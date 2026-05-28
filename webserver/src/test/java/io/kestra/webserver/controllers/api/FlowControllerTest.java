@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
@@ -546,6 +547,7 @@ class FlowControllerTest {
     }
 
     @Test
+    @FlakyTest(description = "OOM in CI kills the Micronaut IO thread pool, causing the third PUT request to hang for 17m before read-timeout fires")
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();
 
@@ -701,6 +703,7 @@ class FlowControllerTest {
     }
 
     @Test
+    @FlakyTest(description = "OOM in CI kills the Micronaut IO thread pool, causing subsequent requests to hang; order-dependent with updateFlowFlowFromJson")
     void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE, "a");
         Flow assertFlow = parseFlow(flow);

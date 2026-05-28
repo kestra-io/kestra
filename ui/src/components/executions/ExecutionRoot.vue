@@ -65,6 +65,7 @@
             $route() {
                 this.executionsStore.taskRun = undefined;
                 if (this.previousExecutionId !== this.$route.params.id) {
+                    this.executionsStore.logs = {total: 0, results: []}
                     this.flowStore.flow = undefined;
                     this.flowStore.flowGraph = undefined;
                     this.follow();

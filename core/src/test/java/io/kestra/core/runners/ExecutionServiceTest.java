@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.services.FlowService;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
@@ -49,6 +51,9 @@ class ExecutionServiceTest {
 
     @Inject
     FlowRepositoryInterface flowRepository;
+
+    @Inject
+    FlowService flowService;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
@@ -166,7 +171,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, null, null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, null, null);
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getNamespace()).isEqualTo("io.kestra.tests");
@@ -187,7 +193,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.getTaskRunList().get(1).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.getTaskRunList().get(1).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -206,7 +213,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(20);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -224,7 +232,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(11);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-3-2_par", List.of()).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("1-3-2_par", List.of()).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -258,7 +267,8 @@ class ExecutionServiceTest {
                 .toList()
         );
 
-        Execution restart = executionService.replay(executionWithRunningSibling, replayTarget.getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(executionWithRunningSibling, flow, replayTarget.getId(), null);
 
         TaskRun restartedSibling = restart.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
         assertThat(restartedSibling.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
@@ -274,7 +284,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(23);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -293,7 +304,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(23);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-2-1_return", List.of("s1", "a a")).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("1-2-1_return", List.of("s1", "a a")).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -313,7 +325,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.getTaskRunList().get(2).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.getTaskRunList().get(2).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -333,7 +346,8 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(11);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
@@ -347,7 +361,36 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/each-parallel-nested.yaml" })
+    @LoadFlows(value = { "flows/valids/replay-revision.yaml" })
+    void replayDifferentRevision() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-revision");
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // update the flow with a new source
+        FlowWithSource flow = flowRepository.findByExecutionWithSource(execution);
+        String newSource = """
+            id: replay-revision
+            namespace: io.kestra.tests
+
+            variables:
+              greeting: "Hello World"
+
+            tasks:
+              - id: print
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ render(vars.greeting) }}"
+            """;
+        FlowWithSource updated = flowRepository.update(GenericFlow.fromYaml(flow.getTenantId(), newSource), flow);
+
+        Execution restart = executionService.replay(execution, updated, null, updated.getRevision());
+
+        assertThat(restart.getFlowRevision()).isEqualTo(updated.getRevision());
+        assertThat(restart.getVariables()).containsEntry("greeting", "Hello World");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/each-parallel-nested.yaml" })
     void markAsEachPara() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-nested");
         Flow flow = flowRepository.findByExecution(execution);

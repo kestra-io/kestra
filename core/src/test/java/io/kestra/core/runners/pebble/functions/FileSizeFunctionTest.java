@@ -184,7 +184,7 @@ public class FileSizeFunctionTest {
             "execution", Map.of("id", "notme")
         );
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ fileSize('unsupported://path-to/file.txt') }}", variables));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileSize('unsupported://path-to/file.txt') }}", variables));
     }
 
     @Test

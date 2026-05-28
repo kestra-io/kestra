@@ -119,7 +119,7 @@ class FileExistsFunctionTest {
             "execution", Map.of("id", "notme")
         );
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ fileExists('unsupported://path-to/file.txt') }}", variables));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileExists('unsupported://path-to/file.txt') }}", variables));
     }
 
     @Test

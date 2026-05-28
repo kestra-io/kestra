@@ -218,7 +218,7 @@ class ReadFileFunctionTest {
     void shouldFailProcessingUnsupportedScheme() {
         Map<String, Object> variables = getVariablesWithExecution("notme", "notme");
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('unsupported://path-to/file.txt') }}", variables));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unsupported://path-to/file.txt') }}", variables));
     }
 
     @Test

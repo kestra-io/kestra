@@ -118,7 +118,7 @@ class IsFileEmptyFunctionTest {
             "execution", Map.of("id", "notme")
         );
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ isFileEmpty('unsupported://path-to/file.txt') }}", variables));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty('unsupported://path-to/file.txt') }}", variables));
     }
 
     @Test

@@ -858,6 +858,7 @@
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
     "last evaluation date": "上次评估日期",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最后执行日期",
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",

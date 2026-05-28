@@ -54,7 +54,7 @@
             height: 20px;
             border: none;
             border-radius: 16px;
-            background-color: var(--ks-toogle-bg-default);
+            background-color: var(--ks-switch-bg-default);
 
             .kel-switch__action {
                 width: 14px;
@@ -69,11 +69,11 @@
         }
 
         &:hover:not(.is-disabled):not(.is-checked) .kel-switch__core {
-            background-color: var(--ks-toogle-bg-hover);
+            background-color: var(--ks-switch-bg-hover);
         }
 
         &.is-checked .kel-switch__core {
-            background-color: var(--ks-toogle-bg-active);
+            background-color: var(--ks-switch-bg-active);
 
             .kel-switch__action {
                 left: 3px;
@@ -93,10 +93,10 @@
             opacity: 1;
 
             .kel-switch__core {
-                background-color: var(--ks-toogle-bg-inactive);
+                background-color: var(--ks-switch-bg-inactive);
 
                 .kel-switch__action {
-                    background-color: var(--ks-toogle-bg-default);
+                    background-color: var(--ks-switch-bg-default);
                 }
             }
         }

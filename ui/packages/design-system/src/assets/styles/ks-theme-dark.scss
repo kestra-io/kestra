@@ -98,11 +98,11 @@ html.dark {
     #{--ks-status-success}: $base-green-300;
     #{--ks-status-warning}: $base-orange-300;
 
-    /* toggle */
-    #{--ks-toogle-bg-active}: $base-primary-400;
-    #{--ks-toogle-bg-default}: $base-gray-700;
-    #{--ks-toogle-bg-hover}: $base-gray-400;
-    #{--ks-toogle-bg-inactive}: $base-gray-800;
+    /* switch */
+    #{--ks-switch-bg-active}: $base-primary-400;
+    #{--ks-switch-bg-default}: $base-gray-700;
+    #{--ks-switch-bg-hover}: $base-gray-400;
+    #{--ks-switch-bg-inactive}: $base-gray-800;
 
     /* topology */
     #{--ks-topology-bg}: $base-gray-600;

@@ -103,8 +103,12 @@
         }
 
         &__label {
+            display: inline-flex;
+            align-items: center;
+            height: var(--ks-spacing-6);
             font-size: var(--ks-font-size-sm);
             font-weight: 400;
+            line-height: 1;
             color: var(--ks-text-secondary);
             white-space: nowrap;
         }

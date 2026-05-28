@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
+import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;

@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.kestra.core.utils.FileUtils.isParentTraversal;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
@@ -66,8 +67,22 @@ public class LocalStorage implements StorageInterface {
             return basePath;
         }
 
-        parentTraversalGuard(uri);
-        return Paths.get(basePath.toString(), windowsToUnixPath(uri.getPath()));
+        // Canonicalize Windows-style separators *before* validating. Otherwise a backslash
+        // payload ("..\..\\") slips past the traversal guard and is only rewritten to "../../"
+        // afterwards, escaping the storage directory (GHSA-qw4v-6w32-xx9h).
+        String relativePath = windowsToUnixPath(uri.getPath());
+        if (isParentTraversal(relativePath)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+
+        Path resolved = Paths.get(basePath.toString(), relativePath).normalize();
+
+        // Defense in depth: the resolved path must never escape the storage base directory.
+        if (!resolved.startsWith(basePath.toAbsolutePath().normalize())) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+
+        return resolved;
     }
 
     @Override

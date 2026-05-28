@@ -54,6 +54,11 @@ export default async (
     _stores: null,
     translations: Record<string, unknown>,
     additionalTranslations: Record<string, unknown> = {},
+    guards: {
+        beforeEach?: (router: Router, ...rest:Parameters<Parameters<Router["beforeEach"]>[0]>) => any;
+        beforeResolve?: (router: Router, ...rest:Parameters<Parameters<Router["beforeResolve"]>[0]>) => any;
+        afterEach?: (router: Router, ...rest:Parameters<Parameters<Router["afterEach"]>[0]>) => any;
+    } = {},
 ): Promise<{router: Router; piniaStore: Pinia}> => {
     // router
     const router = createRouter({
@@ -83,6 +88,18 @@ export default async (
             return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}}
         }
     })
+
+    if(guards.beforeEach){
+        router.beforeEach(guards.beforeEach.bind(null, router))
+    }
+
+    if(guards.beforeResolve){
+        router.beforeResolve(guards.beforeResolve.bind(null, router))
+    }
+
+    if(guards.afterEach){
+        router.afterEach(guards.afterEach.bind(null, router))
+    }
 
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", {detail: to}))
@@ -126,7 +143,7 @@ export default async (
     // moment
     moment.locale(locale)
     // FIXME: type this properly
-    const momentExtended: any = extendMoment(moment)
+    const momentExtended: any = extendMoment(moment as any)
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
     // dateFilter accepts string, DateFormatterFn accepts string | Date — cast to satisfy the type

@@ -1,4 +1,5 @@
 import {defineStore} from "pinia"
+import {ref} from "vue"
 
 export class Me {
     hasAny(_permission: any, _namespace?: any) {
@@ -34,17 +35,22 @@ export class Me {
     }
 }
 
-export const useAuthStore = defineStore("auth", {
-    state: () => ({
-        user: new Me() as Me | undefined,
-        isLogged: true,
-    }),
-    actions: {
-        logout(){
-            return Promise.resolve(true)
-        },
-        correction(){
-            return Promise.resolve(true)
-        },
-    },
+export const useAuthStore = defineStore("auth", () => {
+    const user = ref<Me | undefined>(new Me())
+    const isLogged = ref(true)
+
+    const logout = async () => {
+        return true
+    }
+
+    const correction = async () => {
+        return true
+    }
+
+    return {
+        user,
+        isLogged,
+        logout,
+        correction,
+    }
 })

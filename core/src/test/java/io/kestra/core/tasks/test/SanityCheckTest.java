@@ -120,4 +120,10 @@ class SanityCheckTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+
+    @Test
+    @ExecuteFlow("sanity-checks/ion_binary.yaml")
+    void qaIonBinary(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

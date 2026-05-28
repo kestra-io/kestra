@@ -1,5 +1,5 @@
 import {createApp} from "vue"
-import type {RouteLocationNormalized} from "vue-router"
+import type {RouteLocationNormalized, Router} from "vue-router"
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -13,6 +13,7 @@ import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
+import {AxiosInstance} from "axios"
 
 
 const app = createApp(App)
@@ -26,67 +27,9 @@ const handleAuthError = (error: Error, to: RouteLocationNormalized): {name: stri
     return {name: "setup"}
 }
 
-initApp(app, routes, null, en).then(({router, piniaStore}) => {
-    router.beforeEach(async (to, from) => {
-        if(to.path === from.path && to.query === from.query) {
-            return // Prevent navigation if the path and query are the same
-        }
+let axiosInstance: AxiosInstance
 
-        try {
-            const miscStore = useMiscStore()
-            const configs = await miscStore.loadConfigs()
-
-            if(!configs.isBasicAuthInitialized) {
-                // Since, Configs takes preference
-                // we need to check if any regex validation error in BE.
-                const validationErrors = await miscStore.loadBasicAuthValidationErrors()
-
-                if (validationErrors?.length > 0) {
-                    // Creds exist in config but failed validation
-                    // Route to login to show errors
-                    if (to.name === "login") {
-                        return
-                    }
-
-                    return {name: "login"}
-                } else {
-                    // No creds in config - redirect to set it up
-                    if (to.name === "setup") {
-                        return
-                    }
-
-                    return {name: "setup"}
-                }
-            }
-
-            if (to.meta?.anonymous === true) {
-                if (to.name === "setup") {
-                    return {name: "login"}
-                }
-                return
-            }
-
-            const hasCredentials = BasicAuth.isLoggedIn()
-
-            if (!hasCredentials) {
-                const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-                return {name: "login", query: fromPath ? {from: fromPath} : {}}
-            }
-
-            // Check if basic auth setup is still in progress
-            const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
-            if (isSetupInProgress === "true") {
-                return {name: "setup"}
-            }
-        } catch (error) {
-            console.error("Error during authentication check:", error)
-            return handleAuthError(error as Error, to)
-        }
-    })
-
-    // Setup tenant router
-    setupTenantRouter(router, app)
-
+function setupAxios(router: Router) {
     const coreStore = useCoreStore()
     const authStore = useAuthStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -101,22 +44,94 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
 
     // axios
-    const axiosInstance = configureAxios({}, {
-        authStore: authStore as any, // FIXME: type this properly — authStore.logout returns Promise<boolean> but SDK expects Promise<void>
+    axiosInstance = configureAxios({}, {
+        authStore,
         coreStore,
         oss: true,
         router,
         beforeLogout,
+        isLoggedIn: () => BasicAuth.isLoggedIn(),
         onAuthTimeout: beforeLogout,
-        isImpersonating: () => !!window.sessionStorage.getItem("impersonate"),
-    })
+        isImpersonating: () => Boolean(window.sessionStorage.getItem("impersonate")),
+    }) 
+
+    return axiosInstance
+}
+
+async function beforeResolve(router: Router, to: RouteLocationNormalized, from: RouteLocationNormalized) {
+    if(to.path === from.path && to.query === from.query) {
+        return // Prevent navigation if the path and query are the same
+    }
+
+    try {
+        const miscStore = useMiscStore()
+        if(!axiosInstance) {
+            setupAxios(router)
+        }
+        const configs = await miscStore.loadConfigs()
+
+        if(!configs.isBasicAuthInitialized) {
+            // Since, Configs takes preference
+            // we need to check if any regex validation error in BE.
+            const validationErrors = await miscStore.loadBasicAuthValidationErrors()
+
+            if (validationErrors?.length > 0) {
+                // Creds exist in config but failed validation
+                // Route to login to show errors
+                if (to.name === "login") {
+                    return
+                }
+
+                return {name: "login"}
+            } else {
+                // No creds in config - redirect to set it up
+                if (to.name === "setup") {
+                    return
+                }
+
+                return {name: "setup"}
+            }
+        }
+
+        if (to.meta?.anonymous === true) {
+            if (to.name === "setup") {
+                return {name: "login"}
+            }
+            return
+        }
+
+        const hasCredentials = BasicAuth.isLoggedIn()
+
+        if (!hasCredentials) {
+            const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+            return {name: "login", query: fromPath ? {from: fromPath} : {}}
+        }
+
+        // Check if basic auth setup is still in progress
+        const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
+        if (isSetupInProgress === "true") {
+            return {name: "setup"}
+        }
+    } catch (error) {
+        console.error("Error during authentication check:", error)
+        return handleAuthError(error as Error, to)
+    }
+}
+
+initApp(app, routes, null, en, {}, {beforeResolve}).then(({router, piniaStore}) => {
+    
+
+    // Setup tenant router
+    setupTenantRouter(router, app)
+
+    setupAxios(router)
+
+    const $http = setupAxios(router)
 
     piniaStore.use(({store: piniaStoreLocal}) => {
-        // FIXME: type this properly
-        (piniaStoreLocal as any).$http = axiosInstance
+        piniaStoreLocal.$http = $http
     })
-
-
+    
     // mount
     router.isReady().then(() => app.mount("#app"))
 })

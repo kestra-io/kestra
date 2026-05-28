@@ -12,6 +12,7 @@
                     <KsSideBarItem
                         v-if="tab.disabled"
                         :title="tab.title"
+                        :icon="tab.icon"
                         :active="isActive(tab)"
                         :locked="tab.locked"
                         disabled
@@ -29,6 +30,7 @@
                     >
                         <KsSideBarItem
                             :title="tab.title"
+                            :icon="tab.icon"
                             :href="href"
                             :active="isActive(tab)"
                             :locked="tab.locked"
@@ -87,6 +89,9 @@
     }
 
     function tooltipFor(tab: RouteTab): string {
+        if (typeof tab.props?.tooltip === "string") {
+            return tab.props.tooltip
+        }
         if (tab.disabled && tab.props?.showTooltip) {
             return t("add-trigger-in-editor")
         }

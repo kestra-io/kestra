@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "add_new_item": "Agregar nuevo elemento",
     "additionalPlugins": "Plugins Adicionales",
+    "admin": "Administrador",
     "administration": "Administración",
     "advanced configuration": "Otras propiedades",
     "after": "después",
@@ -174,6 +175,7 @@
     "codeDisabled": "Desactivado en Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar todo",
+    "commit_id": "ID de commit",
     "common": {
       "back": "Atrás"
     },
@@ -880,6 +882,7 @@
       "raw": "Vista temporal",
       "raw_details": "Mostrar task logs y flow logs completos en un formato crudo ordenado por marca de tiempo"
     },
+    "main_configuration": "Configuración Principal",
     "management port": "Puerto de gestión",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -1366,6 +1369,12 @@
     "pluginPage": {
       "alt": "Icono de Plugins",
       "search": "Buscar en más de {count} plugins",
+      "sort": {
+        "most_used": "Más usados",
+        "name_asc": "Nombre A-Z",
+        "name_desc": "Nombre Z-A",
+        "newest": "Más reciente"
+      },
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow."
     },

@@ -27,13 +27,13 @@ public class QueryFilterTest {
 
     @ParameterizedTest
     @MethodSource("validOperationFilters")
-    void should_validate_all_operations(QueryFilter filter, Resource resource) {
+    void shouldValidateWhenOperationIsAllowedForField(QueryFilter filter, Resource resource) {
         assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(filter), resource));
     }
 
     @ParameterizedTest
     @MethodSource("invalidOperationFilters")
-    void should_fail_to_validate_all_operations(QueryFilter filter, Resource resource) {
+    void shouldThrowExceptionWhenOperationIsNotAllowedForField(QueryFilter filter, Resource resource) {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
             () -> QueryFilter.validateQueryFilters(List.of(filter), resource)
@@ -624,14 +624,14 @@ public class QueryFilterTest {
     }
 
     @Test
-    void should_allow_leaf_construction() {
+    void shouldBuildLeafWhenFieldAndOperationProvided() {
         assertDoesNotThrow(() ->
             QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
         );
     }
 
     @Test
-    void should_allow_node_construction() {
+    void shouldBuildNodeWhenLogicalAndChildrenProvided() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
         assertDoesNotThrow(() ->
             QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
@@ -639,7 +639,7 @@ public class QueryFilterTest {
     }
 
     @Test
-    void should_reject_mixed_leaf_and_node_shape() {
+    void shouldThrowExceptionWhenMixingLeafAndNodeShape() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
         assertThrows(IllegalArgumentException.class, () ->
             QueryFilter.builder()
@@ -652,21 +652,21 @@ public class QueryFilterTest {
     }
 
     @Test
-    void should_reject_empty_node_children() {
+    void shouldThrowExceptionWhenNodeHasEmptyChildren() {
         assertThrows(IllegalArgumentException.class, () ->
             QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
         );
     }
 
     @Test
-    void should_reject_leaf_missing_operation() {
+    void shouldThrowExceptionWhenLeafMissingOperation() {
         assertThrows(IllegalArgumentException.class, () ->
             QueryFilter.builder().field(Field.STATE).build()
         );
     }
 
     @Test
-    void should_validate_recursively_through_node_children() {
+    void shouldValidateRecursivelyWhenNodeHasChildren() {
         QueryFilter invalidLeaf = QueryFilter.builder()
             .field(Field.START_DATE)
             .operation(Op.IN)
@@ -681,7 +681,7 @@ public class QueryFilterTest {
     }
 
     @Test
-    void toDashboardFilterBuilder_prefix_shouldReturnPrefixFilter() {
+    void shouldReturnPrefixFilterWhenOperationIsPrefix() {
         QueryFilter filter = QueryFilter.builder()
             .field(Field.NAMESPACE)
             .operation(Op.PREFIX)
@@ -700,7 +700,7 @@ public class QueryFilterTest {
     }
 
     @Test
-    void toDashboardFilterBuilder_equals_shouldReturnEqualToFilter() {
+    void shouldReturnEqualToFilterWhenOperationIsEquals() {
         QueryFilter filter = QueryFilter.builder()
             .field(Field.NAMESPACE)
             .operation(Op.EQUALS)
@@ -716,7 +716,7 @@ public class QueryFilterTest {
     }
 
     @Test
-    void toDashboardFilterBuilder_startsWith_shouldReturnStartsWithFilter() {
+    void shouldReturnStartsWithFilterWhenOperationIsStartsWith() {
         QueryFilter filter = QueryFilter.builder()
             .field(Field.NAMESPACE)
             .operation(Op.STARTS_WITH)

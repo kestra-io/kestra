@@ -76,17 +76,7 @@ public final class Searchable<T> {
 
         if (queryFilters != null && !queryFilters.isEmpty()) {
             results = results.filter(item ->
-                queryFilters.stream().allMatch(queryFilter -> {
-                    BiPredicate<T, Object> predicate = queryFilterPredicateMap.get(
-                        new QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
-                    );
-                    if (predicate == null) {
-                        throw new InvalidQueryFiltersException(
-                            "Unsupported operation for " + queryFilter.field() + ": " + queryFilter.operation()
-                        );
-                    }
-                    return predicate.test(item, queryFilter.value());
-                })
+                queryFilters.stream().allMatch(queryFilter -> evaluate(item, queryFilter))
             );
         }
 
@@ -118,6 +108,25 @@ public final class Searchable<T> {
         }
 
         return ArrayListTotal.of(pageable, results.toList());
+    }
+
+    private boolean evaluate(T item, QueryFilter queryFilter) {
+        if (queryFilter.isNode()) {
+            Stream<QueryFilter> children = queryFilter.children().stream();
+            return switch (queryFilter.logical()) {
+                case AND -> children.allMatch(child -> evaluate(item, child));
+                case OR  -> children.anyMatch(child -> evaluate(item, child));
+            };
+        }
+        BiPredicate<T, Object> predicate = queryFilterPredicateMap.get(
+            new QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
+        );
+        if (predicate == null) {
+            throw new InvalidQueryFiltersException(
+                "Unsupported operation for " + queryFilter.field() + ": " + queryFilter.operation()
+            );
+        }
+        return predicate.test(item, queryFilter.value());
     }
 
     public static <T> Builder<T> builder() {

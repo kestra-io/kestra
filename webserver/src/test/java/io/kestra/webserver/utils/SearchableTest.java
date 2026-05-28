@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.repositories.ArrayListTotal;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -166,6 +169,284 @@ class SearchableTest {
             "Provided query filters are invalid: Unsupported operation for FLOW_ID: EQUALS",
             queryFiltersException.getMessage()
         );
+    }
+
+    @Test
+    void shouldFilterResultsWithOrLogicWhenOrNodeProvided() {
+        // Given
+        List<QueryFilter> queryFilters = List.of(
+            QueryFilter.builder()
+                .logical(QueryFilter.Logical.OR)
+                .children(List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("Alice")
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.PARENT_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(25)
+                        .build()
+                ))
+                .build()
+        );
+
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.PARENT_ID, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.age() == (int) value
+            )
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, null);
+
+        // Then: Alice/30 (name), Bob/25 (age), Alice/40 (name) = 3
+        assertThat(result).extracting(TestEntity::name, TestEntity::age)
+            .containsExactlyInAnyOrder(
+                tuple("Alice", 30),
+                tuple("Bob", 25),
+                tuple("Alice", 40)
+            );
+    }
+
+    @Test
+    void shouldFilterResultsWithAndLogicWhenAndNodeProvided() {
+        // Given
+        List<QueryFilter> queryFilters = List.of(
+            QueryFilter.builder()
+                .logical(QueryFilter.Logical.AND)
+                .children(List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("Alice")
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.PARENT_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(30)
+                        .build()
+                ))
+                .build()
+        );
+
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.PARENT_ID, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.age() == (int) value
+            )
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, null);
+
+        // Then: only Alice/30 matches both
+        assertThat(result).singleElement()
+            .extracting(TestEntity::name, TestEntity::age)
+            .containsExactly("Alice", 30);
+    }
+
+    @Test
+    void shouldFilterResultsWithNestedAndInsideOrWhenComplexFilterProvided() {
+        // Given: OR[ AND[name=Alice, age=30], AND[name=Bob, age=25] ]
+        List<QueryFilter> queryFilters = List.of(
+            QueryFilter.builder()
+                .logical(QueryFilter.Logical.OR)
+                .children(List.of(
+                    QueryFilter.builder()
+                        .logical(QueryFilter.Logical.AND)
+                        .children(List.of(
+                            QueryFilter.builder()
+                                .field(QueryFilter.Field.QUERY)
+                                .operation(QueryFilter.Op.EQUALS)
+                                .value("Alice")
+                                .build(),
+                            QueryFilter.builder()
+                                .field(QueryFilter.Field.PARENT_ID)
+                                .operation(QueryFilter.Op.EQUALS)
+                                .value(30)
+                                .build()
+                        ))
+                        .build(),
+                    QueryFilter.builder()
+                        .logical(QueryFilter.Logical.AND)
+                        .children(List.of(
+                            QueryFilter.builder()
+                                .field(QueryFilter.Field.QUERY)
+                                .operation(QueryFilter.Op.EQUALS)
+                                .value("Bob")
+                                .build(),
+                            QueryFilter.builder()
+                                .field(QueryFilter.Field.PARENT_ID)
+                                .operation(QueryFilter.Op.EQUALS)
+                                .value(25)
+                                .build()
+                        ))
+                        .build()
+                ))
+                .build()
+        );
+
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.PARENT_ID, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.age() == (int) value
+            )
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, null);
+
+        // Then: Alice/30 and Bob/25
+        assertThat(result).extracting(TestEntity::name, TestEntity::age)
+            .containsExactlyInAnyOrder(
+                tuple("Alice", 30),
+                tuple("Bob", 25)
+            );
+    }
+
+    @Test
+    void shouldFilterResultsWithNestedOrInsideAndWhenComplexFilterProvided() {
+        // Given: AND[ name=Alice, OR[age=30, age=40] ]
+        List<QueryFilter> queryFilters = List.of(
+            QueryFilter.builder()
+                .logical(QueryFilter.Logical.AND)
+                .children(List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("Alice")
+                        .build(),
+                    QueryFilter.builder()
+                        .logical(QueryFilter.Logical.OR)
+                        .children(List.of(
+                            QueryFilter.builder()
+                                .field(QueryFilter.Field.PARENT_ID)
+                                .operation(QueryFilter.Op.EQUALS)
+                                .value(30)
+                                .build(),
+                            QueryFilter.builder()
+                                .field(QueryFilter.Field.PARENT_ID)
+                                .operation(QueryFilter.Op.EQUALS)
+                                .value(40)
+                                .build()
+                        ))
+                        .build()
+                ))
+                .build()
+        );
+
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.PARENT_ID, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.age() == (int) value
+            )
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, null);
+
+        // Then: both Alices (ages 30 and 40)
+        assertThat(result).extracting(TestEntity::name, TestEntity::age)
+            .containsExactlyInAnyOrder(
+                tuple("Alice", 30),
+                tuple("Alice", 40)
+            );
+    }
+
+    @Test
+    void shouldCombineTopLevelLeafAndNodeWithAndSemanticsWhenMixedTopLevelProvided() {
+        // Given: top-level list = [ OR[age=30, age=40], leaf(name=Alice) ] — outer list is AND
+        List<QueryFilter> queryFilters = List.of(
+            QueryFilter.builder()
+                .logical(QueryFilter.Logical.OR)
+                .children(List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.PARENT_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(30)
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.PARENT_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(40)
+                        .build()
+                ))
+                .build(),
+            QueryFilter.builder()
+                .field(QueryFilter.Field.QUERY)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("Alice")
+                .build()
+        );
+
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.PARENT_ID, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.age() == (int) value
+            )
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, null);
+
+        // Then: name=Alice AND (age=30 OR age=40)
+        assertThat(result).extracting(TestEntity::name, TestEntity::age)
+            .containsExactlyInAnyOrder(
+                tuple("Alice", 30),
+                tuple("Alice", 40)
+            );
+    }
+
+    @Test
+    void shouldThrowErrorWhenUnsupportedOperationInsideNestedNode() {
+        // Given: OR-node where the first child uses an unregistered (field, op)
+        List<QueryFilter> queryFilters = List.of(
+            QueryFilter.builder()
+                .logical(QueryFilter.Logical.OR)
+                .children(List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.FLOW_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("ignored")
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("Alice")
+                        .build()
+                ))
+                .build()
+        );
+
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> searchable.filter(entities, 1, 100, null, queryFilters, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessage("Provided query filters are invalid: Unsupported operation for FLOW_ID: EQUALS");
     }
 
     record TestEntity(String name, int age) {

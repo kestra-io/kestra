@@ -279,12 +279,10 @@ public class ExecutionService {
         return finalTaskRunToRestart;
     }
 
-    public Execution replay(final Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
+    public Execution replay(final Execution execution, final Flow flow, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
         final String newExecutionId = IdUtils.create();
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
-            final Flow flow = flowRepositoryInterface.findByExecutionWithoutAcl(execution);
-
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
 
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -380,7 +378,13 @@ public class ExecutionService {
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels);
 
-        return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        newExecution = revision != null ? applyNewRevision(flow, newExecution) : newExecution;
+        return newExecution;
+    }
+
+    private Execution applyNewRevision(Flow flow, Execution newExecution) {
+        return newExecution.withFlowRevision(flow.getRevision())
+            .withVariables(flow.getVariables());
     }
 
     public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {

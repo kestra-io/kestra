@@ -13,6 +13,7 @@ import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,
+    registerFilterAutoCompletion,
     registerFunctionParametersAutoCompletion,
     registerNestedValueAutoCompletion,
     registerPebbleAutocompletion,
@@ -578,6 +579,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         );
 
         registerNestedValueAutoCompletion(
+            autoCompletionProviders,
+            yamlAutoCompletion,
+            ["yaml", "plaintext"],
+        );
+
+        registerFilterAutoCompletion(
             autoCompletionProviders,
             yamlAutoCompletion,
             ["yaml", "plaintext"],

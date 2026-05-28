@@ -165,7 +165,17 @@ class WorkerTest {
         WorkerTask notKilled = workerTask(2000);
         workerTaskQueue.emit(notKilled);
 
-        Thread.sleep(500);
+        // Wait for the kill target to emit RUNNING state before sending the kill.
+        // Thread.sleep(500) was not sufficient on slow CI runners, causing the kill to
+        // arrive before the RUNNING transition and producing [CREATED, KILLED] instead of
+        // [CREATED, RUNNING, KILLED].
+        Await.until(
+            () -> workerTaskResult.stream().anyMatch(r ->
+                r.getTaskRun().getExecutionId().equals(workerTask.getTaskRun().getExecutionId())
+                && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
 
         executionKilledQueue.emit(ExecutionKilledExecution.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 

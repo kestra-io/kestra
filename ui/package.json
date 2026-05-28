@@ -7,6 +7,9 @@
     "workspaces": [
         "packages/*"
     ],
+    "exports": {
+        "./src/*": "./src/*"
+    },
     "scripts": {
         "dev": "vite --host",
         "build": "vite build --emptyOutDir",

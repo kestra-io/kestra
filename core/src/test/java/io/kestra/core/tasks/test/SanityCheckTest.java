@@ -14,7 +14,7 @@ import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest(startRunner = true)
+@KestraTest(startRunner = true, startSystemWorker = true)
 class SanityCheckTest {
     @Inject
     private TaskOutputService taskOutputService;

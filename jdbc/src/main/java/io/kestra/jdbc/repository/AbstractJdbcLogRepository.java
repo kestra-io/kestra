@@ -78,6 +78,20 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         return findPage(pageable, tenantId, condition);
     }
 
+    /**
+     * The log table column for {@code TASK_RUN_ID} is {@code taskrun_id} (one word), not
+     * {@code task_run_id} as the default snake-case derivation would produce. Override the
+     * default mapping for that one mismatch; the rest of the column names line up with
+     * {@link QueryFilter.Field#name()} lower-cased.
+     */
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TASK_RUN_ID) {
+            return DSL.quotedName("taskrun_id");
+        }
+        return super.getColumnName(field);
+    }
+
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
         var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));

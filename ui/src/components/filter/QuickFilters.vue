@@ -68,7 +68,7 @@
         const key = value.toLowerCase()
         return {
             "--level-color": `var(--ks-log-${key})`,
-            "--level-bg": `var(--ks-log-background-${key})`,
+            "--level-bg": key === "trace" ? "var(--ks-bg-hover)" : `var(--ks-log-background-${key})`,
             "--level-border": `var(--ks-log-border-${key})`,
         }
     }

@@ -37,17 +37,13 @@
             <div v-show="activeTab === 'form'" class="tab-panel form-panel">
                 <KsForm labelPosition="top" :model="formModel">
                     <KsFormItem :label="$t('namespace')" required>
-                        <KsSelect
+                        <NamespaceSelect
                             v-model="formModel.namespace"
-                            filterable
-                            remote
-                            :remoteMethod="searchNamespaces"
-                            :loading="namespacesLoading"
                             :placeholder="$t('triggers_add_modal_namespace_placeholder')"
-                            @change="onNamespaceChange"
-                        >
-                            <KsOption v-for="ns in namespaceOptions" :key="ns" :label="ns" :value="ns" />
-                        </KsSelect>
+                            :clearable="false"
+                            :autoDefault="false"
+                            @update:model-value="onNamespaceChange"
+                        />
                     </KsFormItem>
 
                     <KsFormItem :label="$t('flow')" required>
@@ -121,12 +117,12 @@
 
     import {useFlowStore} from "../../../stores/flow"
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
-    import {useNamespacesStore} from "override/stores/namespaces"
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {triggerDisplayName} from "./triggerCatalog"
 
     import Editor from "../../inputs/Editor.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
+    import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
 
     const visible = defineModel<boolean>("visible", {required: true})
     const props = defineProps<{trigger: TriggerPluginDto}>()
@@ -140,7 +136,6 @@
     const router = useRouter()
     const flowStore = useFlowStore()
     const pluginsStore = usePluginsStore()
-    const namespacesStore = useNamespacesStore()
     const triggerDraftStore = useTriggerDraftStore()
 
     const activeTab = ref<TabValue>("form")
@@ -148,10 +143,8 @@
         TAB_VALUES.map(value => ({value, label: t(`triggers_add_modal_tab_${value}`)})),
     )
     const copied = ref(false)
-    const namespacesLoading = ref(false)
     const flowsLoading = ref(false)
 
-    const namespaceOptions = ref<string[]>([])
     const flowOptions = ref<{id: string; namespace: string}[]>([])
     const documentationPlugin = ref<PluginComponent | null>(null)
 
@@ -170,16 +163,6 @@
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
     const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n    type: ${props.trigger.type}\n`)
 
-    const searchNamespaces = async (query: string) => {
-        namespacesLoading.value = true
-        try {
-            await namespacesStore.loadAutocomplete({q: query, existingOnly: true})
-            namespaceOptions.value = (namespacesStore.autocomplete ?? []) as string[]
-        } finally {
-            namespacesLoading.value = false
-        }
-    }
-
     const loadFlows = async (namespace: string) => {
         if (!namespace) {
             flowOptions.value = []
@@ -194,9 +177,9 @@
         }
     }
 
-    const onNamespaceChange = (ns: string) => {
+    const onNamespaceChange = (ns: string | string[] | undefined) => {
         formModel.value.flowId = ""
-        loadFlows(ns)
+        loadFlows(typeof ns === "string" ? ns : "")
     }
 
     const copySource = async () => {
@@ -236,7 +219,6 @@
             activeTab.value = "form"
             copied.value = false
             formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
-            searchNamespaces("")
             loadDocumentation()
         }
     }, {immediate: true})

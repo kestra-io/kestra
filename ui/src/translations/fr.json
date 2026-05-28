@@ -36,6 +36,7 @@
     "add_new_item": "Ajouter un nouvel élément",
     "additionalPlugins": "Plugins supplémentaires",
     "admin": "Administrateur",
+    "admin_preferences": "Preferences",
     "administration": "Administration",
     "advanced configuration": "Autres propriétés",
     "after": "après",
@@ -766,7 +767,7 @@
         "tooltip": "Voir les applications utilisant ce flow"
       },
       "dependencies": {
-        "suffix": "Dépendance(s)",
+        "suffix": "Dépendances",
         "tooltip": "Voir les dépendances du flow"
       },
       "errors": {

@@ -1993,7 +1993,7 @@
         "tooltip": "View flow revisions"
       },
       "dependencies": {
-        "suffix": "Dependencie(s)",
+        "suffix": "Dependencies",
         "tooltip": "View flow dependencies"
       },
       "apps": {

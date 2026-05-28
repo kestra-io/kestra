@@ -14,7 +14,6 @@
 </template>
 
 <script>
-    import Topology from "./Topology.vue"
     import FlowRevisions from "./FlowRevisions.vue"
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue"
@@ -127,29 +126,15 @@
                 return this.$route.params.namespace + "/" + this.$route.params.id
             },
             getTabs() {
-                let tabs = [
-                    {
-                        name: undefined,
-                        component: Topology,
-                        title: this.$t("topology"),
-                        props: {
-                            isReadOnly: true,
-                            expandedSubflows: this.flowStore.expandedSubflows,
-                        },
-                    },
-                ]
+                let tabs = []
 
                 if (this.user?.hasAny(resource.EXECUTION)) {
-                    tabs[0].name = "topology"
-
-                    tabs = [
-                        {
-                            name: "overview",
-                            component: Overview,
-                            title: this.$t("overview"),
-                            containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
-                        },
-                    ].concat(tabs)
+                    tabs.push({
+                        name: "overview",
+                        component: Overview,
+                        title: this.$t("overview"),
+                        containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
+                    })
                 }
 
                 if (

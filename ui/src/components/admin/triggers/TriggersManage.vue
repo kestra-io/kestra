@@ -357,7 +357,7 @@
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
     const detailsTriggerId = ref<string | undefined>()
-    const selectedTrigger = ref<any>(undefined)
+    const selectedTrigger = ref<{inputs?: Record<string, unknown>} | undefined>(undefined)
 
     const DATE_COLUMNS: readonly string[] = ["lastTriggeredDate", "nextEvaluationDate", "evaluatedAt", "updatedAt"]
     const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", ...DATE_COLUMNS]

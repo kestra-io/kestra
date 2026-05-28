@@ -331,7 +331,7 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
 
-    import FlowRun from "../../flows/FlowRun.vue"
+    import FlowRun, {SelectedTrigger} from "../../flows/FlowRun.vue"
     import LogsWrapper from "../../logs/LogsWrapper.vue"
     import TriggerAvatar from "../../flows/TriggerAvatar.vue"
     import MarkdownTooltip from "../../layout/MarkdownTooltip.vue"
@@ -356,7 +356,7 @@
     const triggers = ref<any[]>([])
     const triggerToUnlock = ref()
     const isBackfillOpen = ref(false)
-    const selectedTrigger = ref()
+    const selectedTrigger = ref<SelectedTrigger | undefined>()
     const backfill = ref<{
         start: Date | null;
         end: Date | null;
@@ -484,7 +484,7 @@
     const setBackfillModal = (trigger: any, bool: boolean) => {
         if (!trigger) {
             isBackfillOpen.value = false
-            selectedTrigger.value = null
+            selectedTrigger.value = undefined
             return
         }
 

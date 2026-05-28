@@ -216,6 +216,7 @@
             "
             width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            @opened="focusCreationInput"
         >
             <div class="pb-1">
                 <span>
@@ -269,6 +270,7 @@
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
             @keydown.enter.prevent="renameItem()"
+            @opened="focusRenamingInput"
         >
             <div class="pb-1">
                 <span>
@@ -364,7 +366,7 @@
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, nextTick, inject, watch} from "vue"
+    import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
     import * as Utils from "../../utils/utils"
@@ -736,7 +738,6 @@
             dialog.value.visible = true
             dialog.value.type = type
             dialog.value.folder = folder
-            focusCreationInput()
         } else {
             dialog.value.visible = false
             dialog.value = {...DIALOG_DEFAULTS}
@@ -752,7 +753,6 @@
                 old: name,
                 node,
             }
-            focusRenamingInput()
         } else {
             renameDialog.value = {...RENAME_DEFAULTS}
         }
@@ -787,15 +787,11 @@
     const renaming_name = ref<any>()
 
     function focusCreationInput() {
-        nextTick(() => {
-            creation_name.value?.focus()
-        })
+        creation_name.value?.$el?.querySelector("input")?.focus()
     }
 
     function focusRenamingInput() {
-        nextTick(() => {
-            renaming_name.value?.focus()
-        })
+        renaming_name.value?.$el?.querySelector("input")?.focus()
     }
 
     async function importFiles(event: Event) {

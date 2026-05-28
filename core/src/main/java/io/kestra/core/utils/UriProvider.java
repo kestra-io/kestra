@@ -31,13 +31,17 @@ public class UriProvider {
     }
 
     public URI executionUrl(Execution execution) {
+        return executionUrl(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId());
+    }
+
+    public URI executionUrl(String tenantId, String namespace, String flowId, String id) {
         return this.build(
             "/ui/" +
-                (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
+                (tenantId != null ? tenantId + "/" : "") +
                 "executions/" +
-                execution.getNamespace() + "/" +
-                execution.getFlowId() + "/" +
-                execution.getId()
+                namespace + "/" +
+                flowId + "/" +
+                id
         );
     }
 

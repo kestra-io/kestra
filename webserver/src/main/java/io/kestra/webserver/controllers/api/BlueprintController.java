@@ -48,13 +48,18 @@ public class BlueprintController {
     @SuppressWarnings("unchecked")
     @ExecuteOn(TaskExecutors.IO)
     @Get("/{kind}")
-    @Operation(tags = { "Blueprints" }, summary = "List all blueprints")
+    @Operation(
+        tags = { "Blueprints" },
+        summary = "List all blueprints",
+        description = "Community blueprints are served by an external API, so complex query filters are not supported. "
+            + "Only top-level `QUERY` and `TAGS` conditions are honored; logical (AND/OR) and nested filter groups are rejected with a 400."
+    )
     public PagedResults<ApiBlueprintItem> searchBlueprints(
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) Integer page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) Integer size,
         @Parameter(description = "The blueprint kind") Kind kind,
-        @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.") @Nullable @QueryFilterFormat(QueryFilter.Resource.BLUEPRINT) List<QueryFilter> filters,
         HttpRequest<?> httpRequest) throws URISyntaxException {
 
         Map<String, Object> extraParams = new LinkedHashMap<>(blueprintFilterQueryParams(filters));
@@ -96,10 +101,15 @@ public class BlueprintController {
     @SuppressWarnings("unchecked")
     @ExecuteOn(TaskExecutors.IO)
     @Get("/{kind}/tags")
-    @Operation(tags = { "Blueprint Tags" }, summary = "List blueprint tags matching the filter")
+    @Operation(
+        tags = { "Blueprint Tags" },
+        summary = "List blueprint tags matching the filter",
+        description = "Community blueprints are served by an external API, so complex query filters are not supported. "
+            + "Only top-level `QUERY` and `TAGS` conditions are honored; logical (AND/OR) and nested filter groups are rejected with a 400."
+    )
     public List<ApiBlueprintTagItem> listBlueprintTags(
         @Parameter(description = "The blueprint kind") Kind kind,
-        @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.") @Nullable @QueryFilterFormat(QueryFilter.Resource.BLUEPRINT) List<QueryFilter> filters,
         HttpRequest<?> httpRequest) throws URISyntaxException {
 
         return fastForwardToKestraApi(httpRequest, getApiBasePath(kind) + "/tags", blueprintFilterQueryParams(filters), Argument.of(List.class, ApiBlueprintTagItem.class));
@@ -113,6 +123,7 @@ public class BlueprintController {
      */
     protected static Map<String, Object> blueprintFilterQueryParams(@Nullable List<QueryFilter> filters) {
         QueryFilter.validateQueryFilters(filters, QueryFilter.Resource.BLUEPRINT);
+        rejectUnsupportedComplexFilters(filters);
         String q = parseQueryFiltersForBlueprint(filters);
         List<String> tags = parseTagsFromQueryFiltersForBlueprint(filters);
         Map<String, Object> params = new LinkedHashMap<>();
@@ -123,6 +134,23 @@ public class BlueprintController {
             params.put("tags", tags);
         }
         return params;
+    }
+
+    /**
+     * Blueprints proxy to the community API, which only understands flat {@code q} / {@code tags}
+     * params. Logical (AND/OR) or nested filter groups cannot be translated, so reject them with a
+     * clear error instead of silently dropping them — they would otherwise be ignored by the
+     * top-level field scans in {@link #parseQueryFiltersForBlueprint} / {@link #parseTagsFromQueryFiltersForBlueprint}.
+     */
+    private static void rejectUnsupportedComplexFilters(@Nullable List<QueryFilter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return;
+        }
+        if (filters.stream().anyMatch(QueryFilter::isNode)) {
+            throw new InvalidQueryFiltersException(
+                "Resource: BLUEPRINT does not support logical (AND/OR) or nested filter groups; only top-level QUERY and TAGS conditions are supported"
+            );
+        }
     }
 
     protected static String parseQueryFiltersForBlueprint(@Nullable List<QueryFilter> queryFilters) {

@@ -1,9 +1,9 @@
 import {v4 as uuid} from "uuid"
 
 import {State} from "@kestra-io/design-system"
-import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../../../src/components/dependencies/utils/types"
-import type {Types, Node, Edge, Element} from "../../../src/components/dependencies/utils/types"
-import {getRandomID} from "../../../src/utils/id"
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../utils/types"
+import type {Types, Node, Edge, Element} from "../utils/types"
+import {getRandomID} from "../../../utils/id"
 
 type DependencyOptions = {
     roots?: number;

@@ -20,7 +20,7 @@ import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
 import type {Types, Node, Edge, Element} from "../utils/types"
 
-import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies"
+import {getRandomNumber, getDependencies} from "./getDependencies"
 
 // ─── CSS variable maps ────────────────────────────────────────────────────────
 

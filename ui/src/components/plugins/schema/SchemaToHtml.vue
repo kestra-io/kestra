@@ -1,13 +1,11 @@
 <template>
     <div class="schema-root">
         <div class="schema-header">
-            <div v-if="schema.properties?.$beta" class="beta-banner" role="alert">
-                <p>
-                    This plugin is currently in beta. While it is considered safe for use, please be aware that its API
-                    could change in ways that are not compatible with earlier versions in future releases, or it might
-                    become unsupported.
-                </p>
-            </div>
+            <KsAlert v-if="schema.properties?.$beta" type="info" :closable="false">
+                This plugin is currently in beta. While it is considered safe for use, please be aware that its API
+                could change in ways that are not compatible with earlier versions in future releases, or it might
+                become unsupported.
+            </KsAlert>
 
             <div v-if="schema.properties?.description" class="markdown plugin-description">
                 <slot name="markdown" :content="normalizeColons(schema.properties.description)" />
@@ -165,6 +163,7 @@
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
     import type {HighlighterCore} from "shiki/core"
+    import {KsAlert} from "@kestra-io/design-system"
     import SchemaSection from "./SchemaSection.vue"
     import SchemaPropertiesSection from "./SchemaPropertiesSection.vue"
     import SchemaToCode from "./SchemaToCode.vue"
@@ -287,20 +286,6 @@
         gap: 1rem;
     }
 
-    .beta-banner {
-        display: flex;
-        padding: 0.5rem !important;
-        margin-bottom: 0.5rem;
-        background-color: var(--ks-bg-info);
-        border: 1px solid var(--ks-border-info);
-        border-left-width: 0.25rem;
-        border-radius: 0.5rem;
-
-        p {
-            color: var(--ks-status-info);
-        }
-    }
-
     .plugin-description :deep(p),
     .plugin-description :deep(li) {
         color: var(--ks-text-secondary);
@@ -355,33 +340,13 @@
             margin-bottom: 0;
         }
 
-        .collapse-button {
-            font-size: var(--ks-font-size-lg);
-            line-height: 1.5rem;
-        }
-
-        .material-design-icon {
-            &, & * {
-                height: 1.5rem;
-                width: 1.5rem;
-                bottom: 0;
-            }
-        }
-
-        .material-design-icon:not(.property .material-design-icon) {
-            &, & * {
-                height: 2rem;
-                width: 2rem;
-            }
-        }
-
-        > .collapse-button:not(.collapsed) {
-            color: var(--ks-text-link);
-        }
-
         [id$="-body"]:not(#examples-body) span {
             font-size: var(--ks-font-size-xs);
             font-weight: 400;
+        }
+
+        > .collapse-button {
+            margin-bottom: var(--ks-spacing-2);
         }
     }
 </style>

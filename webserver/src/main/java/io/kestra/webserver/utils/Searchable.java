@@ -114,6 +114,13 @@ public final class Searchable<T> {
         return ArrayListTotal.of(pageable, results.toList());
     }
 
+    public boolean matches(T item, @Nullable List<QueryFilter> queryFilters) {
+        if (queryFilters == null || queryFilters.isEmpty()) {
+            return true;
+        }
+        return queryFilters.stream().allMatch(filter -> evaluate(item, filter));
+    }
+
     private boolean evaluate(T item, QueryFilter queryFilter) {
         if (queryFilter.isNode()) {
             Stream<QueryFilter> children = queryFilter.children().stream();

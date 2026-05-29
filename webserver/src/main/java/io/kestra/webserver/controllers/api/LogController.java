@@ -90,7 +90,7 @@ public class LogController {
     @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task")
     public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat List<QueryFilter> filters) {
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
         return logRepository
             .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
             .collectList()
@@ -102,7 +102,7 @@ public class LogController {
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
     public HttpResponse<StreamedFile> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat List<QueryFilter> filters) {
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
         List<LogEntry> logs = logRepository
             .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
             .collectList()
@@ -127,7 +127,7 @@ public class LogController {
     @Operation(tags = { "Logs" }, summary = "Follow logs for a specific execution")
     public Flux<Event<FollowLogEvent>> followLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat List<QueryFilter> filters) {
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
         String subscriberId = UUID.randomUUID().toString();
         List<QueryFilter> effectiveFilters = buildExecutionFilters(executionId, filters);
 

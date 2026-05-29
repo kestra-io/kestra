@@ -3,6 +3,7 @@ package io.kestra.webserver.services;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang3.Strings;
 import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
@@ -29,7 +30,10 @@ public class SearchableFactory {
         return Searchable.<Namespace>builder()
             .searchableExtractor("id", Namespace::getId)
             .sortableExtractor("id", Namespace::getId)
-            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, Namespace::getId, QueryFilter.Op.EQUALS, QueryFilter.Op.NOT_EQUALS)
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (ns, v) -> Strings.CI.contains(ns.getId(), v.toString()))
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.NOT_EQUALS,
+                (ns, v) -> !Strings.CI.contains(ns.getId(), v.toString()))
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, Namespace::getId,
                 QueryFilter.Op.EQUALS, QueryFilter.Op.NOT_EQUALS, QueryFilter.Op.CONTAINS,
                 QueryFilter.Op.STARTS_WITH, QueryFilter.Op.ENDS_WITH, QueryFilter.Op.REGEX,

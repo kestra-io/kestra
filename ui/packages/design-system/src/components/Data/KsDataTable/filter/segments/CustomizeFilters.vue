@@ -19,19 +19,22 @@
                 v-for="key in configuration.keys"
                 :key="key.key"
                 class="item"
-                @click="toggleFilter(key)"
+                :draggable="true"
+                @click="addFilterForKey(key)"
+                @dragstart="(e) => onFieldDragStart(e, key.key)"
+                @dragend="$emit('drag-end-field')"
             >
                 <div class="info">
-                    <span class="label" :class="{'selected': isSelected(key)}">{{ key.label }}</span>
-                    <small :class="{'selected': isSelected(key)}">{{ key.description }}</small>
+                    <span class="label">{{ key.label }}</span>
+                    <small>{{ key.description }}</small>
                 </div>
 
                 <KsButton
                     link
                     size="default"
-                    :icon="isSelected(key) ? undefined : Plus"
-                    :class="isSelected(key) ? 'selected' : 'unselected'"
-                    @click.stop="toggleFilter(key)"
+                    :icon="Plus"
+                    class="unselected"
+                    @click.stop="addFilterForKey(key)"
                 />
             </div>
         </div>
@@ -43,12 +46,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {computed} from "vue"
     import {Close, Plus} from "../utils/icons"
-    import type {
-        FilterConfiguration,
-        FilterKeyConfig,
-        AppliedFilter,
+    import {
+        COMPARATOR_LABELS,
+        type FilterConfiguration,
+        type FilterKeyConfig,
+        type AppliedFilter,
     } from "../utils/filterTypes"
 
     const props = defineProps<{
@@ -60,41 +64,79 @@
         close: [];
         "add-filter": [filter: AppliedFilter];
         "remove-filter": [id: string];
+        "drag-end-field": [];
     }>()
 
-    const selectedCount = computed(() => selectedKeys.value.size)
+    const FIELD_DRAG_MIME = "application/x-kestra-filter-entity"
+
+    /**
+     * Build a transient DOM node styled to look like an empty FilterChip so the browser's
+     * drag preview matches what's actually being created on drop. The node lives off-screen
+     * for one frame so the browser can snapshot it, then we tear it down on the next tick.
+     */
+    const buildDragPreview = (label: string): HTMLElement => {
+        const preview = document.createElement("div")
+        preview.style.cssText = [
+            "display: inline-flex",
+            "align-items: center",
+            "gap: 6px",
+            "background-color: var(--ks-btn-secondary-bg-default)",
+            "border: 1px solid var(--ks-border-default)",
+            "padding: 3px 12px",
+            "border-radius: 4px",
+            "min-height: 32px",
+            "max-height: 32px",
+            "font-family: var(--ks-font-family-sans, inherit)",
+            "font-size: var(--ks-font-size-xs)",
+            "color: var(--ks-text-primary)",
+            "box-shadow: 0 1px 2px var(--ks-shadow-surface)",
+            "position: absolute",
+            "top: -1000px",
+            "left: -1000px",
+            "pointer-events: none",
+            "white-space: nowrap",
+        ].join("; ")
+        const keySpan = document.createElement("span")
+        keySpan.textContent = label
+        preview.append(keySpan)
+        document.body.appendChild(preview)
+        return preview
+    }
+
+    const onFieldDragStart = (event: DragEvent, keyName: string) => {
+        if (!event.dataTransfer) return
+        event.dataTransfer.effectAllowed = "copy"
+        event.dataTransfer.setData(FIELD_DRAG_MIME, `field:${keyName}`)
+        event.dataTransfer.setData("text/plain", keyName)
+
+        const keyConfig = props.configuration.keys.find((k) => k.key === keyName)
+        const preview = buildDragPreview(keyConfig?.label ?? keyName)
+        // Offset the cursor toward the chip's left edge so the preview sits naturally under the pointer.
+        event.dataTransfer.setDragImage(preview, 12, 16)
+        // Browsers snapshot the element synchronously at dragstart; remove it after the current task.
+        setTimeout(() => preview.remove(), 0)
+    }
+
+    const selectedCount = computed(() =>
+        new Set(props.appliedFilters.map(f => f.key)).size,
+    )
     const totalCount = computed(() => props.configuration.keys.length)
 
-    const isSelected = (key: FilterKeyConfig): boolean =>
-        selectedKeys.value.has(key.key)
-
-    const selectedKeys = ref<Set<string>>(new Set(props.appliedFilters.map(f => f.key)))
-
-    watch(() => props.appliedFilters, (newAppliedFilters) => {
-        selectedKeys.value = new Set(newAppliedFilters.map(f => f.key))
-    }, {deep: true})
-
-    const toggleFilter = (key: FilterKeyConfig) => {
-        if (selectedKeys.value.has(key.key)) {
-            selectedKeys.value.delete(key.key)
-            const filterToRemove = props.appliedFilters.find(f => f.key === key.key)
-            if (filterToRemove) {
-                emits("remove-filter", filterToRemove.id)
-            }
-        } else {
-            selectedKeys.value.add(key.key)
-            const newFilter: AppliedFilter = {
-                id: `${key.key}-${Date.now()}`,
-                key: key.key,
-                keyLabel: key.label,
-                comparator: key.comparators?.[0],
-                comparatorLabel: key.comparators?.[0],
-                value: [],
-                valueLabel: "",
-            }
-            emits("add-filter", newFilter)
+    const addFilterForKey = (key: FilterKeyConfig) => {
+        const comparator = key.comparators?.[0]
+        if (!comparator) return
+        const newFilter: AppliedFilter = {
+            id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            key: key.key,
+            keyLabel: key.label,
+            comparator,
+            comparatorLabel: COMPARATOR_LABELS[comparator],
+            value: [],
+            valueLabel: "",
         }
+        emits("add-filter", newFilter)
     }
+
 </script>
 
 <style lang="scss" scoped>
@@ -180,16 +222,6 @@
                 font-size: var(--ks-font-size-sm);
                 font-weight: 400;
                 line-height: 1.375rem;
-
-                &.selected {
-                    color: var(--ks-text-inactive);
-                }
-            }
-
-            small {
-                &.selected {
-                    color: var(--ks-text-inactive);
-                }
             }
         }
     }

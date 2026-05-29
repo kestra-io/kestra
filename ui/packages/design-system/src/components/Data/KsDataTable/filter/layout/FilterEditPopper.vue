@@ -316,15 +316,15 @@
 
         const filterData = getFilterValue()
         if (!filterData) {
+            // The parent closes the dialog as part of handling `remove`; no extra `close` needed.
             emits("remove", props.filter.id)
-            emits("close")
             return
         }
 
         const updatedFilter: any = {
             ...props.filter,
             comparator: state.selectedComparator,
-            comparatorLabel: COMPARATOR_LABELS[state.selectedComparator],
+            comparatorLabel: props.filterKey?.comparatorLabels?.[state.selectedComparator] ?? COMPARATOR_LABELS[state.selectedComparator],
             value: filterData.value,
             valueLabel: filterData.label,
         }
@@ -339,8 +339,10 @@
             updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData.meta)
         }
 
+        // The parent closes the dialog as part of handling `update`; no extra `close` needed.
+        // Emitting `close` here would run the parent's empty-chip auto-remove against the stale
+        // pre-update props and discard the chip we just applied.
         emits("update", updatedFilter)
-        emits("close")
     }
 
     const initializeStateFromFilter = (filter: AppliedFilter) => {

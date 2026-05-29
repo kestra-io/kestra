@@ -130,31 +130,59 @@ export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} fro
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
 export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
+export {
+    useFilterGroups,
+    findLeafById,
+    findLeafContaining,
+    allFilters,
+    newGroupId,
+    emptyLeafGroup,
+} from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
+export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,
     encodeFiltersToQuery,
+    encodeFilterGroupsToQuery,
     getUniqueFilters,
     isValidFilter,
     keyOfComparator,
     getComparator,
     clearFilterQueryParams,
     isSearchPath,
+    isUnrenderableFilterKey,
+    findUnrenderableFilterKeys,
+    serializeFiltersToString,
+    parseFiltersFromString,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {
     readRouteLevelFilter,
     hasUnsupportedRouteLevelComparator,
     readAppliedLevelFilter,
     normalizeRouteLevelFilter,
+    levelToRequestParams,
+} from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export type {
+    LevelFilterValue,
+    LevelFilterDirection,
 } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
 export type {
     FilterConfiguration,
     AppliedFilter,
+    FilterGroup,
+    LeafFilterGroup,
+    WrapperGroup,
+    LogicalOperator,
     SavedFilter,
     TableOptions,
     TableProperties,
     FilterKeyConfig,
     FilterValue,
+} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export {
+    isWrapperGroup,
+    isLeafGroup,
+    flipLogical,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 
 const components: Record<string, Component> = {

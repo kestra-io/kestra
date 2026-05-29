@@ -1396,7 +1396,6 @@
       "yaml_configuration": "YAML設定"
     },
     "pluginPage": {
-      "alt": "プラグインアイコン",
       "elementType": {
         "apps": "アプリ",
         "charts": "チャート",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "ブループリント ({count})",
-        "noBlueprints": "このプラグインにはまだ利用可能なblueprintがありません。",
         "plugins": "プラグイン ({count})",
         "tasks": "タスク ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "名前 Z-A",
         "newest": "最新"
       },
-      "sortBy": "並び替え",
-      "title1": "プラグインはワークフローの構成要素です。",
-      "title2": "taskやtriggerを検索してflowを構築します。"
+      "sortBy": "並び替え"
     },
     "plugin_default_already_exists": "<code>{type}</code>のプラグインデフォルトはすでに存在します。",
     "plugins": {

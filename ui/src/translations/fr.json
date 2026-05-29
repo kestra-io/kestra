@@ -1396,7 +1396,6 @@
       "yaml_configuration": "Configuration YAML"
     },
     "pluginPage": {
-      "alt": "Icône des plugins",
       "elementType": {
         "apps": "Application",
         "charts": "Graphique",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "Blueprints ({count})",
-        "noBlueprints": "Aucun blueprint disponible pour ce plugin pour le moment.",
         "plugins": "Plugins ({count})",
         "tasks": "Tâches ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "Nom Z-A",
         "newest": "Le plus récent"
       },
-      "sortBy": "Trier par",
-      "title1": "Les plugins sont des blocs pour vos workflows.",
-      "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux."
+      "sortBy": "Trier par"
     },
     "plugin_default_already_exists": "Le plugin par défaut pour <code>{type}</code> existe déjà.",
     "plugins": {

@@ -10,46 +10,42 @@
     </section>
 
     <template v-else>
-        <KsRow class="plugin-header">
-            <h4 class="plugin-title">{{ $t("pluginPage.title1") }}</h4>
-
-            <div class="filter-toolbar">
-                <div class="filter-toolbar__search">
-                    <KsSearch
-                        v-model="searchText"
-                        :placeholder="$t('pluginPage.search')"
-                        clearable
-                    />
-                </div>
-
-                <div class="category-tags">
-                    <KsCheckTag
-                        v-for="category in availableCategories"
-                        :key="category"
-                        pill
-                        :checked="selectedCategories.includes(category)"
-                        @change="toggleCategory(category)"
-                    >
-                        <template #icon>
-                            <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="16" />
-                        </template>
-                        <span class="category-label">{{ category }}</span>
-                    </KsCheckTag>
-                </div>
-
-                <div class="sort-by">
-                    <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
-                    <KsSelect v-model="sortBy" size="small" class="sort-select">
-                        <KsOption
-                            v-for="option in sortOptions"
-                            :key="option.value"
-                            :value="option.value"
-                            :label="option.label"
-                        />
-                    </KsSelect>
-                </div>
+        <div class="filter-toolbar">
+            <div class="filter-toolbar__search">
+                <KsSearch
+                    v-model="searchText"
+                    :placeholder="$t('pluginPage.search')"
+                    clearable
+                />
             </div>
-        </KsRow>
+
+            <div class="category-tags">
+                <KsCheckTag
+                    v-for="category in availableCategories"
+                    :key="category"
+                    pill
+                    :checked="selectedCategories.includes(category)"
+                    @change="toggleCategory(category)"
+                >
+                    <template #icon>
+                        <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="16" />
+                    </template>
+                    <span class="category-label">{{ category }}</span>
+                </KsCheckTag>
+            </div>
+
+            <div class="sort-by">
+                <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
+                <KsSelect v-model="sortBy" size="small" class="sort-select">
+                    <KsOption
+                        v-for="option in sortOptions"
+                        :key="option.value"
+                        :value="option.value"
+                        :label="option.label"
+                    />
+                </KsSelect>
+            </div>
+        </div>
 
         <KsEmpty
             v-if="pluginsList.length === 0"
@@ -307,26 +303,18 @@
 </script>
 
 <style scoped lang="scss">
-    .plugin-header {
-        padding: var(--ks-spacing-6);
     
-        .plugin-title {
-            font-weight: var(--ks-font-weight-semibold);
-            margin-bottom: var(--ks-spacing-6);
-        }
+    .filter-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-3);
+        width: 100%;
+        padding: var(--ks-spacing-6);
 
-        .filter-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-3);
-            width: 100%;
-            margin-top: var(--ks-spacing-3);
-
-            &__search {
-                min-width: 17rem;
-            }
+        &__search {
+            min-width: 17rem;
         }
 
         .category-tags {

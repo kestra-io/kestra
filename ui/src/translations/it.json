@@ -1396,7 +1396,6 @@
       "yaml_configuration": "Configurazione YAML"
     },
     "pluginPage": {
-      "alt": "Icona Plugin",
       "elementType": {
         "apps": "App",
         "charts": "Grafico",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "Blueprint ({count})",
-        "noBlueprints": "Nessun blueprint disponibile per questo plugin al momento.",
         "plugins": "Plugin ({count})",
         "tasks": "Attività ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "Nome Z-A",
         "newest": "Più recente"
       },
-      "sortBy": "Ordina per",
-      "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
-      "title2": "Cerca tasks e triggers per costruire il tuo flow."
+      "sortBy": "Ordina per"
     },
     "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "plugins": {

@@ -1396,7 +1396,6 @@
       "yaml_configuration": "YAML-Konfiguration"
     },
     "pluginPage": {
-      "alt": "Plugins-Symbol",
       "elementType": {
         "apps": "Anwendung",
         "charts": "Diagramm",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "Blueprints ({count})",
-        "noBlueprints": "Noch keine Blueprints für dieses Plugin verfügbar.",
         "plugins": "Plugins ({count})",
         "tasks": "Aufgaben ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "Name Z-A",
         "newest": "Neueste"
       },
-      "sortBy": "Sortieren nach",
-      "title1": "Plugins sind Bausteine für Ihre Workflows.",
-      "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
+      "sortBy": "Sortieren nach"
     },
     "plugin_default_already_exists": "Standard-Plugin für <code>{type}</code> existiert bereits.",
     "plugins": {

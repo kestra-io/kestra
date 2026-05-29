@@ -1396,7 +1396,6 @@
       "yaml_configuration": "YAML 配置"
     },
     "pluginPage": {
-      "alt": "插件图标",
       "elementType": {
         "apps": "应用程序",
         "charts": "图表",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "蓝图 ({count})",
-        "noBlueprints": "此插件尚无可用的blueprint。",
         "plugins": "插件 ({count})",
         "tasks": "任务 ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "名称 Z-A",
         "newest": "最新"
       },
-      "sortBy": "排序依据",
-      "title1": "插件是你的工作流构建块。",
-      "title2": "搜索任务和触发器以构建你的流程。"
+      "sortBy": "排序依据"
     },
     "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "plugins": {

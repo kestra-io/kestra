@@ -1396,7 +1396,6 @@
       "yaml_configuration": "YAML कॉन्फ़िगरेशन"
     },
     "pluginPage": {
-      "alt": "प्लगइन्स आइकन",
       "elementType": {
         "apps": "ऐप",
         "charts": "चार्ट",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "ब्लूप्रिंट्स ({count})",
-        "noBlueprints": "इस प्लगइन के लिए अभी तक कोई blueprint उपलब्ध नहीं है।",
         "plugins": "प्लगइन्स ({count})",
         "tasks": "टास्क ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "नाम Z-A",
         "newest": "नवीनतम"
       },
-      "sortBy": "क्रमबद्ध करें",
-      "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
-      "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
+      "sortBy": "क्रमबद्ध करें"
     },
     "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "plugins": {

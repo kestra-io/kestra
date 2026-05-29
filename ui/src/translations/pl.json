@@ -1396,7 +1396,6 @@
       "yaml_configuration": "Konfiguracja YAML"
     },
     "pluginPage": {
-      "alt": "Ikona wtyczek",
       "elementType": {
         "apps": "Aplikacja",
         "charts": "Wykres",
@@ -1409,7 +1408,6 @@
       },
       "group": {
         "blueprints": "Blueprinty ({count})",
-        "noBlueprints": "Brak dostępnych blueprintów dla tego pluginu.",
         "plugins": "Wtyczki ({count})",
         "tasks": "Zadania ({count})"
       },
@@ -1442,9 +1440,7 @@
         "nameDesc": "Nazwa Z-A",
         "newest": "Najnowsze"
       },
-      "sortBy": "Sortuj według",
-      "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
-      "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
+      "sortBy": "Sortuj według"
     },
     "plugin_default_already_exists": "Domyślna wtyczka dla <code>{type}</code> już istnieje.",
     "plugins": {

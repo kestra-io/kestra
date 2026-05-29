@@ -748,6 +748,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/waitfor-nested.yaml" }, tenantId = "waitfornested")
+    void waitforNestedThreeLevels() throws Exception {
+        loopUntilTestCaseTest.waitforNestedThreeLevels("waitfornested");
+    }
+
+    @Test
     @LoadFlows("flows/valids/errors.yaml")
     void errors() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();

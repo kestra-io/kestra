@@ -18,12 +18,14 @@
     </template>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {computed, onBeforeUnmount, onMounted, onUnmounted, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+
     import FlowRevisions from "./FlowRevisions.vue"
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue"
-    import RouteContext from "../../mixins/routeContext"
-    import {mapStores} from "pinia"
     import {useFlowStore} from "../../stores/flow"
     import {useRouteTabsStore} from "../../stores/routeTabs"
     import resource from "../../models/resource"
@@ -38,319 +40,237 @@
     import DemoAuditLogs from "../demo/AuditLogs.vue"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    export default {
-        mixins: [RouteContext],
-        components: {
-            FlowRootTopBar,
-        },
-        data() {
-            return {
-                previousFlow: undefined,
-                dependenciesCount: undefined,
-                deleted: false,
-                tabsOwnerId: Symbol("flow-root-tabs"),
-            }
-        },
-        watch: {
-            tabs: {
-                immediate: true,
-                deep: true,
-                handler() {
-                    this.syncTabsToStore()
+    const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
+    const router = useRouter()
+    const flowStore = useFlowStore()
+    const authStore = useAuthStore()
+    const miscStore = useMiscStore()
+    const routeTabsStore = useRouteTabsStore()
+
+    const previousFlow = ref<string | undefined>(undefined)
+    const dependenciesCount = ref<number | undefined>(undefined)
+    const deleted = ref(false)
+    const tabsOwnerId = Symbol("flow-root-tabs")
+
+    const user = computed(() => authStore.user)
+    const ready = computed(() => user.value && flowStore.flow)
+
+    const tabs = computed(() => {
+        const result = []
+
+        if (user.value?.hasAny(resource.EXECUTION)) {
+            result.push({
+                name: "overview",
+                component: Overview,
+                title: t("overview"),
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.EXECUTION, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "executions",
+                component: FlowExecutions,
+                title: t("executions"),
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.FLOW, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "edit",
+                component: MultiPanelFlowEditorView,
+                title: t("edit"),
+                maximized: true,
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.FLOW, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "revisions",
+                component: FlowRevisions,
+                title: t("revisions"),
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.FLOW, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "triggers",
+                component: FlowTriggers,
+                title: t("triggers"),
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.EXECUTION, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "logs",
+                component: LogsWrapper,
+                title: t("logs"),
+                props: {
+                    showFilters: true,
+                    restoreurl: false,
+                },
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.EXECUTION, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "metrics",
+                component: FlowMetrics,
+                title: t("metrics"),
+            })
+        }
+
+        if (user.value && flowStore.flow && user.value.isAllowed(resource.FLOW, action.VIEW, flowStore.flow.namespace)) {
+            result.push({
+                name: "dependencies",
+                component: Dependencies,
+                title: t("dependencies"),
+                count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
+                disabled: !dependenciesCount.value,
+                maximized: true,
+            })
+        }
+
+        result.push({
+            name: "concurrency",
+            title: t("concurrency"),
+            component: FlowConcurrency,
+        })
+
+        result.push({
+            name: "auditlogs",
+            title: t("auditlogs"),
+            component: DemoAuditLogs,
+            props: {embed: true},
+            locked: true,
+        })
+
+        return result
+    })
+
+    const activeTab = computed(() => {
+        const key = route?.params?.tab
+        return tabs.value.find(t => t.name === key) ?? tabs.value[0]
+    })
+
+    const activeTabName = computed(() => activeTab.value?.name ?? "home")
+
+    const containerClass = computed(() => {
+        if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
+        return {"container": true, "tabs-flush-top": true}
+    })
+
+    const routeInfo = computed(() => ({
+        title: route.params.id as string,
+        breadcrumb: [
+            {
+                label: t("flows"),
+                link: {name: "flows/list"},
+            },
+            {
+                label: route.params.namespace as string,
+                link: {
+                    name: "namespaces/update",
+                    params: {id: route.params.namespace, tab: "flows"},
                 },
             },
-            $route(newValue, oldValue) {
-                if (oldValue.name === newValue.name) {
-                    this.load()
-                }
-            },
-            "$route.params.tab": {
-                immediate: true,
-                handler: function (newTab) {
-                    if (newTab === "overview" || newTab === "executions") {
-                        const dateTimeKeys = ["startDate", "endDate", "timeRange"]
+        ],
+        beta: tabs.value.find(tab => tab.name === route.params.tab)?.props?.beta,
+    }))
 
-                        if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                            const DEFAULT_DURATION = this.miscStore.configs?.chartDefaultDuration ?? "PT24H"
-                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
-                            this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery})
-                        }
-                    }
-                },
-            },
-            "flowStore.flow": {
-                deep: true,
-                handler: function (flow) {
-                    if (flow && flow.id) {
-                        // https://github.com/kestra-io/kestra/issues/10484
-                        setTimeout(() => {
-                            this.flowStore
-                                .loadDependencies({namespace: flow.namespace, id: flow.id}, true)
-                                .then(({count}) => this.dependenciesCount = count > 0 ? (count - 1) : 0)
-                        }, 1000)
-                    }
-                },
-            },
-        },
-        created() {
-            if(!this.$route.params.tab) {
-                const tab = localStorage.getItem("flowDefaultTab") || "overview"
-                this.$router.replace({
-                    name: "flows/update",
-                    params: {...this.$route.params, tab},
-                    query: {...this.$route.query},
-                })
-            }
-            // since this component is only used in edition
-            // we need to set the flag as editing in the store.
-            // Specifically, it would be a problem when saving a new flow
-            // and moving to edit mode.
-            // NOTE: Flow creation component is ./FlowCreate.vue
-            this.flowStore.isCreating = false
+    useRouteContext(routeInfo)
 
-            this.load()
-        },
-        methods: {
-            load() {
-                if (
-                    this.flowStore.flow === undefined ||
-                    this.previousFlow !== this.flowKey()
-                ) {
-                    const query = {...this.$route.query, allowDeleted: true}
-                    return this.flowStore.loadFlow({
-                        ...this.$route.params,
-                        ...query,
-                    })
-                        .then(() => {
-                            if (this.flowStore.flow) {
-                                this.deleted = this.flowStore.flow.deleted
-                                this.previousFlow = this.flowKey()
-                                this.flowStore.loadGraph({
-                                    flow: this.flowStore.flow,
-                                })
-                            }
-                        })
-                }
-            },
-            flowKey() {
-                return this.$route.params.namespace + "/" + this.$route.params.id
-            },
-            getTabs() {
-                let tabs = []
-
-                if (this.user?.hasAny(resource.EXECUTION)) {
-                    tabs.push({
-                        name: "overview",
-                        component: Overview,
-                        title: this.$t("overview"),
-                    })
-                }
-
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.EXECUTION,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "executions",
-                        component: FlowExecutions,
-                        title: this.$t("executions"),
-                    })
-                }
-
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.FLOW,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "edit",
-                        component: MultiPanelFlowEditorView,
-                        title: this.$t("edit"),
-                        maximized: true,
-                    })
-                }
-
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.FLOW,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "revisions",
-                        component: FlowRevisions,
-                        title: this.$t("revisions"),
-                    })
-                }
-
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.FLOW,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "triggers",
-                        component: FlowTriggers,
-                        title: this.$t("triggers"),
-                    })
-                }
-
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.EXECUTION,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "logs",
-                        component: LogsWrapper,
-                        title: this.$t("logs"),
-                        props: {
-                            showFilters: true,
-                            restoreurl: false,
-                        },
-                    })
-                }
-
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.EXECUTION,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "metrics",
-                        component: FlowMetrics,
-                        title: this.$t("metrics"),
-                    })
-                }
-                if (
-                    this.user &&
-                    this.flowStore.flow &&
-                    this.user.isAllowed(
-                        resource.FLOW,
-                        action.VIEW,
-                        this.flowStore.flow.namespace,
-                    )
-                ) {
-                    tabs.push({
-                        name: "dependencies",
-                        component: Dependencies,
-                        title: this.$t("dependencies"),
-                        count: (this.dependenciesCount ?? 0) > 0 ? this.dependenciesCount : undefined,
-                        disabled: !this.dependenciesCount,
-                        maximized: true,
-                    })
-                }
-
-                tabs.push({
-                    name: "concurrency",
-                    title: this.$t("concurrency"),
-                    component: FlowConcurrency,
-                })
-
-                tabs.push({
-                    name: "auditlogs",
-                    title: this.$t("auditlogs"),
-                    component: DemoAuditLogs,
-                    props: {
-                        embed: true,
-                    },
-                    locked: true,
-                })
-
-                return tabs
-            },
-            updateExpandedSubflows(expandedSubflows) {
-                this.flowStore.expandedSubflows = expandedSubflows
-            },
-            syncTabsToStore() {
-                this.routeTabsStore.setTabs({
-                    ownerId: this.tabsOwnerId,
-                    tabs: this.tabs,
-                    routeName: "flows/update",
-                    displayMode: "select",
-                })
-            },
-        },
-        computed: {
-            ...mapStores(useFlowStore, useAuthStore, useMiscStore, useRouteTabsStore),
-            activeTab() {
-                const key = this.$route?.params?.tab
-                return this.tabs.find(t => t.name === key) ?? this.tabs[0]
-            },
-            activeTabName() {
-                return this.activeTab?.name ?? "home"
-            },
-            containerClass() {
-                if (this.activeTab?.locked) return {"px-0": true, "full-container": true}
-                return {"container": true, "tabs-flush-top": true}
-            },
-            routeInfo() {
-                return {
-                    title: this.$route.params.id,
-                    breadcrumb: [
-                        {
-                            label: this.$t("flows"),
-                            link: {
-                                name: "flows/list",
-                            },
-                        },
-                        {
-                            label: this.$route.params.namespace,
-                            link: {
-                                name: "namespaces/update",
-                                params: {
-                                    id: this.$route.params.namespace,
-                                    tab: "flows",
-                                },
-                            },
-                        },
-                    ],
-                    beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,
-                }
-            },
-            tabs() {
-                return this.getTabs()
-            },
-            ready() {
-                return this.user && this.flowStore.flow
-            },
-            user() {
-                return this.authStore.user
-            },
-        },
-        beforeUnmount() {
-            this.routeTabsStore.clearTabsIfOwner(this.tabsOwnerId)
-        },
-        unmounted() {
-            this.flowStore.flow = undefined
-            this.flowStore.flowGraph = undefined
-        },
+    function flowKey() {
+        return route.params.namespace + "/" + route.params.id
     }
+
+    function load() {
+        if (flowStore.flow === undefined || previousFlow.value !== flowKey()) {
+            const query = {...route.query, allowDeleted: true}
+            return flowStore.loadFlow({...route.params, ...query})
+                .then(() => {
+                    if (flowStore.flow) {
+                        deleted.value = flowStore.flow.deleted
+                        previousFlow.value = flowKey()
+                        flowStore.loadGraph({flow: flowStore.flow})
+                    }
+                })
+        }
+    }
+
+    function syncTabsToStore() {
+        routeTabsStore.setTabs({
+            ownerId: tabsOwnerId,
+            tabs: tabs.value,
+            routeName: "flows/update",
+            displayMode: "select",
+        })
+    }
+
+    function updateExpandedSubflows(expandedSubflows: unknown) {
+        flowStore.expandedSubflows = expandedSubflows
+    }
+
+    watch(tabs, () => {
+        syncTabsToStore()
+    }, {immediate: true, deep: true})
+
+    watch(route, (newValue, oldValue) => {
+        if (oldValue.name === newValue.name) {
+            load()
+        }
+    })
+
+    watch(() => route.params.tab, (newTab) => {
+        if (newTab === "overview" || newTab === "executions") {
+            const dateTimeKeys = ["startDate", "endDate", "timeRange"]
+            if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+                const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
+                router.replace({name: route.name, params: route.params, query: newQuery})
+            }
+        }
+    }, {immediate: true})
+
+    watch(() => flowStore.flow, (flow) => {
+        if (flow && flow.id) {
+            // https://github.com/kestra-io/kestra/issues/10484
+            setTimeout(() => {
+                flowStore.loadDependencies({namespace: flow.namespace, id: flow.id}, true)
+                    .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
+            }, 1000)
+        }
+    }, {deep: true})
+
+    onMounted(() => {
+        if (!route.params.tab) {
+            const tab = localStorage.getItem("flowDefaultTab") || "overview"
+            router.replace({
+                name: "flows/update",
+                params: {...route.params, tab},
+                query: {...route.query},
+            })
+        }
+        // since this component is only used in edition
+        // we need to set the flag as editing in the store.
+        // Specifically, it would be a problem when saving a new flow
+        // and moving to edit mode.
+        // NOTE: Flow creation component is ./FlowCreate.vue
+        flowStore.isCreating = false
+
+        load()
+    })
+
+    onBeforeUnmount(() => {
+        routeTabsStore.clearTabsIfOwner(tabsOwnerId)
+    })
+
+    onUnmounted(() => {
+        flowStore.flow = undefined
+        flowStore.flowGraph = undefined
+    })
 </script>
 <style scoped lang="scss">
     .gray-700 {

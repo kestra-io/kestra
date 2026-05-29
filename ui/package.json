@@ -25,7 +25,7 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks || true",
-        "postinstall": "npx patch-package"
+        "postinstall": "[ -n \"$INIT_CWD\" ] && [ \"$INIT_CWD\" != \"$PWD\" ] || npx patch-package"
     },
     "dependencies": {
         "@codecov/vite-plugin": "^2.0.1",

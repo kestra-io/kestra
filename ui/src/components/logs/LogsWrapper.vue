@@ -5,8 +5,10 @@
             <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 @ready="ready = true"
-                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @page-changed="onPageChanged"
                 :total="logsStore.total"
             >
                 <template #navbar v-if="!embed || showFilters">
@@ -201,7 +203,7 @@
     ])
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
 
         if (isFlowEdit.value) {
@@ -249,13 +251,22 @@
         syncLevelFromAppliedFilters(filters)
     }
 
-    const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+    const pageKey = props.embed ? "logsPage" : "page"
+    const sizeKey = props.embed ? "logsSize" : "size"
+    const urlPage = computed(() => Number(route.query[pageKey]) || 1)
+    const urlSize = computed(() => Number(route.query[sizeKey]) || 25)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})
+    }
+
+    const filterQueryKey = computed(() => {
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
+        return JSON.stringify(filters)
     })
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     const showStatChart = () => showChart.value
 

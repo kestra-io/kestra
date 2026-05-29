@@ -130,6 +130,8 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import javax.annotation.CheckReturnValue;
+
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -840,6 +842,7 @@ public class ExecutionController {
         return parsedLabels;
     }
 
+    @CheckReturnValue
     protected <T> HttpResponse<T> validateFile(Execution execution, URI path, String redirect) {
         if (LocalPath.FILE_SCHEME.equals(path.getScheme())) {
             if (!localFilesConfiguration.enablePreview()) {
@@ -1860,7 +1863,10 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file?path=" + path);
+        HttpResponse<?> validateResponse = this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file/preview?path=" + path);
+        if (validateResponse != null) {
+            return validateResponse;
+        }
 
         String extension = FilenameUtils.getExtension(path.toString());
         Optional<Charset> charset;

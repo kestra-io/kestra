@@ -135,13 +135,13 @@
             //}
 
             &.kel-tag--dark {
-                --kel-tag-bg-color: var(--ks-gray-500);
+                --kel-tag-bg-color: var(--ks-gray-cool-500);
                 --kel-tag-border-color: var(--ks-border-default);
             }
 
             &.kel-tag--light {
                 --kel-tag-text-color: var(--ks-black);
-                --kel-tag-bg-color: var(--ks-gray-50);
+                --kel-tag-bg-color: var(--ks-gray-cool-50);
 
             }
 

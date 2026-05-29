@@ -130,8 +130,6 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-
     .mcp-list {
         &__loading {
             display: flex;
@@ -146,10 +144,10 @@
 
         &__item {
             margin: 0.25rem 0;
-            border-radius: var(--bs-border-radius-lg);
-            border: 1px solid var(--ks-border-primary);
-            box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
-            background: var(--ks-background-card);
+            border-radius: var(--ks-radius-lg);
+            border: 1px solid var(--ks-border-default);
+            box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
+            background: var(--ks-bg-surface);
         }
 
         &__row {
@@ -158,14 +156,14 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.625rem 0.875rem;
-            border-radius: var(--bs-border-radius-lg);
-            color: var(--ks-content-primary);
+            border-radius: var(--ks-radius-lg);
+            color: var(--ks-text-primary);
             text-decoration: none;
             transition: background 0.15s;
 
             &:hover {
-                background: var(--ks-background-body);
-                color: var(--ks-content-link);
+                background: var(--ks-bg-body);
+                color: var(--ks-text-link);
             }
 
             &--disabled {
@@ -176,7 +174,7 @@
         &__icon {
             display: flex;
             align-items: center;
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
             font-size: 1.125rem;
         }
 
@@ -188,7 +186,7 @@
 
         &__tenant {
             font-size: 0.8125rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             flex-shrink: 0;
         }
 
@@ -200,7 +198,7 @@
         }
 
         &__type-icon {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: 0.875rem;
         }
 
@@ -209,9 +207,9 @@
             font-weight: 600;
             letter-spacing: 0.05em;
             text-transform: uppercase;
-            color: var(--ks-content-secondary);
-            background: var(--ks-background-body);
-            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-text-secondary);
+            background: var(--ks-bg-body);
+            border: 1px solid var(--ks-border-default);
             border-radius: 4px;
             padding: 1px 5px;
         }
@@ -225,15 +223,15 @@
             padding: 1px 5px;
 
             &--enabled {
-                color: var(--el-color-success);
-                background: var(--el-color-success-light-9);
-                border: 1px solid var(--el-color-success-light-7);
+                color: var(--ks-text-success);
+                background: var(--ks-bg-success);
+                border: 1px solid var(--ks-border-success);
             }
 
             &--disabled {
-                color: var(--ks-content-secondary);
-                background: var(--ks-background-body);
-                border: 1px solid var(--ks-border-primary);
+                color: var(--ks-text-secondary);
+                background: var(--ks-bg-body);
+                border: 1px solid var(--ks-border-default);
             }
         }
 

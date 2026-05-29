@@ -18,7 +18,6 @@
                 columns: {shown: false},
                 refresh: {shown: false}
             }"
-            :searchInputFullWidth="true"
             :buttons="{
                 savedFilters: {shown: false},
                 tableOptions: {shown: false}
@@ -119,16 +118,16 @@
 
     const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
-        namespaces.value = await useNamespaces(
-            1000,
-            route.query?.["filters[q][EQUALS]"] === undefined ? undefined : {q: route.query["filters[q][EQUALS]"]},
-        ).all()
+        const filterParams = Object.fromEntries(
+            Object.entries(route.query).filter(([key]) => key.startsWith("filters[")),
+        )
+        namespaces.value = await useNamespaces(1000, filterParams).all()
     }
 
     watch(
-        () => route.query["filters[q][EQUALS]"],
+        () => route.query,
         () => loadData(),
-        {immediate: true},
+        {immediate: true, deep: true},
     )
 
     const miscStore = useMiscStore()
@@ -226,7 +225,7 @@
         border-radius: var(--kel-border-radius-round);
 
         &:hover {
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
         }
 
         .icon {

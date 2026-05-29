@@ -5,6 +5,8 @@
             <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 @ready="ready = true"
                 @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 striped
@@ -110,13 +112,16 @@
         })
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     function sanitize(content: string) {
         return _escape(content)

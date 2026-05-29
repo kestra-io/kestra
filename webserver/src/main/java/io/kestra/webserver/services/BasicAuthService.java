@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
 
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
-@Requires(property = "micronaut.security.enabled", notEquals = "true") // don't load this in EE
+@Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
     public static final String BASIC_AUTH_ERROR_CONFIG = "kestra.server.authentication-configuration-error";

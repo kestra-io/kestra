@@ -1,6 +1,5 @@
 package io.kestra.mcp;
 
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.mcp.models.McpServer;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,19 +28,19 @@ public class McpServerHandlerTransport {
     private final Map<HandlerKey, McpAsyncServer> servers = new ConcurrentHashMap<>();
     private final McpErrorResponseMapper mcpErrorResponseMapper;
     private final McpToolService mcpToolService;
-    private final McpServerRepositoryInterface mcpServerRepository;
+    private final McpServerCache mcpServerCache;
     private final McpSessionService mcpSessionService;
 
     @Inject
     public McpServerHandlerTransport(
         McpErrorResponseMapper mcpErrorResponseMapper,
         McpToolService mcpToolService,
-        McpServerRepositoryInterface mcpServerRepository,
+        McpServerCache mcpServerCache,
         McpSessionService mcpSessionService
     ) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
         this.mcpToolService = mcpToolService;
-        this.mcpServerRepository = mcpServerRepository;
+        this.mcpServerCache = mcpServerCache;
         this.mcpSessionService = mcpSessionService;
     }
 
@@ -66,7 +65,7 @@ public class McpServerHandlerTransport {
             return Mono.empty();
         }
 
-        McpServer.ServerType serverType = mcpServerRepository.get(tenantId, serverId)
+        McpServer.ServerType serverType = mcpServerCache.get(tenantId, serverId)
             .map(McpServer::serverType)
             .orElse(McpServer.ServerType.PRIVATE);
 
@@ -123,7 +122,7 @@ public class McpServerHandlerTransport {
                     .build()
             );
 
-        Optional<McpServer> serverOpt = mcpServerRepository.get(handlerKey.tenantId(), handlerKey.serverId());
+        Optional<McpServer> serverOpt = mcpServerCache.get(handlerKey.tenantId(), handlerKey.serverId());
         serverOpt.ifPresent(mcpServer -> {
             mcpServerSpec.serverInfo(mcpServer.id(), "1.0.0");
             if (mcpServer.instructions() != null) {

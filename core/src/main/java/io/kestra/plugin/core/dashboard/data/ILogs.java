@@ -4,10 +4,14 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.GreaterThanOrEqualTo;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
+import io.kestra.core.models.executions.LogEntry;
 
 public interface ILogs extends IData<ILogs.Fields> {
 
@@ -31,6 +35,24 @@ public interface ILogs extends IData<ILogs.Fields> {
                 flowFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
+                });
+            }
+
+            List<QueryFilter> levelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LEVEL)).toList();
+            if (!levelFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LEVEL));
+                levelFilters.forEach(f ->
+                {
+                    Level level = f.value() instanceof Level l ? l : Level.valueOf((String) f.value());
+                    List<Level> levels = switch (f.operation()) {
+                        case GREATER_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMin(level);
+                        case LESS_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMax(level);
+                        default -> throw new IllegalArgumentException("Unsupported operation for LEVEL: " + f.operation());
+                    };
+                    updatedWhere.add(In.<Fields>builder()
+                        .field(Fields.LEVEL)
+                        .values(levels.stream().map(Enum::name).map(Object.class::cast).toList())
+                        .build());
                 });
             }
         }

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.kestra.core.models.Label;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 
@@ -84,6 +84,6 @@ public abstract class AbstractFlow implements FlowInterface {
     Map<String, Object> variables;
 
     @Valid
-    private WorkerGroup workerGroup;
-
+    @Schema(description = "Routing requirements (tags + fallback) for this flow.")
+    private WorkerSelector workerSelector;
 }

@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,8 +27,11 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Disposable;
+import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.fetchers.JobFetcher;
+import io.kestra.worker.queues.MonitoredWorkerQueue;
+import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.WorkerIOSender;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -50,14 +52,12 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
  * </ul>
  * <p>
  * Subclasses customize <em>which</em> fetcher and which IO senders are used,
- * and how the effective {@code workerGroup} for the {@link WorkerContext} is
- * resolved (gRPC handshake for {@link WorkerAgent}, a fixed reserved key for
+ * and how the effective {@code workerGroupId} for the {@link WorkerContext} is
+ * resolved (gRPC handshake for {@link WorkerAgent}, a fixed reserved id for
  * the {@code SystemWorker}). Everything else is shared.
  */
 @Slf4j
 public abstract class AbstractWorker extends AbstractService {
-
-    protected static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
     protected final MetricRegistry metricRegistry;
     protected final ServerConfig serverConfig;
@@ -73,7 +73,7 @@ public abstract class AbstractWorker extends AbstractService {
 
     protected final List<Disposable> disposables = new ArrayList<>();
 
-    protected String workerGroup;
+    protected String workerGroupId;
 
     protected AbstractWorker(
         final ServiceType serviceType,
@@ -99,39 +99,49 @@ public abstract class AbstractWorker extends AbstractService {
     }
 
     /**
-     * Resolve the worker group used to build the {@link WorkerContext}.
+     * Resolve the Worker Queue id used to build the {@link WorkerContext}.
      * <p>
-     * Called once during {@link #start(int, String)}. Subclasses may perform
-     * a gRPC handshake here (regular worker) or simply return a fixed string
-     * (SystemWorker).
+     * Called once during {@link #start(int)}. Subclasses may perform a gRPC
+     * handshake here ({@link WorkerAgent}) or simply return a fixed reserved
+     * id (SystemWorker).
      *
-     * @param workerGroupKey the worker group key passed by the caller; may
-     *                       be {@code null}.
-     * @return the resolved worker group; {@code null} for the default group.
+     * @return the resolved Worker Queue id; the controller normalizes the
+     *         absent case to {@link WorkerGroups#DEFAULT_ID} so this value is
+     *         always set.
      */
-    protected abstract String resolveWorkerGroup(String workerGroupKey);
+    protected abstract String resolveWorkerGroupId();
 
     /**
      * Starts the worker.
      */
-    public void start(int numThreads, String workerGroupKey) {
+    public void start(int numThreads) {
         if (!this.initialized.compareAndSet(false, true)) {
             throw new IllegalStateException("Worker already started");
         }
 
-        this.workerGroup = resolveWorkerGroup(workerGroupKey);
+        this.workerGroupId = resolveWorkerGroupId();
 
         this.setState(ServiceState.CREATED);
 
-        String[] tags = workerGroup == null ? new String[0] : new String[] { MetricRegistry.TAG_WORKER_GROUP, workerGroup };
+        // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
         this.metricRegistry.gauge(
             MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
             MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION,
             numThreads,
-            tags
+            metricRegistry.workerGroupTags(workerGroupId)
+        );
+        // Total max in-flight capacity = executing threads + buffered jobs. This is the
+        // authoritative figure the controller uses for reservation math, and what the
+        // UI should display as the worker's "capacity total". Kept in sync with the
+        // buffer formula in WorkerQueueRegistry via the static helper.
+        this.metricRegistry.gauge(
+            MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY,
+            MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION,
+            numThreads + WorkerQueueRegistry.bufferSize(numThreads),
+            metricRegistry.workerGroupTags(workerGroupId)
         );
 
-        WorkerContext workerContext = new WorkerContext(getId(), workerGroup, numThreads);
+        WorkerContext workerContext = new WorkerContext(getId(), workerGroupId, numThreads);
 
         disposables.add(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
             @Override
@@ -162,11 +172,7 @@ public abstract class AbstractWorker extends AbstractService {
         jobFetcher.init(workerContext);
         workerIOThreadsExecutor.submit(jobFetcher);
 
-        if (workerGroup != null) {
-            log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroup);
-        } else {
-            log.info("Worker started with {} thread(s)", numThreads);
-        }
+        log.info("Worker started with {} thread(s)", numThreads);
     }
 
     private void enterMaintenance() {
@@ -194,11 +200,19 @@ public abstract class AbstractWorker extends AbstractService {
 
         Stream<String> metrics = Stream.of(
             MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
-            MetricRegistry.METRIC_WORKER_RUNNING_COUNT
+            MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY,
+            MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
+            MonitoredWorkerQueue.QUEUE_SIZE,
+            MonitoredWorkerQueue.QUEUE_REMAINING_CAPACITY
         );
 
+        String ownGroup = WorkerGroups.normalize(this.workerGroupId);
+        // Only expose worker-level (global) gauges in the heartbeat.
         return metrics
-            .flatMap(metric -> Optional.ofNullable(metricRegistry.findGauge(metric)).stream())
+            .flatMap(metric -> metricRegistry.findGauges(metric).stream())
+            .filter(gauge -> ownGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP)))
+            .filter(gauge -> gauge.getId().getTag(MetricRegistry.TAG_TENANT_ID) == null
+                && gauge.getId().getTag(MetricRegistry.TAG_NAMESPACE_ID) == null)
             .map(Metric::of)
             .collect(Collectors.toSet());
     }
@@ -206,7 +220,7 @@ public abstract class AbstractWorker extends AbstractService {
     @Override
     protected Map<String, Object> getProperties() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SERVICE_PROPS_WORKER_GROUP, workerGroup);
+        properties.put(WorkerGroups.SERVICE_PROPS_KEY, workerGroupId);
         return properties;
     }
 

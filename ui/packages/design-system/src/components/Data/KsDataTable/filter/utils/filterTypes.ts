@@ -17,8 +17,8 @@ export enum Comparators {
 export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
-    Comparators.ENDS_WITH, 
-    Comparators.STARTS_WITH, 
+    Comparators.ENDS_WITH,
+    Comparators.STARTS_WITH,
 ]
 
 export interface DateFilterOption {
@@ -31,7 +31,7 @@ export interface FilterKeyConfig {
     label: string;
     description?: string;
     searchable?: boolean;
-    comparators: Comparators[];
+    comparators: [Comparators, ...Comparators[]];
     showComparatorSelection?: boolean;
     /**
      * Returns the dropdown options for a filter.
@@ -48,6 +48,13 @@ export interface FilterKeyConfig {
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
     keyLabelProvider?: (meta?: Record<string, string>) => string;
+    /**
+     * Per-field override for comparator labels. When provided, supersedes
+     * the global COMPARATOR_LABELS for this filter only. Useful when the
+     * generic label doesn't fit the domain (e.g. "At or Above" for a log
+     * level filter rather than "Greater Than or Equal").
+     */
+    comparatorLabels?: Partial<Record<Comparators, string>>;
 }
 
 export interface FilterValue {
@@ -70,6 +77,33 @@ export interface AppliedFilter {
     meta?: Record<string, string>;
 }
 
+export type LogicalOperator = "AND" | "OR";
+
+export interface LeafFilterGroup {
+    id: string;
+    kind?: "leaf";
+    filters: AppliedFilter[];
+}
+
+export interface WrapperGroup {
+    id: string;
+    kind: "wrapper";
+    logical: LogicalOperator;
+    children: LeafFilterGroup[];
+}
+
+export type FilterGroup = LeafFilterGroup | WrapperGroup;
+
+export const isWrapperGroup = (g: FilterGroup): g is WrapperGroup =>
+    g.kind === "wrapper"
+
+export const isLeafGroup = (g: FilterGroup): g is LeafFilterGroup =>
+    g.kind !== "wrapper"
+
+/** Returns the operator opposite to the given one. */
+export const flipLogical = (op: LogicalOperator): LogicalOperator =>
+    op === "AND" ? "OR" : "AND"
+
 export interface SavedFilter {
     id: string;
     name: string;
@@ -77,6 +111,7 @@ export interface SavedFilter {
     global?: boolean;
     description?: string;
     filters: AppliedFilter[];
+    groups?: FilterGroup[];
 }
 
 export interface FilterConfiguration {
@@ -94,17 +129,17 @@ export interface TableProperties {
 }
 
 export interface TableOptions {
-    chart?: { 
-        shown?: boolean; 
-        value?: boolean; 
-        callback?: (value: boolean) => void 
+    chart?: {
+        shown?: boolean;
+        value?: boolean;
+        callback?: (value: boolean) => void
     };
     columns?: {
         shown?: boolean
     };
-    refresh?: { 
-        shown?: boolean; 
-        callback?: () => void 
+    refresh?: {
+        shown?: boolean;
+        callback?: () => void
     };
 }
 

@@ -138,6 +138,30 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReturnNoWarningsWhenPropertiesProvidedByPluginDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+            pluginDefaults:
+              - type: io.kestra.plugin.core.http.Download
+                values:
+                  uri: https://kestra.io
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).isNull();
+        assertThat(results.getFirst().getWarnings()).isEmpty();
+    }
+
+    @Test
     void importFlow() throws FlowProcessingException {
         String source = """
             id: import
@@ -245,8 +269,9 @@ class FlowServiceTest {
               - id: for
                 type: io.kestra.plugin.core.flow.Loop
                 values: [1, 2, 3]
-                workerGroup:
-                  key: toto
+                workerSelector:
+                  tags:
+                    - toto
                 timeout: PT10S
                 taskCache:
                   enabled: true
@@ -254,8 +279,9 @@ class FlowServiceTest {
                 - id: hello
                   type: io.kestra.plugin.core.log.Log
                   message: Hello World! 🚀
-                  workerGroup:
-                    key: toto
+                  workerSelector:
+                    tags:
+                      - toto
                   timeout: PT10S
                   taskCache:
                     enabled: true
@@ -270,7 +296,7 @@ class FlowServiceTest {
         assertThat(results.getFirst().getWarnings()).containsExactlyInAnyOrder(
             "The task 'for' cannot use the 'timeout' property as it's only relevant for runnable tasks.",
             "The task 'for' cannot use the 'taskCache' property as it's only relevant for runnable tasks.",
-            "The task 'for' cannot use the 'workerGroup' property as it's only relevant for runnable tasks."
+            "The task 'for' cannot use the 'workerSelector' property as it's only relevant for runnable tasks."
         );
     }
 

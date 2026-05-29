@@ -19,7 +19,7 @@
                 :item="currentTaskRun"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
-            >   
+            >
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -200,24 +200,24 @@
                         </template>
                     </DynamicScroller>
                 </KsCard>
-                <div 
-                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                <div
+                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive"
                     style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
                 >
                     <KsButton
                         :tag="RouterLink"
                         :to="{
-                            name: 'executions/list', 
+                            name: 'executions/list',
                             query: {
                                 'filters[parentId][EQUALS]': currentTaskRun.executionId,
                                 'filters[kind][EQUALS]': 'LOOP',
-                            }        
+                            }
                         }"
                     >
                         Iterations
                     </KsButton>
-                    <KsProgress 
-                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                    <KsProgress
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)"
                         :strokeWidth="24"
                         :textInside="true"
                         class="progress-bar"
@@ -235,7 +235,7 @@
     import {RouterLink} from "vue-router"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {LOG_LEVEL_TYPE, State} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
     import moment from "moment"

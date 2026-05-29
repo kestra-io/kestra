@@ -22,7 +22,7 @@ public class GenericTask implements TaskInterface {
     private String version;
     private String id;
     private String type;
-    private WorkerGroup workerGroup;
+    private WorkerSelector workerSelector;
 
     @JsonIgnore
     @Builder.Default

@@ -46,10 +46,10 @@
             @click="editorExportYaml"
         />
         <NavBarAction
-            v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
+            v-if="isEditTab && canDelete && !deleted && !flowStore.isCreating"
             :icon="Delete"
             :label="t('delete')"
-            @click="confirmDeleteFlow"
+            @click="editorDeleteFlow"
         />
 
         <template #primary>
@@ -160,6 +160,10 @@
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),
     )
 
+    const canDelete = computed(() =>
+        authStore.user?.isAllowed(resource.FLOW, action.DELETE, flow.value?.namespace),
+    )
+
     const editFlow = () => {
         router.push({
             name: "flows/update",
@@ -198,10 +202,5 @@
         })
     }
 
-    function confirmDeleteFlow() {
-        toast.confirm(
-            t("delete confirm", {name: flow.value?.id ?? ""}),
-            () => editorDeleteFlow(),
-        )
-    }
+
 </script>

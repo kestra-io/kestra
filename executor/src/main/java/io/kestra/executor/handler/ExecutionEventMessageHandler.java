@@ -17,18 +17,16 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
-import io.kestra.core.models.tasks.SystemTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
@@ -39,7 +37,6 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 @Slf4j
@@ -58,7 +55,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private ExecutorService executorService;
     @Inject
-    private WorkerGroupService workerGroupService;
+    private WorkerQueueService workerGroupService;
 
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
@@ -182,16 +179,19 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             );
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
-                                                String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> executorTask.runContext().render(workerGroup.getKey())))
+                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask);
+                                                // Internal dispatch convention: null = default queue. SystemTask routing
+                                                // is enforced upstream in WorkerQueueService.
+                                                String workerQueueId = routing
+                                                    .map(WorkerQueueRouting::workerQueueId)
+                                                    .map(WorkerQueues::toDispatchKey)
                                                     .orElse(null);
-                                                String routingKey = resolveRoutingKey(workerTask.getTask(), workerGroupKey);
                                                 if (workerTask.getTask() instanceof WorkingDirectory) {
                                                     // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(routingKey, WorkerJobEvent.of(workerTask, routingKey));
+                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                    workerJobEventQueue.emit(routingKey, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), routingKey));
+                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
@@ -307,23 +307,4 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
-    /**
-     * Resolves the routing key for a {@code WorkerJobEvent}.
-     *
-     * <p>{@link SystemTask} implementations are always dispatched to the
-     * reserved {@link WorkerGroup#SYSTEM_KEY} routing key; any user-set
-     * worker group on such a task is ignored with a warning.</p>
-     */
-    static String resolveRoutingKey(Task task, String userKey) {
-        if (task instanceof SystemTask) {
-            if (userKey != null && !WorkerGroup.SYSTEM_KEY.equals(userKey)) {
-                log.warn(
-                    "Task {} is a SystemTask; ignoring user-set workerGroup '{}' and routing to '{}'",
-                    task.getType(), userKey, WorkerGroup.SYSTEM_KEY
-                );
-            }
-            return WorkerGroup.SYSTEM_KEY;
-        }
-        return userKey;
-    }
 }

@@ -56,7 +56,7 @@
         <TaskRunDetails
             v-if="!raw_view"
             ref="logs"
-            :level="effectiveLevel"
+            :levelFilter="effectiveLevel"
             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             :levelToHighlight="cursorLogLevel"
@@ -122,7 +122,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
-    import {KsIconButton, KsFilter as KSFilter,type LOG_LEVEL_TYPE} from "@kestra-io/design-system"
+    import {KsIconButton, KsFilter as KSFilter} from "@kestra-io/design-system"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -155,18 +155,12 @@
     const executionsStore = useExecutionsStore()
 
     const logExecutionsFilter = useLogExecutionsFilter()
-    const defaultLogLevel = computed<LOG_LEVEL_TYPE>(
-        () => localStorage.getItem("defaultLogLevel") as LOG_LEVEL_TYPE || "INFO",
-    )
-
     const {
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
-    } = useRouteFilterPolicy<LOG_LEVEL_TYPE>({
-        defaultValue: () => defaultLogLevel.value,
+    } = useRouteFilterPolicy({
         applyDefaultIfMissing: () => true,
-        fallbackValue: () => "TRACE",
         readFromRoute: readRouteLevelFilter,
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,

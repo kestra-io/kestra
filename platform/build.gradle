@@ -114,7 +114,7 @@ dependencies {
         api group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-jackson', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: jsonschemaVersion
-        api group: 'com.networknt', name: 'json-schema-validator', version: '3.0.2'
+        api group: 'com.networknt', name: 'json-schema-validator', version: '3.0.3'
         api 'com.h2database:h2:2.4.240'
         api 'com.mysql:mysql-connector-j:9.7.0'
         api 'org.postgresql:postgresql:42.7.11'

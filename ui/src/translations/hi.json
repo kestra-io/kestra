@@ -284,6 +284,13 @@
       "previousMonth": "पिछला महीना",
       "previousWeek": "पिछला सप्ताह",
       "previousYear": "पिछला साल",
+      "short": {
+        "12h": "12घं",
+        "15m": "15मिनट",
+        "1d": "1दिन",
+        "1h": "1घं",
+        "7d": "7दिन"
+      },
       "thisMonth": "इस महीने",
       "thisMonthSoFar": "अब तक इस महीने",
       "thisWeek": "इस सप्ताह",

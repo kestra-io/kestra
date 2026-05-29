@@ -284,6 +284,13 @@
       "previousMonth": "Прошлый месяц",
       "previousWeek": "Прошлая неделя",
       "previousYear": "Прошлый год",
+      "short": {
+        "12h": "12ч",
+        "15m": "15м",
+        "1d": "1д",
+        "1h": "1ч",
+        "7d": "7д"
+      },
       "thisMonth": "Этот месяц",
       "thisMonthSoFar": "В этом месяце",
       "thisWeek": "Эта неделя",

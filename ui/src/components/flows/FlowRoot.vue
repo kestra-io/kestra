@@ -39,11 +39,21 @@
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
 
-    export interface FlowRootOptions {
-        extendTabs?: (baseTabs: any[]) => any[]
+    export interface Tab {
+        name: string
+        title: string
+        component: any
+        props?: Record<string, any>
+        maximized?: boolean
+        noOverflow?: boolean
+        disabled?: boolean
+        locked?: boolean
+        count?: number
     }
 
-    export function useFlowRoot(options?: FlowRootOptions) {
+    export function useFlowRoot(options?: {
+        extendTabs?: (baseTabs: Tab[]) => Tab[]
+    }) {
         const {t} = useI18n()
         const route = useRoute()
         const router = useRouter()
@@ -80,8 +90,8 @@
             }
         }
 
-        function getBaseTabs(): any[] {
-            const tabs: any[] = []
+        function getBaseTabs() {
+            const tabs: Tab[] = []
 
             if (user.value?.hasAny(resource.EXECUTION)) {
                 tabs.push({
@@ -192,7 +202,7 @@
 
         const activeTab = computed(() => {
             const key = route?.params?.tab
-            return tabs.value.find(t => t.name === key) ?? tabs.value[0]
+            return tabs.value.find(ta => ta.name === key) ?? tabs.value[0]
         })
 
         const activeTabName = computed(() => activeTab.value?.name ?? "home")

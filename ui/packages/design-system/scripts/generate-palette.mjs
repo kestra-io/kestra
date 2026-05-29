@@ -4,7 +4,7 @@
  * Generates the design-system colour layer from the Figma token export.
  *
  * Inputs:  scripts/Figma.json
- * Outputs: src/assets/styles/{_color-palette,ks-theme-light,ks-theme-dark}.scss
+ * Outputs: src/assets/styles/{_color-palette,ks-theme-<mode>.scss}
  *
  * Usage:   npm run generate:palette inside ui-design-system directory
  */
@@ -15,6 +15,7 @@ import {fileURLToPath} from "node:url"
 import figma from "./Figma.json" with {type: "json"}
 
 /** @typedef {{name: string, value: string, var: string}} FigmaColor */
+/** @typedef {{mode: {name: string, id: string}, color: FigmaColor[]}} FigmaMode */
 /** @typedef {Record<string, string>} ColorIndex */
 
 const STYLES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../src/assets/styles")
@@ -26,103 +27,211 @@ const HEADER = `/**
  * at Kestra first, so your changes are not overwritten.
  */`
 
-const [{color: paletteLight}, {color: paletteDark}] = figma[0].values
+/** @type {FigmaMode[]} */
+const modes = figma[0]?.values ?? []
 
-const light = writeTheme(paletteLight, "light", ":root")
-const dark = writeTheme(paletteDark, "dark", "html.dark")
+if (!modes.length) {
+    throw new Error("No theme modes were found in scripts/Figma.json")
+}
 
-checkPalettesMatch(light, dark)
+const {paletteEntries} = collectAndValidatePalette(modes)
+const sortedPalette = sortPalette(paletteEntries)
+/** @type {ColorIndex} */
+const paletteIndex = Object.fromEntries(sortedPalette.map(c => [normalizeTokenName(c.name), paletteVarName(c.name)]))
+/** @type {ColorIndex} */
+const valueIndex = buildValueIndex(sortedPalette)
+
+fs.writeFileSync(path.resolve(STYLES_DIR, "_color-palette.scss"), renderPalette(sortedPalette))
+
+for (const [index, mode] of modes.entries()) {
+    const modeName = mode.mode?.name?.trim()
+    if (!modeName) {
+        throw new Error("A mode is missing mode.name in scripts/Figma.json")
+    }
+
+    const theme = toThemeKeyword(modeName)
+    const normalizedTheme = (theme === "dark-1-0") ? "dark" : theme.replace(/-0$/g, "")
+    const selector = getSelector(modeName, index === 0, normalizedTheme)
+    const semantic = mode.color.filter(c => !isPaletteColor(c))
+
+    fs.writeFileSync(
+        path.resolve(STYLES_DIR, `ks-theme-${normalizedTheme}.scss`),
+        renderTheme(semantic, paletteIndex, valueIndex, selector),
+    )
+}
 
 /**
- * @param {FigmaColor[]} a
- * @param {FigmaColor[]} b
+ * @param {FigmaMode[]} allModes
  */
-function checkPalettesMatch(a, b) {
-    for (const color of a) {
-        const match = b.find(c => c.name === color.name)
-        if (!match || match.value !== color.value) {
-            console.error(`Color ${color.name} diverges between light and dark palettes`)
+function collectAndValidatePalette(allModes) {
+    /** @type {Map<string, {name: string, value: string, modeName: string}>} */
+    const byName = new Map()
+
+    for (const mode of allModes) {
+        const modeName = mode.mode?.name ?? "<unknown-mode>"
+        for (const color of mode.color.filter(isPaletteColor)) {
+            const key = normalizeTokenName(color.name)
+            const previous = byName.get(key)
+            if (previous && normalizeHex(previous.value) !== normalizeHex(color.value)) {
+                // throw new Error(
+                console.error(
+                    `Palette color "${color.name}" has conflicting values across modes: ` +
+                    `${previous.modeName}=${previous.value}, ${modeName}=${color.value}`,
+                )
+            }
+            if (!previous) {
+                byName.set(key, {name: color.name, value: color.value, modeName})
+            }
         }
     }
+
+    return {
+        paletteEntries: [...byName.values()].map(({name, value}) => ({name, value, var: ""})),
+        byName,
+    }
+}
+
+/** @param {FigmaColor} color */
+function isPaletteColor(color) {
+    return !color.var?.trim() && !color.name.toLowerCase().startsWith("ks/")
+}
+
+/** @param {string} tokenName */
+function normalizeTokenName(tokenName) {
+    return tokenName.trim().toLowerCase()
+}
+
+/** @param {string} hex */
+function normalizeHex(hex) {
+    return hex.trim().toLowerCase()
 }
 
 /**
  * @param {FigmaColor[]} palette
- * @param {string} theme
- * @param {string} selector
- * @returns {FigmaColor[]} the sorted base palette
+ * @returns {ColorIndex}
  */
-function writeTheme(palette, theme, selector) {
-    const base = sortBase(palette.filter(c => c.name.startsWith("base-color-palette/")))
-    const tokens = palette.filter(c => !c.name.startsWith("base-color-palette/"))
+function buildValueIndex(palette) {
     /** @type {ColorIndex} */
-    const index = Object.fromEntries(base.map(c => [c.value, shortName(c.name)]))
-
-    fs.writeFileSync(path.resolve(STYLES_DIR, "_color-palette.scss"), renderPalette(base))
-    fs.writeFileSync(path.resolve(STYLES_DIR, `ks-theme-${theme}.scss`), renderTheme(tokens, index, selector))
-
-    return base
+    const index = {}
+    for (const color of palette) {
+        const key = normalizeHex(color.value)
+        if (!index[key]) {
+            index[key] = paletteVarName(color.name)
+        }
+    }
+    return index
 }
 
-/** @param {string} name */
-function shortName(name) {
-    return name.split("/").pop() ?? ""
+/** @param {string} modeName */
+function toThemeKeyword(modeName) {
+    return modeName
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
 }
 
-/** @param {FigmaColor[]} base */
-function sortBase(base) {
-    return [...base].sort((a, b) => {
-        const [an, bn] = [shortName(a.name), shortName(b.name)]
-        const [ar, br] = [an.split("-")[0], bn.split("-")[0]]
-        if (ar !== br) return ar.localeCompare(br)
-        if (an.length !== bn.length) return an.length - bn.length
-        return an.localeCompare(bn)
+/**
+ * @param {string} modeName
+ * @param {boolean} isFirstMode
+ * @param {string} themeKeyword
+ */
+function getSelector(modeName, isFirstMode, themeKeyword) {
+    if (isFirstMode) {
+        return ":root"
+    }
+    if (modeName.trim().toLowerCase() === "light") {
+        return ":root"
+    }
+    return `html.${themeKeyword}`
+}
+
+/**
+ * @param {string} name
+ */
+function paletteVarName(name) {
+    return name
+        .trim()
+        .toLowerCase()
+        .replace(/\//g, "-")
+        .replace(/\s+/g, "-")
+}
+
+/** @param {FigmaColor[]} palette */
+function sortPalette(palette) {
+    return [...palette].sort((a, b) => {
+        const [groupA, shadeA = ""] = a.name.split("/")
+        const [groupB, shadeB = ""] = b.name.split("/")
+        if (groupA !== groupB) return groupA.localeCompare(groupB)
+
+        const numA = Number(shadeA)
+        const numB = Number(shadeB)
+        const isNumA = Number.isFinite(numA)
+        const isNumB = Number.isFinite(numB)
+
+        if (isNumA && isNumB) return numA - numB
+        if (isNumA) return -1
+        if (isNumB) return 1
+        return shadeA.localeCompare(shadeB)
     })
 }
 
-/** @param {FigmaColor[]} base */
-function renderPalette(base) {
+/** @param {FigmaColor[]} palette */
+function renderPalette(palette) {
     let prev = ""
-    const body = base.map(c => {
-        const short = shortName(c.name)
-        const group = short.split("-")[0]
+    const body = palette.map(c => {
+        const group = c.name.split("/")[0]
         const heading = group !== prev ? `${prev ? "\n" : ""}/* ${group} */\n` : ""
         prev = group
-        return `${heading}$base-${short}: ${c.value};`
+        return `${heading}$base-${paletteVarName(c.name)}: ${c.value};`
     }).join("\n")
     return `${HEADER}\n${body}\n`
 }
 
 /**
  * @param {FigmaColor[]} tokens
- * @param {ColorIndex} index
+ * @param {ColorIndex} localPaletteIndex
+ * @param {ColorIndex} localValueIndex
  * @param {string} selector
  */
-function renderTheme(tokens, index, selector) {
+function renderTheme(tokens, localPaletteIndex, localValueIndex, selector) {
     let prev = ""
     const body = tokens.map(c => {
         const category = c.name.replace(/^ks\//, "").split("-")[0]
         const heading = category !== prev ? `\n${INDENT}/* ${category} */\n` : ""
         prev = category
         const varName = c.name.replace(/\//g, "-")
-        return `${heading}${INDENT}#{--${varName}}: ${resolveValue(c, index)};`
+        return `${heading}${INDENT}#{--${varName}}: ${resolveValue(c, localPaletteIndex, localValueIndex)};`
     }).join("\n").trim()
     return `${HEADER}\n@use "color-palette" as *;\n\n${selector} {\n${INDENT}${body}\n}\n`
 }
 
 /**
  * @param {FigmaColor} color
- * @param {ColorIndex} index
+ * @param {ColorIndex} localPaletteIndex
+ * @param {ColorIndex} localValueIndex
  */
-function resolveValue(color, index) {
-    if (color.var.startsWith("base-color-palette/")) {
-        return `$base-${shortName(color.var)}`
+function resolveValue(color, localPaletteIndex, localValueIndex) {
+    const alias = normalizeTokenName(color.var)
+    const aliasVar = alias ? localPaletteIndex[alias] : undefined
+    if (aliasVar) {
+        return `$base-${aliasVar}`
     }
+
+    const normalizedValue = normalizeHex(color.value)
+
+    // Exact palette colour match.
+    const directMatch = localValueIndex[normalizedValue]
+    if (directMatch) {
+        return `$base-${directMatch}`
+    }
+
     // 8-digit hex (#RRGGBBAA) → rgba($base-*, alpha) when the base colour is known
-    if (color.value.length === 9) {
-        const alpha = Math.round(parseInt(color.value.slice(7), 16) / 2.55) / 100
-        const base = index[color.value.slice(0, 7)]
+    if (normalizedValue.length === 9) {
+        const alpha = Math.round(parseInt(normalizedValue.slice(7), 16) / 2.55) / 100
+        const base = localValueIndex[normalizedValue.slice(0, 7)]
         if (base) return `rgba($base-${base}, ${alpha})`
     }
+
     return color.value
 }

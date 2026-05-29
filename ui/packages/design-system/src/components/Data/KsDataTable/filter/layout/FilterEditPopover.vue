@@ -33,7 +33,7 @@
     import type {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes"
     import FilterEditPopper from "./FilterEditPopper.vue"
 
-    defineProps<{
+    const props = defineProps<{
         filter: AppliedFilter;
         filterKey?: FilterKeyConfig | null;
         shouldShowComparatorInPopper?: boolean;
@@ -63,27 +63,44 @@
             position: "absolute",
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
-            width: `${popupWidth}px`,
+            "min-width": `${popupWidth}px`,
         }
     }
 
     const toggleDialog = () => {
-        isDialogVisible.value = !isDialogVisible.value
-        if (isDialogVisible.value) nextTick(updatePosition)
+        if (isDialogVisible.value) {
+            closeDialog()
+        } else {
+            isDialogVisible.value = true
+            nextTick(updatePosition)
+        }
+    }
+
+    const hasValue = (value: AppliedFilter["value"]): boolean => {
+        if (value == null || value === "") return false
+        if (Array.isArray(value)) return value.length > 0
+        if (typeof value === "object" && "startDate" in value) return !!(value.startDate && value.endDate)
+        return true
     }
 
     const closeDialog = () => {
         isDialogVisible.value = false
+        // If the user closes the popover without giving the chip a value, drop the chip
+        // so we don't leave a misleading "in any" placeholder that gets silently ignored
+        // by the encoder.
+        if (!hasValue(props.filter.value) && !props.filter.isDefaultVisible) {
+            emits("remove", props.filter.id)
+        }
     }
 
     const handleUpdate = (updatedFilter: AppliedFilter) => {
         emits("update", updatedFilter)
-        closeDialog()
+        isDialogVisible.value = false
     }
 
     const handleRemove = (filterId: string) => {
         emits("remove", filterId)
-        closeDialog()
+        isDialogVisible.value = false
     }
 
     onMounted(() => {
@@ -122,6 +139,7 @@
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
         padding: 0;
         min-height: var(--ks-font-size-lg);
+        max-width: 480px;
         position: relative;
     }
 }

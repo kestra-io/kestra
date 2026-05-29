@@ -232,6 +232,39 @@ updates:
             "unified",
           ]
 
+  # Maintain dependencies for ui/packages/slot-contracts
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/slot-contracts"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
   # Maintain dependencies for ui/packages/topology
   - package-ecosystem: "npm"
     directory: "/ui/packages/topology"

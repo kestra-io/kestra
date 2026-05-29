@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
+import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -66,8 +67,8 @@ class FileURIFunctionTest {
         );
 
         var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileURI(fileA) }}", variables));
-        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
-        assertThat(exception.getCause().getMessage()).isEqualTo("Path must not contain '../'");
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Path must not contain '../'");
     }
 
     @Test

@@ -36,9 +36,9 @@ public class WorkingDirectoryTaskValidator implements ConstraintValidator<Workin
             return false;
         }
 
-        if (value.getTasks().stream().anyMatch(task -> task.getWorkerGroup() != null)) {
+        if (value.getTasks().stream().anyMatch(task -> task.getWorkerSelector() != null)) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level")
+            context.buildConstraintViolationWithTemplate("Cannot set routing requirements (workerSelector) on WorkingDirectory sub-tasks, only the WorkingDirectory itself can carry them")
                 .addConstraintViolation();
             return false;
         }

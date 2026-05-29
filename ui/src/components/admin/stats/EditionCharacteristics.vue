@@ -59,7 +59,7 @@
 <style scoped lang="scss">
 .edition-card {
     padding: 2rem;
-    background-color: var(--ks-bg-body);
+    background-color: var(--ks-bg-base);
     display: flex;
     flex-direction: column;
     gap: 1rem;

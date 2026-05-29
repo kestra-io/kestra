@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.WindowsUtils;
 
 import jakarta.annotation.Nullable;
@@ -161,12 +162,15 @@ public record NamespaceFile(
         if (!compatiblePath.startsWith("/")) {
             compatiblePath = "/" + compatiblePath;
         }
-        return Path.of(compatiblePath);
+        if (FileUtils.isParentTraversal(compatiblePath)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+        return Path.of(compatiblePath).normalize();
     }
 
     /**
      * Returns the path of file relative to the namespace.
-     * 
+     *
      * @return The path.
      */
     public Path filePath() {

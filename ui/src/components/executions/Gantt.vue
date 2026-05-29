@@ -16,10 +16,10 @@
         />
         <QuickFilters
             :levels="VALUES.LEVELS"
-            :level="effectiveSelectedLogLevel"
+            :level="effectiveSelectedLogLevel?.value"
             :showInterval="false"
             :levelLabel="t('filter.level_log_executions.label')"
-            @update:level="setLevelRouteValue"
+            @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
         />
         <div class="gantt-stage">
             <KsCard
@@ -112,7 +112,7 @@
                                         <TaskRunDetails
                                             :taskRunId="item.id"
                                             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
-                                            :level="effectiveSelectedLogLevel"
+                                            :levelFilter="effectiveSelectedLogLevel"
                                             @follow="emit('follow', $event)"
                                             :targetFlow="executionsStore.flow"
                                             class="mh-100 mx-3"
@@ -168,6 +168,7 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
@@ -268,10 +269,10 @@
     const {
         effectiveValue: effectiveSelectedLogLevel,
         setRouteValue: setLevelRouteValue,
-    } = useRouteFilterPolicy<string>({
-        defaultValue: () => defaultLogLevel.value,
+    } = useRouteFilterPolicy<LevelFilterValue>({
+        defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
-        fallbackValue: () => "TRACE",
+        fallbackValue: () => ({value: "TRACE", direction: "min"}),
         readFromRoute: readRouteLevelFilter,
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
@@ -658,7 +659,7 @@
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: var(--ks-bg-body);
+                    background: var(--ks-bg-base);
                 }
 
                 &::-webkit-scrollbar-thumb {

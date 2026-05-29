@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.event.Level;
@@ -21,6 +22,7 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -63,7 +65,8 @@ abstract public class Task implements TaskInterface {
 
     @Valid
     @PluginProperty(hidden = true, group = "execution")
-    private WorkerGroup workerGroup;
+    @Schema(description = "Routing requirements (tags + fallback) for this task.")
+    private WorkerSelector workerSelector;
 
     @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;

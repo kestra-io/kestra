@@ -52,7 +52,7 @@
         "@types/path-browserify": "^1.0.3",
         "@types/semver": "^7.7.1",
         "@typescript-eslint/parser": "^8.59.2",
-        "@vitejs/plugin-vue": "^6.0.6",
+        "@vitejs/plugin-vue": "^6.0.7",
         "@vitejs/plugin-vue-jsx": "^5.1.5",
         "@vitest/browser": "^4.1.7",
         "@vitest/browser-playwright": "^4.1.5",
@@ -64,7 +64,7 @@
         "@vueuse/core": "^14.3.0",
         "@vueuse/router": "^14.3.0",
         "ansi-to-html": "^0.7.2",
-        "axios": "1.16.0",
+        "axios": "1.16.1",
         "bootstrap": "^5.3.8",
         "buffer": "^6.0.3",
         "change-case": "5.4.4",
@@ -109,16 +109,16 @@
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3",
         "uuid": "^14.0.0",
-        "vite": "^8.0.11",
+        "vite": "^8.0.14",
         "vitest": "^4.1.5",
         "vue": "^3.5.35",
         "vue-echarts": "^8.0.1",
         "vue-gtag": "^3.7.1",
-        "vue-i18n": "^11.4.2",
+        "vue-i18n": "^11.4.4",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^5.0.6",
         "vue-tsc": "^3.2.8",
-        "vue-virtual-scroller": "^3.0.3",
+        "vue-virtual-scroller": "^3.0.4",
         "xss": "^1.0.15",
         "yaml": "^2.8.3"
     },
@@ -140,7 +140,7 @@
         "lightningcss-linux-x64-gnu": "^1.32.0"
     },
     "overrides": {
-        "axios": "1.16.0",
+        "axios": "1.16.1",
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"

@@ -284,6 +284,13 @@
       "previousMonth": "지난 달",
       "previousWeek": "지난 주",
       "previousYear": "작년",
+      "short": {
+        "12h": "12시간",
+        "15m": "15분",
+        "1d": "1일",
+        "1h": "1시간",
+        "7d": "7일"
+      },
       "thisMonth": "이번 달",
       "thisMonthSoFar": "이번 달 현재까지",
       "thisWeek": "이번 주",

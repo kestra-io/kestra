@@ -284,6 +284,13 @@
       "previousMonth": "Mese precedente",
       "previousWeek": "Settimana precedente",
       "previousYear": "Anno precedente",
+      "short": {
+        "12h": "12h",
+        "15m": "15m",
+        "1d": "1g",
+        "1h": "1h",
+        "7d": "7g"
+      },
       "thisMonth": "Questo mese",
       "thisMonthSoFar": "Questo mese finora",
       "thisWeek": "Questa settimana",

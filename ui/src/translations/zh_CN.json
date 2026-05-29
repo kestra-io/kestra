@@ -284,6 +284,13 @@
       "previousMonth": "上月",
       "previousWeek": "上周",
       "previousYear": "去年",
+      "short": {
+        "12h": "12小时",
+        "15m": "15分钟",
+        "1d": "1天",
+        "1h": "1小时",
+        "7d": "7天"
+      },
       "thisMonth": "本月",
       "thisMonthSoFar": "截至本月",
       "thisWeek": "本周",

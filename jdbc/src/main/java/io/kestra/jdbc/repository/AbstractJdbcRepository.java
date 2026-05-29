@@ -636,7 +636,7 @@ public abstract class AbstractJdbcRepository {
         return List.of(toInteger(value));
     }
 
-    private Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {
+    Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {
         return switch (operation) {
             case LESS_THAN -> field(fieldName).lessThan(dateTime);
             case LESS_THAN_OR_EQUAL_TO -> field(fieldName).lessOrEqual(dateTime);

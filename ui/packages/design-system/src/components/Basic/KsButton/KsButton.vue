@@ -154,5 +154,11 @@
                 border: 0;
             }
         }
+
+        &.kel-button--primary.is-disabled {
+            background-color: var(--ks-btn-primary-bg-inactive);
+            border-color: var(--ks-btn-primary-bg-inactive);
+            color: var(--ks-text-inactive);
+        }
     }
 </style>

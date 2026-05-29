@@ -18,6 +18,7 @@ import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 /**
@@ -57,29 +58,23 @@ public class StorageContext {
 
     /**
      * {@code kestra:///<namespace-as-path>/} — namespace root, flow dirs as direct children.
-     *
-     * @throws NullPointerException if {@code namespace} is {@code null}
      */
-    public static URI namespaceRootUri(String namespace) {
+    public static URI namespaceRootUri(@NotNull String namespace) {
         return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/");
     }
 
     /**
      * {@code kestra:///<namespace-as-path>/<flow-slug>/executions/} — a flow's executions subdir.
-     *
-     * @throws NullPointerException if {@code namespace} or {@code flowId} is {@code null}
      */
-    public static URI executionsRootUri(String namespace, String flowId) {
+    public static URI executionsRootUri(@NotNull String namespace, @NotNull String flowId) {
         Objects.requireNonNull(flowId, "flowId");
         return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
     }
 
     /**
      * Static counterpart of {@link #getNamespaceAsPath()}.
-     *
-     * @throws NullPointerException if {@code namespace} is {@code null}
      */
-    public static String namespaceAsPath(String namespace) {
+    public static String namespaceAsPath(@NotNull String namespace) {
         Objects.requireNonNull(namespace, "namespace");
         return namespace.replace(".", "/");
     }

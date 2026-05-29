@@ -1396,6 +1396,7 @@
       "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
+      "add_field": "Add {field}",
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",

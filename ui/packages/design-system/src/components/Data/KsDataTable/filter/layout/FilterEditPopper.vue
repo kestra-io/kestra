@@ -324,7 +324,7 @@
         const updatedFilter: any = {
             ...props.filter,
             comparator: state.selectedComparator,
-            comparatorLabel: COMPARATOR_LABELS[state.selectedComparator],
+            comparatorLabel: props.filterKey?.comparatorLabels?.[state.selectedComparator] ?? COMPARATOR_LABELS[state.selectedComparator],
             value: filterData.value,
             valueLabel: filterData.label,
         }

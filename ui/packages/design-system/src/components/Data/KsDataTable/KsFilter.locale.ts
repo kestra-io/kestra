@@ -114,6 +114,10 @@ export default {
                 "label": "Name",
                 "description": "Filter by name",
             },
+            "member": {
+                "label": "Member",
+                "description": "Filter by member",
+            },
             "group": {
                 "label": "Group",
                 "description": "Filter by group",
@@ -217,7 +221,7 @@ export default {
             },
             "level": {
                 "label": "Level",
-                "description": "Show logs at or above this severity",
+                "description": "Filter logs by severity",
             },
             "level_log_executions": {
                 "label": "Log Level",
@@ -229,6 +233,18 @@ export default {
             "triggerId_trigger": {
                 "label": "Trigger ID",
                 "description": "Filter by trigger ID",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filter by task identifier",
+            },
+            "taskRunId": {
+                "label": "Task Run ID",
+                "description": "Filter by task run identifier",
+            },
+            "attemptNumber": {
+                "label": "Attempt Number",
+                "description": "Filter by task run attempt number",
             },
             "workerId": {
                 "label": "Worker ID",

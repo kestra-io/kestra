@@ -172,7 +172,7 @@
             margin-bottom: 8px;
 
             .check-border {
-                border: 1px solid var(--ks-border-default);
+                border: 1px solid var(--ks-border-primary);
                 border-radius: 4px;
                 padding: 0 12px;
                 width: calc(50% - 0.5rem);
@@ -203,6 +203,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.75rem;
             padding: 0.5rem 1rem;
             transition: all 0.2s ease;
             cursor: pointer;
@@ -219,12 +220,13 @@
             .option-content {
                 display: flex;
                 align-items: center;
+                flex: 1;
+                min-width: 0;
 
                 .option-label {
-                    max-width: 250px;
                     font-size: var(--ks-font-size-sm);
                     font-weight: 400;
-                    padding-right: 0.25rem;
+                    word-break: break-word;
                 }
             }
         }

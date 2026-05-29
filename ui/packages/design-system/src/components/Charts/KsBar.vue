@@ -76,7 +76,7 @@
             grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
             xAxis: {type: "category", data: props.categories},
             yAxis: {type: "value"},
-            tooltip: {trigger: "axis", axisPointer: {type: "shadow"}},
+            tooltip: {trigger: "axis", confine: true, axisPointer: {type: "shadow"}},
             legend: {},
             series: (props.data ?? []).map((s) => ({
                 type: "bar",

@@ -6,6 +6,7 @@
         :content="tooltipContent"
         :rawContent="true"
         placement="bottom"
+        :popperOptions="tooltipPopperOptions"
     >
         <div
             ref="wrapperRef"
@@ -168,6 +169,13 @@
     const tooltipVisible = ref(false)
     const tooltipContent = ref("")
 
+    const tooltipPopperOptions = {
+        modifiers: [
+            {name: "flip", options: {boundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {boundary: "viewport", padding: 8}},
+        ],
+    }
+
     // Defer mounting VChart until the wrapper has real dimensions. ECharts
     // emits "Can't get DOM width or height" if it initializes inside a 0×0
     // container — common when the chart is revealed by a v-if/v-else flip
@@ -225,7 +233,7 @@
             )
         }
 
-        return rows.join("")
+        return `<div style="max-width:min(320px,90vw);overflow-wrap:anywhere">${rows.join("")}</div>`
     }
 
     function onMouseleave() {

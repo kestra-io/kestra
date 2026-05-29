@@ -124,7 +124,7 @@
 
             &.is-disabled {
                 background-color: var(--ks-btn-secondary-bg-inactive);
-                border: var(--ks-btn-secondary-border-inactive);
+                border-color: var(--ks-btn-secondary-border-inactive);
                 color: var(--ks-text-inactive);
             }
 

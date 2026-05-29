@@ -60,7 +60,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
     const getBlueprints = async (options: Options) => {
-        const PARAMS = {params: options.params, ...VALIDATE}
+        const params = options.type === "custom" ? toCustomBlueprintFilterParams(options.params) : options.params
+        const PARAMS = {params, ...VALIDATE}
 
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}`
@@ -69,6 +70,28 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
         blueprints.value = response.data
         return response.data
+    }
+
+    /**
+     * The /blueprints/custom backend reads search/tag filters from the QueryFilter format
+     * (`filters[q][EQUALS]=…`, `filters[tags][IN]=…`). Legacy callers still pass `q` / `tags`
+     * as scalar params, so translate them here. The external community API (api.kestra.io)
+     * still expects the legacy scalar form, so we only translate for `custom`.
+     */
+    function toCustomBlueprintFilterParams(params?: Record<string, any>): Record<string, any> | undefined {
+        if (!params) return params
+        const translated: Record<string, any> = {}
+        for (const [key, value] of Object.entries(params)) {
+            if (value === undefined || value === null) continue
+            if (key === "q") {
+                translated["filters[q][EQUALS]"] = value
+            } else if (key === "tags") {
+                translated["filters[tags][IN]"] = Array.isArray(value) ? value.join(",") : value
+            } else {
+                translated[key] = value
+            }
+        }
+        return translated
     }
 
     const getBlueprint = async (options: Options) => {
@@ -106,7 +129,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     }
 
     const getBlueprintTags = async (options: Options) => {
-        const PARAMS = {params: options.params, ...VALIDATE}
+        const params = options.type === "custom" ? toCustomBlueprintFilterParams(options.params) : options.params
+        const PARAMS = {params, ...VALIDATE}
 
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}/tags`

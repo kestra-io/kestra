@@ -1,4 +1,4 @@
-import {computed} from "vue"
+import {computed, type ComputedRef} from "vue"
 import {useRoute} from "vue-router"
 import {useStorage} from "@vueuse/core"
 import type {SavedFilter} from "../utils/filterTypes"
@@ -19,7 +19,12 @@ const deserializeDates = (filter: SavedFilter): SavedFilter => ({
     createdAt: new Date(filter.createdAt),
 })
 
-export function useSavedFilters(prefix: string) {
+export function useSavedFilters(prefix: string): {
+    savedFilters: ComputedRef<SavedFilter[]>;
+    saveFilter: (name: string, description: string, filters: any[]) => void;
+    updateSavedFilter: (id: string, name: string, description: string) => void;
+    deleteSavedFilter: (savedFilter: SavedFilter) => void;
+} {
     const route = useRoute()
 
     const storageKey = computed(() => {
@@ -34,7 +39,7 @@ export function useSavedFilters(prefix: string) {
         },
     })
 
-    const saveFilter = (name: string, description: string, filters: any[]) => {
+    const saveFilter = (name: string, description: string, filters: any[]): void => {
         savedFilters.value = [...savedFilters.value, {
             id: `saved_${Date.now()}`,
             name,
@@ -44,7 +49,7 @@ export function useSavedFilters(prefix: string) {
         }]
     }
 
-    const updateSavedFilter = (id: string, name: string, description: string) => {
+    const updateSavedFilter = (id: string, name: string, description: string): void => {
         const index = savedFilters.value.findIndex((f) => f.id === id)
         if (index !== -1) {
             savedFilters.value[index] = {
@@ -55,14 +60,14 @@ export function useSavedFilters(prefix: string) {
         }
     }
 
-    const deleteSavedFilter = (savedFilter: SavedFilter) => {
+    const deleteSavedFilter = (savedFilter: SavedFilter): void => {
         savedFilters.value = savedFilters.value.filter((f) => f.id !== savedFilter.id)
     }
 
     return {
         savedFilters: computed(() => savedFilters.value),
-        saveFilter,
-        updateSavedFilter,
-        deleteSavedFilter,
+        saveFilter: saveFilter,
+        updateSavedFilter: updateSavedFilter,
+        deleteSavedFilter: deleteSavedFilter,
     }
 }

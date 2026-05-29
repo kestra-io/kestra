@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, ref, watch, type ComputedRef} from "vue"
 import {
     type LocationQuery,
     type LocationQueryRaw,
@@ -21,7 +21,13 @@ interface UseRouteFilterPolicyOptions<T> {
     readFromAppliedFilters?: (filters: AppliedFilter[]) => T | undefined;
     shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: Record<string, any>) => boolean;
 }
-export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>) {
+export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>): {
+    routeValue: ComputedRef<T | undefined>;
+    effectiveValue: ComputedRef<T | undefined>;
+    hasUnsupportedRouteValue: ComputedRef<boolean>;
+    syncFromAppliedFilters: (filters: AppliedFilter[]) => void;
+    setRouteValue: (value: T | undefined) => void;
+} {
     const route = useRoute()
     const router = useRouter()
     const normalizedOnce = ref(false)
@@ -80,7 +86,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         {immediate: true},
     )
 
-    const setRouteValue = (value: T | undefined) => {
+    const setRouteValue = (value: T | undefined): void => {
         if (!isEnabled()) {
             return
         }
@@ -94,7 +100,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         })
     }
 
-    const syncFromAppliedFilters = (filters: AppliedFilter[]) => {
+    const syncFromAppliedFilters = (filters: AppliedFilter[]): void => {
         if (!isEnabled() || !options.readFromAppliedFilters) {
             return
         }
@@ -110,10 +116,10 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
     }
 
     return {
-        routeValue,
-        effectiveValue,
-        hasUnsupportedRouteValue,
-        syncFromAppliedFilters,
-        setRouteValue,
+        routeValue: routeValue,
+        effectiveValue: effectiveValue,
+        hasUnsupportedRouteValue: hasUnsupportedRouteValue,
+        syncFromAppliedFilters: syncFromAppliedFilters,
+        setRouteValue: setRouteValue,
     }
 }

@@ -24,7 +24,7 @@ const firstStringValue = (
     return typeof value === "string" ? value : undefined
 }
 
-export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw) => {
+export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw): string | undefined => {
     const value =
         firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]) ??
         firstStringValue(query[LEGACY_LEVEL_FILTER_KEY])
@@ -32,14 +32,14 @@ export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw) =>
     return value && value.length > 0 ? value : undefined
 }
 
-export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | LocationQueryRaw) =>
+export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | LocationQueryRaw): boolean =>
     Object.keys(query).some(
         (key) =>
             key === LEGACY_LEVEL_FILTER_KEY ||
             (key.startsWith(LEVEL_FILTER_PREFIX) && key !== LEVEL_EQUALS_FILTER_KEY),
     )
 
-export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
+export const readAppliedLevelFilter = (filters: AppliedFilter[]): string | undefined => {
     const levelFilter = filters.find((filter) => filter.key === "level")
     if (!levelFilter) {
         return undefined
@@ -58,7 +58,7 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
 export const normalizeRouteLevelFilter = (
     query: Record<string, any>,
     level: string | undefined,
-) => {
+): Record<string, any> => {
     const normalized = {...query}
 
     Object.keys(normalized).forEach((key) => {

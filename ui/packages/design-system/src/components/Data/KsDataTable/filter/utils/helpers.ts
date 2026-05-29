@@ -14,7 +14,7 @@ export function keyOfComparator(comparator: Comparators): keyof typeof Comparato
     return Object.entries(Comparators).find(([_, value]) => value === comparator)![0] as keyof typeof Comparators
 }
 
-export const decodeSearchParams = (query: LocationQuery) =>
+export const decodeSearchParams = (query: LocationQuery): Array<{field: string; value: string | string[]; operation: string}> =>
     Object.entries(query)
         .filter(([key]) => key.startsWith("filters[") || key === "q")
         .map(([key, value]) => {
@@ -43,7 +43,7 @@ export const decodeSearchParams = (query: LocationQuery) =>
 
 type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
 
-export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: (comparator: any) => string) =>
+export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: (comparator: any) => string): Record<string, string> =>
     filters.reduce((query, filter) => {
         const {key, comparator, value} = filter
         const comparatorKey = getComparatorKey(comparator)
@@ -108,5 +108,5 @@ export const clearFilterQueryParams = (query: Record<string, any>): void => {
     }
 }
 
-export const isSearchPath = (name: string) =>
+export const isSearchPath = (name: string): boolean =>
     ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name)

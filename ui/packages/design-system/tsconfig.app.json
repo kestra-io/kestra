@@ -14,6 +14,7 @@
         "outDir": "./node_modules/.tmp/types",
         "esModuleInterop": true,
         "isolatedModules": true,
+        "isolatedDeclarations": true,
         "verbatimModuleSyntax": true,
         "skipLibCheck": true,
         "allowImportingTsExtensions": true,

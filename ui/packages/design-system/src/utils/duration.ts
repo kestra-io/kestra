@@ -34,7 +34,7 @@ const humanizeDurationLanguages = {
     },
 }
 
-export function duration(isoString: string) {
+export function duration(isoString: string): number {
     return (
         moment.duration(isoString, moment.ISO_8601 as any).asMilliseconds() / 1000
     )
@@ -43,7 +43,7 @@ export function duration(isoString: string) {
 export function humanDuration(
     value: number | string,
     options?: HumanizeDurationOptions & { languages?: any },
-) {
+): string {
     options = options || {maxDecimalPoints: 2}
     options.spacer = ""
     options.language = localStorage.getItem("lang") || "en"

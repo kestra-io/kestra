@@ -1,11 +1,17 @@
 import {ref} from "vue"
 import type {AppliedFilter} from "../utils/filterTypes"
 
-export function usePreAppliedFilters() {
+export function usePreAppliedFilters(): {
+    markAsPreApplied: (filters: AppliedFilter[]) => void;
+    hasPreApplied: (filterKey: string) => boolean;
+    getPreApplied: (filterKey: string) => AppliedFilter | undefined;
+    isPreApplied: (filterKey: string) => boolean;
+    getAllPreApplied: () => AppliedFilter[];
+} {
     const preAppliedKeys = ref<Set<string>>(new Set())
     const preAppliedDefaults = ref<Map<string, AppliedFilter>>(new Map())
 
-    const markAsPreApplied = (filters: AppliedFilter[]) => {
+    const markAsPreApplied = (filters: AppliedFilter[]): void => {
         filters.forEach(filter => {
             preAppliedKeys.value.add(filter.key)
             preAppliedDefaults.value.set(filter.key, {...filter})
@@ -29,10 +35,10 @@ export function usePreAppliedFilters() {
     }
 
     return {
-        markAsPreApplied,
-        hasPreApplied,
-        getPreApplied,
-        isPreApplied,
-        getAllPreApplied,
+        markAsPreApplied: markAsPreApplied,
+        hasPreApplied: hasPreApplied,
+        getPreApplied: getPreApplied,
+        isPreApplied: isPreApplied,
+        getAllPreApplied: getAllPreApplied,
     }
 }

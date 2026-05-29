@@ -1,7 +1,7 @@
 import {deepMerge} from "./ksChartUtils.ts"
 import {cssVar} from "../../utils/css.ts"
 
-export default () => {
+export default (): Record<string, unknown> => {
     const axis = {
         nameLocation: "end",
         nameTextStyle: {

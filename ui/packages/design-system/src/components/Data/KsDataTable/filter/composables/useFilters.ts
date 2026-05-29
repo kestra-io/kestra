@@ -1,4 +1,4 @@
-import {ref, watch, computed} from "vue"
+import {ref, watch, computed, type ComputedRef, type Ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {
     keyOfComparator,
@@ -25,7 +25,18 @@ export function useFilters(
     defaultScope?: boolean,
     defaultTimeRange?: boolean,
     defaultDuration?: string,
-) {
+): {
+    appliedFilters: ComputedRef<AppliedFilter[]>;
+    hasDismissedDefaultVisibleKeys: ComputedRef<boolean>;
+    searchQuery: Ref<string>;
+    addFilter: (filter: AppliedFilter) => void;
+    removeFilter: (filterId: string) => void;
+    updateFilter: (updatedFilter: AppliedFilter) => void;
+    clearFilters: () => void;
+    resetToDefaults: () => void;
+    hasPreApplied: (filterKey: string) => boolean;
+    getPreApplied: (filterKey: string) => AppliedFilter | undefined;
+} {
     const router = useRouter()
     const route = useRoute()
 
@@ -333,7 +344,7 @@ export function useFilters(
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false})
     initializeFromRoute()
 
-    const addFilter = (filter: AppliedFilter) => {
+    const addFilter = (filter: AppliedFilter): void => {
         restoreDefaultVisibleKey(filter.key)
         const index = appliedFilters.value.findIndex(f => f?.key === filter?.key)
         appliedFilters.value = index === -1
@@ -342,7 +353,7 @@ export function useFilters(
         updateRoute(hasValue(filter))
     }
 
-    const removeFilter = (filterId: string) => {
+    const removeFilter = (filterId: string): void => {
         const filter = appliedFilters.value.find(f => f?.id === filterId)
         if (filter) {
             dismissDefaultVisibleKey(filter.key)
@@ -351,7 +362,7 @@ export function useFilters(
         }
     }
 
-    const updateFilter = (updatedFilter: AppliedFilter) => {
+    const updateFilter = (updatedFilter: AppliedFilter): void => {
         restoreDefaultVisibleKey(updatedFilter.key)
         appliedFilters.value = [
             ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
@@ -363,7 +374,7 @@ export function useFilters(
     /**
      * Clears all applied filters and search query.
      */
-    const clearFilters = () => {
+    const clearFilters = (): void => {
         dismissAllDefaultVisibleKeys()
         appliedFilters.value = []
         searchQuery.value = ""
@@ -378,7 +389,7 @@ export function useFilters(
     }
     useDefaultFilter(defaultFilterOptions)
 
-    const resetToDefaults = () => {
+    const resetToDefaults = (): void => {
         resetDismissedDefaultVisibleKeys()
 
         const {query: defaultQuery} = applyDefaultFilters({}, defaultFilterOptions)
@@ -422,14 +433,14 @@ export function useFilters(
 
     return {
         appliedFilters: computed(() => appliedFilters.value),
-        hasDismissedDefaultVisibleKeys,
-        searchQuery,
-        addFilter,
-        removeFilter,
-        updateFilter,
-        clearFilters,
-        resetToDefaults,
-        hasPreApplied,
-        getPreApplied,
+        hasDismissedDefaultVisibleKeys: hasDismissedDefaultVisibleKeys,
+        searchQuery: searchQuery,
+        addFilter: addFilter,
+        removeFilter: removeFilter,
+        updateFilter: updateFilter,
+        clearFilters: clearFilters,
+        resetToDefaults: resetToDefaults,
+        hasPreApplied: hasPreApplied,
+        getPreApplied: getPreApplied,
     }
 }

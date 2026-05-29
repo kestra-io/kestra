@@ -191,27 +191,27 @@ export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
 
-export function isRunning(state:string) {
+export function isRunning(state:string): boolean | undefined {
     return STATES[state]?.isRunning
 }
 
-export function isKillable(state:string) {
+export function isKillable(state:string): boolean | undefined {
     return STATES[state]?.isKillable
 }
 
-export function isPaused(state:string) {
+export function isPaused(state:string): boolean {
     return STATES[state] === STATES.PAUSED
 }
 
-export function isFailed(state:string) {
+export function isFailed(state:string): boolean | undefined {
     return STATES[state]?.isFailed
 }
 
-export function isQueued(state:string) {
+export function isQueued(state:string): boolean {
     return STATES[state] === STATES.QUEUED
 }
 
-export function allStates() {
+export function allStates(): Record<string, {key: string; icon: Component; color: string}> {
     return mapValues(STATES, (state:StateModel) => ({
         key: state.name,
         icon: state.icon,
@@ -219,26 +219,26 @@ export function allStates() {
     }))
 }
 
-export function arrayAllStates() {
+export function arrayAllStates(): StateModel[] {
     return Object.values(STATES)
 }
 
-export function colorClass() {
+export function colorClass(): Record<string, string> {
     return mapValues(STATES, (state) => state.colorClass)
 }
 
-export function color() {
+export function color(): Record<string, string> {
     return mapValues(STATES, (state) => cssVar(`--ks-status-${state.name.toLowerCase()}`))
 }
 
-export function getStateColor(state:string) {
+export function getStateColor(state:string): string {
     return cssVar(`--ks-status-${STATES[state].name.toLowerCase()}`)
 }
 
-export function icon() {
+export function icon(): Record<string, Component> {
     return mapValues(STATES, (state) => state.icon)
 }
 
-export function getTerminatedStates() {
+export function getTerminatedStates(): string[] {
     return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name)
 }

@@ -235,7 +235,7 @@
     import {RouterLink} from "vue-router"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State} from "@kestra-io/design-system"
+    import {State, LOG_LEVEL_TYPE} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
     import moment from "moment"

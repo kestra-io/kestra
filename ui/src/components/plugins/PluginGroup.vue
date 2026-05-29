@@ -249,18 +249,16 @@
 
     async function loadGroupBlueprints() {
         groupBlueprints.value = []
-        const g = groupPlugin.value
-        if (!g) return
-        const namespace = g.subGroup ?? g.group
-        if (!namespace) return
+        const cls = groupPlugin.value?.subGroup ?? groupPlugin.value?.group
+        if (!cls) return
 
         try {
             const response = await axios.get<Blueprint[]>(
-                `${API_URL}/v1/blueprints/plugin/${namespace}/version/latest`,
+                `${API_URL}/v1/blueprints/plugin/${cls}/version/latest`,
             )
             groupBlueprints.value = response.data ?? []
         } catch (err) {
-            console.warn("Failed to load blueprints for group", namespace, err)
+            console.warn("Failed to load blueprints for group", cls, err)
             groupBlueprints.value = []
         }
     }

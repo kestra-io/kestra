@@ -56,16 +56,18 @@
 
 <style scoped lang="scss">
 .ks-sidebar-section {
-    padding: 0 var(--ks-spacing-2) 0 var(--ks-spacing-4);
+    padding: 0 var(--ks-spacing-4);
 }
 
 .ks-sidebar-section__title {
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-    padding: var(--ks-spacing-3) 0 var(--ks-spacing-1);
+    padding: var(--ks-spacing-3) 0 0;
+    margin-bottom: var(--ks-spacing-2);
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
+    font-weight: 400;
+    color: var(--ks-text-dim);
     background: none;
     border: none;
     text-align: left;

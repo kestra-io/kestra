@@ -45,6 +45,7 @@ export interface AuthMethods {
 export const useAuthStore = defineStore("auth", () => {
     const user = ref<Me | undefined>(new Me())
     const isLogged = ref(true)
+    const auths = ref<AuthMethods | undefined>(undefined)
 
     const logout = async () => {
         return true
@@ -55,12 +56,13 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     function loadAuths(_options: any): Promise<AuthMethods | undefined> {
-            return Promise.resolve(undefined)
-        }
+        return Promise.resolve(undefined)
+    }
 
     return {
         user,
         isLogged,
+        auths,
         logout,
         correction,
         loadAuths,

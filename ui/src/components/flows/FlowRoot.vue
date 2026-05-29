@@ -58,7 +58,22 @@
     const user = computed(() => authStore.user)
     const ready = computed(() => user.value && flowStore.flow)
 
-    const tabs = computed(() => {
+    interface Tab {
+        name: string; 
+        component: any; 
+        title: string; 
+        maximized?: boolean; 
+        noOverflow?: boolean; 
+        props?: {
+            embed?: boolean
+        }; 
+        count?: number; 
+        disabled?: boolean; 
+        beta?: boolean;
+        locked?: boolean;
+    }
+
+    const tabs = computed<Tab[]>(() => {
         const result = []
 
         if (user.value?.hasAny(resource.EXECUTION)) {
@@ -114,7 +129,15 @@
             })
         }
 
-        if (user.value && flowStore.flow && user.value.isAllowed(resource.EXECUTION, action.VIEW, flowStore.flow.namespace)) {
+        if (
+            user.value && 
+            flowStore.flow && 
+            user.value.isAllowed(
+                resource.EXECUTION, 
+                action.VIEW, 
+                flowStore.flow.namespace,
+            )
+        ) {
             result.push({
                 name: "metrics",
                 component: FlowMetrics,
@@ -143,16 +166,18 @@
             name: "auditlogs",
             title: t("auditlogs"),
             component: DemoAuditLogs,
-            props: {embed: true},
+            props: {
+                embed: true,
+            },
             locked: true,
         })
 
         return result
     })
 
-    const activeTab = computed(() => {
+    const activeTab = computed<Tab>(() => {
         const key = route?.params?.tab
-        return tabs.value.find(t => t.name === key) ?? tabs.value[0]
+        return tabs.value.find(tab => tab.name === key) ?? tabs.value[0]
     })
 
     const activeTabName = computed(() => activeTab.value?.name ?? "home")
@@ -177,7 +202,7 @@
                 },
             },
         ],
-        beta: tabs.value.find(tab => tab.name === route.params.tab)?.props?.beta,
+        beta: activeTab.value?.beta,
     }))
 
     useRouteContext(routeInfo)
@@ -189,10 +214,13 @@
     function load() {
         if (flowStore.flow === undefined || previousFlow.value !== flowKey()) {
             const query = {...route.query, allowDeleted: true}
-            return flowStore.loadFlow({...route.params, ...query})
+            return flowStore.loadFlow({
+                ...route.params, 
+                ...query,
+            } as any)
                 .then(() => {
                     if (flowStore.flow) {
-                        deleted.value = flowStore.flow.deleted
+                        deleted.value = Boolean(flowStore.flow.deleted)
                         previousFlow.value = flowKey()
                         flowStore.loadGraph({flow: flowStore.flow})
                     }
@@ -209,7 +237,7 @@
         })
     }
 
-    function updateExpandedSubflows(expandedSubflows: unknown) {
+    function updateExpandedSubflows(expandedSubflows: string[]) {
         flowStore.expandedSubflows = expandedSubflows
     }
 
@@ -238,7 +266,11 @@
         if (flow && flow.id) {
             // https://github.com/kestra-io/kestra/issues/10484
             setTimeout(() => {
-                flowStore.loadDependencies({namespace: flow.namespace, id: flow.id}, true)
+                flowStore.loadDependencies({
+                    subtype: "FLOW", 
+                    namespace: flow.namespace, 
+                    id: flow.id,
+                }, true)
                     .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
             }, 1000)
         }

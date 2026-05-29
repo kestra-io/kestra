@@ -22,9 +22,8 @@ public interface Worker extends Service {
      * Starts the worker service.
      *
      * @param numThreads the number of threads.
-     * @param workerGroupKey the worker group key.
      */
-    void start(int numThreads, String workerGroupKey);
+    void start(int numThreads);
 
     /**
      * Gets the list of tasks currently running.

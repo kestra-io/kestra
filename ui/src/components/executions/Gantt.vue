@@ -105,7 +105,7 @@
                                         <TaskRunDetails
                                             :taskRunId="item.id"
                                             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
-                                            :level="effectiveSelectedLogLevel"
+                                            :levelFilter="effectiveSelectedLogLevel"
                                             @follow="emit('follow', $event)"
                                             :targetFlow="executionsStore.flow"
                                             class="mh-100 mx-3"
@@ -161,6 +161,7 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
 
     interface TaskRun {
@@ -256,10 +257,10 @@
 
     // Log level filter policy
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
-    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<string>({
-        defaultValue: () => defaultLogLevel.value,
+    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<LevelFilterValue>({
+        defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
-        fallbackValue: () => "TRACE",
+        fallbackValue: () => ({value: "TRACE", direction: "min"}),
         readFromRoute: readRouteLevelFilter,
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,

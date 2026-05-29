@@ -253,8 +253,8 @@ public class RequestUtils {
         if (minLevel != null) {
             filters.add(
                 QueryFilter.builder()
-                    .field(QueryFilter.Field.MIN_LEVEL)
-                    .operation(QueryFilter.Op.EQUALS)
+                    .field(QueryFilter.Field.LEVEL)
+                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
                     .value(minLevel.name())
                     .build()
             );

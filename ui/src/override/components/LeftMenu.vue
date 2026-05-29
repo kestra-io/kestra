@@ -48,7 +48,7 @@
 <style scoped lang="scss">
     #side-menu {
         .kel-select {
-            padding: 0 18px;
+            padding: 0 var(--ks-spacing-4);
             padding-bottom: 15px;
             transition: all 0.2s ease;
             background-color: transparent;

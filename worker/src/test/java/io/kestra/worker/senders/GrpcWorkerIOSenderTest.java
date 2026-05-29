@@ -78,7 +78,7 @@ class GrpcWorkerIOSenderTest {
 
         controller = applicationContext.createBean(Controller.class);
         controller.start();
-        taskResultSender.init(new WorkerContext("test-worker", null, 1));
+        taskResultSender.init(new WorkerContext("test-worker", "", 1));
     }
 
     @AfterEach

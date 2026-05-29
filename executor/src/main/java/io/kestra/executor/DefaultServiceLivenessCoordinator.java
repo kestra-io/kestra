@@ -401,14 +401,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
         } else {
             try {
-                String raw = workerTaskRunning.getWorkerInstance().workerGroup();
-                String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
+                String raw = workerTaskRunning.getWorkerInstance().workerQueueId();
+                String workerQueueId = (raw == null || raw.isEmpty()) ? null : raw;
                 WorkerTask workerTask = WorkerTask.builder()
                     .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                     .task(workerTaskRunning.getTask())
                     .data(workerTaskRunning.getData())
                     .build();
-                workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
+                workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
                 Logs.logTaskRun(
                     workerTaskRunning.getTaskRun(),
                     Level.WARN,
@@ -427,13 +427,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
     private void resubmitWorkerTrigger(WorkerTriggerRunning workerTriggerRunning) {
         try {
-            String raw = workerTriggerRunning.getWorkerInstance().workerGroup();
-            String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
+            String raw = workerTriggerRunning.getWorkerInstance().workerQueueId();
+            String workerQueueId = (raw == null || raw.isEmpty()) ? null : raw;
             WorkerTrigger workerTrigger = WorkerTrigger.builder()
                 .trigger(workerTriggerRunning.getTrigger())
                 .data(workerTriggerRunning.getData())
                 .build();
-            workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
+            workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTrigger, workerQueueId));
             Logs.logTrigger(
                 workerTrigger.triggerId(),
                 Level.WARN,

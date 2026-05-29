@@ -117,8 +117,8 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getDefs().size()).isEqualTo(4);
             assertThat(doc.getDocLicense()).isNull();
 
-            assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");
-            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size()).isEqualTo(2);
+            assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerSelector")).get("type")).isEqualTo("object");
+            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerSelector")).get("properties")).size()).isEqualTo(3);
         }));
     }
 

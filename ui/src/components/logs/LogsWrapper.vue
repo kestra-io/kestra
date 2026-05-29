@@ -82,6 +82,7 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore} from "../../stores/logs"
@@ -135,10 +136,10 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
-    } = useRouteFilterPolicy<string>({
+    } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
-        explicitValue: () => props.logLevel,
-        defaultValue: () => defaultLogLevel.value,
+        explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,
+        defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
         fallbackValue: () => undefined,
         readFromRoute: readRouteLevelFilter,
@@ -235,7 +236,6 @@
         await logsStore.findLogs(loadQuery({
             page,
             size,
-            minLevel: props.filters ? null : effectiveLogLevel.value,
             sort: "timestamp:desc",
         }))
             .finally(() => {

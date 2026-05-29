@@ -87,6 +87,7 @@
     import {ref, computed, onMounted, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import axios from "axios"
     import {KsPluginCard, KsEmpty, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginLayout from "./PluginLayout.vue"
     import BlueprintIconStack from "./BlueprintIconStack.vue"
@@ -95,8 +96,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import useRouteContext from "../../composables/useRouteContext"
-    import {apiUrl} from "override/utils/route"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {API_URL} from "../../stores/api"
 
     type Blueprint = {
         id: string;
@@ -111,7 +111,6 @@
     const route = useRoute()
     const router = useRouter()
     const {t} = useI18n()
-    const httpClient = useClient()
 
     const groupBlueprints = ref<Blueprint[]>([])
 
@@ -254,16 +253,12 @@
         if (!g) return
         const namespace = g.subGroup ?? g.group
         if (!namespace) return
+
         try {
-            const response = await httpClient.get<{results: Blueprint[]}>(`${apiUrl()}/blueprints/community/flow`, {
-                params: {size: 100},
-                validateStatus: (s: number) => s === 200 || s === 401,
-            })
-            const all: Blueprint[] = response.data?.results ?? []
-            groupBlueprints.value = all.filter(bp =>
-                Array.isArray(bp?.includedTasks)
-                && bp.includedTasks.some((cls: string) => cls.startsWith(namespace + ".")),
+            const response = await axios.get<Blueprint[]>(
+                `${API_URL}/v1/blueprints/plugin/${namespace}/version/latest`,
             )
+            groupBlueprints.value = response.data ?? []
         } catch (err) {
             console.warn("Failed to load blueprints for group", namespace, err)
             groupBlueprints.value = []

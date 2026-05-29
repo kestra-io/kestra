@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @JdbcRunnerEnabled
 @Slf4j
 @Requires(property = "kestra.jdbc.cleaner")
+@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
 public class JdbcCleaner {
     private static final Field<Object> UPDATED_FIELD = AbstractJdbcRepository.field("updated");
     private static final int MYSQL_BATCH_SIZE = 10_000;

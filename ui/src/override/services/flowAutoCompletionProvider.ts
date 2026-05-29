@@ -7,6 +7,7 @@ import RegexProvider from "../../utils/regex"
 import {State} from "@kestra-io/design-system"
 import {usePluginsStore} from "../../stores/plugins"
 import {useFlowStore} from "../../stores/flow"
+import {useMcpStore} from "../../stores/mcp"
 import {useNamespacesStore} from "override/stores/namespaces"
 
 function distinct<T>(val: T[] | undefined): T[] {
@@ -18,18 +19,22 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     pluginsStore: ReturnType<typeof usePluginsStore>
     flowStore: ReturnType<typeof useFlowStore>
     namespacesStore: ReturnType<typeof useNamespacesStore>
+    mcpStore: ReturnType<typeof useMcpStore>
+    private mcpServerIdsCache: string[] | undefined
     private readonly completionSource: ComputedRef<string | undefined> | undefined
 
     constructor(
         flowStore: ReturnType<typeof useFlowStore>,
         pluginsStore: ReturnType<typeof usePluginsStore>,
         namespacesStore: ReturnType<typeof useNamespacesStore>,
+        mcpStore: ReturnType<typeof useMcpStore>,
         completionSource?: ComputedRef<string | undefined>,
     ) {
         super()
         this.flowStore = flowStore
         this.pluginsStore = pluginsStore
         this.namespacesStore = namespacesStore
+        this.mcpStore = mcpStore
         this.completionSource = completionSource
     }
 
@@ -249,6 +254,18 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (parentTask !== undefined && parentTask.namespace !== undefined && parentTask.flowId !== undefined) {
                     return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(yamlElement.value ?? {}))
                 }
+                break
+            }
+            case "mcpServer": {
+                if (this.mcpServerIdsCache === undefined) {
+                    try {
+                        const {results} = await this.mcpStore.list()
+                        this.mcpServerIdsCache = results.map(s => s.id)
+                    } catch {
+                        return []
+                    }
+                }
+                return this.mcpServerIdsCache
             }
         }
 

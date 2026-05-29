@@ -45,10 +45,12 @@
         clearable?: boolean,
         taggable?: boolean
         placeholder?: string | undefined
+        autoDefault?: boolean
     }>(), {
         multiple: false,
         clearable: true,
         placeholder: undefined,
+        autoDefault: true,
     })
 
     const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
@@ -73,9 +75,10 @@
     })
 
     onMounted(() => {
-        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []})
+        const ids = [modelValue.value].flat().filter(Boolean) as string[]
+        namespacesStore.loadAutocomplete({ids})
 
-        if (modelValue.value === undefined || modelValue.value.length === 0) {
+        if (props.autoDefault && (modelValue.value === undefined || modelValue.value.length === 0)) {
             const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {

@@ -46,7 +46,7 @@
 // nprogress
 #nprogress {
     .bar {
-        background: palette.$base-purple-500;
+        background: palette.$base-primary-500;
         z-index: 9999;
     }
 
@@ -56,19 +56,23 @@
     }
 
     .peg {
-        box-shadow: 0 0 10px palette.$base-purple-500, 0 0 5px palette.$base-purple-500;
+        box-shadow: 0 0 10px palette.$base-primary-500, 0 0 5px palette.$base-primary-500;
     }
 
     .spinner-icon {
-        border-top-color: palette.$base-purple-500;
-        border-left-color: palette.$base-purple-500;
+        border-top-color: palette.$base-primary-500;
+        border-left-color: palette.$base-primary-500;
     }
 }
 
 // global
+html {
+    font-size: 14px;
+}
+
 html, body {
     height: 100%;
-    background: var(--ks-bg-body);
+    background: var(--ks-bg-base);
     color: var(--ks-text-primary);
     margin: 0;
 }

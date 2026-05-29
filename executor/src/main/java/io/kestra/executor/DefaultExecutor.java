@@ -1,15 +1,5 @@
 package io.kestra.executor;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.slf4j.event.Level;
-
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -18,9 +8,11 @@ import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.Concurrency;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
@@ -31,27 +23,34 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.MultipleConditionEvent;
-import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
-import io.kestra.core.services.*;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.trigger.Webhook;
-
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.event.Level;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.*;
 
@@ -60,8 +59,6 @@ import static io.kestra.core.utils.Rethrow.*;
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
     private static final String IGNORING_EXECUTION_MSG = "Ignoring execution {} because there is a kill switch on it";
-    private static final String CANCELLING_EXECUTION_MSG = "Cancelling execution {} because there is a kill switch on it";
-    private static final String KILLING_EXECUTION_MSG = "Killing execution {} because there is a kill switch on it";
 
     @Inject
     private DispatchQueueInterface<Execution> executionQueue;
@@ -86,6 +83,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private KillSwitchService killSwitchService;
     @Inject
+    private KillSwitchActionService killSwitchActionService;
+    @Inject
     private ExecutorService executorService;
     @Inject
     private ExecutionService executionService;
@@ -95,7 +94,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private SLAService slaService;
     @Inject
     private MaintenanceService maintenanceService;
-
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
 
@@ -337,7 +335,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         EvaluationType evaluationType = killSwitchService.evaluate(message);
         if (evaluationType.isKillSwitched(message)) {
-            handleKillSwitchedExecution(evaluationType, message);
+            killSwitchActionService.handle(evaluationType, message.getTenantId(), message.getId());
             return;
         }
 
@@ -353,18 +351,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        ExecutionCommand message = either.getLeft();
-        EvaluationType evaluationType = killSwitchService.evaluate(message);
-        if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.executionId());
-            if (evaluationType.isKillSwitched(execution)) {
-                handleKillSwitchedExecution(evaluationType, execution);
-                return;
-            }
-        }
-
-        Optional<ExecutorContext> maybeExecutor = executionCommandMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        executionCommandMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void executionEventQueue(Either<ExecutionEvent, DeserializationException> either) {
@@ -378,7 +365,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         if (evaluationType != EvaluationType.PASS) {
             var execution = executionStateStore.findById(message.executionId());
             if (evaluationType.isKillSwitched(execution)) {
-                handleKillSwitchedExecution(evaluationType, execution);
+                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
                 return;
             }
         }
@@ -396,7 +383,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         WorkerTaskResult message = either.getLeft();
         EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
         if (evaluationType != EvaluationType.PASS) {
-            handleKillSwitchedWorkerTaskResult(evaluationType, message);
+            killSwitchActionService.handle(evaluationType, message.getTaskRun().getTenantId(), message.getTaskRun().getExecutionId());
             return;
         }
 
@@ -508,63 +495,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         Optional<ExecutorContext> maybeExecutor = loopExecutionEventMessageHandler.handle(message);
         maybeExecutor.ifPresent(this::toExecution);
-    }
-
-    private void handleKillSwitchedExecution(EvaluationType evaluationType, Execution message) {
-        handleKillSwitchedExecution(evaluationType, message.getTenantId(), message.getId());
-    }
-
-    private void handleKillSwitchedWorkerTaskResult(EvaluationType evaluationType, WorkerTaskResult message) {
-        handleKillSwitchedExecution(evaluationType, message.getTaskRun().getTenantId(), message.getTaskRun().getExecutionId());
-    }
-
-    private void handleKillSwitchedExecution(EvaluationType evaluationType, String tenantId, String executionId) {
-        switch (evaluationType) {
-            case IGNORE -> log.warn(IGNORING_EXECUTION_MSG, executionId);
-            case KILL -> {
-                log.warn(KILLING_EXECUTION_MSG, executionId);
-                killExecution(tenantId, executionId);
-            }
-            case CANCEL -> {
-                log.warn(CANCELLING_EXECUTION_MSG, executionId);
-                cancelExecution(executionId);
-            }
-        }
-    }
-
-    private void killExecution(String tenantId, String executionId) {
-        executionStateStore.lock(executionId, execution ->
-        {
-            if (!execution.getState().isTerminated()) {
-                var newExecution = execution.withState(State.Type.KILLING).addLabel(new Label(Label.KILL_SWITCH, "killed"));
-                return new ExecutorContext(newExecution);
-            }
-            return null;
-        });
-
-        try {
-            killQueue.emit(
-                ExecutionKilledExecution.builder()
-                    .tenantId(tenantId)
-                    .executionId(executionId)
-                    .isOnKillCascade(true)
-                    .state(ExecutionKilled.State.REQUESTED)
-                    .build()
-            );
-        } catch (QueueException e) {
-            log.error("Unable to kill the execution {}", executionId, e);
-        }
-    }
-
-    private void cancelExecution(String executionId) {
-        executionStateStore.lock(executionId, execution ->
-        {
-            if (!execution.getState().isTerminated()) {
-                var newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
-                return new ExecutorContext(newExecution);
-            }
-            return null;
-        });
     }
 
     /**
@@ -740,6 +670,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     sendTriggerExecutionTerminated(execution);
+                    this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                 }
 
                 return;

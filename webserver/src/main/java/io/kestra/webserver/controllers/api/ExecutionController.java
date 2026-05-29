@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -19,7 +20,6 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,7 +64,6 @@ import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
-import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
@@ -177,9 +176,6 @@ public class ExecutionController {
 
     @Inject
     private ExecutionDependenciesStreamingService executionDependenciesStreamingService;
-
-    @Inject
-    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -611,24 +607,18 @@ public class ExecutionController {
         try {
             return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
         } catch (Exception e) {
-            Execution failedExecution = Execution.builder()
-                .id(IdUtils.create())
-                .tenantId(flow.getTenantId())
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
-                .flowRevision(flow.getRevision())
-                .labels(LabelService.labelsExcludingSystem(flow.getLabels()))
-                .state(new State().withState(State.Type.FAILED))
-                .trigger(ExecutionTrigger.of(webhook, Map.of()))
-                .build();
+            var executionId = IdUtils.create();
+            var createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
+                .withLabels(LabelService.labelsExcludingSystem(flow.getLabels()))
+                .withStateType(State.Type.FAILED)
+                .withTrigger(ExecutionTrigger.of(webhook, Map.of()));
 
-            Logger logger = webhookContext.webhookService().runContext(flow, failedExecution).logger();
-            logger.error("[trigger: {}] Webhook evaluate Failed with error '{}'", webhookContext.trigger(), e.getMessage());
+            log.error("[trigger: {}] Webhook evaluate failed with error '{}'", webhookContext.trigger(), e.getMessage());
 
             try {
-                this.executionQueue.emit(failedExecution);
+                executionCommandQueue.emit(createCommand);
             } catch (QueueException ex) {
-                log.error("Unable to emit the execution", ex);
+                log.error("Unable to emit the failed execution command", ex);
             }
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -686,12 +676,10 @@ public class ExecutionController {
         @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
         List<Label> parsedLabels = parseLabels(labels);
-        final Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate).toBuilder()
-            .kind(kind.orElse(null))
-            .breakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null))
-            .build();
 
-        return flowInputOutput.readExecutionInputs(flow, current, inputs)
+
+        var executionId = IdUtils.create();
+        return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
             .flatMap(executionInputs ->
             {
                 List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
@@ -707,72 +695,81 @@ public class ExecutionController {
                     );
                 }
 
-                final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
-                    .map(exec ->
-                    {
-                        if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
-                            Logs.logExecution(current, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
-                            return exec.withState(State.Type.FAILED);
-                        } else {
-                            return exec;
-                        }
-                    })
-                    .get();
+                Create createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
+                    .withLabels(parsedLabels)
+                    .withInputs(executionInputs)
+                    .withScheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
+                    .withKind(kind.orElse(null))
+                    .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
-                try {
-                    // inject the traceparent into the execution
+                    if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
+                        Logs.logExecutionId(createCommand.executionFullId(), log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                        createCommand = createCommand.withStateType(State.Type.FAILED);
+                    }
+
+                    // inject the traceparent from the current OTel context into the command so it's propagated to the execution
+                    // TODO see if we can replicate ExecutionTextMapSetter logic
+                    Map<String, String> traceCarrier = new HashMap<>();
                     openTelemetry
                         .map(OpenTelemetry::getPropagators)
                         .map(ContextPropagators::getTextMapPropagator)
-                        .ifPresent(propagator -> propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE));
-
-                    executionQueue.emit(executionWithInputs);
-                    eventPublisher.publishEvent(CrudEvent.create(executionWithInputs));
-
-                    if (!wait || executionWithInputs.getState().isFailed()) {
-                        return Mono.just(
-                            ExecutionResponse.fromExecution(
-                                executionWithInputs,
-                                executionUrl(executionWithInputs)
-                            )
-                        );
+                        .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
+                    if (traceCarrier.containsKey("traceparent")) {
+                        createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
                     }
 
-                    String subscriberId = UUID.randomUUID().toString();
-                    // Use Flux to wait for completion using the streaming service
-                    return Flux.<Event<Execution>> create(emitter ->
-                    {
-                        streamingService.registerSubscriber(
-                            executionWithInputs.getId(),
-                            subscriberId,
-                            emitter,
-                            flow
-                        );
-                    })
-                        .last()
-                        .map(Event::getData)
-                        .map(
-                            execution -> ExecutionResponse.fromExecution(
-                                execution,
-                                executionUrl(execution)
+                    Create finalCreateCommand = createCommand;
+                    return awaitBlockingAction(
+                        executionId, "Create",
+                        operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
+                    ).flatMap(res -> {
+                        var executionUrl = executionUrl(finalCreateCommand.executionFullId());
+                        if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
+                            return Mono.just(
+                                ExecutionResponse.fromExecution(
+                                    res.body(),
+                                    executionUrl
+                                )
+                            );
+                        }
+
+                        // SSE subscribe
+                        String subscriberId = UUID.randomUUID().toString();
+                        // Use Flux to wait for completion using the streaming service
+                        return Flux.<Event<Execution>> create(emitter ->
+                            {
+                                streamingService.registerSubscriber(
+                                    executionId,
+                                    subscriberId,
+                                    emitter,
+                                    flow
+                                );
+                            })
+                            .last()
+                            .map(Event::getData)
+                            .map(
+                                execution -> ExecutionResponse.fromExecution(
+                                    execution,
+                                    executionUrl
+                                )
                             )
-                        )
-                        .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-                        .doFinally(signalType -> streamingService.unregisterSubscriber(executionWithInputs.getId(), subscriberId));
-                } catch (QueueException e) {
-                    return Mono.error(e);
-                }
+                            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
+                            .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
+                    });
+
+//                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
+
             });
     }
 
-    private URI executionUrl(Execution execution) {
+    private URI executionUrl(ExecutionId executionId) {
         String baseUrl = Optional.ofNullable(kestraConfiguration.url()).map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
         return URI.create(
-            baseUrl + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId() : "")
+            baseUrl + "/ui" + (executionId.tenantId() != null ? "/" + executionId.tenantId() : "")
                 + "/executions/"
-                + execution.getNamespace() + "/"
-                + execution.getFlowId() + "/"
-                + execution.getId()
+                + executionId.namespace() + "/"
+                + executionId.flowId() + "/"
+                + executionId.executionId()
         );
     }
 
@@ -1080,7 +1077,7 @@ public class ExecutionController {
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
 
-        return blockingReplay(execution, flow, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1124,35 +1121,38 @@ public class ExecutionController {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
-            .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), flow, taskRunId, revision, breakpoints)));
+            .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
 
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var replayedExecution = executionService.replay(execution, flow, taskRunId, revision, breakpoints, true);
+        var newExecutionId = IdUtils.create();
 
         AsyncOperationProcessedEvent processed;
         try {
             processed = asyncOperationWaiter.submitAndWait(
-                execution.getId(),
+                newExecutionId,
                 operationId ->
                 {
                     try {
-                        // emit the replayed execution (new run, no operationId tagging)
-                        executionQueue.emit(replayedExecution);
+                        // emit Replay command; signals completion via operationId when new execution is created
+                        executionCommandQueue.emit(
+                            Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null))
+                                .withOperationId(operationId)
+                        );
 
-                        // update parent exec with replayed label; tag with operationId for completion signal
+                        // update parent exec with replayed label (fire-and-forget)
                         List<Label> newLabels = new ArrayList<>(execution.getLabels());
                         if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
                             newLabels.add(new Label(Label.REPLAYED, "true"));
                         }
-                        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
+                        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels));
                     } catch (QueueException e) {
                         throw new RuntimeException(e);
                     }
@@ -1167,20 +1167,22 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
         }
 
-        return HttpResponse.ok(replayedExecution);
+        return HttpResponse.ok(executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation")));
     }
 
-    private void innerReplayBatch(Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId) throws Exception {
+    private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId) throws Exception {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var replayedExecution = executionService.replay(execution, flow, taskRunId, revision, breakpoints, true);
-        executionQueue.emit(replayedExecution);
+        var newExecutionId = IdUtils.create();
+        // emit Replay command fire-and-forget (no operationId on the replay itself)
+        executionCommandQueue.emit(Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null)));
 
-        // update parent exec with replayed label; tag with operationId for completion tracking
+        // update parent exec with replayed label; tag with operationId for batch completion tracking
         List<Label> newLabels = new ArrayList<>(execution.getLabels());
         if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
             newLabels.add(new Label(Label.REPLAYED, "true"));
@@ -1758,7 +1760,7 @@ public class ExecutionController {
         {
             Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
             try {
-                innerReplayBatch(execution, flow, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
+                innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
             } catch (QueueException e) {
                 throw e;
             } catch (Exception e) {

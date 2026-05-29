@@ -191,7 +191,7 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unlockTriggersByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) {
+        @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
             triggerStateService.unlockAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );

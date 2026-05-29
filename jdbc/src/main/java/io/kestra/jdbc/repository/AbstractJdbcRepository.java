@@ -547,10 +547,6 @@ public abstract class AbstractJdbcRepository {
         return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
-    protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported operation for TAGS field: " + operation);
-    }
-
     protected Condition typeCondition(Object value, QueryFilter.Op operation) {
         return defaultHandlers(QueryFilter.Field.TYPE, value, operation);
     }

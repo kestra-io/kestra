@@ -416,7 +416,7 @@
         if (!props.filterKey?.valueProvider) return
 
         const meta = state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined
-        state.valueOptions = await props.filterKey.valueProvider({...meta, ...search})
+        state.valueOptions = await props.filterKey.valueProvider({search, meta})
 
         if (
             props.filterKey?.key === "timeRange" &&

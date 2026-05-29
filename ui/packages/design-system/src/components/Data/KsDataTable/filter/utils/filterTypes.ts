@@ -50,7 +50,7 @@ export interface FilterKeyConfig {
      * of filtering the loaded list client-side. Server-side support is detected
      * via `valueProvider.length > 0`, so avoid default-valued or rest params.
      */
-    valueProvider?: (options?: {search?: string}) => Promise<FilterValue[]>;
+    valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);

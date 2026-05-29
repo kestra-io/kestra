@@ -84,7 +84,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions")
+                        const {VALUES} = useValues("executions", t)
                         return VALUES.KINDS
                     },
                 },
@@ -95,7 +95,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions")
+                        const {VALUES} = useValues("executions", t)
                         return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
@@ -109,7 +109,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions")
+                        const {VALUES} = useValues("executions", t)
                         return VALUES.SCOPES
                     },
                     showComparatorSelection: false,
@@ -121,7 +121,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions")
+                        const {VALUES} = useValues("executions", t)
                         return VALUES.CHILDS
                     },
                 },
@@ -132,7 +132,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions")
+                        const {VALUES} = useValues("executions", t)
                         return VALUES.RELATIVE_DATE
                     },
                     dateFilterOptions: [

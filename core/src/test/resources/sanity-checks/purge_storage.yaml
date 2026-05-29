@@ -2,9 +2,8 @@ id: purge_storage
 namespace: sanitychecks.core
 description: |
   Sanity check for io.kestra.plugin.core.storage.PurgeStorage.
-  Phase 1: dryRun=true must preview the matched subtree without deleting (deletedFilesCount = 0,
-  purgedUris populated).
-  Phase 2: dryRun=false must actually delete (deletedFilesCount > 0, purgedUris populated).
+  Phase 1: dryRun=true must preview matches without deleting (deletedFilesCount = 0).
+  Phase 2: dryRun=false must actually delete (deletedFilesCount > 0).
 
 tasks:
   - id: write_marker
@@ -24,9 +23,8 @@ tasks:
     type: io.kestra.plugin.core.execution.Assert
     conditions:
       - "{{ outputs.purge_dry_run.scannedCount >= 1 }}"
-      - "{{ outputs.purge_dry_run.purgedCount == outputs.purge_dry_run.scannedCount }}"
+      - "{{ outputs.purge_dry_run.purgedCount >= 1 }}"
       - "{{ outputs.purge_dry_run.deletedFilesCount == 0 }}"
-      - "{{ outputs.purge_dry_run.purgedUris | length == outputs.purge_dry_run.purgedCount }}"
 
   - id: purge_real
     type: io.kestra.plugin.core.storage.PurgeStorage
@@ -39,6 +37,5 @@ tasks:
     type: io.kestra.plugin.core.execution.Assert
     conditions:
       - "{{ outputs.purge_real.scannedCount >= 1 }}"
-      - "{{ outputs.purge_real.purgedCount == outputs.purge_real.scannedCount }}"
+      - "{{ outputs.purge_real.purgedCount >= 1 }}"
       - "{{ outputs.purge_real.deletedFilesCount > 0 }}"
-      - "{{ outputs.purge_real.purgedUris | length == outputs.purge_real.purgedCount }}"

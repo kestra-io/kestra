@@ -1,8 +1,6 @@
 package io.kestra.plugin.core.storage;
 
-import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Metric;
@@ -30,20 +28,17 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Purge execution files from the internal storage by last-modified date.",
     description = """
-        **Irreversible.** Always start with `dryRun: true` and review the `purgedUris` output before re-running with \
-        `dryRun: false`.
+        **Irreversible.** Always start with `dryRun: true` and review the counters before re-running with `dryRun: false`.
 
-        Walks storage directly (no flow repository) and deletes `executions/{id}/` subtrees whose newest file falls \
-        within `startDate`/`endDate`. Reclaims orphans left by flows that no longer exist — the primary use case. \
-        Unlike `PurgeExecutions` (DB-driven), this also remediates storage left after isolated worker-group purges.
+        Deletes execution files whose last-modified timestamp falls between `startDate` and `endDate`. The primary use \
+        case is reclaiming files left behind by flows that no longer exist — files that `PurgeExecutions` cannot reach \
+        because there is no execution record to delete.
 
-        `namespace` matching is exact (no sub-namespace recursion), aligned with the single-namespace ACL. To purge \
-        a sub-namespace, target it explicitly; omit `namespace` to walk every namespace under the tenant (requires \
-        `allowAllNamespaces`).
+        `namespace` matching is exact: it does not reach sub-namespaces. Omit `namespace` to purge across every \
+        namespace under the tenant.
 
-        `endDate` is the safety bound and in-flight guard: set it to (or before) your `PurgeExecutions` retention.
-
-        Heavyweight: cost scales with stored objects. Scope with `namespace`/`flowId` and schedule off-peak."""
+        Set `endDate` to (or before) your `PurgeExecutions` retention window so that only files belonging to \
+        already-purged executions are deleted."""
 )
 @Plugin(
     examples = {
@@ -71,16 +66,15 @@ import lombok.experimental.SuperBuilder;
 )
 public class PurgeStorage extends Task implements RunnableTask<PurgeStorage.Output>, SystemTask {
     @Schema(
-        title = "Namespace whose execution storage files should be purged",
-        description = "Exact match (no sub-namespace recursion). Omit to walk every namespace under the tenant "
-            + "(requires `allowAllNamespaces`)."
+        title = "Namespace whose execution storage files should be purged.",
+        description = "Exact match: a sub-namespace is not affected. Omit to purge across every namespace under the tenant."
     )
     @PluginProperty(group = "main")
     private Property<String> namespace;
 
     @Schema(
-        title = "The flow ID to be purged",
-        description = "Provide `namespace` as well if you want to scope to a single flow."
+        title = "The flow ID to be purged.",
+        description = "Requires `namespace` to also be set."
     )
     @PluginProperty(group = "main")
     private Property<String> flowId;
@@ -93,8 +87,8 @@ public class PurgeStorage extends Task implements RunnableTask<PurgeStorage.Outp
 
     @Schema(
         title = "Only purge files last modified before this date.",
-        description = "Acts as the safety bound and in-flight guard: set it to (or before) your `PurgeExecutions` "
-            + "retention window so only files of already-purged executions are deleted."
+        description = "Set this to (or before) your `PurgeExecutions` retention window so only files of "
+            + "already-purged executions are deleted."
     )
     @NotNull
     @PluginProperty(group = "main")
@@ -151,7 +145,6 @@ public class PurgeStorage extends Task implements RunnableTask<PurgeStorage.Outp
             .scannedCount(result.scannedCount())
             .purgedCount(result.purgedCount())
             .deletedFilesCount(result.deletedFilesCount())
-            .purgedUris(result.purgedUris())
             .build();
     }
 
@@ -161,17 +154,10 @@ public class PurgeStorage extends Task implements RunnableTask<PurgeStorage.Outp
         @Schema(title = "Number of execution storage subtrees scanned.")
         private final int scannedCount;
 
-        @Schema(title = "Number of execution storage subtrees matched by the date window (always preserved when `dryRun` is true).")
+        @Schema(title = "Number of executions with at least one file in the date window (preserved when `dryRun` is true).")
         private final int purgedCount;
 
-        @Schema(title = "Number of storage objects deleted, including intermediate directories (always 0 when `dryRun` is true).")
+        @Schema(title = "Number of storage objects deleted (always 0 when `dryRun` is true).")
         private final int deletedFilesCount;
-
-        @Schema(
-            title = "URIs of execution storage subtrees that were (or would be) purged.",
-            description = "One entry per matched execution. Populated for both `dryRun: true` (preview of what would "
-                + "be deleted) and `dryRun: false` (record of what was deleted)."
-        )
-        private final List<URI> purgedUris;
     }
 }

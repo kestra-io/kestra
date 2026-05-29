@@ -4,10 +4,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.NoSuchFileException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Set;
 
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
@@ -19,9 +20,14 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Storage-layer maintenance for orphaned execution files. Mirrors {@link ExecutionLogService} for logs: walks
- * storage without consulting any repository, so it can reclaim files of flows that no longer exist — including the
- * post-isolated-worker-group case in <a href="https://github.com/kestra-io/kestra-ee/issues/6699">kestra-ee#6699</a>.
+ * Maintenance service for orphaned execution storage. Resolves which
+ * {@code <ns>/<flow>/executions/} prefixes are in scope, then delegates per-file
+ * date filtering and deletion to {@link StorageInterface#purgeByLastModified}.
+ * <p>
+ * Mirrors {@link ExecutionLogService} for logs: walks storage directly (no flow
+ * repository) so it can reclaim files of flows that no longer exist, including
+ * the post-isolated-worker-group case in
+ * <a href="https://github.com/kestra-io/kestra-ee/issues/6699">kestra-ee#6699</a>.
  */
 @Singleton
 @Slf4j
@@ -34,14 +40,14 @@ public class StoragePurgeService {
     }
 
     /**
-     * Purges {@code executions/{id}/} subtrees whose newest contained file falls within {@code [startDate, endDate]}.
-     * Namespace matching is exact: {@code namespace=a.b} does not reach {@code a.b.c} (purge that explicitly).
+     * Purges execution storage whose files fall within {@code [startDate, endDate]}.
+     * Namespace matching is exact: {@code namespace=a.b} does not reach {@code a.b.c}.
      *
-     * @param tenantId  tenant identifier; {@code null} only meaningful for backends that don't enforce tenancy
-     * @param namespace exact namespace; {@code null} = every namespace under the tenant
+     * @param tenantId  tenant identifier
+     * @param namespace exact namespace; {@code null} = walk every namespace under the tenant
      * @param flowId    restrict to a single flow (requires {@code namespace})
-     * @param startDate lower bound on newest-file mtime (nullable)
-     * @param endDate   upper bound on newest-file mtime; also the in-flight guard (nullable)
+     * @param startDate inclusive lower bound on file mtime
+     * @param endDate   inclusive upper bound on file mtime (acts as the in-flight guard)
      * @param dryRun    when {@code true}, match but delete nothing
      */
     public StoragePurgeResult purgeByLastModified(
@@ -56,126 +62,90 @@ public class StoragePurgeService {
             throw new IllegalArgumentException("'namespace' is required when 'flowId' is set.");
         }
 
-        Long startMillis = startDate == null ? null : startDate.toInstant().toEpochMilli();
-        Long endMillis = endDate == null ? null : endDate.toInstant().toEpochMilli();
+        Instant startInstant = startDate == null ? null : startDate.toInstant();
+        Instant endInstant = endDate == null ? null : endDate.toInstant();
 
-        int scanned = 0;
-        int deletedFiles = 0;
-        List<URI> purgedUris = new ArrayList<>();
-
-        for (URI executionUri : findExecutionDirs(tenantId, namespace, flowId)) {
-            scanned++;
-            try {
-                // Use newest contained file, not the dir's own timestamp: directory timestamps are virtual on object
-                // stores and don't advance on nested writes on a local fs. Also naturally preserves in-flight runs.
-                OptionalLong lastModified = lastModifiedFileTime(tenantId, executionUri);
-                if (lastModified.isEmpty()
-                    || (startMillis != null && lastModified.getAsLong() < startMillis)
-                    || (endMillis != null && lastModified.getAsLong() > endMillis)) {
-                    continue;
-                }
-
-                if (!dryRun) {
-                    // Delete first, record after — failed deletes don't end up in purgedUris.
-                    deletedFiles += storageInterface.deleteByPrefix(tenantId, null, executionUri).size();
-                }
-                purgedUris.add(executionUri);
-            } catch (Exception e) {
-                // Per-execution isolation: one bad subtree must not abort the rest.
-                log.warn("Failed to purge storage at '{}'; skipping it.", executionUri, e);
-            }
-        }
-
-        return new StoragePurgeResult(scanned, deletedFiles, List.copyOf(purgedUris));
-    }
-
-    /**
-     * Resolves the {@code executions/{id}/} directories to scan by walking storage directly:
-     * {@code namespace+flowId} → one flow's executions; {@code namespace} only → its direct flow dirs (exact match,
-     * no sub-namespace recursion); neither → recursive tenant-wide walk (gated by {@code allowAllNamespaces}).
-     */
-    private List<URI> findExecutionDirs(@Nullable String tenantId, @Nullable String namespace, @Nullable String flowId) throws IOException {
-        List<URI> result = new ArrayList<>();
+        Aggregator agg = new Aggregator();
         if (namespace != null && flowId != null) {
-            addChildDirs(tenantId, StorageContext.executionsRootUri(namespace, flowId), result);
-            return result;
+            purgeFlow(tenantId, namespace, flowId, startInstant, endInstant, dryRun, agg);
+        } else if (namespace != null) {
+            purgeNamespace(tenantId, namespace, startInstant, endInstant, dryRun, agg);
+        } else {
+            walkNamespaceTree(tenantId, "", URI.create(StorageContext.KESTRA_PROTOCOL + "/"),
+                startInstant, endInstant, dryRun, agg);
         }
-        URI scanRoot = namespace == null
-            ? URI.create(StorageContext.KESTRA_PROTOCOL + "/")
-            : StorageContext.namespaceRootUri(namespace);
-        if (namespace != null) {
-            for (FileAttributes flowCandidate : listAsAdminOrEmpty(tenantId, scanRoot)) {
-                if (!isFlowCandidate(flowCandidate) || isAmbiguousFlowName(flowCandidate.getFileName(), namespace)) {
-                    continue;
-                }
-                addChildDirs(tenantId, resolveChildDir(scanRoot, flowCandidate.getFileName() + "/" + StorageContext.EXECUTIONS_DIR_NAME), result);
-            }
-            return result;
-        }
-        collectExecutionDirs(tenantId, scanRoot, result);
-        return result;
+
+        return new StoragePurgeResult(agg.scanned, agg.purgedExecutions.size(), agg.deletedFiles);
     }
 
     /**
-     * Recursive tenant-wide walk. At each level, probes {@code <child>/executions/} to distinguish flow dir (scan its
-     * executions/) from namespace level (recurse). Probing — instead of matching the literal name {@code "executions"}
-     * — avoids treating a sub-namespace segment or flow named {@code executions} as the executions terminal.
+     * Purges a single flow's executions in one storage call. The shallow listing of {@code executions/}
+     * before the purge call feeds the per-execution {@code scanned} counter so the caller can tell how
+     * much work was looked at vs deleted; backends that override {@link StorageInterface#purgeByLastModified}
+     * with a native primitive still benefit because the file-level walk happens inside the override.
      */
-    private void collectExecutionDirs(@Nullable String tenantId, URI dirUri, List<URI> out) throws IOException {
-        for (FileAttributes child : listAsAdminOrEmpty(tenantId, dirUri)) {
+    private void purgeFlow(@Nullable String tenantId, String namespace, String flowId,
+        @Nullable Instant startDate, @Nullable Instant endDate, boolean dryRun, Aggregator agg) throws IOException {
+        URI executionsPrefix = StorageContext.executionsRootUri(namespace, flowId);
+
+        for (FileAttributes child : safeList(tenantId, namespace, executionsPrefix)) {
+            if (child.getType() == FileAttributes.FileType.Directory) {
+                agg.scanned++;
+            }
+        }
+
+        List<URI> matched = storageInterface.purgeByLastModified(
+            tenantId, namespace, executionsPrefix, startDate, endDate, dryRun);
+        for (URI uri : matched) {
+            StorageContext.extractExecutionId(uri).ifPresent(agg.purgedExecutions::add);
+        }
+        if (!dryRun) {
+            agg.deletedFiles += matched.size();
+        }
+    }
+
+    /** Lists direct flow-dir children of {@code namespaceRoot} and purges each. Exact namespace, no recursion. */
+    private void purgeNamespace(@Nullable String tenantId, String namespace,
+        @Nullable Instant startDate, @Nullable Instant endDate, boolean dryRun, Aggregator agg) throws IOException {
+        URI namespaceRoot = StorageContext.namespaceRootUri(namespace);
+        for (FileAttributes child : safeList(tenantId, namespace, namespaceRoot)) {
+            if (!isFlowCandidate(child) || isAmbiguousFlowName(child.getFileName(), namespace)) {
+                continue;
+            }
+            purgeFlow(tenantId, namespace, child.getFileName(), startDate, endDate, dryRun, agg);
+        }
+    }
+
+    /**
+     * Recursive tenant-wide walk. As we descend, we accumulate the dotted namespace from path segments and
+     * thread it through {@link #safeList} so backends enforcing per-namespace isolation receive a valid
+     * scope; only the tenant-root listing itself uses {@code null} (no namespace candidate exists yet).
+     * <p>
+     * At each level we probe {@code <child>/executions/} to distinguish a flow dir (purge it) from a
+     * namespace segment (recurse). A directory literally named {@code executions} is ambiguous — could be
+     * a flow named "executions" or a sub-namespace named "executions" — so we recurse rather than purge
+     * to avoid orphaning legitimate sub-namespace flows; explicit {@code flowId} is needed to purge that.
+     */
+    private void walkNamespaceTree(@Nullable String tenantId, String currentNamespace, URI dirUri,
+        @Nullable Instant startDate, @Nullable Instant endDate, boolean dryRun, Aggregator agg) throws IOException {
+        String namespaceForList = currentNamespace.isEmpty() ? null : currentNamespace;
+        for (FileAttributes child : safeList(tenantId, namespaceForList, dirUri)) {
             if (!isFlowCandidate(child)) {
                 continue;
             }
-            URI childUri = resolveChildDir(dirUri, child.getFileName());
-            URI executionsSubdir = resolveChildDir(childUri, StorageContext.EXECUTIONS_DIR_NAME);
-            List<FileAttributes> executionDirs = listAsAdminOrEmpty(tenantId, executionsSubdir);
-            // Ambiguous-name case (child literally "executions"): recurse rather than skip — skipping would silently
-            // orphan a legitimate sub-namespace's flows under it, while recursing still reaches them at a deeper
-            // level where the parent-name ambiguity no longer applies.
-            if (executionDirs.isEmpty() || isAmbiguousFlowName(child.getFileName(), null)) {
-                collectExecutionDirs(tenantId, childUri, out);
-            } else {
-                for (FileAttributes executionDir : executionDirs) {
-                    if (executionDir.getType() == FileAttributes.FileType.Directory) {
-                        out.add(resolveChild(executionsSubdir, executionDir.getFileName()));
-                    }
-                }
+            String childName = child.getFileName();
+            URI childUri = URI.create(dirUri + childName + "/");
+            URI executionsSubdir = URI.create(childUri + StorageContext.EXECUTIONS_DIR_NAME + "/");
+            List<FileAttributes> executionDirs = safeList(tenantId, namespaceForList, executionsSubdir);
+
+            if (executionDirs.isEmpty() || isAmbiguousFlowName(childName, null)) {
+                String nextNamespace = currentNamespace.isEmpty() ? childName : currentNamespace + "." + childName;
+                walkNamespaceTree(tenantId, nextNamespace, childUri, startDate, endDate, dryRun, agg);
+            } else if (!currentNamespace.isEmpty()) {
+                // Kestra always stores flows under a namespace, so a flow-shaped dir at tenant root is malformed.
+                purgeFlow(tenantId, currentNamespace, childName, startDate, endDate, dryRun, agg);
             }
         }
-    }
-
-    /** Adds direct subdirectories of {@code dirUri} to {@code out} as slash-less URIs (deleteByPrefix-shaped). */
-    private void addChildDirs(@Nullable String tenantId, URI dirUri, List<URI> out) throws IOException {
-        for (FileAttributes child : listAsAdminOrEmpty(tenantId, dirUri)) {
-            if (child.getType() == FileAttributes.FileType.Directory) {
-                out.add(resolveChild(dirUri, child.getFileName()));
-            }
-        }
-    }
-
-    /**
-     * Newest file mtime under {@code prefix}, or empty if no files. Listing errors are isolated via
-     * {@link #listAsAdminOrEmpty}, so a transient failure deep in a subtree yields "no files found" rather than
-     * aborting the whole recursion.
-     */
-    private OptionalLong lastModifiedFileTime(@Nullable String tenantId, URI prefix) {
-        long max = Long.MIN_VALUE;
-        boolean found = false;
-
-        for (FileAttributes child : listAsAdminOrEmpty(tenantId, prefix)) {
-            if (child.getType() == FileAttributes.FileType.Directory) {
-                OptionalLong sub = lastModifiedFileTime(tenantId, resolveChild(prefix, child.getFileName()));
-                if (sub.isPresent()) {
-                    max = Math.max(max, sub.getAsLong());
-                    found = true;
-                }
-            } else {
-                max = Math.max(max, child.getLastModifiedTime());
-                found = true;
-            }
-        }
-
-        return found ? OptionalLong.of(max) : OptionalLong.empty();
     }
 
     private static boolean isFlowCandidate(FileAttributes attrs) {
@@ -184,9 +154,9 @@ public class StoragePurgeService {
     }
 
     /**
-     * True when a child name collides with the {@code executions/} path segment. Storage cannot distinguish a flow
-     * named {@code executions} from a sub-namespace whose last segment is {@code executions}, so namespace-scoped
-     * scans skip the ambiguous name and require explicit {@code flowId} to act on it.
+     * True when a child name collides with the {@code executions/} path segment. Storage cannot distinguish
+     * a flow named {@code executions} from a sub-namespace whose last segment is {@code executions}, so
+     * namespace-scoped scans skip the ambiguous name and require explicit {@code flowId} to act on it.
      */
     private boolean isAmbiguousFlowName(String childName, @Nullable String namespace) {
         if (!StorageContext.EXECUTIONS_DIR_NAME.equals(childName)) {
@@ -197,28 +167,14 @@ public class StoragePurgeService {
         return true;
     }
 
-    private static URI resolveChild(URI parent, String name) {
-        String base = parent.toString();
-        return URI.create(base.endsWith("/") ? base + name : base + "/" + name);
-    }
-
-    private static URI resolveChildDir(URI parent, String name) {
-        return URI.create(resolveChild(parent, name) + "/");
-    }
-
     /**
-     * Lists {@code uri} returning empty on missing paths and on any I/O error (logged at WARN). Passes {@code null}
-     * as the namespace to the backend: the task already validated ACL on the target namespace at entry, and threading
-     * the namespace through here would only shrink results on EE backends that filter list output by namespace.
-     * <p>
-     * <strong>Must remain {@code private}.</strong> This is an admin-grade listing primitive whose safety depends on
-     * the caller having performed the ACL check at the entry point. Exposing it package-private or higher would let a
-     * caller that hasn't validated namespace access enumerate any tenant's storage, silently bypassing namespace
-     * isolation.
+     * Lists {@code uri} returning empty on missing paths and on any I/O error (logged at WARN). The
+     * {@code namespace} is threaded through so backends enforcing per-namespace isolation (e.g. dedicated
+     * storage) receive the correct scope; only the very top of a tenant-wide walk passes {@code null}.
      */
-    private List<FileAttributes> listAsAdminOrEmpty(@Nullable String tenantId, URI uri) {
+    private List<FileAttributes> safeList(@Nullable String tenantId, @Nullable String namespace, URI uri) {
         try {
-            return storageInterface.list(tenantId, null, uri);
+            return storageInterface.list(tenantId, namespace, uri);
         } catch (FileNotFoundException | NoSuchFileException e) {
             return List.of();
         } catch (IOException e) {
@@ -228,16 +184,15 @@ public class StoragePurgeService {
     }
 
     /**
-     * Result of a {@link #purgeByLastModified} run. Mirrors {@link ExecutionLogService.PurgeResult}.
+     * Result of a {@link #purgeByLastModified} run. {@code purgedCount} counts distinct execution IDs that
+     * had at least one file in the window (or would in dry-run mode); {@code deletedFilesCount} is the
+     * raw file count (always 0 in dry-run).
      */
-    public record StoragePurgeResult(int scannedCount, int deletedFilesCount, List<URI> purgedUris) {
-        public StoragePurgeResult {
-            // Tolerate null (e.g. partial Jackson payload) since List.copyOf(null) would NPE.
-            purgedUris = purgedUris == null ? List.of() : List.copyOf(purgedUris);
-        }
+    public record StoragePurgeResult(int scannedCount, int purgedCount, int deletedFilesCount) { }
 
-        public int purgedCount() {
-            return purgedUris.size();
-        }
+    private static final class Aggregator {
+        int scanned;
+        int deletedFiles;
+        final Set<String> purgedExecutions = new LinkedHashSet<>();
     }
 }

@@ -360,6 +360,8 @@ public class FlowService {
                     constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
 
+                // Do not perform a strict parsing validation to ignore unknown
+                // properties that might be injecting through default values.
                 FlowWithSource flowWithDefaults = pluginDefaultService.injectAllDefaults(flow, false);
                 constraintsBuilder.deprecationPaths(deprecationPaths(flowWithDefaults));
                 constraintsBuilder.warnings(warnings(flowWithDefaults, tenantId));

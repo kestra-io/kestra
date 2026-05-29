@@ -266,7 +266,7 @@
 
     .main-editor {
         padding: .5rem 0px;
-        background: var(--ks-bg-body);
+        background: var(--ks-bg-base);
         display: flex;
         height: calc(100% - 49px);
         min-height: 0;

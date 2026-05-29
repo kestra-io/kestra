@@ -225,7 +225,7 @@
         border-radius: var(--kel-border-radius-round);
 
         &:hover {
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
         }
 
         .icon {

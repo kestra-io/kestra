@@ -171,8 +171,8 @@
 
     const tooltipPopperOptions = {
         modifiers: [
-            {name: "flip", options: {boundary: "viewport", padding: 8}},
-            {name: "preventOverflow", options: {boundary: "viewport", padding: 8}},
+            {name: "flip", options: {rootBoundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {rootBoundary: "viewport", padding: 8}},
         ],
     }
 

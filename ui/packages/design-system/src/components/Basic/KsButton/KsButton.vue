@@ -155,7 +155,7 @@
             }
         }
 
-        &.kel-button--primary.is-disabled {
+        &.kel-button--primary:not(.is-text):not(.is-link).is-disabled {
             background-color: var(--ks-btn-primary-bg-inactive);
             border-color: var(--ks-btn-primary-bg-inactive);
             color: var(--ks-text-inactive);

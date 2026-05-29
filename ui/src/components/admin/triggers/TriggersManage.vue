@@ -5,6 +5,8 @@
             :loadData="loadData"
             :data="triggersMerged"
             :total="total"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
             :defaultSort="{prop: 'flowId', order: 'ascending'}"
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
@@ -488,7 +490,7 @@
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...restQuery} = route.query as Record<string, any>
         const queryFilter: Record<string, any> = {...restQuery}
 
         const timeRange = queryFilter["filters[timeRange][EQUALS]"]
@@ -523,14 +525,17 @@
         }
     }
 
-    const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
+        return JSON.stringify(filters)
     })
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     const refresh = () => dataTable.value?.reload()
 

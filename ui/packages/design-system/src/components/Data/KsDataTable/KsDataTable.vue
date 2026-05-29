@@ -57,8 +57,8 @@
 
             <KsPagination
                 v-if="total && total > 0"
-                :currentPage="internalPage"
-                :pageSize="internalSize"
+                :currentPage="currentPageValue"
+                :pageSize="currentSizeValue"
                 :total
                 layout="sizes, prev, pager, next, total"
                 size="small"
@@ -81,6 +81,10 @@
     import KsBulkSelect from "./KsBulkSelect.vue"
 
     defineOptions({inheritAttrs: false})
+
+    const DEFAULT_PAGE_SIZE = 25
+    const MAX_PAGE_SIZE = 1000
+    const MAX_PAGE = 1_000_000
 
     const props = withDefaults(defineProps<{
         data?: any[]
@@ -114,6 +118,8 @@
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
+        "update:currentPage": [page: number]
+        "update:pageSize": [size: number]
         "sort-change": [sort: {column: any; prop: string; order: string | null}]
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
@@ -163,8 +169,18 @@
     const isLoading = ref(props.loading)
     const isReady = ref(false)
 
-    const internalPage = ref(props.currentPage)
-    const internalSize = ref(props.pageSize)
+    const normalizePage = (value: number | undefined): number => {
+        const page = Math.floor(Number(value))
+        if (!Number.isFinite(page) || page < 1) return 1
+        return Math.min(page, MAX_PAGE)
+    }
+    const normalizeSize = (value: number | undefined): number => {
+        const size = Math.floor(Number(value))
+        if (!Number.isFinite(size) || size < 1) return DEFAULT_PAGE_SIZE
+        return Math.min(size, MAX_PAGE_SIZE)
+    }
+    const currentPageValue = computed(() => normalizePage(props.currentPage))
+    const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
     const tableRef = ref<InstanceType<typeof KsTable>>()
@@ -271,8 +287,8 @@
         isLoading.value = true
         try {
             await props.loadData({
-                page: internalPage.value,
-                size: internalSize.value,
+                page: currentPageValue.value,
+                size: currentSizeValue.value,
                 sort: internalSort.value,
             })
         } finally {
@@ -289,8 +305,12 @@
     const reload = () => callLoad()
 
     const resetAndReload = () => {
-        internalPage.value = 1
-        callLoad()
+        if (currentPageValue.value !== 1) {
+            emit("update:currentPage", 1)
+            emit("page-changed", {page: 1, size: currentSizeValue.value})
+        } else {
+            callLoad()
+        }
     }
 
     onMounted(() => {
@@ -325,20 +345,18 @@
     }, {immediate: true})
 
     watch(() => props.loading, (val) => { isLoading.value = val })
-    watch(() => props.currentPage, (val) => { internalPage.value = val ?? 1 })
-    watch(() => props.pageSize, (val) => { internalSize.value = val ?? 25 })
+
+    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {
-        internalPage.value = page
-        emit("page-changed", {page, size: internalSize.value})
-        callLoad()
+        emit("update:currentPage", page)
+        emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
-        internalPage.value = 1
-        internalSize.value = size
+        emit("update:currentPage", 1)
+        emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
-        callLoad()
     }
 
     const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {

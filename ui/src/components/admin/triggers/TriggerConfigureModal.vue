@@ -94,7 +94,7 @@
 
         <template #footer>
             <div class="modal-footer">
-                <KsButton link @click="$emit('cancel')">
+                <KsButton @click="$emit('cancel')">
                     {{ $t("cancel") }}
                 </KsButton>
                 <KsButton type="primary" :disabled="!canSubmit" @click="addTriggerToFlow">
@@ -353,8 +353,7 @@
     }
 
     .modal-footer {
+        justify-self: end;
         display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
     }
 </style>

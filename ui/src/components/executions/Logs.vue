@@ -10,6 +10,13 @@
             @search="filter = $event"
             @filter="syncFromAppliedFilters"
         />
+        <QuickFilters
+            :levels="logLevels"
+            :level="effectiveLevel?.value"
+            :showInterval="false"
+            :levelLabel="$t('filter.level_log_executions.label')"
+            @update:level="(value) => setLevelRouteValue({value, direction: 'min'})"
+        />
         <Collapse>
             <KsFormItem v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
@@ -143,6 +150,8 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import {useValues} from "../filter/composables/useValues"
+    import QuickFilters from "../filter/QuickFilters.vue"
 
     function distinctFilter(value, index, array) {
         return array.indexOf(value) === index
@@ -162,6 +171,7 @@
             DynamicScrollerItem,
             Refresh,
             KSFilter,
+            QuickFilters,
         },
         setup() {
             const logExecutionsFilter = useLogExecutionsFilter()
@@ -173,6 +183,7 @@
                 routeValue: routeLevel,
                 effectiveValue: effectiveLevel,
                 syncFromAppliedFilters,
+                setRouteValue: setLevelRouteValue,
             } = useRouteFilterPolicy({
                 defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
                 applyDefaultIfMissing: () => true,
@@ -183,11 +194,15 @@
                 readFromAppliedFilters: readAppliedLevelFilter,
             })
 
+            const {VALUES} = useValues("logs")
+
             return {
                 logExecutionsFilter,
                 routeLevel,
                 effectiveLevel,
                 syncFromAppliedFilters,
+                setLevelRouteValue,
+                logLevels: VALUES.LEVELS,
             }
         },
         data() {

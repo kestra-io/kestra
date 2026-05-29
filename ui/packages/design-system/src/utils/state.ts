@@ -191,27 +191,27 @@ export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
 
-export function isRunning(state:string): boolean | undefined {
+export function isRunning(state:string) {
     return STATES[state]?.isRunning
 }
 
-export function isKillable(state:string): boolean | undefined {
+export function isKillable(state:string) {
     return STATES[state]?.isKillable
 }
 
-export function isPaused(state:string): boolean {
+export function isPaused(state:string) {
     return STATES[state] === STATES.PAUSED
 }
 
-export function isFailed(state:string): boolean | undefined {
+export function isFailed(state:string) {
     return STATES[state]?.isFailed
 }
 
-export function isQueued(state:string): boolean {
+export function isQueued(state:string) {
     return STATES[state] === STATES.QUEUED
 }
 
-export function allStates(): Record<string, {key: string; icon: Component; color: string}> {
+export function allStates() {
     return mapValues(STATES, (state:StateModel) => ({
         key: state.name,
         icon: state.icon,
@@ -219,26 +219,26 @@ export function allStates(): Record<string, {key: string; icon: Component; color
     }))
 }
 
-export function arrayAllStates(): StateModel[] {
+export function arrayAllStates() {
     return Object.values(STATES)
 }
 
-export function colorClass(): Record<string, string> {
+export function colorClass() {
     return mapValues(STATES, (state) => state.colorClass)
 }
 
-export function color(): Record<string, string> {
+export function color() {
     return mapValues(STATES, (state) => cssVar(`--ks-status-${state.name.toLowerCase()}`))
 }
 
-export function getStateColor(state:string): string {
+export function getStateColor(state:string) {
     return cssVar(`--ks-status-${STATES[state].name.toLowerCase()}`)
 }
 
-export function icon(): Record<string, Component> {
+export function icon() {
     return mapValues(STATES, (state) => state.icon)
 }
 
-export function getTerminatedStates(): string[] {
+export function getTerminatedStates() {
     return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name)
 }

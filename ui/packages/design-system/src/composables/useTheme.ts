@@ -1,6 +1,6 @@
-import {onMounted, onUnmounted, ref, type Ref} from "vue"
+import {onMounted, onUnmounted, ref} from "vue"
 
-export function useTheme(): {isDark: Ref<boolean>} {
+export function useTheme() {
     const isDark = ref(false)
     let observer: MutationObserver | null = null
 
@@ -22,6 +22,6 @@ export function useTheme(): {isDark: Ref<boolean>} {
     })
 
     return {
-        isDark: isDark,
+        isDark,
     }
 }

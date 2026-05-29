@@ -1,24 +1,17 @@
-import {ref, type Ref} from "vue"
+import {ref} from "vue"
 
-export function useDragAndDrop(): {
-    draggedIndex: Ref<number | null>;
-    dragOverIndex: Ref<number | null>;
-    handleDragStart: (event: DragEvent, index: number) => void;
-    handleDragOver: (event: DragEvent, index: number) => void;
-    handleDrop: (event: DragEvent, targetIndex: number, onReorder: (fromIndex: number, toIndex: number) => void) => void;
-    handleDragEnd: () => void;
-} {
+export function useDragAndDrop() {
     const draggedIndex = ref<number | null>(null)
     const dragOverIndex = ref<number | null>(null)
 
-    const handleDragStart = (event: DragEvent, index: number): void => {
+    const handleDragStart = (event: DragEvent, index: number) => {
         draggedIndex.value = index
         if (event.dataTransfer) {
             event.dataTransfer.effectAllowed = "move"
         }
     }
 
-    const handleDragOver = (event: DragEvent, index: number): void => {
+    const handleDragOver = (event: DragEvent, index: number) => {
         event.preventDefault()
         dragOverIndex.value = index
         if (event.dataTransfer) {
@@ -26,7 +19,7 @@ export function useDragAndDrop(): {
         }
     }
 
-    const handleDrop = (event: DragEvent, targetIndex: number, onReorder: (fromIndex: number, toIndex: number) => void): void => {
+    const handleDrop = (event: DragEvent, targetIndex: number, onReorder: (fromIndex: number, toIndex: number) => void) => {
         event.preventDefault()
         if (draggedIndex.value != null && draggedIndex.value !== targetIndex) {
             onReorder(draggedIndex.value, targetIndex)
@@ -34,16 +27,16 @@ export function useDragAndDrop(): {
         handleDragEnd()
     }
 
-    const handleDragEnd = (): void => {
+    const handleDragEnd = () => {
         draggedIndex.value = dragOverIndex.value = null
     }
 
     return {
-        draggedIndex: draggedIndex,
-        dragOverIndex: dragOverIndex,
-        handleDragStart: handleDragStart,
-        handleDragOver: handleDragOver,
-        handleDrop: handleDrop,
-        handleDragEnd: handleDragEnd,
+        draggedIndex,
+        dragOverIndex,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
     }
 }

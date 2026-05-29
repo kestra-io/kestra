@@ -1,15 +1,11 @@
-import {ref, computed, onUnmounted, watch, type ComputedRef, type WritableComputedRef} from "vue"
+import {ref, computed, onUnmounted, watch} from "vue"
 import {useRoute} from "vue-router"
 
 const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${routeName}`
 
 export {getAutoRefreshEnabledKey}
 
-export function usePeriodicRefresh(): {
-    isEnabled: WritableComputedRef<boolean>;
-    tooltip: ComputedRef<string>;
-    toggleRefresh: (enabled: boolean, callback: () => void) => void;
-} {
+export function usePeriodicRefresh() {
     const route = useRoute()
     const enabledRef = ref(false)
     const refreshInterval = ref<number | null>(null)
@@ -30,7 +26,7 @@ export function usePeriodicRefresh(): {
         },
     })
 
-    const toggleRefresh = (enabled: boolean, callback: () => void): void => {
+    const toggleRefresh = (enabled: boolean, callback: () => void) => {
         if (refreshInterval.value) clearInterval(refreshInterval.value)
         refreshInterval.value = enabled ? window.setInterval(callback, intervalSeconds.value * 1000) : null
     }
@@ -38,8 +34,8 @@ export function usePeriodicRefresh(): {
     onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value))
 
     return {
-        isEnabled: isEnabled,
-        tooltip: tooltip,
-        toggleRefresh: toggleRefresh,
+        isEnabled,
+        tooltip,
+        toggleRefresh,
     }
 }

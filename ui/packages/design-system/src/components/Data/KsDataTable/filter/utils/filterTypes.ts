@@ -14,8 +14,8 @@ export enum Comparators {
     PREFIX = "^.=",
 }
 
-export const KV_COMPARATORS: Comparators[] = [Comparators.EQUALS, Comparators.NOT_EQUALS]
-export const TEXT_COMPARATORS: Comparators[] = [
+export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
+export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
     Comparators.ENDS_WITH,
     Comparators.STARTS_WITH,

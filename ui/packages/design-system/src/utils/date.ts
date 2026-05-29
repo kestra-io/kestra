@@ -4,7 +4,7 @@ import momentTz from "moment-timezone"
 export const DATE_FORMAT_STORAGE_KEY = "dateFormat"
 export const TIMEZONE_STORAGE_KEY = "timezone"
 
-export const dateFilter = (dateString: string, format?: string): string => {
+export const dateFilter = (dateString: string, format?: string) => {
     const currentLocale = getCurrentInstance()?.appContext.config.globalProperties.$moment().locale()
     const momentInstance = getCurrentInstance()?.appContext.config.globalProperties.$moment(dateString).locale(currentLocale)
     let f

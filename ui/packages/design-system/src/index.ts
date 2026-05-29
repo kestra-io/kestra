@@ -390,7 +390,7 @@ export {
 }
 
 const KestraDesignSystem = {
-    install(app: App): void {
+    install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
             app.use(ElementPlus, {namespace: "kel"})
         }

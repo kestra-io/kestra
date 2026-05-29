@@ -68,7 +68,7 @@ export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw): L
     return undefined
 }
 
-export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | LocationQueryRaw): boolean =>
+export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | LocationQueryRaw) =>
     Object.keys(query).some(
         (key) =>
             key === LEGACY_LEVEL_FILTER_KEY ||

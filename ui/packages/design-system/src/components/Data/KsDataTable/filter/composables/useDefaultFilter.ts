@@ -31,7 +31,7 @@ function readSavedRestoreState(route: RouteLocationNormalizedLoaded): LocationQu
     }
 }
 
-export function defaultNamespace(): string | null {
+export function defaultNamespace() {
     return localStorage.getItem("defaultNamespace")
 }
 
@@ -80,9 +80,7 @@ export function applyDefaultFilters(
 
 export function useDefaultFilter(
     defaultOptions?: DefaultFilterOptions,
-): {
-    resetDefaultFilter: () => void;
-} {
+) {
     const route = useRoute()
     const router = useRouter()
 
@@ -100,7 +98,7 @@ export function useDefaultFilter(
         }
     })
 
-    function resetDefaultFilter(): void {
+    function resetDefaultFilter(){
         router.replace({
             ...route,
             query: applyDefaultFilters({}, defaultOptions).query,
@@ -108,6 +106,6 @@ export function useDefaultFilter(
     }
 
     return {
-        resetDefaultFilter: resetDefaultFilter,
+        resetDefaultFilter,
     }
 }

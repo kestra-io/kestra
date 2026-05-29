@@ -1,4 +1,4 @@
-import {ref, computed, onMounted, type Ref, type ComputedRef} from "vue"
+import {ref, computed, onMounted} from "vue"
 import {useLocalStorage} from "@vueuse/core"
 
 export interface ColumnConfig {
@@ -15,18 +15,7 @@ export interface UseTableColumnsOptions {
     initialVisibleColumns?: string[];
 }
 
-export function useTableColumns({columns, storageKey, initialVisibleColumns = []}: UseTableColumnsOptions): {
-    visibleColumns: Ref<string[]>;
-    orderedColumns: ComputedRef<ColumnConfig[]>;
-    orderedVisibleColumns: ComputedRef<string[]>;
-    visibleCount: ComputedRef<number>;
-    totalCount: ComputedRef<number>;
-    isVisible: (column: ColumnConfig) => boolean;
-    toggleColumn: (column: ColumnConfig) => void;
-    reorderColumns: (fromIndex: number, toIndex: number) => void;
-    updateVisibleColumns: (newColumns: string[]) => void;
-    initializeVisibleColumns: () => void;
-} {
+export function useTableColumns({columns, storageKey, initialVisibleColumns = []}: UseTableColumnsOptions) {
     const orderStorageKey = `ks-column-order-${storageKey}`
     const visibilityStorageKey = `columns_${storageKey}`
     const defaultOrder = columns.map(c => c.prop)
@@ -64,7 +53,7 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
     const visibleCount = computed(() => visibleColumns.value.length)
     const totalCount = computed(() => columns.length)
 
-    const initializeVisibleColumns = (): void => {
+    const initializeVisibleColumns = () => {
         const stored = localStorage.getItem(visibilityStorageKey)
         if (stored) {
             try {
@@ -82,9 +71,9 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
             : columns.filter(c => c.default && (!c.condition || c.condition())).map(c => c.prop)
     }
 
-    const isVisible = (column: ColumnConfig): boolean => visibleColumns.value.includes(column.prop)
+    const isVisible = (column: ColumnConfig) => visibleColumns.value.includes(column.prop)
 
-    const toggleColumn = (column: ColumnConfig): void => {
+    const toggleColumn = (column: ColumnConfig) => {
         const prop = column.prop
         if (isVisible(column)) {
             visibleColumns.value = visibleColumns.value.filter(p => p !== prop)
@@ -104,7 +93,7 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
         localStorage.setItem(visibilityStorageKey, visibleColumns.value.join(","))
     }
 
-    const reorderColumns = (fromIndex: number, toIndex: number): void => {
+    const reorderColumns = (fromIndex: number, toIndex: number) => {
         if (fromIndex === toIndex) return
         const newOrder = [...columnOrder.value]
         const [dragged] = newOrder.splice(fromIndex, 1)
@@ -114,7 +103,7 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
         localStorage.setItem(visibilityStorageKey, visibleColumns.value.join(","))
     }
 
-    const updateVisibleColumns = (newColumns: string[]): void => {
+    const updateVisibleColumns = (newColumns: string[]) => {
         visibleColumns.value = newColumns
         localStorage.setItem(visibilityStorageKey, newColumns.join(","))
     }
@@ -122,15 +111,15 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
     onMounted(initializeVisibleColumns)
 
     return {
-        visibleColumns: visibleColumns,
-        orderedColumns: orderedColumns,
-        orderedVisibleColumns: orderedVisibleColumns,
-        visibleCount: visibleCount,
-        totalCount: totalCount,
-        isVisible: isVisible,
-        toggleColumn: toggleColumn,
-        reorderColumns: reorderColumns,
-        updateVisibleColumns: updateVisibleColumns,
-        initializeVisibleColumns: initializeVisibleColumns,
+        visibleColumns,
+        orderedColumns,
+        orderedVisibleColumns,
+        visibleCount,
+        totalCount,
+        isVisible,
+        toggleColumn,
+        reorderColumns,
+        updateVisibleColumns,
+        initializeVisibleColumns,
     }
 }

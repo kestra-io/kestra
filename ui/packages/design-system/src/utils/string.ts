@@ -1,3 +1,3 @@
-export function afterLastDot(str: string): string | undefined {
+export function afterLastDot(str: string) {
     return str.split(".").pop()
 }

@@ -7,7 +7,7 @@ import type {ElMessageBoxOptions, ElMessageBoxShortcutMethod} from "element-plus
 export const KsMessageBox = Object.assign(
     (options: ElMessageBoxOptions): ReturnType<typeof ElMessageBox.confirm> => ElMessageBox(options),
     {
-        alert: (...args: Parameters<ElMessageBoxShortcutMethod>) => ElMessageBox.confirm(...args),
+        alert: (...args: Parameters<ElMessageBoxShortcutMethod>) => ElMessageBox.alert(...args),
         confirm: (...args: Parameters<ElMessageBoxShortcutMethod>) => ElMessageBox.confirm(...args),
         prompt: (...args: Parameters<ElMessageBoxShortcutMethod>) => ElMessageBox.prompt(...args),
         close: () => ElMessageBox.close(),

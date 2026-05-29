@@ -96,6 +96,18 @@ class BlueprintControllerTest {
         assertThat(e.getMessage()).contains("Operation EQUALS is not supported for field TAGS");
     }
 
+    @Test
+    void shouldRejectLogicalFilterGroupsInsteadOfSilentlyDroppingThem() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?filters[or][0][q][EQUALS]=foo&filters[or][1][q][EQUALS]=bar"),
+                Argument.of(PagedResults.class, BlueprintController.ApiBlueprintItem.class)
+            )
+        );
+        assertThat(e.getMessage()).contains("does not support logical (AND/OR) or nested filter groups");
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void shouldFindSearchBlueprintsWithoutFiltersOmitsLegacyParams(WireMockRuntimeInfo wmRuntimeInfo) {

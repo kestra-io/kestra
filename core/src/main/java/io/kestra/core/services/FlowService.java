@@ -473,7 +473,7 @@ public class FlowService {
             }
         });
 
-        // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
+        // add warning for runnable properties (timeout, workerSelector, taskCache) when used not in a runnable
         flow.allTasksWithChilds().forEach(task ->
         {
             if (!(task instanceof RunnableTask<?>)) {
@@ -483,8 +483,8 @@ public class FlowService {
                 if (task.getTaskCache() != null) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'taskCache' property as it's only relevant for runnable tasks.");
                 }
-                if (task.getWorkerGroup() != null) {
-                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerGroup' property as it's only relevant for runnable tasks.");
+                if (task.getWorkerSelector() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerSelector' property as it's only relevant for runnable tasks.");
                 }
             }
         });

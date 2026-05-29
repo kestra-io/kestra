@@ -18,19 +18,10 @@ class KestraContextTest {
     @Test
     void shouldGetWorkerMaxNumThreads() throws InterruptedException {
         // When
-        context.injectWorkerConfigs(16, null);
+        context.injectWorkerConfigs(16);
 
         // Then
         assertThat(context.getWorkerMaxNumThreads()).isEqualTo(Optional.of(16));
-    }
-
-    @Test
-    void shouldGetWorkerGroupKey() {
-        // When
-        context.injectWorkerConfigs(null, "my-key");
-
-        // Then
-        assertThat(context.getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
     }
 
     @Test

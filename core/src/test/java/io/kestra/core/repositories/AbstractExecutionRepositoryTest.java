@@ -24,6 +24,7 @@ import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -266,6 +267,120 @@ public abstract class AbstractExecutionRepositoryTest {
 
             Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.NOT_EQUALS).build(), 0)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("complexFilterCombinations")
+    void should_find_all_with_complex_filters(String description, List<QueryFilter> filters, int expectedSize) {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+
+        ArrayListTotal<Execution> entries = executionRepository.find(Pageable.UNPAGED, tenant, filters);
+
+        assertThat(entries).as(description).hasSize(expectedSize);
+    }
+
+    static Stream<Arguments> complexFilterCombinations() {
+        QueryFilter runningState = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value(Type.RUNNING).build();
+        QueryFilter failedState = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value(Type.FAILED).build();
+        QueryFilter successState = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value(Type.SUCCESS).build();
+        QueryFilter flowFull = QueryFilter.builder().field(Field.FLOW_ID).operation(Op.EQUALS).value(FLOW).build();
+        QueryFilter flowSecond = QueryFilter.builder().field(Field.FLOW_ID).operation(Op.EQUALS).value("second").build();
+        QueryFilter namespaceEq = QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value(NAMESPACE).build();
+
+        return Stream.of(
+            // OR at root: state = RUNNING OR state = FAILED -> 5 + 3 = 8
+            Arguments.of(
+                "RUNNING OR FAILED",
+                List.of(QueryFilter.builder()
+                    .logical(Logical.OR)
+                    .children(List.of(runningState, failedState))
+                    .build()),
+                8
+            ),
+
+            // (state=RUNNING AND flow=full) OR (state=SUCCESS AND flow=second) -> 5 + 13 = 18
+            Arguments.of(
+                "(RUNNING AND flow=full) OR (SUCCESS AND flow=second)",
+                List.of(QueryFilter.builder()
+                    .logical(Logical.OR)
+                    .children(List.of(
+                        QueryFilter.builder()
+                            .logical(Logical.AND)
+                            .children(List.of(runningState, flowFull))
+                            .build(),
+                        QueryFilter.builder()
+                            .logical(Logical.AND)
+                            .children(List.of(successState, flowSecond))
+                            .build()
+                    ))
+                    .build()),
+                18
+            ),
+
+            // Mixed root: namespace=X (global AND) + (RUNNING OR FAILED) -> 8
+            Arguments.of(
+                "namespace AND (RUNNING OR FAILED)",
+                List.of(
+                    namespaceEq,
+                    QueryFilter.builder()
+                        .logical(Logical.OR)
+                        .children(List.of(runningState, failedState))
+                        .build()
+                ),
+                8
+            ),
+
+            // 3-way OR with mixed leaves and AND children:
+            // (RUNNING AND flow=full) OR FAILED OR (SUCCESS AND flow=second) -> 5 + 3 + 13 = 21
+            Arguments.of(
+                "(RUNNING AND flow=full) OR FAILED OR (SUCCESS AND flow=second)",
+                List.of(QueryFilter.builder()
+                    .logical(Logical.OR)
+                    .children(List.of(
+                        QueryFilter.builder()
+                            .logical(Logical.AND)
+                            .children(List.of(runningState, flowFull))
+                            .build(),
+                        failedState,
+                        QueryFilter.builder()
+                            .logical(Logical.AND)
+                            .children(List.of(successState, flowSecond))
+                            .build()
+                    ))
+                    .build()),
+                21
+            ),
+
+            // Deeply nested OR-in-AND-in-OR: namespace AND ((RUNNING AND flow=full) OR FAILED) -> 5 + 3 = 8
+            Arguments.of(
+                "namespace AND ((RUNNING AND flow=full) OR FAILED)",
+                List.of(
+                    namespaceEq,
+                    QueryFilter.builder()
+                        .logical(Logical.OR)
+                        .children(List.of(
+                            QueryFilter.builder()
+                                .logical(Logical.AND)
+                                .children(List.of(runningState, flowFull))
+                                .build(),
+                            failedState
+                        ))
+                        .build()
+                ),
+                8
+            ),
+
+            // Single-child AND wrapper -> behaves identically to the leaf -> 5
+            Arguments.of(
+                "AND wrapper containing only RUNNING",
+                List.of(QueryFilter.builder()
+                    .logical(Logical.AND)
+                    .children(List.of(runningState))
+                    .build()),
+                5
+            )
         );
     }
 

@@ -246,18 +246,33 @@ public abstract class AbstractJdbcRepository {
         List<QueryFilter> filters,
         String dateColumn,
         Resource resource) {
-        List<Condition> conditions = new ArrayList<>();
-        if (filters != null) {
-            QueryFilter.validateQueryFilters(filters, resource);
-            for (QueryFilter filter : filters) {
-                QueryFilter.Field field = filter.field();
-                QueryFilter.Op operation = filter.operation();
-                Object value = filter.value();
-                conditions.add(getConditionOnField(field, value, operation, dateColumn));
-            }
+        if (filters == null || filters.isEmpty()) {
+            return DSL.noCondition();
         }
-        return conditions.stream()
+        QueryFilter.validateQueryFilters(filters, resource);
+        return andOf(filters, dateColumn);
+    }
+
+    private Condition andOf(List<QueryFilter> items, String dateColumn) {
+        return items.stream()
+            .map(f -> toCondition(f, dateColumn))
             .reduce(DSL.noCondition(), Condition::and);
+    }
+
+    private Condition orOf(List<QueryFilter> items, String dateColumn) {
+        return items.stream()
+            .map(f -> toCondition(f, dateColumn))
+            .reduce(DSL.noCondition(), Condition::or);
+    }
+
+    private Condition toCondition(QueryFilter filter, String dateColumn) {
+        if (filter.isLeaf()) {
+            return getConditionOnField(filter.field(), filter.value(), filter.operation(), dateColumn);
+        }
+        return switch (filter.logical()) {
+            case AND -> andOf(filter.children(), dateColumn);
+            case OR -> orOf(filter.children(), dateColumn);
+        };
     }
 
     /**

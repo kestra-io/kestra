@@ -21,16 +21,61 @@ import lombok.Builder;
 public record QueryFilter(
     Field field,
     Op operation,
-    Object value) {
+    Object value,
+    Logical logical,
+    List<QueryFilter> children) {
 
     @JsonCreator
     public QueryFilter(
         @JsonProperty("field") Field field,
         @JsonProperty("operation") Op operation,
-        @JsonProperty("value") Object value) {
+        @JsonProperty("value") Object value,
+        @JsonProperty("logical") Logical logical,
+        @JsonProperty("children") List<QueryFilter> children) {
+        boolean leafShape = field != null && operation != null && logical == null && children == null;
+        boolean nodeShape = logical != null && children != null && !children.isEmpty()
+            && field == null && operation == null && value == null;
+        if (!leafShape && !nodeShape) {
+            throw new IllegalArgumentException(
+                "QueryFilter must be either a leaf (field + operation) or a node (logical + non-empty children), not both or neither");
+        }
         this.field = field;
         this.operation = operation;
         this.value = value;
+        this.logical = logical;
+        this.children = children;
+    }
+
+    public boolean isLeaf() {
+        return logical == null;
+    }
+
+    public boolean isNode() {
+        return logical != null;
+    }
+
+    public enum Logical {
+        AND("and"),
+        OR("or");
+
+        private static final Map<String, Logical> BY_VALUE = Arrays.stream(values())
+            .collect(Collectors.toMap(Logical::value, Function.identity()));
+
+        private final String value;
+
+        Logical(String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String value() {
+            return value;
+        }
+
+        @JsonCreator
+        public static Logical fromString(String value) {
+            return Enums.fromString(value, BY_VALUE, "logical");
+        }
     }
 
     public enum Op {
@@ -59,6 +104,9 @@ public record QueryFilter(
     }
 
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
+        if (isNode()) {
+            throw new IllegalStateException("toDashboardFilterBuilder is only supported on leaf QueryFilter instances");
+        }
         return switch (this.operation) {
             case EQUALS -> EqualTo.<T> builder().field(field).value(value).build();
             case NOT_EQUALS -> NotEqualTo.<T> builder().field(field).value(value).build();
@@ -633,27 +681,32 @@ public record QueryFilter(
             return;
         }
         List<String> errors = new ArrayList<>();
-        filters.forEach(filter ->
-        {
-            if (!filter.field().supportedOp().contains(filter.operation())) {
-                errors.add(
-                    "Operation %s is not supported for field %s. Supported operations are %s".formatted(
-                        filter.operation(), filter.field().name(),
-                        filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))
-                    )
-                );
-            }
-            if (!resource.supportedField().contains(filter.field())) {
-                errors.add(
-                    "Field %s is not supported for resource %s. Supported fields are %s".formatted(
-                        filter.field().name(), resource.name(),
-                        resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
-                    )
-                );
-            }
-        });
+        filters.forEach(filter -> collectValidationErrors(filter, resource, errors));
         if (!errors.isEmpty()) {
             throw new InvalidQueryFiltersException(errors);
+        }
+    }
+
+    private static void collectValidationErrors(QueryFilter filter, Resource resource, List<String> errors) {
+        if (filter.isNode()) {
+            filter.children().forEach(child -> collectValidationErrors(child, resource, errors));
+            return;
+        }
+        if (!filter.field().supportedOp().contains(filter.operation())) {
+            errors.add(
+                "Operation %s is not supported for field %s. Supported operations are %s".formatted(
+                    filter.operation(), filter.field().name(),
+                    filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))
+                )
+            );
+        }
+        if (!resource.supportedField().contains(filter.field())) {
+            errors.add(
+                "Field %s is not supported for resource %s. Supported fields are %s".formatted(
+                    filter.field().name(), resource.name(),
+                    resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
+                )
+            );
         }
     }
 

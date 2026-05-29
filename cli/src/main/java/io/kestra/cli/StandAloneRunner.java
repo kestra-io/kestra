@@ -83,7 +83,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
 
         if (workerEnabled) {
             Worker worker = workerProvider.get();
-            poolExecutor.execute(() -> worker.start(workerThread, null));
+            poolExecutor.execute(() -> worker.start(workerThread));
             servers.add(worker);
         }
 

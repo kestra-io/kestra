@@ -268,7 +268,7 @@
         }
 
         :deep(.property-detail) {
-            background-color: var(--ks-bg-body);
+            background-color: var(--ks-bg-base);
             padding: 1rem 0;
 
             > * {

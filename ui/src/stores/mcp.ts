@@ -3,12 +3,16 @@ import {defineStore} from "pinia"
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 
+export type McpAuthType = "BASIC" | "API_TOKEN" | "OAUTH";
+
 export interface McpServer {
     id: string;
     description?: string;
     instructions?: string;
     serverType: "PRIVATE" | "PUBLIC";
-    authType: "BASIC" | "API_TOKEN";
+    authType: McpAuthType;
+    oauthProvider?: string;
+    oauthScopesSupported?: string[];
     disabled: boolean;
     isDefault: boolean;
 }
@@ -18,7 +22,29 @@ export interface McpServerPayload {
     description?: string;
     instructions?: string;
     serverType: "PRIVATE" | "PUBLIC";
-    authType: "BASIC" | "API_TOKEN";
+    authType: McpAuthType;
+    oauthProvider?: string;
+    oauthScopesSupported?: string[];
+    disabled: boolean;
+}
+
+export interface McpToolAnnotations {
+    readOnly: boolean;
+    openWorld: boolean;
+    destructive: boolean;
+    idempotent: boolean;
+    returnDirect: boolean;
+}
+
+export interface McpTool {
+    toolName: string;
+    triggerId: string;
+    title: string;
+    description: string;
+    annotations: McpToolAnnotations;
+    namespace: string;
+    flowId: string;
+    flowRevision: number;
     disabled: boolean;
 }
 
@@ -58,5 +84,10 @@ export const useMcpStore = defineStore("mcp", () => {
         return data
     }
 
-    return {server, list, load, create, update, remove, toggle}
+    const listTools = async (id: string): Promise<McpTool[]> => {
+        const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}/tools`, {withCredentials: true})
+        return data
+    }
+
+    return {server, list, load, create, update, remove, toggle, listTools}
 })

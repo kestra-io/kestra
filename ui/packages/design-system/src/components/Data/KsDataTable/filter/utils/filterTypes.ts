@@ -31,7 +31,7 @@ export interface FilterKeyConfig {
     label: string;
     description?: string;
     searchable?: boolean;
-    comparators: Comparators[];
+    comparators: [Comparators, ...Comparators[]];
     showComparatorSelection?: boolean;
     /**
      * Returns the dropdown options for a filter.
@@ -77,6 +77,33 @@ export interface AppliedFilter {
     meta?: Record<string, string>;
 }
 
+export type LogicalOperator = "AND" | "OR";
+
+export interface LeafFilterGroup {
+    id: string;
+    kind?: "leaf";
+    filters: AppliedFilter[];
+}
+
+export interface WrapperGroup {
+    id: string;
+    kind: "wrapper";
+    logical: LogicalOperator;
+    children: LeafFilterGroup[];
+}
+
+export type FilterGroup = LeafFilterGroup | WrapperGroup;
+
+export const isWrapperGroup = (g: FilterGroup): g is WrapperGroup =>
+    g.kind === "wrapper"
+
+export const isLeafGroup = (g: FilterGroup): g is LeafFilterGroup =>
+    g.kind !== "wrapper"
+
+/** Returns the operator opposite to the given one. */
+export const flipLogical = (op: LogicalOperator): LogicalOperator =>
+    op === "AND" ? "OR" : "AND"
+
 export interface SavedFilter {
     id: string;
     name: string;
@@ -84,6 +111,7 @@ export interface SavedFilter {
     global?: boolean;
     description?: string;
     filters: AppliedFilter[];
+    groups?: FilterGroup[];
 }
 
 export interface FilterConfiguration {

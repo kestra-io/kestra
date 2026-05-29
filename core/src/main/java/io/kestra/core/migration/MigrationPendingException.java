@@ -39,9 +39,9 @@ public class MigrationPendingException extends KestraRuntimeException {
 
     private static String buildMessage(final List<String> pendingScriptIds) {
         return """
-            Kestra cannot start: the database schema is not up to date and automatic migration is disabled.
-            The following migration scripts have not been applied: %s
-            To update the database schema, either:
+            Kestra cannot start: one or more database schema migrations are needed first.
+            Migration scripts to apply: %s
+            To run the migrations, either:
               - Run: kestra migrate run
               - Or enable automatic migration by setting: kestra.migration.auto=true
             """.formatted(pendingScriptIds);

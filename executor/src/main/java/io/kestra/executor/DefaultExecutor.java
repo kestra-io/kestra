@@ -766,7 +766,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
             // pipeline, regardless of how many transitions collapsed into one executor cycle.
             List<State.Type> transitions = executor.getStateTransitions();
             for (int i = 1; i < transitions.size(); i++) {
-                processFlowTriggers(execution.withState(transitions.get(i)));
+                State.Type transitionState = transitions.get(i);
+                processFlowTriggers(transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
             }
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.

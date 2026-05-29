@@ -5,6 +5,8 @@
             :loadData="loadData"
             :data="secrets"
             :total="total"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
@@ -490,14 +492,17 @@
         total.value = secretsResponse.total ?? 0
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     const updateSecretModal = (secretData: NamespaceSecret) => {
         secret.value.namespace = secretData?.namespace

@@ -77,7 +77,7 @@
 
 <style scoped lang="scss">
     .admin-item {
-        margin: 0 var(--ks-spacing-4) var(--ks-spacing-1);
+        margin: 0 var(--ks-spacing-4) var(--ks-spacing-2);
     }
 
     .admin-item__version {

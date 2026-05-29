@@ -16,7 +16,7 @@ import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
@@ -57,6 +57,12 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private WorkerJobDispatcher workerJobDispatcher;
+
+    @Inject
+    private WorkerQueueResolver workerQueueResolver;
+
+    @Inject
+    private WorkerCapacityPolicyFactory workerCapacityPolicyFactory;
 
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
@@ -107,14 +113,22 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
                     WorkerConnectionInfo connInfo = request.getConnectionInfo();
                     String workerId = connInfo.getWorkerId();
-                    // WorkerGroup is optional - use null/empty for default group
-                    String workerGroup = connInfo.getWorkerGroup();
+                    String workerGroupId = connInfo.getWorkerGroupId();
                     int maxConcurrency = connInfo.getMaxConcurrency();
 
-                    log.info("Worker [{}] connected for, group='{}', maxConcurrency={}", workerId, WorkerGroup.forLog(workerGroup), maxConcurrency);
+                    // Resolve group subscriptions from the worker group
+                    List<QueueSubscription> subscriptions = workerQueueResolver.resolve(workerGroupId);
+                    log.info(
+                        "Worker [{}] connected, workerGroup='{}', subscriptions={}, maxConcurrency={}",
+                        workerId, workerGroupId, subscriptions, maxConcurrency
+                    );
 
-                    // Create context for this worker stream
-                    WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(workerId, workerGroup, maxConcurrency, responseObserver);
+                    // Create context for this worker stream with the deployment-specific
+                    // capacity policy supplied by the factory bean.
+                    WorkerCapacityPolicy capacityPolicy = workerCapacityPolicyFactory.create(maxConcurrency, subscriptions);
+                    WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(
+                        workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
+                    );
                     contextRef.set(context);
 
                     // Register with dispatcher
@@ -130,16 +144,20 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     return;
                 }
 
+                // Process completion notifications BEFORE permits so freed bucket
+                // slots are visible before pause/resume is evaluated against the
+                // new permit count. Otherwise a fully-utilized worker that
+                // completes jobs in the same message risks being paused even
+                // though capacity is now available.
+                List<String> completions = request.getCompletedJobIdsList();
+                if (!completions.isEmpty()) {
+                    workerJobDispatcher.onCompletionsReceived(context, completions);
+                }
+
                 // Process permits
                 int permits = request.getPermits();
                 if (permits > 0) {
                     workerJobDispatcher.onPermitsReceived(context, permits);
-                }
-
-                // Process ACKs
-                List<String> acks = request.getAcknowledgedJobIdsList();
-                if (!acks.isEmpty()) {
-                    workerJobDispatcher.onAcksReceived(context, acks);
                 }
             }
 

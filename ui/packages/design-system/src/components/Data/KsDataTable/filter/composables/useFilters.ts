@@ -123,7 +123,7 @@ export function useFilters(
         key,
         keyLabel: config?.keyLabelProvider ? config.keyLabelProvider(meta) : config?.label,
         comparator,
-        comparatorLabel: COMPARATOR_LABELS[comparator],
+        comparatorLabel: config?.comparatorLabels?.[comparator] ?? COMPARATOR_LABELS[comparator],
         value,
         valueLabel,
         ...(meta ? {meta} : {}),

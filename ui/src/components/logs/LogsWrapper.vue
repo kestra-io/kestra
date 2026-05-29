@@ -5,8 +5,10 @@
             <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 @ready="ready = true"
-                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @page-changed="onPageChanged"
                 :total="logsStore.total"
             >
                 <template #navbar v-if="!embed || showFilters">
@@ -80,6 +82,7 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore} from "../../stores/logs"
@@ -133,10 +136,10 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
-    } = useRouteFilterPolicy<string>({
+    } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
-        explicitValue: () => props.logLevel,
-        defaultValue: () => defaultLogLevel.value,
+        explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,
+        defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
         fallbackValue: () => undefined,
         readFromRoute: readRouteLevelFilter,
@@ -201,7 +204,7 @@
     ])
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
 
         if (isFlowEdit.value) {
@@ -233,7 +236,6 @@
         await logsStore.findLogs(loadQuery({
             page,
             size,
-            minLevel: props.filters ? null : effectiveLogLevel.value,
             sort: "timestamp:desc",
         }))
             .finally(() => {
@@ -249,13 +251,22 @@
         syncLevelFromAppliedFilters(filters)
     }
 
-    const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+    const pageKey = props.embed ? "logsPage" : "page"
+    const sizeKey = props.embed ? "logsSize" : "size"
+    const urlPage = computed(() => Number(route.query[pageKey]) || 1)
+    const urlSize = computed(() => Number(route.query[sizeKey]) || 25)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})
+    }
+
+    const filterQueryKey = computed(() => {
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
+        return JSON.stringify(filters)
     })
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     const showStatChart = () => showChart.value
 

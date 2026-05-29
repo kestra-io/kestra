@@ -10,21 +10,22 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 public interface WorkerConnectionService {
 
     /**
-     * Establishes a connection with the controller and resolves worker configuration.
+     * Establishes a connection with the controller.
      *
      * @param workerId the unique identifier of the worker
-     * @param workerGroupKey the worker group key from configuration (maybe null)
-     * @return the connection result containing a resolved configuration
+     * @return the connection result
      * @throws WorkerConnectionFailedException if the connection attempt fails or is not authorized.
      */
-    ConnectionResult connect(String workerId, String workerGroupKey) throws WorkerConnectionFailedException;
+    ConnectionResult connect(String workerId) throws WorkerConnectionFailedException;
 
     /**
      * Result of a worker connection attempt.
      *
-     * @param workerGroup the resolved worker group name (may be null if no group is assigned)
+     * @param workerGroupId the resolved worker group ID; the controller normalizes the
+     *                      absent case to {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}
+     *                      so this value is always set.
      */
-    record ConnectionResult(String workerGroup) {
+    record ConnectionResult(String workerGroupId) {
     }
 
     class WorkerConnectionFailedException extends KestraRuntimeException {

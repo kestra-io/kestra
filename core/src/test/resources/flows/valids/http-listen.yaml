@@ -6,7 +6,7 @@ triggers:
     type: io.kestra.plugin.fs.http.Trigger
     uri: https://api.chucknorris.io/jokes/random
     responseCondition: "{{ response.statusCode == 200 }}"
-    interval: PT10S
+    interval: PT1S
 
 tasks:
   - id: hello

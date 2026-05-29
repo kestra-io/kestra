@@ -313,7 +313,6 @@
 <script setup lang="ts">
     import _merge from "lodash/merge"
     import {ref, computed, watch, useTemplateRef} from "vue"
-    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
@@ -500,19 +499,8 @@
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...restQuery} = route.query as Record<string, any>
-        const queryFilter: Record<string, any> = {...restQuery}
-
-        const timeRange = queryFilter["filters[timeRange][EQUALS]"]
-        if (timeRange) {
-            const end = new Date()
-            const start = new Date(end.getTime() - moment.duration(timeRange).asMilliseconds())
-            queryFilter["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = start.toISOString()
-            queryFilter["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = end.toISOString()
-            delete queryFilter["filters[timeRange][EQUALS]"]
-        }
-
-        return _merge(base, queryFilter)
+        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
+        return _merge(base, restQuery)
     }
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {

@@ -15,7 +15,7 @@ start_time=$(date +%s)
 
 echo ""
 echo "Building the image for this current repository"
-make clean
+./gradlew clean -q
 make build-docker VERSION=$LOCAL_IMAGE_VERSION
 
 end_time=$(date +%s)

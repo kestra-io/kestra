@@ -181,6 +181,7 @@ export type {
     TableProperties,
     FilterKeyConfig,
     FilterValue,
+    FilterMeta,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export {
     isWrapperGroup,

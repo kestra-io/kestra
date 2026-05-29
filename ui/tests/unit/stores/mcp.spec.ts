@@ -76,6 +76,28 @@ describe("mcp store", () => {
         expect(store.server).toBeNull()
     })
 
+    it("load() calls GET /mcp/servers/{id} and sets server", async () => {
+        axiosGet.mockResolvedValueOnce({data: mockServer})
+        const {useMcpStore} = await import("../../../src/stores/mcp")
+        const store = useMcpStore()
+
+        await store.load("my-server")
+
+        expect(axiosGet).toHaveBeenCalledOnce()
+        expect(axiosGet).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server`, {withCredentials: true})
+        expect(store.server).toEqual(mockServer)
+    })
+
+    it("load() sets server to null when server is not found", async () => {
+        axiosGet.mockRejectedValueOnce(new Error("404"))
+        const {useMcpStore} = await import("../../../src/stores/mcp")
+        const store = useMcpStore()
+
+        await store.load("nonexistent")
+
+        expect(store.server).toBeNull()
+    })
+
     it("create() calls POST /mcp/servers with payload and withCredentials and returns server", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()

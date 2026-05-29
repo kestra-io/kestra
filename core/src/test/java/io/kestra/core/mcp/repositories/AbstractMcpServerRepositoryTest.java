@@ -117,7 +117,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpServer original = mcpServerRepository.save(null, createMcpServer(tenant));
         McpServer updated = new McpServer(tenant,
-            original.id(), "Updated description", null, null, null, true, false, false, null, null);
+            original.id(), "Updated description", null, null, null, null, null, true, false, false, null, null);
 
         // When
         McpServer result = mcpServerRepository.save(original, updated);
@@ -301,7 +301,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpServer original = mcpServerRepository.save(null, createMcpServer(tenant));
         McpServerListener.reset();
-        McpServer updated = new McpServer(tenant, original.id(), "Updated", null, null, null, true, false, false, null, null);
+        McpServer updated = new McpServer(tenant, original.id(), "Updated", null, null, null, null, null, true, false, false, null, null);
 
         // When
         mcpServerRepository.save(original, updated);
@@ -332,7 +332,7 @@ public abstract class AbstractMcpServerRepositoryTest {
 
     private static McpServer createMcpServer(String tenantId) {
         String id = "test-mcp-" + IdUtils.create().toLowerCase();
-        return new McpServer(tenantId, id, "A test MCP server", null, null, null, false, false, false, null, null);
+        return new McpServer(tenantId, id, "A test MCP server", null, null, null, null, null, false, false, false, null, null);
     }
 
     @Singleton

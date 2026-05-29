@@ -28,10 +28,10 @@ $fill-color-base: #fafcff;
 
 
     $colors: (
-        'white': palette.$base-white,
-        'black': palette.$base-black,
+        'white': palette.$base-gray-neutral-white,
+        'black': palette.$base-gray-neutral-black,
         'primary': (
-            'base': palette.$base-purple-500,
+            'base': palette.$base-primary-500,
         ),
         'success': (
             'base': palette.$base-green-500,

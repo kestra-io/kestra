@@ -58,4 +58,5 @@ class ClusterControllerTest {
         // Then
         assertThat(metrics).isNotEmpty();
     }
+
 }

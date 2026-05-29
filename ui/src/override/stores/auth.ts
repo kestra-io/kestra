@@ -35,6 +35,13 @@ export class Me {
     }
 }
 
+export interface AuthMethods {
+    mailsEnabled?: boolean;
+    passwordless?: boolean;
+    loginPassword?: boolean;
+    oauths?: string[];
+}
+
 export const useAuthStore = defineStore("auth", () => {
     const user = ref<Me | undefined>(new Me())
     const isLogged = ref(true)
@@ -47,10 +54,15 @@ export const useAuthStore = defineStore("auth", () => {
         return true
     }
 
+    function loadAuths(_options: any): Promise<AuthMethods | undefined> {
+            return Promise.resolve(undefined)
+        }
+
     return {
         user,
         isLogged,
         logout,
         correction,
+        loadAuths,
     }
 })

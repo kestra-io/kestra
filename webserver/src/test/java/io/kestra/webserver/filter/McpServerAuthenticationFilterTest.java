@@ -192,7 +192,7 @@ class McpServerAuthenticationFilterTest {
         McpServer existing = mcpServerRepository.get(TenantService.MAIN_TENANT, serverId).orElseThrow();
         McpServer updated = new McpServer(existing.tenantId(), existing.id(), existing.description(),
             existing.instructions(), McpServer.ServerType.PRIVATE, existing.authType(),
-            existing.disabled(), existing.isDefault(), existing.deleted(), existing.created(), existing.updated());
+            existing.oauthProvider(), existing.oauthScopesSupported(), existing.disabled(), existing.isDefault(), existing.deleted(), existing.created(), existing.updated());
         mcpServerRepository.save(existing, updated);
 
         // Then
@@ -230,7 +230,7 @@ class McpServerAuthenticationFilterTest {
         McpServer existing = mcpServerRepository.get(TenantService.MAIN_TENANT, serverId).orElseThrow();
         McpServer disabled = new McpServer(existing.tenantId(), existing.id(), existing.description(),
             existing.instructions(), existing.serverType(), existing.authType(),
-            true, existing.isDefault(), existing.deleted(), existing.created(), existing.updated());
+            existing.oauthProvider(), existing.oauthScopesSupported(), true, existing.isDefault(), existing.deleted(), existing.created(), existing.updated());
         mcpServerRepository.save(existing, disabled);
 
         // Then
@@ -258,7 +258,7 @@ class McpServerAuthenticationFilterTest {
         String name = "server-" + IdUtils.create();
         McpServer mcpServer = new McpServer(
             TenantService.MAIN_TENANT, name, "A test MCP server",
-            null, serverType, McpServer.AuthType.BASIC, disabled, false, false, null, null
+            null, serverType, McpServer.AuthType.BASIC, null, null, disabled, false, false, null, null
         );
         return mcpServerRepository.save(null, mcpServer).id();
     }

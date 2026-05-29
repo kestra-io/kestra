@@ -30,8 +30,8 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.METADATA,
         QueryFilter.Field.GROUP,
         QueryFilter.Field.NAME,
-        QueryFilter.Field.TAGS,
-        QueryFilter.Field.SUPER_ADMIN
+        QueryFilter.Field.SUPER_ADMIN,
+        QueryFilter.Field.TAGS
     );
 
     @Test

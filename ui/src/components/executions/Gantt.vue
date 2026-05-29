@@ -642,7 +642,7 @@
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: var(--ks-bg-body);
+                    background: var(--ks-bg-base);
                 }
 
                 &::-webkit-scrollbar-thumb {

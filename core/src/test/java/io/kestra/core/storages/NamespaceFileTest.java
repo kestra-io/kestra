@@ -148,4 +148,19 @@ class NamespaceFileTest {
         assertThat(toLogicalPath(unixPath2)).isEqualTo("/folder/file.txt");
     }
 
+    @Test
+    void shouldThrowOnPathTraversalWithDoubleDots() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("/foo/../../etc/passwd")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("/../etc")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("..")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("foo/../../../bar")));
+    }
+
+    @Test
+    void shouldAllowLegitimatePathsWithSingleDotAndMultiLevelDirs() {
+        assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/foo/./bar")))).isEqualTo("/foo/bar");
+        assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/foo/bar")))).isEqualTo("/foo/bar");
+        assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/file..with..dots")))).isEqualTo("/file..with..dots");
+    }
+
 }

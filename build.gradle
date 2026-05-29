@@ -181,6 +181,7 @@ allprojects {
             api group: 'commons-io', name: 'commons-io'
             api group: 'org.apache.commons', name: 'commons-lang3'
             api "io.swagger.core.v3:swagger-annotations"
+            api "com.google.code.findbugs:jsr305" // brings @CheckReturnValue and already in path in core
         }
     }
 }

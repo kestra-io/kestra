@@ -1,6 +1,8 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -22,11 +24,14 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -49,6 +54,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ExecutionControllerTest {
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     @Inject
     @Client("/")
@@ -562,6 +570,48 @@ class ExecutionControllerTest {
             HttpRequest.POST("/api/v1/main/flows", create.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
+    }
+
+    @Test
+    void shouldNotLeakFilePreviewFromAnotherExecution() throws Exception {
+        // Given - execution A exists in the repository
+        String execAId = IdUtils.create();
+        String execBId = IdUtils.create();
+        String nsA = "io.kestra.test-ns-a";
+        String nsB = "io.kestra.test-ns-b";
+
+        Execution execA = Execution.builder()
+            .id(execAId)
+            .tenantId(MAIN_TENANT)
+            .namespace(nsA)
+            .flowId("flow-a")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execA);
+
+        // Execution B does NOT exist in the repository, but a file is stored under its path
+        URI execBFilePath = URI.create(
+            "/" + nsB.replace(".", "/") + "/flow-b/executions/" + execBId + "/tasks/task1/tr1/output.txt"
+        );
+        URI execBFileUri = storageInterface.put(MAIN_TENANT, nsB, execBFilePath,
+            new ByteArrayInputStream("sensitive-data".getBytes(StandardCharsets.UTF_8)));
+
+        // When - request preview for execution A but supply a path belonging to execution B
+        String encodedPath = URLEncoder.encode(execBFileUri.toString(), StandardCharsets.UTF_8);
+
+        // Then - the request must NOT serve the file directly; it must redirect to execution B.
+        // Since execution B is not in the repository the redirect target returns 404.
+        // Before the fix the return value of validateFile() was discarded, causing the file
+        // content ("sensitive-data") to be returned with HTTP 200.
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/" + execAId + "/file/preview?path=" + encodedPath),
+                String.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
 }

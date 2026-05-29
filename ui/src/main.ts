@@ -8,6 +8,7 @@ import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter} from "./composables/useTenant"
 import * as BasicAuth from "./utils/basicAuth"
+import {getCsrfToken} from "./utils/csrf"
 import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
@@ -53,7 +54,16 @@ function setupAxios(router: Router) {
         isLoggedIn: () => BasicAuth.isLoggedIn(),
         onAuthTimeout: beforeLogout,
         isImpersonating: () => Boolean(window.sessionStorage.getItem("impersonate")),
-    }) 
+    })
+
+    axiosInstance.interceptors.request.use((config) => {
+        const csrfToken = getCsrfToken()
+        if (csrfToken) {
+            config.headers = config.headers || {}
+            config.headers["X-CSRF-TOKEN"] = csrfToken
+        }
+        return config
+    })
 
     return axiosInstance
 }

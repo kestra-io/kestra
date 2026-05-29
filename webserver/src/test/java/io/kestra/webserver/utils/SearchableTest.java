@@ -1,19 +1,24 @@
 package io.kestra.webserver.utils;
 
 import java.util.List;
+import java.util.function.Function;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.FieldSource;
 
 import io.kestra.core.repositories.ArrayListTotal;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SearchableTest {
     private List<TestEntity> entities;
@@ -450,5 +455,164 @@ class SearchableTest {
     }
 
     record TestEntity(String name, int age) {
+    }
+
+    @Test
+    void shouldMatchReturnTrueWhenFiltersIsNull() {
+        // Given
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value))
+            .build();
+
+        // Then
+        assertTrue(searchable.matches(new TestEntity("Alice", 30), null));
+    }
+
+    @Test
+    void shouldMatchReturnTrueWhenFiltersIsEmpty() {
+        // Given
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value))
+            .build();
+
+        // Then
+        assertTrue(searchable.matches(new TestEntity("Alice", 30), List.of()));
+    }
+
+    @Test
+    void shouldMatchReturnTrueWhenAllFiltersMatchAndedTogether() {
+        // Given
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value))
+            .searchableQueryFilterExtractor(QueryFilter.Field.FLOW_ID, QueryFilter.Op.GREATER_THAN,
+                (entity, value) -> entity.age() > (Integer) value)
+            .build();
+
+        // When
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("Alice").build(),
+            QueryFilter.builder().field(QueryFilter.Field.FLOW_ID).operation(QueryFilter.Op.GREATER_THAN).value(25).build()
+        );
+
+        // Then
+        assertTrue(searchable.matches(new TestEntity("Alice", 30), filters));
+    }
+
+    @Test
+    void shouldMatchReturnFalseWhenAnyFilterDoesNotMatch() {
+        // Given
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value))
+            .searchableQueryFilterExtractor(QueryFilter.Field.FLOW_ID, QueryFilter.Op.GREATER_THAN,
+                (entity, value) -> entity.age() > (Integer) value)
+            .build();
+
+        // When
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("Alice").build(),
+            QueryFilter.builder().field(QueryFilter.Field.FLOW_ID).operation(QueryFilter.Op.GREATER_THAN).value(100).build()
+        );
+
+        // Then
+        assertFalse(searchable.matches(new TestEntity("Alice", 30), filters));
+    }
+
+    @Test
+    void shouldMatchThrowWhenFieldOpPairNotRegistered() {
+        // Given
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value))
+            .build();
+
+        // When
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.FLOW_ID).operation(QueryFilter.Op.EQUALS).value("anything").build()
+        );
+
+        // Then
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> searchable.matches(new TestEntity("Alice", 30), filters)
+        );
+        assertEquals(
+            "Provided query filters are invalid: Unsupported operation for FLOW_ID: EQUALS",
+            ex.getMessage()
+        );
+    }
+
+    @ParameterizedTest
+    @FieldSource("defaultOperatorCases")
+    void shouldApplyStandardSemanticsForFunctionOverload(DefaultOperatorCase testCase) {
+        // Given
+        Searchable<String> searchable = Searchable.<String>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, Function.identity(), testCase.op())
+            .build();
+
+        // When
+        QueryFilter filter = QueryFilter.builder()
+            .field(QueryFilter.Field.QUERY)
+            .operation(testCase.op())
+            .value(testCase.queryValue())
+            .build();
+
+        // Then
+        assertEquals(testCase.expectedMatch(), searchable.matches(testCase.input(), List.of(filter)),
+            testCase.description());
+    }
+
+    @SuppressWarnings("unused") // referenced via @FieldSource
+    private static final List<DefaultOperatorCase> defaultOperatorCases = List.of(
+        new DefaultOperatorCase(QueryFilter.Op.EQUALS, "hello", "hello", true, "EQUALS: identical strings match"),
+        new DefaultOperatorCase(QueryFilter.Op.EQUALS, "hello", "world", false, "EQUALS: different strings don't match"),
+        new DefaultOperatorCase(QueryFilter.Op.EQUALS, null, "hello", false, "EQUALS: null field value doesn't match"),
+
+        new DefaultOperatorCase(QueryFilter.Op.NOT_EQUALS, "hello", "world", true, "NOT_EQUALS: different strings match"),
+        new DefaultOperatorCase(QueryFilter.Op.NOT_EQUALS, "hello", "hello", false, "NOT_EQUALS: identical strings don't match"),
+        new DefaultOperatorCase(QueryFilter.Op.NOT_EQUALS, null, "hello", true, "NOT_EQUALS: null field value matches (absence ≠ value)"),
+
+        new DefaultOperatorCase(QueryFilter.Op.CONTAINS, "hello world", "world", true, "CONTAINS: substring present"),
+        new DefaultOperatorCase(QueryFilter.Op.CONTAINS, "hello", "world", false, "CONTAINS: substring absent"),
+        new DefaultOperatorCase(QueryFilter.Op.CONTAINS, null, "world", false, "CONTAINS: null field value"),
+
+        new DefaultOperatorCase(QueryFilter.Op.STARTS_WITH, "hello world", "hello", true, "STARTS_WITH: prefix matches"),
+        new DefaultOperatorCase(QueryFilter.Op.STARTS_WITH, "hello", "world", false, "STARTS_WITH: wrong prefix"),
+
+        new DefaultOperatorCase(QueryFilter.Op.ENDS_WITH, "hello world", "world", true, "ENDS_WITH: suffix matches"),
+        new DefaultOperatorCase(QueryFilter.Op.ENDS_WITH, "hello", "world", false, "ENDS_WITH: wrong suffix"),
+
+        new DefaultOperatorCase(QueryFilter.Op.REGEX, "hello", "h.*o", true, "REGEX: pattern matches"),
+        new DefaultOperatorCase(QueryFilter.Op.REGEX, "world", "h.*o", false, "REGEX: pattern doesn't match"),
+
+        new DefaultOperatorCase(QueryFilter.Op.IN, "hello", List.of("hello", "world"), true, "IN: present in list"),
+        new DefaultOperatorCase(QueryFilter.Op.IN, "foo", List.of("hello", "world"), false, "IN: absent from list"),
+        new DefaultOperatorCase(QueryFilter.Op.NOT_IN, "foo", List.of("hello", "world"), true, "NOT_IN: absent from list matches"),
+        new DefaultOperatorCase(QueryFilter.Op.NOT_IN, "hello", List.of("hello", "world"), false, "NOT_IN: present in list doesn't match"),
+
+        new DefaultOperatorCase(QueryFilter.Op.PREFIX, "com.example", "com.example", true, "PREFIX: equals the value"),
+        new DefaultOperatorCase(QueryFilter.Op.PREFIX, "com.example.app", "com.example", true, "PREFIX: starts with value+\".\""),
+        new DefaultOperatorCase(QueryFilter.Op.PREFIX, "com.examples", "com.example", false, "PREFIX: must be the value or a dotted descendant — \"com.examples\" is neither")
+    );
+
+    @Test
+    void shouldThrowAtBuilderTimeForOpWithoutDefault() {
+        assertThatThrownBy(() -> Searchable.<String>builder()
+                .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, Function.identity(), QueryFilter.Op.GREATER_THAN))
+            .isInstanceOf(UnsupportedOperationException.class)
+            .hasMessageContaining("GREATER_THAN")
+            .hasMessageContaining("BiPredicate");
+    }
+
+    private record DefaultOperatorCase(
+        QueryFilter.Op op,
+        String input,
+        Object queryValue,
+        boolean expectedMatch,
+        String description
+    ) {
     }
 }

@@ -65,18 +65,6 @@ java {
     }
 }
 
-
-abstract class GenericLocationProvider implements CommandLineArgumentProvider {
-    @InputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
-    abstract RegularFileProperty getDistribution()
-
-    @Override
-    Iterable<String> asArguments() {
-        ["-javaagent:${distribution.get().asFile.absolutePath}"]
-    }
-}
-
 dependencies {
     implementation project(":cli")
     testImplementation project(":cli")
@@ -203,10 +191,6 @@ subprojects {subProj ->
         }
 
         configurations {
-            agent {
-                canBeResolved = true
-                canBeConsumed = true
-            }
             mockitoAgent
         }
 
@@ -243,10 +227,6 @@ subprojects {subProj ->
             // awaitility
             testImplementation 'org.awaitility:awaitility'
 
-            agent "org.aspectj:aspectjweaver:1.9.25.1"
-
-            testImplementation platform("io.qameta.allure:allure-bom")
-            testImplementation "io.qameta.allure:allure-junit5"
         }
 
         def commonTestConfig = { Test t ->
@@ -374,17 +354,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
             commonTestConfig(t)
-            jvmArgumentProviders.add(
-                objects.newInstance(GenericLocationProvider).tap {
-                    distribution = configurations.mockitoAgent.singleFile
-                }
-            )
-
-            jvmArgumentProviders.add(
-                objects.newInstance(GenericLocationProvider).tap {
-                    distribution = configurations.agent.singleFile
-                }
-            )
+            jvmArgs "-javaagent:${configurations.mockitoAgent.singleFile}"
         }
 
         tasks.named('check') {

@@ -19,7 +19,7 @@
                 :item="currentTaskRun"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
-            >   
+            >
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -200,24 +200,24 @@
                         </template>
                     </DynamicScroller>
                 </KsCard>
-                <div 
-                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                <div
+                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive"
                     style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
                 >
                     <KsButton
                         :tag="RouterLink"
                         :to="{
-                            name: 'executions/list', 
+                            name: 'executions/list',
                             query: {
                                 'filters[parentId][EQUALS]': currentTaskRun.executionId,
                                 'filters[kind][EQUALS]': 'LOOP',
-                            }        
+                            }
                         }"
                     >
                         Iterations
                     </KsButton>
-                    <KsProgress 
-                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                    <KsProgress
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)"
                         :strokeWidth="24"
                         :textInside="true"
                         class="progress-bar"
@@ -238,7 +238,7 @@
 <script>
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State} from "@kestra-io/design-system"
+    import {State, levelToRequestParams} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
     import moment from "moment"
@@ -256,6 +256,7 @@
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import {KsLink, KsProgress} from "@kestra-io/design-system"
 
     export default {
         name: "TaskRunDetails",
@@ -282,9 +283,10 @@
                 type: String,
                 default: undefined,
             },
-            level: {
-                type: String,
-                default: "INFO",
+            levelFilter: {
+                // LevelFilterValue: { value: "INFO", direction: "min" | "max" }
+                type: Object,
+                default: () => ({value: "INFO", direction: "min"}),
             },
             filter: {
                 type: String,
@@ -351,7 +353,7 @@
             "shownAttemptsUid.length": function (openedTaskrunsCount) {
                 this.$emit("opened-taskruns-count", openedTaskrunsCount)
             },
-            level: function () {
+            levelFilter: function () {
                 this.rawLogs = []
                 if(this.followedExecution)
                     this.loadLogs(this.followedExecution.id)
@@ -480,13 +482,16 @@
                 )
             },
             params() {
-                let params = {minLevel: this.level}
+                let params = {...levelToRequestParams(this.levelFilter)}
 
                 if (this.taskRunId) {
-                    params.taskId = this.taskRunById[this.taskRunId]?.taskId
+                    const taskId = this.taskRunById[this.taskRunId]?.taskId
+                    if (taskId) {
+                        params["filters[taskId][EQUALS]"] = taskId
+                    }
 
-                    if (this.forcedAttemptNumber) {
-                        params.attempt = this.forcedAttemptNumber
+                    if (this.forcedAttemptNumber !== undefined && this.forcedAttemptNumber !== null) {
+                        params["filters[attemptNumber][EQUALS]"] = this.forcedAttemptNumber
                     }
                 }
 
@@ -620,8 +625,8 @@
                         executionId: this.followedExecution.id,
                         taskRunId,
                     })
-                    if(outputs === null 
-                        || !outputs.iterationCount 
+                    if(outputs === null
+                        || !outputs.iterationCount
                         || !outputs.terminatedIterations) {
                         return
                     }
@@ -866,13 +871,15 @@
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id)
             },
             loadLogs(executionId) {
+                const params = {...levelToRequestParams(this.levelFilter)}
+                const taskId = this.taskRunById[this.taskRunId]?.taskId
+                if (taskId) {
+                    params["filters[taskId][EQUALS]"] = taskId
+                }
                 this.executionsStore
                     .loadLogs({
                         executionId,
-                        params: {
-                            minLevel: this.level,
-                            taskId: this.taskRunById[this.taskRunId]?.taskId,
-                        },
+                        params,
                     })
                     .then((logs) => {
                         // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.

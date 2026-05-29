@@ -18,7 +18,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.QUERY,
         QueryFilter.Field.STATE,
         QueryFilter.Field.CHILD_FILTER,
-        QueryFilter.Field.MIN_LEVEL,
+        QueryFilter.Field.LEVEL,
         QueryFilter.Field.START_DATE,
         QueryFilter.Field.END_DATE,
         QueryFilter.Field.UPDATED,
@@ -30,8 +30,9 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.METADATA,
         QueryFilter.Field.GROUP,
         QueryFilter.Field.NAME,
-        QueryFilter.Field.SUPER_ADMIN,
-        QueryFilter.Field.TAGS
+        QueryFilter.Field.TAGS,
+        QueryFilter.Field.ATTEMPT_NUMBER,
+        QueryFilter.Field.SUPER_ADMIN
     );
 
     @Test

@@ -138,6 +138,30 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReturnNoWarningsWhenPropertiesProvidedByPluginDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+            pluginDefaults:
+              - type: io.kestra.plugin.core.http.Download
+                values:
+                  uri: https://kestra.io
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).isNull();
+        assertThat(results.getFirst().getWarnings()).isEmpty();
+    }
+
+    @Test
     void importFlow() throws FlowProcessingException {
         String source = """
             id: import

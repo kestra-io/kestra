@@ -1407,7 +1407,7 @@ public class ExecutorService {
             .map(taskRun ->
             {
                 try {
-                    return execution.withTaskRun(taskRun.withState(state));
+                    return execution.withTaskRun(taskRun.withStateAndAttempt(state));
                 } catch (InternalException e) {
                     // in case we cannot update the last not terminated task run, we ignore it
                     return execution;

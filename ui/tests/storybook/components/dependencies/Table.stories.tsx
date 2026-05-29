@@ -3,7 +3,7 @@ import { Meta } from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {FLOW} from "../../../../src/components/dependencies/utils/types";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
-import {getDependencies} from "../../../../src/components/dependencies/composables/getDependencies";
+import {getDependencies} from "../../../fixtures/dependencies/getDependencies";
 
 const meta: Meta<typeof Table> = {
     title: "components/dependencies/Table",

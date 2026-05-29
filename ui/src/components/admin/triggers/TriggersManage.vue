@@ -330,7 +330,7 @@
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
 
-    import FlowRun from "../../flows/FlowRun.vue"
+    import FlowRun, {SelectedTrigger} from "../../flows/FlowRun.vue"
     import LogsWrapper from "../../logs/LogsWrapper.vue"
     import BackfillBanner from "../../flows/BackfillBanner.vue"
     import Vars from "../../executions/Vars.vue"
@@ -357,7 +357,7 @@
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
     const detailsTriggerId = ref<string | undefined>()
-    const selectedTrigger = ref<{inputs?: Record<string, unknown>} | undefined>(undefined)
+    const selectedTrigger = ref<SelectedTrigger | undefined>()
 
     const DATE_COLUMNS: readonly string[] = ["lastTriggeredDate", "nextEvaluationDate", "evaluatedAt", "updatedAt"]
     const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", ...DATE_COLUMNS]

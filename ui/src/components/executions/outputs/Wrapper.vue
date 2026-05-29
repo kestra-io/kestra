@@ -598,7 +598,7 @@
 }
 
 .debug {
-    background: var(--ks-bg-body);
+    background: var(--ks-bg-base);
 }
 
 .bordered {

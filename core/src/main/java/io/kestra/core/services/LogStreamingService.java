@@ -81,13 +81,14 @@ public class LogStreamingService {
     public void registerSubscriber(String executionId, String subscriberId, FluxSink<Event<FollowLogEvent>> sink, List<String> levels) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
-            // resume the subscription if paused
-            if (MapUtils.isEmpty(subscribers) && this.queueSubscriber.isPaused()) {
-                this.queueSubscriber.resume();
-            }
-
+            // Register the subscriber BEFORE resuming the queue to avoid a race where the polling
+            // thread delivers an event between resume() and put(), causing events to be dropped.
             subscribers.computeIfAbsent(executionId, k -> new ConcurrentHashMap<>())
                 .put(subscriberId, Pair.of(sink, levels));
+
+            if (this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.resume();
+            }
         }
     }
 

@@ -101,7 +101,7 @@
             gap: var(--ks-spacing-2);
 
             &:hover {
-                background-color: var(--ks-bg-body);
+                background-color: var(--ks-bg-base);
             }
 
             &.active {

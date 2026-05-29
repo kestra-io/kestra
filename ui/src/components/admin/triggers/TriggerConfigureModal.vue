@@ -48,13 +48,14 @@
 
                     <KsFormItem :label="$t('flow')" required>
                         <KsSelect
+                            :key="formModel.namespace"
                             v-model="formModel.flowId"
                             filterable
                             :placeholder="$t('triggers_add_modal_flow_placeholder')"
                             :disabled="!formModel.namespace"
                             :loading="flowsLoading"
                         >
-                            <KsOption v-for="f in flowOptions" :key="f.id" :label="f.id" :value="f.id" />
+                            <KsOption v-for="f in filteredFlowOptions" :key="f.id" :label="f.id" :value="f.id" />
                         </KsSelect>
                     </KsFormItem>
 
@@ -147,6 +148,12 @@
 
     const flowOptions = ref<{id: string; namespace: string}[]>([])
     const documentationPlugin = ref<PluginComponent | null>(null)
+    const filteredFlowOptions = computed(() => {
+        if (!formModel.value.namespace) {
+            return []
+        }
+        return flowOptions.value.filter((flow) => flow.namespace === formModel.value.namespace)
+    })
 
     const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
     const formModel = ref({
@@ -170,8 +177,12 @@
         }
         flowsLoading.value = true
         try {
-            const response = await flowStore.findFlows({namespace, size: 200, sort: "id:asc"})
-            flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}))
+            const response = await flowStore.flowsByNamespace(namespace)
+            if (formModel.value.namespace !== namespace) {
+                return
+            }
+            flowOptions.value = (response ?? [])
+                .map((f: any) => ({id: f.id, namespace: f.namespace}))
         } finally {
             flowsLoading.value = false
         }
@@ -179,6 +190,7 @@
 
     const onNamespaceChange = (ns: string | string[] | undefined) => {
         formModel.value.flowId = ""
+        flowOptions.value = []
         loadFlows(typeof ns === "string" ? ns : "")
     }
 

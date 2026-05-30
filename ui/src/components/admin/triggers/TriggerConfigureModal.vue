@@ -64,9 +64,73 @@
                             :placeholder="$t('triggers_add_modal_trigger_id_placeholder')"
                         />
                     </KsFormItem>
+
+                    <template v-for="(propSchema, propKey) in triggerProperties" :key="propKey">
+                        <KsFormItem
+                            v-if="propSchema.type !== 'boolean' && propSchema.type !== 'array' && propSchema.type !== 'object'"
+                            :label="propSchema.title || propKey"
+                            :required="isRequired(propKey)"
+                        >
+                            <KsInput
+                                v-if="propSchema.format === 'cron'"
+                                v-model="formModel.properties[propKey]"
+                                :placeholder="propSchema.description || propKey"
+                            />
+                            <TaskNumber
+                                v-else-if="propSchema.type === 'integer' || propSchema.type === 'number'"
+                                v-model="formModel.properties[propKey]"
+                                :schema="propSchema"
+                            />
+                            <KsSelect
+                                v-else-if="propSchema.enum"
+                                v-model="formModel.properties[propKey]"
+                                filterable
+                                clearable
+                            >
+                                <KsOption
+                                    v-for="opt in propSchema.enum"
+                                    :key="opt"
+                                    :label="opt"
+                                    :value="opt"
+                                />
+                            </KsSelect>
+                            <KsInput
+                                v-else
+                                v-model="formModel.properties[propKey]"
+                                :placeholder="propSchema.description || propKey"
+                            />
+                        </KsFormItem>
+
+                        <KsFormItem
+                            v-else-if="propSchema.type === 'boolean'"
+                            :label="propSchema.title || propKey"
+                            :required="isRequired(propKey)"
+                        >
+                            <KsSwitch v-model="formModel.properties[propKey]" />
+                        </KsFormItem>
+
+                        <KsFormItem
+                            v-else-if="propSchema.type === 'array' && propSchema.items?.enum"
+                            :label="propSchema.title || propKey"
+                            :required="isRequired(propKey)"
+                        >
+                            <KsSelect
+                                v-model="formModel.properties[propKey]"
+                                filterable
+                                clearable
+                            >
+                                <KsOption
+                                    v-for="opt in propSchema.items.enum"
+                                    :key="opt"
+                                    :label="opt"
+                                    :value="opt"
+                                />
+                            </KsSelect>
+                        </KsFormItem>
+                    </template>
                 </KsForm>
 
-                <p class="form-hint">
+                <p v-if="!hasTriggerProperties" class="form-hint">
                     {{ $t("triggers_add_modal_properties_hint") }}
                 </p>
             </div>
@@ -119,6 +183,7 @@
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {triggerDisplayName} from "./triggerCatalog"
+    import TaskNumber from "../../no-code/components/tasks/TaskNumber.vue"
 
     import Editor from "../../inputs/Editor.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
@@ -153,15 +218,44 @@
         namespace: "",
         flowId: "",
         triggerId: generateId(),
+        properties: {} as Record<string, any>,
     })
 
+    const triggerPlugin = ref<PluginComponent | null>(null)
+
     const displayName = computed(() => triggerDisplayName(props.trigger))
+    const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
+
+    const triggerProperties = computed(() => {
+        if (!triggerPlugin.value?.schema?.properties) return {}
+        const props = triggerPlugin.value.schema.properties
+        // Filter out internal/base trigger fields that are already handled separately
+        const excluded = new Set(["id", "type", "description", "namespace", "flowId"])
+        return Object.fromEntries(
+            Object.entries(props).filter(([key]) => !excluded.has(key))
+        )
+    })
+
+    const isRequired = (key: string) => {
+        return triggerPlugin.value?.schema?.required?.includes(key) ?? false
+    }
+
     const canSubmit = computed(() =>
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),
     )
 
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
-    const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n    type: ${props.trigger.type}\n`)
+
+    const sourceYaml = computed(() => {
+        const lines = [`  - id: ${getTriggerId()}`, `    type: ${props.trigger.type}`]
+        for (const [key, value] of Object.entries(formModel.value.properties)) {
+            if (value !== undefined && value !== null && value !== "") {
+                const yamlValue = typeof value === "string" ? `'${value}'` : JSON.stringify(value)
+                lines.push(`    ${key}: ${yamlValue}`)
+            }
+        }
+        return lines.join("\n")
+    })
 
     const loadFlows = async (namespace: string) => {
         if (!namespace) {
@@ -192,8 +286,10 @@
         try {
             const doc = await pluginsStore.load({cls: props.trigger.type, commit: false})
             documentationPlugin.value = {...doc, cls: props.trigger.type}
+            triggerPlugin.value = documentationPlugin.value
         } catch {
             documentationPlugin.value = null
+            triggerPlugin.value = null
         }
     }
 
@@ -203,7 +299,10 @@
         triggerDraftStore.setDraft({
             namespace: formModel.value.namespace,
             flowId: formModel.value.flowId,
-            triggerYaml: `id: ${getTriggerId()}\ntype: ${props.trigger.type}\n`,
+            triggerYaml: `id: ${getTriggerId()}\ntype: ${props.trigger.type}\n${Object.entries(formModel.value.properties)
+                .filter(([, v]) => v !== undefined && v !== null && v !== "")
+                .map(([k, v]) => `${k}: ${typeof v === "string" ? `'${v}'` : JSON.stringify(v)}`)
+                .join("\n")}`,
         })
 
         visible.value = false
@@ -218,7 +317,7 @@
         if (val) {
             activeTab.value = "form"
             copied.value = false
-            formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
+            formModel.value = {namespace: "", flowId: "", triggerId: generateId(), properties: {}}
             loadDocumentation()
         }
     }, {immediate: true})

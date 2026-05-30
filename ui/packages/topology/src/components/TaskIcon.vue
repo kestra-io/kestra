@@ -76,7 +76,6 @@
         width: 100%;
         height: 100%;
         position: relative;
-        padding: 1px;
 
         :deep(span) {
             position: absolute;

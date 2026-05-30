@@ -96,26 +96,6 @@
                     <AlertOutline class="button-icon" alt="Add error handler" />
                 </KsTooltip>
             </span>
-            <span
-                v-if="!taskExecution && !data.isReadOnly"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.EDIT, {task: data.node.task, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('edit')">
-                    <Pencil class="button-icon" alt="Edit task" />
-                </KsTooltip>
-            </span>
-            <span
-                v-if="!taskExecution && !data.isReadOnly"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.DELETE, {id: taskId, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('delete')">
-                    <Delete class="button-icon" alt="Delete task" />
-                </KsTooltip>
-            </span>
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -135,8 +115,6 @@
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
     } from "../injectionKeys"
 
-    import Pencil from "vue-material-design-icons/Pencil.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"

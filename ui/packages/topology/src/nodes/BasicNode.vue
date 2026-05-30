@@ -8,7 +8,7 @@
     >
         <div class="main-content">
             <div class="icon">
-                <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" class="bg-white" theme="light" :icons="icons" />
+                <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" theme="light" variable="--ks-topology-icon-color" :icons="icons" />
             </div>
             <div class="node-content">
                 <div class="node-title">
@@ -47,7 +47,7 @@
                     @click="$emit(EVENTS.EXPAND)"
                 >
                     <KsTooltip :content="$t('expand')">
-                        <ArrowExpand class="button-icon" alt="Expand task" />
+                        <UnfoldMoreHorizontal class="button-icon" alt="Expand task" />
                     </KsTooltip>
                 </span>
                 <slot name="badge-button-after" />
@@ -63,7 +63,7 @@
     import {KsTooltip} from "@kestra-io/design-system"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import {EVENTS} from "../utils/constants"
-    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import * as Utils from "../utils/utils"
 
@@ -152,11 +152,11 @@
 <style lang="scss" scoped>
     .node-wrapper {
         background-color: var(--ks-bg-surface);
-        border-radius: var(--ks-border-radius-lg);
+        border-radius: var(--ks-radius-base);
         margin: 0;
         z-index: 150000;
-        box-shadow: 0 12px 12px 0 rgba(130, 103, 158, 0.10);
-        border: 1px solid var(--ks-border-primary);
+        box-shadow: 0 2px 4px var(--ks-shadow-surface);
+        border: 1px solid var(--ks-border-strong);
 
         .main-content {
             display: flex;
@@ -178,13 +178,15 @@
         }
 
         .icon {
-            border-radius: var(--ks-border-radius);
-            margin: 0.2rem;
+            border-radius: var(--ks-radius-sm);
+            margin: var(--ks-spacing-1);
             width: 25px;
             height: 25px;
-            border: 0.4px solid var(--ks-border-primary);
             min-width: 25px;
             min-height: 25px;
+            padding: 2px;
+            border: 1px solid var(--ks-border-default);
+            background-color: var(--ks-topology-icon-bg);
         }
     }
 
@@ -222,14 +224,15 @@
 
     .button-icon {
         font-size: 0.75rem;
+        transform: rotate(45deg);
     }
 
     .task-title {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 0.75rem;
-        font-weight: 700;
+        font-size: var(--ks-font-size-sm);
+        font-weight: 500;
         color: var(--ks-text-primary);
         flex-grow: 1;
     }

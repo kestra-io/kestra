@@ -20,6 +20,10 @@ html.dark #loader-wrapper {
   background-color: #21242E;
 }
 
+#loader svg {
+  overflow: visible;
+}
+
 #loader svg path {
   opacity: 0.12;
   transform-box: fill-box;

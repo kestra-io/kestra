@@ -256,6 +256,7 @@
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import {KsLink, KsProgress} from "@kestra-io/design-system"
 
     export default {
         name: "TaskRunDetails",

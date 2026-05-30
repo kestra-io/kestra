@@ -5,7 +5,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Label;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.Input;
@@ -36,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Singleton
 public class McpToolService {
-    private final DispatchQueueInterface<Execution> executionQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final FlowRepositoryInterface flowRepositoryInterface;
     private final FlowToolSchemaMapper flowToolSchemaMapper;
     private final ExecutionStreamingService streamingService;
@@ -50,13 +53,13 @@ public class McpToolService {
         .build();
 
     public McpToolService(
-        DispatchQueueInterface<Execution> executionQueue,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         FlowRepositoryInterface flowRepositoryInterface,
         FlowToolSchemaMapper flowToolSchemaMapper,
         ExecutionStreamingService streamingService, ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
         McpConfig mcpConfig
         ) {
-        this.executionQueue = executionQueue;
+        this.executionCommandQueue = executionCommandQueue;
         this.flowRepositoryInterface = flowRepositoryInterface;
         this.flowToolSchemaMapper = flowToolSchemaMapper;
         this.streamingService = streamingService;
@@ -135,7 +138,11 @@ public class McpToolService {
         )));
 
         try {
-            executionQueue.emit(execution);
+            executionCommandQueue.emit(Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+                .withKind(execution.getKind())
+                .withTrigger(execution.getTrigger())
+                .withLabels(execution.getLabels())
+                .withInputs(execution.getInputs()));
             eventPublisher.publishEvent(new CrudEvent<>(execution, null, CrudEventType.CREATE));
 
 

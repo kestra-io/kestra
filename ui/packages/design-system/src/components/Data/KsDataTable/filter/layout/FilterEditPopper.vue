@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, inject} from "vue"
+    import {computed, onMounted, reactive, inject, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {
         type AppliedFilter,
@@ -149,12 +149,12 @@
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.selectValue = value),
-                    "update:time-range-mode": (value: "predefined" | "custom") =>
+                    "update:timeRangeMode": (value: "predefined" | "custom") =>
                         (state.timeRangeMode = value),
-                    "update:start-date-value": (value: Date | null) =>
+                    "update:startDateValue": (value: Date | null) =>
                         (state.startDateValue = value),
-                    "update:end-date-value": (value: Date | null) => (state.endDateValue = value),
-                    "update:date-filter-mode": (value: string) => (state.dateFilterMode = value),
+                    "update:endDateValue": (value: Date | null) => (state.endDateValue = value),
+                    "update:dateFilterMode": (value: string) => (state.dateFilterMode = value),
                 },
             },
             text: {
@@ -316,8 +316,8 @@
 
         const filterData = getFilterValue()
         if (!filterData) {
+            // The parent closes the dialog as part of handling `remove`; no extra `close` needed.
             emits("remove", props.filter.id)
-            emits("close")
             return
         }
 
@@ -339,8 +339,10 @@
             updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData.meta)
         }
 
+        // The parent closes the dialog as part of handling `update`; no extra `close` needed.
+        // Emitting `close` here would run the parent's empty-chip auto-remove against the stale
+        // pre-update props and discard the chip we just applied.
         emits("update", updatedFilter)
-        emits("close")
     }
 
     const initializeStateFromFilter = (filter: AppliedFilter) => {
@@ -413,7 +415,8 @@
     const loadValueOptions = async (search?: string) => {
         if (!props.filterKey?.valueProvider) return
 
-        state.valueOptions = await props.filterKey.valueProvider({search})
+        const meta = state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined
+        state.valueOptions = await props.filterKey.valueProvider({search, meta})
 
         if (
             props.filterKey?.key === "timeRange" &&
@@ -450,4 +453,13 @@
     }
 
     onMounted(initializeFilter)
+
+    // When the "Apply to" segmented selector flips, refresh the dropdown options so providers can
+    // vary labels by the chosen date field. Cheap for filters with dateFilterOptions (relative dates
+    // are hardcoded); skipped entirely for filters without dateFilterOptions since dateFilterMode
+    // never changes there.
+    watch(
+        () => state.dateFilterMode,
+        () => loadValueOptions(),
+    )
 </script>

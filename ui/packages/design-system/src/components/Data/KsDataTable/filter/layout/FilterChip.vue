@@ -1,10 +1,14 @@
 <template>
-    <div class="chip" :class="{toggled: isToggled}" @click="editPopover?.toggleDialog()">
+    <div
+        class="chip"
+        :class="{toggled: isToggled}"
+        @click="editPopover?.toggleDialog()"
+        @auxclick="onAuxClick"
+        @mousedown="onMouseDown"
+    >
         <span class="content">
             <span class="key">{{ filter.keyLabel }}</span>
-            <span v-if="!hasValue(filter.value)" class="in">in</span>
-            <span v-if="!hasValue(filter.value)" class="val">any</span>
-            <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
+            <span v-if="hasValue(filter.value) && shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
@@ -75,6 +79,17 @@
     }>()
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
+
+    const onAuxClick = (event: MouseEvent) => {
+        if (event.button !== 1) return
+        event.preventDefault()
+        event.stopPropagation()
+        emit("remove", props.filter.id)
+    }
+
+    const onMouseDown = (event: MouseEvent) => {
+        if (event.button === 1) event.preventDefault()
+    }
 
     const shouldShowComparatorInPopper = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2,

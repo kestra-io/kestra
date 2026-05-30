@@ -26,9 +26,11 @@ import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 
+import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.annotation.Scheduled;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +68,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final MetricRegistry metricRegistry;
     private final VNodeController vNodeController;
+    private Counter workerJobResubmitCounter;
     // mutable for testing purpose
     String serverId = ServerInstance.INSTANCE_ID;
 
@@ -106,6 +109,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             ? serverConfig.service().purge().retention()
             : null;
         this.vNodeController = vNodeController;
+    }
+
+    @PostConstruct
+    void initMetrics() {
+        this.workerJobResubmitCounter = metricRegistry.counter(
+            MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT,
+            MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION
+        );
     }
 
     /**
@@ -238,8 +249,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private void reEmitWorkerJobsForWorker(final TransactionContext txContext, final String id) {
-        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT, MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION)
-            .increment();
+        workerJobResubmitCounter.increment();
 
         workerJobRunningStateStore.processWorkerJobsForDeadWorker(txContext, id, (txContext2, workerJobRunning) ->
         {

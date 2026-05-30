@@ -46,24 +46,24 @@ html.dark #loader-wrapper {
 
 @-webkit-keyframes pulse-seq {
   0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
-  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 6px rgba(169, 80, 255, 0.9)); filter: drop-shadow(0 0 6px rgba(169, 80, 255, 0.9)); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); }
   65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
 }
 
 @keyframes pulse-seq {
   0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
-  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 6px rgba(169, 80, 255, 0.9)); filter: drop-shadow(0 0 6px rgba(169, 80, 255, 0.9)); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); }
   65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
 }
 
 @-webkit-keyframes pulse-seq-pink {
   0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
-  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 6px rgba(246, 46, 118, 0.9)); filter: drop-shadow(0 0 6px rgba(246, 46, 118, 0.9)); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); }
   65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
 }
 
 @keyframes pulse-seq-pink {
   0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
-  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 6px rgba(246, 46, 118, 0.9)); filter: drop-shadow(0 0 6px rgba(246, 46, 118, 0.9)); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); }
   65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
 }

@@ -6,6 +6,7 @@
         :content="tooltipContent"
         :rawContent="true"
         placement="bottom"
+        popperClass="ks-chart-tooltip"
         :popperOptions="tooltipPopperOptions"
     >
         <div
@@ -233,7 +234,7 @@
             )
         }
 
-        return `<div style="max-width:min(320px,90vw);overflow-wrap:anywhere">${rows.join("")}</div>`
+        return rows.join("")
     }
 
     function onMouseleave() {
@@ -266,5 +267,10 @@
     .ks-chart__inner {
         width: 100%;
         height: 100%;
+    }
+
+    :global(.ks-chart-tooltip) {
+        max-width: min(20rem, 90vw);
+        overflow-wrap: anywhere;
     }
 </style>

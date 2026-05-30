@@ -285,7 +285,7 @@
       "next15minutes": "다음 15분",
       "next1hour": "다음 1시간",
       "next24hours": "다음 24시간",
-      "next30days": "다음 30일",
+      "next30days": "향후 30일",
       "next365days": "다음 365일",
       "next48hours": "다음 48시간",
       "next5minutes": "다음 5분",
@@ -294,11 +294,11 @@
       "previousWeek": "지난 주",
       "previousYear": "작년",
       "short": {
-        "12h": "12h",
-        "15m": "15m",
-        "1d": "1d",
-        "1h": "1h",
-        "7d": "7d"
+        "12h": "12시간",
+        "15m": "15분",
+        "1d": "1일",
+        "1h": "1시간",
+        "7d": "7일"
       },
       "thisMonth": "이번 달",
       "thisMonthSoFar": "이번 달 현재까지",

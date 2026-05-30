@@ -286,7 +286,7 @@
       "next1hour": "次の1時間",
       "next24hours": "次の24時間",
       "next30days": "次の30日間",
-      "next365days": "次の365日間",
+      "next365days": "次の365日",
       "next48hours": "次の48時間",
       "next5minutes": "次の5分",
       "next7days": "次の7日間",
@@ -294,11 +294,11 @@
       "previousWeek": "先週",
       "previousYear": "昨年",
       "short": {
-        "12h": "12h",
-        "15m": "15m",
-        "1d": "1d",
-        "1h": "1h",
-        "7d": "7d"
+        "12h": "12時間",
+        "15m": "15分",
+        "1d": "1日",
+        "1h": "1時間",
+        "7d": "7日"
       },
       "thisMonth": "今月",
       "thisMonthSoFar": "今月これまで",

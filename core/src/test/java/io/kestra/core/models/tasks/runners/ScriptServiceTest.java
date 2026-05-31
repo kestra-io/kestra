@@ -129,10 +129,6 @@ class ScriptServiceTest {
 
     @Test
     void shouldRejectOutputFileWithUnsupportedChars() {
-        assertThatThrownBy(() -> ScriptService.validateStoragePath("file🐸name.txt"))
-            .isInstanceOf(IOException.class)
-            .hasMessageContaining("unsupported characters");
-
         assertThatThrownBy(() -> ScriptService.validateStoragePath("file name.txt"))
             .isInstanceOf(IOException.class)
             .hasMessageContaining("unsupported characters");

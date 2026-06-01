@@ -15,7 +15,7 @@ import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@KestraTest(startRunner = true)
 public class WebhookRoutingTest {
 
     @Inject

@@ -9,12 +9,12 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.WebhookService;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@MicronautTest
+@KestraTest(startRunner = true)
 public class WebhookBuilderTest {
     @Inject
     WebhookService webhookService;

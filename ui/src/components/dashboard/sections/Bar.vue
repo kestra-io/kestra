@@ -110,11 +110,13 @@
                 data: categories.value,
                 show: showAxes,
                 name: showAxes ? (chartOptions?.column ? (data?.columns?.[chartOptions.column]?.displayName ?? chartOptions.column) : "") : undefined,
+                nameTextStyle: {align: "right"},
             },
             yAxis: {
                 type: "value",
                 show: showAxes,
                 name: showAxes ? (aggregator[0][1].displayName ?? aggregator[0][0]) : undefined,
+                nameTextStyle: {align: "left"},
                 axisLabel: isDurationAgg()
                     ? {formatter: (v: number) => durationUtils.humanDuration(v)}
                     : {},

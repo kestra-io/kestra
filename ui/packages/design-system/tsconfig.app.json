@@ -12,6 +12,7 @@
         "declaration": true,
         "emitDeclarationOnly": true,
         "outDir": "./node_modules/.tmp/types",
+        "tsBuildInfoFile": "./node_modules/.tmp/types/tsconfig.app.tsbuildinfo",
         "esModuleInterop": true,
         "isolatedModules": true,
         "verbatimModuleSyntax": true,

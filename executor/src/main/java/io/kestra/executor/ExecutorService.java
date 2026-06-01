@@ -316,10 +316,9 @@ public class ExecutorService {
                 List<TaskRun> taskRunByTasks = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
                 if (taskRunByTasks.stream().filter(t -> t.getState().isTerminated()).count() == taskRunByTasks.size()) {
-                    return childWorkerTaskTypeToWorkerTask(
-                        Optional.of(State.Type.KILLED),
-                        parentTaskRun
-                    );
+                    // Use withStateAndAttempt so the last attempt gets an end date; withState alone
+                    // leaves the attempt in RUNNING, causing the UI to show a stuck duration counter.
+                    return Optional.of(new WorkerTaskResult(parentTaskRun.withStateAndAttempt(State.Type.KILLED)));
                 }
             }
         }
@@ -1616,7 +1615,7 @@ public class ExecutorService {
             .map(taskRun ->
             {
                 try {
-                    return execution.withTaskRun(taskRun.withState(state));
+                    return execution.withTaskRun(taskRun.withStateAndAttempt(state));
                 } catch (InternalException e) {
                     // in case we cannot update the last not terminated task run, we ignore it
                     return execution;

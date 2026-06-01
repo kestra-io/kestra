@@ -76,21 +76,8 @@
         }
     }
 
-    const hasValue = (value: AppliedFilter["value"]): boolean => {
-        if (value == null || value === "") return false
-        if (Array.isArray(value)) return value.length > 0
-        if (typeof value === "object" && "startDate" in value) return !!(value.startDate && value.endDate)
-        return true
-    }
-
     const closeDialog = () => {
         isDialogVisible.value = false
-        // If the user closes the popover without giving the chip a value, drop the chip
-        // so we don't leave a misleading "in any" placeholder that gets silently ignored
-        // by the encoder.
-        if (!hasValue(props.filter.value) && !props.filter.isDefaultVisible) {
-            emits("remove", props.filter.id)
-        }
     }
 
     const handleUpdate = (updatedFilter: AppliedFilter) => {

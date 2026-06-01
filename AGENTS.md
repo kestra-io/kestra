@@ -370,3 +370,29 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
+
+## UI Translations
+
+Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
+
+### Checking for missing translations
+
+Run the check script from the translations directory:
+
+```bash
+cd ui/src/translations && node check.js
+```
+
+A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
+
+### Adding missing translations
+
+1. Identify gaps by running `check.js` (or by diffing the flattened `en.json` keys against each language file).
+2. Translate only the missing keys — do **not** re-translate keys that already have a value.
+3. Follow these translation rules (mirroring `generate_translations.py`):
+   - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+   - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
+   - **Preserve `{{placeholder}}` variables** exactly — do not translate the word inside the braces.
+   - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
+4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
+5. Re-run `node check.js` to confirm everything is clean before committing.

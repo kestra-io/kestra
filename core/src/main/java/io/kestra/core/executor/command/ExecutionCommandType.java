@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.kestra.core.utils.Enums;
 
 public enum ExecutionCommandType {
+    CREATE,
+    REPLAY,
     CHANGE_TASK_RUN_STATE,
     FORCE_RUN,
     PAUSE,

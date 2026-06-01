@@ -344,7 +344,9 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.KEY, Resource.WORKER_GROUP,
                 Set.of(
-                    Op.EQUALS
+                    Op.EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
                 )
             ),
 

@@ -440,7 +440,7 @@ public record QueryFilter(
         KEY("key") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS);
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
             }
         };
 

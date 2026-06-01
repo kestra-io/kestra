@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -80,7 +80,7 @@ public class WorkingDirectoryTest {
                         .id("log")
                         .type(Log.class.getName())
                         .message("Hello World")
-                        .workerGroup(new WorkerGroup("toto", null))
+                        .workerSelector(new WorkerSelector(List.of("toto"), null))
                         .build()
                 )
             )
@@ -88,7 +88,7 @@ public class WorkingDirectoryTest {
 
         assertThat(modelValidator.isValid(workingDirectory).isPresent()).isTrue();
         assertThat(modelValidator.isValid(workingDirectory).get().getMessage())
-            .contains("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level");
+            .contains("Cannot set routing requirements (workerSelector) on WorkingDirectory sub-tasks");
 
     }
 }

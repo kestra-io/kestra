@@ -26,6 +26,13 @@
             </div>
         </template>
     </KSFilter>
+    <QuickFilters
+        :intervals="quickIntervals"
+        :timeRange="selectedTimeRange"
+        :intervalLabel="t('filter.timeRange_metric.label')"
+        :showLevel="false"
+        @update:timeRange="onQuickFilterTimeRange"
+    />
 
     <div v-bind="$attrs">
         <KsRow v-if="displayedMetrics.length > 0" :gutter="16">
@@ -75,6 +82,8 @@
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useFlowMetricFilter} from "../filter/configurations"
+    import QuickFilters from "../filter/QuickFilters.vue"
+    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
 
     defineOptions({
         name: "FlowMetrics",
@@ -87,6 +96,7 @@
 
     const flowMetricFilter = useFlowMetricFilter()
     const flowStore = useFlowStore()
+    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const isLoading = ref(false)
     const metricsData = ref<Record<string, any>>({})

@@ -105,7 +105,7 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.ignoreExecutionService.get().setIgnoredIndexerRecords(ignoreIndexerRecords);
         this.ignoreExecutionService.get().setIgnoredQueueRecords(ignoreQueueRecords);
 
-        KestraContext.getContext().injectWorkerConfigs(workerThread, null);
+        KestraContext.getContext().injectWorkerConfigs(workerThread);
 
         if (tenantId != null) {
             tenantIdSelectorService.get().createTenant(tenantId);

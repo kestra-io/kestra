@@ -60,7 +60,7 @@
     text-decoration: none;
     color: var(--ks-text-secondary);
     font-size: var(--ks-font-size-xs);
-    font-weight: var(--ks-sidebar-item-font-weight, 600);
+    font-weight: var(--ks-font-weight-medium);
     transition: background-color 0.15s ease, color 0.15s ease;
     cursor: pointer;
 

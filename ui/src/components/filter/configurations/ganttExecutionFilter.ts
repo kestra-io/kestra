@@ -16,7 +16,11 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.EQUALS],
+                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO],
+                    comparatorLabels: {
+                        [Comparators.GREATER_THAN_OR_EQUAL_TO]: "At or Above",
+                        [Comparators.LESS_THAN_OR_EQUAL_TO]: "At or Below",
+                    },
                     valueType: "select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs")

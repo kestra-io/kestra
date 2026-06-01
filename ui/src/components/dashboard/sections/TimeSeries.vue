@@ -189,18 +189,18 @@
                         type: "line",
                         data: duration,
                         label: label,
-                        borderColor: cssVar("--ks-gray-100"),
+                        borderColor: cssVar("--ks-gray-cool-100"),
                         smooth: true,
                         areaStyle: {
                             opacity: 0.2,
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                                 {
                                     offset: 0,
-                                    color: cssVar("--ks-gray-100"),
+                                    color: cssVar("--ks-gray-cool-100"),
                                 },
                                 {
                                     offset: 1,
-                                    color: cssVar("--ks-gray-900"),
+                                    color: cssVar("--ks-gray-cool-900"),
                                 },
                             ]),
                         },

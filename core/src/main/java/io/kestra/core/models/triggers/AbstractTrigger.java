@@ -14,7 +14,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -22,6 +22,8 @@ import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -59,7 +61,8 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @Valid
     @PluginProperty(hidden = true, group = "execution")
-    private WorkerGroup workerGroup;
+    @Schema(description = "Routing requirements (tags + fallback) for this trigger.")
+    private WorkerSelector workerSelector;
 
     @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;

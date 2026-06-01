@@ -41,17 +41,17 @@ html {
     }
 
     ::-webkit-scrollbar-track {
-        background: var(--ks-bg-body) !important;
+        background: var(--ks-bg-base) !important;
     }
 
     ::-webkit-scrollbar-thumb {
         background: var(--ks-border-default) !important;
         border-radius: 8px !important;
-        border: 4px solid var(--ks-bg-body) !important;
+        border: 4px solid var(--ks-bg-base) !important;
     }
 
     ::-webkit-scrollbar-corner {
-        background: var(--ks-bg-body) !important;
+        background: var(--ks-bg-base) !important;
     }
 }
 

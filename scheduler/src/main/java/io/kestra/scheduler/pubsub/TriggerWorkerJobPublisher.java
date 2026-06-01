@@ -1,5 +1,6 @@
 package io.kestra.scheduler.pubsub;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -7,19 +8,20 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerGroupMetaStore;
+import io.kestra.core.runners.WorkerQueueRouting;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.utils.Logs;
 
 import jakarta.inject.Inject;
@@ -31,17 +33,14 @@ public class TriggerWorkerJobPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(TriggerWorkerJobPublisher.class);
 
-    private final WorkerGroupMetaStore workerGroupMetaStore;
-    private final WorkerGroupService workerGroupService;
+    private final WorkerQueueService workerQueueService;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
 
     @Inject
     public TriggerWorkerJobPublisher(
-        WorkerGroupMetaStore workerGroupMetaStore,
-        WorkerGroupService workerGroupService,
+        WorkerQueueService workerQueueService,
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue) {
-        this.workerGroupMetaStore = workerGroupMetaStore;
-        this.workerGroupService = workerGroupService;
+        this.workerQueueService = workerQueueService;
         this.workerJobEventQueue = workerJobEventQueue;
     }
 
@@ -61,43 +60,37 @@ public class TriggerWorkerJobPublisher {
             .trigger(trigger)
             .data(WorkerTriggerData.from(conditionContext, triggerState.context()))
             .build();
+        Optional<WorkerQueueRouting> routing;
         try {
-            Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(flow, workerTrigger);
-            if (workerGroup.isPresent()) {
-                // Check if the worker group exist
-                String tenantId = triggerState.getTenantId();
-                RunContext runContext = conditionContext.getRunContext();
-                String workerGroupKey = runContext.render(workerGroup.get().getKey());
-                if (WorkerGroup.isDefault(workerGroupKey)) {
-                    // Explicit default worker group - dispatch without existence check
-                    this.workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
-                    return;
-                }
-                if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
-                    // Check whether at-least one worker is available
-                    if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
-                        this.workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
-                    } else {
-                        WorkerGroup.Fallback fallback = workerGroup.map(WorkerGroup::getFallback).orElse(WorkerGroup.Fallback.WAIT);
-                        switch (fallback) {
-                            case FAIL -> runContext.logger()
-                                .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
-                            case CANCEL -> runContext.logger()
-                                .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
-                            case WAIT -> {
-                                runContext.logger()
-                                    .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
-                                this.workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
-                            }
-                        }
-                        ;
-                    }
-                } else {
-                    runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);
-                }
-            } else {
-                // No worker group specified - use default (null key)
+            routing = workerQueueService.resolveWorkerQueueForJob(flow, workerTrigger);
+        } catch (NoMatchingWorkerQueueException e) {
+            // No Worker Queue matches the requested tags — a configuration error.
+            // Drop the trigger evaluation with a clear, user-facing log message.
+            conditionContext.getRunContext().logger()
+                .error("{}, ignoring the trigger.", e.getMessage());
+            return;
+        }
+        try {
+            if (routing.isEmpty() || routing.get().isDefault()) {
+                // No routing or explicit default Worker Queue — dispatch with null key.
                 this.workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
+                return;
+            }
+            WorkerQueueRouting r = routing.get();
+            String workerQueueId = r.workerQueueId();
+            String workerQueueForLog = WorkerQueues.forLog(r.tags(), workerQueueId);
+            RunContext runContext = conditionContext.getRunContext();
+            switch (r.disposition()) {
+                case DISPATCH -> this.workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTrigger, workerQueueId));
+                case WAIT_AND_DISPATCH -> {
+                    runContext.logger()
+                        .info("No workers are available for {}, waiting for one to be available.", workerQueueForLog);
+                    this.workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTrigger, workerQueueId));
+                }
+                case FAIL -> runContext.logger()
+                    .error("No workers are available for {}, ignoring the trigger.", workerQueueForLog);
+                case CANCEL -> runContext.logger()
+                    .warn("No workers are available for {}, ignoring the trigger.", workerQueueForLog);
             }
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);

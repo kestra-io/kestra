@@ -780,7 +780,7 @@
 
     .editor-absolute-container {
         position: absolute;
-        top: 8px;
+        top: var(--ks-font-size-lg);
         right: var(--ks-font-size-lg);
         z-index: 10;
         color: var(--ks-text-secondary);

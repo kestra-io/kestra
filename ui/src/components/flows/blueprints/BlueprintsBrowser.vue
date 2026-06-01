@@ -8,7 +8,10 @@
                 class="blueprints"
                 :loadData="loadData"
                 :total="total"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 divider
+                noPaginationGutter
                 @ready="ready = true"
                 @page-changed="onPageChanged"
             >
@@ -173,8 +176,11 @@
         searchText.value = query
     }
 
-    const onPageChanged = ({page}: {page: number; size: number}) => {
-        router.push({query: {...route.query, page}})
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
 
     const pluginsStore = usePluginsStore()

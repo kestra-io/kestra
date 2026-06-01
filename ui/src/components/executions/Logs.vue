@@ -10,6 +10,13 @@
             @search="filter = $event"
             @filter="syncFromAppliedFilters"
         />
+        <QuickFilters
+            :levels="logLevels"
+            :level="effectiveLevel?.value"
+            :showInterval="false"
+            :levelLabel="$t('filter.level_log_executions.label')"
+            @update:level="(value) => setLevelRouteValue({value, direction: 'min'})"
+        />
         <Collapse>
             <KsFormItem v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
@@ -56,7 +63,7 @@
         <TaskRunDetails
             v-if="!raw_view"
             ref="logs"
-            :level="effectiveLevel"
+            :levelFilter="effectiveLevel"
             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             :levelToHighlight="cursorLogLevel"
@@ -137,11 +144,14 @@
     import {storageKeys} from "../../utils/constants"
     import {
         hasUnsupportedRouteLevelComparator,
+        levelToRequestParams,
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import {useValues} from "../filter/composables/useValues"
+    import QuickFilters from "../filter/QuickFilters.vue"
 
     function distinctFilter(value, index, array) {
         return array.indexOf(value) === index
@@ -161,6 +171,7 @@
             DynamicScrollerItem,
             Refresh,
             KSFilter,
+            QuickFilters,
         },
         setup() {
             const logExecutionsFilter = useLogExecutionsFilter()
@@ -172,21 +183,26 @@
                 routeValue: routeLevel,
                 effectiveValue: effectiveLevel,
                 syncFromAppliedFilters,
+                setRouteValue: setLevelRouteValue,
             } = useRouteFilterPolicy({
-                defaultValue: () => defaultLogLevel.value,
+                defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
                 applyDefaultIfMissing: () => true,
-                fallbackValue: () => "TRACE",
+                fallbackValue: () => ({value: "TRACE", direction: "min"}),
                 readFromRoute: readRouteLevelFilter,
                 writeToRoute: normalizeRouteLevelFilter,
                 hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
                 readFromAppliedFilters: readAppliedLevelFilter,
             })
 
+            const {VALUES} = useValues("logs")
+
             return {
                 logExecutionsFilter,
                 routeLevel,
                 effectiveLevel,
                 syncFromAppliedFilters,
+                setLevelRouteValue,
+                logLevels: VALUES.LEVELS,
             }
         },
         data() {
@@ -303,9 +319,7 @@
                 this.logsLoading = true
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
-                    params: {
-                        minLevel: this.effectiveLevel,
-                    },
+                    params: levelToRequestParams(this.effectiveLevel),
                 }).finally(() => {
                     this.logsLoading = false
                 })
@@ -313,9 +327,7 @@
             downloadContent() {
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
-                    params: {
-                        minLevel: this.effectiveLevel,
-                    },
+                    params: levelToRequestParams(this.effectiveLevel),
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName)
                 })
@@ -323,9 +335,7 @@
             copyAllLogs() {
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
-                    params: {
-                        minLevel: this.effectiveLevel,
-                    },
+                    params: levelToRequestParams(this.effectiveLevel),
                 }).then((response) => {
                     Utils.copy(response)
                 })

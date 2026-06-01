@@ -14,15 +14,13 @@ service ConnectControllerService {
 // Request message for worker connection
 message ConnectRequest {
   RequestOrResponseHeader header = 1;
-  // The worker group key provided by the worker configuration
-  string workerGroupKey = 2;
 }
 
 // Response message for worker connection
 message ConnectResponse {
   RequestOrResponseHeader header = 1;
-  // The resolved worker group name (may be empty if no group is resolved)
-  string workerGroup = 2;
+  // The resolved worker group ID.
+  string worker_group_id = 2;
   // Serialized JSON configuration propagated from the controller to the worker
   bytes worker_configs = 3;
 }

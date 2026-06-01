@@ -688,7 +688,7 @@
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
         padding-top: var(--ks-spacing-2);

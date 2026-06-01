@@ -23,7 +23,8 @@
                 <slot name="header" />
             </span>
             <KsButton link @click="toggleFullScreen">
-                <ArrowExpand class="full-screen" />
+                <ArrowCollapse v-if="fullScreen" class="full-screen" />
+                <ArrowExpand v-else class="full-screen" />
             </KsButton>
         </template>
         <template v-if="$slots.footer" #footer>
@@ -36,6 +37,7 @@
     import {ref, computed} from "vue"
     import {ElDrawer} from "element-plus"
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
+    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

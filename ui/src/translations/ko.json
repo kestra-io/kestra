@@ -620,6 +620,7 @@
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
+    "execution id": "실행 Id",
     "execution labels": "실행 라벨",
     "execution not found": "<code>{executionId}</code> 실행을 찾을 수 없습니다.",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",

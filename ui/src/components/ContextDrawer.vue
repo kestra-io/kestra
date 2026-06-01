@@ -174,6 +174,7 @@
         flex-direction: row;
         align-items: stretch;
         background-color: var(--ks-bg-input);
+        border-left: 1px solid var(--ks-border-default);
 
         .context-tabs {
             flex: 1;

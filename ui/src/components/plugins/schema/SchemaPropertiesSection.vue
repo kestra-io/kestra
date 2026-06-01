@@ -1,6 +1,7 @@
 <template>
     <SchemaSection
         :class="['section-collapsible', {nested}]"
+        :style="labelColor ? {'--property-label-color': labelColor} : undefined"
         :clickableText="sectionName"
         :href="href"
         :initiallyExpanded="initiallyExpanded || autoExpanded"
@@ -27,38 +28,55 @@
                     v-for="(property, propertyKey) in sortedAndAggregated(properties)"
                     :key="propertyKey"
                     class="property"
-                    :arrow="false"
                     :clickableText="String(propertyKey)"
                     :href="`${href}_${propertyKey}`"
                     :noUrlChange
                     @expand="autoExpanded = true"
                 >
                     <template #additionalButtonText>
+                        <KsIcon
+                            v-if="showDynamic && !isDynamic(property)"
+                            tooltip="Non-dynamic"
+                            class="property-flag property-flag--info"
+                        >
+                            <Snowflake />
+                        </KsIcon>
                         <KsTooltip v-if="property['$required']" content="Required">
                             <span class="property-flag property-flag--required"> *</span>
                         </KsTooltip>
                     </template>
-                    <template #buttonRight="{collapsed}">
+                    <template #buttonRight>
                         <span class="property-button-right">
                             <span class="property-flags">
-                                <KsTooltip v-if="showDynamic && !isDynamic(property)" content="Non-dynamic">
-                                    <Snowflake class="property-flag property-flag--info" />
-                                </KsTooltip>
-                                <KsTooltip v-if="property['$beta']" content="Beta">
-                                    <AlphaBBox class="property-flag property-flag--warning" />
-                                </KsTooltip>
-                                <KsTooltip v-if="property['$deprecated']" content="Deprecated">
-                                    <Alert class="property-flag property-flag--warning" />
-                                </KsTooltip>
+                                <KsIcon
+                                    v-if="property['$beta']"
+                                    tooltip="Beta"
+                                    class="property-flag property-flag--warning"
+                                >
+                                    <AlphaBBox />
+                                </KsIcon>
+                                <KsIcon
+                                    v-if="property['$deprecated']"
+                                    tooltip="Deprecated"
+                                    class="property-flag property-flag--warning"
+                                >
+                                    <Alert />
+                                </KsIcon>
                             </span>
                             <span class="property-types">
                                 <template v-for="type in nonDeprecatedTypes(extractTypeInfo(property).types)" :key="type">
-                                    <a v-if="type.startsWith('#')" class="ref-type-box" :href="type" @click.stop>
-                                        <span class="ref-type">{{ className(type) }}</span><EyeOutline />
+                                    <a v-if="type.startsWith('#')" :href="type" class="ref-type-link" @click.stop>
+                                        <KsTag type="info">
+                                            {{ className(type) }}
+                                            <template #icon>
+                                                <EyeOutline />
+                                            </template>
+                                        </KsTag>
                                     </a>
-                                    <span v-else class="type-box">{{ type }}</span>
+                                    <KsTag v-else>
+                                        {{ type }}
+                                    </KsTag>
                                 </template>
-                                <component :is="collapsed ? ChevronDown : ChevronUp" class="arrow" />
                             </span>
                         </span>
                     </template>
@@ -77,11 +95,9 @@
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {KsIcon, KsTag, KsTooltip} from "@kestra-io/design-system"
     import Alert from "vue-material-design-icons/Alert.vue"
     import AlphaBBox from "vue-material-design-icons/AlphaBBox.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import Snowflake from "vue-material-design-icons/Snowflake.vue"
     import SchemaSection from "./SchemaSection.vue"
@@ -109,6 +125,7 @@
         description?: string;
         examples?: SchemaExample[];
         nested?: boolean;
+        labelColor?: string;
     }>(), {
         href: () => Math.random().toString(36).substring(2, 5),
         properties: undefined,
@@ -120,6 +137,7 @@
         description: undefined,
         examples: undefined,
         nested: false,
+        labelColor: undefined,
     })
 
     const emit = defineEmits<{expand: []}>()
@@ -165,6 +183,14 @@
         font-weight: normal;
     }
 
+    .nested :deep(> .collapse-button) {
+        justify-content: flex-start;
+        .collapse-button__chevron {
+            order: -1;
+            margin-left: 0;
+        }
+    }
+
     .property-flag {
         display: inline-flex;
         align-items: center;
@@ -201,30 +227,9 @@
         gap: 0.5rem;
     }
 
-    .type-box {
-        background-color: var(--ks-bg-tag-active);
-        color: var(--ks-text-primary);
-        font-size: 12px;
-        padding: 0 8px 2px;
-        border-radius: 8px;
-        text-transform: capitalize;
-    }
-
-    .ref-type-box {
-        display: flex;
-        align-items: center;
-        font-weight: 700;
-        font-size: var(--ks-font-size-xs);
-        line-height: 1;
-        padding: 0.25rem 0.5rem;
-        border: 1px solid var(--ks-border-info);
-        border-radius: var(--ks-radius-base);
-        background: transparent;
-        color: var(--ks-text-primary);
-
-        .ref-type + * {
-            margin-left: 0.625rem;
-        }
+    .ref-type-link {
+        display: inline-flex;
+        text-decoration: none;
     }
 
     .section-intro {
@@ -252,11 +257,14 @@
 
     .property {
         gap: 0 !important;
-        background-color: var(--ks-bg-overlay);
         border-bottom: 1px solid var(--ks-border-default);
 
         &:last-child {
             border-bottom: 0;
+        }
+
+        :deep(> .collapse-button > .collapse-button__label) {
+            color: var(--property-label-color, inherit);
         }
 
         :deep(> .collapse-button) {

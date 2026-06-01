@@ -483,7 +483,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-      "404": {
+       "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -868,15 +868,50 @@
       }
     },
     "pluginPage": {
-      "title1": "Plugins are building blocks for your workflows.",
-      "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across {count}+ plugins",
-      "alt": "Plugins Icon",
+      "search": "Search across 1400+ plugins",
+      "searchTasks": "Search {count} tasks",
+      "noResults": "No plugins match your search.",
+      "loadError": "Could not load plugins. Please try again.",
+      "notFound": "This plugin could not be found.",
+      "elementType": {
+        "tasks": "Task",
+        "triggers": "Trigger",
+        "conditions": "Condition",
+        "taskRunners": "Task runner",
+        "charts": "Chart",
+        "apps": "App",
+        "logExporters": "Log exporter",
+        "secrets": "Secret"
+      },
+      "sortBy": "Sort by",
       "sort": {
-        "name_asc": "Name A-Z",
-        "name_desc": "Name Z-A",
+        "nameAsc": "Name A-Z",
+        "nameDesc": "Name Z-A",
         "newest": "Newest",
-        "most_used": "Most used"
+        "mostUsed": "Most used"
+      },
+      "group": {
+        "plugins": "Plugins ({count})",
+        "tasks": "Tasks ({count})",
+        "blueprints": "Blueprints ({count})"
+      },
+      "overview": {
+        "title": "Overview",
+        "versions": "Versions",
+        "latest": "Latest",
+        "releaseNotes": "Release notes",
+        "previousVersions": "Previous versions",
+        "createdBy": "Created by",
+        "managedBy": "Managed by",
+        "pluginType": "Plugin type",
+        "linksResources": "Links & Resources",
+        "minKestraVersion": "Min. compatible Kestra vers.: {version}",
+        "minKestraVersionShort": "Min. Kestra version {version}"
+      },
+      "header": {
+        "enterpriseEdition": "Enterprise Edition",
+        "certified": "Certified",
+        "back": "Back to plugins"
       }
     },
     "no inputs": "This flow has no inputs.",

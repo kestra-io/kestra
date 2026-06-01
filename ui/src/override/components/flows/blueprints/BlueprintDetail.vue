@@ -163,6 +163,7 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
+                    kind: props.kind,
                     tab: route.params?.tab || tab.value,
                 },
             },

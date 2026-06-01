@@ -60,6 +60,7 @@ import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
 import KsOptionGroup from "./components/Form/KsOptionGroup.vue"
 import KsPagination from "./components/Data/KsPagination.vue"
+import KsPluginCard from "./components/Data/KsPluginCard.vue"
 import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
@@ -246,6 +247,7 @@ const components: Record<string, Component> = {
     KsOption,
     KsOptionGroup,
     KsPagination,
+    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -348,6 +350,7 @@ export {
     KsOption,
     KsOptionGroup,
     KsPagination,
+    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -355,6 +358,7 @@ export {
     KsRadioGroup,
     KsRow,
     KsScrollbar,
+    KsSearch,
     KsSegmented,
     KsSelect,
     KsSideBar,

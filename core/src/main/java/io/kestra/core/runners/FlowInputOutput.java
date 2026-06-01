@@ -108,6 +108,23 @@ public class FlowInputOutput {
     }
 
     /**
+     * Reads all the inputs of a given flow without requiring a pre-built execution.
+     * Files are stored under the provided {@code executionId} so storage paths match the execution
+     * that will be created from the returned inputs.
+     *
+     * @param flow The Flow.
+     * @param executionId The ID that will be assigned to the execution.
+     * @param data The execution's inputs data.
+     * @return The Map of typed inputs.
+     */
+    public Mono<Map<String, Object>> readExecutionInputs(
+        final FlowInterface flow,
+        final String executionId,
+        final Publisher<CompletedPart> data) {
+        return readExecutionInputs(flow, minimalExecution(flow, executionId), data);
+    }
+
+    /**
      * Reads all the inputs of a given execution of a flow.
      *
      * @param inputs The Flow's inputs
@@ -181,6 +198,13 @@ public class FlowInputOutput {
                 }
             })
             .collectMap(Map.Entry::getKey, Map.Entry::getValue);
+    }
+
+    public Map<String, Object> readExecutionInputs(
+        final FlowInterface flow,
+        final String executionId,
+        final Map<String, ?> data) {
+        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId), data);
     }
 
     /**
@@ -540,6 +564,18 @@ public class FlowInputOutput {
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");
         }
+    }
+
+    private static Execution minimalExecution(FlowInterface flow, String executionId) {
+        return Execution.builder()
+            .id(executionId)
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .state(new State())
+            .variables(flow.getVariables())
+            .build();
     }
 
     /**

@@ -32,4 +32,8 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/segmented';
+
+    .el-segmented__item-selected {
+        font-weight: 500;
+    }
 </style>

@@ -130,4 +130,44 @@ public class QueryFilterUtils {
         validateTimeline(updatedFilters);
         return updatedFilters;
     }
+
+    public static final List<QueryFilter.Field> TRIGGER_DATE_FIELDS = List.of(
+        QueryFilter.Field.NEXT_EXECUTION_DATE,
+        QueryFilter.Field.LAST_TRIGGERED_DATE
+    );
+
+    public static List<QueryFilter> rewriteTriggerDateFilters(List<QueryFilter> filters, QueryFilter.Field dateField) {
+        if (filters == null) {
+            return List.of();
+        }
+        if (dateField != null && !TRIGGER_DATE_FIELDS.contains(dateField)) {
+            throw new IllegalArgumentException(
+                "dateFilter must be one of " + TRIGGER_DATE_FIELDS + " but was " + dateField
+            );
+        }
+        QueryFilter.Field target = dateField == null ? QueryFilter.Field.NEXT_EXECUTION_DATE : dateField;
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+        ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
+
+        return filters.stream()
+            .map(f -> {
+                if (isTimeRangeFilter(f)) {
+                    return QueryFilter.builder()
+                        .field(target)
+                        .operation(timeRangeOperation(f))
+                        .value(resolvedDate.toString())
+                        .build();
+                }
+                if (isStartDateFilter(f) || isEndDateFilter(f)) {
+                    return QueryFilter.builder()
+                        .field(target)
+                        .operation(f.operation())
+                        .value(f.value())
+                        .build();
+                }
+                return f;
+            })
+            .toList();
+    }
 }

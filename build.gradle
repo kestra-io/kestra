@@ -552,13 +552,13 @@ tasks.register('executableJar', Zip) {
 tasks.register('runLocal') {
     group = "application"
     description = "Run Kestra as server local"
-    dependsOn ':cli:runLocal'
+    dependsOn ':ui:assembleFrontend', ':cli:runLocal'
 }
 
 tasks.register('runStandalone') {
     group = "application"
     description = "Run Kestra as server standalone"
-    dependsOn ':cli:runStandalone'
+    dependsOn ':ui:assembleFrontend', ':cli:runStandalone'
 }
 
 /**********************************************************************************************************************\

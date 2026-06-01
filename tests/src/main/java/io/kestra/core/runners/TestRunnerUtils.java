@@ -1,5 +1,25 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.utils.Await;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -9,25 +29,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
-
-import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.*;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.utils.Await;
-
-import io.micronaut.data.model.Pageable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.TestsUtils.stringify;
 
@@ -270,14 +271,12 @@ public class TestRunnerUtils {
         }
     }
 
+    public Execution awaitFlowExecution(String tenantId, String namespace, String flowId, Duration duration) {
+        return awaitFlowExecution((_) -> true, tenantId, namespace, flowId, duration);
+    }
+
     /**
      * This method will return the last created execution
-     * 
-     * @param predicate
-     * @param tenantId
-     * @param namespace
-     * @param flowId
-     * @return
      */
     public Execution awaitFlowExecution(Predicate<Execution> predicate, String tenantId, String namespace, String flowId) {
         return awaitFlowExecution(predicate, tenantId, namespace, flowId, null);

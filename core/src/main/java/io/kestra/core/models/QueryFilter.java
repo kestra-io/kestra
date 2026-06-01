@@ -406,6 +406,30 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
             }
+        },
+        SOURCE("source") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        LOCKED("locked") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        LAST_TRIGGERED_DATE("lastTriggeredDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        NEXT_EXECUTION_DATE("nextExecutionDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -483,14 +507,15 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
-                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID, Field.TRIGGER_STATE
+                    Field.TRIGGER_ID, Field.TRIGGER_STATE,
+                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE
                 );
             }
         },
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE);
             }
         },
         ROLE {

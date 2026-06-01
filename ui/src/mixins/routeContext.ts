@@ -1,4 +1,9 @@
-export default {
+import {defineComponent} from "vue"
+
+/**
+ * @deprecated Use `composables/useRouteContext.ts` instead.
+ */
+export default defineComponent({
     props: {
         embed: {
             type: Boolean,
@@ -24,8 +29,8 @@ export default {
                     baseTitle = document.title
                 }
 
-                document.title = this.routeInfo.title + " | " + baseTitle
+                document.title = (this as unknown as {routeInfo: {title: string}}).routeInfo.title + " | " + baseTitle
             }
         },
     },
-}
+})

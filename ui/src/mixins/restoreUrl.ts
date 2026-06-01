@@ -1,6 +1,10 @@
+import {defineComponent} from "vue"
 import {defaultNamespace} from "../composables/useNamespaces"
 
-export default {
+/**
+ * @deprecated Use `composables/useRestoreUrl.ts` instead.
+ */
+export default defineComponent({
     props: {
         restoreUrl: {
             type: Boolean,
@@ -9,19 +13,21 @@ export default {
     },
     created() {
         if (Object.keys(this.$route.query).length === 0 && this.restoreUrl) {
-            this.loadInit = false
+            (this as unknown as {loadInit: boolean}).loadInit = false
             this.goToRestoreUrl()
         }
     },
     computed: {
-        localStorageName() {
+        localStorageName(): string {
             const tenant = this.$route.params.tenant
-            return `${this.$route.name?.replace("/", "_")}${this.$route.params.tab ? "_" + this.$route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
+            const routeName = typeof this.$route.name === "string" ? this.$route.name.replace("/", "_") : ""
+            return `${routeName}${this.$route.params.tab ? "_" + this.$route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
         },
 
-        localStorageValue() {
-            if (window.sessionStorage.getItem(this.localStorageName)) {
-                return JSON.parse(window.sessionStorage.getItem(this.localStorageName))
+        localStorageValue(): Record<string, unknown> | null {
+            const stored = window.sessionStorage.getItem(this.localStorageName)
+            if (stored) {
+                return JSON.parse(stored) as Record<string, unknown>
             } else {
                 return null
             }
@@ -52,19 +58,19 @@ export default {
 
             const localExist = this.localStorageValue !== null
 
-            const query = {...this.$route.query}
-            const local = this.localStorageValue === null ? {} : {...this.localStorageValue}
+            const query: Record<string, unknown> = {...this.$route.query}
+            const local: Record<string, unknown> = this.localStorageValue === null ? {} : {...this.localStorageValue}
 
             let change = false
 
-            if (!localExist && this.isDefaultNamespaceAllow && defaultNamespace()) {
+            if (!localExist && (this as unknown as {isDefaultNamespaceAllow?: boolean}).isDefaultNamespaceAllow && defaultNamespace()) {
                 local["namespace"] = defaultNamespace()
             }
 
             for (const key in local) {
                 if (!query[key] && local[key]) {
                     // empty array break the application
-                    if (local[key] instanceof Array && local[key].length === 0) {
+                    if (local[key] instanceof Array && (local[key] as unknown[]).length === 0) {
                         continue
                     }
 
@@ -76,11 +82,11 @@ export default {
             if (change) {
                 // wait for the router to be ready
                 this.$nextTick(() => {
-                    this.$router.replace({query: query})
+                    this.$router.replace({query: query as Record<string, string>})
                 })
             } else {
-                this.loadInit = true
+                (this as unknown as {loadInit: boolean}).loadInit = true
             }
         },
     },
-}
+})

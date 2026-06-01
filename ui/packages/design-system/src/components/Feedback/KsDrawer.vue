@@ -3,20 +3,15 @@
         v-model="model"
         destroyOnClose
         lockScroll
+        :resizable="resizable"
         :size="resizable ? drawerSize : ''"
         :appendToBody="true"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'full-screen': fullScreen && !resizable, 'is-resizable': resizable}"
+        :class="{'full-screen': fullScreen && !resizable}"
+        @resize-end="onResizeEnd"
         @before-close="emit('before-close', $event)"
     >
-        <template v-if="$slots.default || resizable" #default>
-            <div
-                v-if="resizable"
-                class="kel-drawer__resize-handle"
-                @mousedown.prevent="startResize"
-            />
-            <slot />
-        </template>
+        <slot />
         <template v-if="$slots.header || props.title" #header>
             <span>
                 {{ props.title }}
@@ -66,9 +61,7 @@
         footer?(): unknown
     }>()
 
-    const MIN_DRAWER_WIDTH = 360
     const FULLSCREEN_THRESHOLD = 0.95
-    const maxDrawerWidth = () => window.innerWidth - 16
 
     const fullScreenToggle = ref(props.isFullScreen)
     const drawerWidth = ref<number | null>(null)
@@ -80,31 +73,16 @@
 
     const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
 
+    const onResizeEnd = (_event: MouseEvent, size: number) => {
+        drawerWidth.value = Math.round(size)
+    }
+
     const toggleFullScreen = () => {
         if (props.resizable) {
-            drawerWidth.value = resizableFull.value ? null : maxDrawerWidth()
+            drawerWidth.value = resizableFull.value ? null : window.innerWidth
         } else {
             fullScreenToggle.value = !fullScreenToggle.value
         }
-    }
-
-    const startResize = (event: MouseEvent) => {
-        const panel = (event.target as HTMLElement).closest(".kel-drawer") as HTMLElement | null
-        if (!panel) return
-
-        const onMove = (move: MouseEvent) => {
-            const raw = panel.getBoundingClientRect().right - move.clientX
-            drawerWidth.value = Math.min(Math.max(raw, MIN_DRAWER_WIDTH), maxDrawerWidth())
-        }
-        const onUp = () => {
-            document.removeEventListener("mousemove", onMove)
-            document.removeEventListener("mouseup", onUp)
-            document.body.style.userSelect = ""
-        }
-
-        document.body.style.userSelect = "none"
-        document.addEventListener("mousemove", onMove)
-        document.addEventListener("mouseup", onUp)
     }
 
     const filteredProps = useFilteredProps(props)
@@ -192,28 +170,6 @@
 
         &.full-screen {
             width: 99% !important;
-        }
-
-        &.is-resizable {
-            .kel-drawer__body {
-                position: relative;
-            }
-
-            .kel-drawer__resize-handle {
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                width: 6px;
-                cursor: ew-resize;
-                z-index: 10;
-                transition: background-color 0.1s;
-
-                &:hover,
-                &:active {
-                    background-color: var(--ks-btn-primary-bg-default);
-                }
-            }
         }
 
         .kel-drawer__header {

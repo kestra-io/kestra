@@ -24,23 +24,22 @@ describe("KsDrawer", () => {
         expect(wrapper.emitted("update:modelValue")).toBeTruthy()
     })
 
-    test("renders a resize handle only when resizable", async () => {
-        const withHandle = mount(KsDrawer, {
-            props: {modelValue: true, resizable: true},
+    test("reflects full-screen state in the toggle icon when resizable", async () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, resizable: true, title: "Diff"},
             attachTo: document.body,
             global: globalConfig,
         })
         await flushPromises()
-        expect(document.querySelectorAll(".kel-drawer__resize-handle").length).toBe(1)
-        withHandle.unmount()
 
-        const without = mount(KsDrawer, {
-            props: {modelValue: true},
-            attachTo: document.body,
-            global: globalConfig,
-        })
+        const expandIcon = document.querySelector(".kel-drawer__header .arrow-expand-icon")
+        expect(expandIcon).toBeTruthy()
+
+        const toggle = expandIcon!.closest("button") as HTMLElement
+        toggle.click()
         await flushPromises()
-        expect(document.querySelectorAll(".kel-drawer__resize-handle").length).toBe(0)
-        without.unmount()
+
+        expect(document.querySelector(".kel-drawer__header .arrow-collapse-icon")).toBeTruthy()
+        wrapper.unmount()
     })
 })

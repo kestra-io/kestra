@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, useTemplateRef} from "vue"
+    import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
@@ -220,8 +221,9 @@
     const logs = useTemplateRef<InstanceType<typeof TaskRunDetails>>("logs")
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
 
+    const executionId = computed(() => executionsStore.execution?.id)
+
     // created hook equivalent
-    import {useRoute} from "vue-router"
     const route = useRoute()
     filter.value = (route.query.q as string) || undefined
 
@@ -252,7 +254,9 @@
 
     // computed
     const temporalLogs = computed(() => {
-        const logResults = executionsStore.logs?.results ?? []
+        // logs can be a plain array (e.g. in tests) or a paginated {results, total} object
+        const raw = executionsStore.logs as any // FIXME: any - store type is LogsState but tests set a plain array
+        const logResults: any[] = Array.isArray(raw) ? raw : (raw?.results ?? [])
 
         if (!logResults.length) {
             return []
@@ -269,8 +273,6 @@
             uid: `${logLine.taskRunId ?? ""}-${logLine.attemptNumber ?? 0}-${logLine.timestamp}-${index}`,
         }))
     })
-
-    const executionId = computed(() => executionsStore.execution?.id)
 
     const downloadName = computed(() => {
         // FIXME: any - moment is a global filter

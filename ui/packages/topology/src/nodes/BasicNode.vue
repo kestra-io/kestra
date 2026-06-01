@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :style="{borderColor: state ? `var(--ks-border-${state.toLowerCase()})` : undefined}"
+        :style="{borderColor}"
         :class="{...classes, 'running-border-animation': state === 'RUNNING'}"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -107,6 +107,12 @@
     }
 
     const expandable = computed(() => props.data?.expandable || false)
+
+    const borderColor = computed(() => {
+        if (!props.state) return undefined
+        const status = props.state.toLowerCase()
+        return status === "failed" ? "var(--ks-status-error)" : `var(--ks-border-${status})`
+    })
 
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null

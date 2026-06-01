@@ -273,6 +273,9 @@ public class TriggerEventHandler {
 
             if (event.evaluation() != null) {
                 newState = newState.updateOnExecutionCreated(clock, event.evaluation().stateType());
+                if (data.getRight() != null && !data.getRight().isAllowConcurrent()) {
+                    newState = newState.executionId(clock, event.evaluation().executionId());
+                }
             }
 
             newState = newState.lastEventId(clock, event.eventId());

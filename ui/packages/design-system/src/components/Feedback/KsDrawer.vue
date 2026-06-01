@@ -6,7 +6,7 @@
         :size="resizable ? drawerSize : ''"
         :appendToBody="true"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'full-screen': fullScreen, 'is-resizable': resizable}"
+        :class="{'full-screen': fullScreen && !resizable, 'is-resizable': resizable}"
         @before-close="emit('before-close', $event)"
     >
         <template v-if="$slots.default || resizable" #default>
@@ -71,7 +71,10 @@
     }
 
     const drawerWidth = ref<number | null>(null)
-    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
+    const drawerSize = computed(() => {
+        if (fullScreen.value) return "99%"
+        return drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"
+    })
 
     const MIN_DRAWER_WIDTH = 360
     const FULLSCREEN_THRESHOLD = 0.95

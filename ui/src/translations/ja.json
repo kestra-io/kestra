@@ -1,5 +1,6 @@
 {
   "ja": {
+    "valid": "有効",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",

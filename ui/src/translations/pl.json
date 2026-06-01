@@ -1,5 +1,6 @@
 {
   "pl": {
+    "valid": "Prawidłowy",
     "Add flow": "Dodaj flow",
     "Default log level": "Domyślny poziom log",
     "Default namespace": "Domyślny namespace",

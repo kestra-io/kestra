@@ -1,5 +1,6 @@
 {
   "hi": {
+    "valid": "मान्य",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",

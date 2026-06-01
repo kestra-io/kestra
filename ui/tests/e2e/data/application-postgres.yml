@@ -26,6 +26,9 @@ datasources:
     password: k3str4
 # Common configuration
 micronaut:
+  security:
+    csrf:
+      cookie-name: csrfToken
   server:
     cors:
       enabled: true

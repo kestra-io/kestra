@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -36,8 +38,20 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+
     @Override
     public Optional<ExecutorContext> handle(SubflowExecutionResult message) {
+        if (killSwitchService.evaluate(message.getExecutionId()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution result for child execution {} as there is a kill switch in it", message.getExecutionId());
+            return Optional.empty();
+        }
+        if (killSwitchService.evaluate(message.getParentTaskRun()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution result for parent execution {} as there is a kill switch in it", message.getParentTaskRun().getExecutionId());
+            return Optional.empty();
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }

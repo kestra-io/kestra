@@ -2,6 +2,8 @@ package io.kestra.executor.handler;
 
 import java.util.Optional;
 
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
@@ -49,8 +51,16 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
     @Inject
     private AsyncOperationService asyncOperationService;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+
     @Override
     public Optional<ExecutorContext> handle(ExecutionKilledExecution message) {
+        // Only IGNORE is filtered here — KILL and CANCEL still need to process the kill event.
+        if (killSwitchService.evaluate(message.getExecutionId()) == EvaluationType.IGNORE) {
+            log.warn("Ignoring execution {} because there is a kill switch on it", message.getExecutionId());
+            return Optional.empty();
+        }
         AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
         String error = null;
         try {

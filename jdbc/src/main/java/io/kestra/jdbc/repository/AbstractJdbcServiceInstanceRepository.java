@@ -1,6 +1,9 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -267,6 +270,22 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             return quotedName("service_type");
         }
         return super.getColumnName(field);
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {
+        String column = dateColumn != null ? dateColumn : CREATED_AT.getName();
+        // Accept ISO-8601 durations (e.g. PT5M) as a "now minus duration" threshold;
+        // the supplied operation is applied against that threshold.
+        try {
+            Duration duration = value instanceof Duration d ? d : Duration.parse(value.toString());
+            ZonedDateTime threshold = ZonedDateTime.now().minus(duration);
+            return applyDateCondition(threshold.toOffsetDateTime(), operation, column);
+        } catch (DateTimeParseException ignored) {
+            // Not a duration — fall through to absolute date parsing
+        }
+        return super.createdCondition(value, operation, column);
     }
 
     @Override

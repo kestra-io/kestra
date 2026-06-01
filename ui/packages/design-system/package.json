@@ -48,6 +48,7 @@
     "element-plus": ">=2.13.5",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.2",
+    "monaco-editor": "^0.52.2",
     "vue": "^3.5.0",
     "vue-i18n": "^11.4.4",
     "vue-material-design-icons": "^5.3.1",
@@ -68,7 +69,9 @@
     "remark-parse": "^11.0.0",
     "shiki": "^4.0.2",
     "unified": ">=11.0.0",
+    "vue": "^3.5.30",
     "vue-echarts": ">=8.0.0",
+    "vue-i18n": "^11.4.4",
     "xss": "^1.0.15"
   },
   "devDependencies": {
@@ -103,8 +106,6 @@
     "vite-plugin-dts": "^5.0.1",
     "vitest": "^4.1.5",
     "vitest-browser-vue": "^2.1.0",
-    "vue": "^3.5.30",
-    "vue-i18n": "^11.4.4",
     "vue-material-design-icons": "^5.3.1",
     "vue-router": "^5.0.6",
     "vue-tsc": "^3.2.8",

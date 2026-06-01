@@ -57,7 +57,7 @@ public class WorkerJobProcessorFactory {
         if (job instanceof WorkerTask) {
             return (WorkerJobProcessor<T>) new WorkerTaskProcessor(
                 context.workerId(),
-                context.workerGroup(),
+                context.workerGroupId(),
                 serverConfig,
                 metricRegistry,
                 workerSecurityService,
@@ -70,7 +70,7 @@ public class WorkerJobProcessorFactory {
             );
         } else if (job instanceof WorkerTrigger) {
             return (WorkerJobProcessor<T>) new WorkerTriggerProcessor(
-                context.workerGroup(),
+                context.workerGroupId(),
                 metricRegistry,
                 workerSecurityService,
                 tracer,

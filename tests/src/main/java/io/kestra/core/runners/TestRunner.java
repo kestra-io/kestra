@@ -74,7 +74,7 @@ public class TestRunner implements Runnable, AutoCloseable {
 
         if (workerEnabled) {
             Worker worker = applicationContext.getBean(Worker.class);
-            poolExecutor.execute(() -> worker.start(workerThread, null));
+            poolExecutor.execute(() -> worker.start(workerThread));
             servers.add(worker);
         }
 

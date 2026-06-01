@@ -24,17 +24,16 @@ service WorkerControllerService {
   rpc sendWorkerLogEntries(OpaqueData) returns (OpaqueData);
 }
 
-// Worker -> Controller: Request for jobs with optional ACKs for previously received jobs
+// Worker -> Controller: Request for jobs and signals about previously dispatched jobs.
 message WorkerJobRequest {
   RequestOrResponseHeader header = 1;
-  
+
   // Number of jobs the worker can accept right now (based on local queue capacity)
   int32 permits = 2;
-  
-  // UIDs of jobs that were successfully received (ACK for receipt, not completion).
-  // These are used for controller-side memory cleanup only.
-  repeated string acknowledgedJobIds = 3;
-  
+
+  // UIDs of jobs that reached a terminal state on the worker.
+  repeated string completed_job_ids = 3;
+
   // Worker connection info - only required in the first message of the stream
   optional WorkerConnectionInfo connectionInfo = 4;
 }
@@ -43,10 +42,10 @@ message WorkerJobRequest {
 message WorkerConnectionInfo {
   // Unique identifier for this worker instance
   string workerId = 1;
-  
-  // Worker group this worker belongs to (absent or empty means default group)
-  optional string workerGroup = 2;
-  
+
+  // Worker group ID used to resolve worker queue subscriptions.
+  string worker_group_id = 2;
+
   // Maximum concurrent jobs this worker can handle (based on thread count)
   int32 maxConcurrency = 3;
 }

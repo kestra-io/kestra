@@ -22,6 +22,16 @@
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
+                    <QuickFilters
+                        :levels="VALUES.LEVELS"
+                        :intervals="quickIntervals"
+                        :level="effectiveLogLevel?.value"
+                        :timeRange="selectedTimeRange"
+                        :intervalLabel="t('filter.timeRange_log.label')"
+                        :levelLabel="t('filter.level_log_executions.label')"
+                        @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
+                        @update:time-range="onQuickFilterTimeRange"
+                    />
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
@@ -59,6 +69,8 @@
     import _merge from "lodash/merge"
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
+    import {useValues} from "../filter/composables/useValues"
+    import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
 
@@ -78,10 +90,12 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
+        normalizeRouteTimeRangeFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore} from "../../stores/logs"
@@ -111,6 +125,14 @@
     const {t} = useI18n()
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
+    const {VALUES} = useValues("logs")
+    const quickIntervals = computed(() => [
+        {label: t("datepicker.short.15m"), value: "PT15M"},
+        {label: t("datepicker.short.1h"), value: "PT1H"},
+        {label: t("datepicker.short.12h"), value: "PT12H"},
+        {label: t("datepicker.short.1d"), value: "PT24H"},
+        {label: t("datepicker.short.7d"), value: "PT168H"},
+    ])
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
 
@@ -135,10 +157,11 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
-    } = useRouteFilterPolicy<string>({
+        setRouteValue: setLevelRouteValue,
+    } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
-        explicitValue: () => props.logLevel,
-        defaultValue: () => defaultLogLevel.value,
+        explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,
+        defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
         fallbackValue: () => undefined,
         readFromRoute: readRouteLevelFilter,
@@ -202,6 +225,10 @@
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
 
+    const onQuickFilterTimeRange = (value: string) => {
+        router.replace({query: normalizeRouteTimeRangeFilter(route.query, value)})
+    }
+
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
@@ -235,7 +262,6 @@
         await logsStore.findLogs(loadQuery({
             page,
             size,
-            minLevel: props.filters ? null : effectiveLogLevel.value,
             sort: "timestamp:desc",
         }))
             .finally(() => {
@@ -313,6 +339,7 @@
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             padding: 1rem;
+            margin: 0 var(--ks-spacing-5);
             padding-top: .5rem;
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);

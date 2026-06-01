@@ -21,7 +21,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -47,7 +47,9 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
     Map<String, Object> getVariables();
 
-    WorkerGroup getWorkerGroup();
+    default WorkerSelector getWorkerSelector() {
+        return null;
+    }
 
     default Concurrency getConcurrency() {
         return null;

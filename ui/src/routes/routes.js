@@ -55,8 +55,9 @@ export default [
     {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("override/components/flows/blueprints/BlueprintDetail.vue"), props: true},
 
     //Documentation
-    {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
-    {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/Plugin.vue")},
+    {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/PluginCatalog.vue")},
+    {name: "plugins/group", path: "/:tenant?/plugins/groups/:name/:subGroup?", component: () => import("../components/plugins/PluginGroup.vue")},
+    {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/PluginDetail.vue")},
 
     //Logs
     {

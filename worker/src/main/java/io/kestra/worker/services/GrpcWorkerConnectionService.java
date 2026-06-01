@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * gRPC-based implementation of {@link WorkerConnectionService}.
  * <p>
  * This service communicates with the controller via gRPC to establish the initial
- * worker connection and resolve configuration such as worker group assignment.
+ * worker connection and resolve group subscriptions from the worker group.
  */
 @Singleton
 @Slf4j
@@ -56,16 +56,15 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
      * {@inheritDoc}
      */
     @Override
-    public ConnectionResult connect(String workerId, String workerGroupKey) {
+    public ConnectionResult connect(String workerId) {
         log.info("Connecting to controller");
 
         ConnectRequest request = ConnectRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerId))
-            .setWorkerGroupKey(workerGroupKey != null ? workerGroupKey : "")
             .build();
 
         try {
-            log.debug("Sending connect request to controller for workerId: {}, workerGroupKey: {}", workerId, workerGroupKey);
+            log.debug("Sending connect request to controller for workerId: {}", workerId);
             // Apply deadline per-call: Deadline.after() creates an absolute timestamp, so it must not be baked into a singleton stub.
             ConnectControllerServiceBlockingStub stub = connectControllerService;
             if (workerControllersConfiguration.waitForReady().enabled()) {
@@ -73,7 +72,10 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
                 stub = stub.withDeadline(Deadline.after(deadlineMs, TimeUnit.MILLISECONDS));
             }
             ConnectResponse response = stub.connect(request);
-            return toConnectionResult(response, workerGroupKey);
+            processConnectResponse(response);
+            String workerGroupId = response.getWorkerGroupId();
+            log.info("Connected to controller, workerGroup: {}", workerGroupId);
+            return new ConnectionResult(workerGroupId);
         } catch (Exception e) {
             log.error("Failed to send connect request to controller", e);
             throw new WorkerConnectionFailedException("Failed connecting to Kestra controller. Cause: " + e.getMessage());
@@ -81,17 +83,15 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
     }
 
     /**
-     * Converts a {@link ConnectResponse} into a {@link ConnectionResult}.
+     * Processes the connect response from the controller.
      * <p>
      * Subclasses can override this to extract additional fields from the response.
      *
      * @param response the gRPC connect response
-     * @param workerGroupKey the original worker group key from configuration
-     * @return the connection result
      */
-    protected ConnectionResult toConnectionResult(ConnectResponse response, String workerGroupKey) {
-        // Extract worker configs from serialized response
-        if (!response.getWorkerConfigs().isEmpty()) {
+    protected void processConnectResponse(ConnectResponse response) {
+        // Extract telemetry configuration from serialized worker configs
+        if (workerReportableScheduler != null && !response.getWorkerConfigs().isEmpty()) {
             Map<String, Object> configs = MessageFormats.JSON.fromByteString(response.getWorkerConfigs(), MAP_TYPE);
             if (configs != null) {
                 // Extract telemetry configuration
@@ -111,14 +111,5 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
                 }
             }
         }
-
-        String resolvedGroup = response.getWorkerGroup();
-        if (resolvedGroup == null || resolvedGroup.isEmpty()) {
-            log.debug("No worker group resolved for key: {}", workerGroupKey);
-            return new ConnectionResult(null);
-        }
-
-        log.info("Worker group resolved via connect service: '{}' for key '{}'", resolvedGroup, workerGroupKey);
-        return new ConnectionResult(resolvedGroup);
     }
 }

@@ -47,6 +47,7 @@ public final class TriggerState implements TriggerId {
     // the last-event id that mutate this state.
     private final EventId lastEventId;
     private final Instant lastTriggeredDate;
+    private final String executionId;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -99,6 +100,7 @@ public final class TriggerState implements TriggerId {
             false,
             null,
             type,
+            null,
             null,
             null
         );
@@ -166,6 +168,18 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState workerId(final Clock clock, String workerId) {
         return update(clock).workerId(workerId).build();
+    }
+
+    /**
+     * Records the id of the execution currently holding this trigger's lock.
+     * <p>
+     * Set only for non-concurrent triggers (allowConcurrent=false); pass {@code null} to clear.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState executionId(final Clock clock, String executionId) {
+        return update(clock).executionId(executionId).build();
     }
 
     /**
@@ -251,7 +265,10 @@ public final class TriggerState implements TriggerId {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
         boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
 
-        return update(clock).disabled(disabled).build();
+        return update(clock)
+            .disabled(disabled)
+            .executionId(null)
+            .build();
     }
 
     /**
@@ -265,6 +282,7 @@ public final class TriggerState implements TriggerId {
             .nextEvaluationDate(null)
             .locked(false)
             .workerId(null)
+            .executionId(null)
             .build();
     }
 
@@ -333,7 +351,8 @@ public final class TriggerState implements TriggerId {
             .disabled(disabled)
             .type(type)
             .lastEventId(lastEventId)
-            .lastTriggeredDate(lastTriggeredDate);
+            .lastTriggeredDate(lastTriggeredDate)
+            .executionId(executionId);
     }
 
     // Lombok hack to properly generate Javadoc

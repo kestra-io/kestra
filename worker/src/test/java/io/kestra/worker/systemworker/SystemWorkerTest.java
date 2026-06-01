@@ -3,10 +3,10 @@ package io.kestra.worker.systemworker;
 import java.util.List;
 
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.senders.WorkerIOSender;
 
@@ -19,12 +19,10 @@ import static org.mockito.Mockito.mock;
 class SystemWorkerTest {
 
     @Test
-    void shouldResolveReservedSystemRoutingKeyRegardlessOfCallerSuppliedKey() {
+    void shouldResolveReservedSystemWorkerQueue() {
         TestableSystemWorker worker = newSystemWorker();
 
-        assertThat(worker.resolveWorkerGroupForTest(null)).isEqualTo(WorkerGroup.SYSTEM_KEY);
-        assertThat(worker.resolveWorkerGroupForTest(WorkerGroup.SYSTEM_KEY)).isEqualTo(WorkerGroup.SYSTEM_KEY);
-        assertThat(worker.resolveWorkerGroupForTest("user-group")).isEqualTo(WorkerGroup.SYSTEM_KEY);
+        assertThat(worker.resolveWorkerGroupIdForTest()).isEqualTo(WorkerQueues.SYSTEM_ID);
     }
 
     @SuppressWarnings("unchecked")
@@ -56,8 +54,8 @@ class SystemWorkerTest {
                 workerIOSenders, maintenanceService, metricRegistry, serverConfig);
         }
 
-        String resolveWorkerGroupForTest(String workerGroupKey) {
-            return resolveWorkerGroup(workerGroupKey);
+        String resolveWorkerGroupIdForTest() {
+            return resolveWorkerGroupId();
         }
     }
 }

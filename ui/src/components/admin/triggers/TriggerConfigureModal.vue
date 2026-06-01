@@ -78,7 +78,7 @@
                         <ContentCopy v-else class="copy-icon" />
                         <span>{{ copied ? $t("copied") : $t("copy") }}</span>
                     </KsButton>
-                    <Editor :modelValue="sourceYaml" lang="yaml" :navbar="false" readOnly :fullHeight="false" />
+                    <KsEditor v-bind="editorBindings" :modelValue="sourceYaml" lang="yaml" :navbar="false" readOnly :options="{fullHeight: false}" />
                 </div>
             </div>
 
@@ -94,7 +94,7 @@
 
         <template #footer>
             <div class="modal-footer">
-                <KsButton link @click="$emit('cancel')">
+                <KsButton @click="$emit('cancel')">
                     {{ $t("cancel") }}
                 </KsButton>
                 <KsButton type="primary" :disabled="!canSubmit" @click="addTriggerToFlow">
@@ -120,7 +120,8 @@
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {triggerDisplayName} from "./triggerCatalog"
 
-    import Editor from "../../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
 
@@ -137,6 +138,8 @@
     const flowStore = useFlowStore()
     const pluginsStore = usePluginsStore()
     const triggerDraftStore = useTriggerDraftStore()
+
+    const editorBindings = useEditorBindings()
 
     const activeTab = ref<TabValue>("form")
     const tabOptions = computed(() =>
@@ -353,8 +356,7 @@
     }
 
     .modal-footer {
+        justify-self: end;
         display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
     }
 </style>

@@ -26,3 +26,5 @@ triggers:
   - id: schedule
     type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 * * * *"
+    inputs:
+      string: hello

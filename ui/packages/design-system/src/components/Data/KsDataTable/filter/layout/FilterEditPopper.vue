@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, inject} from "vue"
+    import {computed, onMounted, reactive, inject, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {
         type AppliedFilter,
@@ -109,6 +109,10 @@
         props.filterKey?.valueType === "key-value",
     )
 
+    const isTimeRange = computed(() =>
+        props.filterKey?.key === "timeRange" || props.filterKey?.valueType === "time-range",
+    )
+
     // Server-side search is opted into by declaring an `options` param on valueProvider.
     const supportsServerSideSearch = computed(() =>
         (props.filterKey?.valueProvider?.length ?? 0) > 0,
@@ -149,12 +153,12 @@
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.selectValue = value),
-                    "update:time-range-mode": (value: "predefined" | "custom") =>
+                    "update:timeRangeMode": (value: "predefined" | "custom") =>
                         (state.timeRangeMode = value),
-                    "update:start-date-value": (value: Date | null) =>
+                    "update:startDateValue": (value: Date | null) =>
                         (state.startDateValue = value),
-                    "update:end-date-value": (value: Date | null) => (state.endDateValue = value),
-                    "update:date-filter-mode": (value: string) => (state.dateFilterMode = value),
+                    "update:endDateValue": (value: Date | null) => (state.endDateValue = value),
+                    "update:dateFilterMode": (value: string) => (state.dateFilterMode = value),
                 },
             },
             text: {
@@ -204,8 +208,10 @@
             },
         }
 
+        const valueType = props.filterKey.valueType === "time-range" ? "select" : props.filterKey.valueType
+
         return (
-            componentConfigs[props.filterKey.valueType as keyof typeof componentConfigs] || null
+            componentConfigs[valueType as keyof typeof componentConfigs] || null
         )
     })
 
@@ -289,6 +295,22 @@
                     ? {dateFilter: state.dateFilterMode}
                     : undefined,
             }
+        case "time-range":
+            if (state.timeRangeMode === "custom") {
+                return {
+                    value: {
+                        startDate: state.startDateValue!,
+                        endDate: state.endDateValue!,
+                    },
+                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                }
+            }
+            return {
+                value: state.selectValue,
+                label:
+                    state.valueOptions?.find(opt => opt.value === state.selectValue)
+                        ?.label || state.selectValue,
+            }
         case "multi-select":
             return {
                 value: state.keyValuePair,
@@ -316,15 +338,15 @@
 
         const filterData = getFilterValue()
         if (!filterData) {
+            // The parent closes the dialog as part of handling `remove`; no extra `close` needed.
             emits("remove", props.filter.id)
-            emits("close")
             return
         }
 
         const updatedFilter: any = {
             ...props.filter,
             comparator: state.selectedComparator,
-            comparatorLabel: COMPARATOR_LABELS[state.selectedComparator],
+            comparatorLabel: props.filterKey?.comparatorLabels?.[state.selectedComparator] ?? COMPARATOR_LABELS[state.selectedComparator],
             value: filterData.value,
             valueLabel: filterData.label,
         }
@@ -339,8 +361,10 @@
             updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData.meta)
         }
 
+        // The parent closes the dialog as part of handling `update`; no extra `close` needed.
+        // Emitting `close` here would run the parent's empty-chip auto-remove against the stale
+        // pre-update props and discard the chip we just applied.
         emits("update", updatedFilter)
-        emits("close")
     }
 
     const initializeStateFromFilter = (filter: AppliedFilter) => {
@@ -353,7 +377,7 @@
         }
 
         if (
-            props.filterKey?.key === "timeRange" &&
+            isTimeRange.value &&
             typeof filter.value === "object" &&
             filter.value !== null &&
             "startDate" in filter.value
@@ -388,6 +412,7 @@
                 state.keyValuePair = Array.isArray(filter.value) ? filter.value : []
                 break
             case "select":
+            case "time-range":
                 state.selectValue =
                     typeof filter.value === "string" &&
                     state.valueOptions.find(option => option.value === filter.value)
@@ -413,10 +438,11 @@
     const loadValueOptions = async (search?: string) => {
         if (!props.filterKey?.valueProvider) return
 
-        state.valueOptions = await props.filterKey.valueProvider({search})
+        const meta = state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined
+        state.valueOptions = await props.filterKey.valueProvider({search, meta})
 
         if (
-            props.filterKey?.key === "timeRange" &&
+            isTimeRange.value &&
             typeof props.filter.value === "string"
         ) {
             const currentValue = props.filter.value
@@ -450,4 +476,13 @@
     }
 
     onMounted(initializeFilter)
+
+    // When the "Apply to" segmented selector flips, refresh the dropdown options so providers can
+    // vary labels by the chosen date field. Cheap for filters with dateFilterOptions (relative dates
+    // are hardcoded); skipped entirely for filters without dateFilterOptions since dateFilterMode
+    // never changes there.
+    watch(
+        () => state.dateFilterMode,
+        () => loadValueOptions(),
+    )
 </script>

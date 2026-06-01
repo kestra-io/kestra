@@ -17,10 +17,6 @@ public class RunContextSDKFactory {
         private static final String USERNAME_PROP = AUTH_PROP + ".username";
         private static final String PASSWORD_PROP = AUTH_PROP + ".password";
 
-        private static final String OSS_BASIC_AUTH_PROP = "kestra.server.basic-auth";
-        private static final String OSS_USERNAME_PROP = OSS_BASIC_AUTH_PROP + ".username";
-        private static final String OSS_PASSWORD_PROP = OSS_BASIC_AUTH_PROP + ".password";
-
         private final Auth sdkAuthentication;
 
         SDKImpl(ApplicationContext applicationContext) {
@@ -28,48 +24,24 @@ public class RunContextSDKFactory {
                 .map(it -> new SDK.Auth(Optional.of(it), Optional.empty(), Optional.empty()))
                 .orElseGet(() ->
                 {
-                    Auth sdkAuth = resolveSdkUsernamePassword(applicationContext);
-                    if (sdkAuth != null) {
-                        return sdkAuth;
-                    }
-                    Auth basicAuth = resolveOssBasicAuth(applicationContext);
-                    if (basicAuth != null) {
-                        return basicAuth;
-                    }
+                    Optional<String> maybeUserName = applicationContext
+                        .getProperty(USERNAME_PROP, String.class)
+                        .filter(username -> !username.isBlank()); // to avoid Optional.of("")
 
+                    Optional<String> maybePassword = applicationContext
+                        .getProperty(PASSWORD_PROP, String.class)
+                        .filter(password -> !password.isBlank()); // to avoid Optional.of("")
+
+                    if (maybePassword.isPresent() && maybeUserName.isPresent()) {
+                        return new SDK.Auth(Optional.empty(), maybeUserName, maybePassword);
+                    }
+                    if (maybeUserName.isPresent() || maybePassword.isPresent()) {
+                        throw new IllegalArgumentException(
+                            "Both username and password must be provided if either is present: please configure both '" + USERNAME_PROP + "' and '" + PASSWORD_PROP + "' properties"
+                        );
+                    }
                     return null;
                 });
-        }
-
-        private Auth resolveSdkUsernamePassword(ApplicationContext applicationContext) {
-
-            Optional<String> maybeUserName = applicationContext.getProperty(USERNAME_PROP, String.class);
-            Optional<String> maybePassword = applicationContext.getProperty(PASSWORD_PROP, String.class);
-            if (maybePassword.isPresent() && maybeUserName.isPresent()) {
-                return new SDK.Auth(Optional.empty(), maybeUserName, maybePassword);
-            }
-            if (maybeUserName.isPresent() || maybePassword.isPresent()) {
-                throw new IllegalArgumentException(
-                    "Both username and password must be provided if either is present: please configure both '" + USERNAME_PROP + "' and '" + PASSWORD_PROP + "' properties"
-                );
-            }
-            return null;
-
-        }
-
-        private Auth resolveOssBasicAuth(ApplicationContext applicationContext) {
-            Optional<String> username = applicationContext.getProperty(OSS_USERNAME_PROP, String.class);
-            Optional<String> password = applicationContext.getProperty(OSS_PASSWORD_PROP, String.class);
-
-            if (username.isPresent() && password.isPresent()) {
-                return new SDK.Auth(
-                    Optional.empty(),
-                    username,
-                    password
-                );
-            }
-
-            return null;
         }
 
         @Override

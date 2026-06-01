@@ -87,6 +87,26 @@ export const CustomSize: Story = {
     }),
 }
 
+/** Resizable – drag the left edge to resize; past 95% it counts as full screen */
+export const Resizable: Story = {
+    render: () => ({
+        components: {KsButton, KsDrawer},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open resizable drawer</ks-button>
+                <ks-drawer v-model="visible" resizable destroy-on-close>
+                    <template #header><span>Resizable drawer</span></template>
+                    <p style="padding:16px">Drag the handle on the left edge to resize. Past 95% it is treated as full screen (the header icon flips).</p>
+                </ks-drawer>
+            </div>
+        `,
+    }),
+}
+
 /** Without header */
 export const NoHeader: Story = {
     render: () => ({

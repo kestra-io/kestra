@@ -137,9 +137,13 @@
             height: 100%;
             overflow: hidden;
             background-color: transparent;
-            background-image: radial-gradient(circle, var(--ks-topology-dash) 1px, transparent 1px);
+            background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 30%, transparent) 1px, transparent 1px);
             background-repeat: repeat;
             background-size: 24px 24px;
+
+            .dark & {
+                background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 20%, transparent) 1px, transparent 1px);
+            }
         }
 
         & .controls {

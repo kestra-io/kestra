@@ -2,13 +2,17 @@
     <div class="property-detail">
         <div v-if="subtype">
             <span>SubType</span>
-            <a v-if="subtype.startsWith('#')" :href="subtype" @click.stop>
-                <KsButton class="ref-type-button">
-                    <span class="ref-type">{{ className(subtype) }}</span>
-                    <EyeOutline />
-                </KsButton>
+            <a v-if="subtype.startsWith('#')" :href="subtype" class="ref-type-link" @click.stop>
+                <KsTag type="info">
+                    {{ className(subtype) }}
+                    <template #icon>
+                        <EyeOutline />
+                    </template>
+                </KsTag>
             </a>
-            <span v-else class="type-box">{{ subtype }}</span>
+            <KsTag v-else>
+                {{ subtype }}
+            </KsTag>
         </div>
 
         <template v-for="row in VALUE_ROWS" :key="row.label">
@@ -23,9 +27,9 @@
         <div v-if="enumValues !== undefined">
             <span>Possible Values</span>
             <div class="enum-values">
-                <code v-for="(possibleValue, index) in enumValues" :key="index" class="value-pill">
+                <KsTag v-for="(possibleValue, index) in enumValues" :key="index">
                     {{ possibleValue }}
-                </code>
+                </KsTag>
             </div>
         </div>
 
@@ -56,7 +60,7 @@
 
 <script setup lang="ts">
     import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils"
-    import {KsAlert, KsButton} from "@kestra-io/design-system"
+    import {KsAlert, KsTag} from "@kestra-io/design-system"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 
     const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`."
@@ -136,28 +140,9 @@
         }
     }
 
-    .ref-type-button {
-        display: flex;
-        align-items: center;
-        font-weight: 700;
-        font-size: var(--ks-font-size-xs);
-        line-height: 1;
-        padding: 0.25rem 0.5rem;
-        border: 1px solid var(--ks-border-info);
-        border-radius: var(--ks-radius-base);
-        background: transparent;
-        color: var(--ks-text-primary);
-        cursor: pointer;
-    }
-
-    .type-box {
-        font-size: var(--ks-font-size-xs);
-        line-height: 1;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        background-color: var(--ks-bg-tag-active);
-        color: var(--ks-text-primary);
-        text-transform: capitalize;
+    .ref-type-link {
+        display: inline-flex;
+        text-decoration: none;
     }
 
     .value-pill {

@@ -370,6 +370,37 @@ export const CustomTagSlot: Story = {
     args: {multiple: true, filterable: true, clearable: true, placeholder: "Select namespaces"},
 }
 
+export const RichOptionContent: Story = {
+    render: (args) => ({
+        components: {KsSelect, ElOption},
+        setup() {
+            const value = ref<string | null>(null)
+            const versions = [
+                {value: "0.22.0", date: "May 21, 2026", minKestra: "0.22.0"},
+                {value: "0.21.3", date: "April 14, 2026", minKestra: "0.21.0"},
+                {value: "0.21.0", date: "March 02, 2026", minKestra: "0.21.0"},
+                {value: "0.20.5", date: "January 18, 2026", minKestra: "0.20.0"},
+            ]
+            return {args, value, versions}
+        },
+        template: `
+            <div style="padding:24px;min-height:340px;display:flex;flex-direction:column;gap:12px">
+                <ks-select v-model="value" v-bind="args" style="width:260px">
+                    <ks-option v-for="v in versions" :key="v.value" :value="v.value" :label="v.value">
+                        <div style="display:flex;flex-direction:column;gap:2px;padding:4px 0;line-height:1.25rem">
+                            <span style="font-weight:600">{{ v.value }}</span>
+                            <span style="font-size:12px;opacity:0.6">{{ v.date }}</span>
+                            <span style="font-size:12px;opacity:0.6">Min. compatible Kestra vers.: {{ v.minKestra }}</span>
+                        </div>
+                    </ks-option>
+                </ks-select>
+                <span style="font-size:13px;opacity:0.6">Selected: {{ value || '(none)' }}</span>
+            </div>
+        `,
+    }),
+    args: {size: "small", placeholder: "Previous versions"},
+}
+
 /** Label slot – as used in Plugin.vue for version display */
 export const WithLabelSlot: Story = {
     render: (args) => ({

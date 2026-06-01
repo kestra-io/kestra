@@ -371,6 +371,6 @@
     }
 
     section.container.padding {
-        padding: 0 2rem;
+        padding: 0 var(--ks-spacing-6);
     }
 </style>

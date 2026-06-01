@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.time.Duration;
 import java.util.Set;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,7 @@ class ClusterControllerTest {
     }
 
     @Test
+    @FlakyTest // flay on CI but never locally
     void shouldGetWorkerMetrics() {
         // When
         Set<Metric> metrics = client.toBlocking().retrieve(

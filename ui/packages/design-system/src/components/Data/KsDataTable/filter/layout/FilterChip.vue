@@ -46,6 +46,7 @@
         type FilterKeyConfig,
         Comparators,
     } from "../utils/filterTypes"
+    import {isDateRangeValue} from "../utils/filterChipFactory"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -134,10 +135,13 @@
         }
     }
 
-    const getComparatorLabel = () =>
-        props.filterKey
-            ? props.filter.comparatorLabel
-            : "in"
+    const getComparatorLabel = () => {
+        if (!props.filterKey) return "in"
+        // Range filters ({startDate, endDate}) have no real comparator — render a
+        // localized "between" label instead of the model's baked comparatorLabel.
+        if (isDateRangeValue(props.filter.value)) return t("filter.is_between")
+        return props.filter.comparatorLabel
+    }
 
     const renderValueResult = computed(() =>
         h("span", {class: "value"}, formatValue(props.filter.value)),

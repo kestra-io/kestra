@@ -151,7 +151,14 @@ const writeFilter = (
             return
         }
         default: {
-            if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+            // A `time-range` field in custom range mode: encode {startDate,endDate} as a GTE/LTE pair
+            // on the field's own key (works inside [and|or][N] group prefixes too). The dedicated
+            // `timeRange` key keeps its own startDate/endDate encoding via the case above.
+            if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
+                const {startDate, endDate} = value as {startDate: Date; endDate: Date}
+                query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
+                query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
+            } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
                 value.forEach((item: string) => {
                     const [k, v] = item.split(":", 2)
                     if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v

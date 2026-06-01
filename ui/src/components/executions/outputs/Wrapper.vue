@@ -78,11 +78,11 @@
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
-                                    <Editor
+                                    <KsEditor
+                                        v-bind="editorBindings"
                                         ref="debugEditor"
-                                        :fullHeight="false"
-                                        :customHeight="20"
-                                        :input="true"
+                                        :options="{fullHeight: false, customHeight: 20}"
+                                        :inline="true"
                                         :navbar="false"
                                         :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
@@ -102,13 +102,12 @@
                                         {{ $t("eval.title") }}
                                     </KsButton>
 
-                                    <Editor
+                                    <KsEditor
+                                        v-bind="editorBindings"
                                         v-if="debugExpression"
                                         :readOnly="true"
-                                        :input="true"
-                                        :showScroll="true"
-                                        :fullHeight="false"
-                                        :customHeight="20"
+                                        :inline="true"
+                                        :options="{showScroll: true, fullHeight: false, customHeight: 20}"
                                         :navbar="false"
                                         :modelValue="debugExpression"
                                         :lang="isJSON ? 'json' : ''"
@@ -164,10 +163,10 @@
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
 
-    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system"
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
-    import Editor from "../../inputs/Editor.vue"
     import VarValue from "../VarValue.vue"
     import SubFlowLink from "../../flows/SubFlowLink.vue"
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue"
@@ -177,6 +176,8 @@
     import * as Utils from "../../../utils/utils"
 
     const {t} = useI18n({useScope: "global"})
+
+    const editorBindings = useEditorBindings()
 
     const editorValue = ref<string>("")
     const debugCollapse = ref<string>("")

@@ -702,7 +702,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
             }
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
-            // NOTE: we may also purge ExecutionKilled events, but as there may not be a lot of them, it may not be worth it.
             if (isTerminated) {
                 // if there is a parent, we send a subflow execution result to it
                 if (ExecutableUtils.isSubflow(execution)) {

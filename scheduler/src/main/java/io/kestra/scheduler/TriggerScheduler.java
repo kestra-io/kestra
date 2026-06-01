@@ -339,9 +339,11 @@ public class TriggerScheduler {
         Optional<TriggerEvaluationResult> evaluationResult = schedulableEvaluator.evaluate(trigger, triggerContext, triggerEvaluationContext.conditionContext());
         if (evaluationResult.isPresent()) {
             log(clock, triggerContext, evaluationResult.get());
+            boolean allowConcurrent = ((AbstractTrigger) trigger).isAllowConcurrent();
             triggerState = triggerState
                 .updateOnExecutionCreated(clock, evaluationResult.get().stateType())
-                .locked(clock, !((AbstractTrigger) trigger).isAllowConcurrent());
+                .locked(clock, !allowConcurrent)
+                .executionId(clock, allowConcurrent ? null : evaluationResult.get().executionId());
         }
         // Save the final trigger state
         triggerStateStore.save(triggerState);

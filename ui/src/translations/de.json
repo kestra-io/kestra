@@ -1,6 +1,5 @@
 {
   "de": {
-    "valid": "Gültig",
     "Add flow": "Flow hinzufügen",
     "Default log level": "Standard-Log-Ebene",
     "Default namespace": "Standard-Namespace",
@@ -1935,6 +1934,7 @@
     "usage": "Verwendung",
     "use": "Verwenden",
     "use_dark_background": "Verwenden Sie diese Version, wenn Sie auf einem dunklen Hintergrund arbeiten, um sicherzustellen, dass unser Name lesbar bleibt.",
+    "valid": "Gültig",
     "validate": "Validieren",
     "value": "Value",
     "variables": "Variablen",

@@ -1,6 +1,5 @@
 {
   "pl": {
-    "valid": "Prawidłowy",
     "Add flow": "Dodaj flow",
     "Default log level": "Domyślny poziom log",
     "Default namespace": "Domyślny namespace",
@@ -1935,6 +1934,7 @@
     "usage": "Użycie",
     "use": "Użyj",
     "use_dark_background": "Użyj tej wersji podczas pracy na ciemnym tle, aby zapewnić, że nasza nazwa pozostanie czytelna.",
+    "valid": "Prawidłowy",
     "validate": "Zatwierdź",
     "value": "Wartość",
     "variables": "Zmienne",

@@ -1,6 +1,5 @@
 {
   "zh_CN": {
-    "valid": "有效",
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",
     "Default namespace": "默认命名空间",
@@ -1935,6 +1934,7 @@
     "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
+    "valid": "有效",
     "validate": "验证",
     "value": "值",
     "variables": "变量",

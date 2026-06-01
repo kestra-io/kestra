@@ -1,6 +1,5 @@
 {
   "ja": {
-    "valid": "有効",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",
@@ -1935,6 +1934,7 @@
     "usage": "使用",
     "use": "使用",
     "use_dark_background": "暗い背景で作業する際には、このバージョンを使用して、私たちの名前が読みやすい状態を保ってください。",
+    "valid": "有効",
     "validate": "検証",
     "value": "Value",
     "variables": "変数",

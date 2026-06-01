@@ -1,6 +1,5 @@
 {
   "fr": {
-    "valid": "Valide",
     "Add flow": "Ajouter un flow",
     "Default log level": "Niveau de log par défaut",
     "Default namespace": "Espace de nom par défaut",
@@ -1935,6 +1934,7 @@
     "usage": "Utilisation",
     "use": "Utiliser",
     "use_dark_background": "Utilisez cette version lorsque vous travaillez sur un fond sombre pour garantir que notre nom reste lisible.",
+    "valid": "Valide",
     "validate": "Valider",
     "value": "Valeur",
     "variables": "Variables",

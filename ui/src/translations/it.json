@@ -1,6 +1,5 @@
 {
   "it": {
-    "valid": "Valido",
     "Add flow": "Aggiungi flow",
     "Default log level": "Livello di log predefinito",
     "Default namespace": "Namespace predefinito",
@@ -1935,6 +1934,7 @@
     "usage": "Utilizzo",
     "use": "Usa",
     "use_dark_background": "Usa questa versione quando lavori su uno sfondo scuro per garantire che il nostro nome rimanga leggibile.",
+    "valid": "Valido",
     "validate": "Valida",
     "value": "Value",
     "variables": "Variabili",

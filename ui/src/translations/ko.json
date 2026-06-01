@@ -1,6 +1,5 @@
 {
   "ko": {
-    "valid": "유효",
     "Add flow": "Flow 추가",
     "Default log level": "기본 log 레벨",
     "Default namespace": "기본 namespace",
@@ -1935,6 +1934,7 @@
     "usage": "사용량",
     "use": "사용",
     "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
+    "valid": "유효",
     "validate": "유효성 검사",
     "value": "Value",
     "variables": "변수",

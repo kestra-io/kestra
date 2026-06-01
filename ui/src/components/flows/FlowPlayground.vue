@@ -80,7 +80,6 @@
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Gantt from "../executions/Gantt.vue"
-    // @ts-expect-error no types on logs
     import Logs from "../executions/Logs.vue"
     import ExecutionOutput from "../executions/outputs/Wrapper.vue"
     import ExecutionMetric from "../executions/ExecutionMetric.vue"

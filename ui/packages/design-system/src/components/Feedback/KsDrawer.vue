@@ -66,20 +66,27 @@
         footer?(): unknown
     }>()
 
-    const fullScreen = ref(props.isFullScreen)
-
-    const toggleFullScreen = () => {
-        fullScreen.value = !fullScreen.value
-    }
-
-    const drawerWidth = ref<number | null>(null)
-    const drawerSize = computed(() => {
-        if (fullScreen.value) return "99%"
-        return drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"
-    })
-
     const MIN_DRAWER_WIDTH = 360
     const FULLSCREEN_THRESHOLD = 0.95
+    const maxDrawerWidth = () => window.innerWidth - 16
+
+    const fullScreenToggle = ref(props.isFullScreen)
+    const drawerWidth = ref<number | null>(null)
+
+    const resizableFull = computed(() =>
+        props.resizable && drawerWidth.value != null && drawerWidth.value >= window.innerWidth * FULLSCREEN_THRESHOLD,
+    )
+    const fullScreen = computed(() => (props.resizable ? resizableFull.value : fullScreenToggle.value))
+
+    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
+
+    const toggleFullScreen = () => {
+        if (props.resizable) {
+            drawerWidth.value = resizableFull.value ? null : maxDrawerWidth()
+        } else {
+            fullScreenToggle.value = !fullScreenToggle.value
+        }
+    }
 
     const startResize = (event: MouseEvent) => {
         const panel = (event.target as HTMLElement).closest(".kel-drawer") as HTMLElement | null
@@ -87,13 +94,7 @@
 
         const onMove = (move: MouseEvent) => {
             const raw = panel.getBoundingClientRect().right - move.clientX
-            const width = Math.min(Math.max(raw, MIN_DRAWER_WIDTH), window.innerWidth - 32)
-            if (width >= window.innerWidth * FULLSCREEN_THRESHOLD) {
-                fullScreen.value = true
-            } else {
-                fullScreen.value = false
-                drawerWidth.value = width
-            }
+            drawerWidth.value = Math.min(Math.max(raw, MIN_DRAWER_WIDTH), maxDrawerWidth())
         }
         const onUp = () => {
             document.removeEventListener("mousemove", onMove)

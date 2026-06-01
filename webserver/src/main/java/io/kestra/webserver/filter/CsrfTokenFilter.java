@@ -10,6 +10,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -17,6 +18,7 @@ import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.filter.FilterPatternStyle;
 import io.micronaut.http.filter.ServerFilterPhase;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.security.csrf.resolver.CsrfTokenResolver;
 import io.micronaut.security.csrf.validator.CsrfTokenValidator;
 
@@ -35,11 +37,14 @@ public class CsrfTokenFilter implements Ordered {
 
     private final List<CsrfTokenResolver<HttpRequest<?>>> csrfTokenResolvers;
     private final CsrfTokenValidator<HttpRequest<?>> csrfTokenValidator;
+    private final HttpServerConfiguration serverConfiguration;
 
     public CsrfTokenFilter(List<CsrfTokenResolver<HttpRequest<?>>> csrfTokenResolvers,
-                            CsrfTokenValidator<HttpRequest<?>> csrfTokenValidator) {
+                            CsrfTokenValidator<HttpRequest<?>> csrfTokenValidator,
+                            HttpServerConfiguration serverConfiguration) {
         this.csrfTokenResolvers = csrfTokenResolvers;
         this.csrfTokenValidator = csrfTokenValidator;
+        this.serverConfiguration = serverConfiguration;
     }
 
     @RequestFilter
@@ -50,6 +55,10 @@ public class CsrfTokenFilter implements Ordered {
         }
 
         if (!hasCookieAuth(request)) {
+            return null;
+        }
+
+        if (isCorsOrigin(request)) {
             return null;
         }
 
@@ -77,6 +86,20 @@ public class CsrfTokenFilter implements Ordered {
             }
         }
         return null;
+    }
+
+    private boolean isCorsOrigin(@NonNull HttpRequest<?> request) {
+        String origin = request.getHeaders().get(HttpHeaders.ORIGIN);
+        if (origin == null) {
+            return false;
+        }
+        var corsConfig = serverConfiguration.getCors();
+        if (!corsConfig.isEnabled()) {
+            return false;
+        }
+        return corsConfig.getConfigurations().values().stream()
+            .flatMap(c -> c.getAllowedOrigins().stream())
+            .anyMatch(origin::equals);
     }
 
     @Override

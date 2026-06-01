@@ -1293,24 +1293,22 @@ public class ExecutorService {
     }
 
     public void addWorkerTaskResult(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
-        // dynamic tasks
-        Execution newExecution = this.addDynamicTaskRun(
-            executor.getExecution(),
+        // add dynamic taskruns + taskruns created by the WorkingDirectory
+        this.addAdditionalTaskRun(
+            executor,
             flow,
             workerTaskResult
         );
-        if (newExecution != null) {
-            executor.withExecution(newExecution, "addDynamicTaskRun");
-        }
 
         TaskRun taskRun = workerTaskResult.getTaskRun();
-        newExecution = executor.getExecution().withTaskRun(taskRun);
+        Execution newExecution = executor.getExecution().withTaskRun(taskRun);
         // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
         // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
         if (taskRun.getState().getCurrent() == State.Type.KILLED && taskRun.getParentTaskRunId() != null) {
             newExecution = executionService.killParentTaskruns(taskRun, newExecution);
         }
         executor.withExecution(newExecution, "addWorkerTaskResult");
+
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
             metricRegistry
@@ -1383,30 +1381,29 @@ public class ExecutorService {
         }
     }
 
-    // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier
-    private Execution addDynamicTaskRun(Execution execution, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    // Note: as the flow is only used in an error branch, and it can take time to load, we pass it thought a Supplier
+    private void addAdditionalTaskRun(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+        Execution execution = executor.getExecution();
         List<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
+
+        // if there is a parent but the taskrun didn't exist: the parent should be the WorkingDirectory
+        // as inside a WorkingDirectory, a taskrun is directly created inside the Worker and not inside the Executor
+        if (workerTaskResult.getTaskRun().getParentTaskRunId() != null && taskRuns.stream().noneMatch(t -> t.getId().equals(workerTaskResult.getTaskRun().getId()))) {
+            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
+            Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
+            if (parentTask instanceof WorkingDirectory) {
+                taskRuns.add(workerTaskResult.getTaskRun());
+            }
+        }
 
         // declared dynamic tasks
         if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {
             taskRuns.addAll(workerTaskResult.getDynamicTaskRuns());
         }
 
-        // if parent, can be a Worker task that generate dynamic tasks
-        if (workerTaskResult.getTaskRun().getParentTaskRunId() != null) {
-            try {
-                execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getId());
-            } catch (InternalException e) {
-                TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
-                Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
-
-                if (parentTask instanceof WorkingDirectory) {
-                    taskRuns.add(workerTaskResult.getTaskRun());
-                }
-            }
+        if (taskRuns.size() > ListUtils.emptyOnNull(execution.getTaskRunList()).size()) {
+            executor.withExecution(execution.withTaskRunList(taskRuns), "addAdditionalTaskRun");
         }
-
-        return taskRuns.size() > ListUtils.emptyOnNull(execution.getTaskRunList()).size() ? execution.withTaskRunList(taskRuns) : null;
     }
 
     public void log(Logger log, boolean in, WorkerJob value) {

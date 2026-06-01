@@ -19,34 +19,42 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue"
+    import {ref, computed, watch} from "vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
     const props = withDefaults(defineProps<{
         title?: string
         collapsible?: boolean
         defaultCollapsed?: boolean
+        collapsed?: boolean
     }>(), {
         collapsible: false,
         defaultCollapsed: false,
+        collapsed: undefined,
     })
 
     const emit = defineEmits<{
-        toggle: [collapsed: boolean]
+        "toggle": [collapsed: boolean]
+        "update:collapsed": [value: boolean]
     }>()
 
-    const collapsed = ref(props.defaultCollapsed)
+    const internal = ref<boolean>(props.defaultCollapsed)
 
-    // When the parent flags this section as the active one (defaultCollapsed: true → false),
-    // auto-expand it. Never auto-collapse — keep previously opened sections open so navigating
-    // between groups doesn't close ones the user has already revealed.
+    const isControlled = computed(() => props.collapsed !== undefined)
+    const collapsed = computed<boolean>(() => isControlled.value ? props.collapsed as boolean : internal.value)
+
     watch(() => props.defaultCollapsed, (next) => {
-        if (!next) collapsed.value = false
+        if (!isControlled.value && !next) internal.value = false
     })
 
     function toggle() {
-        collapsed.value = !collapsed.value
-        emit("toggle", collapsed.value)
+        const next = !collapsed.value
+        if (isControlled.value) {
+            emit("update:collapsed", next)
+        } else {
+            internal.value = next
+        }
+        emit("toggle", next)
     }
 
     defineSlots<{

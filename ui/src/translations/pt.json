@@ -1,5 +1,6 @@
 {
   "pt": {
+    "valid": "Válido",
     "Add flow": "Adicionar flow",
     "Default log level": "Nível de log padrão",
     "Default namespace": "Namespace padrão",

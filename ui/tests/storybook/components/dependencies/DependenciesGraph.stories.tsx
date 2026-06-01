@@ -1,17 +1,22 @@
-import {defineComponent, onMounted, ref} from "vue";
+import {defineComponent, onMounted, PropType, ref} from "vue";
+import { Meta } from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 
 import {
     FLOW,
     EXECUTION,
     NAMESPACE,
+    Types,
 } from "../../../../src/components/dependencies/utils/types";
 import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies";
-import Table from "../../../../src/components/dependencies/components/Table.vue";
+import DependenciesTable from "../../../../src/components/dependencies/components/Table.vue";
+import { useExecutionsStore } from "../../../../src/stores/executions.ts";
+import { getDependencies, getRandomNumber } from "../../../fixtures/dependencies/getDependencies.ts";
 
 
-export default {
-    title: "Dependencies/Graph",
+const meta: Meta<typeof DependenciesTable> = {
+    title: "components/dependencies/Table",
+    component: DependenciesTable,
     decorators: [
         vueRouter([
             {path: "/", name: "home", component: {template: "<div />"}},
@@ -22,27 +27,28 @@ export default {
             },
         ]),
     ],
-};
+}
+
+export default meta
 
 const GraphWrapper = defineComponent({
     name: "DependenciesGraphStoryWrapper",
     props: {
-        subtype: {type: String, default: FLOW},
+        subtype: {type: String as PropType<Types | undefined>, default: FLOW},
     },
     setup(props) {
         onMounted(async () => {
             if (props.subtype === EXECUTION) {
-                const {useExecutionsStore} = await import(
-                    "../../../../src/stores/executions"
-                );
-                const executionsStore = useExecutionsStore();
+                // mock the followExecutionDependencies method to prevent actual API calls 
+                // and WebSocket connections during testing
+                const executionsStore = useExecutionsStore() as any;
                 executionsStore.followExecutionDependencies = () => {
                     return {
                         close: () => void 0,
                         onmessage: null,
                         onerror: null,
                     };
-                };
+                }
             }
         });
 
@@ -55,7 +61,19 @@ const GraphWrapper = defineComponent({
             selectedNodeID,
             selectNode,
             handlers,
-        } = useDependencies(container, props.subtype, "", params, true);
+        } = useDependencies(
+            container, 
+            props.subtype, 
+            "", 
+            params, 
+            async () => {
+                const res = await getDependencies({subtype: props.subtype || FLOW});
+                return {
+                    data: res, 
+                    count: getRandomNumber(1, 100)
+                };
+            }
+        );
 
         return () => (
             <div style="display:flex; gap:12px; height:680px;">
@@ -97,7 +115,7 @@ const GraphWrapper = defineComponent({
                     </div>
                 </div>
                 <div style="width:380px; height:100%;">
-                    <Table
+                    <DependenciesTable
                         elements={getElements()}
                         selected={selectedNodeID.value}
                         onSelect={selectNode}

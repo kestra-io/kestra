@@ -8,7 +8,8 @@
     >
         <span class="content">
             <span class="key">{{ filter.keyLabel }}</span>
-            <span v-if="hasValue(filter.value) && shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
+            <span v-if="!hasValue(filter.value)" class="in">{{ t("filter.in any") }}</span>
+            <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
@@ -186,8 +187,7 @@
         .key,
         .comparator,
         .value,
-        .in,
-        .val {
+        .in {
             font-size: var(--ks-font-size-xs);
             color: var(--ks-text-primary);
             white-space: nowrap;
@@ -201,8 +201,7 @@
             min-width: 0;
             flex-shrink: 1;
         }
-        .in,
-        .val {
+        .in {
             color: var(--ks-text-secondary);
         }
         .comparator {

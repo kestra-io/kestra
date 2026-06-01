@@ -1,11 +1,12 @@
 import {ref} from "vue";
+import { Meta } from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {FLOW} from "../../../../src/components/dependencies/utils/types";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
 import {getDependencies} from "../../../fixtures/dependencies/getDependencies";
 
-export default {
-    title: "Dependencies/Table",
+const meta: Meta<typeof Table> = {
+    title: "components/dependencies/Table",
     component: Table,
     decorators: [
         vueRouter([
@@ -17,19 +18,20 @@ export default {
             },
         ]),
     ],
-};
+}
+
+export default meta
 
 export const Default = () => ({
     components: {Table},
     setup() {
         const elements = getDependencies({subtype: FLOW});
-        const selected = ref(undefined);
-        const onSelect = (id) => (selected.value = id);
-        return {elements, selected, onSelect};
-    },
-    template: `
-      <div style="width:420px; height:640px;">
-        <Table :elements="elements" :selected="selected" @select="onSelect" />
-      </div>
-    `,
+        const selected = ref("");
+        const onSelect = (id: string) => (selected.value = id);
+        return () => (
+            <div style="width:420px; height:640px;">
+                <Table elements={elements} selected={selected.value} onSelect={onSelect} />
+            </div>
+        )
+    }
 });

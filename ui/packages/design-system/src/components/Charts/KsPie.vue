@@ -72,7 +72,7 @@
         const legendHidden = (props.options.legend as {show?: boolean})?.show === false
             || props.disableFeatures.includes(ChartFeature.LEGEND)
         const base: Record<string, unknown> = {
-            tooltip: {trigger: "item", formatter: "{b}: {c} ({d}%)"},
+            tooltip: {trigger: "item", confine: true, formatter: "{b}: {c} ({d}%)"},
             legend: {orient: "vertical", right: "5%", top: "center"},
             series: [
                 {

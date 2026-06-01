@@ -627,4 +627,10 @@ public abstract class AbstractRunnerTest {
     public void shouldCallTasksAfterListener(Execution execution) {
         afterExecutionTestCase.shouldCallTasksAfterListener(execution);
     }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/waitfor-nested.yaml" }, tenantId = "waitfornested")
+    void waitforNestedThreeLevels() throws Exception {
+        loopUntilTestCaseTest.waitforNestedThreeLevels("waitfornested");
+    }
 }

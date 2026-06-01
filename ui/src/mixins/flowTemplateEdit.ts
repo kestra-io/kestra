@@ -3,7 +3,7 @@ import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate"
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue"
 import Delete from "vue-material-design-icons/Delete.vue"
-import Editor from "../components/inputs/Editor.vue"
+import {KsEditor} from "@kestra-io/design-system"
 import RouteContext from "./routeContext"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import action from "../models/action"
@@ -18,7 +18,7 @@ import {useClient} from "@kestra-io/kestra-sdk"
 const FlowTemplateEditMixin: any = defineComponent({ // FIXME: any - avoids TS4082 from private plugin store types
     mixins: [RouteContext],
     components: {
-        Editor,
+        KsEditor,
         ContentSave,
         Delete,
     },

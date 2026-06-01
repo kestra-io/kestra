@@ -120,8 +120,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         {
             if (item.uid().equals(workerTask.uid())) {
                 if (item.getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
-                    resubmitLatch.countDown();
                     workerTaskResult.set(item);
+                    resubmitLatch.countDown();
                 }
 
                 if (item.getTaskRun().getState().getCurrent() == State.Type.RUNNING) {

@@ -3,13 +3,18 @@
         v-model="model"
         destroyOnClose
         lockScroll
-        size=""
+        :size="resizable ? drawerSize : ''"
         :appendToBody="true"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'full-screen': fullScreen}"
+        :class="{'full-screen': fullScreen, 'is-resizable': resizable}"
         @before-close="emit('before-close', $event)"
     >
-        <template v-if="$slots.default" #default>
+        <template v-if="$slots.default || resizable" #default>
+            <div
+                v-if="resizable"
+                class="kel-drawer__resize-handle"
+                @mousedown.prevent="startResize"
+            />
             <slot />
         </template>
         <template v-if="$slots.header || props.title" #header>
@@ -28,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {ref, computed} from "vue"
     import {ElDrawer} from "element-plus"
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -41,10 +46,12 @@
         title?: string
         isFullScreen?: boolean
         withHeader?: boolean
+        resizable?: boolean
     }>(), {
         title: undefined,
         isFullScreen: false,
         withHeader: true,
+        resizable: false,
     })
 
     const emit = defineEmits<{
@@ -61,6 +68,37 @@
 
     const toggleFullScreen = () => {
         fullScreen.value = !fullScreen.value
+    }
+
+    const drawerWidth = ref<number | null>(null)
+    const drawerSize = computed(() => (drawerWidth.value != null ? `${drawerWidth.value}px` : "65%"))
+
+    const MIN_DRAWER_WIDTH = 360
+    const FULLSCREEN_THRESHOLD = 0.95
+
+    const startResize = (event: MouseEvent) => {
+        const panel = (event.target as HTMLElement).closest(".kel-drawer") as HTMLElement | null
+        if (!panel) return
+
+        const onMove = (move: MouseEvent) => {
+            const raw = panel.getBoundingClientRect().right - move.clientX
+            const width = Math.min(Math.max(raw, MIN_DRAWER_WIDTH), window.innerWidth - 32)
+            if (width >= window.innerWidth * FULLSCREEN_THRESHOLD) {
+                fullScreen.value = true
+            } else {
+                fullScreen.value = false
+                drawerWidth.value = width
+            }
+        }
+        const onUp = () => {
+            document.removeEventListener("mousemove", onMove)
+            document.removeEventListener("mouseup", onUp)
+            document.body.style.userSelect = ""
+        }
+
+        document.body.style.userSelect = "none"
+        document.addEventListener("mousemove", onMove)
+        document.addEventListener("mouseup", onUp)
     }
 
     const filteredProps = useFilteredProps(props)
@@ -148,6 +186,28 @@
 
         &.full-screen {
             width: 99% !important;
+        }
+
+        &.is-resizable {
+            .kel-drawer__body {
+                position: relative;
+            }
+
+            .kel-drawer__resize-handle {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                width: 6px;
+                cursor: ew-resize;
+                z-index: 10;
+                transition: background-color 0.1s;
+
+                &:hover,
+                &:active {
+                    background-color: var(--ks-btn-primary-bg-default);
+                }
+            }
         }
 
         .kel-drawer__header {

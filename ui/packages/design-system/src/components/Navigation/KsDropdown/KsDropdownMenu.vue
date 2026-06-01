@@ -1,5 +1,5 @@
 <template>
-    <ElDropdownMenu v-bind="$attrs">
+    <ElDropdownMenu v-bind="$attrs" class="ks-dropdown-menu-padding">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -19,4 +19,10 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dropdown-menu';
+
+    // Inject explicit structural padding onto the menu list container
+    .ks-dropdown-menu-padding {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
 </style>

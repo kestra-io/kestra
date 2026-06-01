@@ -173,9 +173,9 @@ class PurgeStorageTest {
         assertThat(storageInterface.exists(MAIN_TENANT, namespace, fileUri)).isFalse();
     }
 
-    /** ACL boundary: namespace-scoped purge must not reach sub-namespaces (the ACL check at entry only validates the exact namespace). */
+    /** Namespace-scoped purge is recursive: it reaches sub-namespaces (e.g. {@code a.b} also purges {@code a.b.child}). */
     @Test
-    void shouldNotReachSubNamespacesWhenScopedByExactNamespace() throws Exception {
+    void shouldReachSubNamespacesWhenScopedByNamespace() throws Exception {
         String parentNamespace = uniqueNamespace();
         String childNamespace = parentNamespace + ".child";
         String parentFlowId = IdUtils.create();
@@ -192,10 +192,10 @@ class PurgeStorageTest {
             .build();
         var output = purge.run(runContext(parentFlowId, parentNamespace));
 
-        assertThat(output.getScannedCount()).isEqualTo(1);
-        assertThat(output.getPurgedCount()).isEqualTo(1);
+        assertThat(output.getScannedCount()).isEqualTo(2);
+        assertThat(output.getPurgedCount()).isEqualTo(2);
         assertThat(storageInterface.exists(MAIN_TENANT, parentNamespace, parentFile)).isFalse();
-        assertThat(storageInterface.exists(MAIN_TENANT, childNamespace, childFile)).isTrue();
+        assertThat(storageInterface.exists(MAIN_TENANT, childNamespace, childFile)).isFalse();
     }
 
     /** Storage path /<ns>/executions/ is ambiguous between a flow named "executions" and a sub-namespace literally named "executions"; namespace-only scope skips it and requires explicit flowId. */

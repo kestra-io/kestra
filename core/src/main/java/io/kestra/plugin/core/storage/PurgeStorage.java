@@ -34,8 +34,9 @@ import lombok.experimental.SuperBuilder;
         case is reclaiming files left behind by flows that no longer exist — files that `PurgeExecutions` cannot reach \
         because there is no execution record to delete.
 
-        `namespace` matching is exact: it does not reach sub-namespaces. Omit `namespace` to purge across every \
-        namespace under the tenant.
+        `namespace` matching is recursive: `namespace: io.kestra` also purges sub-namespaces such as \
+        `io.kestra.team`. Omit `namespace` to purge across every namespace under the tenant. A sub-namespace \
+        configured with its own dedicated storage is not reached by recursion — target it explicitly.
 
         Set `endDate` to (or before) your `PurgeExecutions` retention window so that only files belonging to \
         already-purged executions are deleted."""
@@ -67,7 +68,7 @@ import lombok.experimental.SuperBuilder;
 public class PurgeStorage extends Task implements RunnableTask<PurgeStorage.Output>, SystemTask {
     @Schema(
         title = "Namespace whose execution storage files should be purged.",
-        description = "Exact match: a sub-namespace is not affected. Omit to purge across every namespace under the tenant."
+        description = "Recursive: sub-namespaces are also purged (e.g. `io.kestra` reaches `io.kestra.team`), except sub-namespaces with their own dedicated storage, which must be targeted explicitly. Omit to purge across every namespace under the tenant."
     )
     @PluginProperty(group = "main")
     private Property<String> namespace;

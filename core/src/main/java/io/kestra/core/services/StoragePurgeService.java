@@ -41,10 +41,16 @@ public class StoragePurgeService {
 
     /**
      * Purges execution storage whose files fall within {@code [startDate, endDate]}.
-     * Namespace matching is exact: {@code namespace=a.b} does not reach {@code a.b.c}.
+     * Namespace matching is recursive: {@code namespace=a.b} also reaches {@code a.b.c}.
+     * <p>
+     * Sub-namespaces are discovered by walking the parent's storage subtree, so recursion only reaches
+     * children that share the parent's backend. A sub-namespace backed by its own dedicated storage is
+     * physically absent from the parent subtree and is therefore not discovered — target it explicitly via
+     * {@code namespace}. This walk-based discovery is deliberate: it lets the purge reclaim files of flows
+     * (and whole namespaces) that no longer exist, which a flow-metadata enumeration could not.
      *
      * @param tenantId  tenant identifier
-     * @param namespace exact namespace; {@code null} = walk every namespace under the tenant
+     * @param namespace namespace and all its sub-namespaces sharing its backend; {@code null} = walk every namespace under the tenant
      * @param flowId    restrict to a single flow (requires {@code namespace})
      * @param startDate inclusive lower bound on file mtime
      * @param endDate   inclusive upper bound on file mtime (acts as the in-flight guard)
@@ -69,7 +75,8 @@ public class StoragePurgeService {
         if (namespace != null && flowId != null) {
             purgeFlow(tenantId, namespace, flowId, startInstant, endInstant, dryRun, agg);
         } else if (namespace != null) {
-            purgeNamespace(tenantId, namespace, startInstant, endInstant, dryRun, agg);
+            walkNamespaceTree(tenantId, namespace, StorageContext.namespaceRootUri(namespace),
+                startInstant, endInstant, dryRun, agg);
         } else {
             walkNamespaceTree(tenantId, "", URI.create(StorageContext.KESTRA_PROTOCOL + "/"),
                 startInstant, endInstant, dryRun, agg);
@@ -104,20 +111,10 @@ public class StoragePurgeService {
         }
     }
 
-    /** Lists direct flow-dir children of {@code namespaceRoot} and purges each. Exact namespace, no recursion. */
-    private void purgeNamespace(@Nullable String tenantId, String namespace,
-        @Nullable Instant startDate, @Nullable Instant endDate, boolean dryRun, Aggregator agg) throws IOException {
-        URI namespaceRoot = StorageContext.namespaceRootUri(namespace);
-        for (FileAttributes child : safeList(tenantId, namespace, namespaceRoot)) {
-            if (!isFlowCandidate(child) || isAmbiguousFlowName(child.getFileName(), namespace)) {
-                continue;
-            }
-            purgeFlow(tenantId, namespace, child.getFileName(), startDate, endDate, dryRun, agg);
-        }
-    }
-
     /**
-     * Recursive tenant-wide walk. As we descend, we accumulate the dotted namespace from path segments and
+     * Recursive walk over a namespace subtree (or the whole tenant when {@code currentNamespace} is empty).
+     * A {@code namespace}-scoped purge reaches every sub-namespace beneath it; e.g. {@code namespace=a.b} also
+     * purges {@code a.b.c}. As we descend, we accumulate the dotted namespace from path segments and
      * thread it through {@link #safeList} so backends enforcing per-namespace isolation receive a valid
      * scope; only the tenant-root listing itself uses {@code null} (no namespace candidate exists yet).
      * <p>

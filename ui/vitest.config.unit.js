@@ -35,6 +35,7 @@ export default defineProject({
                 "**/.storybook/**",
                 "**/*.stories.*",
                 "**/*.d.ts",
+                "**/*.json",
             ],
         },
     },

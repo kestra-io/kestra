@@ -10,13 +10,19 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.Unqueue;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.*;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
@@ -46,7 +52,7 @@ class ConcurrencyLimitServiceTest {
     private FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
@@ -68,9 +74,7 @@ class ConcurrencyLimitServiceTest {
         Execution result = runUntilQueued(CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT, TESTS_FLOW_NS, "flow-concurrency-queue");
         assertThat(result.getState().isQueued()).isTrue();
 
-        Execution unqueued = concurrencyLimitService.unqueue(result, State.Type.RUNNING);
-        assertThat(unqueued.getState().isRunning()).isTrue();
-        executionQueue.emit(unqueued);
+        executionCommandQueue.emit(Unqueue.from(result, State.Type.RUNNING));
 
         assertTrue(terminated.await(10, TimeUnit.SECONDS));
         receive.blockLast();
@@ -118,7 +122,7 @@ class ConcurrencyLimitServiceTest {
 
     private Execution runUntilState(String tenantId, String namespace, String flowId, State.Type state) throws QueueException {
         Execution execution = this.createExecution(tenantId, namespace, flowId);
-        this.executionQueue.emit(execution);
+        executionCommandQueue.emit(Create.of(new ExecutionId(tenantId, namespace, flowId, execution.getId(), execution.getFlowRevision())));
         return runnerUtils.awaitExecution(
             it -> execution.getId().equals(it.getId()) && it.getState().getCurrent() == state,
             execution,

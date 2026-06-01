@@ -69,6 +69,13 @@
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                 />
+                <QuickFilters
+                    :intervals="quickIntervals"
+                    :timeRange="selectedTimeRange"
+                    :intervalLabel="t('filter.timeRange.label')"
+                    :showLevel="false"
+                    @update:timeRange="onQuickFilterTimeRange"
+                />
             </template>
 
             <template v-if="showStatChart()" #top>
@@ -425,9 +432,12 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
+    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
+    import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
+    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()

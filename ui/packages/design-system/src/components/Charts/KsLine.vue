@@ -84,7 +84,7 @@
             grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
             xAxis: {type: "category", boundaryGap: false, data: props.categories},
             yAxis: {type: "value"},
-            tooltip: {trigger: "axis"},
+            tooltip: {trigger: "axis", confine: true},
             legend: {},
             series: ((effectiveData.value ?? []) as KsChartSeriesItem[]).map((s) => ({
                 type: "line",

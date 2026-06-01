@@ -1,5 +1,5 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
+import {mount, flushPromises} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue"
 
@@ -22,5 +22,25 @@ describe("KsDrawer", () => {
         })
         wrapper.vm.$emit("update:modelValue", false)
         expect(wrapper.emitted("update:modelValue")).toBeTruthy()
+    })
+
+    test("renders a resize handle only when resizable", async () => {
+        const withHandle = mount(KsDrawer, {
+            props: {modelValue: true, resizable: true},
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        await flushPromises()
+        expect(document.querySelectorAll(".kel-drawer__resize-handle").length).toBe(1)
+        withHandle.unmount()
+
+        const without = mount(KsDrawer, {
+            props: {modelValue: true},
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        await flushPromises()
+        expect(document.querySelectorAll(".kel-drawer__resize-handle").length).toBe(0)
+        without.unmount()
     })
 })

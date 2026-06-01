@@ -1057,6 +1057,27 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/webhook.yaml" })
+    void shouldPersistExecutionBeforeWebhookResponds() {
+        // Given
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+
+        // When — call the webhook and get the execution back
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key,
+                ImmutableMap.of("a", 1)
+            ),
+            Execution.class
+        );
+
+        // Then — the execution must already be in the repository by the time the response arrives,
+        // no polling needed (AsyncOperationWaiter guarantees it)
+        assertThat(executionRepositoryInterface.findById(TENANT_ID, execution.getId())).isPresent();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/webhook-wait.yaml" })
     void shouldWaitForWebhookAndReturnOutput() {
         Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook-wait").orElseThrow();

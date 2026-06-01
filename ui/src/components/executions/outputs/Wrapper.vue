@@ -423,8 +423,8 @@
                 if(status === 200 && data) {
                     tasksWithOutputs.value = []
                     for(const task of data){
-                        if(task.taskId){
-                            tasksWithOutputs.value?.push(task.taskId)
+                        if(task.taskRunId){
+                            tasksWithOutputs.value?.push(task.taskRunId)
                         }
                     }
                 }
@@ -435,17 +435,19 @@
     )
 
     const outputs = computed<TransformedTask[] | undefined>(() => {
-        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
-            return {
-                label: task.taskId,
-                value: task.taskId,
-                ...task,
-                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
-                icon: true,
-                leaf: !tasksWithOutputs.value?.includes(task.taskId), // Only mark tasks with outputs as non-leaf to trigger lazy loading
-                path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
-            }
-        })
+        const tasks = executionsStore?.execution?.taskRunList
+            ?.filter((task) => tasksWithOutputs.value?.includes(task.id))
+            ?.map((task) => {
+                return {
+                    label: task.taskId,
+                    value: task.taskId,
+                    ...task,
+                    iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
+                    icon: true,
+                    leaf: false,
+                    path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
+                }
+            })
 
         if(!tasks?.length) {
             return undefined

@@ -101,7 +101,7 @@
     .collapse-button {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: var(--ks-spacing-2);
         padding: 0;
         border: none;

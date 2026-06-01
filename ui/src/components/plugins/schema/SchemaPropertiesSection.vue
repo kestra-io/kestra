@@ -1,6 +1,7 @@
 <template>
     <SchemaSection
         :class="['section-collapsible', {nested}]"
+        :style="labelColor ? {'--property-label-color': labelColor} : undefined"
         :clickableText="sectionName"
         :href="href"
         :initiallyExpanded="initiallyExpanded || autoExpanded"
@@ -124,6 +125,7 @@
         description?: string;
         examples?: SchemaExample[];
         nested?: boolean;
+        labelColor?: string;
     }>(), {
         href: () => Math.random().toString(36).substring(2, 5),
         properties: undefined,
@@ -135,6 +137,7 @@
         description: undefined,
         examples: undefined,
         nested: false,
+        labelColor: undefined,
     })
 
     const emit = defineEmits<{expand: []}>()
@@ -258,6 +261,10 @@
 
         &:last-child {
             border-bottom: 0;
+        }
+
+        :deep(> .collapse-button > .collapse-button__label) {
+            color: var(--property-label-color, inherit);
         }
 
         :deep(> .collapse-button) {

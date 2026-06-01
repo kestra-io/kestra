@@ -213,7 +213,7 @@
 
     .description-button {
         margin-left: 0.5rem;
-        color: var(--ks-text-secondary);
+        color: var(--ks-icon-muted);
         cursor: pointer;
     }
 

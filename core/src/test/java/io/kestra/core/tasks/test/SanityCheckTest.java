@@ -121,4 +121,11 @@ class SanityCheckTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+
+    @Test
+    @ExecuteFlow("sanity-checks/purge_storage.yaml")
+    void qaPurgeStorage(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

@@ -22,7 +22,7 @@ dependencies {
     def opensearchRestVersion = "3.6.0"
     def flyingSaucerVersion = "10.2.2"
     def jacksonVersion = "2.21.4"
-    def jacksonAnnotationsVersion = "2.21"
+    def jacksonAnnotationsVersion = "2.22"
     def jugVersion = "5.2.0"
     def langchain4jVersion = "1.15.1"
     def langchain4jCommunityVersion = "1.15.0-beta25"

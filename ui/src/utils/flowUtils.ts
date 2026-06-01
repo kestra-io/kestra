@@ -19,7 +19,7 @@ export function loopOver(item: any, predicate: (item: any) => boolean, result?: 
     return result
 }
 
-export function findTaskById(flow: unknown, taskId: string): unknown | undefined {
+export function findTaskById(flow: unknown, taskId: string): {type?: string; id?: string; [key: string]: unknown} | undefined {
     const result = loopOver(flow, (value) => {
         if (value instanceof Object) {
             if (value.type !== undefined && value.id === taskId) {

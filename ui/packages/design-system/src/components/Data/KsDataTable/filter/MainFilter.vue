@@ -34,6 +34,7 @@
                 @add-filter="handleAddFilter"
                 @remove-filter="filter.removeFilter"
                 @close="isCustomizeFiltersVisible = false"
+                @drag-end-field="onFieldDragEnd"
             />
         </KsPopover>
 
@@ -53,20 +54,43 @@
             />
         </div>
 
-        <FilterChip
-            v-for="appliedFilter in filter.appliedFilters?.value"
-            :key="appliedFilter.id"
-            :ref="el => setChipRef(appliedFilter.id, el)"
-            :filter="appliedFilter"
-            :filterKey="getFilterKeyConfig(appliedFilter)"
-            :class="{
-                'filters-hidden': filter.searchInputFullWidth?.value,
-                'read-only': filter.readOnly?.value
-            }"
-            class="filter-chip"
-            @remove="filter.removeFilter"
-            @update="filter.updateFilter"
-        />
+        <template v-for="(unit, unitIndex) in filter.groups?.value" :key="unit.id">
+            <LogicalSeparator
+                v-if="unitIndex > 0"
+                :logical="filter.topLogical?.value"
+                :disabled="filter.readOnly?.value"
+                :hidden="filter.searchInputFullWidth?.value"
+                @change="filter.setTopLogical"
+            />
+            <FilterGroupRenderer
+                :unit="unit"
+                :totalUnits="filter.groups?.value.length ?? 0"
+                :dragOverGroupId="dragOverGroupId"
+                :draggingEntity="draggingEntity"
+                :setChipRef="setChipRef"
+                @drag-start-filter="onChipDragStart"
+                @drag-start-group="onGroupDragStart"
+                @drag-end="onDragEnd"
+                @drag-over="onDragOver"
+                @drag-leave="onDragLeave"
+                @drop="onDrop"
+            />
+        </template>
+
+        <KsTooltip
+            v-if="filter.hasFilterKeys?.value && !filter.readOnly?.value"
+            placement="top"
+            :content="$t('filter.add_condition_group_tooltip')"
+        >
+            <KsButton
+                link
+                class="add-group-btn"
+                :class="{'filters-hidden': filter.searchInputFullWidth?.value}"
+                @click="filter.addGroup"
+            >
+                {{ $t("filter.add_condition_group") }}
+            </KsButton>
+        </KsTooltip>
 
         <KsTooltip
             v-if="filter.hasFilterKeys?.value"
@@ -92,15 +116,127 @@
 
     import {FilterOutline} from "./utils/icons"
 
-    import FilterChip from "./layout/FilterChip.vue"
     import CustomizeFilters from "./segments/CustomizeFilters.vue"
+    import LogicalSeparator from "./segments/LogicalSeparator.vue"
+    import FilterGroupRenderer from "./FilterGroupRenderer.vue"
 
-    import type {AppliedFilter} from "./utils/filterTypes"
+    import {COMPARATOR_LABELS, type AppliedFilter} from "./utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
     const isCustomizeFiltersVisible = ref(false)
     const chipRefs = ref<Record<string, any>>({})
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
+
+    type DragKind = "filter" | "group" | "field"
+    interface DragEntity { kind: DragKind; id: string }
+
+    /** Entity currently being dragged — chip or group. */
+    const draggingEntity = ref<DragEntity | null>(null)
+    /** Group or wrapper the drag is hovering over. Used to highlight the active drop target. */
+    const dragOverGroupId = ref<string | null>(null)
+
+    const ENTITY_MIME = "application/x-kestra-filter-entity"
+
+    const parseEntity = (raw: string | undefined | null): DragEntity | null => {
+        if (!raw) return null
+        const sep = raw.indexOf(":")
+        if (sep < 0) return null
+        const kind = raw.slice(0, sep) as DragKind
+        if (kind !== "filter" && kind !== "group" && kind !== "field") return null
+        return {kind, id: raw.slice(sep + 1)}
+    }
+
+    const onChipDragStart = (event: DragEvent, filterId: string) => {
+        if (filter.readOnly?.value) return
+        event.stopPropagation() // don't trigger the parent dropzone's group-drag
+        draggingEntity.value = {kind: "filter", id: filterId}
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move"
+            event.dataTransfer.setData(ENTITY_MIME, `filter:${filterId}`)
+            event.dataTransfer.setData("text/plain", filterId)
+        }
+    }
+
+    const onGroupDragStart = (event: DragEvent, groupId: string) => {
+        if (filter.readOnly?.value) return
+        event.stopPropagation()
+        draggingEntity.value = {kind: "group", id: groupId}
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move"
+            event.dataTransfer.setData(ENTITY_MIME, `group:${groupId}`)
+            event.dataTransfer.setData("text/plain", groupId)
+        }
+    }
+
+    const onDragOver = (event: DragEvent, groupId: string) => {
+        if (filter.readOnly?.value) return
+        const entity = draggingEntity.value
+        const isCrossComponentField = entity == null
+            && event.dataTransfer?.types.includes(ENTITY_MIME)
+        if (entity == null && !isCrossComponentField) return
+        // Don't allow dropping a group on itself.
+        if (entity?.kind === "group" && entity.id === groupId) return
+        event.preventDefault()
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = isCrossComponentField ? "copy" : "move"
+        }
+        dragOverGroupId.value = groupId
+    }
+
+    const onDragLeave = (event: DragEvent, groupId: string) => {
+        // Only clear when leaving the dropzone itself, not moving between child elements.
+        const current = event.currentTarget as HTMLElement | null
+        const related = event.relatedTarget as Node | null
+        if (current && (!related || !current.contains(related)) && dragOverGroupId.value === groupId) {
+            dragOverGroupId.value = null
+        }
+    }
+
+    const onDrop = (event: DragEvent, targetGroupId: string) => {
+        if (filter.readOnly?.value) return
+        event.preventDefault()
+
+        const entity = parseEntity(event.dataTransfer?.getData(ENTITY_MIME)) ?? draggingEntity.value
+        if (entity?.kind === "group") {
+            filter.wrapGroups(entity.id, targetGroupId)
+        } else if (entity?.kind === "filter") {
+            filter.moveFilter(entity.id, targetGroupId)
+        } else if (entity?.kind === "field") {
+            addFieldChipToGroup(entity.id, targetGroupId)
+        }
+
+        draggingEntity.value = null
+        dragOverGroupId.value = null
+    }
+
+    const addFieldChipToGroup = (keyName: string, targetGroupId: string) => {
+        const key = filter.configuration.value.keys?.find((k) => k.key === keyName)
+        const comparator = key?.comparators?.[0]
+        if (!key || !comparator) return
+        const newFilter: AppliedFilter = {
+            id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            key: key.key,
+            keyLabel: key.label,
+            comparator,
+            comparatorLabel: COMPARATOR_LABELS[comparator],
+            value: [],
+            valueLabel: "",
+        }
+        filter.addFilter(newFilter, targetGroupId)
+        isCustomizeFiltersVisible.value = false
+        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
+    }
+
+    const onFieldDragEnd = () => {
+        // Mirror onDragEnd so the highlight clears if the user drops outside any dropzone.
+        draggingEntity.value = null
+        dragOverGroupId.value = null
+    }
+
+    const onDragEnd = () => {
+        draggingEntity.value = null
+        dragOverGroupId.value = null
+    }
 
     const canReset = computed(() => {
         return (
@@ -109,10 +245,6 @@
             !!filter.searchQuery?.value
         )
     })
-
-    const getFilterKeyConfig = (appliedFilter: any) => {
-        return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null
-    }
 
     const setChipRef = (filterId: string, el: any) => el
         ? chipRefs.value[filterId] = el
@@ -184,7 +316,6 @@
         color: var(--ks-text-primary);
         text-decoration: underline;
     }
-
 }
 
 .search-container {
@@ -205,17 +336,19 @@
     }
 }
 
-.filter-chip {
+.add-group-btn {
+    margin: 0 !important;
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
     flex-shrink: 0;
-    box-shadow: 0 1px 2px var(--ks-shadow-surface);
+
+    &:hover {
+        color: var(--ks-text-primary);
+        text-decoration: underline;
+    }
 
     &.filters-hidden {
         display: none;
-    }
-
-    &.read-only {
-        pointer-events: none;
-        opacity: 0.6;
     }
 }
 </style>

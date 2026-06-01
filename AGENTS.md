@@ -249,6 +249,9 @@ The full UI design-system rules, component catalogue, token reference, and front
 
 # Run single test method
 ./gradlew :module-name:test --tests "ClassName.methodName"
+
+# After running tests: generate a markdown summary of failures only
+npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)
 ```
 
 ### Frontend (UI)

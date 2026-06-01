@@ -8,6 +8,7 @@
             :pageSize="pageSize"
             :height="240"
             size="small"
+            noPaginationGutter
             @page-changed="handlePageChange"
         >
             <KsTableColumn

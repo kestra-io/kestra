@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 import {useNamespacesStore} from "override/stores/namespaces"
@@ -13,6 +13,8 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
     const route = useRoute()
 
     return computed(() => {
+        const {VALUES} = useValues("triggers")
+
         return {
             title: t("filter.titles.trigger_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_triggers"),
@@ -69,9 +71,19 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_trigger.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.RELATIVE_DATE
+                    valueProvider: async (meta?: FilterMeta) => {
+                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
+                            ? VALUES.RELATIVE_DATE
+                            : VALUES.RELATIVE_DATE_NEXT
+                    },
+                    dateFilterOptions: [
+                        {value: "NEXT_EXECUTION_DATE", label: t("filter.timeRange_trigger.dateFilter.nextExecutionDate")},
+                        {value: "LAST_TRIGGERED_DATE", label: t("filter.timeRange_trigger.dateFilter.lastTriggeredDate")},
+                    ],
+                    keyLabelProvider: (meta?: FilterMeta) => {
+                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
+                            ? t("filter.timeRange_trigger.chip.lastTriggered")
+                            : t("filter.timeRange_trigger.chip.nextExecution")
                     },
                 },
                 {

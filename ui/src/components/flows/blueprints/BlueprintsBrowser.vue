@@ -11,6 +11,7 @@
                 :currentPage="urlPage"
                 :pageSize="urlSize"
                 divider
+                noPaginationGutter
                 @ready="ready = true"
                 @page-changed="onPageChanged"
             >

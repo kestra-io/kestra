@@ -14,12 +14,14 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -58,7 +60,7 @@ public class WebhookService {
     private UriProvider uriProvider;
 
     @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
@@ -144,20 +146,22 @@ public class WebhookService {
      * @throws QueueException If there is an error emitting to the queue
      */
     public void startExecution(Execution execution) throws QueueException {
-        // inject the traceparent into the execution
-        Optional<TextMapPropagator> propagator = openTelemetry
+        // extract traceparent from the current OTel context
+        Optional<String> traceParent = openTelemetry
             .map(OpenTelemetry::getPropagators)
-            .map(ContextPropagators::getTextMapPropagator);
+            .map(ContextPropagators::getTextMapPropagator)
+            .map(propagator -> {
+                Map<String, String> carrier = new HashMap<>();
+                propagator.inject(Context.current(), carrier, Map::put);
+                return carrier.get("traceparent");
+            });
 
-        propagator.ifPresent(
-            textMapPropagator -> textMapPropagator.inject(
-                Context.current(),
-                execution,
-                ExecutionTextMapSetter.INSTANCE
-            )
-        );
-
-        executionQueue.emit(execution);
+        executionCommandQueue.emit(Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+            .withKind(execution.getKind())
+            .withTrigger(execution.getTrigger())
+            .withLabels(execution.getLabels())
+            .withInputs(execution.getInputs())
+            .withTraceParent(traceParent.orElse(null)));
         eventPublisher.publishEvent(CrudEvent.create(execution));
     }
 

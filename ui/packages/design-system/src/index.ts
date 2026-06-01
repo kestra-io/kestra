@@ -166,6 +166,9 @@ export type {
     LevelFilterValue,
     LevelFilterDirection,
 } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export {
+    normalizeRouteTimeRangeFilter,
+} from "./components/Data/KsDataTable/filter/utils/timeRangeQuery"
 export type {
     FilterConfiguration,
     AppliedFilter,
@@ -178,6 +181,7 @@ export type {
     TableProperties,
     FilterKeyConfig,
     FilterValue,
+    FilterMeta,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export {
     isWrapperGroup,

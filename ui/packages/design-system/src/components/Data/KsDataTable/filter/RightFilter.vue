@@ -63,6 +63,21 @@
         </KsPopover>
 
         <KsTooltip
+            :content="viewModeTooltip"
+            placement="top"
+        >
+            <KsButton
+                type="default"
+                size="default"
+                class="view-mode-btn"
+                :icon="filter.viewMode.value === 'chip' ? CodeBraces : FormatListBulleted"
+                :disabled="filter.readOnly.value || isChipViewLocked"
+                @click="filter.setViewMode(filter.viewMode.value === 'chip' ? 'raw' : 'chip')"
+                :aria-label="viewModeTooltip"
+            />
+        </KsTooltip>
+
+        <KsTooltip
             v-if="filter.buttons.value?.tableOptions?.shown !== false"
             :content="$t('filter.show data options tooltip')"
             placement="top"
@@ -81,16 +96,33 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject} from "vue"
-    import {ChevronDown, BookmarkCheckOutline, Refresh} from "./utils/icons"
+    import {computed, ref, inject} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {BookmarkCheckOutline, ChevronDown, CodeBraces, FormatListBulleted, Refresh} from "./utils/icons"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
     import SaveFilters from "./segments/SaveFilters.vue"
     import SavedFilters from "./segments/SavedFilters.vue"
     import VerticalSliders from "./assets/VerticalSliders.vue"
 
+    const {t} = useI18n({useScope: "global"})
+
     const isSavedFiltersVisible = ref(false)
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
+
+    /**
+     * Lock the toggle on the chip view when the URL has filters too deeply nested for the
+     * chip UI — letting the user switch back would either silently drop the unrenderable
+     * keys or render a partial, misleading view.
+     */
+    const isChipViewLocked = computed(() =>
+        filter.viewMode.value === "raw" && filter.hasUnrenderableFilters.value,
+    )
+
+    const viewModeTooltip = computed(() => {
+        if (isChipViewLocked.value) return t("filter.chip_view_locked")
+        return filter.viewMode.value === "chip" ? t("filter.raw_view") : t("filter.chip_view")
+    })
 
     const handleSave = (name: string, description: string) => {
         filter.saveFilter(
@@ -156,6 +188,13 @@
         padding: 0.5rem;
         border-radius: var(--ks-radius-base);
         font-size: var(--ks-font-size-base);
+        color: var(--ks-text-primary) !important;
+    }
+
+    .view-mode-btn {
+        box-shadow: var(--ks-box-shadow);
+        margin: 0;
+        padding: 0.375rem 0.5rem;
         color: var(--ks-text-primary) !important;
     }
 

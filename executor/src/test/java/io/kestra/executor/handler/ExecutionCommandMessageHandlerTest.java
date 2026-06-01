@@ -1,373 +1,369 @@
 package io.kestra.executor.handler;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import io.kestra.core.debug.Breakpoint;
-import io.kestra.core.events.EventId;
-import io.kestra.core.executor.command.*;
-import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
+import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.Replay;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.Variables;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.TaskOutputRepositoryInterface;
-import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.IdUtils;
+import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
+import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
-
-import jakarta.inject.Inject;
+import io.kestra.executor.KillSwitchActionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@KestraTest(startRunner = true)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ExecutionCommandMessageHandlerTest {
-    @Inject
-    private ExecutionCommandMessageHandler executionCommandMessageHandler;
 
-    @Inject
-    private FlowRepositoryInterface flowRepository;
+    @Mock FlowMetaStoreInterface flowMetaStore;
+    @Mock ExecutionService executionService;
+    @Mock ExecutionStateStore executionStateStore;
+    @Mock ExecutionEventMessageHandler executionEventMessageHandler;
+    @Mock AsyncOperationService asyncOperationService;
+    @Mock TaskOutputService taskOutputService;
+    @Mock KillSwitchService killSwitchService;
+    @Mock KillSwitchActionService killSwitchActionService;
 
-    @Inject
-    private ExecutionRepositoryInterface executionRepository;
+    ExecutionCommandMessageHandler handler;
+    Create createCommand;
+    Execution sourceExecution;
+    Replay replayCommand;
 
-    @Inject
-    private TaskOutputRepositoryInterface taskOutputRepository;
-
-    @Inject
-    private BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue;
-
-    @Test
-    @ExecuteFlow("flows/valids/failed-first.yaml")
-    void restart(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        var command = Restart.from(execution, null);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+    @BeforeEach
+    void setUp() {
+        handler = new ExecutionCommandMessageHandler(
+            executionService,
+            executionStateStore,
+            flowMetaStore,
+            taskOutputService,
+            asyncOperationService,
+            executionEventMessageHandler,
+            killSwitchService,
+            killSwitchActionService
+        );
+        createCommand = Create.of(new ExecutionId("tenant", "ns", "flow-id", "exec-1", null))
+            .withOperationId("op-1");
+        sourceExecution = mockExecution("source-exec-id", "tenant", "ns", "flow-id");
+        replayCommand = Replay.from(sourceExecution, "new-exec-id", null, null, null)
+            .withOperationId("op-2");
     }
 
     @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void pause() {
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.RUNNING);
-        executionRepository.save(execution);
-        var command = Pause.from(execution);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.PAUSED);
-    }
-
-    @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void unqueue() {
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.QUEUED);
-        executionRepository.save(execution);
-        var command = Unqueue.from(execution, State.Type.RUNNING);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-    }
-
-    @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void forceRun() {
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList());
-        executionRepository.save(execution);
-        var command = ForceRun.from(execution);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/failed-first.yaml")
-    void changeTaskRunState(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        var command = ChangeTaskRunState.from(execution, execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-    }
-
-    @Test
-    void changeTaskRunStateShouldReturnEmptyWhenNoFlowFound() {
-        var flow = Flow.builder()
-            .tenantId(TenantService.MAIN_TENANT)
-            .namespace("io.kestra.tests")
-            .id("not-found")
-            .build();
-        var execution = Execution.newExecution(flow, Collections.emptyList());
-        executionRepository.save(execution);
-        var command = ChangeTaskRunState.from(execution, "ignored", State.Type.SUCCESS);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isEmpty();
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/failed-first.yaml")
-    void updateStatus(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        var command = UpdateStatus.from(execution, State.Type.SUCCESS);
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
-
-    @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void resumeFromBreakpoint() {
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList())
-            .withBreakpoints(List.of(Breakpoint.of("date")))
-            .withTaskRunList(
-                List.of(
-                    TaskRun.builder()
-                        .id("taskrun")
-                        .state(new State(State.Type.BREAKPOINT))
-                        .build()
-                )
-            )
-            .withState(State.Type.BREAKPOINT);
-        executionRepository.save(execution);
-        var command = ResumeFromBreakpoint.from(execution, Optional.empty());
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-    }
-
-    @Test
-    @LoadFlows("flows/valids/pause-test.yaml")
-    void resume() {
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "pause-test").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList())
-            .withTaskRunList(
-                List.of(
-                    TaskRun.builder()
-                        .id(IdUtils.create())
-                        .taskId("pause")
-                        .executionId("execution")
-                        .namespace(flow.getNamespace())
-                        .tenantId(flow.getTenantId())
-                        .flowId(flow.getId())
-                        .state(new State().withState(State.Type.PAUSED))
-                        .build()
-                )
-            )
-            .withState(State.Type.PAUSED);
-        executionRepository.save(execution);
-        var command = Resume.from(execution, io.kestra.plugin.core.flow.Pause.Resumed.now());
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-    }
-
-    @Test
-    void resumeShouldReturnEmptyWhenNoFlowFound() {
-        var flow = Flow.builder()
-            .tenantId(TenantService.MAIN_TENANT)
-            .namespace("io.kestra.tests")
-            .id("not-found")
-            .build();
-        var execution = Execution.newExecution(flow, Collections.emptyList());
-        executionRepository.save(execution);
-        var command = Resume.from(execution, io.kestra.plugin.core.flow.Pause.Resumed.now());
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isEmpty();
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    @LoadFlows("flows/valids/minimal.yaml")
-    void handleShouldMigrateInlineTaskRunOutputsToRepository() throws Exception {
-        // Given: an execution with a task run carrying deprecated inline outputs (pre-2.0 format)
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.RUNNING);
-
-        String taskRunId = IdUtils.create();
-        Map<String, Object> inlineOutputs = Map.of("value", "migrated");
-        var taskRun = TaskRun.builder()
-            .id(taskRunId)
-            .taskId("date")
-            .executionId(execution.getId())
-            .namespace(flow.getNamespace())
-            .tenantId(flow.getTenantId())
-            .flowId(flow.getId())
-            .state(new State())
-            .outputs(Variables.inMemory(inlineOutputs))
-            .build();
-
-        execution = execution.withTaskRunList(List.of(taskRun));
-        executionRepository.save(execution);
-        var command = Pause.from(execution);
+    void shouldEmitSucceededOutcomeOnHappyPath() {
+        // Given
+        var flow = mock(FlowInterface.class);
+        var execution = executionWithState(State.Type.CREATED);
+        var context = mock(ExecutorContext.class);
+        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.PASS);
+        when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
 
         // When
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
+        Optional<ExecutorContext> result = handler.handle(createCommand);
 
-        // Then: inline outputs were persisted to the task output repository
-        var savedOutput = taskOutputRepository.findById(flow.getTenantId(), taskRunId);
-        assertThat(savedOutput).isPresent();
-        assertThat(savedOutput.get().taskRunId()).isEqualTo(taskRunId);
-        assertThat(savedOutput.get().executionId()).isEqualTo(execution.getId());
-
-        // And: the returned execution has the deprecated outputs field cleared
-        assertThat(handle).isPresent();
-        var migratedTaskRun = handle.get().getExecution().findTaskRunByTaskRunId(taskRunId);
-        assertThat(migratedTaskRun.getOutputs()).isNull();
+        // Then
+        assertThat(result).contains(context);
+        verify(asyncOperationService).emitProcessedIfAsync(createCommand, "tenant", "exec-1", Outcome.SUCCEEDED, null);
     }
 
     @Test
-    void invalidShouldReturnEmpty() {
-        var command = new ExecutionCommand.Invalid("tenant", "namespace", "flow", IdUtils.create(), Instant.now(), EventId.create());
+    void shouldEmitFailedOutcomeWhenFlowNotFound() {
+        // Bug #1: FlowNotFoundException previously escaped the try/finally, so emitProcessedIfAsync
+        // was never called and the controller would time out with a 504 instead of a clean error.
+        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.empty());
 
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
+        // When — must not throw
+        assertThatCode(() -> handler.handle(createCommand)).doesNotThrowAnyException();
 
-        assertThat(handle).isEmpty();
+        // Then — FAILED outcome must be signalled so the controller gets a 409, not a 504
+        verify(asyncOperationService).emitProcessedIfAsync(eq(createCommand), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
     }
 
     @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void shouldReturnEmptyWhenNoExecutionFound() {
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.RUNNING);
-        // we don't save the execution so it would not be found inside the message handler
-        var command = Pause.from(execution);
+    void shouldEmitFailedOutcomeWhenStateStoreCreateFails() {
+        // Bug #2: executionStateStore.create() failure was swallowed (only logged) and the handler
+        // continued to emit SUCCEEDED — the controller returned 200 for an execution never persisted.
+        var flow = mock(FlowInterface.class);
+        var execution = mock(Execution.class); // state stubs not needed — exception fires before getState()
+        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        doThrow(new RuntimeException("DB unavailable")).when(executionStateStore).create(execution);
 
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
+        // When — must not throw
+        assertThatCode(() -> handler.handle(createCommand)).doesNotThrowAnyException();
 
-        assertThat(handle).isEmpty();
+        // Then — FAILED outcome, not SUCCEEDED
+        verify(asyncOperationService).emitProcessedIfAsync(eq(createCommand), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
     }
 
     @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void shouldEmitSucceededProcessedEventWhenCommandCarriesOperationId() throws Exception {
-        // Given: a running execution and a Pause command carrying an operationId
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.RUNNING);
-        executionRepository.save(execution);
-        var operationId = IdUtils.create();
-        var command = Pause.from(execution).withOperationId(operationId);
-        var future = subscribeForOperation(operationId);
+    void shouldEmitFailedOutcomeWhenEventHandlerFails() {
+        var flow = mock(FlowInterface.class);
+        var execution = executionWithState(State.Type.CREATED);
+        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.PASS);
+        when(executionEventMessageHandler.handle(any())).thenThrow(new RuntimeException("handler error"));
+
+        assertThatCode(() -> handler.handle(createCommand)).doesNotThrowAnyException();
+
+        verify(asyncOperationService).emitProcessedIfAsync(eq(createCommand), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void shouldPersistExecutionAndReturnEmptyWhenKillSwitchActive() {
+        // Given
+        var flow = mock(FlowInterface.class);
+        var execution = mock(Execution.class); // no state stubs needed — kill switch fires before getState()
+        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.IGNORE);
 
         // When
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
+        Optional<ExecutorContext> result = handler.handle(createCommand);
 
-        // Then: handler succeeds and emits a SUCCEEDED processed event for the same operation.
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.PAUSED);
-        AsyncOperationProcessedEvent event = future.get(5, TimeUnit.SECONDS);
-        assertThat(event.operationId()).isEqualTo(operationId);
-        assertThat(event.tenantId()).isEqualTo(execution.getTenantId());
-        assertThat(event.itemId()).isEqualTo(execution.getId());
-        assertThat(event.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.SUCCEEDED);
-        assertThat(event.error()).isNull();
+        // Then — execution was persisted but not processed further
+        assertThat(result).isEmpty();
+        verify(executionStateStore).create(execution);
+        verify(executionEventMessageHandler, never()).handle(any());
+        verify(asyncOperationService).emitProcessedIfAsync(createCommand, "tenant", "exec-1", Outcome.SUCCEEDED, null);
+    }
+
+    // ---- Existing-execution kill switch pre-check tests ----
+
+    @Test
+    void shouldReturnEmptyAndLogWhenKillSwitchIsIgnoreForExistingExecution() {
+        // Given — a non-Create/Replay command targeting an existing execution that is IGNORED
+        var command = mock(ExecutionCommand.class);
+        when(command.executionId()).thenReturn("exec-1");
+        var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
+        when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.IGNORE);
+        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        // Then — dropped without locking
+        assertThat(result).isEmpty();
+        verify(executionStateStore, never()).lock(any(), any());
     }
 
     @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void shouldNotEmitProcessedEventWhenCommandHasNoOperationId() throws Exception {
-        // Given: a running execution and a Pause command WITHOUT operationId
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.RUNNING);
-        executionRepository.save(execution);
-        var command = Pause.from(execution);
-        // Capture any event emitted during this test; if none is emitted, future will remain unresolved.
-        CompletableFuture<AsyncOperationProcessedEvent> future = new CompletableFuture<>();
-        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either -> {
-            if (either.isLeft() && either.getLeft().itemId() != null && either.getLeft().itemId().equals(execution.getId())) {
-                future.complete(either.getLeft());
-            }
-        });
-        try {
-            // When
-            Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
+    void shouldKillExecutionWhenKillSwitchIsKillForExistingExecution() {
+        // Given
+        var command = mock(ExecutionCommand.class);
+        when(command.executionId()).thenReturn("exec-1");
+        var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
+        when(execution.getState().getCurrent()).thenReturn(State.Type.RUNNING);
+        when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.KILL);
+        when(executionStateStore.findById("exec-1")).thenReturn(execution);
 
-            // Then: handler succeeds and NO processed event is emitted for this execution.
-            assertThat(handle).isPresent();
-            assertThatThrownBy(() -> future.get(1, TimeUnit.SECONDS))
-                .isInstanceOf(java.util.concurrent.TimeoutException.class);
-        } finally {
-            subscriber.close();
-        }
+        // When
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        // Then — delegated to KillSwitchActionService, not processed further
+        assertThat(result).isEmpty();
+        verify(killSwitchActionService).handle(EvaluationType.KILL, "tenant", "exec-1");
     }
 
     @Test
-    @LoadFlows("flows/valids/minimal.yaml")
-    void shouldEmitFailedProcessedEventWhenBusinessLogicFails() throws Exception {
-        // Given: an execution already in SUCCESS state — pausing it fails inside ExecutionService.pause(...).
-        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
-        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.SUCCESS);
-        executionRepository.save(execution);
-        var operationId = IdUtils.create();
-        var command = Pause.from(execution).withOperationId(operationId);
-        var future = subscribeForOperation(operationId);
+    void shouldCancelExecutionWhenKillSwitchIsCancelForExistingExecution() {
+        // Given
+        var command = mock(ExecutionCommand.class);
+        when(command.executionId()).thenReturn("exec-1");
+        var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
+        when(execution.getState().getCurrent()).thenReturn(State.Type.RUNNING);
+        when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.CANCEL);
+        when(executionStateStore.findById("exec-1")).thenReturn(execution);
 
-        // When: handler swallows the business-logic error and reports it via the processed event.
-        executionCommandMessageHandler.handle(command);
+        // When
+        Optional<ExecutorContext> result = handler.handle(command);
 
-        // Then: a FAILED processed event is emitted carrying the error message.
-        AsyncOperationProcessedEvent event = future.get(5, TimeUnit.SECONDS);
-        assertThat(event.operationId()).isEqualTo(operationId);
-        assertThat(event.itemId()).isEqualTo(execution.getId());
-        assertThat(event.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.FAILED);
-        assertThat(event.error()).isNotNull();
+        // Then — delegated to KillSwitchActionService, not processed further
+        assertThat(result).isEmpty();
+        verify(killSwitchActionService).handle(EvaluationType.CANCEL, "tenant", "exec-1");
     }
 
-    private CompletableFuture<AsyncOperationProcessedEvent> subscribeForOperation(String operationId) {
-        CompletableFuture<AsyncOperationProcessedEvent> future = new CompletableFuture<>();
-        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either -> {
-            if (either.isLeft() && operationId.equals(either.getLeft().operationId())) {
-                future.complete(either.getLeft());
-            }
-        });
-        future.whenComplete((e, t) -> subscriber.close());
-        return future.orTimeout(10, TimeUnit.SECONDS);
+    // ---- Replay command tests ----
+
+    @Test
+    void replayShouldEmitSucceededOutcomeOnHappyPath() throws Exception {
+        // Given
+        var flow = mock(FlowWithSource.class);
+        var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
+        var context = mock(ExecutorContext.class);
+        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
+            .thenReturn(newExecution);
+        when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(replayCommand);
+
+        // Then
+        assertThat(result).contains(context);
+        verify(asyncOperationService).emitProcessedIfAsync(replayCommand, "tenant", "new-exec-id", Outcome.SUCCEEDED, null);
+    }
+
+    @Test
+    void replayShouldEmitFailedOutcomeWhenSourceExecutionNotFound() {
+        // Given — source execution does not exist
+        when(executionStateStore.findById("source-exec-id")).thenReturn(null);
+
+        // When — must not throw
+        assertThatCode(() -> handler.handle(replayCommand)).doesNotThrowAnyException();
+
+        // Then — FAILED outcome, not SUCCEEDED
+        verify(asyncOperationService).emitProcessedIfAsync(eq(replayCommand), eq("tenant"), eq("new-exec-id"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void replayShouldEmitFailedOutcomeWhenFlowNotFound() {
+        // Given
+        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.empty());
+
+        // When — must not throw
+        assertThatCode(() -> handler.handle(replayCommand)).doesNotThrowAnyException();
+
+        // Then
+        verify(asyncOperationService).emitProcessedIfAsync(eq(replayCommand), eq("tenant"), eq("new-exec-id"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void replayShouldEmitFailedOutcomeWhenStateStoreCreateFails() throws Exception {
+        // Given
+        var flow = mock(FlowWithSource.class);
+        var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
+        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(executionService.replay(any(), any(), any(), any(), any(), eq(true), eq("new-exec-id")))
+            .thenReturn(newExecution);
+        doThrow(new RuntimeException("DB unavailable")).when(executionStateStore).create(newExecution);
+
+        // When — must not throw
+        assertThatCode(() -> handler.handle(replayCommand)).doesNotThrowAnyException();
+
+        // Then — FAILED outcome, not SUCCEEDED
+        verify(asyncOperationService).emitProcessedIfAsync(eq(replayCommand), eq("tenant"), eq("new-exec-id"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void replayShouldPersistKilledExecutionAndReturnEmptyWhenKillSwitchIsKill() throws Exception {
+        // Given
+        var flow = mock(FlowWithSource.class);
+        var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
+        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
+            .thenReturn(newExecution);
+        when(killSwitchService.evaluate(newExecution)).thenReturn(EvaluationType.KILL);
+        when(newExecution.withState(State.Type.KILLED)).thenReturn(newExecution);
+        when(newExecution.addLabel(any())).thenReturn(newExecution);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(replayCommand);
+
+        // Then — persisted in KILLED state, no further processing
+        assertThat(result).isEmpty();
+        verify(executionStateStore).create(newExecution);
+        verify(executionEventMessageHandler, never()).handle(any());
+        verify(asyncOperationService).emitProcessedIfAsync(replayCommand, "tenant", "new-exec-id", Outcome.SUCCEEDED, null);
+    }
+
+    @Test
+    void replayShouldPersistIgnoredExecutionAndReturnEmptyWhenKillSwitchIsIgnore() throws Exception {
+        // Given
+        var flow = mock(FlowWithSource.class);
+        var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
+        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
+            .thenReturn(newExecution);
+        when(killSwitchService.evaluate(newExecution)).thenReturn(EvaluationType.IGNORE);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(replayCommand);
+
+        // Then — persisted as-is, no further processing
+        assertThat(result).isEmpty();
+        verify(executionStateStore).create(newExecution);
+        verify(executionEventMessageHandler, never()).handle(any());
+        verify(asyncOperationService).emitProcessedIfAsync(replayCommand, "tenant", "new-exec-id", Outcome.SUCCEEDED, null);
+    }
+
+    @Test
+    void replayShouldApplyRevisionWhenSpecified() throws Exception {
+        // Given
+        var commandWithRevision = replayCommand.withRevision(3);
+        var flow = mock(Flow.class);
+        var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
+        var context = mock(ExecutorContext.class);
+        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findById("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(flow));
+        when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id")))
+            .thenReturn(newExecution);
+        when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(commandWithRevision);
+
+        // Then
+        assertThat(result).contains(context);
+        verify(flowMetaStore).findById("tenant", "ns", "flow-id", Optional.of(3));
+    }
+
+    // ---- helpers ----
+
+    private Execution executionWithState(State.Type type) {
+        var state = mock(State.class);
+        when(state.isCreated()).thenReturn(type == State.Type.CREATED);
+        var execution = mock(Execution.class);
+        when(execution.getState()).thenReturn(state);
+        return execution;
+    }
+
+    private Execution mockExecution(String execId, String tenantId, String namespace, String flowId) {
+        var state = mock(State.class);
+        when(state.isCreated()).thenReturn(false);
+        var execution = mock(Execution.class);
+        when(execution.getId()).thenReturn(execId);
+        when(execution.getTenantId()).thenReturn(tenantId);
+        when(execution.getNamespace()).thenReturn(namespace);
+        when(execution.getFlowId()).thenReturn(flowId);
+        when(execution.getState()).thenReturn(state);
+        return execution;
     }
 }

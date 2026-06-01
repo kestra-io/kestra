@@ -92,19 +92,22 @@
         const panel = (event.target as HTMLElement).closest(".kel-drawer") as HTMLElement | null
         if (!panel) return
 
+        const overlay = document.createElement("div")
+        overlay.style.cssText = "position:fixed;inset:0;z-index:99999;cursor:ew-resize"
+
         const onMove = (move: MouseEvent) => {
             const raw = panel.getBoundingClientRect().right - move.clientX
             drawerWidth.value = Math.min(Math.max(raw, MIN_DRAWER_WIDTH), maxDrawerWidth())
         }
         const onUp = () => {
-            document.removeEventListener("mousemove", onMove)
-            document.removeEventListener("mouseup", onUp)
-            document.body.style.userSelect = ""
+            overlay.removeEventListener("mousemove", onMove)
+            overlay.removeEventListener("mouseup", onUp)
+            overlay.remove()
         }
 
-        document.body.style.userSelect = "none"
-        document.addEventListener("mousemove", onMove)
-        document.addEventListener("mouseup", onUp)
+        overlay.addEventListener("mousemove", onMove)
+        overlay.addEventListener("mouseup", onUp)
+        document.body.appendChild(overlay)
     }
 
     const filteredProps = useFilteredProps(props)

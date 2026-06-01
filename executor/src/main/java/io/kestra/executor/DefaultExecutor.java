@@ -526,7 +526,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
                     try {
                         // Handle paused tasks and scheduledAt
-                        if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !execution.getState().isTerminated()) {
+                        // Also skip if the execution is being killed (KILLING is not yet terminated but must not be resumed).
+                        if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
+                                && !execution.getState().isTerminated()
+                                && execution.getState().getCurrent() != State.Type.KILLING) {
                             if (executionDelay.getTaskRunId() == null) {
                                 // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                                 Execution markAsExecution = execution.withState(executionDelay.getState());
@@ -544,8 +547,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
                                 executor = executor.withExecution(markAsExecution, "pausedRestart");
                             }
                         }
-                        // Handle failed task retries
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
+                        // Handle failed task retries — skip if the execution is being killed so the retry does not race the kill
+                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+                                && execution.getState().getCurrent() != State.Type.KILLING) {
                             FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                             Execution newAttempt = executionService.retryTask(
                                 execution,
@@ -554,8 +558,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             );
                             executor = executor.withExecution(newAttempt, "retryFailedTask");
                         }
-                        // Handle failed flow retries
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
+                        // Handle failed flow retries — skip if the execution is being killed so the retry does not race the kill
+                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
+                                && execution.getState().getCurrent() != State.Type.KILLING) {
                             FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                             Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
                             executor = executor.withExecution(newExecution, "retryFailedFlow");

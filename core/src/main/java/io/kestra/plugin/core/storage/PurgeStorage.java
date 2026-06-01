@@ -30,6 +30,9 @@ import lombok.experimental.SuperBuilder;
     description = """
         **Irreversible.** Always start with `dryRun: true` and review the counters before re-running with `dryRun: false`.
 
+        When using per-namespace dedicated storage (EE), this task must be configured for each namespace to be able to \
+        clean the dedicated storage.
+
         Deletes execution files whose last-modified timestamp falls between `startDate` and `endDate`. The primary use \
         case is reclaiming files left behind by flows that no longer exist — files that `PurgeExecutions` cannot reach \
         because there is no execution record to delete.

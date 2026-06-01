@@ -1413,16 +1413,51 @@
       "yaml_configuration": "Configuración YAML"
     },
     "pluginPage": {
-      "alt": "Icono de Plugins",
+      "elementType": {
+        "apps": "Aplicación",
+        "charts": "Gráfico",
+        "conditions": "Condición",
+        "logExporters": "Exportador de logs",
+        "secrets": "Secreto",
+        "taskRunners": "Ejecutor de task",
+        "tasks": "Tarea",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Planos ({count})",
+        "plugins": "Plugins ({count})",
+        "tasks": "Tareas ({count})"
+      },
+      "header": {
+        "back": "Volver a plugins",
+        "certified": "Certificado",
+        "enterpriseEdition": "Edición Enterprise"
+      },
+      "loadError": "No se pudieron cargar los plugins. Por favor, inténtelo de nuevo.",
+      "noResults": "No hay plugins que coincidan con tu búsqueda.",
+      "notFound": "Este plugin no pudo ser encontrado.",
+      "overview": {
+        "createdBy": "Creado por",
+        "latest": "Último",
+        "linksResources": "Enlaces y Recursos",
+        "managedBy": "Gestionado por",
+        "minKestraVersion": "Vers. mínima compatible de Kestra: {version}",
+        "minKestraVersionShort": "Versión mínima de Kestra {version}",
+        "pluginType": "Tipo de plugin",
+        "previousVersions": "Versiones anteriores",
+        "releaseNotes": "Notas de la versión",
+        "title": "Visión general",
+        "versions": "Versiones"
+      },
       "search": "Buscar en más de {count} plugins",
+      "searchTasks": "Buscar {count} tasks",
       "sort": {
-        "most_used": "Más usados",
-        "name_asc": "Nombre A-Z",
-        "name_desc": "Nombre Z-A",
+        "mostUsed": "Más usados",
+        "nameAsc": "Nombre A-Z",
+        "nameDesc": "Nombre Z-A",
         "newest": "Más reciente"
       },
-      "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
-      "title2": "Busca tasks y triggers para construir tu flow."
+      "sortBy": "Ordenar por"
     },
     "plugin_default_already_exists": "El plugin predeterminado para <code>{type}</code> ya existe.",
     "plugins": {

@@ -1413,16 +1413,51 @@
       "yaml_configuration": "Configuration YAML"
     },
     "pluginPage": {
-      "alt": "Icône des plugins",
+      "elementType": {
+        "apps": "Application",
+        "charts": "Graphique",
+        "conditions": "Condition",
+        "logExporters": "Exportateur de logs",
+        "secrets": "Secret",
+        "taskRunners": "Exécuteur de task",
+        "tasks": "Tâche",
+        "triggers": "Déclencheur"
+      },
+      "group": {
+        "blueprints": "Blueprints ({count})",
+        "plugins": "Plugins ({count})",
+        "tasks": "Tâches ({count})"
+      },
+      "header": {
+        "back": "Retour aux plugins",
+        "certified": "Certifié",
+        "enterpriseEdition": "Édition Enterprise"
+      },
+      "loadError": "Impossible de charger les plugins. Veuillez réessayer.",
+      "noResults": "Aucun plugin ne correspond à votre recherche.",
+      "notFound": "Ce plugin est introuvable.",
+      "overview": {
+        "createdBy": "Créé par",
+        "latest": "Dernier",
+        "linksResources": "Liens et ressources",
+        "managedBy": "Géré par",
+        "minKestraVersion": "Version min. compatible Kestra : {version}",
+        "minKestraVersionShort": "Version min. Kestra {version}",
+        "pluginType": "Type de plugin",
+        "previousVersions": "Versions précédentes",
+        "releaseNotes": "Notes de version",
+        "title": "Vue d'ensemble",
+        "versions": "Versions"
+      },
       "search": "Rechercher parmi {count}+ plugins",
+      "searchTasks": "Rechercher {count} tasks",
       "sort": {
-        "most_used": "Les plus utilisés",
-        "name_asc": "Nom A-Z",
-        "name_desc": "Nom Z-A",
+        "mostUsed": "Les plus utilisés",
+        "nameAsc": "Nom A-Z",
+        "nameDesc": "Nom Z-A",
         "newest": "Le plus récent"
       },
-      "title1": "Les plugins sont des blocs pour vos workflows.",
-      "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux."
+      "sortBy": "Trier par"
     },
     "plugin_default_already_exists": "Le plugin par défaut pour <code>{type}</code> existe déjà.",
     "plugins": {

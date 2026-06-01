@@ -1413,16 +1413,51 @@
       "yaml_configuration": "YAML設定"
     },
     "pluginPage": {
-      "alt": "プラグインアイコン",
+      "elementType": {
+        "apps": "アプリ",
+        "charts": "チャート",
+        "conditions": "条件",
+        "logExporters": "ログエクスポーター",
+        "secrets": "シークレット",
+        "taskRunners": "タスクランナー",
+        "tasks": "タスク",
+        "triggers": "トリガー"
+      },
+      "group": {
+        "blueprints": "ブループリント ({count})",
+        "plugins": "プラグイン ({count})",
+        "tasks": "タスク ({count})"
+      },
+      "header": {
+        "back": "プラグインに戻る",
+        "certified": "認定済み",
+        "enterpriseEdition": "エンタープライズエディション"
+      },
+      "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",
+      "noResults": "検索に一致するプラグインがありません。",
+      "notFound": "このプラグインが見つかりませんでした。",
+      "overview": {
+        "createdBy": "作成者",
+        "latest": "最新",
+        "linksResources": "リンクとリソース",
+        "managedBy": "管理者",
+        "minKestraVersion": "互換性のある最小Kestraバージョン: {version}",
+        "minKestraVersionShort": "最小 Kestra バージョン {version}",
+        "pluginType": "プラグインタイプ",
+        "previousVersions": "以前のバージョン",
+        "releaseNotes": "リリースノート",
+        "title": "概要",
+        "versions": "バージョン"
+      },
       "search": "{count}+ プラグインを検索",
+      "searchTasks": "{count} 件のタスクを検索",
       "sort": {
-        "most_used": "最も使用されている",
-        "name_asc": "名前 A-Z",
-        "name_desc": "名前 Z-A",
+        "mostUsed": "最も使用されている",
+        "nameAsc": "名前 A-Z",
+        "nameDesc": "名前 Z-A",
         "newest": "最新"
       },
-      "title1": "プラグインはワークフローの構成要素です。",
-      "title2": "taskやtriggerを検索してflowを構築します。"
+      "sortBy": "並び替え"
     },
     "plugin_default_already_exists": "<code>{type}</code>のプラグインデフォルトはすでに存在します。",
     "plugins": {

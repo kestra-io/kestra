@@ -1413,16 +1413,51 @@
       "yaml_configuration": "Konfiguracja YAML"
     },
     "pluginPage": {
-      "alt": "Ikona wtyczek",
+      "elementType": {
+        "apps": "Aplikacja",
+        "charts": "Wykres",
+        "conditions": "Warunek",
+        "logExporters": "Eksporter logów",
+        "secrets": "Sekret",
+        "taskRunners": "Uruchamianie tasków",
+        "tasks": "Zadanie",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Blueprinty ({count})",
+        "plugins": "Wtyczki ({count})",
+        "tasks": "Zadania ({count})"
+      },
+      "header": {
+        "back": "Wróć do pluginów",
+        "certified": "Certyfikowany",
+        "enterpriseEdition": "Edycja Enterprise"
+      },
+      "loadError": "Nie można załadować wtyczek. Proszę spróbować ponownie.",
+      "noResults": "Brak wtyczek pasujących do wyszukiwania.",
+      "notFound": "Nie znaleziono tego pluginu.",
+      "overview": {
+        "createdBy": "Utworzone przez",
+        "latest": "Najnowsze",
+        "linksResources": "Linki i zasoby",
+        "managedBy": "Zarządzane przez",
+        "minKestraVersion": "Minimalna kompatybilna wersja Kestra: {version}",
+        "minKestraVersionShort": "Minimalna wersja Kestra {version}",
+        "pluginType": "Typ wtyczki",
+        "previousVersions": "Poprzednie wersje",
+        "releaseNotes": "Informacje o wydaniu",
+        "title": "Przegląd",
+        "versions": "Wersje"
+      },
       "search": "Wyszukaj wśród {count}+ wtyczek",
+      "searchTasks": "Wyszukaj {count} tasków",
       "sort": {
-        "most_used": "Najczęściej używane",
-        "name_asc": "Nazwa A-Z",
-        "name_desc": "Nazwa Z-A",
+        "mostUsed": "Najczęściej używane",
+        "nameAsc": "Nazwa A-Z",
+        "nameDesc": "Nazwa Z-A",
         "newest": "Najnowsze"
       },
-      "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
-      "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
+      "sortBy": "Sortuj według"
     },
     "plugin_default_already_exists": "Domyślna wtyczka dla <code>{type}</code> już istnieje.",
     "plugins": {

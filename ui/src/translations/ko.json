@@ -1413,16 +1413,51 @@
       "yaml_configuration": "YAML 구성"
     },
     "pluginPage": {
-      "alt": "플러그인 아이콘",
+      "elementType": {
+        "apps": "앱",
+        "charts": "차트",
+        "conditions": "조건",
+        "logExporters": "로그 익스포터",
+        "secrets": "비밀",
+        "taskRunners": "작업 실행기",
+        "tasks": "작업",
+        "triggers": "트리거"
+      },
+      "group": {
+        "blueprints": "블루프린트 ({count})",
+        "plugins": "플러그인 ({count})",
+        "tasks": "작업 ({count})"
+      },
+      "header": {
+        "back": "플러그인으로 돌아가기",
+        "certified": "인증됨",
+        "enterpriseEdition": "엔터프라이즈 에디션"
+      },
+      "loadError": "플러그인을 로드할 수 없습니다. 다시 시도해 주세요.",
+      "noResults": "검색어와 일치하는 플러그인이 없습니다.",
+      "notFound": "이 플러그인을 찾을 수 없습니다.",
+      "overview": {
+        "createdBy": "작성자",
+        "latest": "최신",
+        "linksResources": "링크 및 리소스",
+        "managedBy": "관리자:",
+        "minKestraVersion": "호환 가능한 최소 Kestra 버전: {version}",
+        "minKestraVersionShort": "Kestra 최소 버전 {version}",
+        "pluginType": "플러그인 유형",
+        "previousVersions": "이전 버전",
+        "releaseNotes": "릴리스 노트",
+        "title": "개요",
+        "versions": "버전"
+      },
       "search": "{count}+ 플러그인 검색",
+      "searchTasks": "{count}개의 task 검색",
       "sort": {
-        "most_used": "가장 많이 사용됨",
-        "name_asc": "이름 A-Z",
-        "name_desc": "이름 Z-A",
+        "mostUsed": "가장 많이 사용됨",
+        "nameAsc": "이름 A-Z",
+        "nameDesc": "이름 Z-A",
         "newest": "최신순"
       },
-      "title1": "플러그인은 워크플로우의 구성 요소입니다.",
-      "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
+      "sortBy": "정렬 기준"
     },
     "plugin_default_already_exists": "<code>{type}</code>에 대한 플러그인 기본값이 이미 존재합니다.",
     "plugins": {

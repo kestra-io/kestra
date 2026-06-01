@@ -1413,16 +1413,51 @@
       "yaml_configuration": "Configurazione YAML"
     },
     "pluginPage": {
-      "alt": "Icona Plugin",
+      "elementType": {
+        "apps": "App",
+        "charts": "Grafico",
+        "conditions": "Condizione",
+        "logExporters": "Esportatore di log",
+        "secrets": "Segreto",
+        "taskRunners": "Esecutore di task",
+        "tasks": "Compito",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Blueprint ({count})",
+        "plugins": "Plugin ({count})",
+        "tasks": "Attività ({count})"
+      },
+      "header": {
+        "back": "Torna ai plugin",
+        "certified": "Certificato",
+        "enterpriseEdition": "Edizione Enterprise"
+      },
+      "loadError": "Impossibile caricare i plugin. Per favore riprova.",
+      "noResults": "Nessun plugin corrisponde alla tua ricerca.",
+      "notFound": "Questo plugin non è stato trovato.",
+      "overview": {
+        "createdBy": "Creato da",
+        "latest": "Ultimo",
+        "linksResources": "Link e Risorse",
+        "managedBy": "Gestito da",
+        "minKestraVersion": "Min. versione compatibile di Kestra: {version}",
+        "minKestraVersionShort": "Versione minima di Kestra {version}",
+        "pluginType": "Tipo di plugin",
+        "previousVersions": "Versioni precedenti",
+        "releaseNotes": "Note di rilascio",
+        "title": "Panoramica",
+        "versions": "Versioni"
+      },
       "search": "Cerca tra oltre {count} plugin",
+      "searchTasks": "Cerca {count} task",
       "sort": {
-        "most_used": "Più usati",
-        "name_asc": "Nome A-Z",
-        "name_desc": "Nome Z-A",
+        "mostUsed": "Più usati",
+        "nameAsc": "Nome A-Z",
+        "nameDesc": "Nome Z-A",
         "newest": "Più recente"
       },
-      "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
-      "title2": "Cerca tasks e triggers per costruire il tuo flow."
+      "sortBy": "Ordina per"
     },
     "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "plugins": {

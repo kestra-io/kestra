@@ -1413,16 +1413,51 @@
       "yaml_configuration": "YAML 配置"
     },
     "pluginPage": {
-      "alt": "插件图标",
+      "elementType": {
+        "apps": "应用程序",
+        "charts": "图表",
+        "conditions": "条件",
+        "logExporters": "日志导出器",
+        "secrets": "秘密",
+        "taskRunners": "任务运行器",
+        "tasks": "任务",
+        "triggers": "触发器"
+      },
+      "group": {
+        "blueprints": "蓝图 ({count})",
+        "plugins": "插件 ({count})",
+        "tasks": "任务 ({count})"
+      },
+      "header": {
+        "back": "返回插件",
+        "certified": "认证",
+        "enterpriseEdition": "企业版"
+      },
+      "loadError": "无法加载插件。请重试。",
+      "noResults": "没有插件符合您的搜索。",
+      "notFound": "未找到此插件。",
+      "overview": {
+        "createdBy": "由...创建",
+        "latest": "最新",
+        "linksResources": "链接和资源",
+        "managedBy": "由...管理",
+        "minKestraVersion": "与Kestra兼容的最低版本：{version}",
+        "minKestraVersionShort": "最低 Kestra 版本 {version}",
+        "pluginType": "插件类型",
+        "previousVersions": "先前版本",
+        "releaseNotes": "发行说明",
+        "title": "概览",
+        "versions": "版本"
+      },
       "search": "在{count}+个插件中搜索",
+      "searchTasks": "搜索 {count} 个 task",
       "sort": {
-        "most_used": "最常使用",
-        "name_asc": "名称 A-Z",
-        "name_desc": "名称 Z-A",
+        "mostUsed": "最常使用",
+        "nameAsc": "名称 A-Z",
+        "nameDesc": "名称 Z-A",
         "newest": "最新"
       },
-      "title1": "插件是你的工作流构建块。",
-      "title2": "搜索任务和触发器以构建你的流程。"
+      "sortBy": "排序依据"
     },
     "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "plugins": {

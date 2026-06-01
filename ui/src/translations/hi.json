@@ -1413,16 +1413,51 @@
       "yaml_configuration": "YAML कॉन्फ़िगरेशन"
     },
     "pluginPage": {
-      "alt": "प्लगइन्स आइकन",
+      "elementType": {
+        "apps": "ऐप",
+        "charts": "चार्ट",
+        "conditions": "शर्त",
+        "logExporters": "लॉग एक्सपोर्टर",
+        "secrets": "गुप्त",
+        "taskRunners": "टास्क रनर",
+        "tasks": "कार्य",
+        "triggers": "ट्रिगर"
+      },
+      "group": {
+        "blueprints": "ब्लूप्रिंट्स ({count})",
+        "plugins": "प्लगइन्स ({count})",
+        "tasks": "टास्क ({count})"
+      },
+      "header": {
+        "back": "प्लगइन्स पर वापस जाएँ",
+        "certified": "प्रमाणित",
+        "enterpriseEdition": "एंटरप्राइज एडिशन"
+      },
+      "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",
+      "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
+      "notFound": "यह प्लगइन नहीं मिला।",
+      "overview": {
+        "createdBy": "द्वारा निर्मित",
+        "latest": "नवीनतम",
+        "linksResources": "लिंक और संसाधन",
+        "managedBy": "द्वारा प्रबंधित",
+        "minKestraVersion": "न्यूनतम संगत Kestra संस्करण: {version}",
+        "minKestraVersionShort": "न्यूनतम Kestra संस्करण {version}",
+        "pluginType": "प्लगइन प्रकार",
+        "previousVersions": "पिछले संस्करण",
+        "releaseNotes": "रिलीज़ नोट्स",
+        "title": "सारांश",
+        "versions": "संस्करण"
+      },
       "search": "{count}+ प्लगइन्स में खोजें",
+      "searchTasks": "{count} tasks खोजें",
       "sort": {
-        "most_used": "सबसे अधिक उपयोग किया गया",
-        "name_asc": "नाम A-Z",
-        "name_desc": "नाम Z-A",
+        "mostUsed": "सबसे अधिक उपयोग किया गया",
+        "nameAsc": "नाम A-Z",
+        "nameDesc": "नाम Z-A",
         "newest": "नवीनतम"
       },
-      "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
-      "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
+      "sortBy": "क्रमबद्ध करें"
     },
     "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "plugins": {

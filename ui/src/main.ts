@@ -24,7 +24,7 @@ window.MonacoEnvironment = {
     },
 }
 
-const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"})
+const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"}) as Record<string, string>
 function loadNodeTypes(tries = 0) {
     import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
         if (languages.typescript) {

@@ -15,8 +15,10 @@
                 v-if="childIndex > 0"
                 :logical="unit.logical"
                 :disabled="filter.readOnly?.value"
+                :linked="hoveredWrapperId === unit.id"
                 inner
                 @change="(op) => filter.setWrapperLogical(unit.id, op)"
+                @hover="(v) => hoveredWrapperId = v ? unit.id : null"
             />
             <div
                 class="filter-group-dropzone"
@@ -119,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-    import {inject} from "vue"
+    import {inject, ref} from "vue"
 
     import FilterChip from "./layout/FilterChip.vue"
     import GroupActions from "./segments/GroupActions.vue"
@@ -147,6 +149,10 @@
     }>()
 
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
+
+    // A group shares one operator. Track which wrapper is hovered so every separator in it
+    // highlights together — signalling the operator is group-wide rather than per-junction.
+    const hoveredWrapperId = ref<string | null>(null)
 
     const isDraggingFilter = (id: string) =>
         props.draggingEntity?.kind === "filter" && props.draggingEntity.id === id

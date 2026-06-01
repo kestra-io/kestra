@@ -10,9 +10,11 @@
             <button
                 type="button"
                 class="logical-separator"
-                :class="{inner, 'filters-hidden': hidden}"
+                :class="{inner, 'filters-hidden': hidden, linked}"
                 :disabled="disabled"
                 :aria-label="logical"
+                @mouseenter="$emit('hover', true)"
+                @mouseleave="$emit('hover', false)"
             >{{ logical === "AND" ? $t("filter.and") : $t("filter.or") }}</button>
         </template>
         <LogicalChooser
@@ -31,14 +33,17 @@
         disabled?: boolean;
         hidden?: boolean;
         inner?: boolean;
+        linked?: boolean;
     }>(), {
         disabled: false,
         hidden: false,
         inner: false,
+        linked: false,
     })
 
     defineEmits<{
         change: [op: LogicalOperator];
+        hover: [value: boolean];
     }>()
 </script>
 
@@ -57,7 +62,8 @@
     letter-spacing: 0.05em;
     cursor: pointer;
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled),
+    &.linked:not(:disabled) {
         color: var(--ks-text-primary);
         border-color: var(--ks-text-dim);
     }

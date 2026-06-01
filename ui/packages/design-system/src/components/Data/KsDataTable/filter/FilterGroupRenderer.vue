@@ -18,7 +18,8 @@
                 :linked="hoveredWrapperId === unit.id"
                 inner
                 @change="(op) => filter.setWrapperLogical(unit.id, op)"
-                @hover="(v) => hoveredWrapperId = v ? unit.id : null"
+                @mouseenter="hoveredWrapperId = unit.id"
+                @mouseleave="hoveredWrapperId = null"
             />
             <div
                 class="filter-group-dropzone"

@@ -62,7 +62,8 @@
                 :hidden="filter.searchInputFullWidth?.value"
                 :linked="hoveredTopSeparator"
                 @change="filter.setTopLogical"
-                @hover="(v) => hoveredTopSeparator = v"
+                @mouseenter="hoveredTopSeparator = true"
+                @mouseleave="hoveredTopSeparator = false"
             />
             <FilterGroupRenderer
                 :unit="unit"

@@ -13,8 +13,8 @@
                 :class="{inner, 'filters-hidden': hidden, linked}"
                 :disabled="disabled"
                 :aria-label="logical"
-                @mouseenter="$emit('hover', true)"
-                @mouseleave="$emit('hover', false)"
+                @mouseenter="$emit('mouseenter', $event)"
+                @mouseleave="$emit('mouseleave', $event)"
             >{{ logical === "AND" ? $t("filter.and") : $t("filter.or") }}</button>
         </template>
         <LogicalChooser
@@ -43,7 +43,8 @@
 
     defineEmits<{
         change: [op: LogicalOperator];
-        hover: [value: boolean];
+        mouseenter: [event: MouseEvent];
+        mouseleave: [event: MouseEvent];
     }>()
 </script>
 

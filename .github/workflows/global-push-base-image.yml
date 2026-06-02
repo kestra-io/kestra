@@ -43,6 +43,10 @@ jobs:
             org.opencontainers.image.title=kestra-base
             org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
             org.opencontainers.image.vendor=Kestra Technologies
+          annotations: |
+            org.opencontainers.image.title=kestra-base
+            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
+            org.opencontainers.image.vendor=Kestra Technologies
 
       - name: Build and push
         uses: docker/build-push-action@v7
@@ -52,6 +56,7 @@ jobs:
           push: ${{ inputs.dry-run != true }}
           tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
           cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins

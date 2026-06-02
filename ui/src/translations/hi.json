@@ -554,6 +554,10 @@
         "content": "किल स्विच फीचर एक UI आधारित तंत्र प्रदान करता है जो समस्याग्रस्त executions को रोकने के लिए है। यह केवल CLI <code>--skip-executions</code> और <code>--skip-flows</code> कमांड्स को एक व्यापक प्रशासनिक इंटरफेस के साथ बदलता है।",
         "title": "आपके पास अभी तक कोई Kill Switches नहीं हैं!"
       },
+      "mcpToolFlows": {
+        "content": "<code>McpToolTrigger</code> जोड़कर एक flow को MCP टूल के रूप में प्रदर्शित करें। हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> के बारे में और पढ़ें।",
+        "title": "इस सर्वर पर अभी तक कोई टूल flows पंजीकृत नहीं हैं।"
+      },
       "panels": {
         "content": "Flow कोड या नो-कोड खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए दूसरा पैनल चुनें (Topology, Documentation, Namespace Files, Blueprints, Context)।",
         "title": "कोई पैनल वर्तमान में खुला नहीं है।"
@@ -965,11 +969,12 @@
       "tab_tool_flows_placeholder": "टूल flows प्रबंधन जल्द ही आ रहा है।",
       "tools": {
         "annotations": "Annotations",
+        "create_tool_flow": "एक टूल flow बनाएँ",
         "description": "विवरण",
         "destructive": "विनाशकारी",
         "flow": "flow",
         "idempotent": "Idempotent",
-        "no_tools": "इस सर्वर पर अभी तक कोई tool flow पंजीकृत नहीं है। इसे यहाँ दिखाने के लिए किसी flow में `McpToolTrigger` जोड़ें।",
+        "no_tools": "आपकी खोज से मेल खाने वाले कोई टूल flows नहीं हैं।",
         "open_world": "Open world",
         "read_only": "केवल पढ़ें",
         "return_direct": "सीधा वापसी",

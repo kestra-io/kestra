@@ -554,6 +554,10 @@
         "content": "La fonctionnalité Kill Switch offre un mécanisme basé sur l'interface utilisateur pour arrêter les exécutions problématiques. Elle remplace les commandes <code>--skip-executions</code> et <code>--skip-flows</code> disponibles uniquement en ligne de commande par une interface d'administration complète.",
         "title": "Vous n'avez pas encore de Kill Switches !"
       },
+      "mcpToolFlows": {
+        "content": "Exposez un flow comme un outil MCP en y ajoutant un <code>McpToolTrigger</code>. Lisez-en plus sur le <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> dans notre documentation.",
+        "title": "Aucun flow d'outil n'est encore enregistré sur ce serveur."
+      },
       "panels": {
         "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Namespace Files, Blueprints, Context) pour des fonctionnalités associées.",
         "title": "Aucun panneau n'est actuellement ouvert."
@@ -965,11 +969,12 @@
       "tab_tool_flows_placeholder": "La gestion des flows d'outils arrive bientôt.",
       "tools": {
         "annotations": "Annotations",
+        "create_tool_flow": "Créer un flow d'outil",
         "description": "Description",
         "destructive": "Destructif",
         "flow": "flow",
         "idempotent": "Idempotent",
-        "no_tools": "Aucun tool flow n'est encore enregistré sur ce serveur. Ajoutez un `McpToolTrigger` à un flow pour l'exposer ici.",
+        "no_tools": "Aucun flow d'outil ne correspond à votre recherche.",
         "open_world": "Open world",
         "read_only": "Lecture seule",
         "return_direct": "Retour direct",

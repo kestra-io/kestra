@@ -554,6 +554,10 @@
         "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
         "title": "У вас еще нет Kill Switches!"
       },
+      "mcpToolFlows": {
+        "content": "Представьте flow как инструмент MCP, добавив в него <code>McpToolTrigger</code>. Подробнее о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> читайте в нашей документации.",
+        "title": "На этом сервере еще не зарегистрированы tool flows."
+      },
       "panels": {
         "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Namespace Files, Blueprints, Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
@@ -965,11 +969,12 @@
       "tab_tool_flows_placeholder": "Управление flow инструментами скоро появится.",
       "tools": {
         "annotations": "Аннотации",
+        "create_tool_flow": "Создать flow инструмента",
         "description": "Описание",
         "destructive": "Деструктивный",
         "flow": "flow",
         "idempotent": "Идемпотентный",
-        "no_tools": "На этом сервере ещё не зарегистрировано ни одного tool flow. Добавьте `McpToolTrigger` в flow, чтобы отобразить его здесь.",
+        "no_tools": "Нет flow, соответствующих вашему запросу.",
         "open_world": "Open world",
         "read_only": "Только чтение",
         "return_direct": "Прямой возврат",

@@ -554,6 +554,10 @@
         "content": "킬 스위치 기능은 문제 있는 실행을 중지할 수 있는 UI 기반 메커니즘을 제공합니다. 이는 CLI 전용 <code>--skip-executions</code> 및 <code>--skip-flows</code> 명령을 포괄적인 관리 인터페이스로 대체합니다.",
         "title": "아직 Kill Switch가 없습니다!"
       },
+      "mcpToolFlows": {
+        "content": "<code>McpToolTrigger</code>를 추가하여 flow를 MCP 도구로 노출합니다. <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
+        "title": "이 서버에는 아직 등록된 tool flow가 없습니다."
+      },
       "panels": {
         "content": "Flow 코드 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Context)을 선택하세요.",
         "title": "현재 열려 있는 패널이 없습니다."
@@ -965,11 +969,12 @@
       "tab_tool_flows_placeholder": "도구 flow 관리가 곧 제공됩니다.",
       "tools": {
         "annotations": "어노테이션",
+        "create_tool_flow": "도구 flow 생성",
         "description": "설명",
         "destructive": "파괴적",
         "flow": "flow",
         "idempotent": "멱등",
-        "no_tools": "이 서버에는 아직 등록된 tool flow가 없습니다. flow에 `McpToolTrigger`를 추가하여 여기에 공개하세요.",
+        "no_tools": "검색 조건에 맞는 tool flow가 없습니다.",
         "open_world": "Open world",
         "read_only": "읽기 전용",
         "return_direct": "직접 반환",

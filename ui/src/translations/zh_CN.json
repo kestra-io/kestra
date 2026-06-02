@@ -554,6 +554,10 @@
         "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
         "title": "您还没有 Kill Switches！"
       },
+      "mcpToolFlows": {
+        "content": "通过向flow添加<code>McpToolTrigger</code>，将flow公开为MCP工具。请在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>的信息。",
+        "title": "此服务器上尚未注册任何工具flow。"
+      },
       "panels": {
         "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、上下文）以获取相关功能。",
         "title": "当前没有打开的面板。"
@@ -965,11 +969,12 @@
       "tab_tool_flows_placeholder": "工具flow管理即将推出。",
       "tools": {
         "annotations": "注释",
+        "create_tool_flow": "创建工具flow",
         "description": "描述",
         "destructive": "破坏性",
         "flow": "flow",
         "idempotent": "幂等",
-        "no_tools": "此服务器上尚未注册任何 tool flow。向 flow 添加 `McpToolTrigger` 以在此处公开它。",
+        "no_tools": "没有符合您搜索的工具flow。",
         "open_world": "Open world",
         "read_only": "只读",
         "return_direct": "直接返回",

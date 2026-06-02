@@ -83,6 +83,7 @@
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
+      "all": "Все",
       "apps": "Черновики приложений",
       "community": "Сообщество",
       "create": "Создать blueprint",

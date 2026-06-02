@@ -32,7 +32,7 @@
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
-        "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17800659.759d1d11.54793399",
+        "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17803048.c78ae18c.bf35b46d",
         "@kestra-io/slot-contracts": "*",
         "@kestra-io/topology": "*",
         "@kestra-io/ui-libs": "^0.0.302",

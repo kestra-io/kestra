@@ -83,6 +83,7 @@
     "before": "vor",
     "behavior": "Verhalten",
     "blueprints": {
+      "all": "Alle",
       "apps": "App-Blueprints",
       "community": "Gemeinschaft",
       "create": "Erstellen Sie ein Blueprint",

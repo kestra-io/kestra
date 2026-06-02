@@ -9,7 +9,7 @@
             :image="headerImage"
             :imageDark="headerImageDark"
         >
-            <section :class="{'main-container': true, 'blueprints-margin': !props.combinedView}" v-bind="$attrs">
+            <section :class="{'main-container': true, 'blueprints-margin': !props.combinedView, 'detail-view': !!selectedBlueprintId}" v-bind="$attrs">
                 <BlueprintDetail
                     v-if="selectedBlueprintId"
                     :embed="props.embed"
@@ -109,5 +109,9 @@
 <style scoped lang="scss">
     .main-container {
         padding: 32px !important;
+
+        &:not(.blueprints-margin):not(.detail-view) {
+            padding: 0 !important;
+        }
     }
 </style>

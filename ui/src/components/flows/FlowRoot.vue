@@ -5,7 +5,7 @@
             :activeTabName="activeTabName"
         />
         <section
-            v-if="activeTab"
+            v-if="isEditTabActive && activeTab"
             :class="[containerClass, {maximized: activeTab.maximized, 'no-overflow': activeTab.noOverflow}, 'padding']"
         >
             <component
@@ -15,6 +15,12 @@
                 @expand-subflow="updateExpandedSubflows"
             />
         </section>
+        <Tabs
+            v-else
+            routeName="flows/update"
+            :tabs="tabs"
+            @expand-subflow="updateExpandedSubflows"
+        />
     </template>
 </template>
 
@@ -188,12 +194,16 @@
         })
 
         function syncTabsToStore() {
-            routeTabsStore.setTabs({
-                ownerId: tabsOwnerId,
-                tabs: tabs.value,
-                routeName: "flows/update",
-                displayMode: "select",
-            })
+            if (isEditTabActive.value) {
+                routeTabsStore.setTabs({
+                    ownerId: tabsOwnerId,
+                    tabs: tabs.value,
+                    routeName: "flows/update",
+                    displayMode: "select",
+                })
+            } else {
+                routeTabsStore.clearTabsIfOwner(tabsOwnerId)
+            }
         }
 
         function updateExpandedSubflows(expandedSubflows: any) {
@@ -206,6 +216,8 @@
         })
 
         const activeTabName = computed(() => activeTab.value?.name ?? "home")
+
+        const isEditTabActive = computed(() => activeTab.value?.name === "edit")
 
         const containerClass = computed(() => {
             if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
@@ -245,7 +257,7 @@
 
         watch(() => route.fullPath, () => handleTitle())
 
-        watch(tabs, () => syncTabsToStore(), {immediate: true, deep: true})
+        watch([tabs, isEditTabActive], () => syncTabsToStore(), {immediate: true, deep: true})
 
         watch(route, (newValue, oldValue) => {
             if (oldValue.name === newValue.name) {
@@ -307,6 +319,7 @@
             tabs,
             activeTab,
             activeTabName,
+            isEditTabActive,
             containerClass,
             routeInfo,
             ready,
@@ -317,10 +330,11 @@
 
 <script setup lang="ts">
     import FlowRootTopBar from "./FlowRootTopBar.vue"
+    import Tabs from "../Tabs.vue"
 
     withDefaults(defineProps<{embed?: boolean}>(), {embed: false})
 
-    const {activeTab, activeTabName, containerClass, routeInfo, ready, updateExpandedSubflows} = useFlowRoot()
+    const {tabs, activeTab, activeTabName, isEditTabActive, containerClass, routeInfo, ready, updateExpandedSubflows} = useFlowRoot()
 </script>
 <style scoped lang="scss">
     .gray-700 {

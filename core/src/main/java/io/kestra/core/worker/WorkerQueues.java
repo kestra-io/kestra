@@ -81,11 +81,11 @@ public final class WorkerQueues {
     }
 
     /**
-     * Format a Worker Queue id for log display. Returns {@code (default)} for the global
+     * Format a Worker Queue id for log display. Returns {@code default} for the global
      * default queue and the id otherwise.
      */
     public static String forLog(String id) {
-        return isDefault(id) ? "(default)" : id;
+        return isDefault(id) ? "default" : id;
     }
 
     /**

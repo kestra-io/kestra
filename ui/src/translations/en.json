@@ -1811,6 +1811,7 @@
       "flow": {
         "title": "AI Copilot",
         "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
+        "select_provider": "Select a provider",
         "generating": {
           "flow": "Generating Flow YAML for you...",
           "dashboard": "Generating Dashboard YAML for you...",

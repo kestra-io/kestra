@@ -58,7 +58,7 @@
 
         <slot name="buttons" />
 
-        <KsDropdown trigger="click">
+        <KsDropdown trigger="click" :persistent="true">
             <KsButton type="default" class="task-run-buttons" :aria-label="$t('actions')">
                 <DotsVertical />
             </KsButton>

@@ -403,10 +403,6 @@ public abstract class AbstractJdbcRepository {
             return timeRangeCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.KEY) {
-            return keyCondition(value, operation);
-        }
-
         return defaultHandlers(field, value, operation);
     }
 
@@ -545,10 +541,6 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition timeRangeCondition(Object value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported field: TIME_RANGE");
-    }
-
-    protected Condition keyCondition(Object value, QueryFilter.Op operation) {
-        return defaultHandlers(QueryFilter.Field.KEY, value, operation);
     }
 
     protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {

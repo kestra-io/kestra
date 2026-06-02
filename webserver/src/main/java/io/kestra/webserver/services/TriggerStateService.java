@@ -30,7 +30,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.services.AsyncOperationWaiter;
-import io.kestra.webserver.configuration.AsyncOperationsConfiguration;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
 import io.micronaut.http.HttpStatus;

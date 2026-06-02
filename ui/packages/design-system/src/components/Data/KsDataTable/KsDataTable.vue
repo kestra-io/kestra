@@ -56,7 +56,7 @@
             </template>
 
             <KsPagination
-                v-if="total && total > 0"
+                v-if="showPagination"
                 :currentPage="currentPageValue"
                 :pageSize="currentSizeValue"
                 :total
@@ -65,7 +65,7 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="mt-3"
+                class="my-3"
             />
         </div>
     </div>
@@ -303,6 +303,12 @@
     }
 
     const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
+
+    const showPagination = computed(() => {
+        if (!props.total || props.total <= 0) return false
+        const minSize = props.pageSizeOptions.length ? Math.min(...props.pageSizeOptions) : DEFAULT_PAGE_SIZE
+        return props.total > minSize
+    })
 
     const reload = () => callLoad()
 

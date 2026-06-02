@@ -768,6 +768,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/loopuntil-failed-flowable.yaml" }, tenantId = "loopuntilfailedflowable")
+    void loopUntilFailedFlowable() throws Exception {
+        loopUntilTestCaseTest.loopUntilFailedFlowable("loopuntilfailedflowable");
+    }
+
+    @Test
     @LoadFlows("flows/valids/errors.yaml")
     void errors() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();

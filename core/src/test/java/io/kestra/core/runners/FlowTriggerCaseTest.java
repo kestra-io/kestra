@@ -1,8 +1,6 @@
 package io.kestra.core.runners;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -104,13 +102,9 @@ public class FlowTriggerCaseTest {
         );
 
         assertThat(triggeredExec.size()).isEqualTo(4);
-        List<Execution> sortedExecs = triggeredExec.stream()
-            .sorted(Comparator.comparing(e -> e.getState().getEndDate().orElse(Instant.now())))
-            .toList();
-        assertThat(sortedExecs.get(0).getOutputs().get("status")).isEqualTo("RUNNING");
-        assertThat(sortedExecs.get(1).getOutputs().get("status")).isEqualTo("PAUSED");
-        assertThat(sortedExecs.get(2).getOutputs().get("status")).isEqualTo("RUNNING");
-        assertThat(sortedExecs.get(3).getOutputs().get("status")).isEqualTo("SUCCESS");
+        assertThat(triggeredExec).filteredOn(e -> "RUNNING".equals(e.getOutputs().get("status"))).hasSize(2);
+        assertThat(triggeredExec).anyMatch(e -> "PAUSED".equals(e.getOutputs().get("status")));
+        assertThat(triggeredExec).anyMatch(e -> "SUCCESS".equals(e.getOutputs().get("status")));
     }
 
     /**

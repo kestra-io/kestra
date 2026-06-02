@@ -1,4 +1,5 @@
-export function loopOver(item, predicate, result) {
+// FIXME: any - recursive generic, complex object traversal
+export function loopOver(item: any, predicate: (item: any) => boolean, result?: any[]): any[] { // FIXME: any
     if (result === undefined) {
         result = []
     }
@@ -18,8 +19,8 @@ export function loopOver(item, predicate, result) {
     return result
 }
 
-export function findTaskById(flow, taskId) {
-    let result = loopOver(flow, (value) => {
+export function findTaskById(flow: unknown, taskId: string): {type?: string; id?: string; [key: string]: unknown} | undefined {
+    const result = loopOver(flow, (value) => {
         if (value instanceof Object) {
             if (value.type !== undefined && value.id === taskId) {
                 return true

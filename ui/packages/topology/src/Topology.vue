@@ -136,7 +136,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import Information from "vue-material-design-icons/Information.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
@@ -167,7 +167,6 @@
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
-        animated?: boolean;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -186,8 +185,9 @@
         getNodeDimensions: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
-        animated: true,
     })
+
+    const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
 
     const dragging = ref(false)
     const showExtraDetails = ref(false)
@@ -267,6 +267,10 @@
         generateGraph()
     })
 
+    watch(isRunning, () => {
+        generateGraph()
+    })
+
     const generateGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
@@ -296,7 +300,7 @@
                 props.isAllowedEdit,
                 props.enableSubflowInteraction,
                 effectiveGetNodeDimensions.value,
-                props.animated,
+                isRunning.value,
             )
 
             if (elements) {

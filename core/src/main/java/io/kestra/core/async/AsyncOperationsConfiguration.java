@@ -1,4 +1,4 @@
-package io.kestra.webserver.configuration;
+package io.kestra.core.async;
 
 import java.time.Duration;
 

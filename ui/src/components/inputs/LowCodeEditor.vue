@@ -21,7 +21,6 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :animated="animated"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -139,7 +138,6 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
 
@@ -247,7 +245,6 @@
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
             expandedSubflows?: string[];
-            animated?: boolean;
         }>(),
         {
             flowId: undefined,
@@ -259,7 +256,6 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
-            animated: true,
         })
 
     watch(

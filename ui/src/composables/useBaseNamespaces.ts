@@ -31,7 +31,7 @@ export const useBaseNamespacesStore = () => {
     const axios = useClient()
 
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
-        const response = await NamespaceAPI.autocompleteNamespaces(options ?? {})
+        const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
         autocomplete.value = response
         return response
     }

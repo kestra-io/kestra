@@ -117,7 +117,7 @@ public class StaticFilter implements HttpServerFilter {
         response.cookie(
             Cookie.of(csrfConfiguration.get().getCookieName(), csrfToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(request.isSecure())
                 .sameSite(SameSite.Strict)
                 .path("/")
         );

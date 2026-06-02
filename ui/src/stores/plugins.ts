@@ -5,7 +5,7 @@ import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {useApiStore} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
-import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../utils/pluginUtils"
+import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 
@@ -179,11 +179,9 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     async function filteredPlugins(excludedElements: string[]) {
-        if (plugins.value === undefined) {
-            plugins.value = await listWithSubgroup({includeDeprecated: false})
-        }
+        await ensurePlugins()
 
-        return plugins.value.map(p => ({
+        return (plugins.value ?? []).map(p => ({
             ...p,
             ...Object.fromEntries(excludedElements.map(e => [e, undefined])),
         })).filter(p => Object.entries(p)
@@ -192,9 +190,11 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     async function list() {
-        const response = await axios.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`)
-        plugins.value = response.data
-        return response.data
+        const response = await axios.get<{results: Plugin[]; total: number}>(
+            `${apiUrlWithoutTenants()}/plugins`,
+        )
+        plugins.value = response.data.results
+        return response.data.results
     }
 
     async function listTriggers() {
@@ -210,6 +210,16 @@ export const usePluginsStore = defineStore("plugins", () => {
         })
         plugins.value = response.data
         return response.data
+    }
+
+    let pluginsPending: Promise<Plugin[]> | null = null
+    async function ensurePlugins(): Promise<Plugin[]> {
+        if (plugins.value) return plugins.value
+        if (pluginsPending) return pluginsPending
+        pluginsPending = listWithSubgroup({includeDeprecated: false}).finally(() => {
+            pluginsPending = null
+        })
+        return pluginsPending
     }
 
     async function load(options: LoadOptions) {
@@ -351,11 +361,59 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
 
-    function groupIcons() {
-        return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
-        .then(response => {
-            return response.data
-        })
+    const groupIcons = ref<PluginIconMap>({})
+    let groupIconsPending: Promise<PluginIconMap> | null = null
+    function ensureGroupIcons(): Promise<PluginIconMap> {
+        if (Object.keys(groupIcons.value).length > 0) return Promise.resolve(groupIcons.value)
+        if (groupIconsPending) return groupIconsPending
+        groupIconsPending = axios.get<PluginIconMap>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
+            .then(response => {
+                groupIcons.value = response.data ?? {}
+                return groupIcons.value
+            })
+            .finally(() => {
+                groupIconsPending = null
+            })
+        return groupIconsPending
+    }
+
+    function findPluginByCls(cls: string | null | undefined): Plugin | null {
+        if (!cls || !plugins.value) return null
+        const subgroupMatch = plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
+        if (subgroupMatch) return subgroupMatch
+        for (const plugin of plugins.value) {
+            for (const [key, value] of Object.entries(plugin)) {
+                if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
+                    return plugin
+                }
+            }
+        }
+        return null
+    }
+
+    function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
+        if (!name || !plugins.value) return null
+        if (subGroup) {
+            return plugins.value.find(p => p.name === name && p.subGroup === subGroup) ?? null
+        }
+        return plugins.value.find(p => p.name === name && !p.subGroup) ?? null
+    }
+
+    function sidebarPluginsFor(context: {cls?: string | null; owner?: Plugin | null}): Plugin[] {
+        const all = plugins.value ?? []
+        let ownerGroup: string | undefined
+        if (context.owner) {
+            ownerGroup = context.owner.group
+        } else if (context.cls) {
+            ownerGroup = all.find(p =>
+                (p.subGroup && context.cls!.startsWith(p.subGroup + "."))
+                || context.cls!.startsWith(p.group + "."),
+            )?.group
+        }
+        if (!ownerGroup) return all.filter(p => !p.subGroup)
+        const sameGroup = all.filter(p => p.group === ownerGroup)
+        const subgroups = sameGroup.filter(p => p.subGroup)
+        return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
     return {
@@ -381,9 +439,13 @@ export const usePluginsStore = defineStore("plugins", () => {
 
         resolveRef,
         filteredPlugins,
+        findPluginByCls,
+        findPluginByName,
+        sidebarPluginsFor,
         list,
         listTriggers,
         listWithSubgroup,
+        ensurePlugins,
         load,
         loadVersions,
         loadInputsType,
@@ -397,5 +459,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         iconsLoaded,
         fetchIcons,
         groupIcons,
+        ensureGroupIcons,
     }
 })

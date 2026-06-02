@@ -5,7 +5,10 @@ interface State {
     envName: string | undefined;
     envColor: string | undefined;
     sideMenuCollapsed: boolean;
+    menuSectionsCollapsed: Record<string, boolean>;
 }
+
+const MENU_SECTIONS_COLLAPSED_KEY = "menuSectionsCollapsed"
 
 export const useLayoutStore = defineStore("layout", {
     state: (): State => ({
@@ -19,6 +22,7 @@ export const useLayoutStore = defineStore("layout", {
 
             return localStorage.getItem("menuCollapsed") === "true" || window.matchMedia("(max-width: 768px)").matches
         })(),
+        menuSectionsCollapsed: JSON.parse(localStorage.getItem(MENU_SECTIONS_COLLAPSED_KEY) ?? "{}"),
     }),
     getters: {},
     actions: {
@@ -51,6 +55,11 @@ export const useLayoutStore = defineStore("layout", {
             const htmlElement = document.documentElement
             htmlElement.classList.toggle("menu-collapsed", value)
             htmlElement.classList.toggle("menu-not-collapsed", !value)
+        },
+
+        setMenuSectionCollapsed(id: string, collapsed: boolean) {
+            this.menuSectionsCollapsed = {...this.menuSectionsCollapsed, [id]: collapsed}
+            localStorage.setItem(MENU_SECTIONS_COLLAPSED_KEY, JSON.stringify(this.menuSectionsCollapsed))
         },
     },
 })

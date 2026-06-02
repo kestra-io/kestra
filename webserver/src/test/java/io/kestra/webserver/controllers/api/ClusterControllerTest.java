@@ -49,14 +49,14 @@ class ClusterControllerTest {
 
     @Test
     void shouldGetWorkerMetrics() {
-        // When
-        Set<Metric> metrics = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/cluster/metrics/" + ServiceType.WORKER),
-            Argument.of(Set.class, Metric.class)
-        );
-
-        // Then
-        assertThat(metrics).isNotEmpty();
+        // Worker metrics are persisted asynchronously via liveness heartbeats; poll until non-empty.
+        Awaitility.await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            Set<Metric> metrics = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/cluster/metrics/" + ServiceType.WORKER),
+                Argument.of(Set.class, Metric.class)
+            );
+            assertThat(metrics).isNotEmpty();
+        });
     }
 
 }

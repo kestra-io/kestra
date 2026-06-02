@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import io.kestra.core.docs.*;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -20,7 +21,9 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
@@ -41,7 +44,9 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import static io.kestra.core.models.Plugin.isDeprecated;
 import static io.kestra.core.models.Plugin.isInternal;
@@ -59,6 +64,10 @@ public class PluginController {
 
     @Inject
     protected JsonSchemaCache jsonSchemaCache;
+
+    @Inject
+    @Named("PLUGIN")
+    protected Searchable<Plugin> pluginSearchable;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -136,11 +145,18 @@ public class PluginController {
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get list of plugins")
-    public List<Plugin> listPlugins() {
-        return pluginRegistry.plugins()
+    public PagedResults<Plugin> listPlugins(
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10000") int size,
+        @Parameter(description = "A list of sort fields") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters
+    ) {
+        List<Plugin> items = pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
             .toList();
+
+        return PagedResults.of(pluginSearchable.filter(items, page, size, sort, filters));
     }
 
     @Get(uri = "triggers")

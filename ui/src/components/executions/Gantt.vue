@@ -489,7 +489,7 @@
                 left,
                 tooltip,
                 color: colors[task.state.current],
-                running: State.isRunning(task.state.current),
+                running: Boolean(State.isRunning(task.state.current)),
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,

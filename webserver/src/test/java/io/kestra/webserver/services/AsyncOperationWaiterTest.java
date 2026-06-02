@@ -2,6 +2,7 @@ package io.kestra.webserver.services;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import jakarta.inject.Inject;

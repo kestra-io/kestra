@@ -118,6 +118,15 @@ export function useFilterGroups() {
         groups.value = [...before, ...unit.children, ...after]
     }
 
+    const sameField = (a: AppliedFilter | undefined, b: AppliedFilter): boolean =>
+        a?.key === b.key && a?.comparator === b.comparator
+
+    const leafOf = (filters: AppliedFilter[]): LeafFilterGroup => ({
+        id: newGroupId(),
+        kind: "leaf",
+        filters,
+    })
+
     const moveFilter = (filterId: string, targetGroupId: string) => {
         const sourceLeaf = findLeafContaining(groups.value, filterId)
         const targetLeaf = findLeafById(groups.value, targetGroupId)
@@ -130,15 +139,29 @@ export function useFilterGroups() {
             ...leaf,
             filters: leaf.filters.filter(f => f?.id !== filterId),
         }))
-        updateLeaf(targetLeaf.id, leaf => ({
-            ...leaf,
-            filters: [
-                ...leaf.filters.filter(f =>
-                    !(f?.key === filterToMove.key && f?.comparator === filterToMove.comparator),
-                ),
-                filterToMove,
-            ],
-        }))
+
+        if (!targetLeaf.filters.some(f => sameField(f, filterToMove))) {
+            updateLeaf(targetLeaf.id, leaf => ({
+                ...leaf,
+                filters: [...leaf.filters, filterToMove],
+            }))
+            return
+        }
+
+        groups.value = groups.value.map(unit => {
+            if (isWrapperGroup(unit)) {
+                if (!unit.children.some(c => c.id === targetLeaf.id)) return unit
+                return {...unit, children: [...unit.children, leafOf([filterToMove])]}
+            }
+            if (unit.id !== targetLeaf.id) return unit
+            const others = unit.filters.filter(f => !sameField(f, filterToMove))
+            const conflicting = unit.filters.filter(f => sameField(f, filterToMove))
+            const children: LeafFilterGroup[] = []
+            if (others.length > 0) children.push(leafOf(others))
+            conflicting.forEach(c => children.push(leafOf([c])))
+            children.push(leafOf([filterToMove]))
+            return {id: newGroupId(), kind: "wrapper", logical: "AND", children}
+        })
     }
 
     const setTopLogical = (op: LogicalOperator) => {

@@ -403,7 +403,7 @@ public class WorkerJobDispatcher {
                 if (++attempts >= REGISTER_MAX_RETRIES) {
                     throw new IllegalStateException(
                         "Could not register worker '" + context.getWorkerId()
-                            + "' in Worker Queue '" + workerQueueId
+                            + "' in Worker Queue '" + WorkerQueues.forLog(workerQueueId)
                             + "' after " + attempts + " retries (concurrent dispose)"
                     );
                 }
@@ -685,7 +685,7 @@ public class WorkerJobDispatcher {
      */
     private void handleIncomingJob(String workerQueueId, Either<WorkerJobEvent, DeserializationException> either) {
         if (either.isRight()) {
-            log.error("Deserialization error for job in Worker Queue '{}': {}", workerQueueId, either.getRight().getMessage());
+            log.error("Deserialization error for job in Worker Queue '{}': {}", WorkerQueues.forLog(workerQueueId), either.getRight().getMessage());
             handleDeserializationError(either.getRight());
             return;
         }

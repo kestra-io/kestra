@@ -16,7 +16,7 @@
 
         <div class="list">
             <div
-                v-for="key in configuration.keys"
+                v-for="key in groupableKeys"
                 :key="key.key"
                 class="item"
                 :draggable="true"
@@ -49,11 +49,11 @@
     import {computed} from "vue"
     import {Close, Plus} from "../utils/icons"
     import {
-        COMPARATOR_LABELS,
         type FilterConfiguration,
         type FilterKeyConfig,
         type AppliedFilter,
     } from "../utils/filterTypes"
+    import {buildNewFilter} from "../utils/filterChipFactory"
 
     const props = defineProps<{
         configuration: FilterConfiguration;
@@ -68,6 +68,10 @@
     }>()
 
     const FIELD_DRAG_MIME = "application/x-kestra-filter-entity"
+
+    const groupableKeys = computed(() =>
+        props.configuration.keys.filter((key) => key.groupable !== false),
+    )
 
     /**
      * Build a transient DOM node styled to look like an empty FilterChip so the browser's
@@ -120,21 +124,11 @@
     const selectedCount = computed(() =>
         new Set(props.appliedFilters.map(f => f.key)).size,
     )
-    const totalCount = computed(() => props.configuration.keys.length)
+    const totalCount = computed(() => groupableKeys.value.length)
 
     const addFilterForKey = (key: FilterKeyConfig) => {
-        const comparator = key.comparators?.[0]
-        if (!comparator) return
-        const newFilter: AppliedFilter = {
-            id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            key: key.key,
-            keyLabel: key.label,
-            comparator,
-            comparatorLabel: COMPARATOR_LABELS[comparator],
-            value: [],
-            valueLabel: "",
-        }
-        emits("add-filter", newFilter)
+        const newFilter = buildNewFilter(key)
+        if (newFilter) emits("add-filter", newFilter)
     }
 
 </script>

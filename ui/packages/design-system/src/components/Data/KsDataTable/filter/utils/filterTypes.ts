@@ -64,6 +64,11 @@ export interface FilterKeyConfig {
     customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
+    /**
+     * When `false`, the filter is a global AND scope: it cannot be added to or moved into a
+     * conditional group, and is omitted from the "add field" menu. Defaults to `true`.
+     */
+    groupable?: boolean;
     /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */

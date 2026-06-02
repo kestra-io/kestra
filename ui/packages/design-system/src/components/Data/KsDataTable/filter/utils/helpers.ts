@@ -138,11 +138,12 @@ const writeFilter = (
 
     switch (key) {
         case "timeRange": {
+            // timeRange is a global AND scope: always top-level, never under a group prefix.
             if (typeof value === "object" && "startDate" in value) {
                 query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = value.startDate.toISOString()
                 query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = value.endDate.toISOString()
             } else {
-                query[`${prefix}[${key}][${comparatorKey}]`] = value?.toString() ?? ""
+                query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
             }
             const dateFilter = (filter as any).meta?.dateFilter
             if (dateFilter) {

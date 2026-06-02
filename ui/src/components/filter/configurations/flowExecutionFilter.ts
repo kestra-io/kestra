@@ -64,6 +64,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
                         return VALUES.RELATIVE_DATE

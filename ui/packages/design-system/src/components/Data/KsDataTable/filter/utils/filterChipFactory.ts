@@ -8,6 +8,20 @@ import {
 import {type DecodedParam, keyOfComparator} from "./helpers"
 import {TIME_RANGE_KEY} from "./constants"
 
+export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
+    const comparator = key.comparators?.[0]
+    if (!comparator) return null
+    return {
+        id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        key: key.key,
+        keyLabel: key.label,
+        comparator,
+        comparatorLabel: COMPARATOR_LABELS[comparator],
+        value: [],
+        valueLabel: "",
+    }
+}
+
 export const createAppliedFilter = (
     key: string,
     config: FilterKeyConfig | undefined,

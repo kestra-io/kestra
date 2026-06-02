@@ -53,6 +53,13 @@
             :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
+                <QuickFilters
+                    :intervals="quickIntervals"
+                    :timeRange="selectedTimeRange"
+                    :intervalLabel="t('filter.timeRange.label')"
+                    :showLevel="false"
+                    @update:timeRange="onQuickFilterTimeRange"
+                />
                 <KSFilter
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
@@ -68,13 +75,6 @@
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
-                />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
                 />
             </template>
 

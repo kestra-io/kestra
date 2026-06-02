@@ -25,7 +25,7 @@
                 class="filter-group-dropzone"
                 :class="{
                     'drag-over': dragOverGroupId === childLeaf.id,
-                    'empty': childLeaf.filters.length === 0,
+                    'empty': renderableFilters(childLeaf.filters).length === 0,
                 }"
                 @dragover.stop="(e) => $emit('drag-over', e, childLeaf.id)"
                 @dragleave.stop="(e) => $emit('drag-leave', e, childLeaf.id)"
@@ -41,7 +41,7 @@
                     @dragend="$emit('drag-end')"
                 ><Drag /></span>
                 <div
-                    v-for="appliedFilter in childLeaf.filters"
+                    v-for="appliedFilter in renderableFilters(childLeaf.filters)"
                     :key="appliedFilter.id"
                     class="filter-chip-wrap"
                     :class="{'dragging': isDraggingFilter(appliedFilter.id)}"
@@ -76,8 +76,8 @@
             :class="{
                 'filters-hidden': filter.searchInputFullWidth?.value,
                 'drag-over': dragOverGroupId === unit.id,
-                'empty': unit.filters.length === 0,
-                'collapsed': unit.filters.length === 0 && !draggingEntity && totalUnits <= 1,
+                'empty': renderableFilters(unit.filters).length === 0,
+                'collapsed': renderableFilters(unit.filters).length === 0 && !draggingEntity && totalUnits <= 1,
             }"
             @dragover="(e) => $emit('drag-over', e, unit.id)"
             @dragleave="(e) => $emit('drag-leave', e, unit.id)"
@@ -93,7 +93,7 @@
                 @dragend="$emit('drag-end')"
             ><Drag /></span>
             <div
-                v-for="appliedFilter in unit.filters"
+                v-for="appliedFilter in renderableFilters(unit.filters)"
                 :key="appliedFilter.id"
                 class="filter-chip-wrap"
                 :class="{'dragging': isDraggingFilter(appliedFilter.id)}"
@@ -160,6 +160,9 @@
 
     const getFilterKeyConfig = (appliedFilter: AppliedFilter) =>
         filter.configuration.value.keys?.find((key) => key.key === appliedFilter.key) ?? null
+
+    const renderableFilters = (filters: AppliedFilter[]) =>
+        filters.filter((appliedFilter) => getFilterKeyConfig(appliedFilter)?.groupable !== false)
 </script>
 
 <style lang="scss" scoped>

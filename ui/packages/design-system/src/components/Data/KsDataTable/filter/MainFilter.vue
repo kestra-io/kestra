@@ -1,5 +1,38 @@
 <template>
     <div class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
+        <template v-if="globalFilters.length || (unappliedGlobalKeys.length && !filter.readOnly?.value)">
+            <div class="global-filters">
+                <div
+                    v-for="gf in globalFilters"
+                    :key="gf.id"
+                    class="filter-chip-wrap"
+                >
+                    <FilterChip
+                        :ref="(el: any) => setChipRef(gf.id, el)"
+                        :filter="gf"
+                        :filterKey="keyConfigFor(gf)"
+                        :class="{'read-only': filter.readOnly?.value}"
+                        class="filter-chip"
+                        @remove="filter.removeFilter"
+                        @update="filter.updateFilter"
+                    />
+                </div>
+                <template v-if="!filter.readOnly?.value">
+                    <KsButton
+                        v-for="key in unappliedGlobalKeys"
+                        :key="`add-${key.key}`"
+                        :icon="Plus"
+                        size="default"
+                        class="add-global-btn"
+                        @click="addGlobalFilter(key)"
+                    >
+                        {{ key.label }}
+                    </KsButton>
+                </template>
+            </div>
+            <span class="global-filters-divider" aria-hidden="true" />
+        </template>
+
         <KsPopover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
@@ -117,13 +150,15 @@
     import {ref, inject, nextTick, computed, watch} from "vue"
     import {useDebounceFn} from "@vueuse/core"
 
-    import {FilterOutline} from "./utils/icons"
+    import {FilterOutline, Plus} from "./utils/icons"
 
     import CustomizeFilters from "./segments/CustomizeFilters.vue"
     import LogicalSeparator from "./segments/LogicalSeparator.vue"
     import FilterGroupRenderer from "./FilterGroupRenderer.vue"
+    import FilterChip from "./layout/FilterChip.vue"
 
-    import {COMPARATOR_LABELS, type AppliedFilter} from "./utils/filterTypes"
+    import {type AppliedFilter, type FilterKeyConfig} from "./utils/filterTypes"
+    import {buildNewFilter} from "./utils/filterChipFactory"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
     const isCustomizeFiltersVisible = ref(false)
@@ -131,6 +166,28 @@
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const hoveredTopSeparator = ref(false)
+
+    const keyConfigFor = (appliedFilter: AppliedFilter): FilterKeyConfig | null =>
+        filter.configuration?.value?.keys?.find((key) => key.key === appliedFilter.key) ?? null
+
+    const globalFilters = computed(() =>
+        (filter.appliedFilters?.value ?? []).filter(
+            (appliedFilter: AppliedFilter) => keyConfigFor(appliedFilter)?.groupable === false,
+        ),
+    )
+
+    const unappliedGlobalKeys = computed(() =>
+        (filter.configuration?.value?.keys ?? [])
+            .filter((key: FilterKeyConfig) => key.groupable === false)
+            .filter((key: FilterKeyConfig) => !globalFilters.value.some((f: AppliedFilter) => f.key === key.key)),
+    )
+
+    const addGlobalFilter = (key: FilterKeyConfig) => {
+        const newFilter = buildNewFilter(key)
+        if (!newFilter) return
+        filter.addFilter(newFilter)
+        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
+    }
 
     type DragKind = "filter" | "group" | "field"
     interface DragEntity { kind: DragKind; id: string }
@@ -216,17 +273,9 @@
 
     const addFieldChipToGroup = (keyName: string, targetGroupId: string) => {
         const key = filter.configuration.value.keys?.find((k) => k.key === keyName)
-        const comparator = key?.comparators?.[0]
-        if (!key || !comparator) return
-        const newFilter: AppliedFilter = {
-            id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            key: key.key,
-            keyLabel: key.label,
-            comparator,
-            comparatorLabel: COMPARATOR_LABELS[comparator],
-            value: [],
-            valueLabel: "",
-        }
+        if (!key) return
+        const newFilter = buildNewFilter(key)
+        if (!newFilter) return
         filter.addFilter(newFilter, targetGroupId)
         isCustomizeFiltersVisible.value = false
         nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
@@ -293,6 +342,48 @@
     &.filter-grow {
         flex-wrap: nowrap;
         flex-grow: 1;
+    }
+}
+
+.global-filters {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
+
+    .filter-chip-wrap {
+        flex-shrink: 0;
+    }
+
+    .filter-chip {
+        flex-shrink: 0;
+        box-shadow: var(--ks-box-shadow);
+
+        &.read-only {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    }
+}
+
+.global-filters-divider {
+    width: 1px;
+    align-self: stretch;
+    min-height: 1.75rem;
+    background: var(--ks-border-default);
+    flex-shrink: 0;
+}
+
+.add-global-btn {
+    flex-shrink: 0;
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+    border: 1px dashed var(--ks-border-default);
+    background: transparent;
+
+    &:hover {
+        color: var(--ks-text-primary);
+        background: var(--ks-bg-hover);
     }
 }
 

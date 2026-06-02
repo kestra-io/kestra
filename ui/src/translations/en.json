@@ -1671,6 +1671,10 @@
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
       },
+      "mcpToolFlows": {
+        "title": "No tool flows are registered on this server yet.",
+        "content": "Expose a flow as an MCP tool by adding an <code>McpToolTrigger</code> to it. Read more about the <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in our documentation."
+      },
       "versionPlugin": {
         "title": "You have no versioned plugin yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
@@ -2046,7 +2050,8 @@
       "tab_tool_flows": "Tool Flows",
       "tab_tool_flows_placeholder": "Tool flows management is coming soon.",
       "tools": {
-        "no_tools": "No tool flows are registered on this server yet. Add an `McpToolTrigger` to a flow to expose it here.",
+        "no_tools": "No tool flows match your search.",
+        "create_tool_flow": "Create a tool flow",
         "tool_name": "Tool Name",
         "trigger_id": "Trigger ID",
         "title": "Title",

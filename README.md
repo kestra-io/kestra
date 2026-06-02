@@ -74,10 +74,9 @@ Kestra is an open-source, event-driven orchestration platform for data, AI, and 
 🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls).
 
 
-<!-- ⚠️ BLOCKER: replace adding-tasks.mp4 URL once the asset is hosted at kestra.io (see docs PR). Old adding-tasks.gif was removed in kestra-io/docs#4492 → 404. -->
 <p align="center">
   <video src="https://kestra.io/adding-tasks.mp4" autoplay loop muted playsinline width="640">
-    <img src="https://kestra.io/adding-tasks.gif" alt="Adding new tasks in the UI">
+    Your browser does not support the video tag. <a href="https://go.kestra.io/video/product-overview">Watch the demo here</a>.
   </video>
 </p>
 

@@ -620,6 +620,7 @@
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
+    "execution id": "Идентификатор выполнения",
     "execution labels": "Метки выполнения",
     "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",

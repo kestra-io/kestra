@@ -620,6 +620,7 @@
     "execute the flow": "Executar o flow <code>{id}</code>",
     "execution": "Execução",
     "execution already finished": "Execução <code>{executionId}</code> já finalizada",
+    "execution id": "Id de Execução",
     "execution labels": "Labels de execução",
     "execution not found": "Execução <code>{executionId}</code> não encontrada.",
     "execution not in state FAILED": "Execução <code>{executionId}</code> não está no estado FAILED",

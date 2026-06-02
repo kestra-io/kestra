@@ -24,7 +24,7 @@
                 </template>
             </KsAlert>
             <div>
-                <label>{{ $t("filter.name") }}</label>
+                <label>{{ $t("filter.name.label") }}</label>
                 <KsInput
                     v-model="filterName"
                     :placeholder="$t('filter.enter name')"

@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest"
+ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest-no-plugins"
 FROM ${BASE_IMAGE}
 
 ARG KESTRA_PLUGINS=""

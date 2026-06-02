@@ -1,9 +1,11 @@
 <template>
     <div class="theme-picker" role="radiogroup">
-        <button
+        <KsButton
             v-for="option in options"
             :key="option.value"
-            type="button"
+            type="default"
+            text
+            nativeType="button"
             role="radio"
             :aria-checked="option.value === modelValue"
             :aria-label="option.label"
@@ -11,19 +13,22 @@
             :class="{'theme-picker__option--selected': option.value === modelValue}"
             @click="emit('update:modelValue', option.value)"
         >
-            <span class="theme-picker__preview">
-                <template v-if="option.preview === 'sync'">
-                    <ThemeWindow class="theme-picker__window theme-picker__window--dark-2" />
-                    <ThemeWindow class="theme-picker__window theme-picker__window--light theme-picker__window--sync" />
-                </template>
-                <ThemeWindow v-else class="theme-picker__window" :class="`theme-picker__window--${option.preview}`" />
+            <span class="theme-picker__content">
+                <span class="theme-picker__preview">
+                    <template v-if="option.preview === 'sync'">
+                        <ThemeWindow class="theme-picker__window theme-picker__window--dark-2" />
+                        <ThemeWindow class="theme-picker__window theme-picker__window--light theme-picker__window--sync" />
+                    </template>
+                    <ThemeWindow v-else class="theme-picker__window" :class="`theme-picker__window--${option.preview}`" />
+                </span>
+                <KsText tag="span" size="small" class="theme-picker__label">{{ option.label }}</KsText>
             </span>
-            <KsText tag="div" size="small" class="theme-picker__label">{{ option.label }}</KsText>
-        </button>
+        </KsButton>
     </div>
 </template>
 
 <script setup lang="ts">
+    import {KsButton, KsText} from "@kestra-io/design-system"
     import ThemeWindow from "./ThemeWindow.vue"
 
     export type ThemeOption = {
@@ -48,15 +53,30 @@
         gap: 1rem;
         flex-wrap: wrap;
 
-        &__option {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        &__option.kel-button {
             padding: 0;
             background: none;
             border: none;
-            cursor: pointer;
             width: 7rem;
+            height: auto;
+            min-height: 0;
+
+            &:hover,
+            &:focus,
+            &:focus-visible,
+            &:active {
+                background: none;
+                border-color: transparent;
+                box-shadow: none;
+                outline: none;
+            }
+        }
+
+        &__content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
         }
 
         &__preview {

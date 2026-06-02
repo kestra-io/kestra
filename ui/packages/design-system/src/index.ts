@@ -37,6 +37,11 @@ import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
+import KsEditor from "./components/Form/KsEditor.vue"
+export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./components/Form/KsEditor.vue"
+export {findDuplicateTaskIds} from "./utils/yamlValidation"
+export type {EditorMarker} from "./utils/yamlValidation"
+export {isOffsetInPebbleBlock} from "./utils/pebbleBlock"
 import KsDropdown from "./components/Navigation/KsDropdown/KsDropdown.vue"
 import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vue"
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
@@ -60,6 +65,7 @@ import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
 import KsOptionGroup from "./components/Form/KsOptionGroup.vue"
 import KsPagination from "./components/Data/KsPagination.vue"
+import KsPluginCard from "./components/Data/KsPluginCard.vue"
 import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
@@ -130,31 +136,63 @@ export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} fro
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
 export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
+export {
+    useFilterGroups,
+    findLeafById,
+    findLeafContaining,
+    allFilters,
+    newGroupId,
+    emptyLeafGroup,
+} from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
+export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,
     encodeFiltersToQuery,
+    encodeFilterGroupsToQuery,
     getUniqueFilters,
     isValidFilter,
     keyOfComparator,
     getComparator,
     clearFilterQueryParams,
     isSearchPath,
+    isUnrenderableFilterKey,
+    findUnrenderableFilterKeys,
+    serializeFiltersToString,
+    parseFiltersFromString,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {
     readRouteLevelFilter,
     hasUnsupportedRouteLevelComparator,
     readAppliedLevelFilter,
     normalizeRouteLevelFilter,
+    levelToRequestParams,
 } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export type {
+    LevelFilterValue,
+    LevelFilterDirection,
+} from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export {
+    normalizeRouteTimeRangeFilter,
+} from "./components/Data/KsDataTable/filter/utils/timeRangeQuery"
 export type {
     FilterConfiguration,
     AppliedFilter,
+    FilterGroup,
+    LeafFilterGroup,
+    WrapperGroup,
+    LogicalOperator,
     SavedFilter,
     TableOptions,
     TableProperties,
     FilterKeyConfig,
     FilterValue,
+    FilterMeta,
+} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export {
+    isWrapperGroup,
+    isLeafGroup,
+    flipLogical,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 
 const components: Record<string, Component> = {
@@ -195,6 +233,7 @@ const components: Record<string, Component> = {
     KsDropdown,
     KsDropdownItem,
     KsDropdownMenu,
+    KsEditor,
     KsEmpty,
     KsEmptyState,
     KsExecutionStatus,
@@ -214,6 +253,7 @@ const components: Record<string, Component> = {
     KsOption,
     KsOptionGroup,
     KsPagination,
+    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -297,6 +337,7 @@ export {
     KsDropdown,
     KsDropdownItem,
     KsDropdownMenu,
+    KsEditor,
     KsEmpty,
     KsEmptyState,
     KsExecutionStatus,
@@ -316,6 +357,7 @@ export {
     KsOption,
     KsOptionGroup,
     KsPagination,
+    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -323,6 +365,7 @@ export {
     KsRadioGroup,
     KsRow,
     KsScrollbar,
+    KsSearch,
     KsSegmented,
     KsSelect,
     KsSideBar,

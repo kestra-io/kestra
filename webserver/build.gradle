@@ -1,6 +1,9 @@
 if (rootProject.name == "kestra") {
+    // mustRunAfter (not dependsOn) keeps assembleFrontend out of the check/test task graph,
+    // while still guaranteeing processResources sees the built UI files whenever shadowJar
+    // pulls assembleFrontend into the graph (e.g. executableJar, make build-docker).
     tasks.named('processResources') {
-        dependsOn(':ui:assembleFrontend')
+        mustRunAfter(':ui:assembleFrontend')
     }
 }
 

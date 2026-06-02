@@ -360,15 +360,16 @@ public class FlowService {
                     constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
 
-                constraintsBuilder.deprecationPaths(deprecationPaths(flow));
-                constraintsBuilder.warnings(warnings(flow, tenantId));
+                // Do not perform a strict parsing validation to ignore unknown
+                // properties that might be injecting through default values.
+                FlowWithSource flowWithDefaults = pluginDefaultService.injectAllDefaults(flow, false);
+                constraintsBuilder.deprecationPaths(deprecationPaths(flowWithDefaults));
+                constraintsBuilder.warnings(warnings(flowWithDefaults, tenantId));
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());
 
-                // Do not perform a strict parsing validation to ignore unknown
-                // properties that might be injecting through default values.
-                modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
+                modelValidator.validate(flowWithDefaults);
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);

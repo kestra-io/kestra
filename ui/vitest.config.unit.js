@@ -13,6 +13,7 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
+        setupFiles: ["./tests/unit/setup.ts"],
         reporters: [
             ["default"],
             ["junit"],
@@ -35,6 +36,7 @@ export default defineProject({
                 "**/.storybook/**",
                 "**/*.stories.*",
                 "**/*.d.ts",
+                "**/*.json",
             ],
         },
     },

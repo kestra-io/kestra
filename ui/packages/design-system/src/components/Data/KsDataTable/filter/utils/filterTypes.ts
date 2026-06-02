@@ -17,8 +17,8 @@ export enum Comparators {
 export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
-    Comparators.ENDS_WITH, 
-    Comparators.STARTS_WITH, 
+    Comparators.ENDS_WITH,
+    Comparators.STARTS_WITH,
 ]
 
 export interface DateFilterOption {
@@ -26,12 +26,22 @@ export interface DateFilterOption {
     label: string;
 }
 
+/**
+ * Extra metadata attached to an applied filter. Currently only carries the value selected from
+ * {@link FilterKeyConfig.dateFilterOptions} for timeRange-like filters that target different date
+ * fields (e.g. "Last triggered" vs "Next execution"). Add new optional keys here as more
+ * meta-driven filters appear.
+ */
+export interface FilterMeta {
+    dateFilter?: string;
+}
+
 export interface FilterKeyConfig {
     key: string;
     label: string;
     description?: string;
     searchable?: boolean;
-    comparators: Comparators[];
+    comparators: [Comparators, ...Comparators[]];
     showComparatorSelection?: boolean;
     /**
      * Returns the dropdown options for a filter.
@@ -40,14 +50,31 @@ export interface FilterKeyConfig {
      * of filtering the loaded list client-side. Server-side support is detected
      * via `valueProvider.length > 0`, so avoid default-valued or rest params.
      */
-    valueProvider?: (options?: {search?: string}) => Promise<FilterValue[]>;
-    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
+    valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
+    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    /**
+     * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
+     * mode of the time-range picker on an arbitrary date field:
+     *   - "single" — pick one absolute date (encoded as one comparator on the field key).
+     *   - "range"  — pick a start/end range (encoded as GREATER_THAN_OR_EQUAL_TO + LESS_THAN_OR_EQUAL_TO
+     *                on the field key, and decoded back into a single range chip).
+     * Defaults to "single" when omitted. Note: a time-range field must NOT be keyed "startDate" or
+     * "endDate" — those names are reserved for the dedicated `timeRange` filter encoding.
+     */
+    customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
     /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
-    keyLabelProvider?: (meta?: Record<string, string>) => string;
+    keyLabelProvider?: (meta?: FilterMeta) => string;
+    /**
+     * Per-field override for comparator labels. When provided, supersedes
+     * the global COMPARATOR_LABELS for this filter only. Useful when the
+     * generic label doesn't fit the domain (e.g. "At or Above" for a log
+     * level filter rather than "Greater Than or Equal").
+     */
+    comparatorLabels?: Partial<Record<Comparators, string>>;
 }
 
 export interface FilterValue {
@@ -66,9 +93,36 @@ export interface AppliedFilter {
     comparator: Comparators;
     comparatorLabel: string;
     value: string | string[] | Date | {startDate: Date; endDate: Date};
-    /** Extra key-value metadata (e.g. dateFilter for timeRange filters). */
-    meta?: Record<string, string>;
+    /** Extra metadata (e.g. dateFilter for timeRange filters). See {@link FilterMeta}. */
+    meta?: FilterMeta;
 }
+
+export type LogicalOperator = "AND" | "OR";
+
+export interface LeafFilterGroup {
+    id: string;
+    kind?: "leaf";
+    filters: AppliedFilter[];
+}
+
+export interface WrapperGroup {
+    id: string;
+    kind: "wrapper";
+    logical: LogicalOperator;
+    children: LeafFilterGroup[];
+}
+
+export type FilterGroup = LeafFilterGroup | WrapperGroup;
+
+export const isWrapperGroup = (g: FilterGroup): g is WrapperGroup =>
+    g.kind === "wrapper"
+
+export const isLeafGroup = (g: FilterGroup): g is LeafFilterGroup =>
+    g.kind !== "wrapper"
+
+/** Returns the operator opposite to the given one. */
+export const flipLogical = (op: LogicalOperator): LogicalOperator =>
+    op === "AND" ? "OR" : "AND"
 
 export interface SavedFilter {
     id: string;
@@ -77,6 +131,7 @@ export interface SavedFilter {
     global?: boolean;
     description?: string;
     filters: AppliedFilter[];
+    groups?: FilterGroup[];
 }
 
 export interface FilterConfiguration {
@@ -94,17 +149,17 @@ export interface TableProperties {
 }
 
 export interface TableOptions {
-    chart?: { 
-        shown?: boolean; 
-        value?: boolean; 
-        callback?: (value: boolean) => void 
+    chart?: {
+        shown?: boolean;
+        value?: boolean;
+        callback?: (value: boolean) => void
     };
     columns?: {
         shown?: boolean
     };
-    refresh?: { 
-        shown?: boolean; 
-        callback?: () => void 
+    refresh?: {
+        shown?: boolean;
+        callback?: () => void
     };
 }
 

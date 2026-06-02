@@ -83,6 +83,7 @@
     "before": "prima",
     "behavior": "Comportamento",
     "blueprints": {
+      "all": "Tutti",
       "apps": "Blueprint delle App",
       "community": "Comunità",
       "create": "Crea un blueprint",
@@ -281,9 +282,25 @@
       "last7days": "Ultimi 7 giorni",
       "leave empty for infinite": "Lascia vuoto per durata infinita o digita una durata ISO 8601 (esempio: 'P1DT1H1M1S)'",
       "never": "Mai",
+      "next12hours": "Prossime 12 ore",
+      "next15minutes": "I prossimi 15 minuti",
+      "next1hour": "Prossima 1 ora",
+      "next24hours": "Prossime 24 ore",
+      "next30days": "Prossimi 30 giorni",
+      "next365days": "Prossimi 365 giorni",
+      "next48hours": "Prossime 48 ore",
+      "next5minutes": "Prossimi 5 minuti",
+      "next7days": "Prossimi 7 giorni",
       "previousMonth": "Mese precedente",
       "previousWeek": "Settimana precedente",
       "previousYear": "Anno precedente",
+      "short": {
+        "12h": "12h",
+        "15m": "15m",
+        "1d": "1g",
+        "1h": "1h",
+        "7d": "7g"
+      },
       "thisMonth": "Questo mese",
       "thisMonthSoFar": "Questo mese finora",
       "thisWeek": "Questa settimana",
@@ -604,6 +621,7 @@
     "execute the flow": "Esegui il flow <code>{id}</code>",
     "execution": "Esecuzione",
     "execution already finished": "Esecuzione <code>{executionId}</code> già terminata",
+    "execution id": "ID di Esecuzione",
     "execution labels": "Etichette di esecuzione",
     "execution not found": "L'esecuzione <code>{executionId}</code> non è stata trovata.",
     "execution not in state FAILED": "Esecuzione <code>{executionId}</code> non in stato FAILED",
@@ -1396,16 +1414,51 @@
       "yaml_configuration": "Configurazione YAML"
     },
     "pluginPage": {
-      "alt": "Icona Plugin",
+      "elementType": {
+        "apps": "App",
+        "charts": "Grafico",
+        "conditions": "Condizione",
+        "logExporters": "Esportatore di log",
+        "secrets": "Segreto",
+        "taskRunners": "Esecutore di task",
+        "tasks": "Compito",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Blueprint ({count})",
+        "plugins": "Plugin ({count})",
+        "tasks": "Attività ({count})"
+      },
+      "header": {
+        "back": "Torna ai plugin",
+        "certified": "Certificato",
+        "enterpriseEdition": "Edizione Enterprise"
+      },
+      "loadError": "Impossibile caricare i plugin. Per favore riprova.",
+      "noResults": "Nessun plugin corrisponde alla tua ricerca.",
+      "notFound": "Questo plugin non è stato trovato.",
+      "overview": {
+        "createdBy": "Creato da",
+        "latest": "Ultimo",
+        "linksResources": "Link e Risorse",
+        "managedBy": "Gestito da",
+        "minKestraVersion": "Min. versione compatibile di Kestra: {version}",
+        "minKestraVersionShort": "Versione minima di Kestra {version}",
+        "pluginType": "Tipo di plugin",
+        "previousVersions": "Versioni precedenti",
+        "releaseNotes": "Note di rilascio",
+        "title": "Panoramica",
+        "versions": "Versioni"
+      },
       "search": "Cerca tra oltre {count} plugin",
+      "searchTasks": "Cerca {count} task",
       "sort": {
-        "most_used": "Più usati",
-        "name_asc": "Nome A-Z",
-        "name_desc": "Nome Z-A",
+        "mostUsed": "Più usati",
+        "nameAsc": "Nome A-Z",
+        "nameDesc": "Nome Z-A",
         "newest": "Più recente"
       },
-      "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
-      "title2": "Cerca tasks e triggers per costruire il tuo flow."
+      "sortBy": "Ordina per"
     },
     "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "plugins": {
@@ -1883,6 +1936,7 @@
     "usage": "Utilizzo",
     "use": "Usa",
     "use_dark_background": "Usa questa versione quando lavori su uno sfondo scuro per garantire che il nostro nome rimanga leggibile.",
+    "valid": "Valido",
     "validate": "Valida",
     "value": "Value",
     "variables": "Variabili",

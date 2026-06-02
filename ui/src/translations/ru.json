@@ -83,6 +83,7 @@
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
+      "all": "Все",
       "apps": "Черновики приложений",
       "community": "Сообщество",
       "create": "Создать blueprint",
@@ -281,9 +282,25 @@
       "last7days": "Последние 7 дней",
       "leave empty for infinite": "Оставьте пустым для бесконечной длительности или введите длительность в формате ISO 8601 (пример: 'P1DT1H1M1S)'",
       "never": "Никогда",
+      "next12hours": "Следующие 12 часов",
+      "next15minutes": "Следующие 15 минут",
+      "next1hour": "Следующий 1 час",
+      "next24hours": "Следующие 24 часа",
+      "next30days": "Следующие 30 дней",
+      "next365days": "Следующие 365 дней",
+      "next48hours": "Следующие 48 часов",
+      "next5minutes": "Следующие 5 мин",
+      "next7days": "Следующие 7 дней",
       "previousMonth": "Прошлый месяц",
       "previousWeek": "Прошлая неделя",
       "previousYear": "Прошлый год",
+      "short": {
+        "12h": "12ч",
+        "15m": "15м",
+        "1d": "1д",
+        "1h": "1ч",
+        "7d": "7д"
+      },
       "thisMonth": "Этот месяц",
       "thisMonthSoFar": "В этом месяце",
       "thisWeek": "Эта неделя",
@@ -604,6 +621,7 @@
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
+    "execution id": "Идентификатор выполнения",
     "execution labels": "Метки выполнения",
     "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
@@ -1396,16 +1414,51 @@
       "yaml_configuration": "Конфигурация YAML"
     },
     "pluginPage": {
-      "alt": "Иконка плагинов",
+      "elementType": {
+        "apps": "Приложение",
+        "charts": "График",
+        "conditions": "Условие",
+        "logExporters": "Экспортер логов",
+        "secrets": "Секрет",
+        "taskRunners": "Запуск задачи",
+        "tasks": "Задача",
+        "triggers": "Триггер"
+      },
+      "group": {
+        "blueprints": "Чертежи ({count})",
+        "plugins": "Плагины ({count})",
+        "tasks": "Задачи ({count})"
+      },
+      "header": {
+        "back": "Назад к плагинам",
+        "certified": "Сертифицированный",
+        "enterpriseEdition": "Энтерпрайз-версия"
+      },
+      "loadError": "Не удалось загрузить плагины. Пожалуйста, попробуйте снова.",
+      "noResults": "Нет плагинов, соответствующих вашему запросу.",
+      "notFound": "Этот плагин не найден.",
+      "overview": {
+        "createdBy": "Создано пользователем",
+        "latest": "Последние",
+        "linksResources": "Ссылки и ресурсы",
+        "managedBy": "Управляется",
+        "minKestraVersion": "Минимальная совместимая версия Kestra: {version}",
+        "minKestraVersionShort": "Минимальная версия Kestra {version}",
+        "pluginType": "Тип плагина",
+        "previousVersions": "Предыдущие версии",
+        "releaseNotes": "Примечания к выпуску",
+        "title": "Обзор",
+        "versions": "Версии"
+      },
       "search": "Поиск среди {count}+ плагинов",
+      "searchTasks": "Искать {count} tasks",
       "sort": {
-        "most_used": "Наиболее используемые",
-        "name_asc": "Имя A-Я",
-        "name_desc": "Имя Я-А",
+        "mostUsed": "Наиболее используемые",
+        "nameAsc": "Имя A-Я",
+        "nameDesc": "Имя Я-А",
         "newest": "Новейшие"
       },
-      "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
-      "title2": "Ищите tasks и triggers для создания вашего flow."
+      "sortBy": "Сортировать по"
     },
     "plugin_default_already_exists": "Плагин по умолчанию для <code>{type}</code> уже существует.",
     "plugins": {
@@ -1883,6 +1936,7 @@
     "usage": "Использование",
     "use": "Использовать",
     "use_dark_background": "Используйте эту версию при работе на темном фоне, чтобы наше имя оставалось читаемым.",
+    "valid": "Действительный",
     "validate": "Проверить",
     "value": "Значение",
     "variables": "Переменные",

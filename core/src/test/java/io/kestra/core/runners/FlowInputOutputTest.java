@@ -46,6 +46,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -385,7 +386,7 @@ class FlowInputOutputTest {
         List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
 
         // Then
-        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst());
+        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst().value());
     }
 
     @Test
@@ -594,6 +595,48 @@ class FlowInputOutputTest {
         assertThat(encryptedOutput.get("type")).isEqualTo(EncryptedString.TYPE);
         assertThat(encryptedOutput.get("value")).isNotEqualTo(TEST_SECRET_VALUE);
         assertThat(EncryptionService.decrypt(secretKey, encryptedOutput.get("value"))).isEqualTo(TEST_SECRET_VALUE);
+    }
+
+    @Test
+    void shouldReadStringInputGivenExecutionIdWithoutExecution() {
+        // Given
+        var executionId = IdUtils.create();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(StringInput.builder().id("greeting").required(true).build()))
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput
+            .readExecutionInputs(flow, executionId,
+                Flux.just(new MemoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8))))
+            .block();
+
+        // Then
+        assertThat(result).containsEntry("greeting", "hello");
+    }
+
+    @Test
+    void shouldStoreFileInputUnderProvidedExecutionId() {
+        // Given
+        var executionId = IdUtils.create();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("upload").type(Type.FILE).required(true).build()))
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput
+            .readExecutionInputs(flow, executionId,
+                Flux.just(new MemoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8))))
+            .block();
+
+        // Then
+        assertThat(result.get("upload")).isInstanceOf(URI.class);
+        assertThat(result.get("upload").toString()).contains(executionId);
     }
 
     private static class MemoryCompletedPart implements CompletedPart {

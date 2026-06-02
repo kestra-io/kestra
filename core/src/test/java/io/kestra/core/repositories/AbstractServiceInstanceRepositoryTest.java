@@ -104,6 +104,19 @@ public abstract class AbstractServiceInstanceRepositoryTest {
             )
             .build(),
 
+        // ISO-8601 duration: "created in the last 24h" → now-created instance matches
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance))
+            .expectedInstances(List.of(runningInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.CREATED)
+                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                    .value("PT24H")
+                    .build()
+            )
+            .build(),
+
         FilterTestCase.builder()
             .instances(List.of(runningInstance, terminatingInstance, inactiveInstance))
             .expectedInstances(List.of(terminatingInstance, inactiveInstance))

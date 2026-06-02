@@ -2,12 +2,12 @@
     <div class="webhook-curl">
         <div v-if="webhookTriggers.length > 0">
             <KsFormItem :label="$t('webhook.payload')" class="payload">
-                <Editor
-                    :fullHeight="false"
-                    :input="true"
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false, showScroll: true}"
+                    :inline="true"
                     :navbar="false"
                     lang="json"
-                    :showScroll="true"
                     v-model="webhookPayload"
                 />
             </KsFormItem>
@@ -33,7 +33,8 @@
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import Editor from "../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {baseUrl, basePath, apiUrl} from "override/utils/route"
     import {useFlowStore} from "../../stores/flow"
 
@@ -53,6 +54,8 @@
     const props = defineProps<{
         flow: Flow;
     }>()
+
+    const editorBindings = useEditorBindings()
 
     const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}")
 

@@ -83,6 +83,7 @@
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
+      "all": "सभी",
       "apps": "ऐप Blueprints",
       "community": "समुदाय",
       "create": "ब्लूप्रिंट बनाएं",
@@ -281,9 +282,25 @@
       "last7days": "पिछले 7 दिन",
       "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या एक ISO 8601 अवधि टाइप करें (उदाहरण: 'P1DT1H1M1S)'",
       "never": "कभी नहीं",
+      "next12hours": "अगले 12 घंटे",
+      "next15minutes": "अगले 15 मिनट",
+      "next1hour": "अगले 1 घंटे",
+      "next24hours": "अगले 24 घंटे",
+      "next30days": "अगले 30 दिन",
+      "next365days": "अगले 365 दिन",
+      "next48hours": "अगले 48 घंटे",
+      "next5minutes": "अगले 5 मिनट",
+      "next7days": "अगले 7 दिन",
       "previousMonth": "पिछला महीना",
       "previousWeek": "पिछला सप्ताह",
       "previousYear": "पिछला साल",
+      "short": {
+        "12h": "12घं",
+        "15m": "15मिनट",
+        "1d": "1दिन",
+        "1h": "1घं",
+        "7d": "7दिन"
+      },
       "thisMonth": "इस महीने",
       "thisMonthSoFar": "अब तक इस महीने",
       "thisWeek": "इस सप्ताह",
@@ -604,6 +621,7 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
+    "execution id": "निष्पादन Id",
     "execution labels": "निष्पादन labels",
     "execution not found": "<code>{executionId}</code> निष्पादन नहीं मिला।",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
@@ -1396,16 +1414,51 @@
       "yaml_configuration": "YAML कॉन्फ़िगरेशन"
     },
     "pluginPage": {
-      "alt": "प्लगइन्स आइकन",
+      "elementType": {
+        "apps": "ऐप",
+        "charts": "चार्ट",
+        "conditions": "शर्त",
+        "logExporters": "लॉग एक्सपोर्टर",
+        "secrets": "गुप्त",
+        "taskRunners": "टास्क रनर",
+        "tasks": "कार्य",
+        "triggers": "ट्रिगर"
+      },
+      "group": {
+        "blueprints": "ब्लूप्रिंट्स ({count})",
+        "plugins": "प्लगइन्स ({count})",
+        "tasks": "टास्क ({count})"
+      },
+      "header": {
+        "back": "प्लगइन्स पर वापस जाएँ",
+        "certified": "प्रमाणित",
+        "enterpriseEdition": "एंटरप्राइज एडिशन"
+      },
+      "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",
+      "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
+      "notFound": "यह प्लगइन नहीं मिला।",
+      "overview": {
+        "createdBy": "द्वारा निर्मित",
+        "latest": "नवीनतम",
+        "linksResources": "लिंक और संसाधन",
+        "managedBy": "द्वारा प्रबंधित",
+        "minKestraVersion": "न्यूनतम संगत Kestra संस्करण: {version}",
+        "minKestraVersionShort": "न्यूनतम Kestra संस्करण {version}",
+        "pluginType": "प्लगइन प्रकार",
+        "previousVersions": "पिछले संस्करण",
+        "releaseNotes": "रिलीज़ नोट्स",
+        "title": "सारांश",
+        "versions": "संस्करण"
+      },
       "search": "{count}+ प्लगइन्स में खोजें",
+      "searchTasks": "{count} tasks खोजें",
       "sort": {
-        "most_used": "सबसे अधिक उपयोग किया गया",
-        "name_asc": "नाम A-Z",
-        "name_desc": "नाम Z-A",
+        "mostUsed": "सबसे अधिक उपयोग किया गया",
+        "nameAsc": "नाम A-Z",
+        "nameDesc": "नाम Z-A",
         "newest": "नवीनतम"
       },
-      "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
-      "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
+      "sortBy": "क्रमबद्ध करें"
     },
     "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "plugins": {
@@ -1883,6 +1936,7 @@
     "usage": "उपयोग",
     "use": "उपयोग करें",
     "use_dark_background": "इस संस्करण का उपयोग तब करें जब आप एक गहरे पृष्ठभूमि पर काम कर रहे हों ताकि यह सुनिश्चित हो सके कि हमारा नाम पठनीय बना रहे।",
+    "valid": "मान्य",
     "validate": "मान्य करें",
     "value": "Value",
     "variables": "वेरिएबल्स",

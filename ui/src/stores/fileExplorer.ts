@@ -206,11 +206,18 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 toast.error(t("namespace files.create.file_already_exists"))
                 return {}
             }
-            await namespacesStore.saveOrCreateFile({
-                namespace: namespaceId.value,
-                path,
-                content,
-            })
+            try {
+                await namespacesStore.saveOrCreateFile({
+                    namespace: namespaceId.value,
+                    path,
+                    content,
+                })
+                toast.success(`File "${NAME}" created successfully.`)
+            } catch (error) {
+                console.error(`Failed to create file: ${NAME}`, error)
+                toast.error(t("namespace files.create.file_error"))
+                return {}
+            }
         }
         if (!parentPath) {
             fileTree.value.push(NEW)

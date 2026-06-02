@@ -299,6 +299,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
             }
         },
+        ATTEMPT_NUMBER("attemptNumber") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         CHILD_FILTER("childFilter") {
             @Override
             public List<Op> supportedOp() {
@@ -335,10 +341,10 @@ public record QueryFilter(
                 return List.of(Op.EQUALS);
             }
         },
-        MIN_LEVEL("level") {
+        LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.LESS_THAN_OR_EQUAL_TO);
             }
         },
         PATH("path") {
@@ -368,7 +374,7 @@ public record QueryFilter(
         USERNAME("username") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS);
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
         NAME("name") {
@@ -383,6 +389,12 @@ public record QueryFilter(
                 return List.of(Op.IN, Op.EQUALS);
             }
         },
+        EXTERNAL_ID("external_id") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         EXPIRED_AT("expired_at") {
             @Override
             public List<Op> supportedOp() {
@@ -393,6 +405,42 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
+            }
+        },
+        SOURCE("source") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        LOCKED("locked") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        LAST_TRIGGERED_DATE("lastTriggeredDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        NEXT_EXECUTION_DATE("nextExecutionDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        ARTIFACT_ID("artifactId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.IN, Op.NOT_IN);
+            }
+        },
+        KEY("key") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
             }
         };
 
@@ -428,7 +476,7 @@ public record QueryFilter(
         NAMESPACE {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.NAMESPACE);
+                return List.of(Field.NAMESPACE, Field.QUERY);
             }
         },
         EXECUTION {
@@ -446,7 +494,8 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
-                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.MIN_LEVEL, Field.EXECUTION_ID
+                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
+                    Field.TASK_ID, Field.TASK_RUN_ID, Field.ATTEMPT_NUMBER
                 );
             }
         },
@@ -470,14 +519,15 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
-                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID, Field.TRIGGER_STATE
+                    Field.TRIGGER_ID, Field.TRIGGER_STATE,
+                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE
                 );
             }
         },
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.SUPER_ADMIN);
             }
         },
         ROLE {
@@ -507,7 +557,7 @@ public record QueryFilter(
         BINDING {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE);
+                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE, Field.EXTERNAL_ID);
             }
         },
         SECURITY_INTEGRATION {
@@ -553,7 +603,8 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
-                    Field.QUERY
+                    Field.QUERY,
+                    Field.ARTIFACT_ID
                 );
             }
         },
@@ -646,6 +697,18 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID, Field.ENABLED);
+            }
+        },
+        WORKER_GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.KEY);
+            }
+        },
+        BANNER {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.TYPE);
             }
         };
 

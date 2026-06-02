@@ -59,7 +59,7 @@ export const FIRST_FLOW_GUIDE_STEPS: OnboardingGuideStep[] = [
         title: "onboarding.steps.flow_basics.title",
         description: "onboarding.steps.flow_basics.description",
         showCompletionBadge: false,
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: `id: my_flow
 namespace: company.team
 
@@ -80,7 +80,7 @@ tasks:
         stepType: "code_edit",
         title: "onboarding.steps.add_id.title",
         description: "onboarding.steps.add_id.description",
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: "id: my_flow",
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml)
@@ -98,7 +98,7 @@ tasks:
         stepType: "code_edit",
         title: "onboarding.steps.add_namespace.title",
         description: "onboarding.steps.add_namespace.description",
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: "namespace: company.team",
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml)
@@ -116,7 +116,7 @@ tasks:
         stepType: "code_edit",
         title: "onboarding.steps.add_input.title",
         description: "onboarding.steps.add_input.description",
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: `inputs:
   - id: name
     type: STRING`,
@@ -143,7 +143,7 @@ tasks:
         stepType: "code_edit",
         title: "onboarding.steps.add_log_task.title",
         description: "onboarding.steps.add_log_task.description",
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: `tasks:
   - id: greet
     type: io.kestra.plugin.scripts.python.Script
@@ -241,7 +241,7 @@ tasks:
         title: "onboarding.steps.add_cron_trigger.title",
         description: "onboarding.steps.add_cron_trigger.description",
         overlayPosition: {vertical: "middle", horizontal: "right"},
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: `triggers:
   - id: every_5_minutes
     type: io.kestra.plugin.core.trigger.Schedule
@@ -272,7 +272,7 @@ tasks:
         title: "onboarding.steps.add_input_default.title",
         description: "onboarding.steps.add_input_default.description",
         overlayPosition: {vertical: "middle", horizontal: "right"},
-        targetSelector: "#editorWrapper",
+        targetSelector: "#flowFileEditorTab",
         snippet: `inputs:
   - id: name
     type: STRING

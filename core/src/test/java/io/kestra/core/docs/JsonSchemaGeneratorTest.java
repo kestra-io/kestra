@@ -56,6 +56,26 @@ class JsonSchemaGeneratorTest {
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void selectInputValuesAcceptsStringOrObject() {
+        Map<String, Object> properties = jsonSchemaGenerator.properties(
+            io.kestra.core.models.flows.Input.class,
+            io.kestra.core.models.flows.input.SelectInput.class
+        );
+        var props = (Map<String, Map<String, Object>>) properties.get("properties");
+        var values = props.get("values");
+        assertThat((String) values.get("type"), is("array"));
+
+        // items must accept either a plain string or an object with label/value.
+        // Swagger2Module emits the anyOf when @Schema(anyOf=...) is set on the referenced type.
+        Map<String, Object> items = (Map<String, Object>) values.get("items");
+        String rendered = items.toString();
+        assertThat(rendered, anyOf(containsString("anyOf"), containsString("oneOf")));
+        assertThat(rendered, containsString("string"));
+        assertThat(rendered, anyOf(containsString("label"), containsString("ValueOption")));
+    }
+
     @Inject
     PluginRegistry pluginRegistry;
 

@@ -1,6 +1,6 @@
 <template>
-    <div v-if="!TESTING && isLoading" v-ks-loading="true" class="h-100" />
-    <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
+    <div v-if="isLoading" v-ks-loading="true" class="h-100" />
+    <Empty v-else-if="!getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <KsSplitter v-else class="dependencies">
         <KsSplitterPanel id="graph" v-bind="PANEL">
             <KsGraph
@@ -108,7 +108,6 @@
 
     const graphRef = ref(null)
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId)
-    const TESTING = false // When true, bypasses API data fetching and uses mock/test data.
 
     use([TitleComponent])
 
@@ -122,7 +121,7 @@
         selectNode,
         handleNodeClick,
         handlers,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies)
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies)
 </script>
 
 <style scoped lang="scss">
@@ -138,9 +137,13 @@
             height: 100%;
             overflow: hidden;
             background-color: transparent;
-            background-image: radial-gradient(circle, var(--ks-topology-dash) 1px, transparent 1px);
+            background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 30%, transparent) 1px, transparent 1px);
             background-repeat: repeat;
             background-size: 24px 24px;
+
+            .dark & {
+                background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 20%, transparent) 1px, transparent 1px);
+            }
         }
 
         & .controls {

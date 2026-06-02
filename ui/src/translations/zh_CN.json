@@ -83,6 +83,7 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
+      "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",
       "create": "创建一个blueprint",
@@ -620,6 +621,7 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
+    "execution id": "执行 Id",
     "execution labels": "执行标签",
     "execution not found": "执行 <code>{executionId}</code> 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",

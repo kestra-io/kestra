@@ -1,4 +1,42 @@
 import {createApp} from "vue"
+import type {Router} from "vue-router"
+
+import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker"
+import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker"
+import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
+import YamlWorker from "./components/inputs/yaml.worker.js?worker"
+
+window.MonacoEnvironment = {
+    getWorker(_moduleId, label) {
+        switch (label) {
+        case "editorWorkerService":
+            return new EditorWorker()
+        case "yaml":
+            return new YamlWorker()
+        case "json":
+            return new JsonWorker()
+        case "javascript":
+        case "typescript":
+            return new TypeScriptWorker()
+        default:
+            throw new Error(`Unknown label ${label}`)
+        }
+    },
+}
+
+const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"}) as Record<string, string>
+function loadNodeTypes(tries = 0) {
+    import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
+        if (languages.typescript) {
+            for (const path in NodeTypesRaw) {
+                languages.typescript.typescriptDefaults.addExtraLib(NodeTypesRaw[path], `file://${path}`)
+            }
+        } else if (tries <= 15) {
+            setTimeout(() => loadNodeTypes(tries + 1), (tries + 1) * 100)
+        }
+    })
+}
+loadNodeTypes()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -17,7 +55,7 @@ import {useMiscStore} from "override/stores/misc"
 
 const app = createApp(App)
 
-const handleAuthError = (error, to) => {
+const handleAuthError = (error: Error, to: {fullPath: string}) => {
     if (error.message?.includes("401")) {
         BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
@@ -26,9 +64,9 @@ const handleAuthError = (error, to) => {
     return {name: "setup"}
 }
 
-let axiosInstance
+let axiosInstance: ReturnType<typeof configureAxios> | undefined
 
-function setupAxios(router) {
+function setupAxios(router: Router) {
     const coreStore = useCoreStore()
     const authStore = useAuthStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -49,9 +87,9 @@ function setupAxios(router) {
         oss: true,
         router,
         beforeLogout,
-        isLoggedIn: () => BasicAuth.isLoggedIn(),
+        isLoggedIn: () => !!BasicAuth.isLoggedIn(),
         onAuthTimeout: beforeLogout,
-        isImpersonating: () => window.sessionStorage.getItem("impersonate"),
+        isImpersonating: () => !!window.sessionStorage.getItem("impersonate"),
     })
 
     axiosInstance.interceptors.request.use((config) => {
@@ -66,7 +104,8 @@ function setupAxios(router) {
     return axiosInstance
 }
 
-async function beforeResolve(router, to, from) {
+// FIXME: any - guard args are untyped in the GuardFn interface
+async function beforeResolve(router: Router, to: any, from: any): Promise<unknown> { // FIXME: any
     if(to.path === from.path && to.query === from.query) {
         return // Prevent navigation if the path and query are the same
     }
@@ -101,7 +140,7 @@ async function beforeResolve(router, to, from) {
             }
         }
 
-        if (to.meta?.anonymous === true) {
+        if ((to as {meta?: {anonymous?: boolean}}).meta?.anonymous === true) {
             if (to.name === "setup") {
                 return {name: "login"}
             }
@@ -122,12 +161,12 @@ async function beforeResolve(router, to, from) {
         }
     } catch (error) {
         console.error("Error during authentication check:", error)
-        return handleAuthError(error, to)
+        return handleAuthError(error as Error, to)
     }
 }
 
-initApp(app, routes, null, en, {}, {beforeResolve}).then(({router, piniaStore}) => {
-    
+initApp(app, routes, null, en as Record<string, unknown>, {}, {beforeResolve: beforeResolve as (...args: unknown[]) => unknown}).then(({router, piniaStore}) => {
+
 
     // Setup tenant router
     setupTenantRouter(router, app)
@@ -137,9 +176,10 @@ initApp(app, routes, null, en, {}, {beforeResolve}).then(({router, piniaStore}) 
     const $http = setupAxios(router)
 
     piniaStore.use(({store: piniaStoreLocal}) => {
-        piniaStoreLocal.$http = $http
+        // FIXME: any
+        ;(piniaStoreLocal as any).$http = $http
     })
-    
+
     // mount
     router.isReady().then(() => app.mount("#app"))
 })

@@ -1,0 +1,34 @@
+id: waitfor-nested
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop_1
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ outputs.loop_1_return.value | number >= 3 }}"
+    checkFrequency:
+      interval: PT0.2S
+    tasks:
+      - id: loop_1_return
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ outputs.loop_1.iterationCount }}"
+      - id: loop_2
+        type: io.kestra.plugin.core.flow.LoopUntil
+        condition: "{{ outputs.loop_2_return.value | number >= 3 }}"
+        checkFrequency:
+          interval: PT0.2S
+        tasks:
+          - id: loop_2_return
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ outputs.loop_2.iterationCount }}"
+          - id: loop_3
+            type: io.kestra.plugin.core.flow.LoopUntil
+            condition: "{{ outputs.loop_3_return.value | number >= 3 }}"
+            checkFrequency:
+              interval: PT0.2S
+            tasks:
+              - id: loop_3_return
+                type: io.kestra.plugin.core.debug.Return
+                format: "{{ outputs.loop_3.iterationCount }}"
+              - id: loop_3_log
+                type: io.kestra.plugin.core.log.Log
+                message: "loop_3 iteration: {{ outputs.loop_3_return.value }}"

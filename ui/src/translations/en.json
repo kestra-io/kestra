@@ -65,6 +65,7 @@
     "edit flow": "Edit flow",
     "executions": "Executions",
     "execution": "Execution",
+    "execution id": "Execution Id",
     "recent_executions": "Recent Executions",
     "details": "Details",
     "overview": "Overview",
@@ -367,6 +368,7 @@
       "github": "Open a GitHub issue"
     },
     "blueprints": {
+      "all": "All",
       "community": "Community",
       "create": "Create a blueprint",
       "edit": "Edit a blueprint",

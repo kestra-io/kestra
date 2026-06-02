@@ -33,12 +33,15 @@
         <em>null</em>
     </span>
     <div v-else-if="isComplexValue(value)">
-        <Editor
+        <KsEditor
+            v-bind="editorBindings"
             :readOnly="true"
-            :input="true"
-            :showScroll="true"
-            :fullHeight="false"
-            :customHeight="Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length))"
+            :inline="true"
+            :options="{
+                showScroll: true,
+                fullHeight: false,
+                customHeight: Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length)),
+            }"
             :navbar="false"
             :modelValue="JSON.stringify(getDisplayValue(value), null, 2)"
             lang="json"
@@ -55,7 +58,8 @@
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FilePreview from "./FilePreview.vue"
-    import Editor from "../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
     import {useClient} from "@kestra-io/kestra-sdk"
     import * as Utils from "../../utils/utils"
@@ -77,6 +81,8 @@
         execution: () => ({id: ""}),
         restrictUri: false,
     })
+
+    const editorBindings = useEditorBindings()
 
     const humanSize = ref<string>("")
 

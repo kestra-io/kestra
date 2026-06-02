@@ -109,6 +109,10 @@
         props.filterKey?.valueType === "key-value",
     )
 
+    const isTimeRange = computed(() =>
+        props.filterKey?.key === "timeRange" || props.filterKey?.valueType === "time-range",
+    )
+
     // Server-side search is opted into by declaring an `options` param on valueProvider.
     const supportsServerSideSearch = computed(() =>
         (props.filterKey?.valueProvider?.length ?? 0) > 0,
@@ -204,8 +208,10 @@
             },
         }
 
+        const valueType = props.filterKey.valueType === "time-range" ? "select" : props.filterKey.valueType
+
         return (
-            componentConfigs[props.filterKey.valueType as keyof typeof componentConfigs] || null
+            componentConfigs[valueType as keyof typeof componentConfigs] || null
         )
     })
 
@@ -289,6 +295,22 @@
                     ? {dateFilter: state.dateFilterMode}
                     : undefined,
             }
+        case "time-range":
+            if (state.timeRangeMode === "custom") {
+                return {
+                    value: {
+                        startDate: state.startDateValue!,
+                        endDate: state.endDateValue!,
+                    },
+                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                }
+            }
+            return {
+                value: state.selectValue,
+                label:
+                    state.valueOptions?.find(opt => opt.value === state.selectValue)
+                        ?.label || state.selectValue,
+            }
         case "multi-select":
             return {
                 value: state.keyValuePair,
@@ -355,7 +377,7 @@
         }
 
         if (
-            props.filterKey?.key === "timeRange" &&
+            isTimeRange.value &&
             typeof filter.value === "object" &&
             filter.value !== null &&
             "startDate" in filter.value
@@ -390,6 +412,7 @@
                 state.keyValuePair = Array.isArray(filter.value) ? filter.value : []
                 break
             case "select":
+            case "time-range":
                 state.selectValue =
                     typeof filter.value === "string" &&
                     state.valueOptions.find(option => option.value === filter.value)
@@ -419,7 +442,7 @@
         state.valueOptions = await props.filterKey.valueProvider({search, meta})
 
         if (
-            props.filterKey?.key === "timeRange" &&
+            isTimeRange.value &&
             typeof props.filter.value === "string"
         ) {
             const currentValue = props.filter.value

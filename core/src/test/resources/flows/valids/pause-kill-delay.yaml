@@ -1,0 +1,10 @@
+id: pause-kill-delay
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    pauseDuration: PT1M
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }}"

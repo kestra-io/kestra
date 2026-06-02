@@ -430,6 +430,18 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+        },
+        ARTIFACT_ID("artifactId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.IN, Op.NOT_IN);
+            }
+        },
+        KEY("key") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -515,7 +527,7 @@ public record QueryFilter(
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.SUPER_ADMIN);
             }
         },
         ROLE {
@@ -591,7 +603,8 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
-                    Field.QUERY
+                    Field.QUERY,
+                    Field.ARTIFACT_ID
                 );
             }
         },
@@ -684,6 +697,18 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID, Field.ENABLED);
+            }
+        },
+        WORKER_GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.KEY);
+            }
+        },
+        BANNER {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.TYPE);
             }
         };
 

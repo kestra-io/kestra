@@ -186,6 +186,31 @@ describe("useFilterGroups", () => {
             const targetLeaf = findLeafById(tree.groups.value, g2)!
             expect(targetLeaf.filters.map(f => f.id).sort()).toEqual(["moving", "survivor"])
         })
+
+        it("groups same key + comparator chips into an AND wrapper instead of discarding one", () => {
+            const tree = useFilterGroups()
+            tree.addGroup()
+            const [g1, g2] = tree.groups.value.map(g => g.id)
+            const moving = filter("moving", "taskId", Comparators.EQUALS, "B")
+            const existing = filter("existing", "taskId", Comparators.EQUALS, "A")
+            tree.updateLeaf(g1, l => ({...l, filters: [moving]}))
+            tree.updateLeaf(g2, l => ({...l, filters: [existing]}))
+
+            tree.moveFilter("moving", g2)
+
+            // Both chips must survive (none discarded).
+            expect(allFilters(tree.groups.value).map(f => f.id).sort()).toEqual(["existing", "moving"])
+
+            // The target leaf is promoted to an AND wrapper with each conflicting chip isolated.
+            const target = tree.groups.value.find(g => isWrapperGroup(g) && g.children.some(c => c.id === g2))
+                ?? tree.groups.value.find(isWrapperGroup)
+            expect(target && isWrapperGroup(target)).toBe(true)
+            const wrapper = target as Extract<typeof target, {kind: "wrapper"}>
+            expect(wrapper.logical).toBe("AND")
+            expect(wrapper.children.flatMap(c => c.filters).map(f => f.id).sort()).toEqual(["existing", "moving"])
+            // Each conflicting chip lives in its own leaf so they don't collide on one URL param.
+            wrapper.children.forEach(c => expect(c.filters).toHaveLength(1))
+        })
     })
 
     describe("setTopLogical / setWrapperLogical", () => {

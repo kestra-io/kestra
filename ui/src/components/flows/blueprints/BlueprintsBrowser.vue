@@ -70,7 +70,7 @@
                             @click="goToDetail(blueprint.id)"
                         >
                             <div class="card-content-wrapper">
-                                <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
+                                <div v-if="!system && blueprint.tags?.length" class="tags-section">
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
                                 <div v-if="blueprint.template" class="tags-section">
@@ -115,6 +115,7 @@
     import * as Utils from "../../../utils/utils"
     import {usePluginsStore} from "../../../stores/plugins"
     import {useBlueprintsStore} from "../../../stores/blueprints"
+    import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
     import {useApiStore} from "../../../stores/api"
     import {useCoreStore} from "../../../stores/core"
     import {useDocStore} from "../../../stores/doc"
@@ -154,15 +155,9 @@
 
     const searchText = ref(route.query["filters[q][EQUALS]"] ?? "")
     const selectedTags = ref<string[]>(initSelectedTags())
-    const tags = ref<Record<string, any> | undefined>(undefined)
+    const tags = ref<Record<string, BlueprintTag> | undefined>(undefined)
     const total = ref(0)
-    const blueprints = ref<{
-        includedTasks: string[];
-        id: string;
-        tags: string[];
-        title?: string;
-        template?: Record<string, any>;
-    }[] | undefined>(undefined)
+    const blueprints = ref<FlowBlueprint[] | undefined>(undefined)
     const error = ref(false)
 
     const handleSearch = (query: string) => {
@@ -184,8 +179,8 @@
 
     const userCanCreate = computed(() => canCreate(props.blueprintKind))
 
-    const processedTags = (blueprintTags: string[]) => {
-        return blueprintTags.map(tag => ({
+    const processedTags = (blueprintTags?: string[]) => {
+        return (blueprintTags ?? []).map(tag => ({
             original: tag,
             display: tags.value?.[tag]?.name ?? tag,
         }))

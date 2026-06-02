@@ -83,6 +83,7 @@
     "before": "이전",
     "behavior": "동작",
     "blueprints": {
+      "all": "모두",
       "apps": "앱 Blueprints",
       "community": "커뮤니티",
       "create": "블루프린트 생성",

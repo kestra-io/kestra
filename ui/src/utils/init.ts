@@ -1,18 +1,32 @@
 import {createRouter, createWebHistory} from "vue-router"
+import type {App} from "vue"
+import type {RouteRecordRaw} from "vue-router"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
 import moment from "moment-timezone"
+// @ts-ignore - moment locale files don't have type declarations
 import "moment/dist/locale/de"
+// @ts-ignore
 import "moment/dist/locale/es"
+// @ts-ignore
 import "moment/dist/locale/fr"
+// @ts-ignore
 import "moment/dist/locale/hi"
+// @ts-ignore
 import "moment/dist/locale/it"
+// @ts-ignore
 import "moment/dist/locale/ja"
+// @ts-ignore
 import "moment/dist/locale/ko"
+// @ts-ignore
 import "moment/dist/locale/pl"
+// @ts-ignore
 import "moment/dist/locale/pt"
+// @ts-ignore
 import "moment/dist/locale/ru"
+// @ts-ignore
 import "moment/dist/locale/zh-cn"
+// @ts-ignore
 import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range"
 import VueVirtualScroller from "vue-virtual-scroller"
@@ -32,8 +46,16 @@ import {useDocStore} from "../stores/doc"
 import RouterMd from "../components/utils/RouterMd.vue"
 import * as Utils from "./utils"
 
+type GuardFn = (...args: unknown[]) => unknown
 
-export default async (app, routes, _stores, translations, additionalTranslations = {}, guards = {}) => {
+export default async (
+    app: App,
+    routes: RouteRecordRaw[],
+    _stores: unknown,
+    translations: Record<string, unknown>,
+    additionalTranslations: Record<string, unknown> = {},
+    guards: Record<string, GuardFn | undefined> = {},
+) => {
     // router
     const router = createRouter({
         // make e2e tests pass in dev mode
@@ -64,19 +86,19 @@ export default async (app, routes, _stores, translations, additionalTranslations
     })
 
     if(guards.beforeEach){
-        router.beforeEach(guards.beforeEach.bind(null, router))
+        router.beforeEach(guards.beforeEach.bind(null, router) as Parameters<typeof router.beforeEach>[0])
     }
 
     if(guards.beforeResolve){
-        router.beforeResolve(guards.beforeResolve.bind(null, router))
+        router.beforeResolve(guards.beforeResolve.bind(null, router) as Parameters<typeof router.beforeResolve>[0])
     }
 
     if(guards.afterEach){
-        router.afterEach(guards.afterEach.bind(null, router))
+        router.afterEach(guards.afterEach.bind(null, router) as Parameters<typeof router.afterEach>[0])
     }
 
     router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
     })
 
     // avoid loading router in storybook
@@ -93,23 +115,25 @@ export default async (app, routes, _stores, translations, additionalTranslations
     }
 
     // l18n
-    let locale = Utils.getLang()
+    const locale = Utils.getLang()
 
-    let i18n = setupI18n({
+    // FIXME: any - setupI18n options type doesn't expose all options
+    const i18n = setupI18n({
         locale: "en",
         messages: translations,
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
-    })
+    } as any) // FIXME: any
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        await loadLocaleMessages(i18n, locale, additionalTranslations)
-        await setI18nLanguage(i18n, locale)
+        // FIXME: any - loadLocaleMessages/setI18nLanguage expect literal locale types
+        await loadLocaleMessages(i18n, locale as any, additionalTranslations as any) // FIXME: any
+        await setI18nLanguage(i18n, locale as any) // FIXME: any
     }
     setDesignSystemLocale(locale)
     app.use(i18n)
@@ -119,7 +143,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
     const momentExtended = extendMoment(moment)
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
-    setDateFormatter(dateFilter)
+    setDateFormatter(dateFilter as any) // FIXME: any - dateFilter signature differs from DateFormatterFn
 
     // others plugins
     app.use(Toast)
@@ -143,12 +167,12 @@ export default async (app, routes, _stores, translations, additionalTranslations
         ...(import.meta.glob("../components/content/*.vue", {eager: true})),
     }
     const componentsByName = Object.entries(components)
-        .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default])
+        .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), (component as {default: unknown}).default])
     const componentsNames = componentsByName.map(([name]) => name)
     componentsByName.filter(([name], index) => componentsNames.lastIndexOf(name) === index)
-        .forEach(([name, component]) => app.component(name, component))
+        .forEach(([name, component]) => app.component(name as string, component as Parameters<typeof app.component>[1]))
 
-    app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
+    app.config.globalProperties.append = (path: string, pathToAppend: string) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 
     return {router, piniaStore}
 }

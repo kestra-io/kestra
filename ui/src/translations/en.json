@@ -368,6 +368,7 @@
       "github": "Open a GitHub issue"
     },
     "blueprints": {
+      "all": "All",
       "community": "Community",
       "create": "Create a blueprint",
       "edit": "Edit a blueprint",

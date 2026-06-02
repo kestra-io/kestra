@@ -83,6 +83,7 @@
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
+      "all": "सभी",
       "apps": "ऐप Blueprints",
       "community": "समुदाय",
       "create": "ब्लूप्रिंट बनाएं",

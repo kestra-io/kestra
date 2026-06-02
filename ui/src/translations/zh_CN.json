@@ -83,6 +83,7 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
+      "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",
       "create": "创建一个blueprint",

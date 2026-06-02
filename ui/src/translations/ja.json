@@ -83,6 +83,7 @@
     "before": "前",
     "behavior": "動作",
     "blueprints": {
+      "all": "すべて",
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",
       "create": "ブループリントを作成",

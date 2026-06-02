@@ -15,7 +15,7 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @MysqlRepositoryEnabled
-public class V2_0TriggerFiltersMigration extends AbstractSQLMigrationScript {
+public class V2_0_06TriggerFiltersMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "2.0.06-trigger-filters";
     private static final String RESOURCE = "/migrations/2.0.06-trigger-filters-mysql.sql";
@@ -23,7 +23,7 @@ public class V2_0TriggerFiltersMigration extends AbstractSQLMigrationScript {
     private final DataSource dataSource;
 
     @Inject
-    public V2_0TriggerFiltersMigration(final DataSource dataSource) {
+    public V2_0_06TriggerFiltersMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

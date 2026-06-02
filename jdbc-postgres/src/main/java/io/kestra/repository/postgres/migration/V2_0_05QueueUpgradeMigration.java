@@ -24,14 +24,14 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.queue.type", value = "postgres")
-public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
+public class V2_0_05QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "2.0.05-queue";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0QueueUpgradeMigration(final DataSource dataSource) {
+    public V2_0_05QueueUpgradeMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

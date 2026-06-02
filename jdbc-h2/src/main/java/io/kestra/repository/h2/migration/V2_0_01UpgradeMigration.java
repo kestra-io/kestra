@@ -2,7 +2,7 @@ package io.kestra.repository.h2.migration;
 
 import javax.sql.DataSource;
 
-import io.kestra.core.migration.AbstractV2UpgradeMigration;
+import io.kestra.core.migration.AbstractV2_0_01UpgradeMigration;
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 
@@ -27,12 +27,12 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.repository.type", pattern = "h2|memory")
-public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
+public class V2_0_01UpgradeMigration extends AbstractV2_0_01UpgradeMigration {
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0UpgradeMigration(final DataSource dataSource) {
+    public V2_0_01UpgradeMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

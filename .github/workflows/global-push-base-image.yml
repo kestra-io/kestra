@@ -24,10 +24,15 @@ jobs:
       matrix:
         jre:
           - version: "25"
-            tag: "latest-no-plugins"
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest-no-plugins
+              ghcr.io/kestra-io/kestra-base:latest-jre25-no-plugins
+            cache-tag: "latest-no-plugins"
             description: "Kestra base image (no plugins) — JRE 25 + uv pre-installed"
           - version: "21"
-            tag: "latest-jre21-no-plugins"
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest-jre21-no-plugins
+            cache-tag: "latest-jre21-no-plugins"
             description: "Kestra base image (no plugins) — JRE 21 + uv pre-installed"
     steps:
       - uses: actions/checkout@v6
@@ -67,13 +72,13 @@ jobs:
           file: Dockerfile.base
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
+          tags: ${{ matrix.jre.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
             JRE_VERSION=${{ matrix.jre.version }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
+          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.cache-tag }}
           cache-to: type=inline
 
       - name: Slack - Notification
@@ -92,10 +97,15 @@ jobs:
       matrix:
         jre:
           - no-plugins-tag: "latest-no-plugins"
-            tag: "latest"
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest
+              ghcr.io/kestra-io/kestra-base:latest-jre25
+            cache-tag: "latest"
             description: "Kestra base image (with OSS plugins) — JRE 25 + uv + plugins pre-installed"
           - no-plugins-tag: "latest-jre21-no-plugins"
-            tag: "latest-jre21"
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest-jre21
+            cache-tag: "latest-jre21"
             description: "Kestra base image (with OSS plugins) — JRE 21 + uv + plugins pre-installed"
     steps:
       - uses: actions/checkout@v6
@@ -135,13 +145,13 @@ jobs:
           file: Dockerfile.base.with-plugins
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
+          tags: ${{ matrix.jre.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             CACHE_BUST=${{ github.run_id }}
             BASE_IMAGE=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.no-plugins-tag }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
+          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.cache-tag }}
           cache-to: type=inline
 
       - name: Slack - Notification

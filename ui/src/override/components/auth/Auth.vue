@@ -51,17 +51,9 @@
     import {computed} from "vue"
     import {useRoute, useRouter} from "vue-router"
 
-<<<<<<< HEAD
-    import Slack from "vue-material-design-icons/Slack.vue"
-||||||| ec67fcda5
-    import CogOutline from "vue-material-design-icons/CogOutline.vue"
-    import Slack from "vue-material-design-icons/Slack.vue"
-=======
     import {useClient} from "@kestra-io/kestra-sdk"
 
->>>>>>> origin/develop
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import Logout from "vue-material-design-icons/Logout.vue"
     import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
     import Slack from "vue-material-design-icons/Slack.vue"

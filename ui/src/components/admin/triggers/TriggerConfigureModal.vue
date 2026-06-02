@@ -65,74 +65,20 @@
                         />
                     </KsFormItem>
 
-                    <template v-for="(propSchema, propKey) in triggerProperties" :key="propKey">
-                        <KsFormItem
-                            v-if="propSchema.type !== 'boolean' && propSchema.type !== 'array' && propSchema.type !== 'object'"
-                            :label="propSchema.title || propKey"
-                            :required="isRequired(propKey)"
-                        >
-                            <KsInput
-                                v-if="propSchema.format === 'cron'"
-                                v-model="formModel.properties[propKey]"
-                                :placeholder="propSchema.description || propKey"
-                            />
-                            <TaskNumber
-                                v-else-if="propSchema.type === 'integer' || propSchema.type === 'number'"
-                                v-model="formModel.properties[propKey]"
-                                :schema="propSchema"
-                            />
-                            <KsSelect
-                                v-else-if="propSchema.enum"
-                                v-model="formModel.properties[propKey]"
-                                filterable
-                                clearable
-                            >
-                                <KsOption
-                                    v-for="opt in propSchema.enum"
-                                    :key="opt"
-                                    :label="opt"
-                                    :value="opt"
-                                />
-                            </KsSelect>
-                            <KsInput
-                                v-else
-                                v-model="formModel.properties[propKey]"
-                                :placeholder="propSchema.description || propKey"
-                            />
-                        </KsFormItem>
+                    <TaskObject
+                        v-if="hasTriggerProperties"
+                        :modelValue="triggerPropertiesModel"
+                        @update:model-value="onPropertiesUpdate"
+                        :properties="triggerProperties"
+                        :schema="triggerSchema"
+                        :root="trigger.type"
+                        merge
+                    />
 
-                        <KsFormItem
-                            v-else-if="propSchema.type === 'boolean'"
-                            :label="propSchema.title || propKey"
-                            :required="isRequired(propKey)"
-                        >
-                            <KsSwitch v-model="formModel.properties[propKey]" />
-                        </KsFormItem>
-
-                        <KsFormItem
-                            v-else-if="propSchema.type === 'array' && propSchema.items?.enum"
-                            :label="propSchema.title || propKey"
-                            :required="isRequired(propKey)"
-                        >
-                            <KsSelect
-                                v-model="formModel.properties[propKey]"
-                                filterable
-                                clearable
-                            >
-                                <KsOption
-                                    v-for="opt in propSchema.items.enum"
-                                    :key="opt"
-                                    :label="opt"
-                                    :value="opt"
-                                />
-                            </KsSelect>
-                        </KsFormItem>
-                    </template>
+                    <p v-else class="form-hint">
+                        {{ $t("triggers_add_modal_properties_hint") }}
+                    </p>
                 </KsForm>
-
-                <p v-if="!hasTriggerProperties" class="form-hint">
-                    {{ $t("triggers_add_modal_properties_hint") }}
-                </p>
             </div>
 
             <div v-show="activeTab === 'source'" class="tab-panel source-panel">
@@ -178,12 +124,13 @@
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import {KsTaskIcon} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
     import {useFlowStore} from "../../../stores/flow"
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {triggerDisplayName} from "./triggerCatalog"
-    import TaskNumber from "../../no-code/components/tasks/TaskNumber.vue"
+    import TaskObject from "../../no-code/components/tasks/TaskObject.vue"
 
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
@@ -197,6 +144,9 @@
     const COPY_FEEDBACK_MS = 1600
     const TAB_VALUES = ["form", "source", "documentation"] as const
     type TabValue = typeof TAB_VALUES[number];
+
+    // Fields handled by the modal itself, not rendered through the no-code form.
+    const RESERVED_FIELDS = new Set(["id", "type", "description"])
 
     const {t} = useI18n({useScope: "global"})
     const router = useRouter()
@@ -215,33 +165,35 @@
 
     const flowOptions = ref<{id: string; namespace: string}[]>([])
     const documentationPlugin = ref<PluginComponent | null>(null)
+    const triggerPlugin = ref<PluginComponent | null>(null)
 
     const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
     const formModel = ref({
         namespace: "",
         flowId: "",
         triggerId: generateId(),
-        properties: {} as Record<string, any>,
     })
-
-    const triggerPlugin = ref<PluginComponent | null>(null)
+    const triggerPropertiesModel = ref<Record<string, any>>({})
 
     const displayName = computed(() => triggerDisplayName(props.trigger))
-    const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
 
+    // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
+    // $schema, properties, required, title…). The actual class fields live at
+    // schema.properties.properties, with the required array at schema.properties.required.
     const triggerProperties = computed(() => {
-        if (!triggerPlugin.value?.schema?.properties) return {}
-        const props = triggerPlugin.value.schema.properties
-        // Filter out internal/base trigger fields that are already handled separately
-        const excluded = new Set(["id", "type", "description", "namespace", "flowId"])
+        const fields = triggerPlugin.value?.schema?.properties?.properties
+        if (!fields) return {}
         return Object.fromEntries(
-            Object.entries(props).filter(([key]) => !excluded.has(key))
+            Object.entries(fields).filter(([key]) => !RESERVED_FIELDS.has(key)),
         )
     })
 
-    const isRequired = (key: string) => {
-        return triggerPlugin.value?.schema?.required?.includes(key) ?? false
-    }
+    const triggerSchema = computed(() => {
+        const required = triggerPlugin.value?.schema?.properties?.required
+        return required ? {required} : {}
+    })
+
+    const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
 
     const canSubmit = computed(() =>
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),
@@ -249,15 +201,21 @@
 
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
 
-    const sourceYaml = computed(() => {
-        const lines = [`  - id: ${getTriggerId()}`, `    type: ${props.trigger.type}`]
-        for (const [key, value] of Object.entries(formModel.value.properties)) {
-            if (value !== undefined && value !== null && value !== "") {
-                const yamlValue = typeof value === "string" ? `'${value}'` : JSON.stringify(value)
-                lines.push(`    ${key}: ${yamlValue}`)
-            }
+    const triggerBlock = computed(() => {
+        const trigger: Record<string, any> = {
+            id: getTriggerId(),
+            type: props.trigger.type,
+            ...triggerPropertiesModel.value,
         }
-        return lines.join("\n")
+        return YAML_UTILS.stringify(trigger).trimEnd()
+    })
+
+    const sourceYaml = computed(() => {
+        // Indent the trigger block as a list item under `triggers:`
+        return triggerBlock.value
+            .split("\n")
+            .map((line, idx) => (idx === 0 ? `  - ${line}` : `    ${line}`))
+            .join("\n")
     })
 
     const loadFlows = async (namespace: string) => {
@@ -277,6 +235,10 @@
     const onNamespaceChange = (ns: string | string[] | undefined) => {
         formModel.value.flowId = ""
         loadFlows(typeof ns === "string" ? ns : "")
+    }
+
+    const onPropertiesUpdate = (value: Record<string, any> | undefined) => {
+        triggerPropertiesModel.value = value ?? {}
     }
 
     const copySource = async () => {
@@ -302,10 +264,7 @@
         triggerDraftStore.setDraft({
             namespace: formModel.value.namespace,
             flowId: formModel.value.flowId,
-            triggerYaml: `id: ${getTriggerId()}\ntype: ${props.trigger.type}\n${Object.entries(formModel.value.properties)
-                .filter(([, v]) => v !== undefined && v !== null && v !== "")
-                .map(([k, v]) => `${k}: ${typeof v === "string" ? `'${v}'` : JSON.stringify(v)}`)
-                .join("\n")}`,
+            triggerYaml: triggerBlock.value,
         })
 
         visible.value = false
@@ -320,7 +279,8 @@
         if (val) {
             activeTab.value = "form"
             copied.value = false
-            formModel.value = {namespace: "", flowId: "", triggerId: generateId(), properties: {}}
+            formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
+            triggerPropertiesModel.value = {}
             loadDocumentation()
         }
     }, {immediate: true})

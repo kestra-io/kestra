@@ -1,6 +1,6 @@
 <template>
     <KsDropdown>
-        <KsButton>
+        <KsButton :aria-label="$t('more actions')">
             <DotsVertical />
         </KsButton>
         <template #dropdown>

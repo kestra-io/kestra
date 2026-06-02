@@ -1,5 +1,14 @@
 {
   "en": {
+    "more actions": "More actions",
+    "toggle menu": "Toggle menu",
+    "panel actions": "Panel actions",
+    "playground actions": "Playground actions",
+    "bulk actions": "Bulk actions",
+    "view metrics": "View metrics",
+    "remove this item": "Remove this item",
+    "add label": "Add label",
+    "remove label": "Remove label",
     "id": "Id",
     "type": "Type",
     "ok": "OK",

@@ -61,7 +61,7 @@
                     @change="importFiles"
                 >
                 <KsDropdown>
-                    <KsButton>
+                    <KsButton :aria-label="$t('import')">
                         <PlusBox />
                     </KsButton>
                     <template #dropdown>

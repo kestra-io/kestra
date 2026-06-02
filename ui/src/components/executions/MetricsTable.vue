@@ -68,7 +68,7 @@
                               query: {'filters[q][EQUALS]': scope.row.name}
                         }"
                     >
-                        <KsIconButton>
+                        <KsIconButton :tooltip="$t('view metrics')">
                             <ChartAreaspline />
                         </KsIconButton>
                     </router-link>

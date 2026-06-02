@@ -100,7 +100,7 @@
                 </KsButton>
 
                 <KsDropdown>
-                    <KsButton>
+                    <KsButton :aria-label="$t('bulk actions')">
                         <DotsVertical />
                     </KsButton>
                     <template #dropdown>

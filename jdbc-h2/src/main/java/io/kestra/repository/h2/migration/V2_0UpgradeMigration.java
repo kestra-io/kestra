@@ -43,11 +43,11 @@ public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-h2.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.01-upgrade-h2.sql");
     }
 
     @Override
     protected void doSchemaUpgrade() throws Exception {
-        AbstractSQLMigrationScript.executeSqlScript(dataSource, "/migrations/upgrade-v2.0-h2.sql");
+        AbstractSQLMigrationScript.executeSqlScript(dataSource, "/migrations/2.0.01-upgrade-h2.sql");
     }
 }

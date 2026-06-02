@@ -19,7 +19,7 @@ import jakarta.inject.Singleton;
 @MysqlRepositoryEnabled
 public class V2_0McpMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0-mcp";
+    private static final String SCRIPT_ID = "2.0.04-mcp";
 
     private final DataSource dataSource;
 
@@ -40,11 +40,11 @@ public class V2_0McpMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-mcp-mysql.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.04-mcp-mysql.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/upgrade-v2.0-mcp-mysql.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.04-mcp-mysql.sql");
     }
 }

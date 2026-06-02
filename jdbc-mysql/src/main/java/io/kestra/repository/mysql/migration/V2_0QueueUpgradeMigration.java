@@ -26,7 +26,7 @@ import jakarta.inject.Singleton;
 @Requires(property = "kestra.queue.type", value = "mysql")
 public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0-queue";
+    private static final String SCRIPT_ID = "2.0.05-queue";
 
     private final DataSource dataSource;
 
@@ -47,11 +47,11 @@ public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-queue-mysql.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.05-queue-mysql.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/upgrade-v2.0-queue-mysql.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.05-queue-mysql.sql");
     }
 }

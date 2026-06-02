@@ -54,7 +54,7 @@ public class V2_0TriggerMigration implements MigrationScript {
 
     @Override
     public String scriptId() {
-        return "2.0-triggers";
+        return "2.0.07-triggers";
     }
 
     @Override

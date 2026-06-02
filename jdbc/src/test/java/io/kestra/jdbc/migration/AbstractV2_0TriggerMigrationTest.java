@@ -255,7 +255,7 @@ public abstract class AbstractV2_0TriggerMigrationTest {
 
     @Test
     void shouldReturnCorrectMetadata() {
-        assertThat(migration.scriptId()).isEqualTo("2.0-triggers");
+        assertThat(migration.scriptId()).isEqualTo("2.0.07-triggers");
         assertThat(migration.description()).isNotBlank();
         assertThat(migration.checksum()).isNull();
     }

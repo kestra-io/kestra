@@ -17,8 +17,8 @@ import jakarta.inject.Singleton;
 @PostgresRepositoryEnabled
 public class V2_0TriggerFiltersMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0-trigger-filters";
-    private static final String RESOURCE = "/migrations/trigger-filters-postgres.sql";
+    private static final String SCRIPT_ID = "2.0.06-trigger-filters";
+    private static final String RESOURCE = "/migrations/2.0.06-trigger-filters-postgres.sql";
 
     private final DataSource dataSource;
 

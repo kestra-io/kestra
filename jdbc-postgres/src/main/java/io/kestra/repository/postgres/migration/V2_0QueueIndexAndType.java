@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 @PostgresQueueEnabled
 public class V2_0QueueIndexAndType extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0.1-queue-index-and-type";
+    private static final String SCRIPT_ID = "2.0.09-queue-index-and-type";
 
     private final DataSource dataSource;
 
@@ -39,11 +39,11 @@ public class V2_0QueueIndexAndType extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/2.0.1-queue-index-and-type-postgres.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.09-queue-index-and-type-postgres.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/2.0.1-queue-index-and-type-postgres.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.09-queue-index-and-type-postgres.sql");
     }
 }

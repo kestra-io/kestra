@@ -142,7 +142,7 @@
                         <ContentCopy v-else class="copy-icon" />
                         <span>{{ copied ? $t("copied") : $t("copy") }}</span>
                     </KsButton>
-                    <Editor :modelValue="sourceYaml" lang="yaml" :navbar="false" readOnly :fullHeight="false" />
+                    <KsEditor v-bind="editorBindings" :modelValue="sourceYaml" lang="yaml" :navbar="false" readOnly :options="{fullHeight: false}" />
                 </div>
             </div>
 
@@ -185,7 +185,8 @@
     import {triggerDisplayName} from "./triggerCatalog"
     import TaskNumber from "../../no-code/components/tasks/TaskNumber.vue"
 
-    import Editor from "../../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
 
@@ -202,6 +203,8 @@
     const flowStore = useFlowStore()
     const pluginsStore = usePluginsStore()
     const triggerDraftStore = useTriggerDraftStore()
+
+    const editorBindings = useEditorBindings()
 
     const activeTab = ref<TabValue>("form")
     const tabOptions = computed(() =>

@@ -13,7 +13,7 @@
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "preview": "vite preview",
-        "check:types": "vue-tsc --project tsconfig.app.json && vue-tsc --project tsconfig.test.json",
+        "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" && vue-tsc --build tsconfig.app.json && echo \"app checked\" && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
         "test:lint": "oxlint src packages && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
@@ -25,14 +25,14 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks || true",
-        "postinstall": "patch-package"
+        "postinstall": "npx patch-package"
     },
     "dependencies": {
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
-        "@kestra-io/kestra-sdk": "^2.0.0-develop.17797027.1f59eb1f.3afa0199",
+        "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17800659.759d1d11.54793399",
         "@kestra-io/slot-contracts": "*",
         "@kestra-io/topology": "*",
         "@kestra-io/ui-libs": "^0.0.302",

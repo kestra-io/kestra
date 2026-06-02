@@ -260,7 +260,7 @@ public class FlowToolSchemaMapper {
 
     private static Map<String, Object> toMultiselectType(MultiselectInput input, Map<String, Object> baseSchema) {
         baseSchema.putAll(Map.of(
-            "items", buildItemsForMultiselectInput(input, input.getValues()),
+            "items", buildItemsForMultiselectInput(input, input.getValues().stream().map(ValueOption::value).toList()),
             "uniqueItems", true
         ));
 
@@ -288,7 +288,7 @@ public class FlowToolSchemaMapper {
 
     private static Map<String, Object> toSelectType(SelectInput input, Map<String, Object> baseSchema) {
         baseSchema.put(
-            "enum", input.getValues()
+            "enum", input.getValues().stream().map(ValueOption::value).toList()
         );
 
         return baseSchema;

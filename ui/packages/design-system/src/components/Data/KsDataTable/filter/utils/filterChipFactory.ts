@@ -27,14 +27,25 @@ export const createAppliedFilter = (
     ...(meta ? {meta} : {}),
 })
 
+/**
+ * True when a filter value is a date range ({@code {startDate, endDate}}).
+ * Range filters render a localized "between" comparator label at display time
+ * (see {@code FilterChip.vue}/{@code SaveFilters.vue}) rather than baking an
+ * untranslatable English string into the model here.
+ */
+export const isDateRangeValue = (
+    value: AppliedFilter["value"],
+): value is {startDate: Date; endDate: Date} =>
+    !!value && typeof value === "object" && "startDate" in value && "endDate" in value
+
 export const createTimeRangeFilter = (
     config: FilterKeyConfig,
     startDate: Date,
     endDate: Date,
     comparator = Comparators.EQUALS,
     meta?: Record<string, string>,
-): AppliedFilter => ({
-    ...createAppliedFilter(
+): AppliedFilter =>
+    createAppliedFilter(
         TIME_RANGE_KEY,
         config,
         comparator,
@@ -42,9 +53,23 @@ export const createTimeRangeFilter = (
         `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
         keyOfComparator(comparator),
         meta,
-    ),
-    comparatorLabel: "Is Between",
-})
+    )
+
+export const createCustomRangeFilter = (
+    key: string,
+    config: FilterKeyConfig,
+    startDate: Date,
+    endDate: Date,
+    comparator = Comparators.GREATER_THAN_OR_EQUAL_TO,
+): AppliedFilter =>
+    createAppliedFilter(
+        key,
+        config,
+        comparator,
+        {startDate, endDate},
+        `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+        keyOfComparator(comparator),
+    )
 
 export const processFieldValue = (
     config: FilterKeyConfig,
@@ -78,6 +103,10 @@ export const processFieldValue = (
         : (params[0]?.value as string)
 
     if (config?.valueType === "date" && typeof value === "string") {
+        value = new Date(value)
+    } else if (config?.valueType === "time-range" && typeof value === "string" && !/^P/i.test(value)) {
+        // A custom single absolute date for a time-range field. Predefined relative durations
+        // (PT24H, P30D, …) start with "P" and must stay as the raw duration string.
         value = new Date(value)
     }
 

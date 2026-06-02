@@ -1,6 +1,9 @@
 <template>
     <div class="select-panel">
-        <TimeRangeSwitch v-if="filterKey?.key === 'timeRange'" v-model="local.timeRangeMode" />
+        <TimeRangeSwitch
+            v-if="filterKey?.key === 'timeRange' || filterKey?.valueType === 'time-range'"
+            v-model="local.timeRangeMode"
+        />
 
         <div v-if="local.timeRangeMode === 'predefined'" class="section">
             <KsSelect
@@ -74,7 +77,7 @@
         label?: string;
         modelValue: string;
         placeholder?: string;
-        filterKey?: {key: string; dateFilterOptions?: DateFilterOption[]};
+        filterKey?: {key: string; valueType?: string; dateFilterOptions?: DateFilterOption[]};
         endDateValue?: Date | null;
         startDateValue?: Date | null;
         timeRangeMode?: "predefined" | "custom";

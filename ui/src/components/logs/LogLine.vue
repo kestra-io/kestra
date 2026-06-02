@@ -216,6 +216,9 @@ div.line {
             margin: 0;
             padding: 0;
             font-size: inherit;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
     }
 

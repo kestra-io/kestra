@@ -124,7 +124,7 @@
 
             &.is-disabled {
                 background-color: var(--ks-btn-secondary-bg-inactive);
-                border: var(--ks-btn-secondary-border-inactive);
+                border-color: var(--ks-btn-secondary-border-inactive);
                 color: var(--ks-text-inactive);
             }
 
@@ -153,6 +153,12 @@
                 background-color: var(--ks-btn-secondary-bg-active);
                 border: 0;
             }
+        }
+
+        &.kel-button--primary:not(.is-text):not(.is-link).is-disabled {
+            background-color: var(--ks-btn-primary-bg-inactive);
+            border-color: var(--ks-btn-primary-bg-inactive);
+            color: var(--ks-text-inactive);
         }
     }
 </style>

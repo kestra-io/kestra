@@ -27,7 +27,8 @@ public record ApiTriggerState(
     boolean disabled,
     boolean locked,
     String workerId,
-    Instant lastTriggeredDate
+    Instant lastTriggeredDate,
+    String executionId
 ) {
     public static ApiTriggerState from(TriggerState state) {
         return new ApiTriggerState(
@@ -42,7 +43,8 @@ public record ApiTriggerState(
             state.isDisabled(),
             state.isLocked(),
             state.getWorkerId(),
-            truncate(state.getLastTriggeredDate())
+            truncate(state.getLastTriggeredDate()),
+            state.getExecutionId()
         );
     }
 

@@ -18,7 +18,8 @@
                 v-else
                 :title="section.title"
                 collapsible
-                :defaultCollapsed="!sectionHasActiveChild(section)"
+                :collapsed="getSectionCollapsed(section)"
+                @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
                 <template v-for="(item, iIdx) in section.child" :key="item.id ?? `i-${iIdx}`">
                     <MenuLink
@@ -30,7 +31,13 @@
             </KsSideBarSection>
         </template>
 
-        <KsSideBarSection v-if="bookmarksStore.pages?.length" title="Favourites" collapsible>
+        <KsSideBarSection
+            v-if="bookmarksStore.pages?.length"
+            title="Favourites"
+            collapsible
+            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
+            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
+        >
             <BookmarkLinkList :pages="bookmarksStore.pages" />
         </KsSideBarSection>
 
@@ -85,6 +92,25 @@
 
     function sectionHasActiveChild(section: MenuItem): boolean {
         return Boolean(section.child?.some((child) => !child.hidden && isItemActive(child)))
+    }
+
+    const FAVOURITES_SECTION_ID = "favourites"
+
+    function sectionId(section: MenuItem): string {
+        return section.id ?? section.title.toLowerCase().replaceAll(" ", "-")
+    }
+
+    function getCollapsedById(id: string, fallback: boolean): boolean {
+        const stored = layoutStore.menuSectionsCollapsed[id]
+        return stored !== undefined ? stored : fallback
+    }
+
+    function getSectionCollapsed(section: MenuItem): boolean {
+        return getCollapsedById(sectionId(section), !sectionHasActiveChild(section))
+    }
+
+    function onSectionCollapseChange(section: MenuItem, collapsed: boolean) {
+        layoutStore.setMenuSectionCollapsed(sectionId(section), collapsed)
     }
 
     // Inline adapter: maps a MenuItem to <KsSideBarItem>, wiring vue-router navigation

@@ -15,18 +15,18 @@
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </KsForm>
         <template #footer>
-            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
+            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
                 {{ $t('resume') }}
             </KsButton>
         </template>
     </KsDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, computed, onMounted, getCurrentInstance} from "vue"
+    import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
-</script>
-
-<script>
+    import PlayBox from "vue-material-design-icons/PlayBox.vue"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
     import {State} from "@kestra-io/design-system"
@@ -34,99 +34,100 @@
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"
     import {inputsToFormData} from "../../../../../utils/submitTask"
-    import {mapStores} from "pinia"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../../../../utils/toast"
 
-    export default {
-        components: {InputsForm},
-        props: {
-            execution: {
-                type: Object,
-                required: true,
-            },
-            component: {
-                type: String,
-                default: "el-button",
-            },
-        },
-        data() {
-            return {
-                inputs: {},
-                isDrawerOpen: false,
-            }
-        },
-        created() {
-            if (this.enabled) {
-                this.loadDefinition()
-            }
-        },
-        methods: {
-            click() {
-                if (this.needInputs) {
-                    this.isDrawerOpen = true
-                    return
-                }
+    const props = withDefaults(defineProps<{
+        // FIXME: any - execution is an untyped domain object
+        execution: any // FIXME: any
+        component?: string
+    }>(), {
+        component: "el-button",
+    })
 
-                this.$toast()
-                    .confirm(this.$t("resumed confirm", {id: this.execution.id}), () => {
-                        return this.resume()
-                    }, () => {}, false)
-            },
-            resumeWithInputs(formRef) {
-                if (formRef) {
-                    formRef.validate((valid) => {
-                        if (!valid) {
-                            return false
-                        }
+    const {t} = useI18n()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
+    const toast = useToast()
+    const instance = getCurrentInstance()
+    // FIXME: any - $moment is registered as a global property via Vue plugin
+    const $moment = instance?.appContext.config.globalProperties.$moment as any // FIXME: any
 
-                        const formData = inputsToFormData(this, this.inputsList, this.inputs)
-                        this.resume(formData)
-                    })
-                }
+    const inputs = ref<Record<string, unknown>>({})
+    const isDrawerOpen = ref(false)
+    // FIXME: any - form ref type from element-plus
+    const form = ref<any>(null) // FIXME: any
 
-            },
-            resume(formData) {
-                this.executionsStore
-                    .resume({
-                        id: this.execution.id,
-                        formData: formData,
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false
-                        this.$toast().success(this.$t("resumed done"))
-                    })
-            },
-            loadDefinition() {
-                this.executionsStore.loadFlowForExecution({
-                    flowId: this.execution.flowId,
-                    namespace: this.execution.namespace,
-                    store: true,
-                })
-            },
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, this.execution.namespace))) {
+    const enabled = computed(() => {
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
+            return false
+        }
+
+        return State.isPaused(props.execution.state.current)
+    })
+
+    // FIXME: any - findTaskRunsByState and findTaskById return untyped objects
+    const inputsList = computed<any[]>(() => { // FIXME: any
+        const findTaskRunByState = ExecutionUtils.findTaskRunsByState(props.execution, State.PAUSED) as any[] // FIXME: any
+        if (findTaskRunByState.length === 0) {
+            return []
+        }
+
+        const findTaskById = FlowUtils.findTaskById(executionsStore.flow as any, findTaskRunByState[0].taskId) as {inputs?: any[]} | undefined // FIXME: any
+
+        return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs ?? [] : []
+    })
+
+    const needInputs = computed(() => inputsList.value?.length > 0)
+
+    onMounted(() => {
+        if (enabled.value) {
+            loadDefinition()
+        }
+    })
+
+    function click() {
+        if (needInputs.value) {
+            isDrawerOpen.value = true
+            return
+        }
+
+        toast.confirm(t("resumed confirm", {id: props.execution.id}), () => {
+            return resume() as unknown as Promise<void>
+        })
+    }
+
+    function resumeWithInputs(formRef: {validate: (cb: (valid: boolean) => void) => void} | null) {
+        if (formRef) {
+            formRef.validate((valid: boolean) => {
+                if (!valid) {
                     return false
                 }
 
-                return State.isPaused(this.execution.state.current)
-            },
-            inputsList() {
-                const findTaskRunByState = ExecutionUtils.findTaskRunsByState(this.execution, State.PAUSED)
-                if (findTaskRunByState.length === 0) {
-                    return []
-                }
+                const formData = inputsToFormData({$moment} as any, inputsList.value, inputs.value) // FIXME: any
+                resume(formData)
+            })
+        }
+    }
 
-                const findTaskById = FlowUtils.findTaskById(this.executionsStore.flow, findTaskRunByState[0].taskId)
+    function resume(formData?: FormData) {
+        executionsStore
+            .resume({
+                id: props.execution.id,
+                formData: formData,
+            })
+            .then(() => {
+                isDrawerOpen.value = false
+                toast.success(t("resumed done"))
+            })
+    }
 
-                return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : []
-            },
-            needInputs() {
-                return this.inputsList?.length > 0
-            },
-        },
+    function loadDefinition() {
+        executionsStore.loadFlowForExecution({
+            flowId: props.execution.flowId,
+            namespace: props.execution.namespace,
+            store: true,
+        })
     }
 </script>

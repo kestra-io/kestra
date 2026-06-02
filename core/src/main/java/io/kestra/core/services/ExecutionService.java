@@ -5,7 +5,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -157,27 +156,42 @@ public class ExecutionService {
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
-        AtomicReference<Boolean> firstDone = new AtomicReference<>(false);
+        if (execution.getTaskRunList() == null) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        // Pre-build an id→TaskRun map, so ancestor-chain walks are O(1) per step.
+        Map<String, TaskRun> byId = execution.getTaskRunList().stream()
+            .collect(Collectors.toMap(TaskRun::getId, t -> t));
+
+        // Remove all descendants (not just direct children) of the iterating LoopUntil so that nested
+        // LoopUntil tasks start the next iteration with a clean state and don't inherit stale outputs.
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
-            .map(taskRun ->
-            {
+            .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.resetAttempts().incrementIteration();
                 }
-
-                if (flowableTaskRunId.equals(taskRun.getParentTaskRunId())) {
-                    // Clean children
+                if (isDescendantOf(taskRun, flowableTaskRunId, byId)) {
                     return null;
                 }
-
                 return taskRun;
             })
             .filter(Objects::nonNull)
             .toList();
 
         return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+    }
+
+    private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {
+        String parentId = taskRun.getParentTaskRunId();
+        while (parentId != null) {
+            if (ancestorId.equals(parentId)) return true;
+            TaskRun parent = byId.get(parentId);
+            parentId = parent != null ? parent.getParentTaskRunId() : null;
+        }
+        return false;
     }
 
     public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {

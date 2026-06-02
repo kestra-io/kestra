@@ -65,7 +65,7 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="mt-3"
+                class="my-3"
             />
         </div>
     </div>

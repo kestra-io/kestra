@@ -139,7 +139,6 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
 

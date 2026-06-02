@@ -88,6 +88,7 @@
                         <KsSelect
                             v-if="providers.length > 1"
                             class="ai-provider-select"
+                            :popperClass="AI_PROVIDER_POPPER_CLASS"
                             :modelValue="selectedProvider"
                             @update:model-value="onProviderChange"
                             :placeholder="$t('ai.flow.select_provider')"
@@ -206,6 +207,7 @@
                 <KsSelect
                     v-if="providers.length > 1"
                     class="w-50 mx-3"
+                    :popperClass="AI_PROVIDER_POPPER_CLASS"
                     :modelValue="selectedProvider"
                     @update:model-value="onProviderChange"
                     :placeholder="$t('ai.flow.select_provider')"
@@ -277,7 +279,7 @@
     import {useApiStore} from "../../stores/api"
     import type {InputInstance} from "@kestra-io/design-system"
     import {useMiscStore} from "override/stores/misc"
-    import {aiGenerationTypes, AiGenerationType} from "../../utils/constants"
+    import {aiGenerationTypes, AiGenerationType, AI_PROVIDER_POPPER_CLASS} from "../../utils/constants"
     import {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
 

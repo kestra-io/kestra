@@ -727,6 +727,8 @@
     "port": "Port",
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
+    "file unavailable": "File unavailable",
+    "file unavailable description": "This file is no longer available — it may have been purged or expired.",
     "row count": "Row count",
     "encoding": "Encoding",
     "show": "Show",

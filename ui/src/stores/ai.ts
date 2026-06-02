@@ -1,49 +1,52 @@
-import axios from "axios"
 import {defineStore} from "pinia"
-import {apiUrl} from "override/utils/route"
-import {AiGenerationType} from "../utils/constants"
+import {useClient} from "@kestra-io/kestra-sdk"
+import {AiGenerationType, aiGenerationTypes} from "../utils/constants"
 import {getUid} from "../utils/uid"
+import {apiUrl} from "override/utils/route"
 
-export const useAiStore = defineStore("ai", {
-    actions: {
-        async fetchProviders() {
-            const response = await axios.get(`${apiUrl()}/ai/providers`)
-            return response.data ?? []
-        },
+export const useAiStore = defineStore("ai", () => {
+    const client = useClient()
 
-        async generate({userPrompt, yaml, conversationId, providerId, type}: {userPrompt: string, yaml?: string, conversationId: string, providerId?: string, type: AiGenerationType}) {
-            const response = await axios.post(`${apiUrl()}/ai/generate/${type}`, {
-                userPrompt,
-                conversationId,
-                providerId,
-                ...(yaml !== undefined ? {yaml} : {}),
-            }, {
-                headers: {
-                    "X-Kestra-User-Id": getUid(),
-                },
-            })
+    async function generate({
+        userPrompt, 
+        yaml, 
+        conversationId, 
+        providerId, 
+        namespace, 
+        tenantId,
+        type,
+    }: {
+        userPrompt: string, 
+        yaml?: string, 
+        conversationId: string, 
+        providerId?: string, 
+        namespace?: string, 
+        tenantId?: string,
+        type: AiGenerationType
+    }) {
+        const response = await client.post(`${apiUrl()}/ai/generate/${type}`, {
+            userPrompt,
+            conversationId,
+            providerId,
+            namespace, 
+            tenantId,
+            ...(yaml !== undefined ? {yaml} : {}),
+        }, {
+            headers: {
+                "X-Kestra-User-Id": getUid(),
+            },
+        })
 
-            const remainingQuota = response.headers["x-kestra-ai-quota"]
-            return {data: response.data, remainingQuota: remainingQuota ?? undefined}
-        },
+        const remainingQuota = response.headers["x-kestra-ai-quota"]
+        return {data: response.data, remainingQuota: remainingQuota ?? undefined}
+    }
 
-        async generateFlow({userPrompt, yaml, conversationId, providerId, namespace, tenantId}: {userPrompt: string, yaml?: string, conversationId: string, providerId?: string, namespace?: string, tenantId?: string, type: AiGenerationType}) {
-            const response = await axios.post(`${apiUrl()}/ai/generate/flow`, {
-                userPrompt,
-                conversationId,
-                providerId,
-                namespace,
-                tenantId,
-                ...(yaml !== undefined ? {yaml} : {}),
-            }, {
-                headers: {
-                    "X-Kestra-User-Id": getUid(),
-                },
-            })
+    async function generateFlow(options: Omit<Parameters<typeof generate>[0], "type">) {
+        return generate({
+            ...options,
+            type: aiGenerationTypes.FLOW,
+        })
+    }
 
-            const remainingQuota = response.headers["x-kestra-ai-quota"]
-            return {data: response.data, remainingQuota: remainingQuota ?? undefined}
-        },
-
-    },
+    return {generate, generateFlow}
 })

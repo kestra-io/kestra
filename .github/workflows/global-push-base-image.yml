@@ -43,7 +43,7 @@ jobs:
           tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=kestra/kestra-base:latest
+          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins
           cache-to: type=inline
 
       - name: Slack - Notification

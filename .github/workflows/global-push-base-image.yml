@@ -34,6 +34,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/kestra-io/kestra-base
+          labels: |
+            org.opencontainers.image.title=kestra-base
+            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
+            org.opencontainers.image.vendor=Kestra Technologies
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
@@ -41,6 +51,7 @@ jobs:
           file: Dockerfile.base
           push: ${{ inputs.dry-run != true }}
           tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
           cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins

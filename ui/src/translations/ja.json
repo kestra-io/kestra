@@ -554,6 +554,10 @@
         "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
         "title": "まだKill Switchがありません！"
       },
+      "mcpToolFlows": {
+        "content": "<code>McpToolTrigger</code>を追加して、flowをMCPツールとして公開します。<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "title": "このサーバーにはまだツールflowが登録されていません。"
+      },
       "panels": {
         "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
         "title": "現在、パネルは開いていません。"
@@ -965,11 +969,12 @@
       "tab_tool_flows_placeholder": "ツールフロー管理は近日公開予定です。",
       "tools": {
         "annotations": "アノテーション",
+        "create_tool_flow": "ツールフローを作成",
         "description": "説明",
         "destructive": "破壊的",
         "flow": "flow",
         "idempotent": "冪等",
-        "no_tools": "このサーバーにはまだtool flowが登録されていません。flowに`McpToolTrigger`を追加してここで公開してください。",
+        "no_tools": "検索に一致するツールフローはありません。",
         "open_world": "Open world",
         "read_only": "読み取り専用",
         "return_direct": "直接返却",

@@ -62,7 +62,7 @@
                 top: 3px;
                 left: calc(100% - 17px);
                 border-radius: 7px;
-                background-color: palette.$base-white;
+                background-color: palette.$base-gray-neutral-white;
                 box-shadow: 0 1px 4px var(--ks-shadow-element);
                 transition: left 0.2s ease, width 0.2s ease;
             }

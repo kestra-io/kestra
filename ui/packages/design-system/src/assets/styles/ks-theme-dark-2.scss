@@ -53,7 +53,7 @@ html.dark-2 {
     #{--ks-btn-secondary-border-default}: #31303b;
     #{--ks-btn-secondary-border-hover}: $base-primary-300;
     #{--ks-btn-secondary-border-inactive}: #31303b;
-    #{--ks-btn-primary-text}: $base-white;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
 
     /* editor */
     #{--ks-editor-pabble}: $base-green-200;
@@ -63,7 +63,7 @@ html.dark-2 {
 
     /* icon */
     #{--ks-icon-active}: $base-primary-200;
-    #{--ks-icon-default}: $base-white;
+    #{--ks-icon-default}: $base-gray-neutral-white;
     #{--ks-icon-hover}: $base-primary-400;
     #{--ks-icon-inactive}: $base-gray-neutral-300;
     #{--ks-icon-muted}: $base-gray-neutral-300;
@@ -82,7 +82,7 @@ html.dark-2 {
     #{--ks-text-inactive}: $base-gray-neutral-400;
     #{--ks-text-link}: $base-primary-200;
     #{--ks-text-muted}: #b7b4c3;
-    #{--ks-text-primary}: $base-white;
+    #{--ks-text-primary}: $base-gray-neutral-white;
     #{--ks-text-secondary}: #adadbf;
     #{--ks-text-error}: $base-red-200;
     #{--ks-text-info}: $base-blue-300;
@@ -116,16 +116,16 @@ html.dark-2 {
     /* dependencies */
     #{--ks-dependencies-edge-default}: $base-gray-neutral-200;
     #{--ks-dependencies-edge-faded}: $base-gray-neutral-400;
-    #{--ks-dependencies-edge-hovered}: $base-purple-50;
-    #{--ks-dependencies-edge-selected}: $base-purple-300;
+    #{--ks-dependencies-edge-hovered}: $base-primary-50;
+    #{--ks-dependencies-edge-selected}: $base-primary-300;
     #{--ks-dependencies-node-background-assets}: $base-blue-400;
     #{--ks-dependencies-node-background-default}: $base-gray-neutral-500;
     #{--ks-dependencies-node-background-faded}: $base-gray-neutral-700;
-    #{--ks-dependencies-node-background-hovered}: $base-purple-50;
-    #{--ks-dependencies-node-background-selected}: $base-purple-300;
+    #{--ks-dependencies-node-background-hovered}: $base-primary-50;
+    #{--ks-dependencies-node-background-selected}: $base-primary-300;
     #{--ks-dependencies-node-border-assets}: $base-blue-200;
     #{--ks-dependencies-node-border-default}: $base-gray-neutral-300;
     #{--ks-dependencies-node-border-faded}: $base-gray-neutral-400;
-    #{--ks-dependencies-node-border-hovered}: $base-purple-50;
-    #{--ks-dependencies-node-border-selected}: $base-purple-200;
+    #{--ks-dependencies-node-border-hovered}: $base-primary-50;
+    #{--ks-dependencies-node-border-selected}: $base-primary-200;
 }

@@ -9,18 +9,18 @@
 :root {
     /* bg */
     #{--ks-bg-active}: $base-gray-neutral-50;
-    #{--ks-bg-badge}: $base-white;
+    #{--ks-bg-badge}: $base-gray-neutral-white;
     #{--ks-bg-base}: $base-gray-neutral-50;
     #{--ks-bg-body}: $base-gray-neutral-50;
-    #{--ks-bg-elevated}: $base-white;
+    #{--ks-bg-elevated}: $base-gray-neutral-white;
     #{--ks-bg-hover}: $base-gray-neutral-100;
     #{--ks-bg-hover-elevated}: $base-gray-neutral-50;
-    #{--ks-bg-input}: $base-white;
+    #{--ks-bg-input}: $base-gray-neutral-white;
     #{--ks-tabs-bg}: $base-gray-neutral-100;
-    #{--ks-bg-overlay}: $base-white;
+    #{--ks-bg-overlay}: $base-gray-neutral-white;
     #{--ks-bg-scrim}: #4241454d;
-    #{--ks-bg-sidebar}: $base-white;
-    #{--ks-bg-surface}: $base-white;
+    #{--ks-bg-sidebar}: $base-gray-neutral-white;
+    #{--ks-bg-surface}: $base-gray-neutral-white;
     #{--ks-bg-tag}: $base-gray-neutral-100;
     #{--ks-bg-tag-active}: $base-primary-200;
     #{--ks-bg-tag-hover}: $base-primary-100;
@@ -28,7 +28,7 @@
     #{--ks-bg-info}: $base-blue-50;
     #{--ks-bg-success}: $base-green-50;
     #{--ks-bg-warning}: $base-orange-50;
-    #{--ks-bg-inactive}: $base-gray-500;
+    #{--ks-bg-inactive}: $base-gray-neutral-500;
 
     /* border */
     #{--ks-border-default}: $base-gray-neutral-100;
@@ -46,14 +46,14 @@
     #{--ks-btn-primary-bg-hover}: $base-primary-400;
     #{--ks-btn-primary-bg-inactive}: $base-gray-neutral-50;
     #{--ks-btn-secondary-bg-active}: $base-gray-neutral-50;
-    #{--ks-btn-secondary-bg-default}: $base-white;
+    #{--ks-btn-secondary-bg-default}: $base-gray-neutral-white;
     #{--ks-btn-secondary-bg-hover}: $base-gray-neutral-50;
     #{--ks-btn-secondary-bg-inactive}: $base-gray-neutral-50;
     #{--ks-btn-secondary-border-active}: $base-primary-300;
     #{--ks-btn-secondary-border-default}: $base-gray-neutral-100;
     #{--ks-btn-secondary-border-hover}: $base-primary-300;
     #{--ks-btn-secondary-border-inactive}: $base-gray-neutral-50;
-    #{--ks-btn-primary-text}: $base-white;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
 
     /* editor */
     #{--ks-editor-pabble}: $base-orange-500;
@@ -109,22 +109,22 @@
     #{--ks-topology-dash}: $base-gray-neutral-300;
 
     /* scrollbar */
-    #{--ks-scrollbar-bg}: $base-gray-100;
-    #{--ks-scrollbar-content}: $base-gray-200;
+    #{--ks-scrollbar-bg}: $base-gray-neutral-100;
+    #{--ks-scrollbar-content}: $base-gray-neutral-200;
 
     /* dependencies */
-    #{--ks-dependencies-edge-default}: $base-gray-200;
-    #{--ks-dependencies-edge-faded}: $base-gray-100;
-    #{--ks-dependencies-edge-hovered}: $base-purple-300;
-    #{--ks-dependencies-edge-selected}: $base-purple-200;
+    #{--ks-dependencies-edge-default}: $base-gray-neutral-200;
+    #{--ks-dependencies-edge-faded}: $base-gray-neutral-100;
+    #{--ks-dependencies-edge-hovered}: $base-primary-300;
+    #{--ks-dependencies-edge-selected}: $base-primary-200;
     #{--ks-dependencies-node-background-assets}: $base-blue-500;
-    #{--ks-dependencies-node-background-default}: $base-white;
-    #{--ks-dependencies-node-background-faded}: $base-gray-100;
-    #{--ks-dependencies-node-background-hovered}: $base-gray-50;
-    #{--ks-dependencies-node-background-selected}: $base-purple-200;
+    #{--ks-dependencies-node-background-default}: $base-gray-neutral-white;
+    #{--ks-dependencies-node-background-faded}: $base-gray-neutral-100;
+    #{--ks-dependencies-node-background-hovered}: $base-gray-neutral-50;
+    #{--ks-dependencies-node-background-selected}: $base-primary-200;
     #{--ks-dependencies-node-border-assets}: $base-blue-800;
-    #{--ks-dependencies-node-border-default}: $base-gray-200;
-    #{--ks-dependencies-node-border-faded}: $base-gray-200;
-    #{--ks-dependencies-node-border-hovered}: $base-gray-300;
-    #{--ks-dependencies-node-border-selected}: $base-purple-300;
+    #{--ks-dependencies-node-border-default}: $base-gray-neutral-200;
+    #{--ks-dependencies-node-border-faded}: $base-gray-neutral-200;
+    #{--ks-dependencies-node-border-hovered}: $base-gray-neutral-300;
+    #{--ks-dependencies-node-border-selected}: $base-primary-300;
 }

@@ -8,33 +8,33 @@
 
 html.dark {
     /* bg */
-    #{--ks-bg-active}: $base-gray-500;
-    #{--ks-bg-badge}: $base-gray-800;
+    #{--ks-bg-active}: $base-gray-cool-500;
+    #{--ks-bg-badge}: $base-gray-cool-800;
     #{--ks-bg-base}: #111115;
     #{--ks-bg-body}: #111115;
-    #{--ks-bg-elevated}: $base-gray-900;
+    #{--ks-bg-elevated}: $base-gray-cool-900;
     #{--ks-bg-hover}: #23252E;
-    #{--ks-bg-hover-elevated}: $base-gray-600;
-    #{--ks-bg-input}: $base-gray-1000;
+    #{--ks-bg-hover-elevated}: $base-gray-cool-600;
+    #{--ks-bg-input}: $base-gray-cool-1000;
     #{--ks-tabs-bg}: #08090A;
     #{--ks-bg-overlay}: #1A1C22;
     #{--ks-bg-scrim}: #14181fcc;
-    #{--ks-bg-sidebar}: $base-gray-900;
-    #{--ks-bg-surface}: $base-gray-800;
+    #{--ks-bg-sidebar}: $base-gray-cool-900;
+    #{--ks-bg-surface}: $base-gray-cool-800;
     #{--ks-bg-tag}: #ffffff1a;
     #{--ks-bg-tag-active}: #9869f766;
     #{--ks-bg-tag-hover}: #9869f733;
-    #{--ks-bg-error}: $base-gray-950;
-    #{--ks-bg-info}: $base-gray-950;
-    #{--ks-bg-success}: $base-gray-950;
-    #{--ks-bg-warning}: $base-gray-950;
-    #{--ks-bg-inactive}: $base-gray-500;
+    #{--ks-bg-error}: $base-gray-cool-950;
+    #{--ks-bg-info}: $base-gray-cool-950;
+    #{--ks-bg-success}: $base-gray-cool-950;
+    #{--ks-bg-warning}: $base-gray-cool-950;
+    #{--ks-bg-inactive}: $base-gray-cool-500;
 
     /* border */
-    #{--ks-border-default}: $base-gray-600;
+    #{--ks-border-default}: $base-gray-cool-600;
     #{--ks-border-focus}: $base-primary-500;
-    #{--ks-border-strong}: $base-gray-500;
-    #{--ks-border-subtle}: $base-gray-700;
+    #{--ks-border-strong}: $base-gray-cool-500;
+    #{--ks-border-subtle}: $base-gray-cool-700;
     #{--ks-border-error}: $base-red-500;
     #{--ks-border-info}: $base-blue-300;
     #{--ks-border-success}: $base-green-600;
@@ -44,29 +44,29 @@ html.dark {
     #{--ks-btn-primary-bg-active}: $base-primary-600;
     #{--ks-btn-primary-bg-default}: $base-primary-500;
     #{--ks-btn-primary-bg-hover}: $base-primary-400;
-    #{--ks-btn-primary-bg-inactive}: $base-gray-700;
-    #{--ks-btn-secondary-bg-active}: $base-gray-600;
-    #{--ks-btn-secondary-bg-default}: $base-gray-500;
-    #{--ks-btn-secondary-bg-hover}: $base-gray-400;
-    #{--ks-btn-secondary-bg-inactive}: $base-gray-700;
+    #{--ks-btn-primary-bg-inactive}: $base-gray-cool-700;
+    #{--ks-btn-secondary-bg-active}: $base-gray-cool-600;
+    #{--ks-btn-secondary-bg-default}: $base-gray-cool-500;
+    #{--ks-btn-secondary-bg-hover}: $base-gray-cool-400;
+    #{--ks-btn-secondary-bg-inactive}: $base-gray-cool-700;
     #{--ks-btn-secondary-border-active}: $base-primary-300;
-    #{--ks-btn-secondary-border-default}: $base-gray-400;
+    #{--ks-btn-secondary-border-default}: $base-gray-cool-400;
     #{--ks-btn-secondary-border-hover}: $base-primary-300;
-    #{--ks-btn-secondary-border-inactive}: $base-gray-700;
-    #{--ks-btn-primary-text}: $base-white;
+    #{--ks-btn-secondary-border-inactive}: $base-gray-cool-700;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
 
     /* editor */
     #{--ks-editor-pabble}: #ffca16;
     #{--ks-editor-property}: $base-green-200;
-    #{--ks-editor-punctuation}: $base-gray-300;
+    #{--ks-editor-punctuation}: $base-gray-cool-300;
     #{--ks-editor-value}: #ce9178;
 
     /* icon */
     #{--ks-icon-active}: $base-primary-200;
-    #{--ks-icon-default}: $base-white;
+    #{--ks-icon-default}: $base-gray-neutral-white;
     #{--ks-icon-hover}: $base-primary-400;
-    #{--ks-icon-inactive}: $base-gray-300;
-    #{--ks-icon-muted}: $base-gray-300;
+    #{--ks-icon-inactive}: $base-gray-cool-300;
+    #{--ks-icon-muted}: $base-gray-cool-300;
     #{--ks-icon-error}: $base-red-200;
     #{--ks-icon-info}: $base-blue-300;
     #{--ks-icon-success}: $base-green-300;
@@ -78,12 +78,12 @@ html.dark {
     #{--ks-shadow-surface}: #0d061826;
 
     /* text */
-    #{--ks-text-dim}: $base-gray-300;
-    #{--ks-text-inactive}: $base-gray-300;
+    #{--ks-text-dim}: $base-gray-cool-300;
+    #{--ks-text-inactive}: $base-gray-cool-300;
     #{--ks-text-link}: $base-primary-200;
-    #{--ks-text-muted}: $base-gray-200;
-    #{--ks-text-primary}: $base-white;
-    #{--ks-text-secondary}: $base-gray-200;
+    #{--ks-text-muted}: $base-gray-cool-200;
+    #{--ks-text-primary}: $base-gray-neutral-white;
+    #{--ks-text-secondary}: $base-gray-cool-200;
     #{--ks-text-error}: $base-red-200;
     #{--ks-text-info}: $base-blue-300;
     #{--ks-text-success}: $base-green-100;
@@ -92,7 +92,7 @@ html.dark {
     /* status */
     #{--ks-status-error}: $base-red-300;
     #{--ks-status-info}: $base-blue-300;
-    #{--ks-status-neutral}: $base-gray-300;
+    #{--ks-status-neutral}: $base-gray-cool-300;
     #{--ks-status-pending}: $base-yellow-300;
     #{--ks-status-running}: $base-primary-300;
     #{--ks-status-success}: $base-green-300;
@@ -100,31 +100,31 @@ html.dark {
 
     /* switch */
     #{--ks-switch-bg-active}: $base-primary-400;
-    #{--ks-switch-bg-default}: $base-gray-700;
-    #{--ks-switch-bg-hover}: $base-gray-400;
-    #{--ks-switch-bg-inactive}: $base-gray-800;
+    #{--ks-switch-bg-default}: $base-gray-cool-700;
+    #{--ks-switch-bg-hover}: $base-gray-cool-400;
+    #{--ks-switch-bg-inactive}: $base-gray-cool-800;
 
     /* topology */
-    #{--ks-topology-bg}: $base-gray-600;
-    #{--ks-topology-dash}: $base-white;
+    #{--ks-topology-bg}: $base-gray-cool-600;
+    #{--ks-topology-dash}: $base-gray-neutral-white;
 
     /* scrollbar */
-    #{--ks-scrollbar-bg}: $base-gray-900;
-    #{--ks-scrollbar-content}: $base-gray-400;
+    #{--ks-scrollbar-bg}: $base-gray-cool-900;
+    #{--ks-scrollbar-content}: $base-gray-cool-400;
 
     /* dependencies */
-    #{--ks-dependencies-edge-default}: $base-gray-200;
-    #{--ks-dependencies-edge-faded}: $base-gray-400;
-    #{--ks-dependencies-edge-hovered}: $base-purple-50;
-    #{--ks-dependencies-edge-selected}: $base-purple-300;
+    #{--ks-dependencies-edge-default}: $base-gray-cool-200;
+    #{--ks-dependencies-edge-faded}: $base-gray-cool-400;
+    #{--ks-dependencies-edge-hovered}: $base-primary-50;
+    #{--ks-dependencies-edge-selected}: $base-primary-300;
     #{--ks-dependencies-node-background-assets}: $base-blue-400;
-    #{--ks-dependencies-node-background-default}: $base-gray-500;
-    #{--ks-dependencies-node-background-faded}: $base-gray-700;
-    #{--ks-dependencies-node-background-hovered}: $base-purple-50;
-    #{--ks-dependencies-node-background-selected}: $base-purple-300;
+    #{--ks-dependencies-node-background-default}: $base-gray-cool-500;
+    #{--ks-dependencies-node-background-faded}: $base-gray-cool-700;
+    #{--ks-dependencies-node-background-hovered}: $base-primary-50;
+    #{--ks-dependencies-node-background-selected}: $base-primary-300;
     #{--ks-dependencies-node-border-assets}: $base-blue-200;
-    #{--ks-dependencies-node-border-default}: $base-gray-300;
-    #{--ks-dependencies-node-border-faded}: $base-gray-400;
-    #{--ks-dependencies-node-border-hovered}: $base-purple-50;
-    #{--ks-dependencies-node-border-selected}: $base-purple-200;
+    #{--ks-dependencies-node-border-default}: $base-gray-cool-300;
+    #{--ks-dependencies-node-border-faded}: $base-gray-cool-400;
+    #{--ks-dependencies-node-border-hovered}: $base-primary-50;
+    #{--ks-dependencies-node-border-selected}: $base-primary-200;
 }

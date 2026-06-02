@@ -693,6 +693,8 @@
       "title": "Novidades no Kestra"
     },
     "file preview truncated": "Conteúdo exibido foi truncado",
+    "file unavailable": "Arquivo indisponível",
+    "file unavailable description": "Este arquivo não está mais disponível — pode ter sido removido ou expirado.",
     "fileTypeNotAllowed": "Tipo de arquivo não permitido. Tipos aceitos: {types}",
     "files": "Arquivos",
     "filter by log level": "Filtrar por nível de log",

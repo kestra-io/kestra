@@ -620,6 +620,7 @@
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
+    "execution id": "実行 Id",
     "execution labels": "実行ラベル",
     "execution not found": "<code>{executionId}</code> の実行が見つかりません。",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",

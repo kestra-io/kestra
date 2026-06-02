@@ -1,9 +1,7 @@
 <template>
     <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
         <template #header>
-            <div class="header-toolbar">
-                <SidebarToggleButton @toggle="onCollapse(true)" />
-            </div>
+            <SidebarToggleButton class="header-toggle" @toggle="onCollapse(true)" />
             <Environment />
         </template>
 
@@ -147,6 +145,7 @@
 
 <style scoped lang="scss">
 #side-menu {
+    position: relative;
     width: 215px;
     flex-shrink: 0;
     box-sizing: border-box;
@@ -163,10 +162,10 @@
     padding: 0 var(--ks-spacing-2);
 }
 
-.header-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: calc(-1 * var(--ks-spacing-4));
-    margin-bottom: var(--ks-spacing-2);
+.header-toggle {
+    position: absolute;
+    top: var(--ks-spacing-4);
+    right: var(--ks-spacing-4);
+    z-index: 1;
 }
 </style>

@@ -84,6 +84,18 @@ describe("Filter Helpers", () => {
                 "filters[labels][EQUALS][team]": "backend",
             })
         })
+
+        it("should encode a custom-field time-range value as a GTE/LTE pair on its own key", () => {
+            const startDate = new Date("2023-01-01T00:00:00Z")
+            const endDate = new Date("2023-01-31T23:59:59Z")
+            // A generic `time-range` field (e.g. service-instance "created") keeps its own key,
+            // unlike the dedicated `timeRange` filter which maps to startDate/endDate.
+            const filters = [{key: "created", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}}]
+            expect(encodeFiltersToQuery(filters, keyOfComparator)).toEqual({
+                "filters[created][GREATER_THAN_OR_EQUAL_TO]": startDate.toISOString(),
+                "filters[created][LESS_THAN_OR_EQUAL_TO]": endDate.toISOString(),
+            })
+        })
     })
 
     describe("encodeFilterGroupsToQuery", () => {

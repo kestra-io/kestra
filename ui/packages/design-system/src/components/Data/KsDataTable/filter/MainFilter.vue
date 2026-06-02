@@ -60,7 +60,10 @@
                 :logical="filter.topLogical?.value"
                 :disabled="filter.readOnly?.value"
                 :hidden="filter.searchInputFullWidth?.value"
+                :linked="hoveredTopSeparator"
                 @change="filter.setTopLogical"
+                @mouseenter="hoveredTopSeparator = true"
+                @mouseleave="hoveredTopSeparator = false"
             />
             <FilterGroupRenderer
                 :unit="unit"
@@ -126,6 +129,8 @@
     const isCustomizeFiltersVisible = ref(false)
     const chipRefs = ref<Record<string, any>>({})
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
+
+    const hoveredTopSeparator = ref(false)
 
     type DragKind = "filter" | "group" | "field"
     interface DragEntity { kind: DragKind; id: string }

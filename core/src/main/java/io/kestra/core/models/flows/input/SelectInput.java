@@ -10,9 +10,9 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.validations.Regex;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -26,12 +26,13 @@ import lombok.experimental.SuperBuilder;
 public class SelectInput extends Input<String> implements RenderableInput {
 
     @Schema(
-        title = "List of values."
+        title = "List of values.",
+        description = "Each item is either a plain string (used as both label and value) or an object `{label, value}` to decouple the displayed label from the workflow value."
     )
-    List<@Regex String> values;
+    List<@Valid ValueOption> values;
 
     @Schema(
-        title = "Expression to be used for dynamically generating the list of values"
+        title = "Expression to be used for dynamically generating the list of values."
     )
     String expression;
 
@@ -60,7 +61,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
     public Property<String> getDefaults() {
         Property<String> baseDefaults = super.getDefaults();
         if (baseDefaults == null && autoSelectFirst && !Optional.ofNullable(values).map(Collection::isEmpty).orElse(true)) {
-            return Property.ofValue(values.getFirst());
+            return Property.ofValue(values.getFirst().value());
         }
 
         return baseDefaults;
@@ -68,12 +69,12 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (!values.contains(input) && this.getRequired()) {
+        if (this.getRequired() && values.stream().noneMatch(v -> Objects.equals(v.value(), input))) {
             if (this.getAllowCustomValue()) {
                 return;
             }
             throw ManualConstraintViolation.toConstraintViolationException(
-                "it must match the values `" + values + "`",
+                "it must match the values `" + values.stream().map(ValueOption::value).toList() + "`",
                 this,
                 SelectInput.class,
                 getId(),
@@ -104,7 +105,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
         return this;
     }
 
-    private List<String> renderExpressionValues(final Function<String, Object> renderer) {
+    private List<ValueOption> renderExpressionValues(final Function<String, Object> renderer) {
         Object result;
         try {
             result = renderer.apply(expression.trim());
@@ -119,12 +120,11 @@ public class SelectInput extends Input<String> implements RenderableInput {
         }
 
         if (result instanceof List<?> list) {
-            return list.stream().filter(Objects::nonNull).map(Object::toString).toList();
+            return list.stream().filter(Objects::nonNull).map(ValueOption::from).toList();
         }
 
-        String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
         throw ManualConstraintViolation.toConstraintViolationException(
-            "Invalid expression result. Expected a list of strings",
+            "Invalid expression result. Expected a list of values",
             this,
             SelectInput.class,
             getId(),

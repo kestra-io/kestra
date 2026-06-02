@@ -89,10 +89,11 @@
             </KsCol>
         </KsRow>
 
-        <Editor
+        <KsEditor
+            v-bind="editorBindings"
             class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
-            :diffSideBySide="sideBySide"
+            :options="{diffSideBySide: sideBySide}"
             :modelValue="revisionRightText"
             :original="revisionLeftText"
             readOnly
@@ -117,13 +118,16 @@
     import {useRoute, useRouter} from "vue-router"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
-    import Editor from "../../components/inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import moment from "moment"
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
 
     const flowStore = useFlowStore()
+
+    const editorBindings = useEditorBindings()
 
     export interface Revision {
         revision: number;

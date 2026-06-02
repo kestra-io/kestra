@@ -56,7 +56,7 @@ public class MyService {
 // 5. Injected fields (@Inject)
 // 6. Constructors
 // 7. Public methods
-// 8. Protected methods  
+// 8. Protected methods
 // 9. Private methods
 // 10. Inner classes/records
 ```
@@ -137,6 +137,9 @@ public enum MyEnum {
 ## Worker Constraints
 - Never depend on repositories for code called by the workers - instead use MetaStore/StateStore facades
 
+## Executor Constraints
+- Run the `H2RunnerTest` whenever you update part of the executor
+
 ## Testing Guidelines
 
 ### Java Tests
@@ -148,19 +151,19 @@ public enum MyEnum {
 - Always use naming conventions for test methods (e.g., `shouldPerformActionWhenCondition`)
 - Use `@MicronautTest` for tests that require Micronaut beans
 - Use `@KestraTest` for tests that require running Kestra services (e.g., Executor, Scheduler)
-- 
+-
 ```java
 @KestraTest
 class ServiceTest {
     @Inject
     private ServiceClass service;
-    
+
     @Test
     void shouldPerformActionWhenCondition() {
         // Given (setup)
-        
+
         // When (action)
-        
+
         // Then (assertions)
         assertThat(result).isNotNull();
     }
@@ -350,7 +353,7 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 **Queuing Layer:**
 - `queue` - Core API for queue implementations
 - `queue-jdbc` - JDBC-based queue implementation
- 
+
 **Data Layer:**
 - `jdbc-*` - Database implementations (H2, Postgres, MySQL)
 

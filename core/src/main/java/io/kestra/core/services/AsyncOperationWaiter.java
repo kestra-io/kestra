@@ -1,4 +1,4 @@
-package io.kestra.webserver.services;
+package io.kestra.core.services;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncEventStreamingService;

@@ -144,6 +144,12 @@ public class PauseTest {
         suite.shouldExecuteErrorsFinallyAndAfterExecution(execution);
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/pause-kill-delay.yaml" })
+    void killTimedPause() throws Exception {
+        suite.killTimedPause(runnerUtils);
+    }
+
     @Singleton
     public static class Suite {
         @Inject
@@ -395,6 +401,33 @@ public class PauseTest {
             assertThat(execution.findTaskRunsByTaskId("logFinally").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
             assertThat(execution.findTaskRunsByTaskId("logAfter")).hasSize(1);
             assertThat(execution.findTaskRunsByTaskId("logAfter").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        }
+
+        /**
+         * Killing a timed-pause execution (i.e. a Pause task with pauseDuration) must take effect immediately,
+         * not wait until the pause duration elapses. Regression test for issue #16242.
+         * <p>
+         * The pauseDuration is PT1M, far beyond the test await (~15 s), so the execution reaching KILLED
+         * proves the kill is not deferred by the stale ExecutionDelay.
+         */
+        public void killTimedPause(TestRunnerUtils runnerUtils) throws Exception {
+            // Given — execution is paused waiting for a PT1M auto-resume
+            Execution execution = runnerUtils.runOneUntilPaused(
+                MAIN_TENANT, "io.kestra.tests", "pause-kill-delay", null, null, Duration.ofSeconds(30));
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+            assertThat(execution.getTaskRunList()).hasSize(1);
+
+            // When — kill is requested via the queue (same path as the UI)
+            // killExecution emits REQUESTED and awaits a terminated execution (default ~15 s),
+            // well below PT1M; reaching KILLED proves the kill is immediate.
+            Execution killed = runnerUtils.killExecution(execution);
+
+            // Then
+            assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+            assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+            // 'last' must never run — the kill must prevent the auto-resume from triggering it
+            assertThat(killed.findTaskRunsByTaskId("last")).isEmpty();
         }
     }
 }

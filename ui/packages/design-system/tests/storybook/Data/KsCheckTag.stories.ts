@@ -10,6 +10,11 @@ const meta: Meta<typeof KsCheckTag> = {
     argTypes: {
         checked: {control: "boolean"},
         disabled: {control: "boolean"},
+        pill: {control: "boolean"},
+        size: {
+            control: {type: "select"},
+            options: ["small", "default", "large"],
+        },
     },
     parameters: {
         docs: {
@@ -77,6 +82,42 @@ export const Disabled: Story = {
     async play({canvasElement}) {
         const disabled = canvasElement.querySelectorAll(".kel-check-tag.is-disabled")
         await expect(disabled.length).toBe(2)
+    },
+}
+
+export const Pill: Story = {
+    render: () => ({
+        components: {KsCheckTag},
+        setup() {
+            const selected = ref<string>("core")
+            return {selected}
+        },
+        template: `
+            <div style="padding:24px;display:flex;gap:8px;flex-wrap:wrap">
+                <ks-check-tag pill :checked="selected === 'all'" @change="selected = 'all'">
+                    <template #icon>
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M4 11h6V4H4v7m0 9h6v-7H4v7m9 0h6v-7h-6v7m0-16v7h6V4h-6Z"/></svg>
+                    </template>
+                    All Categories
+                </ks-check-tag>
+                <ks-check-tag pill :checked="selected === 'core'" @change="selected = 'core'">
+                    <template #icon>
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/></svg>
+                    </template>
+                    Core
+                </ks-check-tag>
+                <ks-check-tag pill :checked="selected === 'cloud'" @change="selected = 'cloud'">
+                    <template #icon>
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 18H6a4 4 0 1 1 .7-7.9A6 6 0 0 1 18 11a3.5 3.5 0 0 1 1 7Z"/></svg>
+                    </template>
+                    Cloud
+                </ks-check-tag>
+                <ks-check-tag pill :checked="selected === 'data'">No icon</ks-check-tag>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await expect(canvasElement.querySelector(".kel-check-tag--pill")).toBeTruthy()
     },
 }
 

@@ -413,15 +413,11 @@
         }
     }
 
-    .search-bar-row {
-        max-width: 800px;
-        margin: 0 auto 1.5rem auto;
-    }
-
     .card-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(297px, 1fr));
         gap: 1rem;
+        padding-inline: var(--ks-data-table-gutter);
     }
 
     .blueprint-card {

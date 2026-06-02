@@ -75,7 +75,7 @@ Kestra is an open-source, event-driven orchestration platform for data, AI, and 
 
 
 <p align="center">
-  <video src="https://kestra.io/adding-tasks.mp4" autoplay loop muted playsinline width="640">
+  <video src="https://github.com/user-attachments/assets/8bb47d22-848d-4281-a0ca-9790803ce1ea" autoplay loop muted playsinline width="640">
     Your browser does not support the video tag. <a href="https://go.kestra.io/video/product-overview">Watch the demo here</a>.
   </video>
 </p>

@@ -193,8 +193,16 @@ export const getUniqueFilters = <T extends { key: string; comparator?: any }>(fi
 
 export const clearFilterQueryParams = (query: Record<string, any>): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
-    }
+           if (
+               key.startsWith("filters[") ||
+               key === "dateFilter" ||
+               key === "startDate" ||
+               key === "endDate" ||
+               key === "timeRange"
+           ) {
+               delete query[key]
+           }
+       }
 }
 
 /**

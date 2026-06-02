@@ -389,7 +389,7 @@
         return matchedExample?.flow
     })
 
-    const providers = ref<{id: string, displayName: string}[]>([])
+    const providers = ref<{id?: string | undefined, displayName?: string | undefined }[]>([])
     const selectedProvider = ref<string | undefined>(undefined)
 
     async function fetchProviders() {
@@ -513,7 +513,6 @@
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
                     namespace: props.namespace,
-                    type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
                 })
             } else {

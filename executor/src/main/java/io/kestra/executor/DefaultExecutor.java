@@ -30,6 +30,8 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.flow.Loop;
@@ -62,7 +64,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     @Inject
-    private ExecutionMessageHandler executionMessageHandler;
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
     @Inject
     private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
     @Inject
@@ -317,7 +321,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-        executionMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        Execution execution = either.getLeft();
+        // Always persist first so the execution is present in the DB even if kill-switched.
+        try {
+            executionStateStore.create(execution);
+        } catch (Exception e) {
+            log.error("Unable to create execution {}", execution.getId(), e);
+        }
+        EvaluationType evaluationType = killSwitchService.evaluate(execution);
+        if (evaluationType.isKillSwitched(execution)) {
+            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+            return;
+        }
+        var eventType = execution.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
+        executionEventMessageHandler.handle(new ExecutionEvent(execution, eventType)).ifPresent(this::toExecution);
     }
 
     private void executionCommandQueue(Either<ExecutionCommand, DeserializationException> either) {

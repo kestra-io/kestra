@@ -18,8 +18,17 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and Push kestra-base
+    name: Build and Push kestra-base (${{ matrix.jre.tag }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jre:
+          - version: "25"
+            tag: "latest-no-plugins"
+            description: "Kestra base image (no plugins) — JRE 25 + uv pre-installed"
+          - version: "21"
+            tag: "latest-jre21-no-plugins"
+            description: "Kestra base image (no plugins) — JRE 21 + uv pre-installed"
     steps:
       - uses: actions/checkout@v6
 
@@ -44,11 +53,11 @@ jobs:
           images: ghcr.io/kestra-io/kestra-base
           labels: |
             org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
+            org.opencontainers.image.description=${{ matrix.jre.description }}
             org.opencontainers.image.vendor=Kestra Technologies
           annotations: |
             org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
+            org.opencontainers.image.description=${{ matrix.jre.description }}
             org.opencontainers.image.vendor=Kestra Technologies
 
       - name: Build and push
@@ -58,12 +67,13 @@ jobs:
           file: Dockerfile.base
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
+          tags: ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins
+            JRE_VERSION=${{ matrix.jre.version }}
+          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
           cache-to: type=inline
 
       - name: Slack - Notification
@@ -74,10 +84,19 @@ jobs:
           channel: 'C09FF36GKE1'
 
   build-and-push-with-plugins:
-    name: Build and Push kestra-base with plugins
+    name: Build and Push kestra-base with plugins (${{ matrix.jre.tag }})
     runs-on: ubuntu-latest
     needs: build-and-push
     if: ${{ inputs.dry-run != true }}
+    strategy:
+      matrix:
+        jre:
+          - no-plugins-tag: "latest-no-plugins"
+            tag: "latest"
+            description: "Kestra base image (with OSS plugins) — JRE 25 + uv + plugins pre-installed"
+          - no-plugins-tag: "latest-jre21-no-plugins"
+            tag: "latest-jre21"
+            description: "Kestra base image (with OSS plugins) — JRE 21 + uv + plugins pre-installed"
     steps:
       - uses: actions/checkout@v6
 
@@ -102,11 +121,11 @@ jobs:
           images: ghcr.io/kestra-io/kestra-base
           labels: |
             org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (with OSS plugins) — JRE + uv + plugins pre-installed
+            org.opencontainers.image.description=${{ matrix.jre.description }}
             org.opencontainers.image.vendor=Kestra Technologies
           annotations: |
             org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (with OSS plugins) — JRE + uv + plugins pre-installed
+            org.opencontainers.image.description=${{ matrix.jre.description }}
             org.opencontainers.image.vendor=Kestra Technologies
 
       - name: Build and push
@@ -116,12 +135,13 @@ jobs:
           file: Dockerfile.base.with-plugins
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest
+          tags: ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             CACHE_BUST=${{ github.run_id }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest
+            BASE_IMAGE=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.no-plugins-tag }}
+          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.jre.tag }}
           cache-to: type=inline
 
       - name: Slack - Notification

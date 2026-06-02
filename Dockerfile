@@ -2,6 +2,7 @@ ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest-no-plugins"
 FROM ${BASE_IMAGE}
 
 ARG KESTRA_PLUGINS=""
+ARG KESTRA_VERSION=""
 ARG APT_PACKAGES=""
 ARG PYTHON_LIBRARIES=""
 
@@ -15,7 +16,13 @@ RUN if [ -n "${APT_PACKAGES}" ]; then \
         apt-get clean && \
         rm -rf /var/lib/apt/lists/*; \
     fi && \
-    if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
+    if [ -n "${KESTRA_VERSION}" ]; then \
+        curl -fsSL https://raw.githubusercontent.com/kestra-io/kestractl/main/install-scripts/install.sh | bash && \
+        kestractl plugins download "${KESTRA_VERSION}" --edition=OSS --concurrency=4 --plugins-dir=/app/plugins && \
+        rm -f "$(which kestractl)"; \
+    elif [ -n "${KESTRA_PLUGINS}" ]; then \
+        /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; \
+    fi && \
     if [ -n "${PYTHON_LIBRARIES}" ]; then uv venv /app/.venv && uv pip install --python /app/.venv/bin/python ${PYTHON_LIBRARIES}; fi && \
     chown -R kestra:kestra /app
 

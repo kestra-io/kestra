@@ -1,4 +1,5 @@
-FROM ghcr.io/kestra-io/kestra-base:latest-no-plugins
+ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest-no-plugins"
+FROM ${BASE_IMAGE}
 
 ARG CACHE_BUST
 

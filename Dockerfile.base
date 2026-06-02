@@ -1,4 +1,5 @@
-FROM eclipse-temurin:25-jre
+ARG JRE_VERSION="25"
+FROM eclipse-temurin:${JRE_VERSION}-jre
 
 ARG UV_VERSION="0.6.17"
 

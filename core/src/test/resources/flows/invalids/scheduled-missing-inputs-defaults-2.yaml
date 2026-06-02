@@ -1,0 +1,17 @@
+id: scheduled_missing_inputs_defaults_2
+namespace: io.kestra.tests
+
+inputs:
+  - id: user2
+    type: STRING
+
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: hey there {{ inputs.user2 }}! 👋
+
+triggers:
+  - id: every_minute
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/1 * * * *"

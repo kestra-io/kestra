@@ -51,11 +51,12 @@
             <KsCol :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <KsCard>
-                    <Editor
+                    <KsEditor
+                        v-bind="editorBindings"
                         class="position-relative"
                         :readOnly="true"
-                        :input="true"
-                        :fullHeight="false"
+                        :inline="true"
+                        :options="{fullHeight: false}"
                         :modelValue="blueprint?.source"
                         lang="yaml"
                         :navbar="false"
@@ -63,7 +64,7 @@
                         <template #absolute>
                             <CopyToClipboard :text="blueprint?.source" />
                         </template>
-                    </Editor>
+                    </KsEditor>
                 </KsCard>
                 <template v-if="blueprint?.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
@@ -95,11 +96,11 @@
 
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
-    import Editor from "../../../../components/inputs/Editor.vue"
     import TopNavBar from "../../../../components/layout/TopNavBar.vue"
     import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue"
     import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue"
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import {KsTaskIcon, KsMarkdown, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../../composables/useEditorBindings"
 
     import {useFlowStore} from "../../../../stores/flow"
     import {usePluginsStore} from "../../../../stores/plugins"
@@ -134,6 +135,8 @@
     const blueprintsStore = useBlueprintsStore()
     const flowStore = useFlowStore()
     const apiStore = useApiStore()
+
+    const editorBindings = useEditorBindings()
 
     const flowGraph = ref()
     const blueprint = ref()

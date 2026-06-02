@@ -3,13 +3,20 @@ import {createLogger, defineConfig, loadEnv} from "vite"
 import vue from "@vitejs/plugin-vue"
 import {federation} from "@module-federation/vite"
 
-// silence some scss warnings about sourceMaps of
-// element-plus/theme-chalk/src in the wrong directory
-// and will not be published in prod builds
+// Silence "Sourcemap for X points to a source file outside its package"
+// warnings from node_modules — cross-package scss sourcemap references that
+// are harmless and not relevant in prod builds.
 const logger = createLogger()
+const isElementPlusSourcemapWarning = (msg) =>
+    (/sourcemap/i).test(msg) && msg.includes("points to a source file outside its package") && msg.includes("node_modules")
+const loggerWarn = logger.warn.bind(logger)
+logger.warn = (msg, options) => {
+    if (isElementPlusSourcemapWarning(msg)) return
+    loggerWarn(msg, options)
+}
 const loggerWarnOnce = logger.warnOnce.bind(logger)
 logger.warnOnce = (msg, options) => {
-    if (msg.includes("node_modules/element-plus/theme-chalk/src") && (/sourcemap/i).test(msg)) return
+    if (isElementPlusSourcemapWarning(msg)) return
     loggerWarnOnce(msg, options)
 }
 

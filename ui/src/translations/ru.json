@@ -1,6 +1,5 @@
 {
   "ru": {
-    "valid": "Действительный",
     "Add flow": "Добавить flow",
     "Default log level": "Уровень log по умолчанию",
     "Default namespace": "Namespace по умолчанию",
@@ -84,6 +83,7 @@
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
+      "all": "Все",
       "apps": "Черновики приложений",
       "community": "Сообщество",
       "create": "Создать blueprint",
@@ -621,6 +621,7 @@
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
+    "execution id": "Идентификатор выполнения",
     "execution labels": "Метки выполнения",
     "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
@@ -1935,6 +1936,7 @@
     "usage": "Использование",
     "use": "Использовать",
     "use_dark_background": "Используйте эту версию при работе на темном фоне, чтобы наше имя оставалось читаемым.",
+    "valid": "Действительный",
     "validate": "Проверить",
     "value": "Значение",
     "variables": "Переменные",

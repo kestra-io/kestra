@@ -1,6 +1,5 @@
 {
   "ko": {
-    "valid": "유효",
     "Add flow": "Flow 추가",
     "Default log level": "기본 log 레벨",
     "Default namespace": "기본 namespace",
@@ -84,6 +83,7 @@
     "before": "이전",
     "behavior": "동작",
     "blueprints": {
+      "all": "모두",
       "apps": "앱 Blueprints",
       "community": "커뮤니티",
       "create": "블루프린트 생성",
@@ -621,6 +621,7 @@
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
+    "execution id": "실행 Id",
     "execution labels": "실행 라벨",
     "execution not found": "<code>{executionId}</code> 실행을 찾을 수 없습니다.",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
@@ -1935,6 +1936,7 @@
     "usage": "사용량",
     "use": "사용",
     "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
+    "valid": "유효",
     "validate": "유효성 검사",
     "value": "Value",
     "variables": "변수",

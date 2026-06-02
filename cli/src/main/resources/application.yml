@@ -59,6 +59,7 @@ micronaut:
     csrf:
       enabled: true
       signature-key: ${kestra.encryption.secret-key:}
+      cookie-name: csrfToken
       filter:
         enabled: false
   caches:

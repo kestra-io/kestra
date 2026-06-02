@@ -211,7 +211,6 @@
     import ChangeExecutionStatus from "../ChangeExecutionStatus.vue"
     import SetLabels from "../SetLabels.vue"
     import Pause from "./components/actions/Pause.vue"
-    //@ts-expect-error No declaration file
     import Resume from "./components/actions/Resume.vue"
     import Restart from "./components/actions/Restart.vue"
     import Unqueue from "./components/actions/Unqueue.vue"

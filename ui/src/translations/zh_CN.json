@@ -1,6 +1,5 @@
 {
   "zh_CN": {
-    "valid": "有效",
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",
     "Default namespace": "默认命名空间",
@@ -84,6 +83,7 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
+      "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",
       "create": "创建一个blueprint",
@@ -621,6 +621,7 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
+    "execution id": "执行 Id",
     "execution labels": "执行标签",
     "execution not found": "执行 <code>{executionId}</code> 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
@@ -1935,6 +1936,7 @@
     "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
+    "valid": "有效",
     "validate": "验证",
     "value": "值",
     "variables": "变量",

@@ -47,8 +47,8 @@
                         <TriggerFlow
                             v-else-if="fallbackToExecute"
                             type="primary"
-                            :flowId="$route.params.flowId"
-                            :namespace="$route.params.namespace"
+                            :flowId="$route.params.flowId as string"
+                            :namespace="$route.params.namespace as string"
                         />
                     </div>
                 </div>
@@ -57,16 +57,13 @@
     </TopNavBar>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {useRouter, useRoute} from "vue-router"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import DotsVerticalIcon from "vue-material-design-icons/DotsVertical.vue"
     import Badge from "../global/Badge.vue"
-</script>
-
-<script>
-    import {mapStores} from "pinia"
     import {State} from "@kestra-io/design-system"
-
     import TriggerFlow from "../flows/TriggerFlow.vue"
     import Pause from "./overview/components/actions/Pause.vue"
     import Resume from "./overview/components/actions/Resume.vue"
@@ -77,90 +74,72 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
 
-    export default {
-        components: {
-            TriggerFlow,
-            Pause,
-            Resume,
-            Restart,
-            TopNavBar,
-        },
-        props: {
-            routeInfo: {
-                type: Object,
-                required: true,
-            },
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            execution() {
-                return this.executionsStore.execution
-            },
-            isAllowedEdit() {
-                return this.execution && this.authStore.user?.isAllowed(resource.FLOW, action.UPDATE, this.execution.namespace)
-            },
-            isAllowedTrigger() {
-                return this.execution && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.execution.namespace)
-            },
-            hasVisibleActions() {
-                return this.isAllowedEdit || this.primaryAction || this.fallbackToExecute
-            },
-            fallbackToExecute() {
-                return this.execution && this.isAllowedTrigger && !this.primaryAction
-            },
-            primaryAction() {
-                if (!this.execution?.state) {
-                    return null
-                }
+    defineProps<{
+        // FIXME: any - routeInfo shape varies across usage
+        routeInfo: any // FIXME: any
+    }>()
 
-                if (State.isPaused(this.execution.state.current)) {
-                    return {
-                        component: Resume,
-                        props: {},
-                    }
-                }
+    const router = useRouter()
+    const route = useRoute()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
 
-                if (State.isRunning(this.execution.state.current)) {
-                    return {
-                        component: Pause,
-                        props: {},
-                    }
-                }
+    // FIXME: any - execution is an untyped domain object from the store
+    const execution = computed(() => executionsStore.execution as any) // FIXME: any
 
-                if (this.execution.state.current === State.FAILED) {
-                    return {
-                        component: Restart,
-                        props: {},
-                    }
-                }
+    const isAllowedEdit = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),
+    )
 
-                if (State.getTerminatedStates().includes(this.execution.state.current)) {
-                    return {
-                        component: Restart,
-                        props: {
-                            isReplay: true,
-                        },
-                    }
-                }
+    const isAllowedTrigger = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, execution.value.namespace),
+    )
 
-                return null
+    const primaryAction = computed(() => {
+        if (!execution.value?.state) {
+            return null
+        }
+
+        if (State.isPaused(execution.value.state.current)) {
+            return {component: Resume, props: {}}
+        }
+
+        if (State.isRunning(execution.value.state.current)) {
+            return {component: Pause, props: {}}
+        }
+
+        if (execution.value.state.current === State.FAILED) {
+            return {component: Restart, props: {}}
+        }
+
+        if (State.getTerminatedStates().includes(execution.value.state.current)) {
+            return {component: Restart, props: {isReplay: true}}
+        }
+
+        return null
+    })
+
+    const fallbackToExecute = computed(() =>
+        execution.value && isAllowedTrigger.value && !primaryAction.value,
+    )
+
+    const hasVisibleActions = computed(() =>
+        isAllowedEdit.value || primaryAction.value || fallbackToExecute.value,
+    )
+
+    const isATestExecution = computed(() =>
+        execution.value && execution.value.labels && execution.value.labels.some((label: {key: string; value: string}) => label.key === "system.test" && label.value === "true"),
+    )
+
+    function editFlow() {
+        router.push({
+            name: "flows/update", params: {
+                namespace: route.params.namespace as string,
+                id: route.params.flowId as string,
+                tab: "edit",
+                tenant: route.params.tenant as string,
             },
-            isATestExecution() {
-                return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true")
-            },
-        },
-        methods: {
-            editFlow() {
-                this.$router.push({
-                    name: "flows/update", params: {
-                        namespace: this.$route.params.namespace,
-                        id: this.$route.params.flowId,
-                        tab: "edit",
-                        tenant: this.$route.params.tenant,
-                    },
-                })
-            },
-        },
+        })
     }
 </script>
 <style scoped>

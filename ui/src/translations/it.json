@@ -1,6 +1,5 @@
 {
   "it": {
-    "valid": "Valido",
     "Add flow": "Aggiungi flow",
     "Default log level": "Livello di log predefinito",
     "Default namespace": "Namespace predefinito",
@@ -84,6 +83,7 @@
     "before": "prima",
     "behavior": "Comportamento",
     "blueprints": {
+      "all": "Tutti",
       "apps": "Blueprint delle App",
       "community": "Comunità",
       "create": "Crea un blueprint",
@@ -621,6 +621,7 @@
     "execute the flow": "Esegui il flow <code>{id}</code>",
     "execution": "Esecuzione",
     "execution already finished": "Esecuzione <code>{executionId}</code> già terminata",
+    "execution id": "ID di Esecuzione",
     "execution labels": "Etichette di esecuzione",
     "execution not found": "L'esecuzione <code>{executionId}</code> non è stata trovata.",
     "execution not in state FAILED": "Esecuzione <code>{executionId}</code> non in stato FAILED",
@@ -1935,6 +1936,7 @@
     "usage": "Utilizzo",
     "use": "Usa",
     "use_dark_background": "Usa questa versione quando lavori su uno sfondo scuro per garantire che il nostro nome rimanga leggibile.",
+    "valid": "Valido",
     "validate": "Valida",
     "value": "Value",
     "variables": "Variabili",

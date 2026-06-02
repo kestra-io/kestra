@@ -1,16 +1,11 @@
 import {defineStore} from "pinia"
 import {useClient} from "@kestra-io/kestra-sdk"
-import * as AiApi from "@kestra-io/kestra-sdk/ai"
 import {AiGenerationType, aiGenerationTypes} from "../utils/constants"
 import {getUid} from "../utils/uid"
 import {apiUrl} from "override/utils/route"
 
 export const useAiStore = defineStore("ai", () => {
     const client = useClient()
-
-    async function fetchProviders() {
-        return await AiApi.providers()
-    }
 
     async function generate({
         userPrompt, 
@@ -53,5 +48,5 @@ export const useAiStore = defineStore("ai", () => {
         })
     }
 
-    return {fetchProviders, generate, generateFlow}
+    return {generate, generateFlow}
 })

@@ -50,23 +50,25 @@
 <style scoped lang="scss">
     .theme-picker {
         display: flex;
-        gap: 1rem;
+        gap: 0.5rem;
         flex-wrap: wrap;
 
         &__option.kel-button {
             padding: 0;
-            background: none;
-            border: none;
-            width: 7rem;
+            width: 9rem;
             height: auto;
             min-height: 0;
 
+            /* Strip ElButton's chrome on every interactive state.
+               Visual feedback is applied to .theme-picker__content below
+               to avoid Element Plus' internal pseudo-element conflicts. */
+            &,
             &:hover,
             &:focus,
             &:focus-visible,
             &:active {
                 background: none;
-                border-color: transparent;
+                border: none;
                 box-shadow: none;
                 outline: none;
             }
@@ -77,6 +79,18 @@
             flex-direction: column;
             gap: 0.5rem;
             width: 100%;
+            padding: 0.5rem;
+            border-radius: var(--ks-radius-base);
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        &__option:hover &__content {
+            background-color: var(--ks-bg-active);
+            box-shadow: inset 0 0 0 1px var(--ks-border-strong);
+        }
+
+        &__option:focus-visible &__content {
+            box-shadow: inset 0 0 0 2px var(--ks-border-focus);
         }
 
         &__preview {
@@ -126,6 +140,7 @@
         &__label {
             text-align: center;
             color: var(--ks-text-primary);
+            white-space: nowrap;
         }
 
         &__option--selected &__label {

@@ -33,13 +33,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Log in to GitHub Container Registry
+        if: ${{ inputs.dry-run != true }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.base
           push: ${{ inputs.dry-run != true }}
-          tags: kestra/kestra-base:latest
+          tags: |
+            kestra/kestra-base:latest
+            ghcr.io/kestra-io/kestra-base:latest
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
           cache-from: type=registry,ref=kestra/kestra-base:latest

@@ -693,6 +693,8 @@
       "title": "Kestraの新機能"
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
+    "file unavailable": "ファイルが利用できません",
+    "file unavailable description": "このファイルは利用できなくなりました — 削除されたか、有効期限が切れた可能性があります。",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",

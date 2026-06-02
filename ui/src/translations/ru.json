@@ -693,6 +693,8 @@
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
+    "file unavailable": "Файл недоступен",
+    "file unavailable description": "Этот файл больше недоступен — возможно, он был удален или срок его действия истек.",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
     "filter by log level": "Фильтр по уровню log",

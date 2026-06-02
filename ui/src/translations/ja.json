@@ -58,6 +58,7 @@
           "test": "テストYAMLを生成しています..."
         },
         "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
+        "select_provider": "プロバイダーを選択",
         "title": "AIエージェント"
       }
     },

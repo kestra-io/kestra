@@ -58,6 +58,7 @@
           "test": "Generando YAML de prueba para ti..."
         },
         "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra. Ejemplo de solicitud: Crear un flow que se ejecute todos los lunes a las 9 AM.",
+        "select_provider": "Seleccionar un proveedor",
         "title": "Agente de IA"
       }
     },

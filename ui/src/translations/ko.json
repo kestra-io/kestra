@@ -58,6 +58,7 @@
           "test": "테스트 YAML을 생성 중입니다..."
         },
         "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
+        "select_provider": "공급자 선택",
         "title": "AI 에이전트"
       }
     },

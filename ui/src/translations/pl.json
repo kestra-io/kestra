@@ -58,6 +58,7 @@
           "test": "Generowanie Test YAML dla Ciebie..."
         },
         "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
+        "select_provider": "Wybierz dostawcę",
         "title": "Agent AI"
       }
     },

@@ -58,6 +58,7 @@
           "test": "正在为您生成测试 YAML..."
         },
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
+        "select_provider": "选择提供商",
         "title": "AI代理"
       }
     },

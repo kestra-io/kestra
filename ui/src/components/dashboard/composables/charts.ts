@@ -269,3 +269,34 @@ export function getFormat(groupBy?: string) {
             return "MM.YYYY"
     }
 }
+
+export interface BarSeries {
+    label: string
+    data: number[]
+}
+
+export function groupStackedBars(
+    rawData: Record<string, any>[] | undefined,
+    column: string,
+    subColumns: string[],
+    aggKey: string,
+): {labels: string[]; datasets: BarSeries[]} {
+    const grouped: Record<string, Record<string, number>> = {}
+
+    ;(rawData ?? []).forEach((item) => {
+        const itemColumn = item[column] as string
+        const subKey = subColumns.map((col) => item[col]).join(", ")
+        ;(grouped[itemColumn] ??= {})
+        grouped[itemColumn][subKey] = (grouped[itemColumn][subKey] ?? 0) + item[aggKey]
+    })
+
+    const labels = [...new Set((rawData ?? []).map((item) => item[column] as string))]
+    const subKeys = [...new Set((rawData ?? []).map((item) => subColumns.map((col) => item[col]).join(", ")))]
+
+    const datasets = subKeys.map((subKey) => ({
+        label: subKey,
+        data: labels.map((label) => grouped[label]?.[subKey] ?? 0),
+    }))
+
+    return {labels, datasets}
+}

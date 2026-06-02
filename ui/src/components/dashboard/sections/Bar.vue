@@ -23,7 +23,7 @@
     import {ChartFeature, KsBar, TooltipType, durationUtils} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {extractState, getConsistentHEXColor} from "../composables/charts"
+    import {extractState, getConsistentHEXColor, groupStackedBars} from "../composables/charts"
     import {useTheme} from "../../../utils/utils"
     import {FilterObject} from "../../../utils/filters"
     import {useMiscStore} from "override/stores/misc"
@@ -51,40 +51,26 @@
         const column = chartOptions?.column ?? ""
         const columns = data?.columns ?? {}
 
-        const validColumns = Object.entries(columns)
+        const subColumns = Object.entries(columns)
             .filter(([_, value]) => !(value as Record<string, any>).agg)
             .filter(c => c[0] !== column)
             .map(([key]) => key)
 
-        const grouped: Record<string, Record<string, number>> = {}
+        const {labels, datasets} = groupStackedBars(
+            generated.value?.results as Record<string, any>[] | undefined,
+            column,
+            subColumns,
+            aggregator[0][0],
+        )
 
-        const rawData = generated.value?.results as Record<string, any>[] | undefined
-        rawData?.forEach((item: Record<string, any>) => {
-            const key = validColumns.map((col) => item[col]).join(", ")
-            const itemColumn = item[column] as string
-
-            if (!grouped[itemColumn]) {
-                grouped[itemColumn] = {}
-            }
-            if (!grouped[itemColumn][key]) {
-                grouped[itemColumn][key] = 0
-            }
-
-            grouped[itemColumn][key] += item[aggregator[0][0]]
-        })
-
-        const xLabels = [...new Set(rawData?.map((item: Record<string, any>) => item[column] as string))]
-
-        const datasets = xLabels.flatMap((xLabel) => {
-            return Object.entries(grouped[xLabel as string] ?? {}).map(subSectionsEntry => ({
-                label: subSectionsEntry[0],
-                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
-                backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
-                tooltipText: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? durationUtils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
-            }))
-        })
-
-        return {labels: xLabels, datasets}
+        return {
+            labels,
+            datasets: datasets.map((ds) => ({
+                ...ds,
+                backgroundColor: getConsistentHEXColor(theme.value, ds.label),
+                tooltipText: `(${ds.label}): ${aggregator[0][0]}`,
+            })),
+        }
     })
 
     const categories = computed(() => parsedData.value.labels)

@@ -620,6 +620,7 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
+    "execution id": "निष्पादन Id",
     "execution labels": "निष्पादन labels",
     "execution not found": "<code>{executionId}</code> निष्पादन नहीं मिला।",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",

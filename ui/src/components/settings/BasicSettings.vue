@@ -15,7 +15,7 @@
                 :label="$t('settings.blocks.configuration.fields.log_level')"
                 :description="$t('settings.blocks.configuration.descriptions.log_level')"
             >
-                <LogLevelSelector fit clearable :value="settings.defaultLogLevel" @update:model-value="onLogLevel" />
+                <LogLevelSelector fit :value="settings.defaultLogLevel" @update:model-value="onLogLevel" />
             </SettingRow>
 
             <SettingRow

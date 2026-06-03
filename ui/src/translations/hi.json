@@ -1116,6 +1116,7 @@
       "title": "स्वचालन शुरू करें साथ में"
     },
     "no_code": {
+      "add_field": "{field} जोड़ें",
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "clearSelection": "चयन साफ़ करें",

@@ -1,4 +1,4 @@
-package io.kestra.repository.mysql.migration;
+package io.kestra.repository.h2.migration;
 
 import javax.sql.DataSource;
 
@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * MySQL queue Flyway upgrade migration script.
+ * H2 queue Flyway upgrade migration script.
  *
  * <p>
  * Recreates the {@code queues} table with the Queue 2.0 schema (INT {@code type} column
@@ -23,15 +23,15 @@ import jakarta.inject.Singleton;
  * {@code "0-init-queue"} migration). The SQL is idempotent so it is safe to execute in any environment.
  */
 @Singleton
-@Requires(property = "kestra.queue.type", value = "mysql")
-public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
+@Requires(property = "kestra.queue.type", pattern = "h2|memory")
+public class V2_0_05QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0-queue";
+    private static final String SCRIPT_ID = "2.0.05-queue";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0QueueUpgradeMigration(final DataSource dataSource) {
+    public V2_0_05QueueUpgradeMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -42,16 +42,16 @@ public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String description() {
-        return "MySQL queue upgrade: recreate queues table with Queue 2.0 schema on Flyway-managed databases";
+        return "H2 queue upgrade: recreate queues table with Queue 2.0 schema on Flyway-managed databases";
     }
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-queue-mysql.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.05-queue-h2.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/upgrade-v2.0-queue-mysql.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.05-queue-h2.sql");
     }
 }

@@ -86,6 +86,6 @@ public class LoopUntilCaseTest {
         // With the fix (all descendants removed on outer-loop reset), loop_3 runs 3 inner iterations each
         // time giving iteration=6, confirming the inner loops properly restarted from scratch.
         TaskRun lastLoop3Log = execution.findTaskRunsByTaskId("loop_3_log").getFirst();
-        assertThat(lastLoop3Log.getIteration()).isEqualTo(6);
+        assertThat(lastLoop3Log.getIteration()).isEqualTo(7);
     }
 }

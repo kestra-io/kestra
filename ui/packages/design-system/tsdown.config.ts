@@ -1,7 +1,7 @@
 import path from "node:path"
 import {readFileSync} from "node:fs"
 import {defineConfig} from "tsdown"
-import {componentEntries} from "./componentEntries"
+import {componentEntries} from "./componentEntries.ts"
 
 const svgInlinePlugin = {
     name: "svg-inline",
@@ -17,10 +17,7 @@ const svgInlinePlugin = {
 
 export default defineConfig({
     platform: "browser",
-    exports: {
-        enabled: "ci-only",
-        devExports: false,
-    },
+    exports: true,
     plugins: [svgInlinePlugin],
     fromVite: true,
     dts: {vue: true, tsconfig: "./tsconfig.app.json"},

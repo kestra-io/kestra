@@ -16,7 +16,7 @@ function findVueFiles(dir: string): string[] {
 const componentsDir = path.resolve(import.meta.dirname, "src/components")
 export const componentEntries = Object.fromEntries(
     findVueFiles(componentsDir).map(file => {
-        const key = path.relative(path.resolve(import.meta.dirname, "src"), file).replace(/\.vue$/, "")
+        const key = path.relative(path.resolve(import.meta.dirname, "src"), file)
         return [key, "./" + path.relative(import.meta.dirname, file).replace(/\\/g, "/")]
     }),
 )

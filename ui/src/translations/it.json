@@ -1116,6 +1116,7 @@
       "title": "Inizia ad automatizzare con"
     },
     "no_code": {
+      "add_field": "Aggiungi {field}",
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
       "clearSelection": "Cancella selezione",

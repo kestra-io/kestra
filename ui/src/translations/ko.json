@@ -1116,6 +1116,7 @@
       "title": "자동화를 시작하세요"
     },
     "no_code": {
+      "add_field": "{field} 추가",
       "adding": "+ {what} 추가",
       "adding_default": "+ 새 value 추가",
       "clearSelection": "선택 해제",

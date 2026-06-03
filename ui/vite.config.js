@@ -24,7 +24,7 @@ import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
-import {componentEntries} from "./packages/design-system/tsdown.config.js"
+import {componentEntries} from "./packages/design-system/componentEntries.js"
 
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
@@ -154,8 +154,6 @@ export default defineConfig(({mode}) => {
         optimizeDeps: {
             entries: [
                 "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
-                "packages/design-system/src/**/*.{ts,vue}",
-                "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [
                 "lodash",

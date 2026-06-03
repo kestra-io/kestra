@@ -167,7 +167,9 @@
     "lint:fix": "oxlint --fix && eslint --fix",
     "lint:test": "oxlint && eslint",
     "types:test": "vue-tsc --noEmit",
-    "generate:palette": "node scripts/generate-palette.mjs"
+    "generate:palette": "node scripts/generate-palette.mjs",
+    "generate:dev-stubs": "node scripts/generate-dev-stubs.mjs",
+    "prepare": "node scripts/generate-dev-stubs.mjs"
   },
   "peerDependencies": {
     "@vueuse/core": ">=11.0.0",

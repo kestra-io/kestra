@@ -90,11 +90,8 @@
 
         &.is-checked {
             background-color: var(--ks-bg-active);
+            border: 1px solid var(--ks-border-focus);
             color: var(--ks-text-primary);
-        }
-
-        &.is-checked:hover:not(.is-disabled) {
-            border-color: var(--ks-border-focus);
         }
 
         &.is-disabled {

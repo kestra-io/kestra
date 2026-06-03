@@ -22,15 +22,15 @@
                                 :value="item.value"
                                 class="revision-option"
                             >
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
-                                    <TrashCanOutline
-                                        @mousedown.stop.prevent
-                                        @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
-                                    />
                                 </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
                             </KsOption>
                         </KsSelect>
                         <KsButtonGroup>
@@ -60,15 +60,15 @@
                                 :value="item.value"
                                 class="revision-option"
                             >
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
-                                    <TrashCanOutline
-                                        @mousedown.stop.prevent
-                                        @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
-                                    />
                                 </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
                             </KsOption>
                         </KsSelect>
                         <KsButtonGroup>
@@ -393,8 +393,15 @@
     }
 
     .revision-option {
-        padding-right: 0.5rem;
         min-width: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .revision-label {
+            display: flex;
+            gap: var(--ks-spacing-2);
+        }
     }
 
     .revision-number {

@@ -8,6 +8,7 @@
                 :currentPage="urlPage"
                 :pageSize="urlSize"
                 @ready="ready = true"
+                @loaded="onLoaded"
                 @page-changed="onPageChanged"
                 :total="logsStore.total"
             >
@@ -282,8 +283,21 @@
     const urlPage = computed(() => Number(route.query[pageKey]) || 1)
     const urlSize = computed(() => Number(route.query[sizeKey]) || 25)
 
+    const pinToBottom = ref(false)
+
     const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        pinToBottom.value = !props.embed
         router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})
+    }
+
+    const onLoaded = () => {
+        if (!pinToBottom.value) return
+        pinToBottom.value = false
+        const main = document.querySelector("main")
+        if (!main) return
+        requestAnimationFrame(() => {
+            main.scrollTop = main.scrollHeight
+        })
     }
 
     const filterQueryKey = computed(() => {

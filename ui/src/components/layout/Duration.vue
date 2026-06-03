@@ -13,88 +13,96 @@
     </span>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance} from "vue"
     import {State, durationUtils} from "@kestra-io/design-system"
 
-    const ts = date => new Date(date).getTime()
-
-    export default {
-        props: {
-            histories: {
-                type: Array,
-                default: undefined,
-            },
-        },
-        watch: {
-            histories(newValue, oldValue) {
-                if (oldValue.length !== newValue.length) {
-                    this.paint()
-                }
-            },
-        },
-        data () {
-            return {
-                duration: "",
-                refreshHandler: undefined,
-            }
-        },
-        mounted() {
-            this.paint()
-        },
-        computed: {
-            start() {
-                return this.histories && this.histories.length && ts(this.histories[0].date)
-            },
-
-            lastStep() {
-                return this.histories[this.histories.length - 1]
-            },
-        },
-        methods: {
-            paint() {
-                if (!this.refreshHandler) {
-                    this.refreshHandler = setInterval(() => {
-                        this.computeDuration()
-                        if (this.histories && !State.isRunning(this.lastStep.state)) {
-                            this.cancel()
-                        }
-                    }, 100)
-                }
-            },
-            cancel() {
-                if (this.refreshHandler) {
-                    clearInterval(this.refreshHandler)
-                    this.refreshHandler = undefined
-                }
-            },
-            delta() {
-                return this.stop() - this.start
-            },
-            stop() {
-                if (!this.histories || State.isRunning(this.lastStep.state)) {
-                    return +new Date()
-                }
-                return ts(this.lastStep.date)
-            },
-            computeDuration() {
-                this.duration = durationUtils.humanDuration(this.delta() / 1000)
-            },
-            squareClass(state) {
-                let statusVarname = state.toLowerCase()
-
-                // Minor hack to reuse created color for submitted status.
-                // See https://github.com/kestra-io/kestra/issues/14876 for more details.
-                if(statusVarname === "submitted") statusVarname = "created"
-
-                return {
-                    backgroundColor: `var(--ks-status-${statusVarname})`,
-                }
-            },
-        },
-        beforeUnmount() {
-            this.cancel()
-        },
+    interface HistoryEntry {
+        date: string | number
+        state: string
     }
+
+    const props = withDefaults(defineProps<{
+        histories?: HistoryEntry[]
+    }>(), {
+        histories: undefined,
+    })
+
+    const instance = getCurrentInstance()
+    // FIXME: any - $filters is a global property registered via Vue plugin
+    const $filters = instance?.appContext.config.globalProperties.$filters as any // FIXME: any
+
+    const ts = (date: string | number) => new Date(date).getTime()
+
+    const duration = ref("")
+    let refreshHandler: ReturnType<typeof setInterval> | undefined = undefined
+
+    const start = computed(() =>
+        props.histories && props.histories.length ? ts(props.histories[0].date) : 0,
+    )
+
+    const lastStep = computed(() =>
+        props.histories ? props.histories[props.histories.length - 1] : undefined,
+    )
+
+    function stop(): number {
+        if (!props.histories || !lastStep.value || State.isRunning(lastStep.value.state)) {
+            return +new Date()
+        }
+        return ts(lastStep.value.date)
+    }
+
+    function delta(): number {
+        return stop() - start.value
+    }
+
+    function computeDuration() {
+        duration.value = durationUtils.humanDuration(delta() / 1000)
+    }
+
+    function cancel() {
+        if (refreshHandler !== undefined) {
+            clearInterval(refreshHandler)
+            refreshHandler = undefined
+        }
+    }
+
+    function paint() {
+        if (!refreshHandler) {
+            refreshHandler = setInterval(() => {
+                computeDuration()
+                if (props.histories && lastStep.value && !State.isRunning(lastStep.value.state)) {
+                    cancel()
+                }
+            }, 100)
+        }
+    }
+
+    function squareClass(state: string) {
+        let statusVarname = state.toLowerCase()
+
+        // Minor hack to reuse created color for submitted status.
+        // See https://github.com/kestra-io/kestra/issues/14876 for more details.
+        if (statusVarname === "submitted") statusVarname = "created"
+
+        return {
+            backgroundColor: `var(--ks-status-${statusVarname})`,
+        }
+    }
+
+    watch(() => props.histories, (newValue, oldValue) => {
+        if ((oldValue?.length ?? 0) !== (newValue?.length ?? 0)) {
+            paint()
+        }
+    })
+
+    onMounted(() => {
+        paint()
+    })
+
+    onBeforeUnmount(() => {
+        cancel()
+    })
 </script>
 
 <style lang="scss">

@@ -14,7 +14,7 @@
                 @click="emit(EVENTS.EXPAND, {id})"
             >
                 <KsTooltip :content="$t('expand')">
-                    <ArrowExpand class="button-icon" alt="Expand task" />
+                    <UnfoldMoreHorizontal class="button-icon" alt="Expand task" />
                 </KsTooltip>
             </span>
             <slot name="badge-button-after" />
@@ -26,7 +26,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {Handle, Position} from "@vue-flow/core"
-    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import {KsTooltip} from "@kestra-io/design-system"
     import {EVENTS} from "../utils/constants"
@@ -72,6 +72,6 @@
 
     .button-icon {
         font-size: 0.75rem;
+        transform: rotate(45deg);
     }
-
 </style>

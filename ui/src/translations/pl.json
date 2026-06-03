@@ -31,6 +31,7 @@
     "add at position": "Dodaj {position} <code>{task}</code>",
     "add error handler": "Dodaj handler błędów",
     "add flow": "Dodaj flow",
+    "add label": "Dodaj label",
     "add task": "Dodaj task",
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "add_new_item": "Dodaj nowy element",
@@ -57,6 +58,7 @@
           "test": "Generowanie Test YAML dla Ciebie..."
         },
         "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
+        "select_provider": "Wybierz dostawcę",
         "title": "Agent AI"
       }
     },
@@ -83,6 +85,7 @@
     "before": "przed",
     "behavior": "Zachowanie",
     "blueprints": {
+      "all": "Wszystkie",
       "apps": "Szablony aplikacji",
       "community": "Społeczność",
       "create": "Utwórz blueprint",
@@ -102,6 +105,7 @@
     },
     "bookmark": "Zakładki",
     "bulk action async warning": "To może zająć kilka chwil.",
+    "bulk actions": "Akcje zbiorcze",
     "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> wykonanie(a)?",
     "bulk delete backfills": "Usuń {count} backfill",
@@ -550,6 +554,10 @@
         "content": "Funkcja Kill Switch zapewnia mechanizm w interfejsie użytkownika do zatrzymywania problematycznych wykonania. Zastępuje polecenia CLI <code>--skip-executions</code> i <code>--skip-flows</code> kompleksowym interfejsem administracyjnym.",
         "title": "Nie masz jeszcze Kill Switches!"
       },
+      "mcpToolFlows": {
+        "content": "Udostępnij flow jako narzędzie MCP, dodając do niego <code>McpToolTrigger</code>. Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> w naszej dokumentacji.",
+        "title": "Na tym serwerze nie zarejestrowano jeszcze żadnych flow narzędzi."
+      },
       "panels": {
         "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Namespace Files, Blueprints, Context) dla powiązanych funkcji.",
         "title": "Obecnie żadne panele nie są otwarte."
@@ -692,6 +700,8 @@
       "title": "Co nowego w Kestra"
     },
     "file preview truncated": "Wyświetlana zawartość została skrócona",
+    "file unavailable": "Plik niedostępny",
+    "file unavailable description": "Ten plik nie jest już dostępny — mógł zostać usunięty lub wygasł.",
     "fileTypeNotAllowed": "Niedozwolony typ pliku. Akceptowane typy: {types}",
     "files": "Pliki",
     "filter by log level": "Filtruj według poziomu log",
@@ -959,11 +969,12 @@
       "tab_tool_flows_placeholder": "Zarządzanie flow narzędziami wkrótce dostępne.",
       "tools": {
         "annotations": "Adnotacje",
+        "create_tool_flow": "Utwórz flow narzędzia",
         "description": "Opis",
         "destructive": "Destrukcyjny",
         "flow": "flow",
         "idempotent": "Idempotentny",
-        "no_tools": "Na tym serwerze nie zarejestrowano jeszcze żadnych tool flows. Dodaj `McpToolTrigger` do flow, aby udostępnić go tutaj.",
+        "no_tools": "Żadne flow narzędzi nie pasują do Twojego wyszukiwania.",
         "open_world": "Open world",
         "read_only": "Tylko do odczytu",
         "return_direct": "Zwrot bezpośredni",
@@ -984,6 +995,7 @@
     "modify inputs": "Modyfikuj inputy",
     "modify_inputs": "Modyfikuj inputy",
     "monogram": "Monogram",
+    "more actions": "Więcej akcji",
     "more_actions": "Więcej akcji",
     "multi_panel_editor": {
       "close_all_panels": "Zamknij wszystkie panele",
@@ -1104,6 +1116,7 @@
       "title": "Zacznij automatyzację z"
     },
     "no_code": {
+      "add_field": "Dodaj {field}",
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "clearSelection": "Wyczyść zaznaczenie",
@@ -1363,6 +1376,7 @@
       "next": "Następna strona",
       "previous": "Poprzednia strona"
     },
+    "panel actions": "Akcje panelu",
     "parent execution": "Wykonanie rodzica",
     "password": "Hasło",
     "password empty constraint": "Nieprawidłowa nazwa użytkownika lub hasło",
@@ -1389,6 +1403,7 @@
       "toggle": "Plac zabaw",
       "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
+    "playground actions": "Akcje w Playground",
     "plugin defaults exported": "Domyślne ustawienia pluginu wyeksportowane",
     "plugin defaults imported": "Domyślne ustawienia wtyczki zaimportowane",
     "plugin defaults not imported": "Niektóre domyślne ustawienia pluginów nie mogły zostać zaimportowane",
@@ -1500,6 +1515,8 @@
     "relative": "Względny",
     "relative end date": "Względna data zakończenia",
     "relative start date": "Względna data rozpoczęcia",
+    "remove label": "Usuń label",
+    "remove this item": "Usuń ten element",
     "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?",
     "replay": "Odtwórz",
     "replay confirm": "Czy na pewno chcesz odtworzyć to wykonanie <code>{id}</code> i utworzyć nowe?",
@@ -1825,6 +1842,7 @@
     "to": "Do",
     "to toggle": "przełącz",
     "toggle fullscreen": "Przełącz pełny ekran",
+    "toggle menu": "Przełącz menu",
     "toggle output": "Przełącz wyjścia",
     "toggle output display": "Przełącz wyświetlanie wyjścia",
     "toggle periodic refresh each x seconds": "Przełącz okresowe odświeżanie co {interval} sekund",
@@ -1940,6 +1958,7 @@
     "value": "Wartość",
     "variables": "Zmienne",
     "version": "Wersja",
+    "view metrics": "Zobacz metryki",
     "warning": "Ostrzeżenie",
     "warning detected": "Wykryto ostrzeżenie(a)",
     "warning flow with triggers": "Ten flow zawiera triggery i ręczne wykonanie zakończy się niepowodzeniem, jeśli ten flow zależy od wyrażeń trigger.",

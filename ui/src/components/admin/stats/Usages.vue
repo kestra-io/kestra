@@ -15,7 +15,7 @@
                     {{ item.value }}
                 </KsText>
                 <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
-                    <KsButton :icon="TextSearchVariant" link />
+                    <KsButton :icon="TextSearchVariant" link :tooltip="$t('search')" />
                 </router-link>
             </div>
             <slot name="additional-usages" />

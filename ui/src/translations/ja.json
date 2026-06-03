@@ -31,6 +31,7 @@
     "add at position": "{position}に<code>{task}</code>を追加",
     "add error handler": "エラーハンドラを追加",
     "add flow": "Flowを追加",
+    "add label": "ラベルを追加",
     "add task": "taskを追加",
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "add_new_item": "新しいアイテムを追加",
@@ -57,6 +58,7 @@
           "test": "テストYAMLを生成しています..."
         },
         "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
+        "select_provider": "プロバイダーを選択",
         "title": "AIエージェント"
       }
     },
@@ -83,6 +85,7 @@
     "before": "前",
     "behavior": "動作",
     "blueprints": {
+      "all": "すべて",
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",
       "create": "ブループリントを作成",
@@ -102,6 +105,7 @@
     },
     "bookmark": "ブックマーク",
     "bulk action async warning": "少々お待ちください。",
+    "bulk actions": "一括操作",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",
@@ -550,6 +554,10 @@
         "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
         "title": "まだKill Switchがありません！"
       },
+      "mcpToolFlows": {
+        "content": "<code>McpToolTrigger</code>を追加して、flowをMCPツールとして公開します。<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "title": "このサーバーにはまだツールflowが登録されていません。"
+      },
       "panels": {
         "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
         "title": "現在、パネルは開いていません。"
@@ -692,6 +700,8 @@
       "title": "Kestraの新機能"
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
+    "file unavailable": "ファイルが利用できません",
+    "file unavailable description": "このファイルは利用できなくなりました — 削除されたか、有効期限が切れた可能性があります。",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
@@ -959,11 +969,12 @@
       "tab_tool_flows_placeholder": "ツールフロー管理は近日公開予定です。",
       "tools": {
         "annotations": "アノテーション",
+        "create_tool_flow": "ツールフローを作成",
         "description": "説明",
         "destructive": "破壊的",
         "flow": "flow",
         "idempotent": "冪等",
-        "no_tools": "このサーバーにはまだtool flowが登録されていません。flowに`McpToolTrigger`を追加してここで公開してください。",
+        "no_tools": "検索に一致するツールフローはありません。",
         "open_world": "Open world",
         "read_only": "読み取り専用",
         "return_direct": "直接返却",
@@ -984,6 +995,7 @@
     "modify inputs": "入力を変更",
     "modify_inputs": "入力を変更",
     "monogram": "モノグラム",
+    "more actions": "その他のアクション",
     "more_actions": "その他のアクション",
     "multi_panel_editor": {
       "close_all_panels": "すべてのパネルを閉じる",
@@ -1104,6 +1116,7 @@
       "title": "自動化を開始"
     },
     "no_code": {
+      "add_field": "{field}を追加",
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "clearSelection": "選択をクリア",
@@ -1363,6 +1376,7 @@
       "next": "次のページ",
       "previous": "前のページ"
     },
+    "panel actions": "パネルアクション",
     "parent execution": "親実行",
     "password": "パスワード",
     "password empty constraint": "ユーザー名またはパスワードが間違っています",
@@ -1389,6 +1403,7 @@
       "toggle": "プレイグラウンド",
       "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
+    "playground actions": "プレイグラウンドアクション",
     "plugin defaults exported": "プラグインのデフォルトがエクスポートされました",
     "plugin defaults imported": "プラグインのデフォルトがインポートされました",
     "plugin defaults not imported": "一部のプラグインデフォルトをインポートできませんでした",
@@ -1500,6 +1515,8 @@
     "relative": "相対",
     "relative end date": "相対終了日",
     "relative start date": "相対開始日",
+    "remove label": "ラベルを削除",
+    "remove this item": "このアイテムを削除",
     "remove_bookmark": "このブックマークを削除してもよろしいですか？",
     "replay": "リプレイ",
     "replay confirm": "この実行<code>{id}</code>をリプレイして新しいものを作成してもよろしいですか？",
@@ -1825,6 +1842,7 @@
     "to": "まで",
     "to toggle": "切り替える",
     "toggle fullscreen": "フルスクリーンを切り替え",
+    "toggle menu": "メニューを切り替え",
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
     "toggle periodic refresh each x seconds": "{interval}秒ごとに定期的な更新を切り替える",
@@ -1940,6 +1958,7 @@
     "value": "Value",
     "variables": "変数",
     "version": "バージョン",
+    "view metrics": "メトリクスを表示",
     "warning": "警告",
     "warning detected": "警告が検出されました",
     "warning flow with triggers": "このflowにはtriggersが含まれており、trigger expressionsに依存する場合、手動実行は失敗します。",

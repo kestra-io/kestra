@@ -34,9 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -67,7 +64,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.base
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ inputs.dry-run != true }}
           tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
           labels: ${{ steps.meta.outputs.labels }}
@@ -91,9 +88,6 @@ jobs:
     if: ${{ inputs.dry-run != true }}
     steps:
       - uses: actions/checkout@v6
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -125,7 +119,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.base.with-plugins
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ inputs.dry-run != true }}
           tags: ghcr.io/kestra-io/kestra-base:latest
           labels: ${{ steps.meta.outputs.labels }}

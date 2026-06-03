@@ -37,29 +37,25 @@
                 :state="state"
             />
 
-            <template v-if="data.node.task">
-                <button v-if="playgroundEnabled && playgroundReadyToStart" type="button" class="playground-button" @click="emit(EVENTS.RUN_TASK, {task: data.node.task})">
-                    <KsTooltip style="display: flex;" :content="$t('run task in playground')">
-                        <PlayIcon class="button-play-icon" :alt="$t('run task in playground')" />
-                    </KsTooltip>
-                </button>
-                <div
-                    v-else-if="state"
-                    class="playground-button"
-                    :style="{
-                        color: `var(--ks-content-${state?.toLowerCase()})`,
-                        backgroundColor: `var(--ks-background-${state?.toLowerCase()})`
-                    }"
-                >
-                    <KsTooltip style="display: flex;" :content="iconAlt ? $t(iconAlt) : undefined">
-                        <RotatingDots v-if="state === State.RUNNING" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <CheckCircleOutline v-else-if="state === State.SUCCESS" :style="{color: 'var(--ks-status-success)'}" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <AlertIcon v-else-if="state === State.WARNING" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <SkipForwardIcon v-else-if="state === State.SKIPPED" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <CloseCircleOutline v-else-if="state === State.FAILED" :style="{color: 'var(--ks-status-error)'}" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                    </KsTooltip>
-                </div>
-            </template>
+            <button
+                v-if="data.node.task && playgroundEnabled && playgroundReadyToStart"
+                type="button"
+                class="playground-button"
+                @click="emit(EVENTS.RUN_TASK, {task: data.node.task})"
+            >
+                <KsTooltip style="display: flex;" :content="$t('run task in playground')">
+                    <PlayIcon class="button-play-icon" :alt="$t('run task in playground')" />
+                </KsTooltip>
+            </button>
+        </template>
+        <template #title-status>
+            <span v-if="statusStyle" class="status-tag" :style="{color: `var(${statusStyle.textVar})`}">
+                <component :is="statusStyle.icon" class="status-tag__icon" />
+                <span v-if="statusStyle.label" class="status-tag__text">{{ statusStyle.label }}</span>
+                <span v-else class="status-tag__text">
+                    <Duration :histories="histories" :interval="100" />
+                </span>
+            </span>
         </template>
         <template #title-actions>
             <NodeMenu :actions="actions" />
@@ -70,12 +66,15 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
+    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
     import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import ExecutionInformations from "../misc/ExecutionInformations.vue"
+    import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
+    import {getStatusStyle} from "../utils/status"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {
@@ -94,11 +93,6 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
-    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
-    import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
-    import AlertIcon from "vue-material-design-icons/Alert.vue"
-    import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue"
-    import RotatingDots from "../assets/icons/RotatingDots.vue"
     
 
     interface TaskType {
@@ -139,6 +133,8 @@
         taskId: string;
         state: {
             current: [string, string];
+            duration?: string;
+            histories?: {date: string; state: string}[];
         };
         outputs?: {
             executionId?: string;
@@ -263,6 +259,17 @@
         "execution-no-taskrun":
             Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
     }))
+
+    const statusStyle = computed(() => getStatusStyle(state.value))
+
+    const histories = computed(() => {
+        const run = taskRuns.value?.[0]
+        if (!run?.state?.histories?.length) return []
+        return run.state.histories.map((h: {date: string; state: string}) => ({
+            date: moment(h.date),
+            state: h.state,
+        }))
+    })
 
     const expandData = computed<ExpandData>(() => ({
         id: props.id,
@@ -393,24 +400,6 @@
         }
     }
 
-    const iconAlt = computed(() => {
-        if (state.value === State.RUNNING) {
-            return "task is running"
-        }
-        if (state.value === State.SUCCESS) {
-            return "task was successful"
-        }
-        if (state.value === State.WARNING) {
-            return "task sent a warning"
-        }
-        if (state.value === State.SKIPPED) {
-            return "task was skipped"
-        }
-        if (state.value === State.FAILED) {
-            return "task failed"
-        }
-        return undefined
-    })
 </script>
 
 <style lang="scss" scoped>
@@ -432,6 +421,23 @@
 button.playground-button {
     color: var(--ks-white);
     background-color: var(--ks-playground-bg-color);
+}
+
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: var(--ks-radius-xs);
+    background-color: var(--ks-bg-tag);
+    font-size: 14px; /* drives the 14px status icon (1em) */
+    line-height: 1;
+}
+
+.status-tag__text {
+    font-size: var(--ks-font-size-2xs);
+    white-space: nowrap;
+    font-family: var(--ks-font-family-mono);
 }
 
 .view-details-action {

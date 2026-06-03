@@ -50,8 +50,9 @@
 <style lang="scss" scoped>
     .collapsed-cluster-node {
         display: flex;
+        align-items: center;
         width: 150px;
-        height: 44px;
+        height: 56px;
         padding: 8px;
     }
 

@@ -215,6 +215,10 @@
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
                 : {width: getNodeWidth(node), height: baseHeight}
 
+            if (props.execution && (VueFlowUtils.isTaskNode(node) || VueFlowUtils.isTriggerNode(node) || VueFlowUtils.isCustomNode(node))) {
+                dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
+            }
+
             if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
                 return {...dimensions, height: baseHeight}
             }

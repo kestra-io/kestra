@@ -1,13 +1,13 @@
 <template>
     <div
         class="node-wrapper"
-        :style="{borderColor}"
-        :class="{...classes, 'running-border-animation': state === 'RUNNING'}"
+        :style="nodeStyle"
+        :class="[classes, {'node-wrapper--execution': isExecution}]"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
     >
         <div class="main-content">
-            <div class="icon">
+            <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
                 <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" theme="light" variable="--ks-topology-icon-color" :icons="icons" />
             </div>
             <div class="node-content">
@@ -17,6 +17,7 @@
                             {{ displayTitle }}
                         </KsTooltip>
                     </div>
+                    <slot name="title-status" />
                     <slot name="title-actions" />
                 </div>
                 <slot name="content" />
@@ -27,10 +28,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue"
+    import {computed, inject} from "vue"
     import TaskIcon from "../components/TaskIcon.vue"
     import {KsTooltip} from "@kestra-io/design-system"
     import {EVENTS} from "../utils/constants"
+    import {getStatusStyle} from "../utils/status"
+    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
 
@@ -72,10 +75,19 @@
         emit(EVENTS.MOUSE_LEAVE)
     }
 
-    const borderColor = computed(() => {
-        if (!props.state) return undefined
-        const status = props.state.toLowerCase()
-        return status === "failed" ? "var(--ks-status-error)" : `var(--ks-border-${status})`
+    const execution = inject(EXECUTION_INJECTION_KEY, undefined)
+    const isExecution = computed(() => Boolean(execution?.value))
+
+    const statusStyle = computed(() => getStatusStyle(props.state))
+
+    // Per-status node tint/border (Figma). Undefined falls back to the CSS defaults.
+    const nodeStyle = computed(() => {
+        const style = statusStyle.value
+        if (!style) return undefined
+        return {
+            backgroundColor: style.bg,
+            borderColor: style.border,
+        }
     })
 
     const node = computed(() => {
@@ -128,10 +140,15 @@
 
         .main-content {
             display: flex;
-            padding: 8px;
+            padding: var(--ks-spacing-2);
+            padding-right: var(--ks-spacing-4);
             align-items: center;
-            width: 184px;
-            height: 44px;
+            width: 218px;
+            height: 56px;
+        }
+
+        &--execution .main-content {
+            width: 273px;
         }
 
         &.execution-no-taskrun, &.disabled {
@@ -147,14 +164,18 @@
 
         .icon {
             border-radius: var(--ks-radius-sm);
-            margin: var(--ks-spacing-1);
-            width: 25px;
-            height: 25px;
-            min-width: 25px;
-            min-height: 25px;
-            padding: 2px;
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            min-height: 40px;
+            padding: 3px;
+            box-sizing: border-box;
             border: 1px solid var(--ks-border-default);
             background-color: var(--ks-topology-icon-bg);
+
+            &--dimmed {
+                opacity: 0.2;
+            }
         }
     }
 
@@ -163,10 +184,14 @@
         flex-direction: column;
         justify-content: center;
         margin-left: 0.7rem;
+        flex: 1;
+        min-width: 0;
 
         > .node-title {
             display: flex;
-            width: 125px;
+            align-items: center;
+            min-width: 0;
+            gap: var(--ks-spacing-1);
         }
     }
 
@@ -190,43 +215,4 @@
         flex-grow: 1;
     }
 
-    .status-div {
-        width: 8px;
-        height: 100%;
-        position: absolute;
-        left: -0.04438rem;
-        border-radius: 0.5rem 0 0 0.5rem;
-    }
-
-    .running-border-animation {
-        border: none !important;
-        &:before {
-            position: absolute;
-            content: '';
-            z-index: -1;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            bottom: -1px;
-            border-radius: .55rem;
-            background: conic-gradient(from calc(var(--border-angle-running)) at 50% 50%,
-                var(--ks-status-border-running) 0%,
-                var(--ks-status-border-running) 10%,
-                var(--ks-border-primary) 40%,
-                var(--ks-border-primary) 60%,
-                var(--ks-status-border-running) 90%,
-                var(--ks-status-border-running) 100%);
-            animation: running-border 3s linear infinite;
-        }
-    }
-
-    @keyframes running-border {
-        to { --border-angle-running: 1turn; }
-    }
-
-    @property --border-angle-running {
-        syntax: "<angle>";
-        inherits: true;
-        initial-value: 0turn;
-    }
 </style>

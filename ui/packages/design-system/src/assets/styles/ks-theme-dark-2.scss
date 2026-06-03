@@ -11,6 +11,23 @@ html.dark-2 {
     #{--ks-Artwork-border}: $base-blue-200;
     #{--ks-Artwork-fill}: $base-primary-300;
 
+    /* topology */
+    #{--ks-topology-bg-errors}: $base-red-1000;
+    #{--ks-topology-bg-flowable-task}: $base-blue-1000;
+    #{--ks-topology-bg-running}: $base-primary-1000;
+    #{--ks-topology-bg-subflow}: $base-primary-1000;
+    #{--ks-topology-bg-triggers}: $base-green-1000;
+    #{--ks-topology-border-errors}: $base-red-400;
+    #{--ks-topology-border-flowable-task}: $base-blue-500;
+    #{--ks-topology-border-running}: $base-primary-300;
+    #{--ks-topology-border-subflow}: $base-primary-300;
+    #{--ks-topology-border-triggers}: $base-green-500;
+    #{--ks-topology-btn-errors}: $base-red-400;
+    #{--ks-topology-btn-flowable-task}: $base-blue-500;
+    #{--ks-topology-btn-running}: $base-primary-300;
+    #{--ks-topology-btn-subflow}: $base-primary-300;
+    #{--ks-topology-btn-triggers}: $base-green-500;
+
     /* bg */
     #{--ks-bg-active}: $base-gray-neutral-700;
     #{--ks-bg-badge}: $base-gray-neutral-800;

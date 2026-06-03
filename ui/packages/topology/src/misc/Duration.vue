@@ -22,12 +22,15 @@
     import {State, KsTooltip} from "@kestra-io/design-system"
     import * as Utils from "../utils/utils"
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         histories: {
             date: Moment;
             state: string;
         }[];
-    }>()
+        interval?: number;
+    }>(), {
+        interval: 10,
+    })
 
     watch(
         () => props.histories,
@@ -64,7 +67,7 @@
                 if (lastStep.value && !State.isRunning(lastStep.value.state)) {
                     cancel()
                 }
-            }, 10)
+            }, props.interval)
         }
     }
 

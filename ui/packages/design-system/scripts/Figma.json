@@ -345,96 +345,6 @@
             "rootAlias": "primary/500"
           },
           {
-            "name": "ks/topology-bg-errors",
-            "value": "#fff5f5",
-            "var": "red/50",
-            "rootAlias": "red/50"
-          },
-          {
-            "name": "ks/topology-bg-flowable-task",
-            "value": "#eff4ff",
-            "var": "blue/50",
-            "rootAlias": "blue/50"
-          },
-          {
-            "name": "ks/topology-bg-running",
-            "value": "#f9f5ff",
-            "var": "primary/50",
-            "rootAlias": "primary/50"
-          },
-          {
-            "name": "ks/topology-bg-subflow",
-            "value": "#f9f5ff",
-            "var": "primary/50",
-            "rootAlias": "primary/50"
-          },
-          {
-            "name": "ks/topology-bg-triggers",
-            "value": "#ecfff5",
-            "var": "green/50",
-            "rootAlias": "green/50"
-          },
-          {
-            "name": "ks/topology-border-errors",
-            "value": "#ed0011",
-            "var": "red/500",
-            "rootAlias": "red/500"
-          },
-          {
-            "name": "ks/topology-border-flowable-task",
-            "value": "#1761fd",
-            "var": "blue/500",
-            "rootAlias": "blue/500"
-          },
-          {
-            "name": "ks/topology-border-running",
-            "value": "#7738f5",
-            "var": "primary/400",
-            "rootAlias": "primary/400"
-          },
-          {
-            "name": "ks/topology-border-subflow",
-            "value": "#7738f5",
-            "var": "primary/400",
-            "rootAlias": "primary/400"
-          },
-          {
-            "name": "ks/topology-border-triggers",
-            "value": "#15b983",
-            "var": "green/500",
-            "rootAlias": "green/500"
-          },
-          {
-            "name": "ks/topology-btn-errors",
-            "value": "#ed0011",
-            "var": "red/500",
-            "rootAlias": "red/500"
-          },
-          {
-            "name": "ks/topology-btn-flowable-task",
-            "value": "#1761fd",
-            "var": "blue/500",
-            "rootAlias": "blue/500"
-          },
-          {
-            "name": "ks/topology-btn-running",
-            "value": "#7738f5",
-            "var": "primary/400",
-            "rootAlias": "primary/400"
-          },
-          {
-            "name": "ks/topology-btn-subflow",
-            "value": "#7738f5",
-            "var": "primary/400",
-            "rootAlias": "primary/400"
-          },
-          {
-            "name": "ks/topology-btn-triggers",
-            "value": "#15b983",
-            "var": "green/500",
-            "rootAlias": "green/500"
-          },
-          {
             "name": "ks/bg-active",
             "value": "#f7f7f8",
             "var": "gray-neutral/50",
@@ -1063,6 +973,114 @@
             "value": "#e9e9ee",
             "var": "gray-neutral/100",
             "rootAlias": "gray-neutral/100"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#f9f5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#9869f71a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#ecfff5",
+            "var": "green/50",
+            "rootAlias": "green/50"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#43f6b61a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#ed0011",
+            "var": "red/500",
+            "rootAlias": "red/500"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#ed0011",
+            "var": "red/500",
+            "rootAlias": "red/500"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#06f0b1",
+            "var": "green/400",
+            "rootAlias": "green/400"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",
@@ -1729,96 +1747,6 @@
             "rootAlias": "primary/300"
           },
           {
-            "name": "ks/topology-bg-errors",
-            "value": "#1b0001",
-            "var": "red/1000",
-            "rootAlias": "red/1000"
-          },
-          {
-            "name": "ks/topology-bg-flowable-task",
-            "value": "#00071b",
-            "var": "blue/1000",
-            "rootAlias": "blue/1000"
-          },
-          {
-            "name": "ks/topology-bg-running",
-            "value": "#0b021c",
-            "var": "primary/1000",
-            "rootAlias": "primary/1000"
-          },
-          {
-            "name": "ks/topology-bg-subflow",
-            "value": "#0b021c",
-            "var": "primary/1000",
-            "rootAlias": "primary/1000"
-          },
-          {
-            "name": "ks/topology-bg-triggers",
-            "value": "#040c08",
-            "var": "green/1000",
-            "rootAlias": "green/1000"
-          },
-          {
-            "name": "ks/topology-border-errors",
-            "value": "#f73a3d",
-            "var": "red/400",
-            "rootAlias": "red/400"
-          },
-          {
-            "name": "ks/topology-border-flowable-task",
-            "value": "#1761fd",
-            "var": "blue/500",
-            "rootAlias": "blue/500"
-          },
-          {
-            "name": "ks/topology-border-running",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-border-subflow",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-border-triggers",
-            "value": "#15b983",
-            "var": "green/500",
-            "rootAlias": "green/500"
-          },
-          {
-            "name": "ks/topology-btn-errors",
-            "value": "#f73a3d",
-            "var": "red/400",
-            "rootAlias": "red/400"
-          },
-          {
-            "name": "ks/topology-btn-flowable-task",
-            "value": "#1761fd",
-            "var": "blue/500",
-            "rootAlias": "blue/500"
-          },
-          {
-            "name": "ks/topology-btn-running",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-btn-subflow",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-btn-triggers",
-            "value": "#15b983",
-            "var": "green/500",
-            "rootAlias": "green/500"
-          },
-          {
             "name": "ks/bg-active",
             "value": "#2f3342",
             "var": "gray-cool/500",
@@ -2447,6 +2375,114 @@
             "value": "#2c303f",
             "var": "gray-cool/600",
             "rootAlias": "gray-cool/600"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#f73a3d1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#1761fd1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#0b021c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#7738f51a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#040c08",
+            "var": "green/1000",
+            "rootAlias": "green/1000"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#15b9831a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",
@@ -3113,96 +3149,6 @@
             "rootAlias": "primary/300"
           },
           {
-            "name": "ks/topology-bg-errors",
-            "value": "#1b0001",
-            "var": "red/1000",
-            "rootAlias": "red/1000"
-          },
-          {
-            "name": "ks/topology-bg-flowable-task",
-            "value": "#00071b",
-            "var": "blue/1000",
-            "rootAlias": "blue/1000"
-          },
-          {
-            "name": "ks/topology-bg-running",
-            "value": "#0b021c",
-            "var": "primary/1000",
-            "rootAlias": "primary/1000"
-          },
-          {
-            "name": "ks/topology-bg-subflow",
-            "value": "#0b021c",
-            "var": "primary/1000",
-            "rootAlias": "primary/1000"
-          },
-          {
-            "name": "ks/topology-bg-triggers",
-            "value": "#040c08",
-            "var": "green/1000",
-            "rootAlias": "green/1000"
-          },
-          {
-            "name": "ks/topology-border-errors",
-            "value": "#f73a3d",
-            "var": "red/400",
-            "rootAlias": "red/400"
-          },
-          {
-            "name": "ks/topology-border-flowable-task",
-            "value": "#1761fd",
-            "var": "blue/500",
-            "rootAlias": "blue/500"
-          },
-          {
-            "name": "ks/topology-border-running",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-border-subflow",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-border-triggers",
-            "value": "#15b983",
-            "var": "green/500",
-            "rootAlias": "green/500"
-          },
-          {
-            "name": "ks/topology-btn-errors",
-            "value": "#f73a3d",
-            "var": "red/400",
-            "rootAlias": "red/400"
-          },
-          {
-            "name": "ks/topology-btn-flowable-task",
-            "value": "#1761fd",
-            "var": "blue/500",
-            "rootAlias": "blue/500"
-          },
-          {
-            "name": "ks/topology-btn-running",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-btn-subflow",
-            "value": "#9869f7",
-            "var": "primary/300",
-            "rootAlias": "primary/300"
-          },
-          {
-            "name": "ks/topology-btn-triggers",
-            "value": "#15b983",
-            "var": "green/500",
-            "rootAlias": "green/500"
-          },
-          {
             "name": "ks/bg-active",
             "value": "#2e2e3c",
             "var": "gray-neutral/700",
@@ -3831,6 +3777,114 @@
             "value": "#23252e",
             "var": "gray-neutral/800",
             "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#f73a3d1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#1761fd1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#0b021c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#7738f51a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#040c08",
+            "var": "green/1000",
+            "rootAlias": "green/1000"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#15b9831a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",

@@ -24,15 +24,15 @@ const SUCCESS: StatusStyle = {
 const ERROR: StatusStyle = {
     icon: CloseCircleOutline,
     textVar: "--ks-text-error",
-    bg: "var(--ks-topology-bg-errors, var(--ks-bg-surface))",
-    border: "var(--ks-topology-border-errors, var(--ks-border-strong))",
+    bg: "var(--ks-topology-bg-errors)",
+    border: "var(--ks-topology-border-errors)",
 }
 
 const RUNNING: StatusStyle = {
     icon: RotatingDots,
     textVar: "--ks-status-running",
-    bg: "var(--ks-topology-bg-running, var(--ks-bg-surface))",
-    border: "var(--ks-topology-border-running, var(--ks-border-strong))",
+    bg: "var(--ks-topology-bg-running)",
+    border: "var(--ks-topology-border-running)",
 }
 
 const SKIPPED: StatusStyle = {

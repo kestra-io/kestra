@@ -163,7 +163,7 @@
         }
 
         .icon {
-            border-radius: var(--ks-radius-sm);
+            border-radius: var(--ks-radius-base);
             width: 40px;
             height: 40px;
             min-width: 40px;

@@ -464,7 +464,7 @@
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
 
-        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive))
+        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes)
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,

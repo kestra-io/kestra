@@ -40,8 +40,15 @@ export const NODE_SIZES = {
     DOT_WIDTH: 5,
     DOT_HEIGHT: 5,
     COLLAPSED_CLUSTER_WIDTH: 150,
-    COLLAPSED_CLUSTER_HEIGHT: 56,
+    COLLAPSED_CLUSTER_HEIGHT: 40,
     TRIGGER_CLUSTER_WIDTH: 350,
     TRIGGER_CLUSTER_HEIGHT: 180,
     TASK_EXPANDED_FALLBACK_HEIGHT: 140,
 } as const
+
+export const CLUSTER_TAG_STATUS: Record<string, string> = {
+    triggers: "success",
+    subflow: "running",
+    "flowable-task": "info",
+    errors: "error",
+}

@@ -143,10 +143,10 @@ html.dark {
         fill: none;
     }
 
-    @each $name, $color in $node-colors {
-        .ks-topology-#{$name}-border {
-            background-color: rgba($color, 0.05);
-            border: 1px solid $color;
+    @each $type in (triggers, subflow, flowable-task, errors) {
+        .ks-topology-#{$type}-border {
+            background-color: var(--ks-topology-bg-#{$type});
+            border: 1px solid var(--ks-topology-border-#{$type});
         }
     }
 }

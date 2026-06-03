@@ -372,7 +372,7 @@
         if (actionConfig.value && task) {
             list.push({
                 key: "show-details",
-                label: "Show details",
+                label: t("show details"),
                 icon: EyeOutline,
                 onClick: () => onShowDetails(),
             })
@@ -430,7 +430,7 @@ button.playground-button {
     padding: 6px;
     border-radius: var(--ks-radius-xs);
     background-color: var(--ks-bg-tag);
-    font-size: 14px; /* drives the 14px status icon (1em) */
+    font-size: 14px;
     line-height: 1;
 }
 

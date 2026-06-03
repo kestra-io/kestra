@@ -1,0 +1,8 @@
+FROM ghcr.io/kestra-io/kestra-base:latest-no-plugins
+
+ARG CACHE_BUST
+
+RUN curl -fsSL https://raw.githubusercontent.com/kestra-io/kestractl/main/install-scripts/install.sh | bash && \
+    kestractl plugins download latest --edition=OSS --concurrency=1 --plugins-dir=./plugins && \
+    rm -f "$(which kestractl)" && \
+    chown -R kestra:kestra /app/plugins

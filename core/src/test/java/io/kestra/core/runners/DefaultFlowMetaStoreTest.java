@@ -32,11 +32,15 @@ class DefaultFlowMetaStoreTest {
     private DefaultFlowMetaStore flowMetaStore;
 
     @Inject
+    private FlowWithDefaultCache flowWithDefaultCache;
+
+    @Inject
     private FlowService flowService;
 
     @AfterEach
     void clean() {
         flowMetaStore.clearCache();
+        flowWithDefaultCache.clear();
     }
 
     @Test

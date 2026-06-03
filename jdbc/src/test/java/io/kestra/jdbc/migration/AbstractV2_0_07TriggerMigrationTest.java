@@ -1,12 +1,10 @@
 package io.kestra.jdbc.migration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.scheduler.vnodes.VNodes;
-import io.kestra.jdbc.JdbcMapper;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import jakarta.inject.Inject;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.impl.DSL;
@@ -15,22 +13,26 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.jdbc.JdbcMapper;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Abstract integration tests for {@link V2_0TriggerMigration}.
+ * Abstract integration tests for {@link V2_0_07TriggerMigration}.
  * Subclassed per JDBC backend (H2, Postgres, MySQL).
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
-public abstract class AbstractV2_0TriggerMigrationTest {
+public abstract class AbstractV2_0_07TriggerMigrationTest {
 
     private static final ObjectMapper MAPPER = JdbcMapper.of();
     private static final int VNODES = 16;
@@ -41,12 +43,12 @@ public abstract class AbstractV2_0TriggerMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0TriggerMigration migration;
+    V2_0_07TriggerMigration migration;
 
     @BeforeEach
     void cleanup() {
-        dslContextWrapper.transaction(configuration ->
-            DSL.using(configuration)
+        dslContextWrapper.transaction(
+            configuration -> DSL.using(configuration)
                 .deleteFrom(DSL.table("triggers"))
                 .execute()
         );
@@ -255,7 +257,7 @@ public abstract class AbstractV2_0TriggerMigrationTest {
 
     @Test
     void shouldReturnCorrectMetadata() {
-        assertThat(migration.scriptId()).isEqualTo("2.0-triggers");
+        assertThat(migration.scriptId()).isEqualTo("2.0.07-triggers");
         assertThat(migration.description()).isNotBlank();
         assertThat(migration.checksum()).isNull();
     }
@@ -264,8 +266,8 @@ public abstract class AbstractV2_0TriggerMigrationTest {
 
     private void insertV1Trigger(String key, Map<String, Object> v1Json) throws Exception {
         String json = MAPPER.writeValueAsString(v1Json);
-        dslContextWrapper.transaction(configuration ->
-            DSL.using(configuration)
+        dslContextWrapper.transaction(
+            configuration -> DSL.using(configuration)
                 .insertInto(DSL.table("triggers"))
                 .set(KEY_FIELD, (Object) key)
                 .set(VALUE_FIELD, (Object) JSONB.valueOf(json))
@@ -274,7 +276,8 @@ public abstract class AbstractV2_0TriggerMigrationTest {
     }
 
     private TriggerState readTriggerState(String key) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             String json = DSL.using(configuration)
                 .select(VALUE_FIELD)
                 .from(DSL.table("triggers"))

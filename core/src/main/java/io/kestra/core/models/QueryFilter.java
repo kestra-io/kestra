@@ -436,12 +436,6 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.IN, Op.NOT_IN);
             }
-        },
-        KEY("key") {
-            @Override
-            public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
-            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -702,7 +696,7 @@ public record QueryFilter(
         WORKER_GROUP {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.KEY);
+                return List.of(Field.QUERY, Field.ID);
             }
         },
         BANNER {

@@ -74,7 +74,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    border-radius: var(--ks-border-radius-sm);
+    border-radius: var(--ks-radius-xs);
     color: var(--ks-text-secondary);
     width: calc(100% - 0.9rem);
 }

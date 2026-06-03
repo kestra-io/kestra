@@ -2,14 +2,16 @@ name: Build and Push Base Image
 
 # This workflow maintains two base images:
 #
-# 1. kestra-base:latest-no-plugins — a lightweight image with just the JRE and uv pre-installed.
-#    Used as the foundation for the image below.
+# 1. kestra-base:latest-no-plugins — lightweight image with just the JRE and uv pre-installed.
+#    Built for linux/amd64 and linux/arm64 from Dockerfile.base.
 #
-# 2. kestra-base:latest — built on top of latest-no-plugins, with all OSS plugins pre-downloaded.
-#    This is a plugin cache: downstream Kestra image builds pull from it instead of fetching
-#    190+ plugins from Maven Central on every build. A nightly refresh keeps the cache current.
-#    Partial downloads (e.g. due to Maven Central rate-limiting) are acceptable — even a partial
-#    cache is better than none, and missing plugins are picked up on the next nightly run.
+# 2. kestra-base:latest — built on top of latest-no-plugins with all OSS plugins pre-downloaded.
+#    Plugins are fetched once by the CI runner (not inside Docker) and injected via COPY, so
+#    Maven Central is only hit once regardless of how many platforms we build for.
+#
+# Multi-arch strategy: each platform is built on its native runner to avoid QEMU emulation
+# issues. The two per-platform images are combined into a single multi-arch manifest using
+# `docker buildx imagetools create`.
 
 on:
   schedule:
@@ -28,9 +30,21 @@ on:
         default: false
 
 jobs:
-  build-and-push:
-    name: Build and Push kestra-base
-    runs-on: ubuntu-latest
+  # ── Step 1: build kestra-base:latest-no-plugins for each platform ──────────────────────────
+
+  build-no-plugins:
+    name: Build kestra-base (no-plugins, ${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
     steps:
       - uses: actions/checkout@v6
 
@@ -45,34 +59,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/kestra-io/kestra-base
-          labels: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
-          annotations: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
-
-      - name: Build and push
+      - name: Build and push (platform image)
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.base
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins-${{ matrix.arch }}
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins
-          cache-to: type=inline
+          provenance: false
 
       - name: Slack - Notification
         if: ${{ failure() }}
@@ -81,53 +78,145 @@ jobs:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
 
-  build-and-push-with-plugins:
-    name: Build and Push kestra-base with plugins
+  # ── Step 2: assemble the multi-arch manifest for latest-no-plugins ──────────────────────────
+
+  merge-no-plugins:
+    name: Merge kestra-base (no-plugins) manifest
+    needs: build-no-plugins
     runs-on: ubuntu-latest
-    needs: build-and-push
     if: ${{ inputs.dry-run != true }}
     steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
       - name: Log in to GitHub Container Registry
-        if: ${{ inputs.dry-run != true }}
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/kestra-io/kestra-base
-          labels: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (with OSS plugins) — JRE + uv + plugins pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
-          annotations: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (with OSS plugins) — JRE + uv + plugins pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: Build and push
+      - name: Create and push multi-arch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/kestra-io/kestra-base:latest-no-plugins \
+            ghcr.io/kestra-io/kestra-base:latest-no-plugins-amd64 \
+            ghcr.io/kestra-io/kestra-base:latest-no-plugins-arm64
+
+      - name: Slack - Notification
+        if: ${{ failure() }}
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
+  # ── Step 3: download plugins once (platform-independent JARs) ──────────────────────────────
+  # Runs in parallel with build-no-plugins to save wall-clock time.
+
+  download-plugins:
+    name: Download OSS plugins
+    runs-on: ubuntu-latest
+    if: ${{ inputs.dry-run != true }}
+    steps:
+      - name: Install kestractl
+        run: curl -fsSL https://raw.githubusercontent.com/kestra-io/kestractl/main/install-scripts/install.sh | bash
+
+      - name: Download all OSS plugins
+        run: kestractl plugins download latest --edition=OSS --concurrency=4 --plugins-dir=./plugins
+
+      - name: Upload plugins artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kestra-plugins
+          path: plugins/
+          retention-days: 1
+
+      - name: Slack - Notification
+        if: ${{ failure() }}
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
+  # ── Step 4: build kestra-base:latest for each platform ─────────────────────────────────────
+  # Both steps 2 and 3 must complete first: step 2 ensures the base image is available for
+  # both platforms; step 3 ensures the plugins artifact is ready to inject.
+
+  build-with-plugins:
+    name: Build kestra-base (with plugins, ${{ matrix.arch }})
+    needs: [merge-no-plugins, download-plugins]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download plugins artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kestra-plugins
+          path: plugins/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (platform image)
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.base.with-plugins
-          platforms: linux/amd64
-          push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ghcr.io/kestra-io/kestra-base:latest-${{ matrix.arch }}
           build-args: |
-            CACHE_BUST=${{ github.run_id }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest
-          cache-to: type=inline
+            BASE_IMAGE=ghcr.io/kestra-io/kestra-base:latest-no-plugins
+          provenance: false
+
+      - name: Slack - Notification
+        if: ${{ failure() }}
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
+  # ── Step 5: assemble the multi-arch manifest for latest ────────────────────────────────────
+
+  merge-with-plugins:
+    name: Merge kestra-base (with plugins) manifest
+    needs: build-with-plugins
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Create and push multi-arch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/kestra-io/kestra-base:latest \
+            ghcr.io/kestra-io/kestra-base:latest-amd64 \
+            ghcr.io/kestra-io/kestra-base:latest-arm64
 
       - name: Slack - Notification
         if: ${{ failure() }}

@@ -7,9 +7,6 @@
         :class="classes"
         :icons="icons"
         :iconComponent="iconComponent"
-        @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
-        @expand="emit(EVENTS.EXPAND, expandData)"
-        @open-link="emit(EVENTS.OPEN_LINK, $event)"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -64,38 +61,8 @@
                 </div>
             </template>
         </template>
-        <template #badge-button-before>
-            <span
-                v-if="data.node.task && data.node.task.runIf"
-                class="circle-button"
-                :style="{backgroundColor: 'var(--ks-node-warning)'}"
-                @click="emit(EVENTS.SHOW_CONDITION, {id: taskId, task: data.node.task, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('show task condition')">
-                    <SendLock class="button-icon" alt="Show condition" />
-                </KsTooltip>
-            </span>
-            <span
-                v-if="taskExecution"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.SHOW_LOGS, {id: taskId, execution: taskExecution, taskRuns})"
-            >
-                <KsTooltip :content="$t('show task logs')">
-                    <TextBoxSearch class="button-icon" alt="Show logs" />
-                </KsTooltip>
-            </span>
-
-            <span
-                v-if="!taskExecution && !data.isReadOnly && data.isFlowable"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.ADD_ERROR, {task: data.node.task})"
-            >
-                <KsTooltip :content="$t('add error handler')">
-                    <AlertOutline class="button-icon" alt="Add error handler" />
-                </KsTooltip>
-            </span>
+        <template #title-actions>
+            <NodeMenu :actions="actions" />
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -103,12 +70,14 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
+    import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
     import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import ExecutionInformations from "../misc/ExecutionInformations.vue"
     import * as Utils from "../utils/utils"
     import BasicNode from "./BasicNode.vue"
+    import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
@@ -118,6 +87,12 @@
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
@@ -130,6 +105,7 @@
         id: string;
         type: string;
         default: null;
+        description?: string;
         runIf?: unknown;
         subflowId?: {
             namespace: string;
@@ -150,6 +126,7 @@
         color?: string;
         isReadOnly?: boolean;
         isFlowable?: boolean;
+        expandable?: boolean;
         link?: {
             namespace: string;
             id: string;
@@ -320,6 +297,91 @@
         const showDetail = props.showDetails?.[taskType]
         if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
         return undefined
+    })
+
+    const {t} = useI18n()
+
+    const actions = computed<NodeAction[]>(() => {
+        const task = props.data.node.task
+        const readOnly = props.data.isReadOnly
+        const list: NodeAction[] = []
+
+        if (task?.description) {
+            list.push({
+                key: "description",
+                label: t("show description"),
+                icon: InformationOutline,
+                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
+            })
+        }
+        if (task?.runIf) {
+            list.push({
+                key: "condition",
+                label: t("show task condition"),
+                icon: SendLock,
+                onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
+            })
+        }
+        if (taskExecution.value) {
+            list.push({
+                key: "logs",
+                label: t("show task logs"),
+                icon: TextBoxSearch,
+                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+            })
+        }
+        if (dataWithLink.value.link) {
+            list.push({
+                key: "open",
+                label: t("open"),
+                icon: OpenInNew,
+                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
+            })
+        }
+        if (props.data.expandable) {
+            list.push({
+                key: "expand",
+                label: t("expand"),
+                icon: UnfoldMoreHorizontal,
+                onClick: () => emit(EVENTS.EXPAND, expandData.value),
+            })
+        }
+        if (!taskExecution.value && !readOnly && props.data.isFlowable) {
+            list.push({
+                key: "add-error",
+                label: t("add error handler"),
+                icon: AlertOutline,
+                onClick: () => emit(EVENTS.ADD_ERROR, {task}),
+            })
+        }
+        if (!readOnly) {
+            list.push({
+                key: "edit",
+                label: t("edit"),
+                icon: Pencil,
+                onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
+            })
+        }
+        if (actionConfig.value && task) {
+            list.push({
+                key: "show-details",
+                label: "Show details",
+                icon: EyeOutline,
+                onClick: () => onShowDetails(),
+            })
+        }
+        if (!readOnly) {
+            list.push({
+                key: "delete",
+                label: t("delete"),
+                icon: Delete,
+                danger: true,
+                divided: true,
+                onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
+            })
+        }
+
+        return list
     })
 
     function onShowDetails() {

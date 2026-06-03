@@ -347,6 +347,17 @@ export function getEdgeColor(
           : null
 }
 
+export function getEdgeColorToken(edgeColor: string | null): string {
+    switch (edgeColor) {
+        case "danger":
+            return "var(--ks-border-error)"
+        case "warning":
+            return "var(--ks-status-warning)"
+        default:
+            return "var(--ks-topology-dash)"
+    }
+}
+
 export function generateGraph(
     _vueFlowId: string,
     flowId: string | undefined,
@@ -574,9 +585,7 @@ export function generateGraph(
                                   ? nodeByUid[newEdge.target].branchType?.toLocaleLowerCase()
                                   : "custom"),
                           type: MarkerType.ArrowClosed,
-                          color: edgeColor
-                              ? `var(--ks-border-${edgeColor})`
-                              : "var(--ks-topology-dash)",
+                          color: getEdgeColorToken(edgeColor),
                       },
                 data: {
                     haveAdd:

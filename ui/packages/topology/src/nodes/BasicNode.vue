@@ -17,40 +17,9 @@
                             {{ displayTitle }}
                         </KsTooltip>
                     </div>
-                    <span class="description-wrapper" v-if="description">
-                        <KsTooltip :content="$t('show description')" class="description-tooltip">
-                            <InformationOutline
-                                @click="$emit(EVENTS.SHOW_DESCRIPTION, {id: trimmedId, description: description})"
-                                class="description-button"
-                            />
-                        </KsTooltip>
-                    </span>
+                    <slot name="title-actions" />
                 </div>
                 <slot name="content" />
-            </div>
-            <div class="top-button-div">
-                <slot name="badge-button-before" />
-                <span
-                    v-if="data.link"
-                    class="circle-button"
-                    :style="{backgroundColor: `var(--ks-node-${data.color})`}"
-                    @click="$emit(EVENTS.OPEN_LINK, {link: data.link})"
-                >
-                    <KsTooltip :content="$t('open')">
-                        <OpenInNew class="button-icon" alt="Open in new tab" />
-                    </KsTooltip>
-                </span>
-                <span
-                    v-if="expandable"
-                    class="circle-button"
-                    :style="{backgroundColor: `var(--ks-node-${data.color})`}"
-                    @click="$emit(EVENTS.EXPAND)"
-                >
-                    <KsTooltip :content="$t('expand')">
-                        <UnfoldMoreHorizontal class="button-icon" alt="Expand task" />
-                    </KsTooltip>
-                </span>
-                <slot name="badge-button-after" />
             </div>
         </div>
         <slot name="details" />
@@ -61,10 +30,7 @@
     import {computed} from "vue"
     import TaskIcon from "../components/TaskIcon.vue"
     import {KsTooltip} from "@kestra-io/design-system"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import {EVENTS} from "../utils/constants"
-    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import * as Utils from "../utils/utils"
 
 
@@ -106,8 +72,6 @@
         emit(EVENTS.MOUSE_LEAVE)
     }
 
-    const expandable = computed(() => props.data?.expandable || false)
-
     const borderColor = computed(() => {
         if (!props.state) return undefined
         const status = props.state.toLowerCase()
@@ -117,8 +81,6 @@
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
     })
-
-    const description = computed(() => node.value?.description ?? null)
 
     const trimmedId = computed(() => Utils.afterLastDot(props.id ?? ""))
 
@@ -206,21 +168,6 @@
             display: flex;
             width: 125px;
         }
-    }
-
-    .description-wrapper {
-        display: flex;
-    }
-
-    .description-tooltip {
-        display: flex;
-        align-items: center;
-    }
-
-    .description-button {
-        margin-left: 0.5rem;
-        color: var(--ks-icon-muted);
-        cursor: pointer;
     }
 
     .material-design-icon.icon-rounded {

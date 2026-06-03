@@ -23,7 +23,6 @@ import org.slf4j.event.Level;
 import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.Helpers;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.*;
@@ -578,7 +577,6 @@ class FlowControllerTest {
         assertThat(e.getResponse().getBody(String.class).get()).contains("Required QueryValue [revisions] not specified");
     }
 
-    @FlakyTest
     @Test
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();
@@ -696,7 +694,6 @@ class FlowControllerTest {
     }
 
     @Test
-    @FlakyTest
     void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE, "a");
         Flow assertFlow = parseFlow(flow);

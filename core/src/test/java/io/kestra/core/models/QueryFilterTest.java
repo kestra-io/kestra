@@ -342,11 +342,24 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.KEY, Resource.WORKER_GROUP,
+                Field.ID, Resource.WORKER_GROUP,
                 Set.of(
                     Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
                     Op.IN,
                     Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.WORKER_GROUP,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
                 )
             ),
 

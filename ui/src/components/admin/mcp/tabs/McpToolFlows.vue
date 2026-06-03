@@ -1,6 +1,14 @@
 <template>
     <div class="mcp-tools">
+        <Empty v-if="loaded && tools.length === 0" type="mcpToolFlows">
+            <template v-if="canCreateFlow" #button>
+                <KsButton type="primary" :icon="Plus" @click="createToolFlow">
+                    {{ t("mcp.tools.create_tool_flow") }}
+                </KsButton>
+            </template>
+        </Empty>
         <KsDataTable
+            v-else
             :data="filteredTools"
             :total="filteredTools.length"
             :loading="loading"
@@ -92,22 +100,34 @@
 
 <script lang="ts" setup>
     import {computed, onMounted, ref, watch} from "vue"
-    import {useRoute} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
+    import {KsButton, KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Empty from "../../../layout/empty/Empty.vue"
     import {useMcpStore, type McpTool, type McpToolAnnotations} from "../../../../stores/mcp"
     import {useMcpToolsFilter} from "../../../filter/configurations"
     import {type ColumnConfig, useTableColumns} from "../../../../composables/useTableColumns"
     import {storageKeys} from "../../../../utils/constants"
+    import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../../models/resource"
+    import action from "../../../../models/action"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
+    const router = useRouter()
     const mcpStore = useMcpStore()
     const toolsFilter = useMcpToolsFilter()
+    const authStore = useAuthStore()
+
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
+    const canCreateFlow = computed(() => isOSS.value || authStore.user?.hasAnyAction?.(resource.FLOW, action.CREATE))
 
     const tools = ref<McpTool[]>([])
     const loading = ref(false)
+    const loaded = ref(false)
 
     const serverId = () => route.params.id as string | undefined
 
@@ -119,6 +139,7 @@
             tools.value = await mcpStore.listTools(id)
         } finally {
             loading.value = false
+            loaded.value = true
         }
     }
 
@@ -184,6 +205,47 @@
         return ANNOTATION_KEYS
             .filter((k) => a[k])
             .map((k) => k.replace(/([A-Z])/g, "_$1").toLowerCase())
+    }
+
+    function starterFlow(mcpServer: string): string {
+        return `id: hello_world
+namespace: company.team
+
+inputs:
+  - id: user
+    type: STRING
+    defaults: John Doe
+    description: "The name of the user to greet."
+
+tasks:
+  - id: greet
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      greeting: "Hello, {{ inputs.user }}!"
+
+outputs:
+  - id: greeting
+    type: STRING
+    value: "{{ outputs.greet.values.greeting }}"
+
+triggers:
+  - id: mcp
+    type: io.kestra.plugin.core.trigger.McpToolTrigger
+    toolName: hello_world
+    title: Hello World greeting tool
+    toolDescription: Returns a personalised greeting. Call this when the user asks for a greeting.
+    mcpServer: ${mcpServer}`
+    }
+
+    function createToolFlow() {
+        router.push({
+            name: "flows/create",
+            query: {
+                blueprintId: "mcp-tool-trigger",
+                blueprintSourceYaml: starterFlow(serverId() ?? "default"),
+            },
+            ...(route.params.tenant ? {params: {tenant: route.params.tenant}} : {}),
+        })
     }
 
     function flowRouteFor(tool: McpTool) {

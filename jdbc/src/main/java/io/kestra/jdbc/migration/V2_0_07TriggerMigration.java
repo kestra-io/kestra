@@ -1,6 +1,17 @@
 package io.kestra.jdbc.migration;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.jooq.Cursor;
+import org.jooq.Field;
+import org.jooq.Record2;
+import org.jooq.impl.DSL;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
@@ -12,30 +23,23 @@ import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.Cursor;
-import org.jooq.Field;
-import org.jooq.Record2;
-import org.jooq.impl.DSL;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.List;
 
 /**
  * Migrates V1 trigger rows (stored as legacy {@code Trigger} JSON) to V2 {@link TriggerState} format.
  *
- * <p>Reads all rows from the {@code triggers} table, deserializes the V1 JSON, converts each
+ * <p>
+ * Reads all rows from the {@code triggers} table, deserializes the V1 JSON, converts each
  * to a {@link TriggerState}, and updates the row in-place. Generated columns (vnode, locked,
  * next_evaluation_epoch, etc.) are recomputed automatically by the database.
  */
 @Slf4j
 @Singleton
 @JdbcRepositoryEnabled
-public class V2_0TriggerMigration implements MigrationScript {
+public class V2_0_07TriggerMigration implements MigrationScript {
 
     private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
     private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));
@@ -44,17 +48,16 @@ public class V2_0TriggerMigration implements MigrationScript {
     private final int vnodes;
 
     @Inject
-    public V2_0TriggerMigration(
+    public V2_0_07TriggerMigration(
         final JooqDSLContextWrapper dslContextWrapper,
-        final SchedulerConfiguration schedulerConfiguration
-    ) {
+        final SchedulerConfiguration schedulerConfiguration) {
         this.dslContextWrapper = dslContextWrapper;
         this.vnodes = schedulerConfiguration.vnodes();
     }
 
     @Override
     public String scriptId() {
-        return "2.0-triggers";
+        return "2.0.07-triggers";
     }
 
     @Override
@@ -69,14 +72,17 @@ public class V2_0TriggerMigration implements MigrationScript {
 
     @Override
     public void migrate() throws Exception {
-        dslContextWrapper.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration ->
+        {
             int migrated = 0;
             int skipped = 0;
 
-            try (Cursor<Record2<Object, Object>> cursor = DSL.using(configuration)
-                .select(KEY_FIELD, VALUE_FIELD)
-                .from(DSL.table("triggers"))
-                .fetchLazy()) {
+            try (
+                Cursor<Record2<Object, Object>> cursor = DSL.using(configuration)
+                    .select(KEY_FIELD, VALUE_FIELD)
+                    .from(DSL.table("triggers"))
+                    .fetchLazy()
+            ) {
 
                 while (cursor.hasNext()) {
                     Record2<Object, Object> row = cursor.fetchNext();
@@ -125,10 +131,12 @@ public class V2_0TriggerMigration implements MigrationScript {
             .stopAfter(v1.stopAfter())
             .disabled(v1.disabled() != null ? v1.disabled() : false)
             .workerId(v1.workerId())
-            .vnode(VNodes.computeVNodeFromTrigger(
-                TriggerId.of(v1.tenantId(), v1.namespace(), v1.flowId(), v1.triggerId()),
-                vnodes
-            ))
+            .vnode(
+                VNodes.computeVNodeFromTrigger(
+                    TriggerId.of(v1.tenantId(), v1.namespace(), v1.flowId(), v1.triggerId()),
+                    vnodes
+                )
+            )
             .locked(v1.executionId() != null)
             .build();
     }
@@ -147,6 +155,6 @@ public class V2_0TriggerMigration implements MigrationScript {
         Backfill backfill,
         List<State.Type> stopAfter,
         Boolean disabled,
-        Instant evaluatedAt
-    ) {}
+        Instant evaluatedAt) {
+    }
 }

@@ -314,33 +314,18 @@
         .plugins-container {
             display: flex;
             flex-wrap: wrap;
+            gap: var(--ks-spacing-4);
+
             > div {
-                background: var(--ks-bg-surface);
-                border-radius: var(--kel-border-radius-base);
-                min-width : 100px;
-                width: 100px;
-                height : 100px;
-                padding: 1rem;
-                margin-right: 1rem;
-                margin-bottom: 1rem;
                 display: flex;
-                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                width: 3rem;
+                height: 3rem;
+                padding: var(--ks-spacing-2);
+                background: var(--ks-bg-surface);
                 border: 1px solid var(--ks-border-default);
-
-                :deep(.wrapper) {
-                    .icon {
-                        height: 100%;
-                        margin: 0;
-                    }
-
-                    .hover {
-                        position: static;
-                        background: none;
-                        border-top: 0;
-                        font-size: var(--ks-font-size-sm);
-                    }
-
-                }
+                border-radius: var(--ks-radius-base);
             }
         }
     }

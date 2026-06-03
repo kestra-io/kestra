@@ -2,6 +2,8 @@ package io.kestra.webserver.utils;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
@@ -59,16 +61,39 @@ public class QueryFilterUtils {
         return createUpdatedDateFilter(filter, resolvedStartDate, QueryFilter.Field.START_DATE);
     }
 
+    /**
+     * Recursively applies {@code leafMapper} to every leaf in the filter tree, rebuilding any
+     * intermediate nodes so that date-boundary leaves nested inside conditional groups are rewritten
+     * just like top-level leaves.
+     */
+    private static QueryFilter mapLeavesRecursively(QueryFilter filter, UnaryOperator<QueryFilter> leafMapper) {
+        if (filter.isNode()) {
+            return QueryFilter.builder()
+                .logical(filter.logical())
+                .children(filter.children().stream().map(c -> mapLeavesRecursively(c, leafMapper)).toList())
+                .build();
+        }
+        return leafMapper.apply(filter);
+    }
+
+    /**
+     * Returns {@code true} if any leaf in the filter tree (including inside nested nodes) satisfies
+     * {@code predicate}.
+     */
+    private static boolean anyLeafMatches(List<QueryFilter> filters, Predicate<QueryFilter> predicate) {
+        return filters.stream().anyMatch(f -> f.isNode() ? anyLeafMatches(f.children(), predicate) : predicate.test(f));
+    }
+
     protected static List<QueryFilter> updateFilters(List<QueryFilter> filters, ZonedDateTime resolvedStartDate) {
-        boolean hasDateFilter = filters.stream().anyMatch(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter));
+        boolean hasDateFilter = anyLeafMatches(filters, filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter));
 
         List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
             filters.stream()
-                .map(
-                    filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter)
-                        ? createUpdatedStartDateFilter(filter, resolvedStartDate)
-                        : filter
-                )
+                .map(filter -> mapLeavesRecursively(filter, leaf ->
+                    isStartDateFilter(leaf) || isTimeRangeFilter(leaf)
+                        ? createUpdatedStartDateFilter(leaf, resolvedStartDate)
+                        : leaf
+                ))
                 .toList()
         );
 
@@ -84,13 +109,15 @@ public class QueryFilterUtils {
      * Used when {@link DateFilter#END_DATE} mode is active.
      */
     protected static List<QueryFilter> updateFiltersForEndDate(List<QueryFilter> filters, ZonedDateTime resolvedDate) {
-        boolean hasDateFilter = filters.stream().anyMatch(QueryFilterUtils::isDateBoundaryFilter);
+        boolean hasDateFilter = anyLeafMatches(filters, QueryFilterUtils::isDateBoundaryFilter);
 
         List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
             filters.stream()
-                .map(filter -> isTimeRangeFilter(filter)
-                    ? createUpdatedDateFilter(filter, resolvedDate, QueryFilter.Field.END_DATE)
-                    : filter)
+                .map(filter -> mapLeavesRecursively(filter, leaf ->
+                    isTimeRangeFilter(leaf)
+                        ? createUpdatedDateFilter(leaf, resolvedDate, QueryFilter.Field.END_DATE)
+                        : leaf
+                ))
                 .toList()
         );
 
@@ -151,23 +178,23 @@ public class QueryFilterUtils {
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
 
         return filters.stream()
-            .map(f -> {
-                if (isTimeRangeFilter(f)) {
+            .map(f -> mapLeavesRecursively(f, leaf -> {
+                if (isTimeRangeFilter(leaf)) {
                     return QueryFilter.builder()
                         .field(target)
-                        .operation(timeRangeOperation(f))
+                        .operation(timeRangeOperation(leaf))
                         .value(resolvedDate.toString())
                         .build();
                 }
-                if (isStartDateFilter(f) || isEndDateFilter(f)) {
+                if (isStartDateFilter(leaf) || isEndDateFilter(leaf)) {
                     return QueryFilter.builder()
                         .field(target)
-                        .operation(f.operation())
-                        .value(f.value())
+                        .operation(leaf.operation())
+                        .value(leaf.value())
                         .build();
                 }
-                return f;
-            })
+                return leaf;
+            }))
             .toList();
     }
 }

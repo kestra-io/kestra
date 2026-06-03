@@ -175,7 +175,7 @@ $fill-color-base: #fafcff;
 
     /* text */
     #{--kel-text-color-primary}: var(--ks-text-primary);
-    #{--kel-text-color-regular}: var(--ks-text-muted);
+    #{--kel-text-color-regular}: var(--ks-text-primary);
     #{--kel-text-color-secondary}: var(--ks-text-secondary);
     #{--kel-text-color-placeholder}: var(--ks-text-dim);
     #{--kel-text-color-disabled}: var(--ks-text-inactive);

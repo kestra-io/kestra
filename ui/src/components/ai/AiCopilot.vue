@@ -88,6 +88,7 @@
                         <KsSelect
                             v-if="providers.length > 1"
                             class="ai-provider-select"
+                            :popperClass="AI_PROVIDER_POPPER_CLASS"
                             :modelValue="selectedProvider"
                             @update:model-value="onProviderChange"
                             :placeholder="$t('ai.flow.select_provider')"
@@ -206,6 +207,7 @@
                 <KsSelect
                     v-if="providers.length > 1"
                     class="w-50 mx-3"
+                    :popperClass="AI_PROVIDER_POPPER_CLASS"
                     :modelValue="selectedProvider"
                     @update:model-value="onProviderChange"
                     :placeholder="$t('ai.flow.select_provider')"
@@ -277,7 +279,9 @@
     import {useApiStore} from "../../stores/api"
     import type {InputInstance} from "@kestra-io/design-system"
     import {useMiscStore} from "override/stores/misc"
-    import {aiGenerationTypes, AiGenerationType} from "../../utils/constants"
+    import {aiGenerationTypes, AiGenerationType, AI_PROVIDER_POPPER_CLASS} from "../../utils/constants"
+    import {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
+    import * as AiApi from "@kestra-io/kestra-sdk/ai"
 
     const aiStore = useAiStore()
     const apiStore = useApiStore()
@@ -389,12 +393,12 @@
         return matchedExample?.flow
     })
 
-    const providers = ref<{id: string, displayName: string}[]>([])
+    const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string | undefined>(undefined)
 
     async function fetchProviders() {
         try {
-            const list = await aiStore.fetchProviders()
+            const list = await AiApi.providers()
             providers.value = list ?? []
             if (providers.value.length > 0) {
                 selectedProvider.value = providers.value[0].id
@@ -513,7 +517,6 @@
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
                     namespace: props.namespace,
-                    type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
                 })
             } else {

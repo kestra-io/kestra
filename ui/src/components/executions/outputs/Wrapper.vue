@@ -308,13 +308,8 @@
 
     const execution = computed(() => executionsStore.execution)
 
-    function isValidURL(url: string) {
-        try {
-            URL.canParse(url)
-            return true
-        } catch {
-            return false
-        }
+    function isValidURL(url: unknown): boolean {
+        return typeof url === "string" && URL.canParse(url)
     }
 
     const processedValue = (data: TransformedTask) => {
@@ -477,14 +472,14 @@
             getTaskRunOutputs(task.id, task.path).then((children) => {
                 let child: TransformedTask | undefined = children.filter(item => item.leaf === false)[0]
 
-                do {
+                while (child) {
                     selectedLocal.push(child.value)
-                    if(child?.path) {
+                    if(child.path) {
                         expandedValueLocal = child.path
                     }
 
-                    child = child.children?.filter(item => !item.heading)[0]
-                } while(child?.path)
+                    child = child.path ? child.children?.filter(item => !item.heading)[0] : undefined
+                }
 
                 selected.value = selectedLocal
                 if(expandedValueLocal){

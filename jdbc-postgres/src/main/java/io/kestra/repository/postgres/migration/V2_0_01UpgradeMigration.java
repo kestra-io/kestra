@@ -1,17 +1,17 @@
-package io.kestra.repository.mysql.migration;
+package io.kestra.repository.postgres.migration;
 
 import javax.sql.DataSource;
 
-import io.kestra.core.migration.AbstractV2UpgradeMigration;
+import io.kestra.core.migration.AbstractV2_0_01UpgradeMigration;
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
-import io.kestra.repository.mysql.MysqlRepositoryEnabled;
+import io.kestra.repository.postgres.PostgresRepositoryEnabled;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * OSS MySQL Flyway upgrade migration script.
+ * OSS PostgreSQL Flyway upgrade migration script.
  *
  * <p>
  * Applies schema changes introduced in Kestra 2.0 on top of a Flyway-managed schema
@@ -26,28 +26,28 @@ import jakarta.inject.Singleton;
  * so it is safe to execute in any environment.
  */
 @Singleton
-@MysqlRepositoryEnabled
-public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
+@PostgresRepositoryEnabled
+public class V2_0_01UpgradeMigration extends AbstractV2_0_01UpgradeMigration {
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0UpgradeMigration(final DataSource dataSource) {
+    public V2_0_01UpgradeMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
     @Override
     public String description() {
-        return "OSS MySQL upgrade: apply Kestra 2.0 schema changes on Flyway-managed databases";
+        return "OSS PostgreSQL upgrade: apply Kestra 2.0 schema changes on Flyway-managed databases";
     }
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-mysql.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.01-upgrade-postgres.sql");
     }
 
     @Override
     protected void doSchemaUpgrade() throws Exception {
-        AbstractSQLMigrationScript.executeSqlScript(dataSource, "/migrations/upgrade-v2.0-mysql.sql");
+        AbstractSQLMigrationScript.executeSqlScript(dataSource, "/migrations/2.0.01-upgrade-postgres.sql");
     }
 }

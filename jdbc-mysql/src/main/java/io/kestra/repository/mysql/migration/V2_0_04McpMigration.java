@@ -17,14 +17,14 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @MysqlRepositoryEnabled
-public class V2_0McpMigration extends AbstractSQLMigrationScript {
+public class V2_0_04McpMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0-mcp";
+    private static final String SCRIPT_ID = "2.0.04-mcp";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0McpMigration(final DataSource dataSource) {
+    public V2_0_04McpMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -40,11 +40,11 @@ public class V2_0McpMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-mcp-mysql.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.04-mcp-mysql.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/upgrade-v2.0-mcp-mysql.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.04-mcp-mysql.sql");
     }
 }

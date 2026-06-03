@@ -182,7 +182,7 @@
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
-                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" :tooltip="$t('remove this item')" />
                             <div class="d-flex flex-column controls-input">
                                 <ChevronUp @click="moveArrayItem(input, 'up', index)" />
                                 <ChevronDown @click="moveArrayItem(input, 'down', index)" />

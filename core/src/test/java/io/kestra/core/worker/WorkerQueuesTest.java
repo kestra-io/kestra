@@ -24,7 +24,7 @@ class WorkerQueuesTest {
 
     @Test
     void shouldFormatAsDefaultPlaceholderWhenIdIsDefaultSentinel() {
-        assertThat(WorkerQueues.forLog(WorkerQueues.DEFAULT_ID)).isEqualTo("(default)");
+        assertThat(WorkerQueues.forLog(WorkerQueues.DEFAULT_ID)).isEqualTo("default");
     }
 
     @Test
@@ -46,7 +46,7 @@ class WorkerQueuesTest {
 
     @Test
     void shouldFallBackToDefaultPlaceholderWhenTagsAbsentAndIdIsDefault() {
-        assertThat(WorkerQueues.forLog(null, WorkerQueues.DEFAULT_ID)).isEqualTo("(default)");
-        assertThat(WorkerQueues.forLog(List.of(), WorkerQueues.DEFAULT_ID)).isEqualTo("(default)");
+        assertThat(WorkerQueues.forLog(null, WorkerQueues.DEFAULT_ID)).isEqualTo("default");
+        assertThat(WorkerQueues.forLog(List.of(), WorkerQueues.DEFAULT_ID)).isEqualTo("default");
     }
 }

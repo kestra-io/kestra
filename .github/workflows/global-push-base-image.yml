@@ -1,5 +1,16 @@
 name: Build and Push Base Image
 
+# This workflow maintains two base images:
+#
+# 1. kestra-base:latest-no-plugins — a lightweight image with just the JRE and uv pre-installed.
+#    Used as the foundation for the image below.
+#
+# 2. kestra-base:latest — built on top of latest-no-plugins, with all OSS plugins pre-downloaded.
+#    This is a plugin cache: downstream Kestra image builds pull from it instead of fetching
+#    190+ plugins from Maven Central on every build. A nightly refresh keeps the cache current.
+#    Partial downloads (e.g. due to Maven Central rate-limiting) are acceptable — even a partial
+#    cache is better than none, and missing plugins are picked up on the next nightly run.
+
 on:
   schedule:
     - cron: '0 2 * * *'

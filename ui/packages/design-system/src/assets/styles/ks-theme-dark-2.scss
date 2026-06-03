@@ -7,87 +7,107 @@
 @use "color-palette" as *;
 
 html.dark-2 {
+    /* Artwork */
+    #{--ks-Artwork-border}: $base-blue-200;
+    #{--ks-Artwork-fill}: $base-primary-300;
+
     /* bg */
-    #{--ks-bg-active}: #2a283e;
+    #{--ks-bg-active}: $base-gray-neutral-700;
     #{--ks-bg-badge}: $base-gray-neutral-800;
-    #{--ks-bg-base}: #0a0b0f;
-    #{--ks-bg-body}: #0a0b0f;
-    #{--ks-bg-elevated}: #15171e;
-    #{--ks-bg-hover}: #31303b;
-    #{--ks-bg-hover-elevated}: #2a283e;
-    #{--ks-bg-input}: $base-gray-neutral-1000;
-    #{--ks-tabs-bg}: #08090A;
-    #{--ks-bg-overlay}: #0e1016;
+    #{--ks-bg-base}: $base-gray-neutral-950;
+    #{--ks-bg-elevated}: $base-gray-neutral-900;
+    #{--ks-bg-error}: $base-gray-neutral-950;
+    #{--ks-bg-hover}: $base-gray-neutral-800;
+    #{--ks-bg-hover-elevated}: $base-gray-neutral-700;
+    #{--ks-bg-inactive}: $base-gray-neutral-800;
+    #{--ks-bg-info}: $base-gray-neutral-950;
+    #{--ks-bg-input}: $base-gray-neutral-950;
+    #{--ks-bg-overlay}: $base-gray-neutral-900;
     #{--ks-bg-scrim}: #0e1016cc;
-    #{--ks-bg-sidebar}: #0e1016;
-    #{--ks-bg-surface}: #15171e;
-    #{--ks-bg-tag}: #ffffff1a;
-    #{--ks-bg-tag-active}: #9869f766;
-    #{--ks-bg-tag-hover}: #9869f733;
-    #{--ks-bg-error}: #0a0b0f;
-    #{--ks-bg-info}: #0a0b0f;
-    #{--ks-bg-success}: #0a0b0f;
-    #{--ks-bg-warning}: #0a0b0f;
-    #{--ks-bg-inactive}: $base-gray-neutral-500;
+    #{--ks-bg-sidebar}: $base-gray-neutral-900;
+    #{--ks-bg-success}: $base-gray-neutral-950;
+    #{--ks-bg-surface}: $base-gray-neutral-900;
+    #{--ks-bg-tag}: rgba($base-gray-cool-white, 0.05);
+    #{--ks-bg-tag-active}: rgba($base-primary-300, 0.4);
+    #{--ks-bg-tag-hover}: rgba($base-primary-300, 0.2);
+    #{--ks-bg-tag-inactive}: rgba($base-gray-cool-white, 0.03);
+    #{--ks-bg-warning}: $base-gray-neutral-950;
 
     /* border */
-    #{--ks-border-default}: #31303b;
-    #{--ks-border-focus}: $base-primary-500;
-    #{--ks-border-strong}: #585673;
-    #{--ks-border-subtle}: #2a283e;
+    #{--ks-border-default}: $base-gray-neutral-700;
     #{--ks-border-error}: $base-red-500;
+    #{--ks-border-focus}: $base-primary-300;
     #{--ks-border-info}: $base-blue-300;
+    #{--ks-border-strong}: $base-gray-neutral-600;
+    #{--ks-border-subtle}: $base-gray-neutral-800;
     #{--ks-border-success}: $base-green-600;
-    #{--ks-status-warning}: $base-orange-700;
+    #{--ks-border-warning}: $base-orange-700;
 
     /* btn */
+    #{--ks-btn-bg-run}: $base-blue-700;
+    #{--ks-btn-bg-run-hover}: $base-blue-600;
+    #{--ks-btn-bg-success}: $base-green-900;
+    #{--ks-btn-bg-success-hover}: $base-green-800;
     #{--ks-btn-primary-bg-active}: $base-primary-600;
     #{--ks-btn-primary-bg-default}: $base-primary-500;
     #{--ks-btn-primary-bg-hover}: $base-primary-400;
     #{--ks-btn-primary-bg-inactive}: $base-gray-neutral-800;
-    #{--ks-btn-secondary-bg-active}: #2a283e;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
+    #{--ks-btn-secondary-bg-active}: $base-gray-neutral-700;
     #{--ks-btn-secondary-bg-default}: $base-gray-neutral-800;
     #{--ks-btn-secondary-bg-hover}: $base-gray-neutral-700;
     #{--ks-btn-secondary-bg-inactive}: $base-gray-neutral-800;
     #{--ks-btn-secondary-border-active}: $base-primary-300;
-    #{--ks-btn-secondary-border-default}: #31303b;
-    #{--ks-btn-secondary-border-hover}: $base-primary-300;
-    #{--ks-btn-secondary-border-inactive}: #31303b;
-    #{--ks-btn-primary-text}: $base-white;
+    #{--ks-btn-secondary-border-default}: $base-gray-neutral-600;
+    #{--ks-btn-secondary-border-hover}: $base-gray-neutral-500;
+    #{--ks-btn-secondary-border-inactive}: $base-gray-neutral-600;
+
+    /* dependencies */
+    #{--ks-dependencies-edge-default}: $base-gray-neutral-300;
+    #{--ks-dependencies-edge-faded}: $base-gray-neutral-600;
+    #{--ks-dependencies-edge-hovered}: $base-gray-neutral-white;
+    #{--ks-dependencies-edge-selected}: $base-primary-300;
+    #{--ks-dependencies-node-background-assets}: $base-blue-300;
+    #{--ks-dependencies-node-background-default}: $base-gray-neutral-600;
+    #{--ks-dependencies-node-background-faded}: $base-gray-neutral-800;
+    #{--ks-dependencies-node-background-hovered}: $base-gray-neutral-300;
+    #{--ks-dependencies-node-background-selected}: $base-primary-400;
+    #{--ks-dependencies-node-border-assets}: $base-blue-200;
+    #{--ks-dependencies-node-border-default}: $base-gray-neutral-400;
+    #{--ks-dependencies-node-border-faded}: $base-gray-neutral-700;
+    #{--ks-dependencies-node-border-hovered}: $base-gray-neutral-200;
+    #{--ks-dependencies-node-border-selected}: $base-primary-300;
+
+    /* dropdown */
+    #{--ks-dropdown-bg}: $base-gray-neutral-900;
+    #{--ks-dropdown-bg-active}: $base-gray-neutral-800;
+    #{--ks-dropdown-bg-hover}: $base-gray-neutral-800;
 
     /* editor */
     #{--ks-editor-pabble}: $base-green-200;
     #{--ks-editor-property}: $base-primary-200;
     #{--ks-editor-punctuation}: $base-gray-neutral-300;
-    #{--ks-editor-value}: #e8e6f0;
+    #{--ks-editor-value}: $base-gray-neutral-50;
 
     /* icon */
     #{--ks-icon-active}: $base-primary-200;
-    #{--ks-icon-default}: $base-white;
-    #{--ks-icon-hover}: $base-primary-400;
-    #{--ks-icon-inactive}: $base-gray-neutral-300;
-    #{--ks-icon-muted}: $base-gray-neutral-300;
+    #{--ks-icon-default}: $base-gray-neutral-white;
     #{--ks-icon-error}: $base-red-200;
+    #{--ks-icon-hover}: $base-primary-300;
+    #{--ks-icon-inactive}: $base-gray-neutral-400;
     #{--ks-icon-info}: $base-blue-300;
+    #{--ks-icon-muted}: $base-gray-neutral-300;
     #{--ks-icon-success}: $base-green-300;
     #{--ks-icon-warning}: $base-orange-300;
+
+    /* scrollbar */
+    #{--ks-scrollbar-bg}: $base-gray-neutral-900;
+    #{--ks-scrollbar-content}: $base-gray-neutral-500;
 
     /* shadow */
     #{--ks-shadow-element}: #0000000d;
     #{--ks-shadow-elevated}: #000000a6;
     #{--ks-shadow-surface}: #00000026;
-
-    /* text */
-    #{--ks-text-dim}: $base-gray-neutral-300;
-    #{--ks-text-inactive}: $base-gray-neutral-400;
-    #{--ks-text-link}: $base-primary-200;
-    #{--ks-text-muted}: #b7b4c3;
-    #{--ks-text-primary}: $base-white;
-    #{--ks-text-secondary}: #c6c4d0;
-    #{--ks-text-error}: $base-red-200;
-    #{--ks-text-info}: $base-blue-300;
-    #{--ks-text-success}: $base-green-100;
-    #{--ks-text-warning}: $base-orange-300;
 
     /* status */
     #{--ks-status-error}: $base-red-300;
@@ -98,34 +118,28 @@ html.dark-2 {
     #{--ks-status-success}: $base-green-300;
     #{--ks-status-warning}: $base-orange-300;
 
+    /* text */
+    #{--ks-text-blue}: $base-blue-200;
+    #{--ks-text-dim}: $base-gray-neutral-300;
+    #{--ks-text-error}: $base-red-200;
+    #{--ks-text-green}: $base-green-200;
+    #{--ks-text-inactive}: $base-gray-neutral-400;
+    #{--ks-text-info}: $base-blue-300;
+    #{--ks-text-link}: $base-primary-200;
+    #{--ks-text-muted}: $base-gray-neutral-200;
+    #{--ks-text-primary}: $base-gray-neutral-white;
+    #{--ks-text-secondary}: $base-gray-neutral-300;
+    #{--ks-text-success}: $base-green-100;
+    #{--ks-text-warning}: $base-orange-300;
+
     /* toggle */
-    #{--ks-toogle-bg-active}: $base-primary-400;
-    #{--ks-toogle-bg-default}: #31303b;
-    #{--ks-toogle-bg-hover}: #585673;
-    #{--ks-toogle-bg-inactive}: #15171e;
+    #{--ks-toggle-active}: $base-primary-400;
+    #{--ks-toggle-default}: $base-gray-neutral-600;
+    #{--ks-toggle-hover}: $base-gray-neutral-500;
+    #{--ks-toggle-inactive}: $base-gray-neutral-800;
+    #{--ks-toggle-playground}: $base-blue-500;
 
     /* topology */
-    #{--ks-topology-bg}: #31303b;
+    #{--ks-topology-bg}: $base-gray-neutral-800;
     #{--ks-topology-dash}: $base-gray-neutral-300;
-
-
-    /* scrollbar */
-    #{--ks-scrollbar-bg}: $base-gray-neutral-900;
-    #{--ks-scrollbar-content}: $base-gray-neutral-500;
-
-    /* dependencies */
-    #{--ks-dependencies-edge-default}: $base-gray-neutral-200;
-    #{--ks-dependencies-edge-faded}: $base-gray-neutral-400;
-    #{--ks-dependencies-edge-hovered}: $base-purple-50;
-    #{--ks-dependencies-edge-selected}: $base-purple-300;
-    #{--ks-dependencies-node-background-assets}: $base-blue-400;
-    #{--ks-dependencies-node-background-default}: $base-gray-neutral-500;
-    #{--ks-dependencies-node-background-faded}: $base-gray-neutral-700;
-    #{--ks-dependencies-node-background-hovered}: $base-purple-50;
-    #{--ks-dependencies-node-background-selected}: $base-purple-300;
-    #{--ks-dependencies-node-border-assets}: $base-blue-200;
-    #{--ks-dependencies-node-border-default}: $base-gray-neutral-300;
-    #{--ks-dependencies-node-border-faded}: $base-gray-neutral-400;
-    #{--ks-dependencies-node-border-hovered}: $base-purple-50;
-    #{--ks-dependencies-node-border-selected}: $base-purple-200;
 }

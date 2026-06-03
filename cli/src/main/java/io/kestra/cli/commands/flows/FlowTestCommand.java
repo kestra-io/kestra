@@ -5,8 +5,9 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import org.apache.commons.io.FileUtils;
 
 import com.google.common.collect.ImmutableMap;
@@ -83,7 +84,7 @@ public class FlowTestCommand extends AbstractApiCommand {
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
         TenantIdSelectorService tenantService = applicationContext.getBean(TenantIdSelectorService.class);
-        DispatchQueueInterface<Execution> executionQueue = applicationContext.getBean(DispatchQueueInterface.class, Qualifiers.byTypeArguments(Execution.class));
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue = applicationContext.getBean(DispatchQueueInterface.class, Qualifiers.byTypeArguments(ExecutionCommand.class));
 
         Map<String, Object> inputs = new HashMap<>();
 
@@ -104,10 +105,13 @@ public class FlowTestCommand extends AbstractApiCommand {
                 throw new IllegalArgumentException("Too many flow found, need 1, found " + all.size());
             }
 
-            Execution execution = Execution.newExecution(all.getFirst(), (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs), Collections.emptyList(), Optional.empty());
-            executionQueue.emit(execution);
+            var flow = all.getFirst();
+            var createCommand = Create.of(flow.toFlowId()).withInputsFromReader((executionId) -> flowInputOutput.readExecutionInputs(flow, executionId, inputs));
+            executionCommandQueue.emit(
+                createCommand
+            );
             Execution terminated = await().atMost(Duration.ofHours(1)).until(
-                () -> executionRepository.findById(tenantService.getTenantId(tenantId), execution.getId()).orElse(null),
+                () -> executionRepository.findById(tenantService.getTenantId(tenantId), createCommand.executionId()).orElse(null),
                 e -> e != null && e.getState().isTerminated()
             );
             stdOut("Successfully executed the flow with execution %s in state %s", terminated.getId(), terminated.getState().getCurrent());

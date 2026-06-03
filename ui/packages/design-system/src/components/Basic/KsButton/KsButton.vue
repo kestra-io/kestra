@@ -1,5 +1,28 @@
 <template>
+    <KsTooltip
+        v-if="tooltip"
+        :content="tooltip"
+        v-bind="tooltipPlacement ? {placement: tooltipPlacement} : {}"
+    >
+        <ElButton
+            :aria-label="tooltip"
+            v-bind="({...filteredProps(), ...$attrs} as any)"
+            @click="emit('click', $event)"
+            plain
+        >
+            <template v-if="$slots.default" #default>
+                <slot />
+            </template>
+            <template v-if="$slots.loading" #loading>
+                <slot name="loading" />
+            </template>
+            <template v-if="$slots.icon" #icon>
+                <slot name="icon" />
+            </template>
+        </ElButton>
+    </KsTooltip>
     <ElButton
+        v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @click="emit('click', $event)"
         plain
@@ -22,6 +45,7 @@
     import {ElButton} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -40,6 +64,8 @@
         circle?: boolean
         color?: string
         tag?: string | Component
+        tooltip?: string
+        tooltipPlacement?: string
     }>()
 
     const emit = defineEmits<{
@@ -52,7 +78,7 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement"])
 </script>
 
 <style lang="scss">
@@ -124,7 +150,7 @@
 
             &.is-disabled {
                 background-color: var(--ks-btn-secondary-bg-inactive);
-                border: var(--ks-btn-secondary-border-inactive);
+                border-color: var(--ks-btn-secondary-border-inactive);
                 color: var(--ks-text-inactive);
             }
 
@@ -153,6 +179,12 @@
                 background-color: var(--ks-btn-secondary-bg-active);
                 border: 0;
             }
+        }
+
+        &.kel-button--primary:not(.is-text):not(.is-link).is-disabled {
+            background-color: var(--ks-btn-primary-bg-inactive);
+            border-color: var(--ks-btn-primary-bg-inactive);
+            color: var(--ks-text-inactive);
         }
     }
 </style>

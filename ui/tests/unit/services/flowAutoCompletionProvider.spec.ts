@@ -138,6 +138,10 @@ const namespacesStore = {
     }),
 } as any
 
+const mcpStore = {
+    list: vi.fn(() => Promise.resolve({results: [{id: "default"}, {id: "analytics-server"}], total: 2})),
+} as any
+
 const mockFunctions = [
     {name: "kv", arguments: [{name: "key", defaultValue: "'my_key'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "errorOnMissing", defaultValue: null}]},
     {name: "now", arguments: [{name: "format", defaultValue: null}, {name: "timeZone", defaultValue: null}, {name: "existingFormat", defaultValue: null}, {name: "locale", defaultValue: null}]},
@@ -146,7 +150,7 @@ const mockFunctions = [
     {name: "uuid", arguments: []},
 ]
 
-const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore)
+const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore)
 const parsed = YAML_UTILS.parse(defaultFlow)
 const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask)
 
@@ -156,7 +160,7 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("root autocompletions include variables and function snippets", async () => {
-        const result = await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()
+        const result = await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore).rootFieldAutoCompletion()
 
         // Variables come first
         expect(result).toContain("outputs")

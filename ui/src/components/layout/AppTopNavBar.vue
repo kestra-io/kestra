@@ -9,7 +9,7 @@
         :beta="store.beta"
         :isBookmarked="bookmarked"
         :sidebarCollapsed="layoutStore.sideMenuCollapsed"
-        :tabs="routeTabsStore.visibleTabs"
+        :tabs="selectTabs"
         :activeTab="activeTabValue"
         :showDescription="store.hasDescriptionSlot"
         :showDockToggle="true"
@@ -64,33 +64,21 @@
         miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
     }
 
-    const activeTabValue = computed(() => {
-        // Tabs that bring their own `route` override (e.g. blueprints sub-pages
-        // that share a route name but differ in params) must be matched by the
-        // resolved full path, not by `route.params.tab`.
-        const matchedByRoute = routeTabsStore.visibleTabs.find((t) => {
-            if (!t.route) return false
-            const resolved = router.resolve(t.route)
-            if (resolved.fullPath === route?.fullPath) return true
-            if (resolved.name && resolved.name === route?.name) return true
-            return false
-        })
-        if (matchedByRoute) return matchedByRoute.name ?? "default"
+    const selectTabs = computed(() =>
+        routeTabsStore.displayMode === "select" ? routeTabsStore.visibleTabs : [],
+    )
 
+    const activeTabValue = computed(() => {
         const fromEmbed = routeTabsStore.embedActiveTab
         if (fromEmbed !== undefined) return fromEmbed
         const fromRoute = route?.params?.tab
         const explicit = typeof fromRoute === "string" ? fromRoute : undefined
-        return explicit ?? routeTabsStore.visibleTabs[0]?.name ?? "default"
+        return explicit ?? selectTabs.value[0]?.name ?? "default"
     })
 
     function onTabChange(value: string) {
         const tab = routeTabsStore.tabs.find((t) => (t.name ?? "default") === value)
         if (!tab) return
-        if (tab.route) {
-            router.push(tab.route)
-            return
-        }
         router.push({
             name: routeTabsStore.routeName || (route?.name as string),
             params: {...route?.params, tab: tab.name},

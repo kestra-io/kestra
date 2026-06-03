@@ -31,11 +31,13 @@
     "add at position": "Añadir {position} <code>{task}</code>",
     "add error handler": "Añadir un manejador de errores",
     "add flow": "Añadir flujo",
+    "add label": "Agregar label",
     "add task": "Añadir una task",
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "add_new_item": "Agregar nuevo elemento",
     "additionalPlugins": "Plugins Adicionales",
     "admin": "Administrador",
+    "admin_preferences": "Preferences",
     "administration": "Administración",
     "advanced configuration": "Otras propiedades",
     "after": "después",
@@ -56,6 +58,7 @@
           "test": "Generando YAML de prueba para ti..."
         },
         "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra. Ejemplo de solicitud: Crear un flow que se ejecute todos los lunes a las 9 AM.",
+        "select_provider": "Seleccionar un proveedor",
         "title": "Agente de IA"
       }
     },
@@ -82,6 +85,7 @@
     "before": "antes",
     "behavior": "Comportamiento",
     "blueprints": {
+      "all": "Todo",
       "apps": "Planos de la Aplicación",
       "community": "Comunidad",
       "create": "Crear un blueprint",
@@ -101,6 +105,7 @@
     },
     "bookmark": "Marcadores",
     "bulk action async warning": "Esto podría tardar unos momentos.",
+    "bulk actions": "Acciones masivas",
     "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
     "bulk delete": "¿Estás seguro de que quieres eliminar <code>{executionCount}</code> ejecución(es)?",
     "bulk delete backfills": "Eliminar {count} backfill",
@@ -280,9 +285,25 @@
       "last7days": "Últimos 7 días",
       "leave empty for infinite": "Dejar vacío para duración infinita o escribir una duración ISO 8601 (ejemplo: 'P1DT1H1M1S)'",
       "never": "Nunca",
+      "next12hours": "Próximas 12 horas",
+      "next15minutes": "Próximos 15 minutos",
+      "next1hour": "Próxima 1 hora",
+      "next24hours": "Próximas 24 horas",
+      "next30days": "Próximos 30 días",
+      "next365days": "Próximos 365 días",
+      "next48hours": "Próximas 48 horas",
+      "next5minutes": "Próximos 5 minutos",
+      "next7days": "Próximos 7 días",
       "previousMonth": "Mes anterior",
       "previousWeek": "Semana anterior",
       "previousYear": "Año anterior",
+      "short": {
+        "12h": "12h",
+        "15m": "15m",
+        "1d": "1d",
+        "1h": "1h",
+        "7d": "7d"
+      },
       "thisMonth": "Este mes",
       "thisMonthSoFar": "Este mes hasta ahora",
       "thisWeek": "Esta semana",
@@ -533,6 +554,10 @@
         "content": "La función Kill Switch proporciona un mecanismo basado en la UI para detener ejecuciones problemáticas. Reemplaza los comandos de solo CLI <code>--skip-executions</code> y <code>--skip-flows</code> con una interfaz de administración integral.",
         "title": "¡Aún no tienes Kill Switches!"
       },
+      "mcpToolFlows": {
+        "content": "Exponga un flow como una herramienta MCP añadiendo un <code>McpToolTrigger</code> a él. Lea más sobre el <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> en nuestra documentación.",
+        "title": "Aún no hay flows de herramientas registrados en este servidor."
+      },
       "panels": {
         "content": "Abre Flow Code o No-Code para comenzar a editar tus flows, o selecciona otro panel (Topology, Documentation, Namespace Files, Blueprints, Context) para funciones relacionadas.",
         "title": "Actualmente no hay paneles abiertos."
@@ -603,6 +628,7 @@
     "execute the flow": "Ejecutar el flujo <code>{id}</code>",
     "execution": "Ejecución",
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
+    "execution id": "Id de Ejecución",
     "execution labels": "Etiquetas de ejecución",
     "execution not found": "La ejecución <code>{executionId}</code> no se encuentra.",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
@@ -674,6 +700,8 @@
       "title": "Novedades en Kestra"
     },
     "file preview truncated": "El contenido mostrado ha sido truncado",
+    "file unavailable": "Archivo no disponible",
+    "file unavailable description": "Este archivo ya no está disponible; puede haber sido eliminado o haber expirado.",
     "fileTypeNotAllowed": "Tipo de archivo no permitido. Tipos aceptados: {types}",
     "files": "Archivos",
     "filter by log level": "Filtrar por nivel de log",
@@ -766,7 +794,7 @@
         "tooltip": "Ver aplicaciones que usan este flow"
       },
       "dependencies": {
-        "suffix": "Dependencia(s)",
+        "suffix": "Dependencias",
         "tooltip": "Ver dependencias del flow"
       },
       "errors": {
@@ -858,6 +886,7 @@
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} en los últimos {days} días",
     "last evaluation date": "Última fecha de evaluación",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Fecha de última ejecución",
     "last execution state": "Último estado",
     "last execution status": "Último estado de ejecución",
@@ -892,20 +921,23 @@
       "basic_auth": "Autenticación Básica",
       "bearer_token": "Autenticación de token Bearer",
       "connect": "Conectar",
-      "connect_modal": {
+      "connect_tab": {
+        "auth_api_token_hint": "Configure <code>KESTRA_TOKEN</code> como variable de entorno antes de iniciar el cliente.",
+        "auth_basic_hint": "Configure <code>KESTRA_BASIC_AUTH</code> como variable de entorno que contenga una cadena <code>username:password</code> codificada en base64 antes de iniciar el cliente.",
+        "auth_oauth_browser_hint": "Su navegador abrirá la página de inicio de sesión del proveedor de identidad en la primera conexión.",
+        "auth_oauth_client_id_hint": "Reemplace <code>&lt;client-id&gt;</code> con el ID de cliente OAuth y registre <code>http://localhost:7777</code> como URI de redirección válida en ese cliente.",
         "claude_code": "Código Claude",
         "claude_code_hint": "Ejecute el siguiente comando en su terminal:",
         "claude_desktop": "Claude Desktop",
         "claude_desktop_hint": "Agrega lo siguiente a tu archivo claude_desktop_config.json:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
         "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "client_picker_label": "Elija su cliente de IA",
         "codex": "Codex (OpenAI)",
         "codex_hint": "Agrega lo siguiente a tu configuración MCP en codex.json:",
         "cursor": "Cursor",
         "cursor_hint": "Agrega lo siguiente a ~/.cursor/mcp.json:",
-        "done": "Hecho",
-        "server_url": "URL del servidor",
-        "title": "Conectar a {name}"
+        "server_url": "URL del servidor"
       },
       "copy_url": "Copiar URL",
       "create": "Crear Servidor",
@@ -914,19 +946,44 @@
       "id_placeholder": "p. ej. my-mcp-server",
       "instructions": "Instrucciones",
       "main_tenant": "principal",
+      "no_oauth_providers": "No hay proveedores OIDC configurados en esta instancia",
       "no_servers": "No se encontraron servidores MCP. Cree su primer servidor para exponer los triggers de la herramienta MCP a agentes de IA externos.",
+      "oauth": "OAuth",
+      "oauth_hint": "JWT Bearer de su proveedor OIDC",
+      "oauth_provider": "Proveedor OAuth",
+      "oauth_provider_placeholder": "Seleccione un proveedor OIDC configurado",
+      "oauth_provider_required": "El proveedor OAuth es obligatorio cuando el tipo de autenticación es OAuth",
       "page_description": "Exponga sus flows de Kestra como herramientas para agentes de IA compatibles con MCP",
       "private": "Privado",
       "public": "Público",
       "save": "Guardar cambios",
+      "scopes_supported": "Scopes admitidos",
+      "scopes_supported_hint": "Scopes anunciados en el documento Protected Resource Metadata de este servidor. Los clientes MCP que cumplen con la especificación limitan su solicitud de autorización a esta lista. Déjelo vacío para omitir el campo y dejar que los clientes utilicen los scopes anunciados por el IdP.",
+      "scopes_supported_placeholder": "openid, profile, email",
       "server": "Servidor MCP",
       "server_type": "Tipo de Servidor",
       "servers": "Servidores MCP",
       "tab_connect": "Conectar",
-      "tab_connect_placeholder": "Detalles de conexión próximamente.",
       "tab_edit": "Editar",
       "tab_tool_flows": "Flujos de Herramientas",
       "tab_tool_flows_placeholder": "La gestión de flows de herramientas llegará pronto.",
+      "tools": {
+        "annotations": "Anotaciones",
+        "create_tool_flow": "Crear un flow de herramienta",
+        "description": "Descripción",
+        "destructive": "Destructivo",
+        "flow": "flow",
+        "idempotent": "Idempotente",
+        "no_tools": "No hay flows de herramientas que coincidan con tu búsqueda.",
+        "open_world": "Open world",
+        "read_only": "Solo lectura",
+        "return_direct": "Retorno directo",
+        "state": "Estado",
+        "title": "Título",
+        "tool_name": "Nombre de la herramienta",
+        "trigger_id": "ID del trigger",
+        "view_flow": "Abrir flow"
+      },
       "url_copied": "¡URL copiada!",
       "username_password": "Nombre de usuario y contraseña"
     },
@@ -938,6 +995,7 @@
     "modify inputs": "Modificar inputs",
     "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
+    "more actions": "Más acciones",
     "more_actions": "Más acciones",
     "multi_panel_editor": {
       "close_all_panels": "Cerrar todos los paneles",
@@ -1317,6 +1375,7 @@
       "next": "Página siguiente",
       "previous": "Página anterior"
     },
+    "panel actions": "Acciones del panel",
     "parent execution": "Ejecución padre",
     "password": "Contraseña",
     "password empty constraint": "Nombre de usuario o contraseña incorrectos",
@@ -1343,6 +1402,7 @@
       "toggle": "Área de pruebas",
       "tooltip_persistence": "Si desactivas y vuelves a activar el Playground, la información permanece mientras te mantengas en la página."
     },
+    "playground actions": "Acciones del Playground",
     "plugin defaults exported": "Valores predeterminados del plugin exportados",
     "plugin defaults imported": "Valores predeterminados del plugin importados",
     "plugin defaults not imported": "Algunos valores predeterminados del plugin no se pudieron importar",
@@ -1367,16 +1427,51 @@
       "yaml_configuration": "Configuración YAML"
     },
     "pluginPage": {
-      "alt": "Icono de Plugins",
+      "elementType": {
+        "apps": "Aplicación",
+        "charts": "Gráfico",
+        "conditions": "Condición",
+        "logExporters": "Exportador de logs",
+        "secrets": "Secreto",
+        "taskRunners": "Ejecutor de task",
+        "tasks": "Tarea",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Planos ({count})",
+        "plugins": "Plugins ({count})",
+        "tasks": "Tareas ({count})"
+      },
+      "header": {
+        "back": "Volver a plugins",
+        "certified": "Certificado",
+        "enterpriseEdition": "Edición Enterprise"
+      },
+      "loadError": "No se pudieron cargar los plugins. Por favor, inténtelo de nuevo.",
+      "noResults": "No hay plugins que coincidan con tu búsqueda.",
+      "notFound": "Este plugin no pudo ser encontrado.",
+      "overview": {
+        "createdBy": "Creado por",
+        "latest": "Último",
+        "linksResources": "Enlaces y Recursos",
+        "managedBy": "Gestionado por",
+        "minKestraVersion": "Vers. mínima compatible de Kestra: {version}",
+        "minKestraVersionShort": "Versión mínima de Kestra {version}",
+        "pluginType": "Tipo de plugin",
+        "previousVersions": "Versiones anteriores",
+        "releaseNotes": "Notas de la versión",
+        "title": "Visión general",
+        "versions": "Versiones"
+      },
       "search": "Buscar en más de {count} plugins",
+      "searchTasks": "Buscar {count} tasks",
       "sort": {
-        "most_used": "Más usados",
-        "name_asc": "Nombre A-Z",
-        "name_desc": "Nombre Z-A",
+        "mostUsed": "Más usados",
+        "nameAsc": "Nombre A-Z",
+        "nameDesc": "Nombre Z-A",
         "newest": "Más reciente"
       },
-      "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
-      "title2": "Busca tasks y triggers para construir tu flow."
+      "sortBy": "Ordenar por"
     },
     "plugin_default_already_exists": "El plugin predeterminado para <code>{type}</code> ya existe.",
     "plugins": {
@@ -1419,6 +1514,8 @@
     "relative": "Relativo",
     "relative end date": "Fecha de fin relativa",
     "relative start date": "Fecha de inicio relativa",
+    "remove label": "Eliminar label",
+    "remove this item": "Eliminar este elemento",
     "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?",
     "replay": "Repetir",
     "replay confirm": "¿Estás seguro de repetir esta ejecución <code>{id}</code> y crear una nueva?",
@@ -1744,6 +1841,7 @@
     "to": "Hasta",
     "to toggle": "para alternar",
     "toggle fullscreen": "Alternar pantalla completa",
+    "toggle menu": "Alternar menú",
     "toggle output": "Alternar salidas",
     "toggle output display": "Alternar visualización de salida",
     "toggle periodic refresh each x seconds": "Alternar actualización periódica cada {interval} segundos",
@@ -1854,10 +1952,12 @@
     "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Utiliza esta versión cuando trabajes sobre un fondo oscuro para asegurar que nuestro nombre permanezca legible.",
+    "valid": "Válido",
     "validate": "Validar",
     "value": "Value",
     "variables": "Variables",
     "version": "Versión",
+    "view metrics": "Ver métricas",
     "warning": "Advertencia",
     "warning detected": "Advertencia(s) detectada(s)",
     "warning flow with triggers": "Este flujo contiene triggers y una ejecución manual fallará si este flujo depende de expresiones de trigger.",

@@ -35,7 +35,7 @@ const render: Story["render"] = ({modelValue}) => ({
             padding: "0 1rem"
         };
 
-        return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-bg-body)">
+        return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-bg-base)">
             <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
             <div style={{...labelStyle, background: "blue", width: "800px", top: "20px"}}>This is an example of 800px wide element.</div>
             <MultiPanelTabs modelValue={modelValueRef.value} />

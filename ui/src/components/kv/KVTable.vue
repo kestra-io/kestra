@@ -4,6 +4,8 @@
         :loadData="loadData"
         :data="kvs"
         :total="total"
+        :currentPage="urlPage"
+        :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
@@ -191,9 +193,10 @@
                     allowCustom
                     @update:model-value="kv.value = $event.timeRange"
                 />
-                <Editor
-                    :fullHeight="false"
-                    :input="true"
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false}"
+                    :inline="true"
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
                     lang="json"
@@ -247,11 +250,9 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import {KsId, KsIconButton} from "@kestra-io/design-system"
-    import Editor from "../inputs/Editor.vue"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import InheritedKVs from "./InheritedKVs.vue"
-
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -294,6 +295,8 @@
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
     const kvStore = useKvStore()
+
+    const editorBindings = useEditorBindings()
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
@@ -344,14 +347,17 @@
         return _merge(base, filters)
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     interface KvItem {
         namespace?: string;

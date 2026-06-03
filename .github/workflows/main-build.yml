@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download executable
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: exe
           path: build/executable

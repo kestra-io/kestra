@@ -367,6 +367,25 @@ class NamespaceFileControllerTest {
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.txt", null)));
     }
 
+    @Test
+    void pathTraversalShouldBeRejected() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        // Path traversal via ".." should be rejected on all mutating / read endpoints
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt")));
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/foo/../../test.txt"), TestFileAttributes.class));
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/foo/../.."), TestFileAttributes[].class));
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt", null)));
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo/../../test.txt&to=/bar", null)));
+    }
+
     private void assertForbiddenErrorThrown(Executable executable) {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, executable);
         assertThat(httpClientResponseException.getMessage()).startsWith("Illegal argument: Forbidden path: ");

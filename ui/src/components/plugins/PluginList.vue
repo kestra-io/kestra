@@ -162,7 +162,7 @@
     })
 
     const loadPluginIcons = async () => {
-        icons.value = await pluginsStore.groupIcons() ?? {}
+        icons.value = await pluginsStore.ensureGroupIcons() ?? {}
     }
 
     const breadcrumbItems = computed<KsBreadcrumbItem[]>(() => {
@@ -326,7 +326,7 @@
     min-height: 3.0625rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--ks-spacing-3);
 
     .back-btn {
         background: none;
@@ -351,30 +351,6 @@
             &::placeholder {
                 color: var(--ks-text-dim) !important;
             }
-        }
-    }
-
-    .kel-breadcrumb {
-        :deep(.kel-breadcrumb__separator) {
-            font-size: inherit;
-            margin: 0 0.25rem;
-        }
-
-        :deep(.kel-breadcrumb__item .kel-breadcrumb__inner) {
-            text-transform: none !important;
-            color: var(--ks-text-secondary) !important;
-            font-weight: 500 !important;
-        }
-
-        :deep(.kel-breadcrumb__item .kel-breadcrumb__inner a) {
-            color: var(--ks-text-secondary) !important;
-            font-weight: 500 !important;
-        }
-
-        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner),
-        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner a) {
-            color: var(--ks-text-primary) !important;
-            font-weight: 600 !important;
         }
     }
 

@@ -134,7 +134,7 @@
         scheduleDate: string | undefined
     }
 
-    interface SelectedTrigger {
+    export interface SelectedTrigger {
         inputs?: Record<string, unknown>
     }
 

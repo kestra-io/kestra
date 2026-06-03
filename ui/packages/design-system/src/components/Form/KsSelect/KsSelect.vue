@@ -160,6 +160,7 @@
             border-radius: var(--ks-radius-xs);
             position: relative;
             font-size: var(--ks-font-size-xs);
+            height: auto;
 
             &.is-selected {
                 background-color: transparent;

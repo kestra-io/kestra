@@ -1,10 +1,10 @@
 <template>
     <div id="debug">
-        <Editor
+        <KsEditor
+            v-bind="editorBindings"
             v-model="expression"
-            :shouldFocus="false"
             :navbar="false"
-            input
+            inline
             lang="yaml-pebble"
             class="expression"
         />
@@ -23,12 +23,12 @@
         <template v-if="result">
             <VarValue v-if="Utils.isFile(result.value)" :value="result.value" :execution />
 
-            <Editor
+            <KsEditor
                 v-else
+                v-bind="editorBindings"
                 v-model="result.value"
-                :shouldFocus="false"
                 :navbar="false"
-                input
+                inline
                 readOnly
                 :lang="result.type"
                 class="result"
@@ -49,7 +49,8 @@
 <script setup lang="ts">
     import {watch, ref} from "vue"
 
-    import Editor from "../../../../../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../../../../composables/useEditorBindings"
     import VarValue from "../../../../VarValue.vue"
 
     import {Execution} from "../../../../../../stores/executions"
@@ -63,6 +64,8 @@
     import {useClient} from "@kestra-io/kestra-sdk"
 
     const flowStore = useFlowStore()
+
+    const editorBindings = useEditorBindings()
 
     const props = defineProps<{
         property?: "outputs" | "trigger";

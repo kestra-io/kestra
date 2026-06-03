@@ -1,9 +1,7 @@
 <template>
     <div class="plugin-list-wrapper">
         <div v-if="isLoading || !pluginsData" class="loading-container">
-            <div class="loading-text">
-                Loading plugins...
-            </div>
+            <KsSkeleton animated :rows="8" />
         </div>
         <PluginList
             v-else
@@ -43,14 +41,6 @@
     }
 
     .loading-container {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .loading-text {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-        }
+        padding: var(--ks-spacing-4);
     }
 </style>

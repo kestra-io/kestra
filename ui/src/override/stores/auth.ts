@@ -34,10 +34,18 @@ export class Me {
     }
 }
 
+export interface AuthMethods {
+    mailsEnabled?: boolean;
+    passwordless?: boolean;
+    loginPassword?: boolean;
+    oauths?: string[];
+}
+
 export const useAuthStore = defineStore("auth", {
     state: () => ({
         user: new Me() as Me | undefined,
         isLogged: true,
+        auths: undefined as AuthMethods | undefined,
     }),
     actions: {
         logout(){
@@ -45,6 +53,9 @@ export const useAuthStore = defineStore("auth", {
         },
         correction(){
             return Promise.resolve(true)
+        },
+        loadAuths(_options: any): Promise<AuthMethods | undefined> {
+            return Promise.resolve(undefined)
         },
     },
 })

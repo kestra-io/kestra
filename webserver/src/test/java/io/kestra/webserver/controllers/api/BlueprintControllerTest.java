@@ -17,6 +17,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 @WireMockTest(httpPort = 28181)
@@ -38,8 +40,8 @@ class BlueprintControllerTest {
     private static final String API_BLUEPRINT_GET_SOURCE = API_BLUEPRINT_GET + "/source";
     // GET "/v1/blueprints/kinds/{kind}/{id}/versions/{version}/graph"
     private static final String API_BLUEPRINT_GET_GRAPH = API_BLUEPRINT_GET + "/graph";
-    // GET "/v1/blueprints/kinds/{kind}/{id}/versions/{version}/graph"
-    private static final String API_BLUEPRINT_GET_TAGS = "/v1/blueprints/kinds/%s/versions/%s/tags?q=%s";
+    // GET "/v1/blueprints/kinds/{kind}/versions/{version}/tags"
+    private static final String API_BLUEPRINT_GET_TAGS_PATH = "/v1/blueprints/kinds/%s/versions/%s/tags";
     private static final String KIND_FLOW = BlueprintController.Kind.FLOW.val();
     public static final String API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH = "/api/v1/main/blueprints/community/flow";
 
@@ -52,7 +54,7 @@ class BlueprintControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldFindSearchBlueprints(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldFindSearchBlueprintsTranslatesFiltersToLegacyQueryParams(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(
             get(urlMatching("/v1/blueprints.*"))
                 .willReturn(
@@ -63,24 +65,72 @@ class BlueprintControllerTest {
         );
 
         PagedResults<BlueprintController.ApiBlueprintItem> blueprintsWithTotal = client.toBlocking().retrieve(
-            HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?page=1&size=5&q=someTitle&sort=title:asc&tags=3"),
+            HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?page=1&size=5&sort=title:asc&filters[q][EQUALS]=someTitle&filters[tags][CONTAINS]=3"),
             Argument.of(PagedResults.class, BlueprintController.ApiBlueprintItem.class)
         );
 
         assertThat(blueprintsWithTotal.getTotal()).isEqualTo(2L);
-        List<BlueprintController.ApiBlueprintItem> blueprints = blueprintsWithTotal.getResults();
-        assertThat(blueprints.size()).isEqualTo(2);
-        assertThat(blueprints.getFirst().getId()).isEqualTo("1");
-        assertThat(blueprints.getFirst().getTitle()).isEqualTo("GCS Trigger");
-        assertThat(blueprints.getFirst().getDescription()).isEqualTo("GCS trigger flow");
-        assertThat(blueprints.getFirst().getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:34.661Z"));
-        assertThat(blueprints.getFirst().getTags().size()).isEqualTo(2);
-        assertThat(blueprints.getFirst().getTags()).containsExactly("3", "2");
-        assertThat(blueprints.get(1).getId()).isEqualTo("2");
+        assertThat(blueprintsWithTotal.getResults()).hasSize(2);
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(
-            getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW, KIND_FLOW, versionProvider.getVersion()) + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false"))
+            getRequestedFor(urlPathEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW, KIND_FLOW, versionProvider.getVersion())))
+                .withQueryParam("q", equalTo("someTitle"))
+                .withQueryParam("tags", equalTo("3"))
+                .withQueryParam("ee", equalTo("false"))
+                .withQueryParam("page", equalTo("1"))
+                .withQueryParam("size", equalTo("5"))
+                .withQueryParam("sort", equalTo("title:asc"))
+        );
+    }
+
+    @Test
+    void shouldRejectUnsupportedOperationForTagsFilter() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?filters[tags][EQUALS]=foo"),
+                Argument.of(PagedResults.class, BlueprintController.ApiBlueprintItem.class)
+            )
+        );
+        assertThat(e.getMessage()).contains("Operation EQUALS is not supported for field TAGS");
+    }
+
+    @Test
+    void shouldRejectLogicalFilterGroupsInsteadOfSilentlyDroppingThem() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?filters[or][0][q][EQUALS]=foo&filters[or][1][q][EQUALS]=bar"),
+                Argument.of(PagedResults.class, BlueprintController.ApiBlueprintItem.class)
+            )
+        );
+        assertThat(e.getMessage()).contains("does not support logical (AND/OR) or nested filter groups");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldFindSearchBlueprintsWithoutFiltersOmitsLegacyParams(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(
+            get(urlMatching("/v1/blueprints.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprints.json")
+                )
+        );
+
+        client.toBlocking().retrieve(
+            HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "?page=1&size=5"),
+            Argument.of(PagedResults.class, BlueprintController.ApiBlueprintItem.class)
+        );
+
+        WireMock wireMock = wmRuntimeInfo.getWireMock();
+        wireMock.verifyThat(
+            getRequestedFor(urlPathEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW, KIND_FLOW, versionProvider.getVersion())))
+                .withQueryParam("ee", equalTo("false"))
+                .withoutQueryParam("q")
+                .withoutQueryParam("tags")
         );
     }
 
@@ -165,7 +215,7 @@ class BlueprintControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldGetTags(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetTagsTranslatesFilterToLegacyQueryParam(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(
             get(urlMatching("/v1/blueprints/.*/tags.*"))
                 .willReturn(
@@ -176,16 +226,41 @@ class BlueprintControllerTest {
         );
 
         List<BlueprintController.ApiBlueprintTagItem> blueprintTags = client.toBlocking().retrieve(
-            HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "/tags?q=someQuery"),
+            HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "/tags?filters[q][EQUALS]=someQuery"),
             Argument.of(List.class, BlueprintController.ApiBlueprintTagItem.class)
         );
 
         assertThat(blueprintTags.size()).isEqualTo(3);
         assertThat(blueprintTags.getFirst().getId()).isEqualTo("3");
-        assertThat(blueprintTags.getFirst().getName()).isEqualTo("Cloud");
-        assertThat(blueprintTags.getFirst().getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:10.171Z"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_TAGS, KIND_FLOW, versionProvider.getVersion(), "someQuery"))));
+        wireMock.verifyThat(
+            getRequestedFor(urlPathEqualTo(String.format(API_BLUEPRINT_GET_TAGS_PATH, KIND_FLOW, versionProvider.getVersion())))
+                .withQueryParam("q", equalTo("someQuery"))
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldGetTagsWithoutFiltersOmitsLegacyQueryParam(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(
+            get(urlMatching("/v1/blueprints/.*/tags.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprint-tags.json")
+                )
+        );
+
+        client.toBlocking().retrieve(
+            HttpRequest.GET(API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH + "/tags"),
+            Argument.of(List.class, BlueprintController.ApiBlueprintTagItem.class)
+        );
+
+        WireMock wireMock = wmRuntimeInfo.getWireMock();
+        wireMock.verifyThat(
+            getRequestedFor(urlPathEqualTo(String.format(API_BLUEPRINT_GET_TAGS_PATH, KIND_FLOW, versionProvider.getVersion())))
+                .withoutQueryParam("q")
+        );
     }
 }

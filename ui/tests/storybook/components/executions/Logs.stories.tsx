@@ -72,8 +72,15 @@ function makeDecorators() {
                 executionsStore.execution = FAKE_EXECUTION as any;
 
                 (executionsStore as any).loadLogs = async ({params}: {executionId: string; params?: Record<string, any>}) => {
-                    const minLevel = params?.minLevel ?? "TRACE";
-                    const filtered = filteredByMinLevel(FAKE_LOGS, minLevel);
+                    const gte = params?.["filters[level][GREATER_THAN_OR_EQUAL_TO]"];
+                    const lte = params?.["filters[level][LESS_THAN_OR_EQUAL_TO]"];
+                    let filtered: typeof FAKE_LOGS;
+                    if (lte) {
+                        const maxIdx = LEVEL_ORDER.indexOf(lte as Level);
+                        filtered = FAKE_LOGS.filter(log => LEVEL_ORDER.indexOf(log.level as Level) >= maxIdx);
+                    } else {
+                        filtered = filteredByMinLevel(FAKE_LOGS, (gte as string) ?? "TRACE");
+                    }
                     executionsStore.logs = filtered as any;
                     return filtered;
                 };
@@ -122,19 +129,27 @@ export const LevelFilterUpdatesRoute: Story = {
             {timeout: 5000}
         );
 
-        // 2. Open the filter chip popup.
+        // 2. Open the filter chip popup and grab the value combobox.
+        //    The popup now renders two comboboxes — the comparator select
+        //    (.comp-container, "At or Above" / "At or Below", added when the
+        //    level filter gained min/max directions) and the value select
+        //    (.select-panel). Scope to .select-panel so we drive the level
+        //    value, not the comparator, and avoid a multiple-match error.
         const combobox = await waitFor(
             async () => {
                 const chip = canvasElement.querySelector<HTMLElement>(".chip");
                 if (!chip) throw new Error("filter chip not found");
 
-                const popup = iframeBody.querySelector(".edit-popup");
+                const popup = iframeBody.querySelector<HTMLElement>(".edit-popup");
                 if (!popup) {
                     await userEvent.click(chip);
                     throw new Error("popup not yet open, retrying");
                 }
 
-                const cb = within(iframeBody).queryByRole("combobox");
+                const valuePanel = popup.querySelector<HTMLElement>(".select-panel");
+                if (!valuePanel) throw new Error("value select panel not yet rendered in popup");
+
+                const cb = within(valuePanel).queryByRole("combobox");
                 if (!cb) throw new Error("combobox not yet rendered in popup");
                 return cb;
             },

@@ -18,7 +18,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.QUERY,
         QueryFilter.Field.STATE,
         QueryFilter.Field.CHILD_FILTER,
-        QueryFilter.Field.MIN_LEVEL,
+        QueryFilter.Field.LEVEL,
         QueryFilter.Field.START_DATE,
         QueryFilter.Field.END_DATE,
         QueryFilter.Field.UPDATED,
@@ -30,7 +30,13 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.METADATA,
         QueryFilter.Field.GROUP,
         QueryFilter.Field.NAME,
-        QueryFilter.Field.SUPER_ADMIN
+        QueryFilter.Field.TAGS,
+        QueryFilter.Field.ATTEMPT_NUMBER,
+        QueryFilter.Field.SUPER_ADMIN,
+        QueryFilter.Field.LOCKED,
+        QueryFilter.Field.LAST_TRIGGERED_DATE,
+        QueryFilter.Field.NEXT_EXECUTION_DATE,
+        QueryFilter.Field.TIME_RANGE
     );
 
     @Test
@@ -87,5 +93,22 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         ))
             .isInstanceOf(InvalidQueryFiltersException.class)
             .hasMessageContaining("STARTS_WITH operation requires a string value, got a List");
+    }
+    
+    @Test
+    void tagsConditionShouldDelegateToDefaultHandlers() {
+        String assertValue = "my-tag";
+        Name columnName = DSL.quotedName(QueryFilter.Field.TAGS.name().toLowerCase());
+    
+        assertThat(
+            this.getConditionOnField(
+                QueryFilter.Field.TAGS,
+                List.of(assertValue),
+                QueryFilter.Op.IN,
+                null
+            )
+        ).isEqualTo(
+            DSL.field(columnName).in(List.of(assertValue))
+        );
     }
 }

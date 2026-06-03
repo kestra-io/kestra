@@ -86,7 +86,7 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" />
+                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem
@@ -688,7 +688,7 @@
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
         padding-top: var(--ks-spacing-2);

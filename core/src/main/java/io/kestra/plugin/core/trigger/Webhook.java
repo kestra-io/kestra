@@ -15,7 +15,6 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.WebhookValidation;
@@ -27,7 +26,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -191,31 +189,31 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         Execution execution = maybeExecution.get();
 
-        try {
-            context.webhookService().startExecution(execution);
-        } catch (QueueException e) {
-            return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
-        }
-
-        if (!this.wait) {
-            return Mono.just(HttpResponse.of(context.webhookService().executionResponse(execution)));
-        }
-
-        return context
-            .webhookService()
-            .followExecution(execution, context.flow())
-            .last()
-            .map(throwFunction(event ->
-            {
-                RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
-                int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
-
-                if (this.getReturnOutputs()) {
-                    return buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode));
-                } else {
-                    return HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
+        return context.webhookService().startExecution(execution)
+            .flatMap(__ -> {
+                if (!this.wait) {
+                    return Mono.<HttpResponse<?>>just(HttpResponse.of(context.webhookService().executionResponse(execution)));
                 }
-            }));
+
+                return context
+                    .webhookService()
+                    .followExecution(execution, context.flow())
+                    .last()
+                    .flatMap(event -> {
+                        try {
+                            RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
+                            int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
+
+                            HttpResponse<?> response = this.getReturnOutputs()
+                                ? buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode))
+                                : HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
+                            return Mono.<HttpResponse<?>>just(response);
+                        } catch (Exception e) {
+                            return Mono.error(e);
+                        }
+                    });
+            })
+            .onErrorReturn(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
     }
 
     private HttpResponse<?> buildOutputResponse(Object body, String responseContentType, HttpResponse.Status responseCode) {

@@ -1,7 +1,7 @@
 <template>
     <component
         :is="component"
-        :icon="icon.StateMachine"
+        :icon="StateMachine"
         @click="visible = !visible"
         :disabled="!enabled"
     >
@@ -38,7 +38,7 @@
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
-                        <li v-for="(text, i) in $t('change status hint')[selectedStatus]" :key="i">
+                        <li v-for="(text, i) in ($t('change status hint') as any)[selectedStatus]" :key="i">
                             {{ text }}
                         </li>
                     </ul>
@@ -61,125 +61,110 @@
     </component>
 </template>
 
-<script>
+<script setup lang="ts">
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
-    import {mapStores} from "pinia"
+    import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
     import {useExecutionsStore} from "../../stores/executions"
+    import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {State} from "@kestra-io/design-system"
-    import {shallowRef, ref} from "vue"
-    import {useAuthStore} from "override/stores/auth"
-    import {useToast} from "../../utils/toast"
-    import {useI18n} from "vue-i18n"
 
-    export default {
-        components: {StateMachine},
-        props: {
-            component: {
-                type: String,
-                default: "b-button",
-            },
-            execution: {
-                type: Object,
-                required: true,
-            },
-            taskRun: {
-                type: Object,
-                required: false,
-                default: undefined,
-            },
-            attemptIndex: {
-                type: Number,
-                required: false,
-                default: undefined,
-            },
-        },
-        emits: ["follow"],
-        setup(props, {emit}) {
-            const visible = ref(false)
-            const selectedStatus = ref(undefined)
+    // FIXME: any - execution/taskRun are untyped domain objects
+    const props = withDefaults(defineProps<{
+        component?: string
+        execution: any // FIXME: any
+        taskRun?: any // FIXME: any
+        attemptIndex?: number
+    }>(), {
+        component: "b-button",
+        taskRun: undefined,
+        attemptIndex: undefined,
+    })
 
-            const {t} = useI18n()
+    const emit = defineEmits<{
+        follow: []
+    }>()
 
-            const executionsStore = useExecutionsStore()
-            const toast = useToast()
+    const {t} = useI18n()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
+    const toast = useToast()
 
-            function changeStatus() {
-                visible.value = false
+    const visible = ref(false)
+    const selectedStatus = ref<string | undefined>(undefined)
 
-                executionsStore
-                    .changeStatus({
-                        executionId: props.execution.id,
-                        taskRunId: props.taskRun.id,
-                        state: selectedStatus.value,
-                    })
-                    .then(() => executionsStore.waitForStateChange(props.execution))
-                    .then((execution) => {
-                        executionsStore.execution = execution
-                        emit("follow")
+    const uuid = computed(() =>
+        "changestatus-" + (props.execution as {id: string}).id + (props.taskRun ? "-" + (props.taskRun as {id: string}).id : ""),
+    )
 
-                        toast.success(t("change state done"))
-                    })
-            }
-
-            return {
-                visible,
-                selectedStatus,
-                changeStatus,
-            }
-        },
-        computed: {
-            ...mapStores(useAuthStore),
-            uuid() {
-                return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "")
-            },
-            states() {
-                return (this.taskRun.state.current === "PAUSED" ?
-                    [
-                        State.FAILED,
-                        State.RUNNING,
-                    ] :
-                    [
-                        State.FAILED,
-                        State.SUCCESS,
-                        State.WARNING,
-                    ]
-                )
-                    .filter(value => value !== this.taskRun.state.current)
-                    .map(value => {
-                        return {
-                            code: value,
-                            label: this.$t("mark as", {status: value}),
-                            disabled: value === this.taskRun.state.current,
-                        }
-                    })
-            },
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false
+    // FIXME: any - execution/taskRun are untyped domain objects
+    const states = computed(() => {
+        const taskRun = props.taskRun as any // FIXME: any
+        return (taskRun.state.current === "PAUSED" ?
+            [
+                State.FAILED,
+                State.RUNNING,
+            ] :
+            [
+                State.FAILED,
+                State.SUCCESS,
+                State.WARNING,
+            ]
+        )
+            .filter((value: string) => value !== taskRun.state.current)
+            .map((value: string) => {
+                return {
+                    code: value,
+                    label: t("mark as", {status: value}),
+                    disabled: value === taskRun.state.current,
                 }
+            })
+    })
 
-                if (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex) {
-                    return false
-                }
+    const enabled = computed(() => {
+        const execution = props.execution as any // FIXME: any
+        const taskRun = props.taskRun as any // FIXME: any
 
-                if (this.taskRun.state.current === "PAUSED" || this.taskRun.state.current === "CREATED") {
-                    return true
-                }
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, execution.namespace))) {
+            return false
+        }
 
-                if (State.isRunning(this.execution.state.current)) {
-                    return false
-                }
+        if (taskRun.attempts !== undefined && taskRun.attempts.length - 1 !== props.attemptIndex) {
+            return false
+        }
 
-                return true
-            },
-        },
-        data() {
-            return {
-                icon: {StateMachine: shallowRef(StateMachine)},
-            }
-        },
+        if (taskRun.state.current === "PAUSED" || taskRun.state.current === "CREATED") {
+            return true
+        }
+
+        if (State.isRunning(execution.state.current)) {
+            return false
+        }
+
+        return true
+    })
+
+    function changeStatus() {
+        visible.value = false
+
+        const taskRun = props.taskRun as any // FIXME: any
+        executionsStore
+            .changeStatus({
+                executionId: (props.execution as {id: string}).id,
+                taskRunId: taskRun.id,
+                state: selectedStatus.value as string,
+            })
+            .then(() => executionsStore.waitForStateChange(props.execution as any)) // FIXME: any
+            .then((execution: unknown) => {
+                // FIXME: any
+                ;(executionsStore as any).execution = execution // FIXME: any
+                emit("follow")
+
+                toast.success(t("change state done"))
+            })
     }
 </script>
 

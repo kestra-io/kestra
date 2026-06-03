@@ -3,6 +3,16 @@ import {setActivePinia, createPinia} from "pinia"
 import {nextTick} from "vue"
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
+// Avoid pulling in the full design-system (monaco-editor) on cold import.
+// Provide minimal stubs for the symbols `@kestra-io/topology` reads at module
+// top level (`utils/utils.ts` reads stringUtils/durationUtils; `index.ts`
+// re-exports State).
+vi.mock("@kestra-io/design-system", () => ({
+    stringUtils: {afterLastDot: (s: string) => s?.split(".").pop() ?? s},
+    durationUtils: {humanDuration: () => "", duration: () => 0},
+    State: {},
+}))
+
 vi.mock("nprogress", () => ({
     start: vi.fn(),
     done: vi.fn(),

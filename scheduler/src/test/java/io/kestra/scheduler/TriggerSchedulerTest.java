@@ -130,6 +130,9 @@ class TriggerSchedulerTest {
         assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
         assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
         assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+
+        // The locking execution id is persisted on the trigger state (allowConcurrent defaults to false).
+        assertThat(state.getExecutionId()).isEqualTo(execution.getId());
     }
 
     @Test

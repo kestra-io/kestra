@@ -17,13 +17,13 @@
     #{--ks-bg-base}: $base-gray-neutral-50;
     #{--ks-bg-elevated}: $base-gray-neutral-white;
     #{--ks-bg-error}: $base-red-50;
-    #{--ks-bg-hover}: $base-gray-neutral-100;
+    #{--ks-bg-hover}: $base-gray-neutral-50;
     #{--ks-bg-hover-elevated}: $base-gray-neutral-50;
     #{--ks-bg-inactive}: $base-gray-neutral-50;
     #{--ks-bg-info}: $base-blue-50;
     #{--ks-bg-input}: $base-gray-neutral-white;
     #{--ks-bg-overlay}: $base-gray-neutral-white;
-    #{--ks-bg-scrim}: #4241454d;
+    #{--ks-bg-scrim}: rgba($base-gray-cool-white, 0.7);
     #{--ks-bg-sidebar}: $base-gray-neutral-white;
     #{--ks-bg-success}: $base-green-50;
     #{--ks-bg-surface}: $base-gray-neutral-white;
@@ -52,6 +52,7 @@
     #{--ks-btn-primary-bg-default}: $base-primary-500;
     #{--ks-btn-primary-bg-hover}: $base-primary-400;
     #{--ks-btn-primary-bg-inactive}: $base-gray-neutral-50;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
     #{--ks-btn-secondary-bg-active}: $base-gray-neutral-50;
     #{--ks-btn-secondary-bg-default}: $base-gray-neutral-white;
     #{--ks-btn-secondary-bg-hover}: $base-gray-neutral-50;

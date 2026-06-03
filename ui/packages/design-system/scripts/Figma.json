@@ -376,9 +376,9 @@
           },
           {
             "name": "ks/bg-hover",
-            "value": "#e9e9ee",
-            "var": "gray-neutral/100",
-            "rootAlias": "gray-neutral/100"
+            "value": "#f7f7f8",
+            "var": "gray-neutral/50",
+            "rootAlias": "gray-neutral/50"
           },
           {
             "name": "ks/bg-hover-elevated",
@@ -412,7 +412,7 @@
           },
           {
             "name": "ks/bg-scrim",
-            "value": "#4241454d",
+            "value": "#ffffffb2",
             "var": "",
             "rootAlias": ""
           },
@@ -559,6 +559,12 @@
             "value": "#f7f7f8",
             "var": "gray-neutral/50",
             "rootAlias": "gray-neutral/50"
+          },
+          {
+            "name": "ks/btn-primary-text",
+            "value": "#ffffff",
+            "var": "gray-neutral/white",
+            "rootAlias": "gray-neutral/white"
           },
           {
             "name": "ks/btn-secondary-bg-active",
@@ -1778,9 +1784,9 @@
           },
           {
             "name": "ks/border-strong",
-            "value": "#2f3342",
-            "var": "gray-cool/500",
-            "rootAlias": "gray-cool/500"
+            "value": "#404559",
+            "var": "gray-cool/400",
+            "rootAlias": "gray-cool/400"
           },
           {
             "name": "ks/border-subtle",
@@ -1847,6 +1853,12 @@
             "value": "#262a35",
             "var": "gray-cool/700",
             "rootAlias": "gray-cool/700"
+          },
+          {
+            "name": "ks/btn-primary-text",
+            "value": "#ffffff",
+            "var": "gray-neutral/white",
+            "rootAlias": "gray-neutral/white"
           },
           {
             "name": "ks/btn-secondary-bg-active",
@@ -3135,6 +3147,12 @@
             "value": "#23252e",
             "var": "gray-neutral/800",
             "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/btn-primary-text",
+            "value": "#ffffff",
+            "var": "gray-neutral/white",
+            "rootAlias": "gray-neutral/white"
           },
           {
             "name": "ks/btn-secondary-bg-active",

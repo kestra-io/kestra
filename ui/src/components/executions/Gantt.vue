@@ -143,12 +143,9 @@
     import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import {State, durationUtils} from "@kestra-io/design-system"
-    // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue"
-    // @ts-expect-error JS module without declarations
     import * as FlowUtils from "../../utils/flowUtils"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -489,7 +486,7 @@
                 left,
                 tooltip,
                 color: colors[task.state.current],
-                running: State.isRunning(task.state.current),
+                running: Boolean(State.isRunning(task.state.current)),
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,

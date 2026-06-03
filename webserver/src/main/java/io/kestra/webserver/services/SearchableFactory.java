@@ -2,11 +2,13 @@ package io.kestra.webserver.services;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.Strings;
 import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.docs.Plugin;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.namespaces.Namespace;
@@ -39,6 +41,30 @@ public class SearchableFactory {
                 QueryFilter.Op.STARTS_WITH, QueryFilter.Op.ENDS_WITH, QueryFilter.Op.REGEX,
                 QueryFilter.Op.IN, QueryFilter.Op.NOT_IN, QueryFilter.Op.PREFIX)
             .build();
+    }
+
+    @Singleton
+    @Named("PLUGIN")
+    public Searchable<Plugin> pluginSearchable() {
+        return Searchable.<Plugin>builder()
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (plugin, v) -> pluginQueryMatches(plugin, v))
+            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.NOT_EQUALS,
+                (plugin, v) -> !pluginQueryMatches(plugin, v))
+            // ARTIFACT_ID matches on Plugin.getName() — the X-Kestra-Name manifest entry (the Maven artifactId).
+            .searchableQueryFilterExtractor(QueryFilter.Field.ARTIFACT_ID, Plugin::getName,
+                QueryFilter.Op.IN, QueryFilter.Op.NOT_IN)
+            .build();
+    }
+
+    /**
+     * Substring match for the plugin QUERY filter across the plugin title, group and name (artifactId).
+     */
+    private static boolean pluginQueryMatches(Plugin plugin, Object queryValue) {
+        String needle = queryValue == null ? "" : queryValue.toString();
+        return Stream.of(plugin.getTitle(), plugin.getGroup(), plugin.getName())
+            .filter(Objects::nonNull)
+            .anyMatch(field -> field.contains(needle));
     }
 
     @Singleton

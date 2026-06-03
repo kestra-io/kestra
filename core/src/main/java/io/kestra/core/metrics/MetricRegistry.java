@@ -70,9 +70,9 @@ public class MetricRegistry {
     public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE = "controller.permits.available";
     public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE_DESCRIPTION = "The total available permits (remaining capacity) in a worker queue";
     public static final String METRIC_CONTROLLER_JOB_INFLIGHT = "controller.job.inflight";
-    public static final String METRIC_CONTROLLER_JOB_INFLIGHT_DESCRIPTION = "The total number of in-flight jobs in a worker queue";
+    public static final String METRIC_CONTROLLER_JOB_INFLIGHT_DESCRIPTION = "The number of in-flight jobs in a worker queue";
     public static final String METRIC_CONTROLLER_WORKER_ACTIVE_ALL = "controller.worker.active.all";
-    public static final String METRIC_CONTROLLER_WORKER_ACTIVE_ALL_DESCRIPTION = "The total number of active workers across all worker queues";
+    public static final String METRIC_CONTROLLER_WORKER_ACTIVE_ALL_DESCRIPTION = "The number of active workers across all worker queues";
     public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL = "controller.permits.available.all";
     public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL_DESCRIPTION = "The total available permits across all worker queues";
     public static final String METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL = "controller.job.dispatched.total";
@@ -99,8 +99,8 @@ public class MetricRegistry {
     public static final String METRIC_CONTROLLER_CAPACITY_SHARED_ALLOCATED_DESCRIPTION = "Shared (unreserved) slots allocated, aggregated across workers in the worker group";
     public static final String METRIC_CONTROLLER_CAPACITY_SHARED_USED = "controller.capacity.shared.used";
     public static final String METRIC_CONTROLLER_CAPACITY_SHARED_USED_DESCRIPTION = "Shared (unreserved) slots currently used, aggregated across workers in the worker group";
-    public static final String METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT = "controller.workergroup.job.inflight";
-    public static final String METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT_DESCRIPTION = "The total number of in-flight jobs being processed by workers in a worker group";
+    public static final String METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT = "controller.worker.group.job.inflight";
+    public static final String METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT_DESCRIPTION = "The number of in-flight jobs being processed by workers in a worker group";
 
     public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
     public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";

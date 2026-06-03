@@ -26,7 +26,7 @@ import {
     TIME_RANGE_KEY,
 } from "./constants"
 import {newGroupId} from "../composables/useFilterGroups"
-import {createAppliedFilter, createTimeRangeFilter, processFieldValue} from "./filterChipFactory"
+import {createAppliedFilter, createCustomRangeFilter, createTimeRangeFilter, processFieldValue} from "./filterChipFactory"
 
 /** A bag of params bucketed into one logical position in the tree. */
 type Slot = {
@@ -96,7 +96,32 @@ const buildLeafFromSlot = (
 ): LeafFilterGroup => {
     const filtersMap = new Map<string, AppliedFilter>()
 
+    // Pre-pass: a `time-range` field in range mode arrives as two buckets (GTE + LTE) because
+    // bucketParams keys by `field|operation`. Merge them into one range chip and mark the buckets
+    // consumed so the normal pass below doesn't render them as two separate `>=` / `<=` chips.
+    const consumedBuckets = new Set<string>()
+    const paramsByField = new Map<string, DecodedParam[]>()
     slot.fieldParams.forEach((params, bucketKey) => {
+        const field = params[0]?.field ?? bucketKey.split("|")[0]
+        if (!paramsByField.has(field)) paramsByField.set(field, [])
+        paramsByField.get(field)!.push(...params)
+    })
+    paramsByField.forEach((params, field) => {
+        const config = configuration.keys?.find(k => k?.key === field)
+        if (config?.valueType !== "time-range" || config.customDateMode !== "range") return
+        const gte = params.find(p => p.operation === "GREATER_THAN_OR_EQUAL_TO")
+        const lte = params.find(p => p.operation === "LESS_THAN_OR_EQUAL_TO")
+        if (!gte || !lte) return
+        filtersMap.set(
+            `${field}|GREATER_THAN_OR_EQUAL_TO`,
+            createCustomRangeFilter(field, config, new Date(gte.value as string), new Date(lte.value as string)),
+        )
+        consumedBuckets.add(`${field}|GREATER_THAN_OR_EQUAL_TO`)
+        consumedBuckets.add(`${field}|LESS_THAN_OR_EQUAL_TO`)
+    })
+
+    slot.fieldParams.forEach((params, bucketKey) => {
+        if (consumedBuckets.has(bucketKey)) return
         const field = params[0]?.field ?? bucketKey.split("|")[0]
         const config = configuration.keys?.find(k => k?.key === field)
         if (!config) return

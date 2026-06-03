@@ -43,6 +43,11 @@ export interface FlowBlueprint {
     template?: BlueprintTemplate
 }
 
+export interface BlueprintTag {
+    id: string;
+    name: string;
+}
+
 const API_URL = "https://api.kestra.io/v1"
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
 

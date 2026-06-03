@@ -11,7 +11,7 @@
                     :execution="executionsStore.execution"
                 />
                 <KsDropdown trigger="click" placement="bottom-end">
-                    <KsButton :icon="DotsVertical" link class="tab-icon" />
+                    <KsButton :icon="DotsVertical" link class="tab-icon" :aria-label="$t('playground actions')" />
                     <template #dropdown>
                         <KsDropdownMenu class="m-2">
                             <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
@@ -80,7 +80,6 @@
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Gantt from "../executions/Gantt.vue"
-    // @ts-expect-error no types on logs
     import Logs from "../executions/Logs.vue"
     import ExecutionOutput from "../executions/outputs/Wrapper.vue"
     import ExecutionMetric from "../executions/ExecutionMetric.vue"

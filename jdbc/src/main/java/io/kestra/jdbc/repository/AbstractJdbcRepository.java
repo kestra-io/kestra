@@ -307,11 +307,15 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
             if (dateColumn == null) {
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
             return getDateCondition(value, operation, dateColumn);
+        }
+
+        if (field == QueryFilter.Field.CREATED) {
+            return createdCondition(value, operation, dateColumn);
         }
 
         if (field == QueryFilter.Field.ENABLED) {
@@ -500,6 +504,10 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
     }
 
+    protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.TAGS, value, operation);
+    }
+
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     protected Condition generateStateCondition(Object value, QueryFilter.Op operation) {
@@ -535,12 +543,15 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported field: TIME_RANGE");
     }
 
-    protected Condition statusCondition(Object value, QueryFilter.Op operation) {
-        return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
+    protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {
+        if (dateColumn == null) {
+            throw new InvalidQueryFiltersException("When filtering on CREATED, dateColumn is required but was null");
+        }
+        return getDateCondition(value, operation, dateColumn);
     }
 
-    protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported operation for TAGS field: " + operation);
+    protected Condition statusCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
     }
 
     protected Condition groupCondition(Object value, QueryFilter.Op operation) {

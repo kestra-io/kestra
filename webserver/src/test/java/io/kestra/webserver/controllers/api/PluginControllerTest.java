@@ -48,10 +48,11 @@ class PluginControllerTest {
 
     @Test
     void plugins() {
-        List<Plugin> list = client.toBlocking().retrieve(
+        PagedResults<Plugin> page = client.toBlocking().retrieve(
             HttpRequest.GET(PATH),
-            Argument.listOf(Plugin.class)
+            Argument.of(PagedResults.class, Plugin.class)
         );
+        List<Plugin> list = page.getResults();
 
         assertThat(list.size()).isEqualTo(3);
 
@@ -78,10 +79,11 @@ class PluginControllerTest {
         assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.CORE);
 
         // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
-        list = client.toBlocking().retrieve(
+        PagedResults<Plugin> page2 = client.toBlocking().retrieve(
             HttpRequest.GET(PATH),
-            Argument.listOf(Plugin.class)
+            Argument.of(PagedResults.class, Plugin.class)
         );
+        list = page2.getResults();
 
         assertThat(list.size()).isEqualTo(3);
     }

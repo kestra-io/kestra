@@ -20,8 +20,6 @@ import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
 import type {Types, Node, Edge, Element} from "../utils/types"
 
-import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies"
-
 // ─── CSS variable maps ────────────────────────────────────────────────────────
 
 const NODE_BG = {
@@ -125,7 +123,6 @@ export function useDependencies(
     subtype: Types = FLOW,
     initialNodeID: string,
     params: RouteParams,
-    isTesting = false,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
 ) {
     const coreStore = useCoreStore()
@@ -454,58 +451,45 @@ export function useDependencies(
     }
 
     onMounted(async () => {
-        if (isTesting) {
-            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)}
-            isLoading.value   = false
-            isRendering.value = false
-            if (subtype !== NAMESPACE) selectNode(elements.value.data.find(
-                (el): el is {data: Node} => el.data.type === NODE,
-            )?.data.id ?? initialNodeID)
-            await nextTick()
-            chartNodes.value = graphNodes.value
-            chartEdges.value = graphEdges.value
-            captureAndFocusWhenReady()
-        } else {
-            try {
-                if (fetchAssetDependencies) {
-                    const result = await fetchAssetDependencies()
-                    elements.value = {data: result.data, count: result.count}
-                } else if (subtype === NAMESPACE) {
-                    const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
-                    const nodes = data.nodes ?? []
-                    elements.value = {
-                        data:  transformResponse(data, NAMESPACE),
-                        count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
-                    }
-                } else {
-                    const result = await flowStore.loadDependencies(
-                        {
-                            id:       (subtype === FLOW ? params.id : params.flowId) as string,
-                            namespace: params.namespace as string,
-                            subtype:  subtype === FLOW ? FLOW : EXECUTION,
-                        },
-                        false,
-                    )
-                    elements.value = {data: result.data ?? [], count: result.count}
+        try {
+            if (fetchAssetDependencies) {
+                const result = await fetchAssetDependencies()
+                elements.value = {data: result.data, count: result.count}
+            } else if (subtype === NAMESPACE) {
+                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
+                const nodes = data.nodes ?? []
+                elements.value = {
+                    data:  transformResponse(data, NAMESPACE),
+                    count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
-            } catch (error) {
-                console.error(`Failed to load ${subtype} dependencies:`, error)
-                elements.value = {data: [], count: 0}
+            } else {
+                const result = await flowStore.loadDependencies(
+                    {
+                        id:       (subtype === FLOW ? params.id : params.flowId) as string,
+                        namespace: params.namespace as string,
+                        subtype:  subtype === FLOW ? FLOW : EXECUTION,
+                    },
+                    false,
+                )
+                elements.value = {data: result.data ?? [], count: result.count}
             }
-
-            isLoading.value   = false
-            isRendering.value = false
-
-            if (subtype !== NAMESPACE && elements.value.data.length > 0) {
-                // Wait for KsGraph to receive the new nodes prop and render.
-                await nextTick()
-                selectNode(initialNodeID)
-            }
-            await nextTick()
-            chartNodes.value = graphNodes.value
-            chartEdges.value = graphEdges.value
-            captureAndFocusWhenReady()
+        } catch (error) {
+            console.error(`Failed to load ${subtype} dependencies:`, error)
+            elements.value = {data: [], count: 0}
         }
+
+        isLoading.value   = false
+        isRendering.value = false
+
+        if (subtype !== NAMESPACE && elements.value.data.length > 0) {
+            // Wait for KsGraph to receive the new nodes prop and render.
+            await nextTick()
+            selectNode(initialNodeID)
+        }
+        await nextTick()
+        chartNodes.value = graphNodes.value
+        chartEdges.value = graphEdges.value
+        captureAndFocusWhenReady()
 
         if (subtype === EXECUTION) nextTick(() => openSSE())
     })

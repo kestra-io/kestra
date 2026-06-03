@@ -61,7 +61,7 @@
                     @change="importFiles"
                 >
                 <KsDropdown>
-                    <KsButton>
+                    <KsButton :aria-label="$t('import')">
                         <PlusBox />
                     </KsButton>
                     <template #dropdown>
@@ -359,7 +359,7 @@
 
 <script lang="ts">
     import {InjectionKey} from "vue"
-    import {EditorTabProps} from "./EditorWrapper.vue"
+    import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
     export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>

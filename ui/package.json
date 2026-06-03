@@ -9,8 +9,9 @@
     ],
     "scripts": {
         "dev": "vite --host",
-        "build": "vite build --emptyOutDir",
         "prebuild": "npm run build:design",
+        "build": "vite build --emptyOutDir",
+        "postbuild": "npm run generate:dev-stubs --workspace=@kestra-io/design-system",
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "preview": "vite preview",

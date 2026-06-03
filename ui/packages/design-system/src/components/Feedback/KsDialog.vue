@@ -67,6 +67,10 @@
         --kel-dialog-bg-color: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
 
+        .kel-dialog__body > :last-child {
+            margin-bottom: 0;
+        }
+
         .kel-dialog__header {
             font-size: var(--ks-font-size-base);
             font-weight: bold;
@@ -87,6 +91,7 @@
 
         .kel-dialog__footer {
             border-top: 1px solid var(--ks-border-default);
+            margin-top: var(--kel-dialog-padding-primary);
             margin-left: calc(var(--kel-dialog-padding-primary) * -1);
             margin-bottom: calc(var(--kel-dialog-padding-primary) * -1);
             padding-bottom: var(--kel-dialog-padding-primary);

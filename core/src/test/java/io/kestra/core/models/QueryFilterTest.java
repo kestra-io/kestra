@@ -334,6 +334,65 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.ARTIFACT_ID, Resource.PLUGIN,
+                Set.of(
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.WORKER_GROUP,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.WORKER_GROUP,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.BANNER,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.SUPER_ADMIN, Resource.USER,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.CREATED, Resource.SERVICE_INSTANCE,
+                Set.of(
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN,
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.NAME, Resource.USER,
                 Set.of(
                     Op.EQUALS

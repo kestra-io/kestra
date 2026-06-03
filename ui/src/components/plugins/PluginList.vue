@@ -162,7 +162,7 @@
     })
 
     const loadPluginIcons = async () => {
-        icons.value = await pluginsStore.groupIcons() ?? {}
+        icons.value = await pluginsStore.ensureGroupIcons() ?? {}
     }
 
     const breadcrumbItems = computed<KsBreadcrumbItem[]>(() => {

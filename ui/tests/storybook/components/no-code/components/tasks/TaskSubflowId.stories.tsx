@@ -1,5 +1,4 @@
 import {computed, provide, ref} from "vue";
-// @ts-expect-error Options API component without type declarations
 import TaskSubflowId from "../../../../../../src/components/no-code/components/tasks/TaskSubflowId.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";

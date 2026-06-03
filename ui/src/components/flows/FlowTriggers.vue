@@ -107,6 +107,15 @@
                 <template v-else-if="col.prop === 'updatedAt'">
                     <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                 </template>
+                <template v-else-if="col.prop === 'executionId'">
+                    <router-link
+                        v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
+                        :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
+                    >
+                        <KsId :value="scope.row.executionId" :shrink="true" />
+                    </router-link>
+                    <span v-else />
+                </template>
                 <template v-else>
                     {{ scope.row[col.prop] }}
                 </template>
@@ -355,6 +364,11 @@
         {
             label: t("type"),
             prop: "type",
+            default: true,
+        },
+        {
+            label: t("execution id"),
+            prop: "executionId",
             default: true,
         },
         {

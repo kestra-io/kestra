@@ -164,6 +164,10 @@ export function switchTheme(miscStore: any, theme?: string) {
         }
     }
 
+    const disableTransitions = document.createElement("style")
+    disableTransitions.appendChild(document.createTextNode("*,*::before,*::after{transition:none !important}"))
+    document.head.appendChild(disableTransitions)
+
     // class name
     const htmlClass = document.getElementsByTagName("html")[0].classList
 
@@ -189,6 +193,9 @@ export function switchTheme(miscStore: any, theme?: string) {
     miscStore.theme = theme
 
     localStorage.setItem("theme", theme)
+
+    void document.body.offsetHeight
+    requestAnimationFrame(() => disableTransitions.remove())
 }
 
 export function getTheme(): "light" | "dark" {

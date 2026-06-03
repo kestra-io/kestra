@@ -15,8 +15,8 @@
             }"
         >
             <DynamicScrollerItem
-                v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
-                :item="currentTaskRun"
+                v-if="uniqueTaskRunDisplayFilter(asTaskRun(currentTaskRun))"
+                :item="asTaskRun(currentTaskRun)"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
@@ -45,9 +45,9 @@
                         :items="
                             logsWithIndexByAttemptUid[
                                 attemptUid(
-                                    currentTaskRun.id,
+                                    asTaskRun(currentTaskRun).id,
                                     selectedAttemptNumberByTaskRunId[
-                                        currentTaskRun.id
+                                        asTaskRun(currentTaskRun).id
                                     ],
                                 )
                             ] ?? []
@@ -62,9 +62,9 @@
                                     el,
                                     currentTaskRunIndex,
                                     attemptUid(
-                                        currentTaskRun.id,
+                                        asTaskRun(currentTaskRun).id,
                                         selectedAttemptNumberByTaskRunId[
-                                            currentTaskRun.id
+                                            asTaskRun(currentTaskRun).id
                                         ],
                                     ),
                                 )
@@ -89,7 +89,7 @@
                                             :icon="Download"
                                             rel="noopener noreferrer"
                                         >
-                                            {{ $t("download") }}
+                                            {{ t("download") }}
                                         </KsButton>
                                         <FilePreview
                                             :value="item.logFile"
@@ -124,9 +124,9 @@
                                             levelToHighlight !== item.level,
                                     }"
                                     :key="index"
-                                    :level="level"
+                                    :level="level as any"
                                     :log="item"
-                                    :excludeMetas="excludeMetas"
+                                    :excludeMetas="excludeMetas as any"
                                     v-else-if="
                                         filter === '' ||
                                             item.message
@@ -142,7 +142,7 @@
                                                 index,
                                                 currentTaskRun,
                                             ) &&
-                                            currentTaskRun.outputs?.executionId
+                                            asTaskRun(currentTaskRun).outputs?.executionId
                                     "
                                     :ref="
                                         (el) =>
@@ -176,7 +176,7 @@
                                         )
                                     "
                                     :levelToHighlight="levelToHighlight"
-                                    :level="level"
+                                    :level="level as any"
                                     :excludeMetas="[
                                         'namespace',
                                         'flowId',
@@ -186,7 +186,7 @@
                                     :filter="filter"
                                     :allowAutoExpandSubflows="false"
                                     :targetExecutionId="
-                                        currentTaskRun.outputs.executionId
+                                        asTaskRun(currentTaskRun).outputs.executionId
                                     "
                                     :class="
                                         $el.classList.contains('even')
@@ -209,7 +209,7 @@
                         :to="{
                             name: 'executions/list',
                             query: {
-                                'filters[parentId][EQUALS]': currentTaskRun.executionId,
+                                'filters[parentId][EQUALS]': asTaskRun(currentTaskRun).executionId,
                                 'filters[kind][EQUALS]': 'LOOP',
                             }
                         }"
@@ -217,12 +217,12 @@
                         Iterations
                     </KsButton>
                     <KsProgress
-                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)"
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.iterationCount ?? 1) * 100)"
                         :strokeWidth="24"
                         :textInside="true"
                         class="progress-bar"
                     >
-                        <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                        <span>{{ loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.iterationCount ?? '?' }}</span>
                     </KsProgress>
                 </div>
             </DynamicScrollerItem>
@@ -230,22 +230,20 @@
     </DynamicScroller>
 </template>
 
-<script setup>
-    import Download from "vue-material-design-icons/Download.vue"
+<script setup lang="ts">
+    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef} from "vue"
+    import {useI18n} from "vue-i18n"
     import {RouterLink} from "vue-router"
-</script>
-
-<script>
+    import Download from "vue-material-design-icons/Download.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State, levelToRequestParams} from "@kestra-io/design-system"
+    import {State, levelToRequestParams, KsProgress, type LevelFilterValue} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
     import moment from "moment"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
-    import {mapStores} from "pinia"
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore} from "../../stores/executions"
     import TaskRunLine from "../executions/TaskRunLine.vue"
@@ -256,805 +254,806 @@
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
-    import {KsLink, KsProgress} from "@kestra-io/design-system"
 
-    export default {
-        name: "TaskRunDetails",
-        components: {
-            FilePreview,
-            TaskRunLine,
-            LogLine,
-            DynamicScroller,
-            DynamicScrollerItem,
-        },
-        emits: [
-            "opened-taskruns-count",
-            "follow",
-            "reset-expand-collapse-all-switch",
-            "log-cursor",
-            "log-indices-by-level",
-        ],
-        props: {
-            logCursor: {
-                type: String,
-                default: undefined,
-            },
-            levelToHighlight: {
-                type: String,
-                default: undefined,
-            },
-            levelFilter: {
-                // LevelFilterValue: { value: "INFO", direction: "min" | "max" }
-                type: Object,
-                default: () => ({value: "INFO", direction: "min"}),
-            },
-            filter: {
-                type: String,
-                default: "",
-            },
-            taskRunId: {
-                type: String,
-                default: undefined,
-            },
-            excludeMetas: {
-                type: Array,
-                default: () => [],
-            },
-            forcedAttemptNumber: {
-                type: Number,
-                default: undefined,
-            },
-            // allows to fetch the execution at startup
-            targetExecutionId: {
-                type: String,
-                default: undefined,
-            },
-            // allows to pass directly a flow source (since it is already fetched by parent component)
-            targetFlow: {
-                type: Object,
-                default: undefined,
-            },
-            allowAutoExpandSubflows: {
-                type: Boolean,
-                default: true,
-            },
-            showProgressBar: {
-                type: Boolean,
-                default: true,
-            },
-        },
-        data() {
-            return {
-                showOutputs: {},
-                showMetrics: {},
-                fullscreen: false,
-                followed: false,
-                shownAttemptsUid: [],
-                rawLogs: [],
-                timer: undefined,
-                timeout: undefined,
-                selectedAttemptNumberByTaskRunId: {},
-                executionSSE: undefined,
-                logsSSE: undefined,
-                flow: undefined,
-                logsBuffer: [],
-                shownSubflowsIds: [],
-                logFileSizeByPath: {},
-                selectedLogLevel: undefined,
-                childrenLogIndicesByLevelByChildUid: {},
-                logsScrollerRefs: {},
-                subflowTaskRunDetailsRefs: {},
-                throttledExecutionUpdate: undefined,
-                targetExecution: undefined,
-                loopOutputsByTaskRunId: {},
-            }
-        },
-        watch: {
-            "shownAttemptsUid.length": function (openedTaskrunsCount) {
-                this.$emit("opened-taskruns-count", openedTaskrunsCount)
-            },
-            levelFilter: function () {
-                this.rawLogs = []
-                if(this.followedExecution)
-                    this.loadLogs(this.followedExecution.id)
-            },
-            currentTaskRuns: {
-                handler(taskRuns) {
-                    // by default we preselect the last attempt for each task run
-                    this.selectedAttemptNumberByTaskRunId = Object.fromEntries(
-                        taskRuns.map((taskRun) => [
-                            taskRun.id,
-                            this.forcedAttemptNumber ??
-                                this.attempts(taskRun).length - 1,
-                        ]),
-                    )
-                    this.autoExpandBasedOnSettings()
-                },
-                immediate: true,
-                deep: true,
-            },
-            targetFlow: {
-                handler: function (flowSource) {
-                    if (flowSource) {
-                        this.flow = flowSource
-                    }
-                },
-                immediate: true,
-            },
-            followedExecution: {
-                handler: async function (newExecution, oldExecution) {
-                    if (!newExecution) {
-                        return
-                    }
+    // Recursive component - self reference
+    import TaskRunDetails from "./TaskRunDetails.vue"
 
-                    if (!oldExecution) {
-                        this.$nextTick(() => {
-                            const parentScroller =
-                                this.$refs.taskRunScroller?.$el?.parentNode?.closest(
-                                    ".vue-recycle-scroller",
-                                )
-                            if (parentScroller) {
-                                const scrollerStyles =
-                                    window.getComputedStyle(parentScroller)
-                                this.$refs.taskRunScroller.$el.style.maxHeight = `${scrollerStyles.getPropertyValue("max-height") - parentScroller.clientHeight}px`
-                            }
-                        })
-                    }
+    const {t} = useI18n()
 
-                    if (!this.targetFlow) {
-                        this.flow = await this.executionsStore.loadFlowForExecution(
-                            {
-                                namespace: newExecution.namespace,
-                                flowId: newExecution.flowId,
-                                revision: newExecution.flowRevision,
-                                store: false,
-                            },
-                        )
-                    }
+    const $http = useClient()
 
-                    if (!State.isRunning(this.followedExecution.state.current)) {
-                        // wait a bit to make sure we don't miss logs as log indexer is asynchronous
-                        setTimeout(() => {
-                            this.closeLogsSSE()
-                        }, 2000)
+    // Cast helper for DynamicScroller slot items which lose type info
+    function asTaskRun(item: unknown): any { // FIXME: any
+        return item
+    }
 
-                        if (!this.logsSSE) {
-                            this.loadLogs(newExecution.id)
-                        }
+    const coreStore = useCoreStore()
+    const executionsStore = useExecutionsStore()
 
-                        return
-                    }
+    // Props
+    interface Props {
+        logCursor?: string
+        levelToHighlight?: string
+        levelFilter?: LevelFilterValue
+        filter?: string
+        taskRunId?: string
+        excludeMetas?: string[]
+        forcedAttemptNumber?: number
+        targetExecutionId?: string
+        targetFlow?: any // FIXME: any
+        allowAutoExpandSubflows?: boolean
+        showProgressBar?: boolean
+        level?: string
+        showLogs?: boolean
+    }
 
-                    // running or paused
-                    if (!this.logsSSE) {
-                        this.followLogs(newExecution.id)
-                    }
-                },
-                immediate: true,
-            },
-            allLogIndicesByLevel() {
-                this.$emit("log-indices-by-level", this.allLogIndicesByLevel)
-            },
-            logCursor(newValue) {
-                if (newValue !== undefined) {
-                    this.scrollToLog(newValue)
-                }
-            },
-        },
-        mounted() {
-            this.throttledExecutionUpdate = throttle((executionEvent) => {
-                this.targetExecution = JSON.parse(executionEvent.data)
-            }, 500)
+    const props = withDefaults(defineProps<Props>(), {
+        logCursor: undefined,
+        levelToHighlight: undefined,
+        levelFilter: () => ({value: "INFO", direction: "min" as const}),
+        filter: "",
+        taskRunId: undefined,
+        excludeMetas: () => [],
+        forcedAttemptNumber: undefined,
+        targetExecutionId: undefined,
+        targetFlow: undefined,
+        allowAutoExpandSubflows: true,
+        showProgressBar: true,
+        level: undefined,
+        showLogs: undefined,
+    })
 
-            if (this.targetExecutionId) {
-                this.followExecution(this.targetExecutionId)
-            }
+    const emit = defineEmits<{
+        "opened-taskruns-count": [count: number]
+        follow: [event: unknown]
+        "reset-expand-collapse-all-switch": []
+        "log-cursor": [cursor: string]
+        "log-indices-by-level": [indices: Record<string, string[]>]
+    }>()
 
-            this.autoExpandBasedOnSettings()
+    // Reactive state
+    const shownAttemptsUid = ref<string[]>([])
+    const rawLogs = ref<any[]>([]) // FIXME: any
+    const timer = ref<ReturnType<typeof moment> | undefined>(undefined)
+    const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
+    const selectedAttemptNumberByTaskRunId = ref<Record<string, number>>({})
+    const executionSSE = ref<any>(undefined) // FIXME: any
+    const logsSSE = ref<any>(undefined) // FIXME: any
+    const flow = ref<any>(undefined) // FIXME: any
+    const logsBuffer = ref<any[]>([]) // FIXME: any
+    const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
+    const logFileSizeByPath = ref<Record<string, string>>({})
+    const childrenLogIndicesByLevelByChildUid = ref<Record<string, Record<string, string[]>>>({})
+    const logsScrollerRefs = ref<Record<string | number, any>>({}) // FIXME: any
+    const subflowTaskRunDetailsRefs = ref<Record<string, any>>({}) // FIXME: any
+    const throttledExecutionUpdate = ref<ReturnType<typeof throttle> | undefined>(undefined)
+    const targetExecution = ref<any>(undefined) // FIXME: any
+    const loopOutputsByTaskRunId = ref<Record<string, any>>({}) // FIXME: any
 
-            for(const taskRun of this.currentTaskRuns) {
-                if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
-                    this.updateLoopStatus(taskRun.id)
-                }
-            }
-        },
-        setup(){
-            const $http = useClient()
-            return {
-                $http,
-            }
-        },
-        computed: {
-            ...mapStores(useCoreStore, useExecutionsStore),
-            followedExecution() {
-                return this.targetExecutionId === undefined
-                    ? this.executionsStore.execution
-                    : this.targetExecution
-            },
-            Download() {
-                return Download
-            },
-            currentTaskRuns() {
-                return (
-                    this.followedExecution?.taskRunList?.filter((tr) =>
-                        this.taskRunId ? tr.id === this.taskRunId : true,
-                    ) ?? []
-                )
-            },
-            params() {
-                let params = {...levelToRequestParams(this.levelFilter)}
+    // Template ref
+    const taskRunScroller = useTemplateRef<any>("taskRunScroller") // FIXME: any
 
-                if (this.taskRunId) {
-                    const taskId = this.taskRunById[this.taskRunId]?.taskId
-                    if (taskId) {
-                        params["filters[taskId][EQUALS]"] = taskId
-                    }
+    // Computed
+    const followedExecution = computed(() =>
+        props.targetExecutionId === undefined
+            ? executionsStore.execution
+            : targetExecution.value,
+    )
 
-                    if (this.forcedAttemptNumber !== undefined && this.forcedAttemptNumber !== null) {
-                        params["filters[attemptNumber][EQUALS]"] = this.forcedAttemptNumber
-                    }
-                }
+    const currentTaskRuns = computed(() =>
+        (followedExecution.value?.taskRunList?.filter((tr: any) => // FIXME: any
+            props.taskRunId ? tr.id === props.taskRunId : true,
+        ) ?? []),
+    )
 
-                return params
-            },
-            taskRunById() {
-                return Object.fromEntries(
-                    this.currentTaskRuns.map((taskRun) => [taskRun.id, taskRun]),
-                )
-            },
-            logsWithIndexByAttemptUid() {
-                const logFilesWrappers = this.currentTaskRuns.flatMap((taskRun) =>
-                    this.attempts(taskRun)
-                        .filter((attempt) => attempt.logFile !== undefined)
-                        .map((attempt, attemptNumber) => ({
-                            logFile: attempt.logFile,
-                            taskRunId: taskRun.id,
-                            attemptNumber,
-                        })),
-                )
+    const taskRunById = computed(() =>
+        Object.fromEntries(
+            currentTaskRuns.value.map((taskRun: any) => [taskRun.id, taskRun]), // FIXME: any
+        ),
+    )
 
-                logFilesWrappers.forEach((logFileWrapper) =>
-                    this.fetchAndStoreLogFileSize(logFileWrapper.logFile),
-                )
+    const logsWithIndexByAttemptUid = computed(() => {
+        const logFilesWrappers = currentTaskRuns.value.flatMap((taskRun: any) => // FIXME: any
+            attempts(taskRun)
+                .filter((attempt: any) => attempt.logFile !== undefined) // FIXME: any
+                .map((attempt: any, attemptNumber: number) => ({ // FIXME: any
+                    logFile: attempt.logFile,
+                    taskRunId: taskRun.id,
+                    attemptNumber,
+                })),
+        )
 
-                const indexedLogs = [...this.filteredLogs, ...logFilesWrappers]
-                    .filter(
-                        (logLine) =>
-                            logLine.logFile !== undefined ||
-                            this.filter === "" ||
-                            logLine?.message
-                                .toLowerCase()
-                                .includes(this.filter.toLowerCase()) ||
-                            this.isSubflow(this.taskRunById[logLine.taskRunId]),
-                    )
-                    .map((logLine, index) => ({...logLine, index}))
+        logFilesWrappers.forEach((logFileWrapper: any) => // FIXME: any
+            fetchAndStoreLogFileSize(logFileWrapper.logFile),
+        )
 
-                return _groupBy(indexedLogs, (indexedLog) =>
-                    this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber),
-                )
-            },
-            autoExpandTaskRunStates() {
-                switch (
-                    localStorage.getItem("logDisplay") ||
-                    logDisplayTypes.DEFAULT
-                ) {
-                case logDisplayTypes.ERROR:
-                    return [State.FAILED, State.RUNNING, State.PAUSED]
-                case logDisplayTypes.ALL:
-                    return State.arrayAllStates().map((s) => s.name)
-                case logDisplayTypes.HIDDEN:
-                    return []
-                default:
-                    return State.arrayAllStates().map((s) => s.name)
-                }
-            },
-            taskTypeAndTaskRunByTaskId() {
-                return Object.fromEntries(
-                    this.followedExecution?.taskRunList?.map((taskRun) => [
-                        taskRun.taskId,
-                        [this.taskType(taskRun), taskRun],
-                    ]),
-                )
-            },
-            currentTaskRunsLogIndicesByLevel() {
-                return this.currentTaskRuns.reduce(
-                    (currentTaskRunsLogIndicesByLevel, taskRun, taskRunIndex) => {
-                        if (this.shouldDisplayLogs(taskRun)) {
-                            const currentTaskRunLogs =
-                                this.logsWithIndexByAttemptUid[
-                                    this.attemptUid(
-                                        taskRun.id,
-                                        this.selectedAttemptNumberByTaskRunId[
-                                            taskRun.id
-                                        ],
-                                    )
-                                ]
-                            currentTaskRunLogs?.forEach((log, logIndex) => {
-                                currentTaskRunsLogIndicesByLevel[log.level] = [
-                                    ...(currentTaskRunsLogIndicesByLevel?.[
-                                        log.level
-                                    ] ?? []),
-                                    taskRunIndex + "/" + logIndex,
-                                ]
-                            })
-                        }
+        const indexedLogs = [...filteredLogs.value, ...logFilesWrappers]
+            .filter(
+                (logLine: any) => // FIXME: any
+                    logLine.logFile !== undefined ||
+                    props.filter === "" ||
+                    logLine?.message
+                        .toLowerCase()
+                        .includes(props.filter.toLowerCase()) ||
+                    isSubflow(taskRunById.value[logLine.taskRunId]),
+            )
+            .map((logLine: any, index: number) => ({...logLine, index})) // FIXME: any
 
-                        return currentTaskRunsLogIndicesByLevel
-                    },
-                    {},
-                )
-            },
-            allLogIndicesByLevel() {
-                const currentTaskRunsLogIndicesByLevel = {
-                    ...this.currentTaskRunsLogIndicesByLevel,
-                }
-                return Object.entries(
-                    this.childrenLogIndicesByLevelByChildUid,
-                ).reduce(
-                    (allLogIndicesByLevel, [logUid, childrenLogIndicesByLevel]) => {
-                        Object.entries(childrenLogIndicesByLevel).forEach(
-                            ([level, logIndices]) => {
-                                allLogIndicesByLevel[level] = [
-                                    ...(allLogIndicesByLevel?.[level] ?? []),
-                                    ...logIndices.map(
-                                        (logIndex) => logUid + "/" + logIndex,
-                                    ),
-                                ]
-                            },
-                        )
+        return _groupBy(indexedLogs, (indexedLog: any) => // FIXME: any
+            attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber),
+        )
+    })
 
-                        return allLogIndicesByLevel
-                    },
-                    currentTaskRunsLogIndicesByLevel,
-                )
-            },
-            levelOrLower() {
-                return LogUtils.levelOrLower(this.level)
-            },
-            filteredLogs() {
-                return this.rawLogs.filter((log) =>
-                    this.levelOrLower.includes(log.level),
-                )
-            },
-        },
-        methods: {
-            async updateLoopStatus(taskRunId) {
-                if (!this.followedExecution) return
-                try {
-                    const outputs = await OutputsAPI.taskRunOutputs({
-                        executionId: this.followedExecution.id,
-                        taskRunId,
-                    })
-                    if(outputs === null
-                        || !outputs.iterationCount
-                        || !outputs.terminatedIterations) {
-                        return
-                    }
+    const autoExpandTaskRunStates = computed(() => {
+        switch (
+            localStorage.getItem("logDisplay") ||
+            logDisplayTypes.DEFAULT
+        ) {
+        case logDisplayTypes.ERROR:
+            return [State.FAILED, State.RUNNING, State.PAUSED]
+        case logDisplayTypes.ALL:
+            return State.arrayAllStates().map((s: any) => s.name) // FIXME: any
+        case logDisplayTypes.HIDDEN:
+            return []
+        default:
+            return State.arrayAllStates().map((s: any) => s.name) // FIXME: any
+        }
+    })
 
-                    this.loopOutputsByTaskRunId[taskRunId] = outputs
-                } catch {
-                    // ignore fetch errors
-                }
-            },
-            fileUrl(path) {
-                return `${apiUrl()}/executions/${this.followedExecution.id}/file?path=${path}`
-            },
-            async fetchAndStoreLogFileSize(path) {
-                if (this.logFileSizeByPath[path] !== undefined) {
-                    return
-                }
-
-                const axiosResponse = await this.$http(
-                    `${apiUrl()}/executions/${this.followedExecution.id}/file/metas?path=${path}`,
-                    {
-                        validateStatus: (status) =>
-                            status === 200 || status === 404 || status === 422,
-                    },
-                )
-                this.logFileSizeByPath[path] = Utils.humanFileSize(
-                    axiosResponse.data.size,
-                )
-            },
-            closeLogsSSE() {
-                if (this.logsSSE) {
-                    this.logsSSE.close()
-                    this.logsSSE = undefined
-                }
-            },
-            toggleExpandCollapseAll() {
-                if (this.shownAttemptsUid.length === 0) {
-                    this.expandAll()
-                } else {
-                    this.collapseAll()
-                }
-            },
-            autoExpandBasedOnSettings() {
-                if (this.autoExpandTaskRunStates.length === 0) {
-                    return
-                }
-
-                if (this.followedExecution === undefined) {
-                    setTimeout(() => this.autoExpandBasedOnSettings(), 50)
-                    return
-                }
-                this.currentTaskRuns.forEach((taskRun) => {
-                    if (this.isSubflow(taskRun) && !this.allowAutoExpandSubflows) {
-                        return
-                    }
-
-                    if (
-                        this.taskRunId === taskRun.id ||
-                        this.autoExpandTaskRunStates.includes(taskRun.state.current)
-                    ) {
-                        this.showAttempt(
-                            this.attemptUid(
+    const currentTaskRunsLogIndicesByLevel = computed(() =>
+        currentTaskRuns.value.reduce(
+            (currentTaskRunsLogIndicesByLevel: Record<string, string[]>, taskRun: any, taskRunIndex: number) => { // FIXME: any
+                if (shouldDisplayLogs(taskRun)) {
+                    const currentTaskRunLogs =
+                        logsWithIndexByAttemptUid.value[
+                            attemptUid(
                                 taskRun.id,
-                                this.selectedAttemptNumberByTaskRunId[taskRun.id],
-                            ),
-                        )
-                    }
-                })
-            },
-            shouldDisplayLogs(taskRun) {
-                const uid = this.attemptUid(
-                    taskRun.id,
-                    this.selectedAttemptNumberByTaskRunId[taskRun.id],
-                )
-                return (
-                    (this.taskRunId || this.shownAttemptsUid.includes(uid)) &&
-                    this.logsWithIndexByAttemptUid[uid]?.length > 0
-                )
-            },
-            closeTargetExecutionSSE() {
-                if (this.executionSSE) {
-                    this.executionSSE.close()
-                    this.executionSSE = undefined
-                }
-            },
-            followExecution(executionId) {
-                this.closeTargetExecutionSSE()
-                this.executionsStore
-                    .followExecution({id: executionId, rawSSE: true})
-                    .then((sse) => {
-                        this.executionSSE = sse
-                        this.executionSSE.onmessage = (executionEvent) => {
-                            const isEnd =
-                                executionEvent &&
-                                executionEvent.lastEventId === "end"
-                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                            if (executionEvent.lastEventId !== "start") {
-                                this.throttledExecutionUpdate(executionEvent)
-                            }
-                            if (isEnd) {
-                                this.closeTargetExecutionSSE()
-                                this.throttledExecutionUpdate.flush()
-                            }
-                        }
-                    })
-            },
-            refreshLogs(){
-                this.timer = moment()
-                this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
-                for(const taskRun of this.currentTaskRuns) {
-                    if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
-                        this.updateLoopStatus(taskRun.id)
-                    }
-                }
-                this.logsBuffer = []
-                this.scrollToBottomFailedTask()
-            },
-            followLogs(executionId) {
-                this.executionsStore.followLogs({id: executionId}).then((sse) => {
-                    this.logsSSE = sse
-
-                    this.logsSSE.onmessage = (event) => {
-                        // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                        if (event.lastEventId !== "start") {
-                            this.logsBuffer = this.logsBuffer.concat(
-                                JSON.parse(event.data),
+                                selectedAttemptNumberByTaskRunId.value[taskRun.id],
                             )
-                        }
+                        ]
+                    currentTaskRunLogs?.forEach((log: any, logIndex: number) => { // FIXME: any
+                        currentTaskRunsLogIndicesByLevel[log.level] = [
+                            ...(currentTaskRunsLogIndicesByLevel?.[log.level] ?? []),
+                            taskRunIndex + "/" + logIndex,
+                        ]
+                    })
+                }
+                return currentTaskRunsLogIndicesByLevel
+            },
+            {},
+        ),
+    )
 
-                        clearTimeout(this.timeout)
-                        this.timeout = setTimeout(() => {
-                            this.refreshLogs()
-                        }, 100)
-
-                        // force at least 1 logs refresh / 500ms
-                        if (moment().diff(this.timer, "seconds") > 0.5) {
-                            clearTimeout(this.timeout)
-                            this.refreshLogs()
-                        }
-                    }
-
-                    this.logsSSE.onerror = (_) => {
-                        this.coreStore.message = {
-                            variant: "error",
-                            title: this.$t("error"),
-                            message: this.$t(
-                                "something_went_wrong.loading_execution",
+    const allLogIndicesByLevel = computed(() => {
+        const current = {...currentTaskRunsLogIndicesByLevel.value}
+        return Object.entries(
+            childrenLogIndicesByLevelByChildUid.value,
+        ).reduce(
+            (allLogIndices: Record<string, string[]>, [logUid, childrenLogIndicesByLevel]: [string, Record<string, string[]>]) => {
+                Object.entries(childrenLogIndicesByLevel).forEach(
+                    ([lvl, logIndices]) => {
+                        allLogIndices[lvl] = [
+                            ...(allLogIndices?.[lvl] ?? []),
+                            ...logIndices.map(
+                                (logIndex) => logUid + "/" + logIndex,
                             ),
-                        }
+                        ]
+                    },
+                )
+                return allLogIndices
+            },
+            current,
+        )
+    })
+
+    const levelOrLower = computed(() =>
+        LogUtils.levelOrLower(props.level as any), // FIXME: any
+    )
+
+    const filteredLogs = computed(() =>
+        rawLogs.value.filter((log: any) => // FIXME: any
+            levelOrLower.value.includes(log.level),
+        ),
+    )
+
+    // Watchers
+    watch(
+        () => shownAttemptsUid.value.length,
+        (openedTaskrunsCount) => {
+            emit("opened-taskruns-count", openedTaskrunsCount)
+        },
+    )
+
+    watch(
+        () => props.levelFilter,
+        () => {
+            rawLogs.value = []
+            if (followedExecution.value)
+                loadLogs(followedExecution.value.id)
+        },
+    )
+
+    watch(
+        currentTaskRuns,
+        (taskRuns) => {
+            // by default we preselect the last attempt for each task run
+            selectedAttemptNumberByTaskRunId.value = Object.fromEntries(
+                taskRuns.map((taskRun: any) => [ // FIXME: any
+                    taskRun.id,
+                    props.forcedAttemptNumber ??
+                        attempts(taskRun).length - 1,
+                ]),
+            )
+            autoExpandBasedOnSettings()
+        },
+        {immediate: true, deep: true},
+    )
+
+    watch(
+        () => props.targetFlow,
+        (flowSource) => {
+            if (flowSource) {
+                flow.value = flowSource
+            }
+        },
+        {immediate: true},
+    )
+
+    watch(
+        followedExecution,
+        async (newExecution, oldExecution) => {
+            if (!newExecution) {
+                return
+            }
+
+            if (!oldExecution) {
+                nextTick(() => {
+                    const parentScroller =
+                        (taskRunScroller.value as any)?.$el?.parentNode?.closest( // FIXME: any
+                            ".vue-recycle-scroller",
+                        )
+                    if (parentScroller) {
+                        const scrollerStyles =
+                            window.getComputedStyle(parentScroller)
+                        ;(taskRunScroller.value as any).$el.style.maxHeight = `${parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight}px` // FIXME: any
                     }
                 })
-            },
-            isSubflow(taskRun) {
-                return taskRun.outputs?.executionId
-            },
+            }
 
-            shouldDisplaySubflow(taskRunIndex, taskRun) {
-                const subflowExecutionId = taskRun.outputs.executionId
-                const index = this.shownSubflowsIds.findIndex(
-                    (item) => item.subflowExecutionId === subflowExecutionId,
+            if (!props.targetFlow) {
+                flow.value = await executionsStore.loadFlowForExecution(
+                    {
+                        namespace: newExecution.namespace,
+                        flowId: newExecution.flowId,
+                        revision: newExecution.flowRevision,
+                        store: false,
+                    },
                 )
-                if (index === -1) {
-                    this.shownSubflowsIds.push({
-                        subflowExecutionId: subflowExecutionId,
-                        taskRunIndex: taskRunIndex,
-                    })
-                    return true
-                } else {
-                    return (
-                        this.shownSubflowsIds[index].taskRunIndex === taskRunIndex
-                    )
+            }
+
+            if (!State.isRunning(followedExecution.value.state.current)) {
+                // wait a bit to make sure we don't miss logs as log indexer is asynchronous
+                setTimeout(() => {
+                    closeLogsSSE()
+                }, 2000)
+
+                if (!logsSSE.value) {
+                    loadLogs(newExecution.id)
                 }
+
+                return
+            }
+
+            // running or paused
+            if (!logsSSE.value) {
+                followLogs(newExecution.id)
+            }
+        },
+        {immediate: true},
+    )
+
+    watch(allLogIndicesByLevel, (val) => {
+        emit("log-indices-by-level", val)
+    })
+
+    watch(
+        () => props.logCursor,
+        (newValue) => {
+            if (newValue !== undefined) {
+                scrollToLog(newValue)
+            }
+        },
+    )
+
+    // Lifecycle
+    onMounted(() => {
+        throttledExecutionUpdate.value = throttle((executionEvent: any) => { // FIXME: any
+            targetExecution.value = JSON.parse(executionEvent.data)
+        }, 500)
+
+        if (props.targetExecutionId) {
+            followExecution(props.targetExecutionId)
+        }
+
+        autoExpandBasedOnSettings()
+
+        for (const taskRun of currentTaskRuns.value) {
+            if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                updateLoopStatus(taskRun.id)
+            }
+        }
+    })
+
+    onBeforeUnmount(() => {
+        closeLogsSSE()
+    })
+
+    // Methods
+    async function updateLoopStatus(taskRunId: string) {
+        if (!followedExecution.value) return
+        try {
+            const outputs = await OutputsAPI.taskRunOutputs({
+                executionId: followedExecution.value.id,
+                taskRunId,
+            })
+            if (outputs === null
+                || !outputs.iterationCount
+                || !outputs.terminatedIterations) {
+                return
+            }
+            loopOutputsByTaskRunId.value[taskRunId] = outputs
+        } catch {
+            // ignore fetch errors
+        }
+    }
+
+    function fileUrl(path: string): string {
+        return `${apiUrl()}/executions/${followedExecution.value.id}/file?path=${path}`
+    }
+
+    async function fetchAndStoreLogFileSize(path: string) {
+        if (logFileSizeByPath.value[path] !== undefined) {
+            return
+        }
+
+        const axiosResponse = await $http(
+            `${apiUrl()}/executions/${followedExecution.value.id}/file/metas?path=${path}`,
+            {
+                validateStatus: (status: number) =>
+                    status === 200 || status === 404 || status === 422,
             },
+        )
+        logFileSizeByPath.value[path] = Utils.humanFileSize(
+            axiosResponse.data.size,
+        )
+    }
 
-            expandAll() {
-                if (!this.followedExecution) {
-                    setTimeout(() => this.expandAll(), 50)
-                    return
-                }
+    function closeLogsSSE() {
+        if (logsSSE.value) {
+            logsSSE.value.close()
+            logsSSE.value = undefined
+        }
+    }
 
-                this.shownAttemptsUid = this.currentTaskRuns.map((taskRun) =>
-                    this.attemptUid(
+    function toggleExpandCollapseAll() {
+        if (shownAttemptsUid.value.length === 0) {
+            expandAll()
+        } else {
+            collapseAll()
+        }
+    }
+
+    function autoExpandBasedOnSettings() {
+        if (autoExpandTaskRunStates.value.length === 0) {
+            return
+        }
+
+        if (followedExecution.value === undefined) {
+            setTimeout(() => autoExpandBasedOnSettings(), 50)
+            return
+        }
+        currentTaskRuns.value.forEach((taskRun: any) => { // FIXME: any
+            if (isSubflow(taskRun) && !props.allowAutoExpandSubflows) {
+                return
+            }
+
+            if (
+                props.taskRunId === taskRun.id ||
+                autoExpandTaskRunStates.value.includes(taskRun.state.current)
+            ) {
+                showAttempt(
+                    attemptUid(
                         taskRun.id,
-                        this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0,
+                        selectedAttemptNumberByTaskRunId.value[taskRun.id],
                     ),
                 )
-                this.shownAttemptsUid.forEach((attemptUid) =>
-                    this.logsScrollerRefs?.[attemptUid]?.[0]?.scrollToBottom(),
-                )
-
-                this.expandSubflows()
-            },
-            expandSubflows() {
-                if (
-                    this.currentTaskRuns.some((taskRun) => this.isSubflow(taskRun))
-                ) {
-                    const subflowLogsElements = Object.values(
-                        this.subflowTaskRunDetailsRefs,
-                    )
-                    if (subflowLogsElements.length === 0) {
-                        setTimeout(() => this.expandSubflows(), 50)
-                    }
-
-                    subflowLogsElements?.forEach((subflowLogs) =>
-                        subflowLogs.expandAll(),
-                    )
-                }
-            },
-            collapseAll() {
-                this.shownAttemptsUid = []
-            },
-            attemptUid(taskRunId, attemptNumber) {
-                return `${taskRunId}-${attemptNumber}`
-            },
-            scrollToBottomFailedTask() {
-                if (
-                    this.autoExpandTaskRunStates.includes(
-                        this.followedExecution?.state?.current,
-                    )
-                ) {
-                    this.currentTaskRuns.forEach((taskRun) => {
-                        if (
-                            taskRun.state.current === State.FAILED ||
-                            taskRun.state.current === State.RUNNING
-                        ) {
-                            const attemptNumber = taskRun.attempts
-                                ? taskRun.attempts.length - 1
-                                : (this.forcedAttemptNumber ?? 0)
-                            if (
-                                this.shownAttemptsUid.includes(
-                                    `${taskRun.id}-${attemptNumber}`,
-                                )
-                            ) {
-                                this.logsScrollerRefs?.[
-                                    `${taskRun.id}-${attemptNumber}`
-                                ]?.scrollToBottom()
-                            }
-                        }
-                    })
-                }
-            },
-            uniqueTaskRunDisplayFilter(currentTaskRun) {
-                return !(this.taskRunId && this.taskRunId !== currentTaskRun.id)
-            },
-            loadLogs(executionId) {
-                const params = {...levelToRequestParams(this.levelFilter)}
-                const taskId = this.taskRunById[this.taskRunId]?.taskId
-                if (taskId) {
-                    params["filters[taskId][EQUALS]"] = taskId
-                }
-                this.executionsStore
-                    .loadLogs({
-                        executionId,
-                        params,
-                    })
-                    .then((logs) => {
-                        // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
-                        this.rawLogs = logs?.results ?? logs ?? []
-                        // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
-                        this.logsBuffer = []
-                    })
-            },
-            attempts(taskRun) {
-                if (
-                    this.followedExecution.state.current === State.RUNNING ||
-                    this.forcedAttemptNumber === undefined
-                ) {
-                    return taskRun.attempts ?? [{state: taskRun.state}]
-                }
-
-                return taskRun.attempts
-                    ? [taskRun.attempts[this.forcedAttemptNumber]]
-                    : []
-            },
-            showAttempt(attemptUid) {
-                if (!this.shownAttemptsUid.includes(attemptUid)) {
-                    this.shownAttemptsUid.push(attemptUid)
-                }
-            },
-            toggleShowAttempt(attemptUid) {
-                this.shownAttemptsUid = _xor(this.shownAttemptsUid, [attemptUid])
-            },
-            swapDisplayedAttempt(event) {
-                const {taskRunId, attemptNumber: newDisplayedAttemptNumber} =
-                    event
-                this.shownAttemptsUid = this.shownAttemptsUid.map((attemptUid) =>
-                    attemptUid.startsWith(`${taskRunId}-`)
-                        ? this.attemptUid(taskRunId, newDisplayedAttemptNumber)
-                        : attemptUid,
-                )
-
-                this.selectedAttemptNumberByTaskRunId[taskRunId] =
-                    newDisplayedAttemptNumber
-            },
-            taskType(taskRun) {
-                if (!taskRun) return undefined
-
-                const task = FlowUtils.findTaskById(this.flow, taskRun?.taskId)
-                const parentTaskRunId = taskRun.parentTaskRunId
-                if (task === undefined && parentTaskRunId) {
-                    return this.taskType(this.taskRunById[parentTaskRunId])
-                }
-                return task ? task.type : undefined
-            },
-            emitLogCursor(logCursor) {
-                this.$emit("log-cursor", logCursor)
-            },
-            childLogIndicesByLevel(taskRunIndex, logIndex, logIndicesByLevel) {
-                this.childrenLogIndicesByLevelByChildUid[
-                    `${taskRunIndex}/${logIndex}`
-                ] = logIndicesByLevel
-            },
-            logsScrollerRef(el, ...ids) {
-                ids.forEach((id) => (this.logsScrollerRefs[id] = el))
-            },
-            subflowTaskRunDetailsRef(el, id) {
-                this.subflowTaskRunDetailsRefs[id] = el
-            },
-            scrollToLog(logId) {
-                const split = logId.split("/")
-                this.$refs.taskRunScroller.scrollToItem(split[0])
-                this.logsScrollerRefs?.[split[0]]?.scrollToItem(split[1])
-                if (split.length > 2) {
-                    this.subflowTaskRunDetailsRefs?.[
-                        split[0] + "/" + split[1]
-                    ]?.scrollToLog(split.slice(2).join("/"))
-                }
-            },
-
-            deduplicateLogs(logs) {
-                const list = new Set()
-
-                return logs.filter((log) => {
-                    // Use the server-assigned index when present as it is the most stable unique identifier per log line per attempt.
-                    const key = log.index !== undefined
-                        ? `${log.taskRunId}-${log.attemptNumber}-${log.index}`
-                        : `${log.taskRunId}-${log.attemptNumber}-${log.timestamp}-${log.message}`
-
-                    if (list.has(key)) return false
-
-                    list.add(key)
-
-                    return true
-                })
-            },
-        },
-        beforeUnmount() {
-            this.closeLogsSSE()
-        },
+            }
+        })
     }
+
+    function shouldDisplayLogs(taskRun: any): boolean { // FIXME: any
+        const uid = attemptUid(
+            taskRun.id,
+            selectedAttemptNumberByTaskRunId.value[taskRun.id],
+        )
+        return (
+            !!(props.taskRunId || shownAttemptsUid.value.includes(uid)) &&
+            (logsWithIndexByAttemptUid.value[uid]?.length ?? 0) > 0
+        )
+    }
+
+    function closeTargetExecutionSSE() {
+        if (executionSSE.value) {
+            executionSSE.value.close()
+            executionSSE.value = undefined
+        }
+    }
+
+    function followExecution(executionId: string) {
+        closeTargetExecutionSSE()
+        executionsStore
+            .followExecution({id: executionId, rawSSE: true}, (s: string) => s)
+            .then((sse: any) => { // FIXME: any
+                executionSSE.value = sse
+                executionSSE.value.onmessage = (executionEvent: any) => { // FIXME: any
+                    const isEnd =
+                        executionEvent &&
+                        executionEvent.lastEventId === "end"
+                    // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                    if (executionEvent.lastEventId !== "start") {
+                        throttledExecutionUpdate.value!(executionEvent)
+                    }
+                    if (isEnd) {
+                        closeTargetExecutionSSE()
+                        throttledExecutionUpdate.value!.flush()
+                    }
+                }
+            })
+    }
+
+    function refreshLogs() {
+        timer.value = moment()
+        rawLogs.value = deduplicateLogs(rawLogs.value.concat(logsBuffer.value))
+        for (const taskRun of currentTaskRuns.value) {
+            if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                updateLoopStatus(taskRun.id)
+            }
+        }
+        logsBuffer.value = []
+        scrollToBottomFailedTask()
+    }
+
+    function followLogs(executionId: string) {
+        executionsStore.followLogs({id: executionId}).then((sse: any) => { // FIXME: any
+            logsSSE.value = sse
+
+            logsSSE.value.onmessage = (event: any) => { // FIXME: any
+                // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                if (event.lastEventId !== "start") {
+                    logsBuffer.value = logsBuffer.value.concat(
+                        JSON.parse(event.data),
+                    )
+                }
+
+                clearTimeout(timeout.value)
+                timeout.value = setTimeout(() => {
+                    refreshLogs()
+                }, 100)
+
+                // force at least 1 logs refresh / 500ms
+                if (moment().diff(timer.value, "seconds") > 0.5) {
+                    clearTimeout(timeout.value)
+                    refreshLogs()
+                }
+            }
+
+            logsSSE.value.onerror = (_: unknown) => {
+                coreStore.message = {
+                    variant: "error",
+                    title: t("error"),
+                    message: t(
+                        "something_went_wrong.loading_execution",
+                    ),
+                }
+            }
+        })
+    }
+
+    function isSubflow(taskRun: any): boolean { // FIXME: any
+        return taskRun?.outputs?.executionId
+    }
+
+    function shouldDisplaySubflow(taskRunIndex: number, taskRun: any): boolean { // FIXME: any
+        const subflowExecutionId = taskRun.outputs.executionId
+        const index = shownSubflowsIds.value.findIndex(
+            (item) => item.subflowExecutionId === subflowExecutionId,
+        )
+        if (index === -1) {
+            shownSubflowsIds.value.push({
+                subflowExecutionId: subflowExecutionId,
+                taskRunIndex: taskRunIndex,
+            })
+            return true
+        } else {
+            return (
+                shownSubflowsIds.value[index].taskRunIndex === taskRunIndex
+            )
+        }
+    }
+
+    function expandAll() {
+        if (!followedExecution.value) {
+            setTimeout(() => expandAll(), 50)
+            return
+        }
+
+        shownAttemptsUid.value = currentTaskRuns.value.map((taskRun: any) => // FIXME: any
+            attemptUid(
+                taskRun.id,
+                selectedAttemptNumberByTaskRunId.value[taskRun.id] ?? 0,
+            ),
+        )
+        shownAttemptsUid.value.forEach((uid) =>
+            logsScrollerRefs.value?.[uid]?.[0]?.scrollToBottom(),
+        )
+
+        expandSubflows()
+    }
+
+    function expandSubflows() {
+        if (
+            currentTaskRuns.value.some((taskRun: any) => isSubflow(taskRun)) // FIXME: any
+        ) {
+            const subflowLogsElements = Object.values(
+                subflowTaskRunDetailsRefs.value,
+            )
+            if (subflowLogsElements.length === 0) {
+                setTimeout(() => expandSubflows(), 50)
+            }
+
+            subflowLogsElements?.forEach((subflowLogs: any) => // FIXME: any
+                subflowLogs.expandAll(),
+            )
+        }
+    }
+
+    function collapseAll() {
+        shownAttemptsUid.value = []
+    }
+
+    function attemptUid(taskRunId: string, attemptNumber: number): string {
+        return `${taskRunId}-${attemptNumber}`
+    }
+
+    function scrollToBottomFailedTask() {
+        if (
+            autoExpandTaskRunStates.value.includes(
+                followedExecution.value?.state?.current,
+            )
+        ) {
+            currentTaskRuns.value.forEach((taskRun: any) => { // FIXME: any
+                if (
+                    taskRun.state.current === State.FAILED ||
+                    taskRun.state.current === State.RUNNING
+                ) {
+                    const attemptNumber = taskRun.attempts
+                        ? taskRun.attempts.length - 1
+                        : (props.forcedAttemptNumber ?? 0)
+                    if (
+                        shownAttemptsUid.value.includes(
+                            `${taskRun.id}-${attemptNumber}`,
+                        )
+                    ) {
+                        logsScrollerRefs.value?.[
+                            `${taskRun.id}-${attemptNumber}`
+                        ]?.scrollToBottom()
+                    }
+                }
+            })
+        }
+    }
+
+    function uniqueTaskRunDisplayFilter(currentTaskRun: any): boolean { // FIXME: any
+        return !(props.taskRunId && props.taskRunId !== currentTaskRun.id)
+    }
+
+    function loadLogs(executionId?: string) {
+        const p: Record<string, unknown> = {...levelToRequestParams(props.levelFilter)}
+        const taskId = taskRunById.value[props.taskRunId as string]?.taskId
+        if (taskId) {
+            p["filters[taskId][EQUALS]"] = taskId
+        }
+        executionsStore
+            .loadLogs({
+                executionId: executionId!,
+                params: p,
+            })
+            .then((logs: any) => { // FIXME: any
+                // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
+                rawLogs.value = logs?.results ?? logs ?? []
+                // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
+                logsBuffer.value = []
+            })
+    }
+
+    function attempts(taskRun: any): any[] { // FIXME: any
+        if (
+            followedExecution.value.state.current === State.RUNNING ||
+            props.forcedAttemptNumber === undefined
+        ) {
+            return taskRun.attempts ?? [{state: taskRun.state}]
+        }
+
+        return taskRun.attempts
+            ? [taskRun.attempts[props.forcedAttemptNumber]]
+            : []
+    }
+
+    function showAttempt(uid: string) {
+        if (!shownAttemptsUid.value.includes(uid)) {
+            shownAttemptsUid.value.push(uid)
+        }
+    }
+
+    function toggleShowAttempt(uid: string) {
+        shownAttemptsUid.value = _xor(shownAttemptsUid.value, [uid])
+    }
+
+    function swapDisplayedAttempt(event: {taskRunId: string; attemptNumber: number}) {
+        const {taskRunId, attemptNumber: newDisplayedAttemptNumber} = event
+        shownAttemptsUid.value = shownAttemptsUid.value.map((uid) =>
+            uid.startsWith(`${taskRunId}-`)
+                ? attemptUid(taskRunId, newDisplayedAttemptNumber)
+                : uid,
+        )
+
+        selectedAttemptNumberByTaskRunId.value[taskRunId] =
+            newDisplayedAttemptNumber
+    }
+
+    function taskType(taskRun: any): string | undefined { // FIXME: any
+        if (!taskRun) return undefined
+
+        const task = FlowUtils.findTaskById(flow.value, taskRun?.taskId)
+        const parentTaskRunId = taskRun.parentTaskRunId
+        if (task === undefined && parentTaskRunId) {
+            return taskType(taskRunById.value[parentTaskRunId])
+        }
+        return task ? (task as any).type : undefined // FIXME: any
+    }
+
+    function emitLogCursor(cursor: string) {
+        emit("log-cursor", cursor)
+    }
+
+    function childLogIndicesByLevel(taskRunIndex: number, logIndex: number, logIndicesByLevel: Record<string, string[]>) {
+        childrenLogIndicesByLevelByChildUid.value[
+            `${taskRunIndex}/${logIndex}`
+        ] = logIndicesByLevel
+    }
+
+    function logsScrollerRef(el: any, ...ids: Array<string | number>) { // FIXME: any
+        ids.forEach((id) => (logsScrollerRefs.value[id] = el))
+    }
+
+    function subflowTaskRunDetailsRef(el: any, id: string) { // FIXME: any
+        subflowTaskRunDetailsRefs.value[id] = el
+    }
+
+    function scrollToLog(logId: string) {
+        const split = logId.split("/")
+        ;(taskRunScroller.value as any)?.scrollToItem(split[0]) // FIXME: any
+        logsScrollerRefs.value?.[split[0]]?.scrollToItem(split[1])
+        if (split.length > 2) {
+            subflowTaskRunDetailsRefs.value?.[
+                split[0] + "/" + split[1]
+            ]?.scrollToLog(split.slice(2).join("/"))
+        }
+    }
+
+    function deduplicateLogs(logs: any[]): any[] { // FIXME: any
+        const list = new Set<string>()
+
+        return logs.filter((log) => {
+            // Use the server-assigned index when present as it is the most stable unique identifier per log line per attempt.
+            const key = log.index !== undefined
+                ? `${log.taskRunId}-${log.attemptNumber}-${log.index}`
+                : `${log.taskRunId}-${log.attemptNumber}-${log.timestamp}-${log.message}`
+
+            if (list.has(key)) return false
+
+            list.add(key)
+
+            return true
+        })
+    }
+
+    // Expose public methods for parent refs
+    defineExpose({
+        toggleExpandCollapseAll,
+        expandAll,
+        scrollToLog,
+    })
 </script>
+
 <style scoped lang="scss">
 
 .log-wrapper {
-    :deep(
-        > .vue-recycle-scroller__item-wrapper
-            > .vue-recycle-scroller__item-view
-            > div
-    ) {
-        padding-bottom: 1rem;
+  :deep(
+    > .vue-recycle-scroller__item-wrapper
+      > .vue-recycle-scroller__item-view
+      > div
+  ) {
+    padding-bottom: 1rem;
+  }
+
+  :deep(.line) {
+    padding-left: 0;
+  }
+
+  .progress-bar {
+    margin-block: .5rem;
+    flex: 1;
+  }
+
+  .attempt-wrapper {
+    background-color: var(--ks-bg-input);
+    margin-bottom: 0;
+    border: 1px solid var(--ks-border-default);
+
+    :deep(.kel-card__body) {
+      padding: 0;
     }
 
-    :deep(.line) {
-        padding-left: 0;
+    .attempt-wrapper & {
+      border-radius: var(--ks-radius-base);
     }
 
-    .progress-bar {
-        margin-block: .5rem;
-        flex: 1;
+    tbody:last-child & {
+      border-bottom: 1px solid var(--ks-border-default);
     }
 
-    .attempt-wrapper {
-        background-color: var(--ks-bg-input);
-        margin-bottom: 0;
-        border: 1px solid var(--ks-border-default);
-
-        :deep(.kel-card__body) {
-            padding: 0;
-        }
-
-        .attempt-wrapper & {
-            border-radius: var(--ks-radius-base);
-        }
-
-        tbody:last-child & {
-            border-bottom: 1px solid var(--ks-border-default);
-        }
-
-        .attempt-header {
-            padding: 0 0.5rem 0.5rem;
-            border-bottom: 1px solid var(--ks-border-default);
-        }
-
-        .line {
-            padding: 0.5rem;
-        }
+    .attempt-header {
+      padding: 0 0.5rem 0.5rem;
+      border-bottom: 1px solid var(--ks-border-default);
     }
 
-    .output {
-        margin-right: 5px;
+    .line {
+      padding: 0.5rem;
+    }
+  }
+
+  .output {
+    margin-right: 5px;
+  }
+
+  pre {
+    border: 1px solid var(--light);
+    background-color: var(--ks-scrollbar-content);
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: var(--ks-font-size-lg);
+  }
+
+  .log-lines {
+    transition: max-height 0.2s ease-out;
+    max-height: 300px;
+
+    :deep(.vue-recycle-scroller__item-view > div) {
+      min-height: 2rem;
     }
 
-    pre {
-        border: 1px solid var(--light);
-        background-color: var(--ks-scrollbar-content);
-        padding: 10px;
-        margin-top: 5px;
-        margin-bottom: var(--ks-font-size-lg);
+    &.single-line {
+      max-height: calc(100vh - 250px);
     }
 
-    .log-lines {
-        transition: max-height 0.2s ease-out;
-        max-height: 300px;
+    .line {
+      padding: 1rem;
 
-        :deep(.vue-recycle-scroller__item-view > div) {
-            min-height: 2rem;
-        }
-
-        &.single-line {
-            max-height: calc(100vh - 250px);
-        }
-
-        .line {
-            padding: 1rem;
-
-            &.cursor {
-                background-color: var(--ks-border-default);
-            }
-        }
+      &.cursor {
+        background-color: var(--ks-border-default);
+      }
     }
+  }
 }
 </style>

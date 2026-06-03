@@ -46,6 +46,56 @@ class TimeLineSearchTest {
     }
 
     @Test
+    void testExtractFrom_nestedInsideOrNode_findsDateBoundaries() {
+        // Given — TIME_RANGE leaf nested inside an OR node (the shape the frontend sends when a
+        // conditional group is added alongside the default time-range chip)
+        ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
+        var startDateLeaf = QueryFilter.builder()
+            .field(QueryFilter.Field.START_DATE)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(startDate.toString())
+            .build();
+        var labelsLeaf = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("foo:bar")
+            .build();
+        var orNode = QueryFilter.builder()
+            .logical(QueryFilter.Logical.OR)
+            .children(List.of(startDateLeaf, labelsLeaf))
+            .build();
+
+        // When
+        TimeLineSearch result = TimeLineSearch.extractFrom(List.of(orNode));
+
+        // Then — the nested START_DATE is found
+        assertThat(result.getStartDate()).isEqualTo(startDate);
+    }
+
+    @Test
+    void testExtractFrom_timeRangeNestedInsideOrNode_computesStartDate() {
+        // Given — TIME_RANGE inside a node
+        Duration duration = Duration.ofHours(24);
+        var timeRangeLeaf = QueryFilter.builder()
+            .field(QueryFilter.Field.TIME_RANGE)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(duration.toString())
+            .build();
+        var orNode = QueryFilter.builder()
+            .logical(QueryFilter.Logical.OR)
+            .children(List.of(timeRangeLeaf))
+            .build();
+
+        // When
+        TimeLineSearch result = TimeLineSearch.extractFrom(List.of(orNode));
+
+        // Then — time range is found and startDate is computed
+        assertThat(result.getTimeRange()).isEqualTo(duration);
+        assertThat(result.getStartDate()).isNotNull();
+        assertThat(result.getStartDate()).isBefore(ZonedDateTime.now());
+    }
+
+    @Test
     void testExtractFromWithInvalidDuration() {
         // GIVEN
         List<QueryFilter> filters = List.of(

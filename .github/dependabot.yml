@@ -26,9 +26,9 @@ updates:
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/backend"]
     ignore:
-      # Ignore versions of Protobuf >= 4.0.0 because Orc still uses version 3
-      - dependency-name: "com.google.protobuf:*"
-        versions: ["[4,)"]
+      # Ignore Micronaut 5.x until migration is planned
+      - dependency-name: "io.micronaut*"
+        versions: ["[5,)"]
 
   # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"

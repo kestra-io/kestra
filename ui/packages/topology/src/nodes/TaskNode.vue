@@ -56,10 +56,10 @@
                 >
                     <KsTooltip style="display: flex;" :content="iconAlt ? $t(iconAlt) : undefined">
                         <RotatingDots v-if="state === State.RUNNING" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <CheckIcon v-else-if="state === State.SUCCESS" :alt="iconAlt ? $t(iconAlt) : undefined" />
+                        <CheckCircleOutline v-else-if="state === State.SUCCESS" :style="{color: 'var(--ks-status-success)'}" :alt="iconAlt ? $t(iconAlt) : undefined" />
                         <AlertIcon v-else-if="state === State.WARNING" :alt="iconAlt ? $t(iconAlt) : undefined" />
                         <SkipForwardIcon v-else-if="state === State.SKIPPED" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <AlertCircleIcon v-else-if="state === State.FAILED" :alt="iconAlt ? $t(iconAlt) : undefined" />
+                        <CloseCircleOutline v-else-if="state === State.FAILED" :style="{color: 'var(--ks-status-error)'}" :alt="iconAlt ? $t(iconAlt) : undefined" />
                     </KsTooltip>
                 </div>
             </template>
@@ -96,26 +96,6 @@
                     <AlertOutline class="button-icon" alt="Add error handler" />
                 </KsTooltip>
             </span>
-            <span
-                v-if="!taskExecution && !data.isReadOnly"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.EDIT, {task: data.node.task, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('edit')">
-                    <Pencil class="button-icon" alt="Edit task" />
-                </KsTooltip>
-            </span>
-            <span
-                v-if="!taskExecution && !data.isReadOnly"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.DELETE, {id: taskId, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('delete')">
-                    <Delete class="button-icon" alt="Delete task" />
-                </KsTooltip>
-            </span>
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -135,14 +115,12 @@
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
     } from "../injectionKeys"
 
-    import Pencil from "vue-material-design-icons/Pencil.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
-    import CheckIcon from "vue-material-design-icons/Check.vue"
-    import AlertCircleIcon from "vue-material-design-icons/AlertCircle.vue"
+    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
+    import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
     import AlertIcon from "vue-material-design-icons/Alert.vue"
     import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue"
     import RotatingDots from "../assets/icons/RotatingDots.vue"

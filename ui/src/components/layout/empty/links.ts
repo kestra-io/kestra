@@ -52,6 +52,10 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=qDiQtsVEETs",
         learnMore: "https://kestra.io/docs/workflow-components/triggers",
     },
+    mcpToolFlows: {
+        video: "https://www.youtube.com/watch?v=QxaMnGuu0kI",
+        learnMore: "https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger",
+    },
     concurrency_executions: {
         video: "https://www.youtube.com/watch?v=lDGOqqMyQEo",
         learnMore: "https://kestra.io/docs/workflow-components/concurrency",

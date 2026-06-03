@@ -51,7 +51,17 @@ export interface FilterKeyConfig {
      * via `valueProvider.length > 0`, so avoid default-valued or rest params.
      */
     valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
-    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
+    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    /**
+     * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
+     * mode of the time-range picker on an arbitrary date field:
+     *   - "single" — pick one absolute date (encoded as one comparator on the field key).
+     *   - "range"  — pick a start/end range (encoded as GREATER_THAN_OR_EQUAL_TO + LESS_THAN_OR_EQUAL_TO
+     *                on the field key, and decoded back into a single range chip).
+     * Defaults to "single" when omitted. Note: a time-range field must NOT be keyed "startDate" or
+     * "endDate" — those names are reserved for the dedicated `timeRange` filter encoding.
+     */
+    customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
     /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */

@@ -38,7 +38,7 @@ html.dark {
     #{--ks-border-error}: $base-red-500;
     #{--ks-border-focus}: $base-primary-500;
     #{--ks-border-info}: $base-blue-300;
-    #{--ks-border-strong}: $base-gray-cool-500;
+    #{--ks-border-strong}: $base-gray-cool-400;
     #{--ks-border-subtle}: $base-gray-cool-700;
     #{--ks-border-success}: $base-green-600;
     #{--ks-border-warning}: $base-orange-700;
@@ -52,6 +52,7 @@ html.dark {
     #{--ks-btn-primary-bg-default}: $base-primary-500;
     #{--ks-btn-primary-bg-hover}: $base-primary-400;
     #{--ks-btn-primary-bg-inactive}: $base-gray-cool-700;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
     #{--ks-btn-secondary-bg-active}: $base-gray-cool-600;
     #{--ks-btn-secondary-bg-default}: $base-gray-cool-500;
     #{--ks-btn-secondary-bg-hover}: $base-gray-cool-400;

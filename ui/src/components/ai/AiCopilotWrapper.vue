@@ -44,7 +44,7 @@
     import resource from "../../models/resource"
     import action from "../../models/action"
     import * as Utils from "../../utils/utils"
-    import {aiGenerationTypes} from "../../utils/constants"
+    import {aiGenerationTypes, AI_PROVIDER_POPPER_CLASS} from "../../utils/constants"
     import type {AiGenerationType} from "../../utils/constants"
 
     const props = withDefaults(defineProps<{
@@ -76,7 +76,7 @@
     onClickOutside(
         computed(() => copilotEl.value?.$el),
         () => { if (aiCopilotOpened.value) closeAiCopilot() },
-        {ignore: [computed(() => triggerBtn.value?.$el), ".ai-provider-pill-popper"]},
+        {ignore: [computed(() => triggerBtn.value?.$el), `.${AI_PROVIDER_POPPER_CLASS}`]},
     )
 
     const aiCopilotAllowed = computed(() => {

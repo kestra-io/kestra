@@ -372,7 +372,7 @@
         if (actionConfig.value && task) {
             list.push({
                 key: "show-details",
-                label: t("show details"),
+                label: actionConfig.value.config.label || t("show details"),
                 icon: EyeOutline,
                 onClick: () => onShowDetails(),
             })

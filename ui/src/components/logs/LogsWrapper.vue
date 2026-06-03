@@ -21,6 +21,7 @@
                             columns: {shown: false}
                         }"
                         :defaultScope="false"
+                        defaultsOnlyWhenEmpty
                         @filter="onFilterRouteSync"
                     />
                     <QuickFilters
@@ -107,7 +108,6 @@
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
-    import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
     import {useComplexFilters} from "../filter/composables/useComplexFilters"
@@ -203,6 +203,10 @@
             ? localStorage.getItem("defaultLogLevel") || "INFO"
             : "INFO",
     )
+    // Did the user arrive with any filter already applied? Captured once at setup, before any
+    // default seeding/policy writes. Logs only seed defaults on a clean route; if filters are
+    // present we use them as-is (so the level default below is suppressed too).
+    const routeHadFiltersAtMount = Object.keys(route.query).some(key => key.startsWith("filters["))
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
@@ -210,7 +214,7 @@
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
-        applyDefaultIfMissing: () => true,
+        applyDefaultIfMissing: () => !routeHadFiltersAtMount,
         fallbackValue: () => undefined,
         readFromRoute: readRouteLevelFilter,
         writeToRoute: normalizeRouteLevelFilter,
@@ -234,6 +238,9 @@
         return key ? String(route.query[key] ?? "") : ""
     })
 
+    // Kind has no bespoke handling here: its NORMAL default is declared on the chip in logFilter.ts
+    // and seeded into the URL generically by the filter system's default mechanism, so it flows
+    // through `...routeFilters` like any other filter (and removing the chip drops it -> all kinds).
     const selectedTimeRange = computed(() => {
         if (route.query.timeRange) {
             return route.query.timeRange as string
@@ -248,29 +255,6 @@
         }
 
         return rawValue as string | undefined
-    })
-    const endDate = computed(() => {
-        if (route.query.endDate) {
-            return route.query.endDate
-        }
-        if (selectedTimeRange.value) {
-            return moment().toISOString(true)
-        }
-        return undefined
-    })
-    const startDate = computed(() => {
-        // we mention the last refresh date here to trick
-        // VueJs fine grained reactivity system and invalidate
-        // computed property startDate
-        if (route.query.startDate && lastRefreshDate.value) {
-            return route.query.startDate
-        }
-        if (selectedTimeRange.value) {
-            return moment().subtract(moment.duration(selectedTimeRange.value).as("milliseconds")).toISOString(true)
-        }
-
-        // the default is PT30D
-        return moment().subtract(7, "days").toISOString(true)
     })
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
@@ -289,17 +273,14 @@
             queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value
         }
 
-        // Level filter is a minimum threshold. Always normalize to a single EQUALS query.
         if (!props.filters) {
-            queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
+            const level = hasLevelFilterUI.value
+                ? (effectiveLogLevel.value
+                    ?? readRouteLevelFilter(route.query)
+                    ?? (routeHadFiltersAtMount ? undefined : {value: defaultLogLevel.value, direction: "min" as const}))
+                : effectiveLogLevel.value
+            queryFilter = normalizeRouteLevelFilter(queryFilter, level)
         }
-
-        if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
-            queryFilter["startDate"] = startDate.value
-            queryFilter["endDate"] = endDate.value
-        }
-
-        delete queryFilter["level"]
 
         return _merge(base, queryFilter)
     }

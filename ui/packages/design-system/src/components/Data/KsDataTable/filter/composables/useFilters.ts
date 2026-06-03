@@ -15,7 +15,7 @@
  */
 import {ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
-import {clearFilterQueryParams} from "../utils/helpers"
+import {clearFilterQueryParams, encodeFiltersToQuery, isValidFilter, keyOfComparator} from "../utils/helpers"
 import {TIME_RANGE_KEY} from "../utils/constants"
 import {
     type AppliedFilter,
@@ -36,6 +36,7 @@ export function useFilters(
     defaultScope?: boolean,
     defaultTimeRange?: boolean,
     defaultDuration?: string,
+    defaultsOnlyWhenEmpty = false,
 ) {
     const router = useRouter()
     const route = useRoute()
@@ -52,6 +53,7 @@ export function useFilters(
         searchQuery,
         preApplied,
         showSearchInput,
+        defaultsOnlyWhenEmpty,
     })
 
     // CRUD + structural ops — depend on routeSync.updateRoute to push to the URL.
@@ -63,11 +65,20 @@ export function useFilters(
         hasValue: routeSync.hasValue,
     })
 
+    // Encode every config-declared default-visible filter (any key with a non-empty defaultValue)
+    // so useDefaultFilter can seed them into the URL generically — no per-field knowledge here.
+    const defaultVisibleParams = encodeFiltersToQuery(
+        createDefaultVisibleFilters(configuration.keys, new Set(), new Set()).filter(isValidFilter),
+        keyOfComparator,
+    )
+
     const defaultFilterOptions = {
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
         defaultDuration,
+        defaultVisibleParams,
+        onlyWhenEmpty: defaultsOnlyWhenEmpty,
     }
     useDefaultFilter(defaultFilterOptions)
 

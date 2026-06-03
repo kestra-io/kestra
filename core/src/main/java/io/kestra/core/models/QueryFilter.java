@@ -489,7 +489,7 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
                     Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
-                    Field.TASK_ID, Field.TASK_RUN_ID, Field.ATTEMPT_NUMBER
+                    Field.TASK_ID, Field.TASK_RUN_ID, Field.ATTEMPT_NUMBER, Field.KIND
                 );
             }
         },

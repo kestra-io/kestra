@@ -106,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch, useTemplateRef} from "vue"
+    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations"
@@ -137,6 +137,7 @@
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
+        State,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
@@ -172,9 +173,15 @@
         follow: [event: unknown]
     }>()
 
+    const props = withDefaults(defineProps<{
+        playground?: boolean
+    }>(), {
+        playground: false,
+    })
+
     const executionsStore = useExecutionsStore()
 
-    const logExecutionsFilter = useLogExecutionsFilter()
+    const logExecutionsFilter = useLogExecutionsFilter(() => props.playground)
     const defaultLogLevel = computed(
         () => localStorage.getItem("defaultLogLevel") || "INFO",
     )
@@ -219,24 +226,88 @@
     const route = useRoute()
     filter.value = (route.query.q as string) || undefined
 
-    // watchers
-    watch(
-        () => executionsStore.execution,
-        (execution, oldExecution) => {
-            if (execution && !oldExecution && raw_view.value && !logsLoading.value && !executionsStore.logs?.results?.length) {
-                loadLogs()
+    const logsSSE = ref<EventSource | undefined>(undefined)
+    let sseBuffer: any[] = [] // FIXME: any
+    let sseFlushTimer: ReturnType<typeof setTimeout> | undefined
+
+    const flushSseBuffer =  () => {
+        sseFlushTimer = undefined
+        if (!sseBuffer.length) return
+        const raw = executionsStore.logs as any // FIXME: any
+        const current: any[] = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        const results = current.concat(sseBuffer)
+        sseBuffer = []
+        executionsStore.logs = {total: results.length, results}
+    }
+
+    const closeLogsSSE = () => {
+        if (logsSSE.value) {
+            logsSSE.value.close()
+            logsSSE.value = undefined
+        }
+        if (sseFlushTimer) {
+            clearTimeout(sseFlushTimer)
+            sseFlushTimer = undefined
+        }
+        sseBuffer = []
+    }
+
+    const streamLogs = () => {
+        closeLogsSSE()
+        executionsStore.logs = {total: 0, results: []}
+        executionsStore.followLogs({
+            id: executionId.value!,
+            params: levelToRequestParams(effectiveLevelValue.value),
+        }).then((sse: EventSource) => {
+            logsSSE.value = sse
+            sse.onmessage = (event: MessageEvent) => {
+                // ignore the initial "start" keep-alive event
+                if (event.lastEventId === "start") return
+                sseBuffer.push(JSON.parse(event.data))
+                if (!sseFlushTimer) {
+                    sseFlushTimer = setTimeout(flushSseBuffer, 200)
+                }
             }
+        })
+    }
+
+    const refreshTemporalLogs = () => {
+        if (!executionId.value) return
+        const currentState = executionsStore.execution?.state?.current
+        if (currentState && State.isRunning(currentState)) {
+            streamLogs()
+        } else {
+            closeLogsSSE()
+            executionsStore.logs = {total: 0, results: []}
+            logsLoading.value = false
+            loadLogs()
+        }
+    }
+
+    const isExecutionRunning = computed(() => {
+        const current = executionsStore.execution?.state?.current
+        return !!current && State.isRunning(current)
+    })
+
+    watch(
+        [executionId, isExecutionRunning, raw_view],
+        ([id, , isRaw]) => {
+            if (!id || !isRaw) {
+                closeLogsSSE()
+                return
+            }
+            refreshTemporalLogs()
         },
         {immediate: true},
     )
 
     watch(routeLevel, () => {
-        if (raw_view.value && executionsStore.execution) {
-            executionsStore.logs = {total: 0, results: []}
-            logsLoading.value = false
-            loadLogs()
+        if (raw_view.value && executionId.value) {
+            refreshTemporalLogs()
         }
     })
+
+    onUnmounted(closeLogsSSE)
 
     watch(logCursor, (newValue) => {
         if (newValue === undefined) {

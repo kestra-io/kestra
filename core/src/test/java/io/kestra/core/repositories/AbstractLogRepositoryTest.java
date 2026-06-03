@@ -190,10 +190,10 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.size()).isZero();
 
         LogEntry save = logRepository.save(builder.build());
-        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // should only be loaded by execution id
+        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // all kinds are now exposed by default
 
         find = logRepository.find(Pageable.UNPAGED, tenant, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find.size()).isEqualTo(2);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
         var filters = List.of(
             QueryFilter.builder()
@@ -211,12 +211,23 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.size()).isZero();
 
         find = logRepository.find(Pageable.UNPAGED, tenant, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find.size()).isEqualTo(2);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find.size()).isEqualTo(2);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
+
+        // An explicit KIND filter narrows the result set back down to a single kind.
+        find = logRepository.find(Pageable.UNPAGED, tenant, List.of(
+            QueryFilter.builder()
+                .field(Field.KIND)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(ExecutionKind.TEST.name())
+                .build()
+        ));
+        assertThat(find.size()).isEqualTo(1);
+        assertThat(find.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.TEST);
 
         List<LogEntry> list = logRepository.findByExecutionId(tenant, save.getExecutionId(), null);
         assertThat(list.size()).isEqualTo(2);
@@ -495,6 +506,14 @@ public abstract class AbstractLogRepositoryTest {
     private static final LogEntry nowLog = logEntry(null, Level.INFO, "exec-now").timestamp(T_NOW).build();
     private static final LogEntry futureLog = logEntry(null, Level.INFO, "exec-future").timestamp(T_FUTURE).build();
     private static final List<LogEntry> timeLogs = List.of(pastLog, nowLog, futureLog);
+
+    private static final LogEntry normalKindLog = logEntry(null, Level.INFO, "exec-normal-kind")
+        .executionKind(ExecutionKind.NORMAL).build();
+    private static final LogEntry playgroundKindLog = logEntry(null, Level.INFO, "exec-playground-kind")
+        .executionKind(ExecutionKind.PLAYGROUND).build();
+    private static final LogEntry loopKindLog = logEntry(null, Level.INFO, "exec-loop-kind")
+        .executionKind(ExecutionKind.LOOP).build();
+    private static final List<LogEntry> kindLogs = List.of(normalKindLog, playgroundKindLog, loopKindLog);
 
     public static final List<FiltersTestCase> filtersTestCases = List.of(
         FiltersTestCase.builder()
@@ -800,7 +819,20 @@ public abstract class AbstractLogRepositoryTest {
             .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.IN).build()).build(),
         FiltersTestCase.builder()
             .logs(distinctLogs).expectedLogs(List.of(gammaLog))
-            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.NOT_IN).build()).build()
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(playgroundKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.PLAYGROUND.name()).operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(normalKindLog, loopKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.PLAYGROUND.name()).operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(playgroundKindLog, loopKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name())).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(normalKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name())).operation(Op.NOT_IN).build()).build()
     );
 
     @ParameterizedTest

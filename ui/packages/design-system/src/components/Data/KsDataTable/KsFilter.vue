@@ -70,6 +70,11 @@
         defaultTimeRange?: boolean;
         defaultDuration?: string;
         /**
+         * When true, default filters are seeded only on a "clean" route (no `filters[...]` in the
+         * URL). If the user arrives with any filter applied, it is used as-is and no defaults added.
+         */
+        defaultsOnlyWhenEmpty?: boolean;
+        /**
          * Initial view mode. `'chip'` (default) shows the structured filter UI;
          * `'raw'` opens the URL editor. Either way, the user can toggle via the
          * `{ }` / `≡` button — unless the URL has nesting the chip UI can't render,
@@ -87,6 +92,7 @@
         defaultScope: undefined,
         defaultTimeRange: undefined,
         defaultDuration: undefined,
+        defaultsOnlyWhenEmpty: false,
         defaultViewMode: "chip",
     })
 
@@ -129,6 +135,7 @@
         props.defaultScope,
         props.defaultTimeRange,
         props.defaultDuration,
+        props.defaultsOnlyWhenEmpty,
     )
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(

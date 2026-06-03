@@ -96,6 +96,19 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: false,
                 },
                 {
+                    key: "kind",
+                    label: t("filter.kind.label"),
+                    description: t("filter.kind.description"),
+                    comparators: [Comparators.IN],
+                    valueType: "multi-select",
+                    valueProvider: async () => {
+                        const {VALUES} = useValues("logs")
+                        return VALUES.KINDS
+                    },
+                    defaultValue: () => ["NORMAL"],
+                    visibleByDefault: true,
+                },
+                {
                     key: "triggerId",
                     label: t("filter.triggerId.label"),
                     description: t("filter.triggerId.description"),

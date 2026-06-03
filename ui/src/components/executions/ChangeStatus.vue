@@ -1,7 +1,7 @@
 <template>
     <component
         :is="component"
-        :icon="icon.StateMachine"
+        :icon="StateMachine"
         @click="visible = !visible"
         :disabled="!enabled"
     >
@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
-    import {computed, ref, shallowRef} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
@@ -95,7 +95,6 @@
 
     const visible = ref(false)
     const selectedStatus = ref<string | undefined>(undefined)
-    const icon = {StateMachine: shallowRef(StateMachine)}
 
     const uuid = computed(() =>
         "changestatus-" + (props.execution as {id: string}).id + (props.taskRun ? "-" + (props.taskRun as {id: string}).id : ""),

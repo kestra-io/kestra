@@ -1,22 +1,41 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.services.AsyncOperationWaiter;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import reactor.core.publisher.Mono;
 
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 public class WebhookRoutingTest {
+
+    @MockBean(AsyncOperationWaiter.class)
+    AsyncOperationWaiter asyncOperationWaiter() {
+        AsyncOperationWaiter mock = mock(AsyncOperationWaiter.class);
+        when(mock.submit(any(), any(), any()))
+            .thenReturn(Mono.just(new AsyncOperationProcessedEvent(
+                "op-id", null, "item-id", AsyncOperationProcessedEvent.Outcome.SUCCEEDED, null, Instant.now()
+            )));
+        return mock;
+    }
 
     @Inject
     @Client("/")

@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -18,7 +20,6 @@ import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -38,6 +39,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 
@@ -67,6 +69,12 @@ public class WebhookService {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private AsyncOperationWaiter asyncOperationWaiter;
+
+    @Inject
+    private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     /**
      * Parse query parameters from the webhook request URI.
@@ -140,13 +148,16 @@ public class WebhookService {
     }
 
     /**
-     * Start the execution by injecting trace context and emitting it to the execution queue.
+     * Start the execution by injecting trace context, emitting a {@link Create} command to the
+     * execution queue tagged with an {@code operationId}, and waiting asynchronously for the
+     * executor to confirm processing via {@link AsyncOperationProcessedEvent}.
      *
      * @param execution The execution to start
-     * @throws QueueException If there is an error emitting to the queue
+     * @return a {@link Mono} that completes with the processed event once the executor confirms,
+     *         or signals a {@link java.util.concurrent.TimeoutException} if no confirmation
+     *         arrives within the configured timeout
      */
-    public void startExecution(Execution execution) throws QueueException {
-        // extract traceparent from the current OTel context
+    public Mono<AsyncOperationProcessedEvent> startExecution(Execution execution) {
         Optional<String> traceParent = openTelemetry
             .map(OpenTelemetry::getPropagators)
             .map(ContextPropagators::getTextMapPropagator)
@@ -156,13 +167,25 @@ public class WebhookService {
                 return carrier.get("traceparent");
             });
 
-        executionCommandQueue.emit(Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+        Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
             .withKind(execution.getKind())
             .withTrigger(execution.getTrigger())
             .withLabels(execution.getLabels())
             .withInputs(execution.getInputs())
-            .withTraceParent(traceParent.orElse(null)));
-        eventPublisher.publishEvent(CrudEvent.create(execution));
+            .withTraceParent(traceParent.orElse(null));
+
+        return asyncOperationWaiter.submit(
+            execution.getId(),
+            operationId -> {
+                try {
+                    executionCommandQueue.emit(command.withOperationId(operationId));
+                    eventPublisher.publishEvent(CrudEvent.create(execution));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            asyncOperationsConfiguration.waitTimeout()
+        );
     }
 
     /**

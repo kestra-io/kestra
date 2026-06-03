@@ -11,8 +11,6 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -59,7 +57,6 @@ class ExecutionControllerTest {
     private ReactorHttpClient client;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
-    public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
 
     @Test
     void getExecutionNotFound() {
@@ -169,86 +166,6 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/webhook-dynamic-key.yaml" })
-    void webhookDynamicKey() {
-        Execution execution = client.toBlocking().retrieve(
-            GET(
-                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
-            ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-secret-key.yaml" })
-    @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
-    void webhookDynamicKeyFromASecret() {
-        Execution execution = client.toBlocking().retrieve(
-            GET(
-                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
-            ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-with-condition.yaml" })
-    void webhookWithCondition() {
-        record Hello(String hello) {
-        }
-
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                    new Hello("world")
-                ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(
-                HttpRequest
-                    .POST(
-                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                        new Hello("webhook")
-                    ),
-                Execution.class
-            )
-        );
-        assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getResponse().body()).isNull();
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-inputs.yaml" })
-    void webhookWithInputs() {
-        record Hello(String hello) {
-        }
-
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-inputs/webhookKey",
-                    new Hello("world")
-                ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-    }
-
-    @Test
     void nullLabels() {
         MultipartBody requestBody = createExecutionInputsFlowBody();
 
@@ -301,30 +218,6 @@ class ExecutionControllerTest {
         assertThat(result).isNotNull();
         assertThat(result.getTasks()).hasSize(5);
         assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isEqualTo(true);
-    }
-
-    @SuppressWarnings("DataFlowIssue")
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook.yaml" })
-    void getExecutionFlowForExecutionById() {
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + TESTS_WEBHOOK_KEY + "?name=john&age=12&age=13",
-                    ImmutableMap.of("a", 1, "b", true)
-                ),
-            Execution.class
-        );
-        executionRepository.save(execution);
-
-        FlowForExecution result = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + execution.getId() + "/flow"),
-            FlowForExecution.class
-        );
-
-        assertThat(result.getId()).isEqualTo(execution.getFlowId());
-        assertThat(result.getTriggers()).hasSize(1);
-        assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution)).isTrue();
     }
 
     @SuppressWarnings("unchecked")

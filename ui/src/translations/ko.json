@@ -31,6 +31,7 @@
     "add at position": "{position} <code>{task}</code> 추가",
     "add error handler": "오류 처리기 추가",
     "add flow": "Flow 추가",
+    "add label": "레이블 추가",
     "add task": "task 추가",
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "add_new_item": "새 항목 추가",
@@ -57,6 +58,7 @@
           "test": "테스트 YAML을 생성 중입니다..."
         },
         "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
+        "select_provider": "공급자 선택",
         "title": "AI 에이전트"
       }
     },
@@ -103,6 +105,7 @@
     },
     "bookmark": "북마크",
     "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
+    "bulk actions": "일괄 작업",
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
     "bulk delete backfills": "{count} backfill 삭제",
@@ -551,6 +554,10 @@
         "content": "킬 스위치 기능은 문제 있는 실행을 중지할 수 있는 UI 기반 메커니즘을 제공합니다. 이는 CLI 전용 <code>--skip-executions</code> 및 <code>--skip-flows</code> 명령을 포괄적인 관리 인터페이스로 대체합니다.",
         "title": "아직 Kill Switch가 없습니다!"
       },
+      "mcpToolFlows": {
+        "content": "<code>McpToolTrigger</code>를 추가하여 flow를 MCP 도구로 노출합니다. <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
+        "title": "이 서버에는 아직 등록된 tool flow가 없습니다."
+      },
       "panels": {
         "content": "Flow 코드 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Context)을 선택하세요.",
         "title": "현재 열려 있는 패널이 없습니다."
@@ -693,6 +700,8 @@
       "title": "Kestra의 새로운 기능"
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
+    "file unavailable": "파일을 사용할 수 없음",
+    "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다 — 삭제되었거나 만료되었을 수 있습니다.",
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
     "files": "파일",
     "filter by log level": "Log 레벨로 필터링",
@@ -960,11 +969,12 @@
       "tab_tool_flows_placeholder": "도구 flow 관리가 곧 제공됩니다.",
       "tools": {
         "annotations": "어노테이션",
+        "create_tool_flow": "도구 flow 생성",
         "description": "설명",
         "destructive": "파괴적",
         "flow": "flow",
         "idempotent": "멱등",
-        "no_tools": "이 서버에는 아직 등록된 tool flow가 없습니다. flow에 `McpToolTrigger`를 추가하여 여기에 공개하세요.",
+        "no_tools": "검색 조건에 맞는 tool flow가 없습니다.",
         "open_world": "Open world",
         "read_only": "읽기 전용",
         "return_direct": "직접 반환",
@@ -985,6 +995,7 @@
     "modify inputs": "입력 수정",
     "modify_inputs": "입력 수정",
     "monogram": "모노그램",
+    "more actions": "추가 작업",
     "more_actions": "추가 작업",
     "multi_panel_editor": {
       "close_all_panels": "모든 패널 닫기",
@@ -1364,6 +1375,7 @@
       "next": "다음 페이지",
       "previous": "이전 페이지"
     },
+    "panel actions": "패널 작업",
     "parent execution": "부모 실행",
     "password": "비밀번호",
     "password empty constraint": "잘못된 사용자 이름 또는 비밀번호",
@@ -1390,6 +1402,7 @@
       "toggle": "플레이그라운드",
       "tooltip_persistence": "Playground를 끄고 다시 켜면, 페이지에 머무르는 동안 정보가 유지됩니다."
     },
+    "playground actions": "플레이그라운드 작업",
     "plugin defaults exported": "플러그인 기본값 내보내기 완료",
     "plugin defaults imported": "플러그인 기본값이 가져왔습니다.",
     "plugin defaults not imported": "일부 플러그인 기본값을 가져올 수 없습니다.",
@@ -1501,6 +1514,8 @@
     "relative": "상대적",
     "relative end date": "상대적 종료 날짜",
     "relative start date": "상대적 시작 날짜",
+    "remove label": "레이블 제거",
+    "remove this item": "이 항목 제거",
     "remove_bookmark": "이 북마크를 제거하시겠습니까?",
     "replay": "재실행",
     "replay confirm": "재실행 하시겠습니까?",
@@ -1826,6 +1841,7 @@
     "to": "종료",
     "to toggle": "전환하기",
     "toggle fullscreen": "전체 화면 전환",
+    "toggle menu": "메뉴 전환",
     "toggle output": "출력 전환",
     "toggle output display": "출력 표시 전환",
     "toggle periodic refresh each x seconds": "주기적인 새로 고침을 {interval}초마다 전환",
@@ -1941,6 +1957,7 @@
     "value": "Value",
     "variables": "변수",
     "version": "버전",
+    "view metrics": "메트릭 보기",
     "warning": "경고",
     "warning detected": "경고 감지됨",
     "warning flow with triggers": "이 flow는 triggers를 포함하고 있으며, 이 flow가 trigger expressions에 의존하는 경우 수동 실행이 실패합니다. 해당 Flow는 Trigger를 포함하고 있으며,  Trigger Expression을 의존하는 경우 수동 실행이 실패할 수 있습니다. ",

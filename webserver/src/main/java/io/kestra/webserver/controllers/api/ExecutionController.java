@@ -71,7 +71,7 @@ import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
-import io.kestra.webserver.configuration.AsyncOperationsConfiguration;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;

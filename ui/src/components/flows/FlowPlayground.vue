@@ -11,7 +11,7 @@
                     :execution="executionsStore.execution"
                 />
                 <KsDropdown trigger="click" placement="bottom-end">
-                    <KsButton :icon="DotsVertical" link class="tab-icon" />
+                    <KsButton :icon="DotsVertical" link class="tab-icon" :aria-label="$t('playground actions')" />
                     <template #dropdown>
                         <KsDropdownMenu class="m-2">
                             <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">

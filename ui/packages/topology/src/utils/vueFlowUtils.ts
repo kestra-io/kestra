@@ -468,7 +468,7 @@ export function generateGraph(
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
                             : dagreNode.height + "px",
-                    borderRadius: "var(--ks-border-radius)",
+                    borderRadius: "var(--ks-radius-xs)",
                     padding: "0.5rem",
                 },
                 data: {
@@ -517,7 +517,7 @@ export function generateGraph(
                 style: {
                     width: nodeDimensions.width + "px",
                     height: nodeDimensions.height + "px",
-                    ...(node.type === "collapsedcluster" ? {borderRadius: "var(--ks-border-radius)"} : {}),
+                    ...(node.type === "collapsedcluster" ? {borderRadius: "var(--ks-radius-xs)"} : {}),
                 },
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
@@ -576,7 +576,7 @@ export function generateGraph(
                           type: MarkerType.ArrowClosed,
                           color: edgeColor
                               ? `var(--ks-border-${edgeColor})`
-                              : "var(--ks-topology-edge-color)",
+                              : "var(--ks-topology-dash)",
                       },
                 data: {
                     haveAdd:

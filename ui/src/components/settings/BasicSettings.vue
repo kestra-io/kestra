@@ -766,6 +766,7 @@
     async function saveAllSettings() {
         let refreshWhenSaved = false
         const previousDefaultNamespace = localStorage.getItem("defaultNamespace")
+        const previousLang = localStorage.getItem("lang")
         for (const key in pendingSettings) {
             const storedKey = settingsKeyMapping[key]
             switch (key) {
@@ -806,7 +807,9 @@
                 // NOTE2: We have to wait until all values are saved
                 // before refreshing. If we don't, some values will be saved
                 // but the page will refresh before all is saved.
-                refreshWhenSaved = true
+                // Only refresh when the language actually changed
+                if (pendingSettings[key] && pendingSettings[key] !== previousLang)
+                    refreshWhenSaved = true
                 break
             }
             default:

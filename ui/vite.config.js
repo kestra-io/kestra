@@ -68,6 +68,9 @@ export default defineConfig(({mode}) => {
             preserveSymlinks: true,
             dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
+                {find: /^@kestra-io\/topology$/, replacement: path.resolve(__dirname, "packages/topology/src/index.ts")},
+                {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
+
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
                 {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
 

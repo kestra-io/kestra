@@ -126,6 +126,7 @@
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
+        "loaded": []
     }>()
 
     defineSlots<{
@@ -299,6 +300,8 @@
                 isReady.value = true
                 emit("ready")
             }
+            await nextTick()
+            emit("loaded")
         }
     }
 

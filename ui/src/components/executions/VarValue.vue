@@ -148,10 +148,12 @@
         if (isFile(props.value) && props.execution?.id) {
             try {
                 const response = await axios.get<FileMetadata>(
-                    `${apiUrl()}/executions/${props.execution.id}/file/metas`,
-                    {params: {path: props.value}, showMessageOnError: false}
+                    `${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`,
+                    {validateStatus: (status: number) => status === 200 || status === 404 || status === 422},
                 );
-                humanSize.value = Utils.humanFileSize(response.data.size);
+                if (response.status === 200) {
+                    humanSize.value = Utils.humanFileSize(response.data.size);
+                }
             } catch (error) {
                 console.error("Failed to fetch file size:", error);
             }

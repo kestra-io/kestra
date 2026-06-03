@@ -1,7 +1,13 @@
 <template>
     <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
         <template #header>
-            <SidebarToggleButton class="header-toggle" @toggle="onCollapse(true)" />
+            <KsIconButton
+                class="header-toggle"
+                aria-label="Toggle menu"
+                @click="onCollapse(true)"
+            >
+                <DockLeft />
+            </KsIconButton>
             <Environment />
         </template>
 
@@ -49,10 +55,10 @@
     import {computed, h, defineComponent} from "vue"
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem} from "@kestra-io/design-system"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton} from "@kestra-io/design-system"
+    import DockLeft from "vue-material-design-icons/DockLeft.vue"
 
     import Environment from "./Environment.vue"
-    import SidebarToggleButton from "./SidebarToggleButton.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
@@ -167,5 +173,6 @@
     top: var(--ks-spacing-4);
     right: var(--ks-spacing-4);
     z-index: 1;
+    color: var(--ks-icon-muted);
 }
 </style>

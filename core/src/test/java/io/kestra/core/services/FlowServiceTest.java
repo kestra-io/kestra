@@ -162,6 +162,27 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReturnConstraintWhenPluginDefaultsRefIsUnknown() {
+        // Given — a task references a pluginDefaultsRef that does not resolve to any plugin-defaults
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+                uri: https://kestra.io
+                pluginDefaultsRef: does-not-exist
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        // Then — surfaced as a constraint error naming the unresolved ref (same check create/update enforce)
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).contains("does-not-exist");
+    }
+
+    @Test
     void importFlow() throws FlowProcessingException {
         String source = """
             id: import

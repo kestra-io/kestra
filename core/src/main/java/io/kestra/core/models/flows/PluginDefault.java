@@ -22,8 +22,20 @@ public class PluginDefault implements PluginDefaultSpec {
     private final boolean forced = false;
 
     @Schema(
+        title = "Optional reference id used to apply this default only to plugins that opt in via `pluginDefaultsRef`."
+    )
+    private final String ref;
+
+    @Schema(
         type = "object",
         additionalProperties = Schema.AdditionalPropertiesValue.FALSE
     )
     private final Map<String, Object> values;
+
+    /**
+     * Convenience constructor for type-matched (non-{@code ref}) defaults.
+     */
+    public PluginDefault(String type, boolean forced, Map<String, Object> values) {
+        this(type, forced, null, values);
+    }
 }

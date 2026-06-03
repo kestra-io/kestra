@@ -344,6 +344,11 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    void pluginDefaultsRefNotFound() throws Exception {
+        pluginDefaultsCaseTest.pluginDefaultsRefNotFound();
+    }
+
+    @Test
     @LoadFlows(
         value = { "flows/valids/switch.yaml",
             "flows/valids/task-flow.yaml",

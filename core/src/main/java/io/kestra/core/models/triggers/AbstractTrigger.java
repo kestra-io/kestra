@@ -42,6 +42,10 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @PluginProperty(hidden = true, group = "advanced")
     protected String version;
 
+    @PluginProperty(group = "advanced")
+    @Schema(title = "Reference (`ref`) of the `pluginDefaults` to apply to this trigger.")
+    protected String pluginDefaultsRef;
+
     @PluginProperty(hidden = true, group = "advanced")
     private String description;
 

@@ -120,7 +120,7 @@ class PluginControllerTest {
         assertThat(doc.getMarkdown()).contains("Return a value for debugging purposes.");
         assertThat(doc.getMarkdown()).contains("The templated string to render");
         assertThat(doc.getMarkdown()).contains("The generated string");
-        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(1);
+        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(2);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
 
@@ -133,7 +133,7 @@ class PluginControllerTest {
         );
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(5);
+        assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(6);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
 
@@ -184,7 +184,7 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(19);
+        assertThat(properties.size()).isEqualTo(20);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }

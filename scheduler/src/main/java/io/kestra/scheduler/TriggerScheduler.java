@@ -23,6 +23,7 @@ import org.slf4j.event.Level;
 import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import io.kestra.core.exceptions.PluginDefaultsRefNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -373,6 +374,13 @@ public class TriggerScheduler {
     }
 
     private void processWorkerTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext, WorkerTriggerInterface trigger) {
+        // a surviving 'pluginDefaultsRef' means plugin-default injection could not resolve the referenced
+        // plugin-defaults: fail the trigger evaluation instead of sending a bad job to the worker
+        String unresolvedRef = ((AbstractTrigger) trigger).getPluginDefaultsRef();
+        if (unresolvedRef != null) {
+            throw new PluginDefaultsRefNotFoundException(unresolvedRef);
+        }
+
         final boolean mustBeLocked = trigger instanceof RealtimeTriggerInterface || !((AbstractTrigger) trigger).isAllowConcurrent();
         updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state ->
         {

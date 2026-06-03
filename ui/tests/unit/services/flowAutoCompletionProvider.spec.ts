@@ -266,6 +266,30 @@ tasks:
         expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"])
     })
 
+    it("pluginDefaultsRef value autocompletions from flow pluginDefaults", async () => {
+        const flow = [
+            "tasks:",
+            "  - id: t1",
+            "    type: io.kestra.plugin.core.log.Log",
+            "    pluginDefaultsRef: ",
+            "pluginDefaults:",
+            "  - type: io.kestra.plugin.core.log.Log",
+            "    ref: io-config",
+            "    values:",
+            "      message: hi",
+            "  - type: io.kestra.plugin.core.log.Log",
+            "    ref: cpu-config",
+            "    values:",
+            "      message: yo",
+            "id: my-flow",
+            "namespace: my.namespace",
+        ].join("\n")
+        const flowParsed = YAML_UTILS.parse(flow)
+        const cursor = flow.indexOf("pluginDefaultsRef:") + "pluginDefaultsRef:".length
+        expect(await provider.valueAutoCompletion(flow, flowParsed, YAML_UTILS.localizeElementAtIndex(flow, cursor)))
+            .toEqual(["io-config", "cpu-config"])
+    })
+
     it("function autocompletions", async () => {
         expect(await provider.functionAutoCompletion(parsed, "secret", {})).toEqual(["'myFirstSecret'", "'mySecondSecret'", "'myInheritedSecret'"])
         expect(await provider.functionAutoCompletion(parsed, "secret", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstSecret'", "'anotherNsSecondSecret'"])

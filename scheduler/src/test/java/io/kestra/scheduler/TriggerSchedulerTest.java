@@ -191,6 +191,35 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldSendFailedExecutionGivenUnresolvedPluginDefaultsRef() {
+        // region [GIVEN]
+        // a surviving 'pluginDefaultsRef' (no matching plugin-defaults entry) must fail the trigger
+        // evaluation instead of sending a bad job to the worker
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestPollingTrigger.builder()
+                .id("polling")
+                .type(TestPollingTrigger.class.getName())
+                .interval(Duration.ofMinutes(30))
+                .pluginDefaultsRef("does-not-exist")
+                .build()
+        );
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN - the trigger is not locked (no worker job sent) and a FAILED execution is sent
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("polling")).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+    }
+
+    @Test
     void shouldSucceedScheduleRealTimeTriggerGivenValidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithTrigger(

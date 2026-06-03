@@ -119,7 +119,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         LEVELS: ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"].map(level => ({
             label: level,
             value: level,
-            color: `var(--ks-log-border-${level.toLowerCase()})`,
+            color: `var(--ks-log-${level.toLowerCase()})`,
         })),
         TYPES: auditLogTypes,
         PERMISSIONS: buildFromObject(resource),

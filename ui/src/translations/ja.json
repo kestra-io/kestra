@@ -1116,6 +1116,7 @@
       "title": "自動化を開始"
     },
     "no_code": {
+      "add_field": "{field}を追加",
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "clearSelection": "選択をクリア",

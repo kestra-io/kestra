@@ -1116,6 +1116,7 @@
       "title": "Zacznij automatyzację z"
     },
     "no_code": {
+      "add_field": "Dodaj {field}",
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "clearSelection": "Wyczyść zaznaczenie",

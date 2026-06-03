@@ -1,12 +1,13 @@
 package io.kestra.repository.h2.migration;
 
+import javax.sql.DataSource;
+
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 import io.kestra.repository.h2.H2QueueEnabled;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import javax.sql.DataSource;
 
 /**
  * H2 queue Flyway update migration script.
@@ -16,14 +17,14 @@ import javax.sql.DataSource;
  */
 @Singleton
 @H2QueueEnabled
-public class V2_0QueueIndexAndType extends AbstractSQLMigrationScript {
+public class V2_0_09QueueIndexAndTypeMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0.1-queue-index-and-type";
+    private static final String SCRIPT_ID = "2.0.09-queue-index-and-type";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0QueueIndexAndType(final DataSource dataSource) {
+    public V2_0_09QueueIndexAndTypeMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -39,11 +40,11 @@ public class V2_0QueueIndexAndType extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/2.0.1-queue-index-and-type-h2.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.09-queue-index-and-type-h2.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/2.0.1-queue-index-and-type-h2.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.09-queue-index-and-type-h2.sql");
     }
 }

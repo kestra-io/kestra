@@ -1116,6 +1116,7 @@
       "title": "Начните автоматизацию с"
     },
     "no_code": {
+      "add_field": "Добавить {field}",
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "clearSelection": "Очистить выбор",

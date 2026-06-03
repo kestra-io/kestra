@@ -1116,6 +1116,7 @@
       "title": "开始自动化使用"
     },
     "no_code": {
+      "add_field": "添加{field}",
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
       "clearSelection": "清除选择",

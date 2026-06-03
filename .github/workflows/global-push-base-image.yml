@@ -1,15 +1,26 @@
 name: Build and Push Base Image
 
-# This workflow maintains two base images:
+# Produces two multi-arch base images (linux/amd64 + linux/arm64):
 #
-# 1. kestra-base:latest-no-plugins — a lightweight image with just the JRE and uv pre-installed.
-#    Used as the foundation for the image below.
+#   kestra-base:latest-no-plugins  — JRE + uv, no plugins
+#   kestra-base:latest             — JRE + uv + all OSS plugins (plugin cache)
 #
-# 2. kestra-base:latest — built on top of latest-no-plugins, with all OSS plugins pre-downloaded.
-#    This is a plugin cache: downstream Kestra image builds pull from it instead of fetching
-#    190+ plugins from Maven Central on every build. A nightly refresh keeps the cache current.
-#    Partial downloads (e.g. due to Maven Central rate-limiting) are acceptable — even a partial
-#    cache is better than none, and missing plugins are picked up on the next nightly run.
+# Pipeline (sequential to avoid duplicating the plugin download):
+#
+#   Job 1 — amd64 runner
+#     • Build and push kestra-base:latest-no-plugins-amd64
+#     • Download all OSS plugins with kestractl (once, Maven Central hit only here)
+#     • Upload plugins as a GHA artifact for the next job
+#
+#   Job 2 — arm64 runner  (needs Job 1 so the artifact is ready)
+#     • Build and push kestra-base:latest-no-plugins-arm64
+#     • Download plugin artifact from Job 1
+#
+#   Job 3 — any runner  (needs Job 1 + Job 2)
+#     • Merge latest-no-plugins-amd64 + arm64 → latest-no-plugins  (imagetools)
+#     • Build and push kestra-base:latest-amd64  (COPY plugins from artifact)
+#     • Build and push kestra-base:latest-arm64  (COPY plugins from artifact)
+#     • Merge latest-amd64 + arm64 → latest  (imagetools)
 
 on:
   schedule:
@@ -28,8 +39,10 @@ on:
         default: false
 
 jobs:
-  build-and-push:
-    name: Build and Push kestra-base
+  # ── Job 1: amd64 — build no-plugins image and download plugins ─────────────────────────────
+
+  build-amd64:
+    name: Build amd64 + download plugins
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -45,34 +58,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/kestra-io/kestra-base
-          labels: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
-          annotations: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
-
-      - name: Build and push
+      - name: Build and push kestra-base:latest-no-plugins-amd64
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.base
           platforms: linux/amd64
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins-amd64
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins
-          cache-to: type=inline
+          provenance: false
+
+      - name: Install kestractl
+        if: ${{ inputs.dry-run != true }}
+        run: curl -fsSL https://raw.githubusercontent.com/kestra-io/kestractl/main/install-scripts/install.sh | bash
+
+      - name: Download all OSS plugins
+        if: ${{ inputs.dry-run != true }}
+        run: kestractl plugins download latest --edition=OSS --concurrency=4 --plugins-dir=./plugins
+
+      - name: Upload plugins artifact
+        if: ${{ inputs.dry-run != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kestra-plugins
+          path: plugins/
+          retention-days: 1
 
       - name: Slack - Notification
         if: ${{ failure() }}
@@ -81,11 +93,12 @@ jobs:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
 
-  build-and-push-with-plugins:
-    name: Build and Push kestra-base with plugins
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    if: ${{ inputs.dry-run != true }}
+  # ── Job 2: arm64 — build no-plugins image (plugins artifact already in GHA) ───────────────
+
+  build-arm64:
+    name: Build arm64
+    runs-on: ubuntu-24.04-arm
+    needs: build-amd64
     steps:
       - uses: actions/checkout@v6
 
@@ -100,34 +113,88 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Build and push kestra-base:latest-no-plugins-arm64
+        uses: docker/build-push-action@v7
         with:
-          images: ghcr.io/kestra-io/kestra-base
-          labels: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (with OSS plugins) — JRE + uv + plugins pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
-          annotations: |
-            org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (with OSS plugins) — JRE + uv + plugins pre-installed
-            org.opencontainers.image.vendor=Kestra Technologies
+          context: .
+          file: Dockerfile.base
+          platforms: linux/arm64
+          push: ${{ inputs.dry-run != true }}
+          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins-arm64
+          build-args: |
+            UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
+          provenance: false
 
-      - name: Build and push
+      - name: Slack - Notification
+        if: ${{ failure() }}
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
+  # ── Job 3: assemble manifests and build with-plugins images ───────────────────────────────
+
+  assemble:
+    name: Assemble manifests and build with-plugins
+    runs-on: ubuntu-latest
+    needs: [build-amd64, build-arm64]
+    if: ${{ inputs.dry-run != true }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge kestra-base:latest-no-plugins manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/kestra-io/kestra-base:latest-no-plugins \
+            ghcr.io/kestra-io/kestra-base:latest-no-plugins-amd64 \
+            ghcr.io/kestra-io/kestra-base:latest-no-plugins-arm64
+
+      - name: Download plugins artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kestra-plugins
+          path: plugins/
+
+      - name: Build and push kestra-base:latest-amd64
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.base.with-plugins
           platforms: linux/amd64
-          push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          push: true
+          tags: ghcr.io/kestra-io/kestra-base:latest-amd64
           build-args: |
-            CACHE_BUST=${{ github.run_id }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest
-          cache-to: type=inline
+            BASE_IMAGE=ghcr.io/kestra-io/kestra-base:latest-no-plugins
+          provenance: false
+
+      - name: Build and push kestra-base:latest-arm64
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.base.with-plugins
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/kestra-io/kestra-base:latest-arm64
+          build-args: |
+            BASE_IMAGE=ghcr.io/kestra-io/kestra-base:latest-no-plugins
+          provenance: false
+
+      - name: Merge kestra-base:latest manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/kestra-io/kestra-base:latest \
+            ghcr.io/kestra-io/kestra-base:latest-amd64 \
+            ghcr.io/kestra-io/kestra-base:latest-arm64
 
       - name: Slack - Notification
         if: ${{ failure() }}

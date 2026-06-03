@@ -294,7 +294,10 @@ export function getParentNamespaces(namespace: string): string[] {
 
 export const useTheme = () => {
     const miscStore = useMiscStore()
-    return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark")
+    return computed<"light" | "dark">(() => {
+        void miscStore.theme
+        return getTheme()
+    })
 }
 
 export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {

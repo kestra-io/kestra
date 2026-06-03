@@ -14,16 +14,6 @@
             <Transition name="details-slide">
                 <div v-if="globalShowExtraDetails" class="details-wrapper">
                     <slot name="details" />
-                    <div v-if="actionConfig && data.node.task" class="view-details-action">
-                        <button
-                            type="button"
-                            class="view-details-button"
-                            aria-label="Show details"
-                            @click.stop="onShowDetails()"
-                        >
-                            Show details
-                        </button>
-                    </div>
                 </div>
             </Transition>
         </template>
@@ -438,48 +428,6 @@ button.playground-button {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
     font-family: var(--ks-font-family-mono);
-}
-
-.view-details-action {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 6px;
-    padding: 0 8px 8px;
-}
-
-.view-details-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    box-sizing: border-box;
-    appearance: none;
-    margin: 0;
-    padding: 4px 10px;
-    border: 1px solid var(--ks-border-primary);
-    border-radius: 999px;
-    background-color: var(--ks-bg-surface);
-    color: var(--ks-text-secondary);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
-    line-height: 1.2;
-    white-space: nowrap;
-    text-transform: none;
-    box-shadow: none;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-
-    &:hover {
-        border-color: var(--ks-border-active);
-        background-color: var(--ks-button-background-secondary-hover);
-        color: var(--ks-text-primary);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--ks-border-active);
-        outline-offset: 2px;
-    }
 }
 
 .details-slide-enter-active,

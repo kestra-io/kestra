@@ -61,6 +61,7 @@
     })
 
     function paint() {
+        computeDuration()
         if (!refreshHandler.value) {
             refreshHandler.value = setInterval(() => {
                 computeDuration()

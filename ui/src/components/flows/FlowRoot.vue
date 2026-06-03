@@ -354,7 +354,7 @@
         overflow: hidden;
     }
 
-    section.container.padding {
+    section.container.padding:not(.maximized) {
         padding: 0 var(--ks-spacing-6);
     }
 </style>

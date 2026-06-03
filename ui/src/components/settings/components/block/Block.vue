@@ -17,7 +17,7 @@
     .settings-block {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: var(--ks-spacing-4);
 
         &__heading {
             align-self: flex-start;

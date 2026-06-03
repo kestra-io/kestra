@@ -25,8 +25,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
-        padding: 1rem;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-4);
 
         &:not(:last-child) {
             border-bottom: 1px solid var(--ks-border-default);
@@ -36,7 +36,7 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 0.25rem;
+            gap: var(--ks-spacing-1);
             min-width: 0;
         }
 

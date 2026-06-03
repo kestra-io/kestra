@@ -547,10 +547,13 @@
     }
 
     function onLang(value: string) {
+        const previous = settings.lang
         settings.lang = value
         persist("lang", value)
 
-        document.location.assign(document.location.href)
+        if (value !== previous) {
+            document.location.assign(document.location.href)
+        }
     }
 
     function onTimezone(value: string) {

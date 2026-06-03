@@ -956,7 +956,8 @@
             "execute_flow": "Where execution results open after triggering a run.",
             "execute_default_tab": "Tab selected when navigating to an execution.",
             "flow_default_tab": "Tab selected when navigating to a flow.",
-            "auto_refresh_interval": "Seconds between automatic data refreshes on list pages."
+            "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
+            "playground": "Run tasks individually in the editor playground."
           }
         },
         "theme": {
@@ -990,7 +991,9 @@
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
-            "editor_hover_description": "Show property descriptions on hover in the editor."
+            "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "environment_name": "Display name for the current environment, shown in the navigation.",
+            "environment_color": "Accent color used for the current environment in the navigation."
           }
         },
         "localization": {

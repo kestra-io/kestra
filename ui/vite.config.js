@@ -33,7 +33,7 @@ export default defineConfig(({mode}) => {
         base: "",
         build: {
             outDir: "../webserver/src/main/resources/ui",
-            rollupOptions: {
+            rolldownOptions: {
                 output: {
                     advancedChunks: {
                         groups: [
@@ -44,6 +44,22 @@ export default defineConfig(({mode}) => {
                             {
                                 test: /src\/components\/flows/i,
                                 name: "flows",
+                            },
+                            {
+                                name: "kestra-sdk",
+                                test: /node_modules\/@kestra-io\/kestra-sdk/,
+                                priority: 20,
+                            },
+                            {
+                                name: "design-system",
+                                test: /(packages\/design-system\/src|node_modules\/@kestra-io\/design-system)/,
+                                priority: 20,
+                            },
+                            {
+                                name: "shared-ui-core",
+                                test: /node_modules[\\/](vue|pinia|vue-router)/,
+                                priority: 20,
+                                includeDependenciesRecursively: true,
                             },
                         ],
                     },

@@ -10,6 +10,9 @@
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
+        <template #badge>
+            <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
+        </template>
         <template #details>
             <Transition name="details-slide">
                 <div v-if="globalShowExtraDetails" class="details-wrapper">
@@ -18,15 +21,6 @@
             </Transition>
         </template>
         <template #content>
-            <ExecutionInformations
-                v-if="taskExecution && globalShowExtraDetails"
-                :execution="taskExecution"
-                :task="data.node.task"
-                :color="color"
-                :uid="data.node.uid"
-                :state="state"
-            />
-
             <button
                 v-if="data.node.task && playgroundEnabled && playgroundReadyToStart"
                 type="button"
@@ -61,7 +55,6 @@
     import {Handle, Position} from "@vue-flow/core"
     import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
-    import ExecutionInformations from "../misc/ExecutionInformations.vue"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle} from "../utils/status"
@@ -91,6 +84,9 @@
         default: null;
         description?: string;
         runIf?: unknown;
+        taskRunner?: {
+            type?: string;
+        };
         subflowId?: {
             namespace: string;
             flowId: string;
@@ -184,9 +180,21 @@
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
 
-    const color = computed(() => props.data.color ?? "primary")
-
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const runnerType = computed(() => props.data.node?.task?.taskRunner?.type)
+
+    const runnerLabel = computed(() => {
+        const type = runnerType.value
+        if (!type) return ""
+        const parts = type.split(".")
+        const cls = parts.at(-1) ?? ""
+        const runnerIdx = parts.indexOf("runner")
+        const plugin = runnerIdx > 0 ? parts[runnerIdx - 1] : ""
+        const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "")
+        if (!plugin || cls.toLowerCase().includes(plugin.toLowerCase())) return titleCase(cls)
+        return `${plugin.toUpperCase()} ${titleCase(cls)}`
+    })
 
     const taskExecution = computed(() => {
         const executionId = props.data.executionId
@@ -428,6 +436,24 @@ button.playground-button {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
     font-family: var(--ks-font-family-mono);
+}
+
+.details-wrapper {
+    border-top: 1px solid var(--ks-border-default);
+    font-size: var(--ks-font-size-2xs);
+}
+
+.runner-badge {
+    align-self: flex-start;
+    padding: 0 var(--ks-spacing-2);
+    border-radius: var(--ks-radius-sm);
+    background-color: var(--ks-bg-tag);
+    color: var(--ks-text-info);
+    font-size: var(--ks-font-size-2xs);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .details-slide-enter-active,

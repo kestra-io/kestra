@@ -11,6 +11,7 @@
                 <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" theme="light" variable="--ks-topology-icon-color" :icons="icons" />
             </div>
             <div class="node-content">
+                <slot name="badge" />
                 <div class="node-title">
                     <div class="task-title" :title="hoverTooltip">
                         <KsTooltip :content="hoverTooltip">

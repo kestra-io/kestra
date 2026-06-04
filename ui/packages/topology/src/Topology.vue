@@ -219,19 +219,8 @@
                 dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
             }
 
-            if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
+            if (VueFlowUtils.isTaskNode(node) && !showExtraDetails.value) {
                 return {...dimensions, height: baseHeight}
-            }
-
-            if (showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                const taskType = node?.task?.type as string | undefined
-                const hasDetailsAction = Boolean(
-                    (taskType && props.customActions?.[taskType]) ||
-                        (taskType && props.showDetails?.[taskType]),
-                )
-                if (hasDetailsAction) {
-                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)}
-                }
             }
 
             return dimensions

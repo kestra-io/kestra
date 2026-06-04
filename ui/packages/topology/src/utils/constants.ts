@@ -43,7 +43,6 @@ export const NODE_SIZES = {
     COLLAPSED_CLUSTER_HEIGHT: 40,
     TRIGGER_CLUSTER_WIDTH: 350,
     TRIGGER_CLUSTER_HEIGHT: 180,
-    TASK_EXPANDED_FALLBACK_HEIGHT: 140,
 } as const
 
 export const CLUSTER_TAG_STATUS: Record<string, string> = {

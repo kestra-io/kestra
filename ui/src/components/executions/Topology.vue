@@ -199,6 +199,7 @@
         :deep(.kel-card__body) {
             height: 100%;
             display: flex;
+            padding: 0;
         }
     }
 

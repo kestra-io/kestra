@@ -12,7 +12,9 @@
         "esModuleInterop": true,
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "allowImportingTsExtensions": true,
+        "noEmit": true
     },
     "include": [
         "tsdown.config.ts",

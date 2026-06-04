@@ -931,6 +931,7 @@
     "admin_preferences": "Preferences",
     "settings": {
       "label": "Settings",
+      "updated": "{name} updated",
       "blocks": {
         "configuration": {
           "label": "Main Configuration",
@@ -946,12 +947,24 @@
             "flow_default_tab": "Default Flow Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
+          },
+          "descriptions": {
+            "default_namespace": "Used when creating new flows without a namespace.",
+            "log_level": "Minimum log level shown in execution logs.",
+            "log_display": "How logs are presented when opening an execution.",
+            "editor_type": "Editor shown when opening a flow for the first time.",
+            "execute_flow": "Where execution results open after triggering a run.",
+            "execute_default_tab": "Tab selected when navigating to an execution.",
+            "flow_default_tab": "Tab selected when navigating to a flow.",
+            "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
+            "playground": "Run tasks individually in the editor playground."
           }
         },
         "theme": {
-          "label": "Theme Preferences",
+          "label": "Appearance",
           "fields": {
             "theme": "Theme",
+            "color_mode": "Color mode",
             "editor_font_size": "Editor Font Size",
             "logs_font_size": "Logs Font Size",
             "editor_font_family": "Editor Font Family",
@@ -965,6 +978,22 @@
               "classic": "Classic",
               "kestra": "Kestra"
             }
+          },
+          "color_modes": {
+            "dark_2": "Dark 2.0",
+            "dark_1": "Dark 1.0",
+            "light": "Light",
+            "sync": "Sync with system"
+          },
+          "descriptions": {
+            "color_mode": "Choose your preferred interface theme.",
+            "logs_font_size": "Font size used in log viewers and terminals.",
+            "editor_font_family": "Monospace font used in the YAML editor.",
+            "editor_font_size": "Font size used in the YAML and no-code editors.",
+            "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
+            "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "environment_name": "Display name for the current environment, shown in the navigation.",
+            "environment_color": "Accent color used for the current environment in the navigation."
           }
         },
         "localization": {
@@ -973,6 +1002,11 @@
           "fields": {
             "time_zone": "Time Zone",
             "date_format": "Date Format"
+          },
+          "descriptions": {
+            "language": "Interface language for menus and labels.",
+            "time_zone": "Used for displaying execution dates and scheduled triggers.",
+            "date_format": "Format used to display dates throughout the dashboard."
           }
         },
         "export": {

@@ -1,6 +1,6 @@
 <template>
     <div class="trigger">
-        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"
@@ -118,17 +118,12 @@
     }
 
     .trigger-icon {
-        display: inline-flex !important;
+        display: inline-flex;
         align-items: center;
-        margin-right: .25rem;
-        border: none;
-        background-color: transparent;
-        padding: 2px;
-        cursor: default;
-    }
-
-    :deep(div.wrapper) {
+        justify-content: center;
         width: var(--ks-font-size-lg);
         height: var(--ks-font-size-lg);
+        margin-right: var(--ks-spacing-1);
+        cursor: default;
     }
 </style>

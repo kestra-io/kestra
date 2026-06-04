@@ -54,6 +54,19 @@ public record QueryFilter(
         return logical != null;
     }
 
+    /**
+     * Tells whether the given list of filters references the given {@link Field}, recursing into
+     * nested AND/OR groups. Used to decide whether an implicit default (e.g. NORMAL kind on logs)
+     * should be applied when the caller hasn't filtered on that field.
+     */
+    public static boolean hasField(List<QueryFilter> filters, Field field) {
+        if (filters == null) {
+            return false;
+        }
+        return filters.stream().anyMatch(filter ->
+            filter.field() == field || (filter.children() != null && hasField(filter.children(), field)));
+    }
+
     public enum Logical {
         AND("and"),
         OR("or");

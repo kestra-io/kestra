@@ -105,8 +105,6 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("logs")
                         return VALUES.KINDS
                     },
-                    defaultValue: () => ["NORMAL"],
-                    visibleByDefault: true,
                 },
                 {
                     key: "triggerId",

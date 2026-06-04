@@ -38,11 +38,6 @@ interface UseRouteSyncOptions {
     searchQuery: Ref<string>;
     preApplied: PreApplied;
     showSearchInput: boolean;
-    /**
-     * When true, default-visible chips are NOT injected if the route already has filters — so a
-     * route the user arrived at with filters shows only those, with no default chips layered on.
-     */
-    defaultsOnlyWhenEmpty?: boolean;
 }
 
 export function useRouteSync({
@@ -52,7 +47,6 @@ export function useRouteSync({
     searchQuery,
     preApplied,
     showSearchInput,
-    defaultsOnlyWhenEmpty,
 }: UseRouteSyncOptions) {
     const router = useRouter()
     const route = useRoute()
@@ -146,15 +140,11 @@ export function useRouteSync({
         const parsedFilterKeys = new Set(parsedFlat.map((f) => f.key))
         parsedFilterKeys.forEach((key) => dismissed.restoreDefaultVisibleKey(key))
 
-        // When the route already carries filters and defaults are gated to "clean routes only",
-        // don't inject the default-visible chips — show only what the user arrived with.
-        const defaultsForFirstGroup = (defaultsOnlyWhenEmpty && parsedFlat.length > 0)
-            ? []
-            : createDefaultVisibleFilters(
-                configuration.keys,
-                parsedFilterKeys,
-                dismissed.dismissedKeys.value,
-            )
+        const defaultsForFirstGroup = createDefaultVisibleFilters(
+            configuration.keys,
+            parsedFilterKeys,
+            dismissed.dismissedKeys.value,
+        )
         const finalGroups = mergeDefaultVisibleIntoFirstLeaf(parsedGroups, defaultsForFirstGroup)
         tree.replaceTree(finalGroups, parsedTop)
     }

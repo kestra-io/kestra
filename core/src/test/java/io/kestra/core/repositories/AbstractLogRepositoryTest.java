@@ -190,10 +190,10 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.size()).isZero();
 
         LogEntry save = logRepository.save(builder.build());
-        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // all kinds are now exposed by default
+        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // non-NORMAL: excluded from the default NORMAL-only listing
 
         find = logRepository.find(Pageable.UNPAGED, tenant, null);
-        assertThat(find.size()).isEqualTo(2);
+        assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
         var filters = List.of(
             QueryFilter.builder()
@@ -211,14 +211,14 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.size()).isZero();
 
         find = logRepository.find(Pageable.UNPAGED, tenant, null);
-        assertThat(find.size()).isEqualTo(2);
+        assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null);
-        assertThat(find.size()).isEqualTo(2);
+        assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
-        // An explicit KIND filter narrows the result set back down to a single kind.
+        // An explicit KIND filter overrides the NORMAL default and selects the requested kind.
         find = logRepository.find(Pageable.UNPAGED, tenant, List.of(
             QueryFilter.builder()
                 .field(Field.KIND)
@@ -849,6 +849,18 @@ public abstract class AbstractLogRepositoryTest {
             .containsExactlyInAnyOrderElementsOf(
                 testCase.expectedLogs().stream().map(LogEntry::getExecutionId).toList()
             );
+    }
+
+    @Test
+    void findDefaultsToNormalKindWhenNoKindFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        kindLogs.forEach(log -> logRepository.save(log.toBuilder().tenantId(tenant).build()));
+
+        ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, tenant, null);
+
+        assertThat(results)
+            .extracting(LogEntry::getExecutionId)
+            .containsExactly(normalKindLog.getExecutionId());
     }
 
     @Builder

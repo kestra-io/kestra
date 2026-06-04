@@ -74,8 +74,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public ArrayListTotal<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
-        // All execution kinds are exposed by default; callers narrow with an explicit KIND filter.
+        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
         return findPage(pageable, tenantId, condition);
     }
 
@@ -101,7 +104,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
+        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
     }
 

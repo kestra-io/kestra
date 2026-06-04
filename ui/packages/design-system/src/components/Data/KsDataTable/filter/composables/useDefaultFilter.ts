@@ -10,18 +10,6 @@ interface DefaultFilterOptions {
      * Falls back to chartDefaultDuration from config endpoint -> then "PT24H".
     **/
     defaultDuration?: string;
-    /**
-     * Query params for the config's default-visible filters (any key declaring a `defaultValue`),
-     * already encoded as `filters[field][OP]=value`. Seeded into the URL in this single coordinated
-     * write — one per field, only when that field isn't already filtered — so defaults are applied
-     * generically (and forwarded like any other filter) without racing per-filter route writers.
-     */
-    defaultVisibleParams?: Record<string, string>;
-    /**
-     * When true, apply NO defaults if the query already has any `filters[...]` param — i.e. only
-     * seed defaults on a "clean" route; if the user arrived with filters, use them as-is.
-     */
-    onlyWhenEmpty?: boolean;
 }
 
 const NAMESPACE_FILTER_PREFIX = "filters[namespace]"
@@ -54,18 +42,10 @@ export function applyDefaultFilters(
         includeTimeRange,
         includeScope,
         defaultDuration,
-        defaultVisibleParams,
-        onlyWhenEmpty,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
 
     const query = {...currentQuery}
     let change = false
-
-    // "Defaults only on a clean route": if the user arrived with any filter applied, use it as-is
-    // and seed nothing.
-    if (onlyWhenEmpty && hasFilterKey(query, "filters[")) {
-        return {query, change}
-    }
 
     if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace()
@@ -90,18 +70,6 @@ export function applyDefaultFilters(
         Object.keys(query).forEach(key => {
             if (key.startsWith(SCOPE_FILTER_PREFIX)) {
                 delete query[key]
-                change = true
-            }
-        })
-    }
-
-    // Seed each config-declared default-visible filter (level, kind, …) when its field isn't
-    // already present. Field-agnostic: driven entirely by the config's defaultValue declarations.
-    if (defaultVisibleParams) {
-        Object.entries(defaultVisibleParams).forEach(([key, value]) => {
-            const fieldPrefix = key.slice(0, key.indexOf("]") + 1) // e.g. "filters[kind]"
-            if (!hasFilterKey(query, fieldPrefix)) {
-                query[key] = value
                 change = true
             }
         })

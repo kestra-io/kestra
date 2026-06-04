@@ -132,7 +132,7 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldExposeNonNormalKindLogsByDefaultAndAllowKindFilter() {
+    void shouldDefaultToNormalKindAndAllowKindFilter() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);
         LogEntry playgroundLog = logEntry(tenant, Level.INFO).toBuilder()
@@ -140,28 +140,29 @@ class LogControllerTest {
             .build();
         logRepository.save(playgroundLog);
 
-        // Execution-scoped endpoint (the temporal view) exposes playground logs by default.
+        // Execution-scoped endpoint defaults to NORMAL kind only, so a playground log is hidden...
         List<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId()),
+            Argument.of(List.class, LogEntry.class)
+        );
+        assertThat(logs).isEmpty();
+
+        // ...unless the caller explicitly asks for that kind.
+        logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId() + "?filters[kind][EQUALS]=PLAYGROUND"),
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size()).isEqualTo(1);
         assertThat(logs.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.PLAYGROUND);
 
-        // Global search also exposes all kinds by default...
+        // Global search defaults to NORMAL kind only too...
         PagedResults<LogEntry> search = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
-        assertThat(search.getTotal()).isEqualTo(1L);
-
-        // ...and can be narrowed with an explicit KIND filter.
-        search = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/search?filters[kind][EQUALS]=NORMAL"),
-            Argument.of(PagedResults.class, LogEntry.class)
-        );
         assertThat(search.getTotal()).isEqualTo(0L);
 
+        // ...and can be narrowed with an explicit KIND filter.
         search = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[kind][EQUALS]=PLAYGROUND"),
             Argument.of(PagedResults.class, LogEntry.class)

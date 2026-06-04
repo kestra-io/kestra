@@ -976,6 +976,12 @@
         if (taskId) {
             p["filters[taskId][EQUALS]"] = taskId
         }
+        // Logs default to NORMAL kind on the backend; surface this execution's own kind when it
+        // isn't NORMAL (e.g. PLAYGROUND) so its logs still load.
+        const kind = followedExecution.value?.kind
+        if (kind && kind !== "NORMAL") {
+            p["filters[kind][IN]"] = kind
+        }
         return p
     }
 

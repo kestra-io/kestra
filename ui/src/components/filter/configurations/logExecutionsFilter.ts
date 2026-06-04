@@ -5,11 +5,17 @@ import {useI18n} from "vue-i18n"
 
 export const useLogExecutionsFilter = (
     playground: MaybeRefOrGetter<boolean> = false,
+    executionKind: MaybeRefOrGetter<string | undefined> = undefined,
 ): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
 
     return computed(() => {
         const isPlayground = toValue(playground)
+        // For non-NORMAL executions (PLAYGROUND, TEST, LOOP) the backend only returns that kind
+        // when a kind filter is present, so surface it as a default-visible chip to make clear
+        // which logs are shown.
+        const kind = toValue(executionKind)
+        const nonNormalKind = kind && kind !== "NORMAL" ? kind : undefined
         return {
             title: t("filter.titles.log_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_logs"),
@@ -73,6 +79,21 @@ export const useLogExecutionsFilter = (
                         valueType: "text",
                     },
                 ]) as FilterConfiguration["keys"],
+                ...(nonNormalKind ? [
+                    {
+                        key: "kind",
+                        label: t("filter.kind.label"),
+                        description: t("filter.kind.description"),
+                        comparators: [Comparators.IN],
+                        valueType: "multi-select",
+                        valueProvider: async () => {
+                            const {VALUES} = useValues("logs")
+                            return VALUES.KINDS
+                        },
+                        defaultValue: () => [nonNormalKind],
+                        visibleByDefault: true,
+                    },
+                ] : []) as FilterConfiguration["keys"],
             ],
         }
     })

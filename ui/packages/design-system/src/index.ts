@@ -16,6 +16,7 @@ import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
+import KsTopologyDetails from "./components/Data/KsTopologyDetails.vue"
 import KsDateAgo from "./components/Data/KsDateAgo.vue"
 import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
@@ -209,6 +210,7 @@ const components: Record<string, Component> = {
     KsButton,
     KsButtonGroup,
     KsCard,
+    KsTopologyDetails,
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
@@ -313,6 +315,7 @@ export {
     KsButton,
     KsButtonGroup,
     KsCard,
+    KsTopologyDetails,
     KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
@@ -438,6 +441,7 @@ declare module "vue" {
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
         KsCard: typeof KsCard
+        KsTopologyDetails: typeof KsTopologyDetails
         KsDateAgo: typeof KsDateAgo
         KsDataTable: typeof KsDataTable
         KsCascaderPanel: typeof KsCascaderPanel

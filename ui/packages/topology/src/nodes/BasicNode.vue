@@ -133,6 +133,7 @@
     .node-wrapper {
         background-color: var(--ks-bg-surface);
         border-radius: var(--ks-radius-base);
+        overflow: hidden;
         margin: 0;
         z-index: 150000;
         box-shadow: 0 2px 4px var(--ks-shadow-surface);

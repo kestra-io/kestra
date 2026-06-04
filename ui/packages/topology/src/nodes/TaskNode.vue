@@ -439,14 +439,18 @@ button.playground-button {
 }
 
 .details-wrapper {
-    border-top: 1px solid var(--ks-border-default);
     font-size: var(--ks-font-size-2xs);
+
+    &:has(> *) {
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-base);
+    }
 }
 
 .runner-badge {
     align-self: flex-start;
     padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-sm);
+    border-radius: var(--ks-radius-base);
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-info);
     font-size: var(--ks-font-size-2xs);

@@ -31,9 +31,6 @@ public class Extension extends AbstractExtension {
     private KvFunction kvFunction;
 
     @Inject
-    private EnvFunction envFunction;
-
-    @Inject
     private ReadFileFunction readFileFunction;
 
     @Inject
@@ -146,7 +143,7 @@ public class Extension extends AbstractExtension {
 
         functions.put(NowFunction.NAME, new NowFunction());
         functions.put(FromJsonFunction.NAME, new FromJsonFunction());
-        functions.put(EnvFunction.NAME, envFunction);
+        functions.put(EnvFunction.NAME, new EnvFunction());
         functions.put(SecretFunction.NAME, secretFunction);
         functions.put(KvFunction.NAME, kvFunction);
         functions.put(ReadFileFunction.NAME, readFileFunction);

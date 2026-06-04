@@ -34,13 +34,13 @@
             <template #header>
                 <span v-html="t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </KsDialog>
         <KsDialog
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
-            :beforeClose="() => reset()"
+            :beforeClose="beforeSelectFlowClose"
             :appendToBody="true"
             :width="dialogWidth"
         >
@@ -77,7 +77,7 @@
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
             </KsForm>
@@ -90,6 +90,7 @@
     import {ref, computed, watch} from "vue"
     import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
+    import {KsMessageBox} from "@kestra-io/design-system"
     import {useToast} from "../../utils/toast"
     import {useApiStore} from "../../stores/api"
     import {useExecutionsStore} from "../../stores/executions"
@@ -128,6 +129,9 @@
 
     const isOpen = ref(false)
     const isSelectFlowOpen = ref(false)
+    const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
+    const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
+    const isConfirmingClose = ref(false)
     const localFlow = ref<ExecutableFlow | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
     const isLargeScreen = useMediaQuery("(min-width: 768px)")
@@ -167,9 +171,34 @@
         localNamespace.value = undefined
     }
 
+    function confirmDiscardIfDirty(isDirty: boolean | undefined, done: () => void) {
+        if (!isDirty) {
+            reset()
+            done()
+            return
+        }
+        if (isConfirmingClose.value) {
+            return
+        }
+        isConfirmingClose.value = true
+        KsMessageBox
+            .confirm(t("discard execution confirmation"), t("confirmation"), {type: "warning", showCancelButton: true})
+            .then(() => {
+                reset()
+                done()
+            })
+            .catch(() => {})
+            .finally(() => {
+                isConfirmingClose.value = false
+            })
+    }
+
     function beforeClose(done: () => void) {
-        reset()
-        done()
+        confirmDiscardIfDirty(flowRunRef.value?.isDirty, done)
+    }
+
+    function beforeSelectFlowClose(done: () => void) {
+        confirmDiscardIfDirty(selectFlowRunRef.value?.isDirty, done)
     }
 
     async function toggleModal(newValue?: boolean) {

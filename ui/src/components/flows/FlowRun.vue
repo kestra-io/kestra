@@ -198,6 +198,14 @@
         flow.value && !flow.value.disabled && !haveBadLabels.value,
     )
 
+    const isDirty = computed(() =>
+        Object.keys(inputsNoDefaults.value).length > 0 ||
+        executionLabels.value.some(label => label.key || label.value) ||
+        scheduleDate.value !== undefined,
+    )
+
+    defineExpose({isDirty})
+
     const hasWebhookTriggers = computed(() => {
         if (!flow.value?.triggers) {
             return false

@@ -1626,6 +1626,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
+            "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
+            "editor_type": "जब पहली बार किसी flow को खोलते हैं तो दिखाया गया संपादक।",
+            "execute_default_tab": "नेविगेशन के दौरान एक execution पर जाने पर चयनित Tab।",
+            "execute_flow": "ट्रिगर करने के बाद निष्पादन परिणाम कहाँ खुलते हैं।",
+            "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
+            "log_display": "जब एक execution खोला जाता है तो logs कैसे प्रस्तुत किए जाते हैं।",
+            "log_level": "न्यूनतम log स्तर जो execution logs में दिखाया गया है।",
+            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।"
+          },
           "fields": {
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
             "default_namespace": "पूर्व-निर्धारित Namespace",
@@ -1649,6 +1660,11 @@
           "label": "निर्यात करें"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "डैशबोर्ड में तारीखें प्रदर्शित करने के लिए उपयोग किया जाने वाला प्रारूप।",
+            "language": "मेनू और लेबल के लिए इंटरफ़ेस भाषा।",
+            "time_zone": "निष्पादन तिथियों और अनुसूचित triggers को प्रदर्शित करने के लिए उपयोग किया जाता है।"
+          },
           "fields": {
             "date_format": "दिनांक प्रारूप",
             "time_zone": "समय क्षेत्र"
@@ -1664,12 +1680,29 @@
           "unsaved_warning": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप उन्हें छोड़ने से पहले सहेजना चाहते हैं?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "डार्क 1.0",
+            "dark_2": "डार्क 2.0",
+            "light": "लाइट",
+            "sync": "सिस्टम के साथ सिंक करें"
+          },
+          "descriptions": {
+            "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
+            "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
+            "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
+            "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
+            "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
+            "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
+            "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
+            "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।"
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "क्लासिक",
               "kestra": "Kestra",
               "label": "चार्ट रंग योजना"
             },
+            "color_mode": "रंग मोड",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
@@ -1683,7 +1716,8 @@
           "label": "थीम प्राथमिकताएँ"
         }
       },
-      "label": "सेटिंग्स"
+      "label": "सेटिंग्स",
+      "updated": "{name} अपडेट किया गया"
     },
     "setup": {
       "config": {

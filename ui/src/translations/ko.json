@@ -1626,6 +1626,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "목록 페이지에서 자동 데이터 새로 고침 간격(초).",
+            "default_namespace": "namespace 없이 새로운 flow를 생성할 때 사용됩니다.",
+            "editor_type": "flow를 처음 열 때 표시되는 편집기.",
+            "execute_default_tab": "실행으로 이동할 때 선택된 탭.",
+            "execute_flow": "실행 결과가 실행을 트리거한 후 열리는 위치.",
+            "flow_default_tab": "flow로 이동할 때 선택된 탭.",
+            "log_display": "실행을 열 때 로그가 표시되는 방식.",
+            "log_level": "실행 로그에 표시되는 최소 log level.",
+            "playground": "편집기 플레이그라운드에서 개별적으로 task 실행."
+          },
           "fields": {
             "auto_refresh_interval": "자동 새로고침 간격",
             "default_namespace": "기본 Namespace",
@@ -1649,6 +1660,11 @@
           "label": "내보내기"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "대시보드 전반에 걸쳐 날짜를 표시하는 데 사용되는 형식.",
+            "language": "메뉴 및 레이블의 인터페이스 언어.",
+            "time_zone": "실행 날짜와 예약된 trigger를 표시하는 데 사용됩니다."
+          },
           "fields": {
             "date_format": "날짜 형식",
             "time_zone": "시간대"
@@ -1664,12 +1680,29 @@
           "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "다크 1.0",
+            "dark_2": "다크 2.0",
+            "light": "라이트",
+            "sync": "시스템과 동기화"
+          },
+          "descriptions": {
+            "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
+            "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
+            "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
+            "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
+            "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
+            "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
+            "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
+            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "클래식",
               "kestra": "Kestra",
               "label": "차트 색상 구성표"
             },
+            "color_mode": "색상 모드",
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
@@ -1683,7 +1716,8 @@
           "label": "테마 설정"
         }
       },
-      "label": "설정"
+      "label": "설정",
+      "updated": "{name} 업데이트됨"
     },
     "setup": {
       "config": {

@@ -1626,6 +1626,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "Sekundy między automatycznymi odświeżeniami danych na stronach list.",
+            "default_namespace": "Używane podczas tworzenia nowych flow bez namespace.",
+            "editor_type": "Edytor wyświetlany przy otwieraniu flow po raz pierwszy.",
+            "execute_default_tab": "Karta wybrana podczas nawigacji do wykonania.",
+            "execute_flow": "Gdzie wyniki wykonania otwierają się po uruchomieniu trigger.",
+            "flow_default_tab": "Karta wybrana podczas nawigacji do flow.",
+            "log_display": "Jak logi są prezentowane podczas otwierania wykonania.",
+            "log_level": "Minimalny poziom logów wyświetlany w logach wykonania.",
+            "playground": "Uruchom taski indywidualnie w edytorze playground."
+          },
           "fields": {
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
             "default_namespace": "Domyślny Namespace",
@@ -1649,6 +1660,11 @@
           "label": "Eksportuj"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "Format używany do wyświetlania dat w całym dashboardzie.",
+            "language": "Język interfejsu dla menu i etykiet.",
+            "time_zone": "Używane do wyświetlania dat wykonania i zaplanowanych triggerów."
+          },
           "fields": {
             "date_format": "Format Daty",
             "time_zone": "Strefa Czasowa"
@@ -1664,12 +1680,29 @@
           "unsaved_warning": "Masz niezapisane zmiany. Czy chcesz je zapisać przed opuszczeniem?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "Dark 2.0",
+            "light": "Jasny",
+            "sync": "Synchronizuj z systemem"
+          },
+          "descriptions": {
+            "color_mode": "Wybierz preferowany motyw interfejsu.",
+            "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML podczas otwierania flow.",
+            "editor_font_family": "Czcionka monospace używana w edytorze YAML.",
+            "editor_font_size": "Rozmiar czcionki używany w edytorach YAML i no-code.",
+            "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
+            "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
+            "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
+            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach."
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Klasyczny",
               "kestra": "Kestra",
               "label": "Schemat kolorów wykresu"
             },
+            "color_mode": "Tryb kolorów",
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
@@ -1683,7 +1716,8 @@
           "label": "Preferencje Motywu"
         }
       },
-      "label": "Ustawienia"
+      "label": "Ustawienia",
+      "updated": "{name} zaktualizowano"
     },
     "setup": {
       "config": {

@@ -1626,6 +1626,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "Sekunden zwischen automatischen Datenaktualisierungen auf Listen-Seiten.",
+            "default_namespace": "Wird verwendet, wenn neue flows ohne namespace erstellt werden.",
+            "editor_type": "Editor wird angezeigt, wenn ein flow zum ersten Mal geöffnet wird.",
+            "execute_default_tab": "Registerkarte ausgewählt beim Navigieren zu einer Ausführung.",
+            "execute_flow": "Wo Ausführungsergebnisse nach dem Auslösen eines Runs geöffnet werden.",
+            "flow_default_tab": "Registerkarte ausgewählt beim Navigieren zu einem flow.",
+            "log_display": "Wie Logs bei der Öffnung einer Ausführung dargestellt werden.",
+            "log_level": "Minimale Log-Ebene, die in den Ausführungs-Logs angezeigt wird.",
+            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus."
+          },
           "fields": {
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
             "default_namespace": "Standard-Namespace",
@@ -1649,6 +1660,11 @@
           "label": "Exportieren"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "Format zur Anzeige von Datumsangaben im gesamten Dashboard.",
+            "language": "Oberflächensprache für Menüs und Labels.",
+            "time_zone": "Wird zur Anzeige von Ausführungsdaten und geplanten Triggers verwendet."
+          },
           "fields": {
             "date_format": "Datumsformat",
             "time_zone": "Zeitzone"
@@ -1664,12 +1680,29 @@
           "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dunkel 1.0",
+            "dark_2": "Dunkel 2.0",
+            "light": "Hell",
+            "sync": "Mit System synchronisieren"
+          },
+          "descriptions": {
+            "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
+            "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
+            "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
+            "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",
+            "editor_hover_description": "Eigenschaftsbeschreibungen beim Hover im Editor anzeigen.",
+            "environment_color": "Auffälligkeitsfarbe, die für die aktuelle Umgebung in der Navigation verwendet wird.",
+            "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
+            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",
               "label": "Diagramm-Farbschema"
             },
+            "color_mode": "Farbmodus",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
@@ -1683,7 +1716,8 @@
           "label": "Modus-Einstellungen"
         }
       },
-      "label": "Einstellungen"
+      "label": "Einstellungen",
+      "updated": "{name} aktualisiert"
     },
     "setup": {
       "config": {

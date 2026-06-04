@@ -1626,6 +1626,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
+            "default_namespace": "namespaceなしで新しいflowを作成する際に使用されます。",
+            "editor_type": "初めてflowを開くときに表示されるエディター。",
+            "execute_default_tab": "実行に移動するときに選択されたタブ。",
+            "execute_flow": "実行結果がトリガーされた後に開く場所。",
+            "flow_default_tab": "フローに移動するときに選択されたタブ。",
+            "log_display": "実行を開いたときにログが表示される方法。",
+            "log_level": "実行ログに表示される最小のLogレベル。",
+            "playground": "エディタープレイグラウンドでタスクを個別に実行します。"
+          },
           "fields": {
             "auto_refresh_interval": "自動更新間隔",
             "default_namespace": "デフォルトNamespace",
@@ -1649,6 +1660,11 @@
           "label": "エクスポート"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "ダッシュボード全体で日付を表示するために使用されるフォーマット。",
+            "language": "メニューとラベルのインターフェース言語。",
+            "time_zone": "実行日とスケジュールされたトリガーを表示するために使用されます。"
+          },
           "fields": {
             "date_format": "日付形式",
             "time_zone": "タイムゾーン"
@@ -1664,12 +1680,29 @@
           "unsaved_warning": "保存されていない変更があります。離れる前に保存しますか？"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "ダーク 1.0",
+            "dark_2": "ダーク 2.0",
+            "light": "ライト",
+            "sync": "システムと同期"
+          },
+          "descriptions": {
+            "color_mode": "お好みのインターフェーステーマを選択してください。",
+            "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
+            "editor_font_family": "YAMLエディタで使用される等幅フォント。",
+            "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
+            "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
+            "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
+            "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
+            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",
               "label": "チャートのカラースキーム"
             },
+            "color_mode": "カラーモード",
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
@@ -1683,7 +1716,8 @@
           "label": "テーマ設定"
         }
       },
-      "label": "設定"
+      "label": "設定",
+      "updated": "{name} が更新されました"
     },
     "setup": {
       "config": {

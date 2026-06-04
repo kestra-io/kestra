@@ -18,21 +18,14 @@ const svgInlinePlugin = {
 export default defineConfig({
     publint: true,
     attw: {
-        "profile": "esm-only",
+        profile: "esm-only",
+        excludeEntrypoints: ["./src/assets/styles/color-palette.scss", "./src/assets/styles/variables.scss"],
     },
     platform: "browser",
     exports: {
         customExports(exp) {
-            exp["./src/assets/styles/color-palette.scss"] = {
-                sass: "./src/assets/styles/_color-palette.scss",
-                bundler: "./src/assets/styles/_color-palette.scss",
-                default: "./src/assets/styles/_color-palette.scss",
-            }
-            exp["./src/assets/styles/variables.scss"] = {
-                sass: "./src/assets/styles/_variables.scss",
-                bundler: "./src/assets/styles/_variables.scss",
-                default: "./src/assets/styles/_variables.scss",
-            }
+            exp["./src/assets/styles/color-palette.scss"] = "./src/assets/styles/_color-palette.scss"
+            exp["./src/assets/styles/variables.scss"] = "./src/assets/styles/_variables.scss"
             return exp
         },
     },

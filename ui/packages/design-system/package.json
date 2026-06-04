@@ -144,16 +144,8 @@
     "./components/Others/KsDivider.vue": "./dist/components/Others/KsDivider.vue.js",
     "./styleBase": "./dist/styleBase.js",
     "./package.json": "./package.json",
-    "./src/assets/styles/color-palette.scss": {
-      "sass": "./src/assets/styles/_color-palette.scss",
-      "bundler": "./src/assets/styles/_color-palette.scss",
-      "default": "./src/assets/styles/_color-palette.scss"
-    },
-    "./src/assets/styles/variables.scss": {
-      "sass": "./src/assets/styles/_variables.scss",
-      "bundler": "./src/assets/styles/_variables.scss",
-      "default": "./src/assets/styles/_variables.scss"
-    }
+    "./src/assets/styles/color-palette.scss": "./src/assets/styles/_color-palette.scss",
+    "./src/assets/styles/variables.scss": "./src/assets/styles/_variables.scss"
   },
   "files": [
     "dist",

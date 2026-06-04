@@ -531,6 +531,12 @@
                 )
             }
 
+            for (const taskRun of currentTaskRuns.value) {
+                if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                    updateLoopStatus(taskRun.id)
+                }
+            }
+
             if (!State.isRunning(followedExecution.value.state.current)) {
                 // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                 setTimeout(() => {
@@ -596,9 +602,7 @@
                 executionId: followedExecution.value.id,
                 taskRunId,
             })
-            if (outputs === null
-                || !outputs.iterationCount
-                || !outputs.terminatedIterations) {
+            if (outputs === null || !outputs.iterationCount) {
                 return
             }
             loopOutputsByTaskRunId.value[taskRunId] = outputs
@@ -714,11 +718,6 @@
     function refreshLogs() {
         timer.value = moment()
         rawLogs.value = deduplicateLogs(rawLogs.value.concat(logsBuffer.value))
-        for (const taskRun of currentTaskRuns.value) {
-            if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
-                updateLoopStatus(taskRun.id)
-            }
-        }
         logsBuffer.value = []
         scrollToBottomFailedTask()
     }

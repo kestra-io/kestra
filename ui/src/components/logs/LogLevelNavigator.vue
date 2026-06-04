@@ -27,7 +27,7 @@
 
     const isSelected = computed(() => props.cursorIdx !== undefined)
     const forwardEvent = (eventName: "previous" | "next" | "close") => emit(eventName)
-    const circle = (level: string) => ({backgroundColor: `var(--ks-log-border-${level.toLowerCase()})`})
+    const circle = (level: string) => ({backgroundColor: `var(--ks-log-${level.toLowerCase()})`})
     const closeButton = (level: string) => ({color: `var(--ks-log-${level.toLowerCase()})`})
     const wrapperStyle = (level: string) =>
         isSelected.value

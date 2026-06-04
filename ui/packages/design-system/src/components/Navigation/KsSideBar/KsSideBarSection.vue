@@ -67,6 +67,10 @@
     padding: 0 var(--ks-spacing-4);
 }
 
+.ks-sidebar-section:first-child .ks-sidebar-section__title {
+    padding-top: 0;
+}
+
 .ks-sidebar-section__title {
     display: inline-flex;
     align-items: center;

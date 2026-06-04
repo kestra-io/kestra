@@ -92,7 +92,7 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-4);
-        padding: 1.25rem 2.75rem 1.25rem 1.25rem;
+        padding: 1.25rem 2rem 1.25rem 1.25rem;
         background-color: var(--ks-bg-surface);
         border-bottom: 1px solid var(--ks-border-default);
         cursor: pointer;

@@ -85,6 +85,10 @@
             }
         }
 
+        .kel-dialog__body {
+            padding-bottom: var(--kel-dialog-padding-primary);
+        }
+
         .kel-dialog__footer {
             border-top: 1px solid var(--ks-border-default);
             margin-left: calc(var(--kel-dialog-padding-primary) * -1);

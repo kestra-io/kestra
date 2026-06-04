@@ -271,7 +271,7 @@
             <Vars :data="detailsData" />
         </KsDrawer>
 
-        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
             <template #header>
                 <span v-html="$t('backfill executions')" />
             </template>
@@ -336,6 +336,7 @@
     import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
     import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -398,6 +399,13 @@
         inputs: null,
         labels: [],
     })
+
+    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+        backfill.value.start ||
+        backfill.value.end ||
+        backfill.value.labels?.some((label: any) => label.key || label.value)
+    ))
+    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
 
     const optionalColumns = computed<ColumnConfig[]>(() => [
         {
@@ -564,6 +572,7 @@
             flowId: trigger.flowId,
             store: true,
         }).then(() => {
+            backfill.value = {start: null, end: null, inputs: null, labels: []}
             isBackfillOpen.value = bool
             selectedTrigger.value = trigger
         })

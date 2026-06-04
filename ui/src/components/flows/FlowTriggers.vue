@@ -238,7 +238,7 @@
         </template>
     </Empty>
 
-    <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
         <template #header>
             <span v-html="$t('backfill executions')" />
         </template>
@@ -329,6 +329,7 @@
     import {useTriggerStore} from "../../stores/trigger"
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useTriggerFilter} from "../filter/configurations"
     import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
     import QuickFilters from "../filter/QuickFilters.vue"
@@ -354,6 +355,13 @@
     const triggers = ref<any[]>([])
     const isBackfillOpen = ref(false)
     const selectedTrigger = ref<any>(null)
+
+    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+        backfill.value.start ||
+        backfill.value.end ||
+        backfill.value.labels?.some((label: any) => label.key || label.value)
+    ))
+    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
     const triggerId = ref<string | undefined>()
 
     const reloadLogs = ref<number | undefined>()
@@ -512,6 +520,9 @@
     }
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
+        if (bool) {
+            backfill.value = {start: null, end: null, inputs: null, labels: []}
+        }
         isBackfillOpen.value = bool
         selectedTrigger.value = trigger
     }

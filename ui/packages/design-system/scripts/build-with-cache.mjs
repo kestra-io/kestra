@@ -15,36 +15,18 @@
  *   node scripts/build-with-cache.mjs --force   # bypass cache, always build
  */
 
-import {createHash} from "node:crypto"
-import {existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, rmSync} from "node:fs"
-import {join, relative, resolve} from "node:path"
+import {existsSync, readdirSync, rmSync} from "node:fs"
+import {join, resolve} from "node:path"
 import * as tsdown from "tsdown"
 import tsdownConfig from "../tsdown.config.ts"
 import {copyRecursive} from "./copy-recursive.mjs"
+import {readCache, writeCache, computePackageHash} from "../../../scripts/build-with-cache-utils.mjs"
 
 const packageRoot = resolve(import.meta.dirname, "..")
 const distDir = join(packageRoot, "dist")
 const cacheFile = join(distDir, ".build-cache.json")
 
 const force = process.argv.includes("--force")
-
-// ---------------------------------------------------------------------------
-// File collection
-// ---------------------------------------------------------------------------
-
-function collectFilesRecursive(dir) {
-    const files = []
-    if (!existsSync(dir)) return files
-    for (const entry of readdirSync(dir, {withFileTypes: true})) {
-        const full = join(dir, entry.name)
-        if (entry.isDirectory()) {
-            files.push(...collectFilesRecursive(full))
-        } else {
-            files.push(full)
-        }
-    }
-    return files
-}
 
 // ---------------------------------------------------------------------------
 // Hashing
@@ -57,45 +39,6 @@ const CONFIG_FILES = [
     "tsconfig.json",
     "package.json",
 ]
-
-function computePackageHash() {
-    const configFiles = CONFIG_FILES
-        .map(f => join(packageRoot, f))
-        .filter(existsSync)
-
-    const srcFiles = collectFilesRecursive(join(packageRoot, "src"))
-
-    const allFiles = [...configFiles, ...srcFiles].sort()
-
-    const hash = createHash("sha256")
-    for (const file of allFiles) {
-        // Include the relative path so renames also invalidate the cache.
-        hash.update(relative(packageRoot, file))
-        hash.update("\0")
-        hash.update(readFileSync(file))
-        hash.update("\0")
-    }
-    return hash.digest("hex")
-}
-
-// ---------------------------------------------------------------------------
-// Cache persistence
-// ---------------------------------------------------------------------------
-
-function readCache() {
-    if (!existsSync(cacheFile)) return {package: null, entries: {}}
-    try {
-        const parsed = JSON.parse(readFileSync(cacheFile, "utf8"))
-        return {package: null, entries: {}, ...parsed}
-    } catch {
-        return {package: null, entries: {}}
-    }
-}
-
-function writeCache(cache) {
-    mkdirSync(distDir, {recursive: true})
-    writeFileSync(cacheFile, JSON.stringify(cache, null, 2) + "\n")
-}
 
 // ---------------------------------------------------------------------------
 // Main
@@ -123,8 +66,8 @@ if (existsSync(stubsMarker)) {
     }
 }
 
-const packageHash = computePackageHash()
-const cache = readCache()
+const packageHash = computePackageHash(packageRoot, CONFIG_FILES)
+const cache = readCache(cacheFile)
 
 if (!force && cache.package === packageHash) {
     console.log("Build cache hit — no source changes detected, skipping build.")
@@ -139,4 +82,4 @@ if (force) {
 
 await tsdown.build(tsdownConfig)
 
-writeCache({...cache, package: packageHash})
+writeCache(distDir, ".build-cache.json", {...cache, package: packageHash})

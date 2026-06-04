@@ -235,6 +235,28 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
         );
+// RAGHFLOW POC alias registration ========================
+        if (plugin.allClass().stream().anyMatch(cls -> cls.getName().equals("io.kestra.plugin.core.log.Log"))) {
+
+            Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) plugin.allClass().stream()
+                .filter(cls -> cls.getName().equals("io.kestra.plugin.core.log.Log"))
+                .findFirst()
+                .orElseThrow();
+
+            Class<Plugin> pluginBaseClass =
+                plugin.baseClass(pluginClass.getName());
+
+            classes.put(
+                ClassTypeIdentifier.create("io.ragh.plugin.core.log.Log"),
+                PluginClassAndMetadata.create(
+                    plugin,
+                    pluginClass,
+                    pluginBaseClass,
+                    "io.ragh.plugin.core.log.Log"
+                )
+            );
+            log.info("RAGHFLOW POC: Registered alias io.ragh.plugin.core.log.Log");
+}
 
         classes.putAll(plugin.getAliases().values().stream().map(e ->
         {

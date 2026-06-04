@@ -1771,8 +1771,10 @@
     },
     "setup": {
       "login": "Login",
+      "login_title": "Sign in",
+      "login_subtitle": "Enter your credentials to access your Kestra instance",
       "logout": "Logout",
-      "troubleshooting": "Forgot Password?",
+      "troubleshooting": "Trouble signing in?",
       "steps": {
         "user": "Create admin user",
         "config": "Validate Configuration",

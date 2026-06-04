@@ -57,6 +57,7 @@
 
     .kel-textarea, .kel-input {
         --kel-input-border-color: var(--ks-border-default);
+        --kel-input-hover-border-color: var(--ks-border-strong);
         --kel-input-bg-color: var(--ks-bg-input);
     }
 

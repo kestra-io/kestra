@@ -1,3 +1,5 @@
+// @ts-check
+
 import path from "path"
 import {createLogger, defineConfig, loadEnv} from "vite"
 import vue from "@vitejs/plugin-vue"
@@ -7,14 +9,28 @@ import {federation} from "@module-federation/vite"
 // warnings from node_modules — cross-package scss sourcemap references that
 // are harmless and not relevant in prod builds.
 const logger = createLogger()
+/**
+ * @param {string} msg 
+ * @returns 
+ */
 const isElementPlusSourcemapWarning = (msg) =>
     (/sourcemap/i).test(msg) && msg.includes("points to a source file outside its package") && msg.includes("node_modules")
 const loggerWarn = logger.warn.bind(logger)
+/**
+ * @param {string} msg 
+ * @param {any} options 
+ * @returns 
+ */
 logger.warn = (msg, options) => {
     if (isElementPlusSourcemapWarning(msg)) return
     loggerWarn(msg, options)
 }
 const loggerWarnOnce = logger.warnOnce.bind(logger)
+/**
+ * @param {string} msg 
+ * @param {any} options 
+ * @returns 
+ */
 logger.warnOnce = (msg, options) => {
     if (isElementPlusSourcemapWarning(msg)) return
     loggerWarnOnce(msg, options)
@@ -32,9 +48,9 @@ export default defineConfig(({mode}) => {
         base: "",
         build: {
             outDir: "../webserver/src/main/resources/ui",
-            rollupOptions: {
+            rolldownOptions: {
                 output: {
-                    advancedChunks: {
+                    codeSplitting: {
                         groups: [
                             {
                                 test: /src\/components\/dashboard/i,
@@ -72,7 +88,6 @@ export default defineConfig(({mode}) => {
                 {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
 
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-                {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
 
                 // to be removed when all mdc import are removed
                 // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
@@ -97,12 +112,10 @@ export default defineConfig(({mode}) => {
                 shared: {
                     vue: {
                         singleton: true,
-                        eager: true,
-                        requiredVersion: "^3",
+                        
                     },
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
-                        eager: true,
                     },
                     // add all exports of @kestra-io/kestra-sdk as shared singletons
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
@@ -111,7 +124,6 @@ export default defineConfig(({mode}) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {
                                 singleton: true,
-                                eager: true,
                             }]
                         }),
                     ),

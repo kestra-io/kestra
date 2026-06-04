@@ -151,6 +151,23 @@ export function capturePosthogEvent(
     flushQueue()
 }
 
+export function capturePosthogException(
+    configs: Record<string, any> | undefined,
+    error: unknown,
+    properties?: Record<string, any>,
+) {
+    if (isPosthogDisabled(configs)) return
+
+    void ensurePosthogClient(configs).then((client) => {
+        if (!client?.captureException) return
+        try {
+            client.captureException(error, properties)
+        } catch {
+            // swallow
+        }
+    })
+}
+
 export async function identifyPosthogUser(
     configs: Record<string, any> | undefined,
     properties: Record<string, any>,

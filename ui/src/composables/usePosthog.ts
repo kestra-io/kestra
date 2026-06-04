@@ -82,6 +82,10 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             capture_pageview: false,
             capture_pageleave: true,
             autocapture: false,
+            capture_exceptions: true,
+            capture_dead_clicks: true,
+            rageclick: true,
+            capture_performance: {web_vitals: true},
         })
 
         posthog.register_for_session(statsGlobalData(config, uid))

@@ -218,7 +218,7 @@
                     </KsTableColumn>
                 </template>
 
-                <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+                <KsTableColumn columnKey="action" className="row-action">
                     <template #default="scope">
                         <div class="flow-actions-cell">
                             <KsIconButton
@@ -385,7 +385,7 @@
     const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace)
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -705,6 +705,11 @@
     cursor: pointer;
 }
 
+:deep(.flows-table) .kel-table__body tr:not(:hover) .flow-actions-cell {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .header-actions-list {
     display: flex;
     list-style: none;
@@ -717,5 +722,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    transition: opacity 0.15s ease;
+    padding: 0 var(--ks-spacing-2);
 }
 </style>

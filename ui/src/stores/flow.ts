@@ -87,7 +87,6 @@ export const useFlowStore = defineStore("flow", () => {
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const flowYamlBeforeAdd = ref<string>("")
-    const confirmOutdatedSaveDialog = ref<boolean>(false)
     const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
@@ -126,9 +125,30 @@ export const useFlowStore = defineStore("flow", () => {
         }
 
         if (!flow.value) return;
+
+        const validation = await onEdit({source: flowYaml.value, currentIsFlow: true});
+        if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+            return "no_op";
+        }
+
         await editorStore.saveAllTabs({namespace: flow.value.namespace});
         flowYamlOrigin.value = flowYaml.value;
         return saveWithoutRevisionGuard();
+    }
+
+    function confirmOutdatedSave(): Promise<boolean> {
+        const key = "outdated revision save confirmation.update";
+        return ElMessageBox({
+            title: t(`${key}.title`),
+            message: () => h("div", null, [
+                h("p", null, `${t(`${key}.description`)} ${t(`${key}.details`)}`),
+            ]),
+            showCancelButton: true,
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("cancel"),
+            center: false,
+            showClose: false,
+        }).then(() => true).catch(() => false);
     }
 
     const namespaceStore = useNamespacesStore()
@@ -152,9 +172,9 @@ export const useFlowStore = defineStore("flow", () => {
         const currentTab = editorStore.current;
 
         if (isFlow.value && source) {
-            return onEdit({source, currentIsFlow: true}).then((validation: any) => {
-                if (validation?.outdated && !isCreating.value) {
-                    return "confirmOutdatedSaveDialog";
+            return onEdit({source, currentIsFlow: true}).then(async (validation: any) => {
+                if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+                    return "no_op";
                 }
                 const res = saveWithoutRevisionGuard();
                 flowYamlOrigin.value = source;
@@ -905,7 +925,6 @@ function deleteFlowAndDependencies() {
         flowYaml,
         flowYamlOrigin,
         flowYamlBeforeAdd,
-        confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,
         metadata,

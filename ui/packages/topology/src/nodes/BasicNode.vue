@@ -80,7 +80,6 @@
 
     const statusStyle = computed(() => getStatusStyle(props.state))
 
-    // Per-status node tint/border (Figma). Undefined falls back to the CSS defaults.
     const nodeStyle = computed(() => {
         const style = statusStyle.value
         if (!style) return undefined
@@ -163,7 +162,7 @@
         }
 
         .icon {
-            border-radius: var(--ks-radius-base);
+            border-radius: var(--ks-radius-lg);
             width: 40px;
             height: 40px;
             min-width: 40px;

@@ -13,13 +13,38 @@ if (["publish", "pack"].includes(process.env.npm_command)) {
     process.exit(0)
 }
 
-import {mkdirSync, writeFileSync} from "fs"
+import {existsSync, readdirSync, mkdirSync, rmSync, writeFileSync} from "fs"
 import {dirname, join, relative} from "path"
 import {fileURLToPath} from "url"
 import {componentEntries} from "../componentEntries.ts"
+import {copyRecursive} from "./copy-recursive.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const packageRoot = join(__dirname, "..")
+
+// if anything already exists in dist/, it should be kept for caching. 
+
+// detect if anything in `dist` that is not the stubs.
+const distDirGlobal = join(packageRoot, "dist")
+
+
+if (existsSync(distDirGlobal) && readdirSync(distDirGlobal).length > 0) {
+    const cacheFile = join(distDirGlobal, ".build-cache.json")
+    if(existsSync(cacheFile)) {
+        console.log("[dev-stubs] Existing dist/ content moved to dist/__cached__/ for caching.")
+        const cachedDir = join(distDirGlobal, "__cached__")
+        copyRecursive(distDirGlobal, cachedDir, {filter: (src) => !src.includes("__cached__")})
+        // remove all non-stub files from dist since they got moved to cached
+        for (const file of readdirSync(distDirGlobal)) {
+            if (file === "__cached__") continue
+            const filePath = join(distDirGlobal, file)
+            if (existsSync(filePath)) {
+                rmSync(filePath, {recursive: true, force: true})
+            }
+        }
+    }
+}
+
 
 // componentEntries keys are like "components/Basic/KsButton/KsButton.vue" (relative to src/)
 const entries = [
@@ -41,7 +66,7 @@ for (const {srcRelPath, distRelPath} of entries) {
     const relPath = relative(distDir, srcAbsPath).replace(/\\/g, "/")
 
     const isVue = srcRelPath.endsWith(".vue")
-    const reexports = isVue
+    const reexports = isVue || srcRelPath.endsWith("/index.ts")
         ? `export { default } from '${relPath}';\nexport * from '${relPath}';\n`
         : `export * from '${relPath}';\n`
 
@@ -65,6 +90,6 @@ for (const {srcRelPath, distRelPath} of entries) {
 }
 
 // write the color palette dev as a `@forward`
-writeFileSync(join(packageRoot, "dist/_color-palette.scss"), "@forward \"../src/assets/styles/_color-palette.scss\";\n", "utf-8")
+writeFileSync(join(distDirGlobal, ".stubs"), "", "utf-8") // marker file to indicate dist/ contains dev stubs
 
 console.log(`[dev-stubs] Created ${created} stub(s).`)

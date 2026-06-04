@@ -23,8 +23,16 @@ export default defineConfig({
     platform: "browser",
     exports: {
         customExports(exp) {
-            exp["./_color-palette.scss"] = "./dist/assets/_color-palette.scss"
-            exp["./_variables.scss"] = "./dist/assets/_variables.scss"
+            exp["./src/assets/styles/color-palette.scss"] = {
+                sass: "./src/assets/styles/_color-palette.scss",
+                bundler: "./src/assets/styles/_color-palette.scss",
+                default: "./src/assets/styles/_color-palette.scss",
+            }
+            exp["./src/assets/styles/variables.scss"] = {
+                sass: "./src/assets/styles/_variables.scss",
+                bundler: "./src/assets/styles/_variables.scss",
+                default: "./src/assets/styles/_variables.scss",
+            }
             return exp
         },
     },
@@ -42,8 +50,6 @@ export default defineConfig({
     },
     copy: [
         {from: "src/assets/images", to: "dist/assets"},
-        {from: "src/assets/styles/_color-palette.scss", to: "dist/assets"},
-        {from: "src/assets/styles/_variables.scss", to: "dist/assets"},
     ],
     deps: {
         neverBundle: [/\.png$/, "@vue/reactivity"],

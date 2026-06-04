@@ -130,21 +130,24 @@ export default defineConfig(({mode}) => {
                             }]
                         }),
                     ),
-                    "@kestra-io/design-system": {
-                        singleton: true,
-                        eager: true,
-                    },
-                    // add all exports of @kestra-io/design-system as shared singletons
-                    ...Object.fromEntries(Object.keys(componentEntries)
-                        .filter((key) => key !== ".")
-                        .map((key) => {
-                            const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
-                            return [`@kestra-io/design-system/${name}.vue`, {
-                                singleton: true,
-                                eager: true,
-                            }]
-                        }),
-                    ),
+                    ...Object(mode === "production" ? {
+                        "@kestra-io/design-system": {
+                            singleton: true,
+                            eager: true,
+                        },
+                        // add all exports of @kestra-io/design-system as shared singletons
+                        ...Object.fromEntries(Object.keys(componentEntries)
+                            .filter((key) => key !== ".")
+                            .map((key) => {
+                                const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
+                                return [`@kestra-io/design-system/${name}`, {
+                                    singleton: true,
+                                    eager: true,
+                                }]
+                            }),
+                        ),
+                    }
+                    : {}),
                 },
             }),
             commit(),
@@ -172,6 +175,7 @@ export default defineConfig(({mode}) => {
             ],
             include: [
                 "lodash",
+                "lodash/uniqBy",
                 "debug",
                 "@braintree/sanitize-url",
                 "monaco-yaml/yaml.worker",

@@ -144,17 +144,27 @@
     "./components/Others/KsDivider.vue": "./dist/components/Others/KsDivider.vue.js",
     "./styleBase": "./dist/styleBase.js",
     "./package.json": "./package.json",
-    "./_color-palette.scss": "./dist/assets/_color-palette.scss",
-    "./_variables.scss": "./dist/assets/_variables.scss"
+    "./src/assets/styles/color-palette.scss": {
+      "sass": "./src/assets/styles/_color-palette.scss",
+      "bundler": "./src/assets/styles/_color-palette.scss",
+      "default": "./src/assets/styles/_color-palette.scss"
+    },
+    "./src/assets/styles/variables.scss": {
+      "sass": "./src/assets/styles/_variables.scss",
+      "bundler": "./src/assets/styles/_variables.scss",
+      "default": "./src/assets/styles/_variables.scss"
+    }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/assets/styles/_color-palette.scss",
+    "src/assets/styles/_variables.scss"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "node scripts/build-with-cache.mjs",
     "dev": "tsdown --watch",
     "play": "vite",
     "typecheck": "vue-tsc --noEmit",

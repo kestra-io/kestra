@@ -23,6 +23,7 @@ import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import TaskIcon from "./components/plugins/TaskIcon.vue"
 import {registerServiceWorker} from "./utils/serviceWorker"
 import {initPwaInstallCapture} from "./utils/pwaInstallState"
+import {capturePosthogException} from "./utils/posthog"
 
 void registerServiceWorker()
 initPwaInstallCapture()
@@ -145,6 +146,10 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
 
 initApp(app, routes, null, en as Record<string, unknown>, {}, {beforeResolve: beforeResolve as (...args: unknown[]) => unknown}).then(({router, piniaStore}) => {
 
+    app.config.errorHandler = (error, _instance, info) => {
+        console.error(error)
+        capturePosthogException(useMiscStore().configs, error, {handler: "vue", info})
+    }
 
     // Setup tenant router
     setupTenantRouter(router, app)

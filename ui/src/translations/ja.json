@@ -1800,6 +1800,7 @@
     "show chart": "チャートを表示",
     "show description": "説明を表示",
     "show documentation": "ドキュメントを表示",
+    "show more details": "詳細を表示",
     "show task condition": "タスク条件を表示",
     "show task documentation": "taskのドキュメントを表示",
     "show task documentation in editor": "エディタでtaskのドキュメントを表示",

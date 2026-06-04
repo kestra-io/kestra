@@ -1011,9 +1011,11 @@
       "create": {
         "file": "파일 생성",
         "file_already_exists": "이 이름의 파일이 이미 존재합니다",
+        "file_conflicts_with_folder": "이 이름의 폴더가 이미 존재합니다",
         "file_error": "파일 생성 중 오류 발생",
         "folder": "폴더 생성",
         "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
+        "folder_conflicts_with_file": "이 이름의 파일이 이미 존재합니다",
         "folder_error": "폴더 생성 중 오류가 발생했습니다",
         "label": "생성"
       },
@@ -1740,6 +1742,8 @@
         "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
       },
       "login": "로그인",
+      "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",
+      "login_title": "로그인",
       "logout": "로그아웃",
       "steps": {
         "complete": "Kestra UI 시작",

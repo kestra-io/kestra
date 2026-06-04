@@ -353,8 +353,4 @@
     section.no-overflow {
         overflow: hidden;
     }
-
-    section.container.padding {
-        padding: 0 var(--ks-spacing-6);
-    }
 </style>

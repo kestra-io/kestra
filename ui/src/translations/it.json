@@ -1011,9 +1011,11 @@
       "create": {
         "file": "Crea file",
         "file_already_exists": "Un file con questo nome esiste già",
+        "file_conflicts_with_folder": "Una cartella con questo nome esiste già",
         "file_error": "Si è verificato un errore durante la creazione del file",
         "folder": "Crea cartella",
         "folder_already_exists": "Una cartella con questo nome esiste già",
+        "folder_conflicts_with_file": "Un file con questo nome esiste già",
         "folder_error": "Si è verificato un errore durante la creazione della cartella",
         "label": "Crea"
       },
@@ -1740,6 +1742,8 @@
         "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero."
       },
       "login": "Accedi",
+      "login_subtitle": "Inserisci le tue credenziali per accedere alla tua istanza di Kestra",
+      "login_title": "Accedi",
       "logout": "Logout",
       "steps": {
         "complete": "Avvia Kestra UI",

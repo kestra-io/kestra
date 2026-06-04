@@ -1011,9 +1011,11 @@
       "create": {
         "file": "ファイルを作成",
         "file_already_exists": "この名前のファイルはすでに存在します",
+        "file_conflicts_with_folder": "この名前のフォルダーはすでに存在します",
         "file_error": "ファイルの作成中にエラーが発生しました",
         "folder": "フォルダーを作成",
         "folder_already_exists": "この名前のフォルダーはすでに存在します",
+        "folder_conflicts_with_file": "この名前のファイルはすでに存在します",
         "folder_error": "フォルダーの作成中にエラーが発生しました",
         "label": "作成"
       },
@@ -1740,6 +1742,8 @@
         "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
       },
       "login": "ログイン",
+      "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
+      "login_title": "サインイン",
       "logout": "ログアウト",
       "steps": {
         "complete": "Kestra UIを開始",

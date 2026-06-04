@@ -128,7 +128,7 @@
 .dependencies {
     display: flex;
     width: 100%;
-    height: calc(100vh - 145px);
+    height: 100%;
 
     & div#graph {
         position: relative; // for absolute positioning of controls

@@ -10,6 +10,10 @@
     >
         <Background :patternColor="cssVariable('--ks-topology-bg')" />
 
+        <Panel position="top-right">
+            <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
+        </Panel>
+
         <template #node-cluster="clusterProps">
             <ClusterNode
                 v-bind="clusterProps"
@@ -104,9 +108,6 @@
             <ControlButton @click.stop="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
                 <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
             </ControlButton>
-            <ControlButton @click.stop="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
-                <InformationSlabCircleOutline />
-            </ControlButton>
             <ControlButton @click.stop="toggleDropdown">
                 <Download />
             </ControlButton>
@@ -127,7 +128,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow} from "@vue-flow/core"
+    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import type {XYPosition} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -143,9 +144,8 @@
     import AlignHorizontalCenter from "vue-material-design-icons/AlignHorizontalCenter.vue"
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import InformationSlabCircleOutline from "vue-material-design-icons/InformationSlabCircleOutline.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsSwitch} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"

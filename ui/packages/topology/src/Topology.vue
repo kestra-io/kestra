@@ -285,6 +285,7 @@
             collapsed.value = new Set<string>()
             hiddenNodes.value = []
             edgeReplacer.value = {}
+            clusterToNode.value = []
             oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
             const elements = VueFlowUtils.generateGraph(
@@ -450,6 +451,7 @@
 
     const collapseCluster = (clusterUid: string, regenerate: boolean) => {
         const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
 

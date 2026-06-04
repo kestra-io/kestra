@@ -1742,6 +1742,8 @@
         "password_requirements": "Pelo menos 8 caracteres com 1 letra maiúscula e 1 número."
       },
       "login": "Login",
+      "login_subtitle": "Insira suas credenciais para acessar sua instância do Kestra",
+      "login_title": "Entrar",
       "logout": "Sair",
       "steps": {
         "complete": "Iniciar Kestra UI",

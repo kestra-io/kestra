@@ -1742,6 +1742,8 @@
         "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
       },
       "login": "ログイン",
+      "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
+      "login_title": "サインイン",
       "logout": "ログアウト",
       "steps": {
         "complete": "Kestra UIを開始",

@@ -1742,6 +1742,8 @@
         "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
       },
       "login": "登录",
+      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
+      "login_title": "登录",
       "logout": "注销",
       "steps": {
         "complete": "启动 Kestra UI",

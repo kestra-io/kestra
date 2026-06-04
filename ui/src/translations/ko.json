@@ -1742,6 +1742,8 @@
         "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
       },
       "login": "로그인",
+      "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",
+      "login_title": "로그인",
       "logout": "로그아웃",
       "steps": {
         "complete": "Kestra UI 시작",

@@ -59,7 +59,6 @@ export default defineConfig(({mode}) => {
                                 name: "shared-ui-core",
                                 test: /node_modules[\\/](vue|pinia|vue-router)/,
                                 priority: 20,
-                                includeDependenciesRecursively: true,
                             },
                         ],
                     },

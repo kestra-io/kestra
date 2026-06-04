@@ -34,6 +34,7 @@ import {createPinia} from "pinia"
 
 import Toast from "./toast"
 import filters from "./filters"
+import "@kestra-io/design-system/styleBase"
 import KestraDesignSystem from "@kestra-io/design-system"
 import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/design-system"
 import {date as dateFilter} from "./filters"
@@ -140,7 +141,7 @@ export default async (
 
     // moment
     moment.locale(locale)
-    const momentExtended = extendMoment(moment)
+    const momentExtended = extendMoment(moment as any) // FIXME: any - extendMoment doesn't have proper types
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
     setDateFormatter(dateFilter as any) // FIXME: any - dateFilter signature differs from DateFormatterFn

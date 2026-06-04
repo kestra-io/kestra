@@ -144,7 +144,8 @@
     "./components/Others/KsDivider.vue": "./dist/components/Others/KsDivider.vue.js",
     "./styleBase": "./dist/styleBase.js",
     "./package.json": "./package.json",
-    "./color-palette.scss": "./dist/_color-palette.scss"
+    "./_color-palette.scss": "./dist/assets/_color-palette.scss",
+    "./_variables.scss": "./dist/assets/_variables.scss"
   },
   "files": [
     "dist"

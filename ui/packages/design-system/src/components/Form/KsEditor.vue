@@ -1548,12 +1548,12 @@
         padding: 1rem 0 0 1rem;
     }
 
-    .custom-dark-vs-theme .ks-monaco-editor :deep(.sticky-widget) {
+    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
         background-color: var(--ks-background-input);
     }
 
     .monaco-editor {
-        :deep(.monaco-scrollable-element) {
+        .monaco-scrollable-element {
             > .scrollbar {
                 .slider {
                     width: 13px !important;

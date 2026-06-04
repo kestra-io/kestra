@@ -83,7 +83,7 @@
 
         const outdatedWarning =
             flowStore.flowValidation?.outdated && !flowStore.isCreating
-                ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
+                ? [translateErrorWithKey(flowStore.baseOutdatedTranslationKey)]
                 : [];
 
         const deprecationWarnings =

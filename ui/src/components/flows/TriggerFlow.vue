@@ -90,8 +90,8 @@
     import {ref, computed, watch} from "vue"
     import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
-    import {KsMessageBox} from "@kestra-io/design-system"
     import {useToast} from "../../utils/toast"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useApiStore} from "../../stores/api"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -131,7 +131,6 @@
     const isSelectFlowOpen = ref(false)
     const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
-    const isConfirmingClose = ref(false)
     const localFlow = ref<ExecutableFlow | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
     const isLargeScreen = useMediaQuery("(min-width: 768px)")
@@ -171,34 +170,27 @@
         localNamespace.value = undefined
     }
 
-    function confirmDiscardIfDirty(isDirty: boolean | undefined, done: () => void) {
-        if (!isDirty) {
-            reset()
-            done()
-            return
-        }
-        if (isConfirmingClose.value) {
-            return
-        }
-        isConfirmingClose.value = true
-        KsMessageBox
-            .confirm(t("discard execution confirmation"), t("confirmation"), {type: "warning", showCancelButton: true})
-            .then(() => {
-                reset()
-                done()
-            })
-            .catch(() => {})
-            .finally(() => {
-                isConfirmingClose.value = false
-            })
-    }
+    const {guardedClose: guardExecuteClose} = useDiscardGuard(
+        () => flowRunRef.value?.isDirty,
+        {message: t("discard execution confirmation")},
+    )
+    const {guardedClose: guardSelectFlowClose} = useDiscardGuard(
+        () => selectFlowRunRef.value?.isDirty,
+        {message: t("discard execution confirmation")},
+    )
 
     function beforeClose(done: () => void) {
-        confirmDiscardIfDirty(flowRunRef.value?.isDirty, done)
+        guardExecuteClose(() => {
+            reset()
+            done()
+        })
     }
 
     function beforeSelectFlowClose(done: () => void) {
-        confirmDiscardIfDirty(selectFlowRunRef.value?.isDirty, done)
+        guardSelectFlowClose(() => {
+            reset()
+            done()
+        })
     }
 
     async function toggleModal(newValue?: boolean) {

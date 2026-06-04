@@ -1011,9 +1011,11 @@
       "create": {
         "file": "Criar arquivo",
         "file_already_exists": "Um arquivo com este nome já existe",
+        "file_conflicts_with_folder": "Uma pasta com este nome já existe",
         "file_error": "Ocorreu um erro ao criar o arquivo",
         "folder": "Criar pasta",
         "folder_already_exists": "Uma pasta com este nome já existe",
+        "folder_conflicts_with_file": "Um arquivo com este nome já existe",
         "folder_error": "Ocorreu um erro ao criar a pasta",
         "label": "Criar"
       },

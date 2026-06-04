@@ -1011,9 +1011,11 @@
       "create": {
         "file": "फ़ाइल बनाएँ",
         "file_already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है",
+        "file_conflicts_with_folder": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
         "file_error": "फ़ाइल बनाते समय त्रुटि हुई",
         "folder": "फ़ोल्डर बनाएँ",
         "folder_already_exists": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
+        "folder_conflicts_with_file": "इस नाम की एक फ़ाइल पहले से मौजूद है",
         "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई",
         "label": "बनाएँ"
       },

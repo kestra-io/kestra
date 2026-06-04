@@ -1011,9 +1011,11 @@
       "create": {
         "file": "Datei erstellen",
         "file_already_exists": "Eine Datei mit diesem Namen existiert bereits",
+        "file_conflicts_with_folder": "Ein Ordner mit diesem Namen existiert bereits",
         "file_error": "Fehler beim Erstellen der Datei aufgetreten",
         "folder": "Ordner erstellen",
         "folder_already_exists": "Ein Ordner mit diesem Namen existiert bereits",
+        "folder_conflicts_with_file": "Eine Datei mit diesem Namen existiert bereits",
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten",
         "label": "Erstellen"
       },

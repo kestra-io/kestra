@@ -1011,9 +1011,11 @@
       "create": {
         "file": "创建文件",
         "file_already_exists": "已存在同名文件",
+        "file_conflicts_with_folder": "已存在同名文件夹",
         "file_error": "创建文件时发生错误",
         "folder": "创建文件夹",
         "folder_already_exists": "已存在同名文件夹",
+        "folder_conflicts_with_file": "已存在同名文件",
         "folder_error": "创建文件夹时发生错误",
         "label": "创建"
       },

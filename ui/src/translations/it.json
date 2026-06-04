@@ -1011,9 +1011,11 @@
       "create": {
         "file": "Crea file",
         "file_already_exists": "Un file con questo nome esiste già",
+        "file_conflicts_with_folder": "Una cartella con questo nome esiste già",
         "file_error": "Si è verificato un errore durante la creazione del file",
         "folder": "Crea cartella",
         "folder_already_exists": "Una cartella con questo nome esiste già",
+        "folder_conflicts_with_file": "Un file con questo nome esiste già",
         "folder_error": "Si è verificato un errore durante la creazione della cartella",
         "label": "Crea"
       },

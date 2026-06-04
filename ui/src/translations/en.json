@@ -772,9 +772,11 @@
         "label": "Create",
         "file": "Create file",
         "file_already_exists": "A file with this name already exists",
+        "file_conflicts_with_folder": "A folder with this name already exists",
         "file_error": "Error occurred while creating the file",
         "folder": "Create folder",
         "folder_already_exists": "A folder with this name already exists",
+        "folder_conflicts_with_file": "A file with this name already exists",
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {

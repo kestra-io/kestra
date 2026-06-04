@@ -128,3 +128,28 @@ export const NoHeader: Story = {
         `,
     }),
 }
+
+/** Confirm before close – beforeClose intercepts accidental dismissal (X / Escape / overlay) */
+export const ConfirmBeforeClose: Story = {
+    render: () => ({
+        components: {KsButton, KsDrawer},
+        setup() {
+            const visible = ref(false)
+            const beforeClose = (done: () => void) => {
+                if (window.confirm("Discard your changes?")) {
+                    done()
+                }
+            }
+            return {visible, beforeClose}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open guarded drawer</ks-button>
+                <ks-drawer v-model="visible" :before-close="beforeClose" destroy-on-close>
+                    <template #header><h3>Edit something</h3></template>
+                    <p style="padding:16px">Try to close with the X, Escape, or the overlay — you are asked to confirm first.</p>
+                </ks-drawer>
+            </div>
+        `,
+    }),
+}

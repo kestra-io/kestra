@@ -101,11 +101,15 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                 .reduce(Integer::sum)
                 .blockOptional()
                 .orElse(0);
-            log.info(
-                "Loaded {} \"Getting Started\" flows from community blueprints. " +
-                    "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
-                count
-            );
+            if (count > 0) {
+                log.info(
+                    "Loaded {} \"Getting Started\" flows from community blueprints. " +
+                        "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
+                    count
+                );
+            } else {
+                log.debug("No \"Getting Started\" flows found in community blueprints to load.");
+            }
         } catch (Exception e) {
             // Kestra's API is likely to be unavailable.
             log.warn(

@@ -67,7 +67,6 @@ test.describe("Flow Page", () => {
         await page.goto("/ui/flows")
 
         await test.step("create a the flow by pasting the YAML", async () => {
-            await page.locator("#side-menu .sidebar-toggle").click()
             await expect(page.getByRole("button", {name: "Create", exact: true})).toBeVisible()
             await page.getByRole("button", {name: "Create", exact: true}).click()
             await page.waitForURL("**/flows/new")

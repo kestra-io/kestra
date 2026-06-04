@@ -23,7 +23,7 @@
         <Suspense v-else-if="pluginsStore.plugin && pluginType">
             <SchemaToHtml
                 class="plugin-schema"
-                :darkMode="miscStore.theme === 'dark'"
+                :darkMode="isDarkTheme"
                 :schema="pluginsStore.plugin.schema"
                 :propsInitiallyExpanded="true"
                 :pluginType="pluginType"
@@ -52,10 +52,15 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useMiscStore} from "override/stores/misc"
     import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin} from "../../utils/pluginUtils"
+    import {getTheme} from "../../utils/utils"
     import useRouteContext from "../../composables/useRouteContext"
 
     const pluginsStore = usePluginsStore()
     const miscStore = useMiscStore()
+    const isDarkTheme = computed(() => {
+        void miscStore.theme
+        return getTheme() === "dark"
+    })
     const route = useRoute()
     const {t, te} = useI18n()
 

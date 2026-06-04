@@ -7,7 +7,7 @@
 
     <section id="welcome" class="container mt-0">
         <KsRow justify="center">
-            <KsCol :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
+            <KsCol :xs="24" :sm="24" :md="18" :lg="16" :xl="14" class="welcome-col">
                 <AiCopilot
                     :flow="activeExample.yaml"
                     :conversationId="conversationId"
@@ -24,27 +24,28 @@
                     @create-flow-directly="emit('createDirectly', $event)"
                 />
 
-                <div class="mt-2 welcome-copilot-tags">
-                    <KsTag
+                <div class="welcome-copilot-tags">
+                    <KsCheckTag
                         v-for="(example, i) in visibleExamples"
                         :key="i"
-                        round
-                        :effect="selectedIndex === i ? 'dark' : 'plain'"
-                        :type="selectedIndex === i ? 'primary' : 'info'"
-                        @click="selectExample(i)"
+                        pill
+                        :checked="selectedIndex === i"
+                        @change="selectExample(i)"
                     >
                         {{ example.label }}
-                    </KsTag>
+                    </KsCheckTag>
 
-                    <KsTag
+                    <KsCheckTag
                         v-if="examples.length > 5"
-                        round
-                        effect="plain"
-                        type="info"
-                        @click="allShown = !allShown"
+                        pill
+                        :checked="false"
+                        @change="allShown = !allShown"
                     >
                         {{ allShown ? $t("welcome_copilot.show_less") : $t("welcome_copilot.show_more") }}
-                    </KsTag>
+                        <KsIcon class="show-more-chevron" :class="{'is-open': allShown}">
+                            <ChevronDown />
+                        </KsIcon>
+                    </KsCheckTag>
                 </div>
 
                 <div v-if="welcomeResources.length > 0" class="welcome-help-section">
@@ -60,6 +61,8 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
     import TopNavBar from "../layout/TopNavBar.vue"
     import AiCopilot from "../ai/AiCopilot.vue"
@@ -109,7 +112,7 @@
 
     const {onboardingResources} = useOnboardingResources()
     const welcomeResources = computed(() =>
-        props.resources !== undefined ? props.resources : onboardingResources.value.slice(0, 3),
+        props.resources ?? onboardingResources.value.slice(0, 3),
     )
 
     function selectExample(index: number) {
@@ -130,18 +133,50 @@
 
     section#welcome {
         position: relative;
+        height: 100%;
+        padding-bottom: var(--ks-spacing-6);
         overflow-x: hidden;
         overflow-y: auto;
-        background: url("./assets/background.svg") center top / cover no-repeat;
-        height: 100%;
-        padding-bottom: 2rem;
+        background: url("./assets/grid.svg") center top / auto no-repeat;
+
+        .welcome-col {
+            max-width: 593px;
+        }
 
         .welcome-copilot-tags {
+            position: relative;
+            z-index: 1;
             display: flex;
-            justify-content: center;
-            align-items: center;
             flex-wrap: wrap;
-            margin: 0 auto;
+            align-items: center;
+            justify-content: center;
+            gap: var(--ks-spacing-3);
+            margin: var(--ks-spacing-4) auto var(--ks-spacing-10);
+        }
+
+        .show-more-chevron {
+            transition: transform 0.2s ease;
+
+            &.is-open {
+                transform: rotate(180deg);
+            }
+        }
+
+        .welcome-help-section {
+            position: relative;
+            z-index: 1;
+            width: calc(100% - var(--ks-spacing-8));
+            max-width: 1120px;
+            margin: var(--ks-spacing-4) auto 0;
+        }
+
+        .welcome-help-title {
+            margin: 0 0 var(--ks-spacing-3);
+            color: var(--ks-text-dim);
+            font-size: var(--ks-font-size-xs);
+        }
+
+        :deep(.kel-row) {
             position: relative;
             z-index: 1;
         }
@@ -152,52 +187,10 @@
             }
         }
 
-        .kel-tag {
-            cursor: pointer;
-            height: 30px;
-            margin: calc(1rem / 4);
-            border: 1px solid var(--ks-border-default);
-            background-color: var(--ks-btn-secondary-bg-default);
-            color: var(--ks-text-primary);
-
-            & :deep(.kel-tag__content) {
-                padding: 4px 13px;
-            }
-
-            &:hover {
-                background-color: var(--ks-btn-secondary-bg-hover);
-            }
-
-            &.kel-tag--primary {
-                border-color: var(--ks-btn-primary-bg-default);
-                background-color: var(--ks-btn-primary-bg-default);
-                color: var(--ks-white);
-            }
-        }
-
-        .welcome-help-section {
-            width: calc(100% - 48px);
-            max-width: 1120px;
-            margin: 1rem auto 0;
-            position: relative;
-            z-index: 1;
-        }
-
         @media (max-width: 768px) {
             .welcome-help-section {
-                width: calc(100% - 24px);
+                width: calc(100% - var(--ks-spacing-5));
             }
-        }
-
-        .welcome-help-title {
-            margin: 0 0 0.875rem;
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-        }
-
-        :deep(.kel-row) {
-            position: relative;
-            z-index: 1;
         }
     }
 </style>

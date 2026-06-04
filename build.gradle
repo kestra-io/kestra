@@ -398,6 +398,11 @@ gradle.taskGraph.afterTask { Task task ->
     }
 }
 
+// Workaround for https://github.com/gradle/gradle/issues/36699
+// Gradle's test task `timeout` kills the JVM hard, so JUnit XML reports are never
+// generated for timed-out modules. This task captures per-module task states so that
+// kestra-devtools can detect missing results and report them in PR comments.
+// Remove this task once Gradle supports graceful test task timeouts.
 tasks.register('generateTestMetadata') {
     group = 'verification'
     description = 'Generates build/test-metadata.json with per-module test task states for CI reporting.'

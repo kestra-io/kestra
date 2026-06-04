@@ -1,6 +1,6 @@
 <template>
     <KsSelect
-        class="fit-text"
+        :class="{'fit-text': !fit}"
         v-model="modelValue"
         :multiple
         collapseTags
@@ -8,6 +8,7 @@
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
+        :fit="fit"
         :placeholder="placeholder ?? $t('namespaces')"
         :suffixIcon="suffixIcon"
     >
@@ -45,6 +46,7 @@
         clearable?: boolean,
         taggable?: boolean
         placeholder?: string | undefined
+        fit?: boolean
         autoDefault?: boolean
     }>(), {
         multiple: false,

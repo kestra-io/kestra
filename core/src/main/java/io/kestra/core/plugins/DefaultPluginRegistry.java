@@ -235,28 +235,42 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
         );
-// RAGHFLOW POC alias registration ========================
-        if (plugin.allClass().stream().anyMatch(cls -> cls.getName().equals("io.kestra.plugin.core.log.Log"))) {
+// RAGHFLOW automatic alias registration ========================
+        for (Class<?> cls : plugin.allClass()) {
 
-            Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) plugin.allClass().stream()
-                .filter(cls -> cls.getName().equals("io.kestra.plugin.core.log.Log"))
-                .findFirst()
-                .orElseThrow();
+        String originalType = cls.getName();
+
+        if (originalType.startsWith("io.kestra.plugin.")) {
+
+            String raghAlias =
+                originalType.replaceFirst(
+                    "io\\.kestra\\.plugin\\.",
+                    "io.ragh.plugin."
+                );
+
+            Class<? extends Plugin> pluginClass =
+                (Class<? extends Plugin>) cls;
 
             Class<Plugin> pluginBaseClass =
                 plugin.baseClass(pluginClass.getName());
 
             classes.put(
-                ClassTypeIdentifier.create("io.ragh.plugin.core.log.Log"),
+                ClassTypeIdentifier.create(raghAlias),
                 PluginClassAndMetadata.create(
                     plugin,
                     pluginClass,
                     pluginBaseClass,
-                    "io.ragh.plugin.core.log.Log"
+                    raghAlias
                 )
             );
-            log.info("RAGHFLOW POC: Registered alias io.ragh.plugin.core.log.Log");
-}
+
+            log.debug(
+                "RAGHFLOW: {} -> {}",
+                originalType,
+                raghAlias
+            );
+        }
+    }
 
         classes.putAll(plugin.getAliases().values().stream().map(e ->
         {

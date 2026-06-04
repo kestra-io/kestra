@@ -201,12 +201,13 @@
     "remark-parse": "^11.0.0",
     "shiki": "^4.0.2",
     "unified": ">=11.0.0",
-    "vue": "^3.5.30",
+    "vue": "^3.5.0",
     "vue-echarts": ">=8.0.0",
     "vue-i18n": "^11.4.4",
     "xss": "^1.0.15"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.3",
     "@storybook/addon-a11y": "^10.4.1",
     "@storybook/addon-docs": "^10.4.1",
     "@storybook/addon-themes": "^10.4.1",
@@ -229,6 +230,7 @@
     "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
     "playwright": "^1.59.1",
+    "publint": "^0.3.21",
     "sass": "^1.100.0",
     "sass-embedded": "^1.99.0",
     "storybook": "^10.3.1",

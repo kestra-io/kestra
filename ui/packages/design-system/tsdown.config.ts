@@ -16,6 +16,10 @@ const svgInlinePlugin = {
 
 
 export default defineConfig({
+    publint: true,
+    attw: {
+        "profile": "esm-only",
+    },
     platform: "browser",
     exports: {
         customExports(exp) {
@@ -24,7 +28,11 @@ export default defineConfig({
             return exp
         },
     },
-    dts: {vue: true, tsconfig: "./tsconfig.app.json"},
+    dts: {
+        vue: true, 
+        tsconfig: "./tsconfig.app.json", 
+        incremental: true,
+    },
     plugins: [svgInlinePlugin],
     fromVite: true,
     entry: {

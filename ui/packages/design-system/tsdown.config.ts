@@ -17,10 +17,15 @@ const svgInlinePlugin = {
 
 export default defineConfig({
     platform: "browser",
-    exports: true,
+    exports: {
+        customExports(exp) {
+            exp["./color-palette.scss"] = "./dist/_color-palette.scss"
+            return exp
+        },
+    },
+    dts: {vue: true, tsconfig: "./tsconfig.app.json"},
     plugins: [svgInlinePlugin],
     fromVite: true,
-    dts: {vue: true, tsconfig: "./tsconfig.app.json"},
     entry: {
         index: "src/index.ts",
         styleBase: "src/styleBase.ts",
@@ -28,6 +33,7 @@ export default defineConfig({
     },
     copy: [
         {from: "src/assets/images", to: "dist/assets"},
+        {from: "src/assets/styles/_color-palette.scss", to: "dist"},
     ],
     deps: {
         neverBundle: [/\.png$/, "@vue/reactivity"],

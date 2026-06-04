@@ -64,4 +64,7 @@ for (const {srcRelPath, distRelPath} of entries) {
     created++
 }
 
+// write the color palette dev as a `@forward`
+writeFileSync(join(packageRoot, "dist/_color-palette.scss"), "@forward \"../src/assets/styles/_color-palette.scss\";\n", "utf-8")
+
 console.log(`[dev-stubs] Created ${created} stub(s).`)

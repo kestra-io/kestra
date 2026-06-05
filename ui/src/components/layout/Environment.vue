@@ -33,9 +33,10 @@
 
 <style scoped lang="scss">
 #environment {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--ks-spacing-1);
+    margin-top: calc(-1 * var(--ks-spacing-4));
+    margin-right: var(--ks-spacing-6);
     text-align: center;
-    margin-top: -1.25rem;
 
     strong {
         border: 1px solid v-bind('color');
@@ -46,7 +47,7 @@
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;
-        max-width: 90%;
+        max-width: 100%;
         display: inline-block;
     }
 }

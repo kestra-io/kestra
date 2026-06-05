@@ -2,7 +2,14 @@
     <Teleport to="body">
         <Transition name="adv-fade" appear>
             <div v-if="open" class="adv-overlay" @click="open = false">
-                <div class="adv-builder" :style="positionStyle" @click.stop>
+                <div
+                    class="adv-builder"
+                    role="dialog"
+                    aria-modal="true"
+                    :aria-label="$t('filter.advanced_filter')"
+                    :style="positionStyle"
+                    @click.stop
+                >
                     <div class="adv-header">
                         <span class="adv-title">{{ $t("filter.advanced_filter") }}</span>
                         <KsButton link :icon="Close" class="adv-header-close" :aria-label="$t('filter.cancel')" @click="open = false" />
@@ -75,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, nextTick, ref, watch} from "vue"
+    import {computed, inject, nextTick, onBeforeUnmount, ref, watch} from "vue"
 
     import ConditionRow from "./ConditionRow.vue"
     import {findLeafById} from "./composables/useFilterGroups"
@@ -118,8 +125,27 @@
         }
     }
 
+    const handleKeydown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+            e.stopPropagation()
+            open.value = false
+        }
+    }
+
     watch(open, (visible) => {
-        if (visible) nextTick(computePosition)
+        if (visible) {
+            nextTick(computePosition)
+            window.addEventListener("resize", computePosition)
+            window.addEventListener("keydown", handleKeydown)
+        } else {
+            window.removeEventListener("resize", computePosition)
+            window.removeEventListener("keydown", handleKeydown)
+        }
+    }, {immediate: true})
+
+    onBeforeUnmount(() => {
+        window.removeEventListener("resize", computePosition)
+        window.removeEventListener("keydown", handleKeydown)
     })
 
     const isGroupable = (filter: AppliedFilter): boolean =>
@@ -214,7 +240,7 @@
     background-color: var(--ks-bg-elevated);
     border: 1px solid var(--ks-border-strong);
     border-radius: var(--ks-radius-lg);
-    box-shadow: 0 8px 24px var(--ks-shadow-elevated, rgba(8, 9, 10, 0.18));
+    box-shadow: 0 8px 24px var(--ks-shadow-elevated);
     z-index: 1501;
 }
 

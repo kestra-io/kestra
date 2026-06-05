@@ -123,7 +123,7 @@
         props.prefix,
     )
 
-    const {showOptions, chartVisible, toggleOptions, updateChart, refreshData: tableRefreshData} = useDataOptions(
+    const {chartVisible, updateChart, refreshData: tableRefreshData} = useDataOptions(
         props.tableOptions,
     )
 
@@ -182,7 +182,6 @@
         tableOptions: computed(() => props.tableOptions),
         showSearchInput: computed(() => props.showSearchInput),
         searchInputFullWidth: computed(() => props.searchInputFullWidth),
-        showOptions,
         chartVisible,
         addFilter,
         removeFilter,
@@ -200,7 +199,6 @@
         updateSavedFilter,
         deleteSavedFilter,
         loadSavedFilter,
-        toggleOptions,
         updateChart,
         refreshData,
         resetToDefaults,
@@ -253,10 +251,7 @@
         flex-wrap: wrap;
         gap: 0.5rem;
 
-        &.options {
-            padding-bottom: 1rem;
-        }
-    }
+}
 
     .code-toggle {
         margin: 0 !important;

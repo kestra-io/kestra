@@ -80,6 +80,8 @@ export interface FilterKeyConfig {
      * level filter rather than "Greater Than or Equal").
      */
     comparatorLabels?: Partial<Record<Comparators, string>>;
+    /** When `true`, renders colored status tags in multi-select value display. */
+    colored?: boolean;
 }
 
 export interface FilterValue {

@@ -81,16 +81,10 @@ export default defineConfig(({mode}) => {
             },
         },
         resolve: {
-            tsconfigPaths: true,
             preserveSymlinks: true,
             dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
-                // to be removed when all mdc import are removed
-                // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
-                {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "#build/mdc-image-component.mjs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "#mdc-imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "#mdc-configs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "override", replacement: path.resolve(__dirname, "src/override/")},
             ],
         },
         plugins: [
@@ -115,7 +109,7 @@ export default defineConfig(({mode}) => {
                     },
                     // add all exports of @kestra-io/kestra-sdk as shared singletons
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
-                        .filter((key) => key !== ".")
+                        .filter((key) => key !== "." && !key.endsWith(".json"))
                         .map((key) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {

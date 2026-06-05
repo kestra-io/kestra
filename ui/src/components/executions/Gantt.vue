@@ -122,6 +122,19 @@
                             </DynamicScrollerItem>
                         </template>
                     </DynamicScroller>
+                    <KsEmpty v-else-if="series.length === 0 && execution?.state?.current">
+                        <template #description>
+                            <h5 class="gantt-empty-status">
+                                {{ t("execution_status") }}
+                                <KsExecutionStatus :status="execution.state.current" />
+                            </h5>
+                            <p class="gantt-empty-hint">{{ emptyStateHint }}</p>
+                        </template>
+                    </KsEmpty>
+                    <KsEmpty
+                        v-else
+                        :description="t('gantt_no_tasks_match_filters')"
+                    />
                 </template>
             </KsCard>
         </div>
@@ -156,7 +169,7 @@
     import ExecutionPending from "./ExecutionPending.vue"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, KsExecutionStatus} from "@kestra-io/design-system"
     import {Comparators, type AppliedFilter} from "@kestra-io/design-system"
     import {useGanttExecutionFilter} from "../filter/configurations"
     import {
@@ -387,6 +400,18 @@
 
     const isExecutionStarted = computed<boolean>(() => {
         return !!execution.value?.state?.current && !["CREATED", "QUEUED"].includes(execution.value.state.current)
+    })
+
+    // Supporting line shown under the status badge when the Gantt has no task runs to plot.
+    const emptyStateHint = computed<string>(() => {
+        const current = execution.value?.state?.current
+        // The execution reached a terminal state (e.g. cancelled or failed by a
+        // concurrency limit) before any task started — nothing will ever be plotted.
+        if (current && !State.isRunning(current)) {
+            return t("gantt_no_tasks_executed")
+        }
+        // The execution is running but its first task run has not been created yet.
+        return t("execution_starts_progress")
     })
 
     const hasValidDate = computed<boolean>(() => isFinite(delta()))
@@ -728,6 +753,21 @@
 
     .no-border {
         border: none !important;
+    }
+
+    .gantt-empty-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--ks-spacing-2);
+        font-weight: 600;
+    }
+
+    .gantt-empty-hint {
+        margin-top: var(--ks-spacing-3);
+        margin-bottom: 0;
+        color: var(--ks-text-secondary);
+        white-space: pre-line;
     }
 
     // To Separate through Line

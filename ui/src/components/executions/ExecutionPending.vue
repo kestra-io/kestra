@@ -2,14 +2,9 @@
     <FlowConcurrency v-if="execution?.state?.current === 'QUEUED' && flowStore.flow" />
     <EmptyTemplate v-else class="queued">
         <img src="../../assets/queued_visual.svg" alt="Queued Execution">
-        <h5 class="mt-4 fw-bold">
+        <h5 class="mt-4 fw-bold pending-status">
             {{ $t('execution_status') }}
-            <span
-                class="ms-2 px-2 py-1 rounded fs-7 fw-normal"
-                :style="getStyle(execution?.state?.current)"
-            >
-                {{ execution?.state?.current }}
-            </span>
+            <KsExecutionStatus v-if="execution?.state?.current" :status="execution.state.current" />
         </h5>
         <p class="mt-4 mb-0">
             {{ $t('no_tasks_running') }}
@@ -22,6 +17,7 @@
 
 <script setup lang="ts">
     import {PropType, onMounted} from "vue"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
     import EmptyTemplate from "../layout/EmptyTemplate.vue"
     import FlowConcurrency from "../flows/FlowConcurrency.vue"
     import {useFlowStore} from "../../stores/flow"
@@ -54,20 +50,18 @@
             }
         }
     })
-
-    const getStyle = (state: string | undefined) => {
-        if (!state) return {}
-        return {
-            color: `var(--ks-status-${state.toLowerCase()})`,
-            border: `1px solid var(--ks-status-border-${state.toLowerCase()})`,
-            backgroundColor: `var(--ks-status-background-${state.toLowerCase()})`,
-        }
-    }
 </script>
 
 <style scoped lang="scss">
 .queued {
     margin-top: -2rem;
+}
+
+.pending-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ks-spacing-2);
 }
 
 p {

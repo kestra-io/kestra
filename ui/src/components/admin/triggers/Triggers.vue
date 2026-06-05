@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="$t('triggers')">
-        <template v-if="isManageTab" #additional-right>
+        <template v-if="isManageTab" #actions>
             <ul>
                 <li>
                     <KsButton :icon="Download" @click="exportTriggers">

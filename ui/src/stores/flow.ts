@@ -708,7 +708,7 @@ function deleteFlowAndDependencies() {
     async function exportFlowAsCSV(params: any) {
         const response = await axios.get(
             `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "blob"},
+            {params, responseType: "text", headers: {Accept: "text/csv"}},
         )
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")

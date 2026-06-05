@@ -173,7 +173,7 @@ export const useTriggerStore = defineStore("trigger", () => {
     }
 
     async function exportTriggersAsCSV(options: any) {
-        const response = await axios.get(`${apiUrl()}/triggers/export/by-query/csv`, {params: options, responseType: "blob"})
+        const response = await axios.get(`${apiUrl()}/triggers/export/by-query/csv`, {params: options, responseType: "text", headers: {Accept: "text/csv"}})
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")
         link.href = url

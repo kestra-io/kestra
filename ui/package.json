@@ -35,7 +35,6 @@
         "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17805863.5a3d4f18.e462bf05",
         "@kestra-io/slot-contracts": "*",
         "@kestra-io/topology": "*",
-        "@kestra-io/ui-libs": "^0.0.302",
         "@module-federation/enhanced": "^2.4.0",
         "@module-federation/vite": "^1.14.1",
         "@playwright/test": "^1.59.1",

@@ -151,6 +151,7 @@ export default defineConfig(({mode}) => {
                 "html-to-image",
                 "@module-federation/runtime",
                 "js-yaml",
+                "path-browserify",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

@@ -675,6 +675,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "log expand setting": "Log default display",
+    "environment": "Environment",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",

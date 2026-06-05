@@ -1,6 +1,8 @@
 <template>
     <div v-if="name" id="environment">
-        <strong>{{ name }}</strong>
+        <span class="dot" />
+        <span class="name" :title="name">{{ name }}</span>
+        <span class="label">{{ t("environment") }}</span>
     </div>
 </template>
 
@@ -9,7 +11,9 @@
     import {useLayoutStore} from "../../stores/layout"
     import {useMiscStore} from "override/stores/misc"
     import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
 
+    const {t} = useI18n()
     const layoutStore = useLayoutStore()
     const miscStore = useMiscStore()
 
@@ -33,22 +37,36 @@
 
 <style scoped lang="scss">
 #environment {
-    margin-bottom: var(--ks-spacing-1);
-    margin-top: calc(-1 * var(--ks-spacing-4));
-    margin-right: var(--ks-spacing-6);
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    border: 1px solid v-bind('color');
+    border-radius: var(--ks-radius-sm);
+    padding: 0.125rem var(--ks-spacing-2);
 
-    strong {
-        border: 1px solid v-bind('color');
-        border-radius: var(--kel-border-radius-base);
+    .dot {
+        flex-shrink: 0;
+        width: 0.25rem;
+        height: 0.25rem;
+        border-radius: 50%;
+        background-color: v-bind('color');
+    }
+
+    .name {
+        flex: 1;
+        min-width: 0;
         color: var(--ks-text-primary);
-        padding: 0.125rem 0.25rem;
-        font-size: var(--ks-font-size-sm);
+        font-size: var(--ks-font-size-xs);
         white-space: nowrap;
-        text-overflow: ellipsis;
         overflow: hidden;
-        max-width: 100%;
-        display: inline-block;
+        text-overflow: ellipsis;
+    }
+
+    .label {
+        flex-shrink: 0;
+        color: var(--ks-text-inactive);
+        font-size: var(--ks-font-size-2xs);
+        white-space: nowrap;
     }
 }
 </style>

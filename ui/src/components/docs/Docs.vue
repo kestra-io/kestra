@@ -12,7 +12,7 @@
                         :body="ast.body"
                         :data="ast.data"
                         :key="ast"
-                        :components="proseComponents"
+                        :components="componentsByName"
                     />
                 </div>
             </template>
@@ -26,21 +26,26 @@
     import {useDocStore} from "../../stores/doc"
     import DocsLayout from "./DocsLayout.vue"
     import Toc from "./Toc.vue"
-    import {computed,ref,watch,getCurrentInstance} from "vue"
+    import {computed,DefineComponent,ref,watch} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
+
+    const components = {
+        ...(import.meta.glob<{default: DefineComponent}>("../../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),
+        ...(import.meta.glob<{default: DefineComponent}>("../../../node_modules/@kestra-io/ui-libs/src/components/content/*.vue", {eager: true})),
+        ...(import.meta.glob<{default: DefineComponent}>("../content/*.vue", {eager: true})),
+    }
+
+    const componentsByName = Object.fromEntries(
+        Object.entries(components)
+            .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default]),
+    )
 
     const route = useRoute()
     const {t} = useI18n()
     const docStore = useDocStore()
 
     const ast = ref()
-    const proseComponents = Object.fromEntries(
-        Object.keys(getCurrentInstance()?.appContext.components ?? {})
-            .filter(name => name.startsWith("Prose"))
-            .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
-            .map(name => [name, "prose-" + name]),
-    )
 
     const path = computed(() => {
         const routePath = Array.isArray(route.params.path) ? route.params.path.join("/") : route.params.path

@@ -122,6 +122,10 @@
                             </DynamicScrollerItem>
                         </template>
                     </DynamicScroller>
+                    <KsEmpty
+                        v-else
+                        :description="emptyDescription"
+                    />
                 </template>
             </KsCard>
         </div>
@@ -387,6 +391,24 @@
 
     const isExecutionStarted = computed<boolean>(() => {
         return !!execution.value?.state?.current && !["CREATED", "QUEUED"].includes(execution.value.state.current)
+    })
+
+    // Empty-state message shown when the Gantt has no rows to display.
+    const emptyDescription = computed<string>(() => {
+        // Some task runs exist but the active search / state / task filters hid them all.
+        if (series.value.length > 0) {
+            return t("gantt_no_tasks_match_filters")
+        }
+
+        // The execution reached a terminal state (e.g. cancelled or failed by a
+        // concurrency limit) before any task started — nothing will ever be plotted.
+        const current = execution.value?.state?.current
+        if (current && !State.isRunning(current)) {
+            return t("gantt_no_tasks_executed")
+        }
+
+        // The execution is running but its first task run has not been created yet.
+        return t("no_tasks_running")
     })
 
     const hasValidDate = computed<boolean>(() => isFinite(delta()))

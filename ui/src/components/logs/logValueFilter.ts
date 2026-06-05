@@ -21,5 +21,9 @@ export const buildValueFilterQuery = (
     if (!comparators) return null
 
     const comparator = negate ? comparators.out : comparators.for
-    return {...currentQuery, [`filters[${field}][${comparator}]`]: value, [pageKey]: "1"}
+    const fieldPrefix = `filters[${field}][`
+    const cleaned = Object.fromEntries(
+        Object.entries(currentQuery).filter(([k]) => !k.startsWith(fieldPrefix)),
+    )
+    return {...cleaned, [`filters[${field}][${comparator}]`]: value, [pageKey]: "1"}
 }

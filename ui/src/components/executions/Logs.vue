@@ -42,15 +42,9 @@
             <div class="logs-toolbar__actions">
                 <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
                 <LogDisplaySettings />
-                <KsTooltip :content="t('download logs')">
-                    <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" @click="downloadContent()" />
-                </KsTooltip>
-                <KsTooltip :content="t('copy logs')">
-                    <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" @click="copyAllLogs()" />
-                </KsTooltip>
-                <KsTooltip :content="t('refresh')">
-                    <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Refresh" :aria-label="t('refresh')" @click="loadLogs()" />
-                </KsTooltip>
+                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
+                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
+                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Refresh" :aria-label="t('refresh')" :tooltip="t('refresh')" @click="loadLogs()" />
             </div>
         </div>
 

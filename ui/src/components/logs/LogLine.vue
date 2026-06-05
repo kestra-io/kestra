@@ -300,8 +300,8 @@ div.line {
     .log-meta {
         display: inline-flex;
         align-items: baseline;
-        gap: 3px;
-        padding: 1px var(--ks-spacing-1);
+        gap: 0.1875rem;
+        padding: 0.0625rem var(--ks-spacing-1);
         border-radius: var(--ks-radius-xs);
         background: var(--ks-bg-tag);
         font-family: var(--ks-font-family-sans);
@@ -318,7 +318,7 @@ div.line {
 
     .log-message {
         display: block;
-        margin: 2px 0 0;
+        margin: 0.125rem 0 0;
         padding: 0;
         background: transparent;
         font-family: var(--ks-font-family-mono);

@@ -51,12 +51,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsTooltip :content="t('download logs')">
-                                    <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" @click="openDownload" />
-                                </KsTooltip>
-                                <KsTooltip :content="t('copy logs')">
-                                    <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" @click="copyAllLogs" />
-                                </KsTooltip>
+                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
+                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">

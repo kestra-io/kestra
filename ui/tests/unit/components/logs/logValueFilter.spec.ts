@@ -49,6 +49,21 @@ describe("buildValueFilterQuery", () => {
         expect(query?.["filters[flowId][EQUALS]"]).toBe("new")
     })
 
+    test("replaces an opposing filter-out with filter-for on the same field", () => {
+        const existing = {"filters[flowId][NOT_EQUALS]": "old-flow", "size": "25"}
+        const result = buildValueFilterQuery(existing, "flowId", "new-flow", false)
+        expect(result).not.toHaveProperty("filters[flowId][NOT_EQUALS]")
+        expect(result?.["filters[flowId][EQUALS]"]).toBe("new-flow")
+        expect(result?.size).toBe("25")
+    })
+
+    test("replaces an opposing filter-for with filter-out on the same field", () => {
+        const existing = {"filters[flowId][EQUALS]": "my-flow", "size": "25"}
+        const result = buildValueFilterQuery(existing, "flowId", "my-flow", true)
+        expect(result).not.toHaveProperty("filters[flowId][EQUALS]")
+        expect(result?.["filters[flowId][NOT_EQUALS]"]).toBe("my-flow")
+    })
+
     test("returns null for a non-filterable field", () => {
         expect(buildValueFilterQuery({}, "executionId", "abc", false)).toBeNull()
     })

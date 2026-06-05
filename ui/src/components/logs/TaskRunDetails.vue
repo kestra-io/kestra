@@ -418,6 +418,10 @@
 
     const expandedGroups = ref<Set<string>>(new Set())
 
+    watch(() => props.filter, () => {
+        expandedGroups.value = new Set()
+    })
+
     function isCollapsibleLine(item: any): boolean { // FIXME: any
         return !!item.message
             && item.logFile === undefined
@@ -514,10 +518,9 @@
                             )
                         ]
                     currentTaskRunLogs?.forEach((log: any) => { // FIXME: any
-                        currentTaskRunsLogIndicesByLevel[log.level] = [
-                            ...(currentTaskRunsLogIndicesByLevel?.[log.level] ?? []),
+                        ;(currentTaskRunsLogIndicesByLevel[log.level] ??= []).push(
                             taskRunIndex + "/" + log.index,
-                        ]
+                        )
                     })
                 }
                 return currentTaskRunsLogIndicesByLevel
@@ -534,12 +537,10 @@
             (allLogIndices: Record<string, string[]>, [logUid, childrenLogIndicesByLevel]: [string, Record<string, string[]>]) => {
                 Object.entries(childrenLogIndicesByLevel).forEach(
                     ([lvl, logIndices]) => {
-                        allLogIndices[lvl] = [
-                            ...(allLogIndices?.[lvl] ?? []),
-                            ...logIndices.map(
-                                (logIndex) => logUid + "/" + logIndex,
-                            ),
-                        ]
+                        const bucket = (allLogIndices[lvl] ??= [])
+                        for (const logIndex of logIndices) {
+                            bucket.push(logUid + "/" + logIndex)
+                        }
                     },
                 )
                 return allLogIndices

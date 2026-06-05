@@ -79,6 +79,18 @@ describe("normalizeLogTemplate", () => {
         expect(normalizeLogTemplate("ok: [web-01] => gather_facts"))
             .not.toBe(normalizeLogTemplate("ok: [web-01] => install_packages"))
     })
+
+    it("masks full 8-group IPv6 addresses", () => {
+        const a = normalizeLogTemplate("connected from 2001:db8:85a3:0:0:8a2e:370:7334")
+        const b = normalizeLogTemplate("connected from 2001:db8:85a3:0:0:8a2e:370:0001")
+        expect(a).toBe(b)
+    })
+
+    it("groups repeated hex-colon sequences as the same template (variable channel/node IDs)", () => {
+        const a = normalizeLogTemplate("channel dead:beef:cafe timeout")
+        const b = normalizeLogTemplate("channel a1b2:c3d4:ef56 timeout")
+        expect(a).toBe(b)
+    })
 })
 
 describe("pushLog / groupConsecutive", () => {

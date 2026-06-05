@@ -23,11 +23,7 @@
             return split.join('/') + "/";
         }();
         if (localStorage.getItem("theme")) {
-            const theme = localStorage.getItem("theme");
-            document.getElementsByTagName("html")[0].classList.add(theme);
-
-            if (theme === "dark-2") 
-                document.getElementsByTagName("html")[0].classList.add("dark");
+            document.getElementsByTagName("html")[0].classList.add(localStorage.getItem("theme"));
         }
     </script>
 </head>

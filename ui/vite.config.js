@@ -5,16 +5,19 @@ import {createLogger, defineConfig, loadEnv} from "vite"
 import vue from "@vitejs/plugin-vue"
 import {federation} from "@module-federation/vite"
 
-// Silence "Sourcemap for X points to a source file outside its package"
-// warnings from node_modules — cross-package scss sourcemap references that
-// are harmless and not relevant in prod builds.
+// Silence sourcemap warnings from node_modules that are harmless:
+// - "points to a source file outside its package" (element-plus, etc.)
+// - missing .map files inside monaco-editor (marked.umd.js.map, etc.)
 const logger = createLogger()
 /**
  * @param {string} msg 
  * @returns 
  */
-const isElementPlusSourcemapWarning = (msg) =>
-    (/sourcemap/i).test(msg) && msg.includes("points to a source file outside its package") && msg.includes("node_modules")
+const isNodeModulesSourcemapWarning = (msg) =>
+    (/sourcemap/i).test(msg) && msg.includes("node_modules") && (
+        msg.includes("points to a source file outside its package") ||
+        msg.includes("An error occurred while trying to read the map file")
+    )
 const loggerWarn = logger.warn.bind(logger)
 /**
  * @param {string} msg 
@@ -22,7 +25,7 @@ const loggerWarn = logger.warn.bind(logger)
  * @returns 
  */
 logger.warn = (msg, options) => {
-    if (isElementPlusSourcemapWarning(msg)) return
+    if (isNodeModulesSourcemapWarning(msg)) return
     loggerWarn(msg, options)
 }
 const loggerWarnOnce = logger.warnOnce.bind(logger)
@@ -32,7 +35,7 @@ const loggerWarnOnce = logger.warnOnce.bind(logger)
  * @returns 
  */
 logger.warnOnce = (msg, options) => {
-    if (isElementPlusSourcemapWarning(msg)) return
+    if (isNodeModulesSourcemapWarning(msg)) return
     loggerWarnOnce(msg, options)
 }
 
@@ -148,7 +151,6 @@ export default defineConfig(({mode}) => {
                 "lodash",
                 "debug",
                 "@braintree/sanitize-url",
-                "monaco-yaml/yaml.worker",
                 "lodash-es",
                 "nprogress",
                 // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.
@@ -170,6 +172,10 @@ export default defineConfig(({mode}) => {
                 "* > @kestra-io/ui-libs",
                 "@kestra-io/design-system",
                 "@kestra-io/topology",
+                "monaco-editor",
+                "monaco-yaml",
+                "monaco-worker-manager",
+                "monaco-marker-data-provider",
             ],
         },
     }

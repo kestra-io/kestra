@@ -11,6 +11,7 @@
             @filter="syncFromAppliedFilters"
         />
         <QuickFilters
+            v-if="!hasComplexFilters"
             :levels="logLevels"
             :level="effectiveLevelValue?.value"
             :showInterval="false"
@@ -152,6 +153,7 @@
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
     import {useValues} from "../filter/composables/useValues"
+    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
 
     function distinctFilter(value: string, index: number, array: string[]) {
@@ -175,6 +177,7 @@
     }
 
     const {t} = useI18n()
+    const {hasComplexFilters} = useComplexFilters()
 
     const emit = defineEmits<{
         follow: [event: unknown]

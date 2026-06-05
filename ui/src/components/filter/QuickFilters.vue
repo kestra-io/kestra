@@ -35,33 +35,75 @@
                 </button>
             </div>
         </div>
+
+        <div v-if="showState" class="quick-filters__group">
+            <span v-if="stateLabel" class="quick-filters__label">{{ stateLabel }}:</span>
+            <div
+                class="quick-filters__levels"
+                data-test="quick-filters-state"
+                role="group"
+                :aria-label="stateLabel"
+            >
+                <button
+                    v-for="item in states"
+                    :key="item.value"
+                    type="button"
+                    class="quick-filters__level"
+                    :class="{'quick-filters__level--active': state.includes(item.value)}"
+                    :style="stateStyle(item.value)"
+                    :data-test="`quick-filters-state-${item.value}`"
+                    :aria-pressed="state.includes(item.value)"
+                    @click="emit('update:state', item.value)"
+                >
+                    <component
+                        :is="stateIcon(item.value)"
+                        v-if="stateIcon(item.value)"
+                        class="quick-filters__icon"
+                        :size="15"
+                        aria-hidden="true"
+                    />
+                    {{ item.label }}
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+    import {EXECUTION_STATUSES} from "@kestra-io/design-system"
+
     withDefaults(defineProps<{
         levels?: Array<{label: string; value: string}>;
         intervals?: Array<{label: string; value: string}>;
+        states?: Array<{label: string; value: string}>;
         level?: string;
         timeRange?: string;
+        state?: string[];
         showInterval?: boolean;
         showLevel?: boolean;
+        showState?: boolean;
         intervalLabel?: string;
         levelLabel?: string;
+        stateLabel?: string;
     }>(), {
         levels: () => [],
         intervals: () => [],
+        states: () => [],
         level: undefined,
         timeRange: undefined,
+        state: () => [],
         showInterval: true,
         showLevel: true,
+        showState: false,
         intervalLabel: undefined,
         levelLabel: undefined,
+        stateLabel: undefined,
     })
 
     const emit = defineEmits<{
         "update:level": [value: string];
         "update:timeRange": [value: string];
+        "update:state": [value: string];
     }>()
 
     const levelStyle = (value: string) => {
@@ -72,6 +114,17 @@
             "--level-border": `var(--ks-log-border-${key})`,
         }
     }
+
+    const stateStyle = (value: string) => {
+        const key = value.toLowerCase()
+        return {
+            "--level-color": `var(--ks-status-${key})`,
+            "--level-bg": `var(--ks-status-background-${key})`,
+            "--level-border": `var(--ks-status-border-${key})`,
+        }
+    }
+
+    const stateIcon = (value: string) => EXECUTION_STATUSES[value]?.icon
 </script>
 
 <style lang="scss" scoped>
@@ -162,6 +215,13 @@
             height: var(--ks-spacing-2);
             border-radius: 50%;
             background: var(--level-color);
+            flex-shrink: 0;
+        }
+
+        &__icon {
+            display: inline-flex;
+            align-items: center;
+            color: var(--level-color);
             flex-shrink: 0;
         }
     }

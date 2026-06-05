@@ -49,6 +49,7 @@ export interface FilterContext {
     updateProperties: (columns: string[]) => void;
     deleteSavedFilter: (filter: SavedFilter) => void;
     resetToDefaults: () => void;
+    clearFilters: () => void;
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;
     updateSavedFilter: (id: string, name: string, description: string) => void;

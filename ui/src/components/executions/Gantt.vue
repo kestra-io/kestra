@@ -15,6 +15,7 @@
             @filter="onFilterChange"
         />
         <QuickFilters
+            v-if="!hasComplexFilters"
             :levels="VALUES.LEVELS"
             :level="effectiveSelectedLogLevel?.value"
             :showInterval="false"
@@ -168,6 +169,7 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useValues} from "../filter/composables/useValues"
+    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
 
     interface TaskRun {
@@ -275,6 +277,7 @@
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
     const {VALUES} = useValues("logs")
+    const {hasComplexFilters} = useComplexFilters()
 
     // Computed properties
     const execution = computed<Execution | undefined>(() => executionsStore.execution)

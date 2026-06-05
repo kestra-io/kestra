@@ -15,8 +15,8 @@
         <template v-if="$slots.label" #label="p">
             <slot name="label" v-bind="p" />
         </template>
-        <template v-if="$slots.tag" #tag>
-            <slot name="tag" />
+        <template v-if="$slots.tag" #tag="tagScope">
+            <slot name="tag" v-bind="tagScope" />
         </template>
     </ElSelect>
 </template>

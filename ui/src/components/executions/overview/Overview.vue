@@ -16,7 +16,12 @@
                             />
                         </template>
                     </Row>
-                    <KsExecutionStatus :status="execution.state.current" />
+                    <KsExecutionStatus
+                        :status="execution.state.current"
+                        clickable
+                        :aria-label="t('filter by status', {status: execution.state.current})"
+                        @click.stop="navigateToStateFilter(execution.state.current)"
+                    />
                     <Timeline :histories="execution.state.histories || []" />
                 </div>
 
@@ -222,6 +227,8 @@
     import yaml from "yaml"
     import YAML_CHART from "./components/main/assets/chart.yaml?raw"
     import {useValues} from "../../filter/composables/useValues"
+    import {useStateFilter} from "../../filter/composables/useStateFilter"
+    const {navigateToStateFilter} = useStateFilter()
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"

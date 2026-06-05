@@ -123,20 +123,4 @@
     font-weight: 400;
     line-height: 1.375rem;
 }
-
-:deep(.kel-button.selected) {
-    color: var(--ks-status-success);
-
-    &:hover {
-        color: var(--ks-text-success);
-    }
-}
-
-:deep(.kel-button.unselected) {
-    color: var(--ks-text-dim);
-
-    &:hover {
-        color: var(--ks-text-secondary);
-    }
-}
 </style>

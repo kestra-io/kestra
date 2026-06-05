@@ -53,7 +53,13 @@
         </div>
 
         <div class="task-status">
-            <KsExecutionStatus size="small" :status="currentTaskRun.state.current" />
+            <KsExecutionStatus
+                size="small"
+                :status="currentTaskRun.state.current"
+                clickable
+                :aria-label="$t('filter by status', {status: currentTaskRun.state.current})"
+                @click.stop="filterExecutionsByState(currentTaskRun.state.current)"
+            />
         </div>
 
         <slot name="buttons" />
@@ -180,6 +186,7 @@
     import Metrics from "./Metrics.vue"
     import {State} from "@kestra-io/design-system"
     import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {executionsListFilteredByState} from "../filter/composables/useStateFilter"
     import ChangeStatus from "./ChangeStatus.vue"
     import TaskEdit from "../flows/TaskEdit.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
@@ -272,6 +279,11 @@
     )
 
     // methods
+    function filterExecutionsByState(state: string) {
+        if (!state) return
+        router.push(executionsListFilteredByState(state, route.params.tenant as string))
+    }
+
     function attempts(taskRun: any): any[] { // FIXME: any
         if (props.followedExecution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]

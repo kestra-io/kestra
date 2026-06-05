@@ -8,6 +8,7 @@ import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as ExecutionUtils from "../utils/executionUtils"
+import {executionLogsDownloadFilename} from "../utils/logs"
 
 interface LogsState {
     total: number;
@@ -499,6 +500,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    const downloadLogsFile = (options: { executionId: string; params?: Record<string, any> }) => {
+        return downloadLogs(options).then((text: unknown) => {
+            Utils.downloadUrl(
+                window.URL.createObjectURL(new Blob([text as BlobPart])),
+                executionLogsDownloadFilename(options.executionId, new Date()),
+            )
+        })
+    }
+
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
         return axios.delete(`${apiUrl()}/logs/${options.executionId}`, {
             params: options.params,
@@ -826,6 +836,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLogs,
         loadMetrics,
         downloadLogs,
+        downloadLogsFile,
         deleteLogs,
         filePreview,
         setLabels,

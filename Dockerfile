@@ -7,9 +7,11 @@ ARG PYTHON_LIBRARIES=""
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY --chown=kestra:kestra docker /
-COPY --chown=kestra:kestra plugins/ /app/plugins/
 
-RUN if [ -n "${APT_PACKAGES}" ]; then \
+RUN --mount=type=bind,target=/mnt/context \
+    mkdir -p /app/plugins && \
+    { cp -r /mnt/context/plugins/. /app/plugins/ 2>/dev/null || true; }; \
+    if [ -n "${APT_PACKAGES}" ]; then \
         apt-get update -y && \
         apt-get install -y --no-install-recommends ${APT_PACKAGES} && \
         apt-get clean && \

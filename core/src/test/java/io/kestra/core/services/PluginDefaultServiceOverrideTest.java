@@ -1,9 +1,12 @@
 package io.kestra.core.services;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -16,6 +19,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowPluginDefault;
 import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.services.PluginDefaultServiceTest.DefaultPrecedenceTester;
 import io.kestra.core.utils.TestsUtils;
 
@@ -30,6 +35,12 @@ import static org.hamcrest.Matchers.is;
 class PluginDefaultServiceOverrideTest {
     @Inject
     private PluginDefaultService pluginDefaultService;
+
+    @Inject
+    private RunContextLoggerFactory runContextLoggerFactory;
+
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     /**
      * Tests that:
@@ -86,6 +97,57 @@ class PluginDefaultServiceOverrideTest {
         assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropFoo(), is(fooValue));
         assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropBar(), is(barValue));
         assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropBaz(), is(bazValue));
+    }
+
+    /**
+     * Forced defaults follow admin-first precedence: when both a namespace-level (EE) and a global
+     * (configuration) forced default match the same plugin, the global one wins (kestra-ee#8262) —
+     * the reverse of non-forced precedence (flow beats namespace beats global). The namespace level
+     * does not exist in OSS, so it is simulated by overriding {@code getAllDefaults}, which is exactly
+     * the seam the EE service uses to contribute namespace defaults.
+     */
+    @Test
+    void globalForcedDefaultBeatsNamespaceForcedDefault() throws FlowProcessingException {
+        final DefaultPrecedenceTester task = DefaultPrecedenceTester.builder()
+            .id("test")
+            .type(DefaultPrecedenceTester.class.getName())
+            .propFoo("taskValue")
+            .build();
+
+        final PluginDefault namespaceForced = new PluginDefault(
+            DefaultPrecedenceTester.class.getName(), true, ImmutableMap.of(
+                "propFoo", "namespaceValue",
+                "propBar", "namespaceValue"
+            )
+        );
+        final PluginDefault globalForced = new PluginDefault(
+            DefaultPrecedenceTester.class.getName(), true, ImmutableMap.of("propFoo", "globalValue")
+        );
+
+        // defaults are ordered most-important-first: flow, then namespace, then global
+        final PluginDefaultService service = new PluginDefaultService(null, runContextLoggerFactory, pluginRegistry) {
+            @Override
+            protected List<PluginDefault> getAllDefaults(String tenantId, String namespace, Map<String, Object> flow) {
+                List<PluginDefault> defaults = new ArrayList<>(getFlowDefaults(flow));
+                defaults.add(namespaceForced);
+                defaults.add(globalForced);
+                return defaults;
+            }
+        };
+
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceOverrideTest.class.getSimpleName());
+        final Flow flow = Flow.builder()
+            .tenantId(tenant)
+            .tasks(Collections.singletonList(task))
+            .build();
+
+        final Flow injected = service.injectAllDefaults(flow, true);
+
+        DefaultPrecedenceTester result = (DefaultPrecedenceTester) injected.getTasks().getFirst();
+        // the global (admin) forced default wins over the namespace forced one
+        assertThat(result.getPropFoo(), is("globalValue"));
+        // non-overlapping namespace forced values still apply
+        assertThat(result.getPropBar(), is("namespaceValue"));
     }
 
     private static Stream<Arguments> flowDefaultsOverrideGlobalDefaults() {

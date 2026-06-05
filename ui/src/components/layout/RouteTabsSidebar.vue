@@ -99,8 +99,12 @@
     .tab-header {
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
-        color: var(--ks-text-primary);
+        font-weight: var(--ks-font-weight-regular);
+        color: var(--ks-text-dim);
+
+        & ~ .tab-header {
+            margin-top: var(--ks-spacing-3);
+        }
     }
 
     .indented {

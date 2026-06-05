@@ -20,6 +20,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
     import {ElTable} from "element-plus"
+    import type {TableInstance} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -53,7 +54,7 @@
     const emit = defineEmits<{
         selectionChange: [selection: any[]]
         select: [selection: any[], row: any]
-        sortChange: [sort: {column: any; prop: string; order: string | null}]
+        sortChange: [sort: {column: any; prop: string | null; order: string | null}]
         rowClick: [row: any, column: any, event: Event]
         rowDblclick: [row: any, column: any, event: Event]
     }>()
@@ -63,7 +64,7 @@
         empty?(): unknown
     }>()
 
-    const tableRef = ref<InstanceType<typeof ElTable>>()
+    const tableRef = ref<TableInstance>()
 
     const filteredProps = useFilteredProps(props)
 

@@ -81,11 +81,10 @@ export default defineConfig(({mode}) => {
             },
         },
         resolve: {
+            tsconfigPaths: true,
             preserveSymlinks: true,
             dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
-                {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-
                 // to be removed when all mdc import are removed
                 // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
                 {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},

@@ -51,22 +51,6 @@ export default defineConfig(({mode}) => {
         base: "",
         build: {
             outDir: "../webserver/src/main/resources/ui",
-            rolldownOptions: {
-                output: {
-                    codeSplitting: {
-                        groups: [
-                            {
-                                test: /src\/components\/dashboard/i,
-                                name: "dashboard",
-                            },
-                            {
-                                test: /src\/components\/flows/i,
-                                name: "flows",
-                            },
-                        ],
-                    },
-                },
-            },
         },
         server: {
             watch: {

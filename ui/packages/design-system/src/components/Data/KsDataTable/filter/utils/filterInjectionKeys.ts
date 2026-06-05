@@ -6,7 +6,6 @@ export interface FilterContext {
     editingFilter: Ref<SavedFilter | undefined>;
 
     readOnly: ComputedRef<boolean>;
-    showOptions: ComputedRef<boolean>;
     chartVisible: ComputedRef<boolean>;
     hasFilterKeys: ComputedRef<boolean>;
     showSearchInput: ComputedRef<boolean>;
@@ -29,7 +28,6 @@ export interface FilterContext {
     }>;
 
     refreshData: () => void;
-    toggleOptions: () => void;
     closeEditFilter: () => void;
     removeFilter: (id: string) => void;
     updateChart: (value: boolean) => void;

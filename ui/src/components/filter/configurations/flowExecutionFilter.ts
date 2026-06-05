@@ -23,6 +23,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "scope",

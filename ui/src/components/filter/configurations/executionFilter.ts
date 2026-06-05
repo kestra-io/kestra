@@ -101,6 +101,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                     searchable: true,
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "scope",

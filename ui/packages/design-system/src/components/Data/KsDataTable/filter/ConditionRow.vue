@@ -173,7 +173,7 @@
 
     const isMulti = computed(() => keyConfig.value?.valueType === "multi-select")
 
-    const isStatusColored = computed(() => keyConfig.value?.key === "state")
+    const isStatusColored = computed(() => keyConfig.value?.colored === true)
 
     const statusStyle = (value: string) => {
         const token = value.toLowerCase()

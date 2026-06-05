@@ -70,6 +70,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     showComparatorSelection: true,
+                    colored: true,
                 },
                 {
                     key: "scope",

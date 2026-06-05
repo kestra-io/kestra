@@ -153,6 +153,19 @@
                 border-color: var(--ks-btn-secondary-border-inactive);
                 color: var(--ks-text-inactive);
             }
+            &.is-darkbkg {
+                --kel-button-bg-color: transparent;
+                --kel-button-border-color: var(--ks-text-primary);
+                --kel-button-text-color: var(--ks-text-primary);
+
+                --kel-button-hover-bg-color: var(--ks-text-primary);
+                --kel-button-hover-border-color: var(--ks-text-primary);
+                --kel-button-hover-text-color: var(--ks-bg-base);
+
+                --kel-button-active-bg-color: var(--ks-text-primary);
+                --kel-button-active-border-color: var(--ks-text-primary);
+                --kel-button-active-text-color: var(--ks-bg-base);
+            }
 
 
             &.kel-button--primary {

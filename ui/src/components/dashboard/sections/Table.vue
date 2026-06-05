@@ -64,6 +64,9 @@
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
     import Namespace from "./table/columns/Namespace.vue"
+    import {useStateFilter} from "../../filter/composables/useStateFilter"
+
+    const {navigateToStateFilter} = useStateFilter()
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
@@ -111,6 +114,8 @@
             return {
                 size: "small",
                 status: row[key].toString(),
+                clickable: true,
+                onClick: () => navigateToStateFilter(row[key].toString()),
             }
         case "DURATION":
             return {field: row[key], startDate: row["start_date"]}

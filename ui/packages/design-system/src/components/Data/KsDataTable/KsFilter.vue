@@ -1,6 +1,17 @@
 <template>
     <section class="filter">
-        <div class="top" :class="{'options': showOptions}">
+        <div class="top">
+            <KsButton
+                v-if="hasFilterKeys"
+                :icon="CodeTags"
+                size="default"
+                class="code-toggle"
+                :class="{'code-toggle--active': viewMode === 'raw'}"
+                :disabled="readOnly || codeToggleDisabled"
+                :aria-label="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
+                :title="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
+                @click="toggleViewMode"
+            />
             <MainFilter v-if="viewMode === 'chip'" />
             <RawFilter v-else>
                 <template v-if="$slots.rawEditor" #rawEditor="slotProps">
@@ -13,7 +24,6 @@
                 </template>
             </RightFilter>
         </div>
-        <FilterOptions v-if="showOptions && buttons?.tableOptions?.shown !== false" />
     </section>
 </template>
 
@@ -33,7 +43,7 @@
     import MainFilter from "./filter/MainFilter.vue"
     import RawFilter from "./filter/RawFilter.vue"
     import RightFilter from "./filter/RightFilter.vue"
-    import FilterOptions from "./filter/FilterOptions.vue"
+    import CodeTags from "vue-material-design-icons/CodeTags.vue"
 
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;
@@ -98,6 +108,7 @@
         addGroup,
         removeGroup,
         resetToDefaults,
+        clearFilters,
         hasPreApplied,
         getPreApplied,
     } = useFilters(
@@ -129,6 +140,9 @@
             viewMode.value = "raw"
         }
     }, {immediate: true})
+
+    const toggleViewMode = () => setViewMode(viewMode.value === "chip" ? "raw" : "chip")
+    const codeToggleDisabled = computed(() => viewMode.value === "raw" && hasUnrenderableFilters.value)
 
     const hasFilterKeys = computed(() => props.configuration.keys?.length > 0)
     const hasAppliedFilters = computed(() => appliedFilters.value?.length > 0)
@@ -190,6 +204,7 @@
         updateChart,
         refreshData,
         resetToDefaults,
+        clearFilters,
         hasPreApplied,
         getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {
@@ -240,6 +255,31 @@
 
         &.options {
             padding-bottom: 1rem;
+        }
+    }
+
+    .code-toggle {
+        margin: 0 !important;
+        flex-shrink: 0;
+        background-color: var(--ks-btn-secondary-bg-default);
+        box-shadow: 0 1px 2px var(--ks-shadow-surface);
+
+        :deep(svg) {
+            color: var(--ks-text-dim) !important;
+            font-size: var(--ks-font-size-md);
+        }
+
+        &:hover {
+            background-color: var(--ks-btn-secondary-bg-hover);
+        }
+
+        &--active {
+            background-color: var(--ks-btn-secondary-bg-active);
+            border-color: var(--ks-btn-secondary-border-active);
+
+            :deep(svg) {
+                color: var(--ks-content-link, var(--ks-text-link)) !important;
+            }
         }
     }
 }

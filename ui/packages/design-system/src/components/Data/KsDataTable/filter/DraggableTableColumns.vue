@@ -12,7 +12,6 @@
             'dragging': draggedIndex === index,
             'drag-over': dragOverIndex === index
         }"
-        @click.stop="handleToggle(column)"
     >
         <div class="column-info">
             <Drag class="drag-handle" />
@@ -24,18 +23,16 @@
             </div>
         </div>
 
-        <KsButton
-            link
-            size="default"
-            :icon="isVisible(column) ? EyeOutline : EyeOffOutline"
-            :class="isVisible(column) ? 'selected' : 'unselected'"
-            @click.stop="handleToggle(column)"
+        <KsSwitch
+            :modelValue="isVisible(column)"
+            :aria-label="column.label"
+            @click.stop
+            @update:modelValue="() => handleToggle(column)"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {EyeOutline, EyeOffOutline} from "./utils/icons"
     import {useDragAndDrop} from "./composables/useDragAndDrop"
     import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
     import Drag from "vue-material-design-icons/Drag.vue"

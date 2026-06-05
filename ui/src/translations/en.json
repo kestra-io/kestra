@@ -329,6 +329,7 @@
     "trigger refresh": "Trigger refresh",
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
+    "filter by status": "Filter executions by {status} status",
     "topology-graph": {
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",

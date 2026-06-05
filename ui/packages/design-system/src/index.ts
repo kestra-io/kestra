@@ -165,7 +165,9 @@ export {
     findUnrenderableFilterKeys,
     serializeFiltersToString,
     parseFiltersFromString,
+    validStructureSignature,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
+export {pickStarterField} from "./components/Data/KsDataTable/filter/utils/filterChipFactory"
 export {
     readRouteLevelFilter,
     hasUnsupportedRouteLevelComparator,

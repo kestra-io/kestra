@@ -12,6 +12,7 @@ import Drag from "vue-material-design-icons/Drag.vue"
 import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue"
 import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 import FilterOutline from "vue-material-design-icons/FilterOutline.vue"
+import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
 import FormatListBulleted from "vue-material-design-icons/FormatListBulleted.vue"
 import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
 import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -36,6 +37,7 @@ export {
     EyeOffOutline,
     EyeOutline,
     FilterOutline,
+    FilterVariant,
     FormatListBulleted,
     InformationOutline,
     Magnify,

@@ -126,7 +126,7 @@ public class WorkingDirectoryTest {
     }
 
     // FIXME can be moved back to regular @Test once https://github.com/kestra-io/kestra/issues/13134 is handled
-    @FlakyTest
+    @FlakyTest(description = "Blocked by #13134: working directory output file handling")
     @LoadFlows(value = { "flows/valids/working-directory-outputs.yml" }, tenantId = "output")
     void outputFiles() throws Exception {
         suite.outputFiles("output", runnerUtils);

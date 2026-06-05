@@ -14,7 +14,6 @@ import com.google.common.io.CharStreams;
 
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -58,18 +57,16 @@ public class PauseTest {
         suite.run(runnerUtils);
     }
 
-    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
-    @LoadFlows("flows/valids/pause-delay.yaml")
+    @LoadFlows(value = "flows/valids/pause-delay.yaml", tenantId = "pause-delay")
     void delay() throws Exception {
-        suite.runDelay(runnerUtils);
+        suite.runDelay("pause-delay", runnerUtils);
     }
 
-    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
-    @LoadFlows("flows/valids/pause-duration-from-input.yaml")
+    @LoadFlows(value = "flows/valids/pause-duration-from-input.yaml", tenantId = "pause-duration-input")
     void delayFromInput() throws Exception {
-        suite.runDurationFromInput(runnerUtils);
+        suite.runDurationFromInput("pause-duration-input", runnerUtils);
     }
 
     @Test
@@ -188,8 +185,8 @@ public class PauseTest {
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
 
-        public void runDelay(TestRunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
+        public void runDelay(String tenantId, TestRunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(tenantId, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -205,8 +202,8 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(2);
         }
 
-        public void runDurationFromInput(TestRunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-duration-from-input", null, null, Duration.ofSeconds(30));
+        public void runDurationFromInput(String tenantId, TestRunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(tenantId, "io.kestra.tests", "pause-duration-from-input", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);

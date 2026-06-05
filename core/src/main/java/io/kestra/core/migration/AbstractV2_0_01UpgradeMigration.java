@@ -5,16 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Abstract base for the Kestra 2.0 upgrade migration script.
  *
- * <p>Concrete subclasses apply backend-specific schema changes (SQL DDL, Elasticsearch
+ * <p>
+ * Concrete subclasses apply backend-specific schema changes (SQL DDL, Elasticsearch
  * index mappings, …) via {@link #doSchemaUpgrade()}. Trigger data migration is handled
- * separately by {@link V2_0TriggerMigration}.
+ * separately by {@link V2_0_07TriggerMigration}.
  */
 @Slf4j
-public abstract class AbstractV2UpgradeMigration implements MigrationScript {
+public abstract class AbstractV2_0_01UpgradeMigration implements MigrationScript {
 
     @Override
     public final String scriptId() {
-        return "2.0";
+        return "2.0.01-upgrade";
     }
 
     /**

@@ -93,8 +93,7 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
-    @FlakyTest(description = "Depending on the load on the CI, this test can have unpredictable number of retries")
-    @ExecuteFlow("flows/valids/retry-failed-flow-duration.yml")
+    @ExecuteFlow(value = "flows/valids/retry-failed-flow-duration.yml", tenantId = "retry-flow-duration")
     void retryFailedFlowDuration(Execution execution) {
         retryCaseTest.retryFailedFlowDuration(execution);
     }
@@ -141,7 +140,7 @@ public abstract class AbstractRunnerRetryTest {
         retryCaseTest.retryDynamicTask(execution);
     }
 
-    @FlakyTest(description = "it seems this flow sometimes stay stuck in RUNNING")
+    @FlakyTest(description = "AllowFailure + retry + shared KV state can deadlock; flow gets stuck in RUNNING under CI load")
     @Test
     @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
     void retryWithFlowableErrors(Execution execution) {

@@ -25,6 +25,7 @@
 
     import type {BlueprintType} from "../../stores/blueprints"
     import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useOnboardingV2Store} from "../../stores/onboardingV2"
@@ -36,7 +37,41 @@
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const onboardingV2Store = useOnboardingV2Store()
+    const miscStore = useMiscStore()
     const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
+
+    const defaultFlowTemplate = (id: string, namespace: string) => {
+        const configuredTemplate = miscStore.configs?.flowTemplate
+        if (typeof configuredTemplate === "string" && configuredTemplate.trim()) {
+            return configuredTemplate.trim()
+        }
+
+        return `
+id: ${id}
+namespace: ${namespace}
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀`.trim()
+    }
+
+    const isRecord = (value: unknown): value is Record<string, unknown> => {
+        return typeof value === "object" && value !== null && !Array.isArray(value)
+    }
+
+    const withGeneratedFlowMetadata = (source: string, parsedFlow: Record<string, unknown>, id: string, namespace: string) => {
+        const metadata: string[] = []
+        if (!("id" in parsedFlow)) {
+            metadata.push(`id: ${id}`)
+        }
+
+        if (!("namespace" in parsedFlow)) {
+            metadata.push(`namespace: ${namespace}`)
+        }
+
+        return metadata.length > 0 ? `${metadata.join("\n")}\n\n${source}`.trim() : source
+    }
 
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string
@@ -51,6 +86,7 @@
             action.CREATE,
         )[0]
         let flowYaml = ""
+        let shouldApplyGeneratedMetadata = false
         const id = getRandomID()
         const selectedNamespace = (route.query.namespace as string)
             ?? defaultNamespace()
@@ -76,21 +112,20 @@
         } else if (isGuidedOnboarding) {
             flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`
         } else {
-            flowYaml = `
-id: ${id}
-namespace: ${selectedNamespace}
-
-tasks:
-  - id: hello
-    type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`.trim()
+            flowYaml = defaultFlowTemplate(id, selectedNamespace)
+            shouldApplyGeneratedMetadata = true
         }
 
-        let parsedFlow = {}
+        let parsedFlow: Record<string, unknown> = {}
         try {
-            parsedFlow = YAML_UTILS.parse(flowYaml) ?? {}
+            const parsed = YAML_UTILS.parse(flowYaml)
+            parsedFlow = isRecord(parsed) ? parsed : {}
         } catch {
             parsedFlow = {}
+        }
+
+        if (shouldApplyGeneratedMetadata) {
+            flowYaml = withGeneratedFlowMetadata(flowYaml, parsedFlow, id, selectedNamespace)
         }
 
         flowStore.flow = {

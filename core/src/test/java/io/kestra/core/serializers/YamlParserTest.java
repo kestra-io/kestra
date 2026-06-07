@@ -269,6 +269,27 @@ class YamlParserTest {
         ;
     }
 
+    @Test
+    void raghAliasParser() throws IOException {
+        String yaml =
+            "id: alias-test\n" +
+            "namespace: io.kestra.tests\n" +
+            "tasks:\n" +
+            "- id: t1\n" +
+            "  type: io.ragh.plugin.core.log.Log\n" +
+            "  message: hello\n";
+
+        Map<String, Object> mapFlow =
+            OBJECT_MAPPER.readValue(yaml, JacksonMapper.MAP_TYPE_REFERENCE);
+
+        FlowWithSource parse =
+            YamlParser.parse(mapFlow, FlowWithSource.class, false);
+
+        assertThat(parse).isNotNull();
+        assertThat(parse.getTasks()).hasSize(1);
+    }
+
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

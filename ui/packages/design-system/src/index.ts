@@ -18,6 +18,7 @@ import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
 import KsDateAgo from "./components/Data/KsDateAgo.vue"
 import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
+export type {SortItem} from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
 import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
@@ -37,6 +38,11 @@ import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
+import KsEditor from "./components/Form/KsEditor.vue"
+export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./components/Form/KsEditor.vue"
+export {findDuplicateTaskIds} from "./utils/yamlValidation"
+export type {EditorMarker} from "./utils/yamlValidation"
+export {isOffsetInPebbleBlock} from "./utils/pebbleBlock"
 import KsDropdown from "./components/Navigation/KsDropdown/KsDropdown.vue"
 import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vue"
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
@@ -50,6 +56,7 @@ import KsId from "./components/Data/KsId.vue"
 import KsIcon from "./components/Basic/KsIcon.vue"
 import KsIconButton from "./components/Basic/KsIconButton/KsIconButton.vue"
 import KsInput from "./components/Form/KsInput.vue"
+import KsSearch from "./components/Form/KsSearch.vue"
 import KsPassword from "./components/Form/KsPassword.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
@@ -59,6 +66,7 @@ import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
 import KsOptionGroup from "./components/Form/KsOptionGroup.vue"
 import KsPagination from "./components/Data/KsPagination.vue"
+import KsPluginCard from "./components/Data/KsPluginCard.vue"
 import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
@@ -93,6 +101,14 @@ import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
+import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
+import KsPageHeader from "./components/Data/KsPageHeader.vue"
+import KsDescriptions from "./components/Data/KsDescriptions.vue"
+import KsDescriptionsItem from "./components/Data/KsDescriptionsItem.vue"
+import KsCarousel from "./components/Data/KsCarousel.vue"
+import KsCarouselItem from "./components/Data/KsCarouselItem.vue"
+import KsResult from "./components/Feedback/KsResult.vue"
+import KsBacktop from "./components/Others/KsBacktop.vue"
 import KsFilterChip from "./components/Data/KsDataTable/filter/layout/FilterChip.vue"
 
 import {vKsLoading} from "./components/Feedback/KsLoading"
@@ -121,31 +137,63 @@ export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} fro
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
 export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
+export {
+    useFilterGroups,
+    findLeafById,
+    findLeafContaining,
+    allFilters,
+    newGroupId,
+    emptyLeafGroup,
+} from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
+export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,
     encodeFiltersToQuery,
+    encodeFilterGroupsToQuery,
     getUniqueFilters,
     isValidFilter,
     keyOfComparator,
     getComparator,
     clearFilterQueryParams,
     isSearchPath,
+    isUnrenderableFilterKey,
+    findUnrenderableFilterKeys,
+    serializeFiltersToString,
+    parseFiltersFromString,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {
     readRouteLevelFilter,
     hasUnsupportedRouteLevelComparator,
     readAppliedLevelFilter,
     normalizeRouteLevelFilter,
+    levelToRequestParams,
 } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export type {
+    LevelFilterValue,
+    LevelFilterDirection,
+} from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export {
+    normalizeRouteTimeRangeFilter,
+} from "./components/Data/KsDataTable/filter/utils/timeRangeQuery"
 export type {
     FilterConfiguration,
     AppliedFilter,
+    FilterGroup,
+    LeafFilterGroup,
+    WrapperGroup,
+    LogicalOperator,
     SavedFilter,
     TableOptions,
     TableProperties,
     FilterKeyConfig,
     FilterValue,
+    FilterMeta,
+} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export {
+    isWrapperGroup,
+    isLeafGroup,
+    flipLogical,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 
 const components: Record<string, Component> = {
@@ -186,6 +234,7 @@ const components: Record<string, Component> = {
     KsDropdown,
     KsDropdownItem,
     KsDropdownMenu,
+    KsEditor,
     KsEmpty,
     KsEmptyState,
     KsExecutionStatus,
@@ -205,6 +254,7 @@ const components: Record<string, Component> = {
     KsOption,
     KsOptionGroup,
     KsPagination,
+    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -212,6 +262,7 @@ const components: Record<string, Component> = {
     KsRadioGroup,
     KsRow,
     KsScrollbar,
+    KsSearch,
     KsSegmented,
     KsSelect,
     KsSideBar,
@@ -239,6 +290,14 @@ const components: Record<string, Component> = {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsSubMenu,
+    KsPageHeader,
+    KsDescriptions,
+    KsDescriptionsItem,
+    KsCarousel,
+    KsCarouselItem,
+    KsResult,
+    KsBacktop,
 }
 
 export {
@@ -279,6 +338,7 @@ export {
     KsDropdown,
     KsDropdownItem,
     KsDropdownMenu,
+    KsEditor,
     KsEmpty,
     KsEmptyState,
     KsExecutionStatus,
@@ -298,6 +358,7 @@ export {
     KsOption,
     KsOptionGroup,
     KsPagination,
+    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -305,6 +366,7 @@ export {
     KsRadioGroup,
     KsRow,
     KsScrollbar,
+    KsSearch,
     KsSegmented,
     KsSelect,
     KsSideBar,
@@ -332,6 +394,14 @@ export {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsSubMenu,
+    KsPageHeader,
+    KsDescriptions,
+    KsDescriptionsItem,
+    KsCarousel,
+    KsCarouselItem,
+    KsResult,
+    KsBacktop,
     KsFilterChip,
 }
 
@@ -419,6 +489,7 @@ declare module "vue" {
         KsRadioGroup: typeof KsRadioGroup
         KsRow: typeof KsRow
         KsScrollbar: typeof KsScrollbar
+        KsSearch: typeof KsSearch
         KsSegmented: typeof KsSegmented
         KsSelect: typeof KsSelect
         KsSideBar: typeof KsSideBar

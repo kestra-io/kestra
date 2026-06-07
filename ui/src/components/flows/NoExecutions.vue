@@ -34,7 +34,6 @@
     import EmptyTemplate from "../layout/EmptyTemplate.vue"
     import noexecutionimg from "../../assets/onboarding/noexecution.svg"
     import {useFlowStore} from "../../stores/flow"
-    //@ts-expect-error no declaration file
     import TriggerFlow from "../flows/TriggerFlow.vue"
 
     withDefaults(defineProps<{topbar?: boolean; isNamespace?: boolean}>(), {

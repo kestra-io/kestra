@@ -99,15 +99,11 @@
 
             .kel-tabs__nav {
                 gap: var(--ks-spacing-1);
-                padding: var(--ks-spacing-2) var(--ks-spacing-4);
+                padding: var(--ks-spacing-2);
             }
 
             .kel-tabs__header {
                 margin-bottom: 0;
-            }
-
-            .kel-tabs__nav-scroll {
-                padding: 0 15px;
             }
 
             .kel-tabs__nav-prev {

@@ -2,87 +2,101 @@
 
 $node-default: #7081b9;
 
-$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
-
-:root {
-    --ks-topology-edge-color: #9A8EB4;
-    --ks-topology-dot-color: #{$base-gray-300};
-
-    --ks-border-radius:      0.25rem;
-    --ks-border-radius-lg:   0.5rem;
-    --ks-border-radius-sm:   0.15rem;
-    --ks-border-radius-pill: 50rem;
-}
-
 $node-colors: (
-    "success": $base-green-400,
-    "primary": $base-purple-500,
+    "success": $base-green-500,
+    "primary": $base-primary-500,
     "danger":  $base-red-500,
     "blue":    $base-blue-500,
     "default": $node-default,
     "warning": $base-orange-300,
 );
 
+$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
+
 :root {
+    --ks-topology-icon-color: #{$base-gray-neutral-800};
+    --ks-topology-icon-bg: #{$base-gray-neutral-white};
+    --ks-border-radius-pill: 50rem;
+
     @each $name, $color in $node-colors {
         --ks-node-#{$name}: #{$color};
     }
 }
 
 html.dark {
-    --ks-node-default: #{$base-gray-400};
+    --ks-node-default: #{$base-gray-neutral-400};
 }
-
-.bg-white { background-color: $base-white; }
 
 .text-danger { color: $base-red-500; }
 
-.vue-flow .material-design-icon {
-    height: 1em;
-    width: 1em;
-
-    > .material-design-icon__svg {
-        height: 1em;
-        width: 1em;
-        bottom: 0;
-    }
-}
-
-button.circle-button {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    appearance: none;
-}
+.button-icon { font-size: 0.66rem; }
 
 .circle-button {
-    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 1rem;
     height: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     margin-left: 0.25rem;
+    border-radius: 1rem;
     z-index: 2000;
     cursor: pointer;
 }
 
-.button-icon {
-    font-size: 0.66rem;
+.vue-flow {
+    background-color: var(--ks-bg-base);
+}
+
+.vue-flow .material-design-icon {
+    width: 1em;
+    height: 1em;
+
+    > .material-design-icon__svg {
+        width: 1em;
+        height: 1em;
+        bottom: 0;
+    }
 }
 
 .vue-flow__controls {
-    border: 1px solid var(--ks-border-primary);
-    border-radius: var(--ks-border-radius);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ks-spacing-1);
+    background-color: var(--ks-bg-surface);
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-sm);
+    box-shadow: 0 1px 2px var(--ks-shadow-element);
 }
 
-.vue-flow__controls-button {
+.vue-flow .vue-flow__controls-button {
+    padding: var(--ks-spacing-1);
+    border: none;
+    border-radius: var(--ks-radius-xs);
+    background: transparent;
     color: var(--ks-text-primary);
-    border-bottom-color: var(--ks-border-primary);
 
-    svg { fill: var(--ks-text-primary); }
+    &:hover,
+    &.active {
+        background-color: var(--ks-bg-hover);
+    }
 
-    html.dark & { background: var(--ks-bg-surface); }
+    .material-design-icon,
+    .material-design-icon__svg {
+        width: 1rem;
+        height: 1rem;
+        max-width: none;
+        max-height: none;
+    }
+
+    .material-design-icon__svg {
+        fill: var(--ks-icon-muted);
+    }
+
+    &:hover .material-design-icon__svg,
+    &.active .material-design-icon__svg {
+        fill: var(--ks-icon-default);
+    }
 }
 
 .vue-flow__container {
@@ -92,7 +106,7 @@ button.circle-button {
     }
 
     .vue-flow__node.topology-node-hovered .node-wrapper {
-        border-color: var(--ks-text-primary) !important;
+        border-color: var(--ks-border-default) !important;
     }
 
     .vue-flow__node.topology-node-drop-target .node-wrapper {
@@ -103,17 +117,18 @@ button.circle-button {
         position: absolute;
         top: -0.5rem;
         right: -0.5rem;
+        display: flex;
         justify-content: center;
         padding-right: 3px;
-        display: flex;
         color: white;
     }
-
     .vue-flow__node-cluster { pointer-events: none !important; }
     .vue-flow__handle       { opacity: 0 !important; }
 
     .vue-flow__edge-path {
-        stroke: var(--ks-topology-edge-color);
+        stroke: var(--ks-topology-dash);
+        stroke-width: 1;
+        stroke-linecap: round;
         fill: none;
     }
 

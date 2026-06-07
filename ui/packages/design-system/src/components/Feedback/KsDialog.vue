@@ -34,6 +34,7 @@
         appendToBody?: boolean
         width?: string | number
         top?: string
+        beforeClose?: (done: () => void) => void    
     }>(), {
         title: undefined,
         lockScroll: undefined,
@@ -42,6 +43,7 @@
         showClose: undefined,
         width: undefined,
         top: undefined,
+        beforeClose: undefined,
     })
 
     const emit = defineEmits<{
@@ -81,6 +83,10 @@
                     color: var(--ks-icon-hover) !important;
                 }
             }
+        }
+
+        .kel-dialog__body {
+            padding-bottom: var(--kel-dialog-padding-primary);
         }
 
         .kel-dialog__footer {

@@ -7,17 +7,13 @@ import io.kestra.core.models.HasUID;
 /**
  * Represents a Worker Instance.
  *
- * @param uid The service ID of the worker.
- * @param workerGroup The worker group.
+ * @param uid The worker identifier.
+ * @param workerQueueId The worker queue id.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record WorkerInstance(
     String uid,
-    String workerGroup) implements HasUID {
-
-    public WorkerInstance(String uid) {
-        this(uid, null);
-    }
+    String workerQueueId) implements HasUID {
 
     @Override
     public String uid() {

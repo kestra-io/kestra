@@ -32,7 +32,7 @@
                 @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 @ready="ready = true"
                 @row-dblclick="onRowDoubleClick"
-                @sort-change="({prop, order}: {prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+                @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
                 :rowClassName="rowClasses"
                 :selectable="canCheck"
                 :selectionMapper="selectionMapper"
@@ -280,7 +280,6 @@
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
-    //@ts-expect-error no declaration file
     import FlowRun from "./FlowRun.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
@@ -386,7 +385,7 @@
     const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace)
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -423,17 +422,17 @@
         params: {...item, tenant: route.params.tenant},
     })
 
-    const filterQuery = computed(() => {
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
-    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {
@@ -706,6 +705,10 @@
     cursor: pointer;
 }
 
+:deep(.flows-table) th.row-action .cell {
+    padding-right: var(--ks-spacing-4);
+}
+
 .header-actions-list {
     display: flex;
     list-style: none;
@@ -717,6 +720,8 @@
 .flow-actions-cell {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
+    padding-right: var(--ks-spacing-4);
 }
 </style>

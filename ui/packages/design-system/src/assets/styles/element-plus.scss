@@ -28,10 +28,10 @@ $fill-color-base: #fafcff;
 
 
     $colors: (
-        'white': palette.$base-white,
-        'black': palette.$base-black,
+        'white': palette.$base-gray-neutral-white,
+        'black': palette.$base-gray-neutral-black,
         'primary': (
-            'base': palette.$base-purple-500,
+            'base': palette.$base-primary-500,
         ),
         'success': (
             'base': palette.$base-green-500,
@@ -175,7 +175,7 @@ $fill-color-base: #fafcff;
 
     /* text */
     #{--kel-text-color-primary}: var(--ks-text-primary);
-    #{--kel-text-color-regular}: var(--ks-text-muted);
+    #{--kel-text-color-regular}: var(--ks-text-primary);
     #{--kel-text-color-secondary}: var(--ks-text-secondary);
     #{--kel-text-color-placeholder}: var(--ks-text-dim);
     #{--kel-text-color-disabled}: var(--ks-text-inactive);
@@ -232,11 +232,23 @@ $fill-color-base: #fafcff;
 .kel-notification {
     --kel-notification-border-color: var(--ks-border-strong);
     --kel-notification-title-color: var(--ks-text-primary);
+    --kel-notification-title-font-size: var(--ks-font-size-md);
+    --kel-notification-content-color: var(--ks-text-secondary);
+    --kel-notification-content-font-size: var(--ks-font-size-xs);
+    --kel-notification-icon-size: 1rem;
+    --kel-notification-width: 266px;
+    --kel-notification-padding: var(--ks-spacing-4);
+    --kel-notification-radius: var(--ks-radius-xs);
+    --kel-notification-shadow: 0 8px 24px var(--ks-shadow-elevated);
+    --kel-notification-group-margin-left: var(--ks-spacing-3);
+    --kel-notification-group-margin-right: var(--ks-spacing-5);
+    align-items: flex-start;
     background-color: var(--ks-bg-elevated);
+    border-width: 0.5px;
 
     @each $type in $types {
         .kel-notification--#{$type}, &.kel-notification--#{$type} .kel-notification__icon {
-            --kel-notification-icon-color: var(--ks-text-#{$type});
+            --kel-notification-icon-color: var(--ks-icon-#{$type});
             color: var(--kel-notification-icon-color);
         }
     }
@@ -245,12 +257,23 @@ $fill-color-base: #fafcff;
         flex-grow: 2;
     }
 
+    .kel-notification__title {
+        font-weight: 600;
+        line-height: 18px;
+    }
+
     .kel-notification__content {
         text-align: left;
         max-height: 200px;
         overflow-y: auto;
-        font-size: var(--ks-font-size-sm);
-        line-height: inherit;
+        margin-top: var(--ks-spacing-1);
+        line-height: 20px;
+    }
+
+    .kel-notification__closeBtn {
+        top: var(--ks-spacing-4);
+        right: var(--ks-spacing-4);
+        color: var(--ks-icon-muted);
     }
 
     &.kel-notification__large {

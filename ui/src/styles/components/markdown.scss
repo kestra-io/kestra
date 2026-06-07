@@ -43,7 +43,7 @@
 
         &:not(.shiki code) {
             font-weight: 700;
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
             color: var(--ks-text-primary);
             border: 1px solid var(--border-killing);
         }
@@ -86,7 +86,7 @@
         margin-bottom: -1rem;
         padding-top: 56.75%;
         overflow: hidden;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         border-radius: calc(1rem / 2);
         border: 1px solid var(--ks-border-subtle);
 

@@ -16,6 +16,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
@@ -232,7 +233,7 @@ public class FlowController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters
     ) throws HttpStatusException {
         return PagedResults.of(
             flowRepository.find(
@@ -674,7 +675,7 @@ public class FlowController {
     )
     public HttpResponse<byte[]> exportFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws IOException {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws IOException {
         var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
@@ -704,7 +705,7 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws QueueException {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws QueueException {
         List<Flow> list = flowRepository
             .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
@@ -739,7 +740,7 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> disableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws Exception {
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, true).size()).build());
     }
 
@@ -763,7 +764,7 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> enableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws Exception {
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, false).size()).build());
     }
 
@@ -822,7 +823,7 @@ public class FlowController {
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportFlows(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 flowRepository.findAsync(this.tenantService.resolveTenant(), filters)

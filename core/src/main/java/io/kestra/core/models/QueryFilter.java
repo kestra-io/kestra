@@ -21,16 +21,61 @@ import lombok.Builder;
 public record QueryFilter(
     Field field,
     Op operation,
-    Object value) {
+    Object value,
+    Logical logical,
+    List<QueryFilter> children) {
 
     @JsonCreator
     public QueryFilter(
         @JsonProperty("field") Field field,
         @JsonProperty("operation") Op operation,
-        @JsonProperty("value") Object value) {
+        @JsonProperty("value") Object value,
+        @JsonProperty("logical") Logical logical,
+        @JsonProperty("children") List<QueryFilter> children) {
+        boolean leafShape = field != null && operation != null && logical == null && children == null;
+        boolean nodeShape = logical != null && children != null && !children.isEmpty()
+            && field == null && operation == null && value == null;
+        if (!leafShape && !nodeShape) {
+            throw new IllegalArgumentException(
+                "QueryFilter must be either a leaf (field + operation) or a node (logical + non-empty children), not both or neither");
+        }
         this.field = field;
         this.operation = operation;
         this.value = value;
+        this.logical = logical;
+        this.children = children;
+    }
+
+    public boolean isLeaf() {
+        return logical == null;
+    }
+
+    public boolean isNode() {
+        return logical != null;
+    }
+
+    public enum Logical {
+        AND("and"),
+        OR("or");
+
+        private static final Map<String, Logical> BY_VALUE = Arrays.stream(values())
+            .collect(Collectors.toMap(Logical::value, Function.identity()));
+
+        private final String value;
+
+        Logical(String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String value() {
+            return value;
+        }
+
+        @JsonCreator
+        public static Logical fromString(String value) {
+            return Enums.fromString(value, BY_VALUE, "logical");
+        }
     }
 
     public enum Op {
@@ -59,6 +104,9 @@ public record QueryFilter(
     }
 
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
+        if (isNode()) {
+            throw new IllegalStateException("toDashboardFilterBuilder is only supported on leaf QueryFilter instances");
+        }
         return switch (this.operation) {
             case EQUALS -> EqualTo.<T> builder().field(field).value(value).build();
             case NOT_EQUALS -> NotEqualTo.<T> builder().field(field).value(value).build();
@@ -110,7 +158,7 @@ public record QueryFilter(
         TAGS("tags") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.CONTAINS, Op.IN);
+                return List.of(Op.IN, Op.NOT_IN, Op.PREFIX, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH);
             }
         },
         METADATA("metadata") {
@@ -251,6 +299,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
             }
         },
+        ATTEMPT_NUMBER("attemptNumber") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         CHILD_FILTER("childFilter") {
             @Override
             public List<Op> supportedOp() {
@@ -287,10 +341,10 @@ public record QueryFilter(
                 return List.of(Op.EQUALS);
             }
         },
-        MIN_LEVEL("level") {
+        LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.LESS_THAN_OR_EQUAL_TO);
             }
         },
         PATH("path") {
@@ -320,7 +374,7 @@ public record QueryFilter(
         USERNAME("username") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS);
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
         NAME("name") {
@@ -335,6 +389,12 @@ public record QueryFilter(
                 return List.of(Op.IN, Op.EQUALS);
             }
         },
+        EXTERNAL_ID("external_id") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         EXPIRED_AT("expired_at") {
             @Override
             public List<Op> supportedOp() {
@@ -345,6 +405,36 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
+            }
+        },
+        SOURCE("source") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        LOCKED("locked") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        LAST_TRIGGERED_DATE("lastTriggeredDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        NEXT_EXECUTION_DATE("nextExecutionDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        ARTIFACT_ID("artifactId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.IN, Op.NOT_IN);
             }
         };
 
@@ -380,7 +470,7 @@ public record QueryFilter(
         NAMESPACE {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.EXISTING_ONLY);
+                return List.of(Field.NAMESPACE, Field.QUERY);
             }
         },
         EXECUTION {
@@ -398,7 +488,8 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
-                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.MIN_LEVEL, Field.EXECUTION_ID
+                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
+                    Field.TASK_ID, Field.TASK_RUN_ID, Field.ATTEMPT_NUMBER
                 );
             }
         },
@@ -422,14 +513,15 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
-                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID, Field.TRIGGER_STATE
+                    Field.TRIGGER_ID, Field.TRIGGER_STATE,
+                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE
                 );
             }
         },
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.SUPER_ADMIN);
             }
         },
         ROLE {
@@ -450,10 +542,16 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.NAME);
             }
         },
+        BLUEPRINT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.TAGS);
+            }
+        },
         BINDING {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE);
+                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE, Field.EXTERNAL_ID);
             }
         },
         SECURITY_INTEGRATION {
@@ -499,7 +597,8 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
-                    Field.QUERY
+                    Field.QUERY,
+                    Field.ARTIFACT_ID
                 );
             }
         },
@@ -591,7 +690,19 @@ public record QueryFilter(
         APP {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID);
+                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID, Field.ENABLED);
+            }
+        },
+        WORKER_GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.ID);
+            }
+        },
+        BANNER {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.TYPE);
             }
         };
 
@@ -627,27 +738,32 @@ public record QueryFilter(
             return;
         }
         List<String> errors = new ArrayList<>();
-        filters.forEach(filter ->
-        {
-            if (!filter.field().supportedOp().contains(filter.operation())) {
-                errors.add(
-                    "Operation %s is not supported for field %s. Supported operations are %s".formatted(
-                        filter.operation(), filter.field().name(),
-                        filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))
-                    )
-                );
-            }
-            if (!resource.supportedField().contains(filter.field())) {
-                errors.add(
-                    "Field %s is not supported for resource %s. Supported fields are %s".formatted(
-                        filter.field().name(), resource.name(),
-                        resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
-                    )
-                );
-            }
-        });
+        filters.forEach(filter -> collectValidationErrors(filter, resource, errors));
         if (!errors.isEmpty()) {
             throw new InvalidQueryFiltersException(errors);
+        }
+    }
+
+    private static void collectValidationErrors(QueryFilter filter, Resource resource, List<String> errors) {
+        if (filter.isNode()) {
+            filter.children().forEach(child -> collectValidationErrors(child, resource, errors));
+            return;
+        }
+        if (!filter.field().supportedOp().contains(filter.operation())) {
+            errors.add(
+                "Operation %s is not supported for field %s. Supported operations are %s".formatted(
+                    filter.operation(), filter.field().name(),
+                    filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))
+                )
+            );
+        }
+        if (!resource.supportedField().contains(filter.field())) {
+            errors.add(
+                "Field %s is not supported for resource %s. Supported fields are %s".formatted(
+                    filter.field().name(), resource.name(),
+                    resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
+                )
+            );
         }
     }
 

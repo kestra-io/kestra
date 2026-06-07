@@ -5,10 +5,8 @@ import {useI18n} from "vue-i18n"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 
-//@ts-expect-error no declaration file
 import Logs from "../Logs.vue"
 import Gantt from "../Gantt.vue"
-//@ts-expect-error no declaration file
 import Topology from "../Topology.vue"
 import Overview from "../overview/Overview.vue"
 import DemoAuditLogs from "../../demo/AuditLogs.vue"
@@ -156,6 +154,7 @@ export function useExecutionRoot() {
         watch(route, () => {
             executionsStore.taskRun = undefined
             if (previousExecutionId.value !== route.params.id) {
+                executionsStore.logs = {total: 0, results: []}
                 flowStore.flow = undefined
                 flowStore.flowGraph = undefined
                 follow()
@@ -166,6 +165,7 @@ export function useExecutionRoot() {
             executionsStore.closeSSE()
             window.removeEventListener("popstate", follow)
             executionsStore.execution = undefined
+            executionsStore.logs = {total: 0, results: []}
             flowStore.flow = undefined
             flowStore.flowGraph = undefined
         })

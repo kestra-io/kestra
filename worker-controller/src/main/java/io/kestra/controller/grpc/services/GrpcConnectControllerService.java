@@ -5,7 +5,7 @@ import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.controller.messages.MessageFormats;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.worker.WorkerGroups;
 
 import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
@@ -15,54 +15,40 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * gRPC service for handling worker connection and registration.
  * <p>
- * This service is called by workers when they start to resolve their worker group
- * based on the configured worker group key.
+ * This service is called by workers when they start to resolve their group subscriptions
+ * based on their worker group ID.
  */
 @Singleton
 @Slf4j
 public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.ConnectControllerServiceImplBase implements WorkerControllerService {
 
-    public static final String DEFAULT_WORKER_GROUP = "";
-
-    private final WorkerGroupService workerGroupService;
-    private final WorkerConfigsProvider workerConfigsProvider;
+    protected final WorkerConfigsProvider workerConfigsProvider;
 
     @Inject
-    public GrpcConnectControllerService(WorkerGroupService workerGroupService,
-        WorkerConfigsProvider workerConfigsProvider) {
-        this.workerGroupService = workerGroupService;
+    public GrpcConnectControllerService(WorkerConfigsProvider workerConfigsProvider) {
         this.workerConfigsProvider = workerConfigsProvider;
     }
 
-    /**
-     * Handles worker connection requests.
-     * <p>
-     * Resolves the worker group based on the provided worker group key using the
-     * {@link WorkerGroupService}.
-     *
-     * @param request the connect request containing the worker group key
-     * @param responseObserver the response observer to send the resolved worker group
-     */
     @Override
     public void connect(ConnectRequest request, StreamObserver<ConnectResponse> responseObserver) {
-        String workerGroupKey = request.getWorkerGroupKey();
-        log.info("Worker connect request received with workerGroupKey: {}", workerGroupKey);
-
-        String resolvedWorkerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
-
-        if (resolvedWorkerGroup != null && !resolvedWorkerGroup.isEmpty()) {
-            log.debug("Worker group resolved: '{}' for key '{}'", resolvedWorkerGroup, workerGroupKey);
-        } else {
-            log.debug("No worker group resolved for key '{}'", workerGroupKey);
-        }
+        String workerGroupId = resolveWorkerGroupId();
+        log.info("Worker connect request received with workerGroup: {}", workerGroupId);
 
         ConnectResponse response = ConnectResponse.newBuilder()
             .setHeader(request.getHeader())
-            .setWorkerGroup(resolvedWorkerGroup != null ? resolvedWorkerGroup : DEFAULT_WORKER_GROUP)
+            .setWorkerGroupId(workerGroupId)
             .setWorkerConfigs(MessageFormats.JSON.toByteString(workerConfigsProvider.get()))
             .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+    }
+
+    /**
+     * Resolves the Worker Group id. OSS always returns {@link WorkerGroups#DEFAULT_ID};
+     * the EE override resolves it from the authenticated worker context.
+     */
+    protected String resolveWorkerGroupId() {
+        return WorkerGroups.DEFAULT_ID;
     }
 }

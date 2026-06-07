@@ -58,7 +58,7 @@
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 
         &:hover {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-bg-hover);
             color: var(--ks-text-primary);
         }
 

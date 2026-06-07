@@ -32,6 +32,24 @@ console.warn = (...args) => {
     originalConsoleWarn(...args)
 }
 
+// Vite writes logger warnings to process.stderr. Silence the
+// "Sourcemap for X points to a source file outside its package" noise
+// emitted when node_modules packages reference scss from sibling packages
+// (e.g. element-plus inside design-system, design-system inside topology).
+// These are harmless cross-package sourcemap references that flood test output.
+const isElementPlusSourcemapWarning = (s) =>
+    /sourcemap/i.test(s) && s.includes("points to a source file outside its package") && s.includes("node_modules")
+const origStderrWrite = process.stderr.write.bind(process.stderr)
+process.stderr.write = (chunk, ...rest) => {
+    if (typeof chunk === "string" && isElementPlusSourcemapWarning(chunk)) return true
+    return origStderrWrite(chunk, ...rest)
+}
+const origStdoutWrite = process.stdout.write.bind(process.stdout)
+process.stdout.write = (chunk, ...rest) => {
+    if (typeof chunk === "string" && isElementPlusSourcemapWarning(chunk)) return true
+    return origStdoutWrite(chunk, ...rest)
+}
+
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
     plugins: [vue()],
@@ -66,6 +84,15 @@ export default defineConfig({
                             {
                                 browser: "chromium",
                             },
+                        ],
+                    },
+                    coverage: {
+                        reporter: ["text", "html"],
+                        exclude: [
+                            "**/*.stories.{ts,tsx}",
+                            "**/*.spec.{ts,tsx}",
+                            "**/node_modules/**",
+                            "**/*.json",
                         ],
                     },
                 },

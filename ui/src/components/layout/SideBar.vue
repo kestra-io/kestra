@@ -1,9 +1,13 @@
 <template>
     <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
         <template #header>
-            <div class="header-toolbar">
-                <SidebarToggleButton @toggle="onCollapse(true)" />
-            </div>
+            <KsIconButton
+                class="header-toggle"
+                aria-label="Toggle menu"
+                @click="onCollapse(true)"
+            >
+                <DockLeft />
+            </KsIconButton>
             <Environment />
         </template>
 
@@ -18,7 +22,8 @@
                 v-else
                 :title="section.title"
                 collapsible
-                :defaultCollapsed="!sectionHasActiveChild(section)"
+                :collapsed="getSectionCollapsed(section)"
+                @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
                 <template v-for="(item, iIdx) in section.child" :key="item.id ?? `i-${iIdx}`">
                     <MenuLink
@@ -30,7 +35,13 @@
             </KsSideBarSection>
         </template>
 
-        <KsSideBarSection v-if="bookmarksStore.pages?.length" title="Favourites" collapsible>
+        <KsSideBarSection
+            v-if="bookmarksStore.pages?.length"
+            title="Favourites"
+            collapsible
+            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
+            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
+        >
             <BookmarkLinkList :pages="bookmarksStore.pages" />
         </KsSideBarSection>
 
@@ -44,10 +55,10 @@
     import {computed, h, defineComponent} from "vue"
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem} from "@kestra-io/design-system"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton} from "@kestra-io/design-system"
+    import DockLeft from "vue-material-design-icons/DockLeft.vue"
 
     import Environment from "./Environment.vue"
-    import SidebarToggleButton from "./SidebarToggleButton.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
@@ -87,6 +98,25 @@
         return Boolean(section.child?.some((child) => !child.hidden && isItemActive(child)))
     }
 
+    const FAVOURITES_SECTION_ID = "favourites"
+
+    function sectionId(section: MenuItem): string {
+        return section.id ?? section.title.toLowerCase().replaceAll(" ", "-")
+    }
+
+    function getCollapsedById(id: string, fallback: boolean): boolean {
+        const stored = layoutStore.menuSectionsCollapsed[id]
+        return stored !== undefined ? stored : fallback
+    }
+
+    function getSectionCollapsed(section: MenuItem): boolean {
+        return getCollapsedById(sectionId(section), !sectionHasActiveChild(section))
+    }
+
+    function onSectionCollapseChange(section: MenuItem, collapsed: boolean) {
+        layoutStore.setMenuSectionCollapsed(sectionId(section), collapsed)
+    }
+
     // Inline adapter: maps a MenuItem to <KsSideBarItem>, wiring vue-router navigation
     // via <RouterLink custom> when the item has a resolved href.
     const MenuLink = defineComponent({
@@ -121,6 +151,7 @@
 
 <style scoped lang="scss">
 #side-menu {
+    position: relative;
     width: 215px;
     flex-shrink: 0;
     box-sizing: border-box;
@@ -137,10 +168,11 @@
     padding: 0 var(--ks-spacing-2);
 }
 
-.header-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: calc(-1 * var(--ks-spacing-4));
-    margin-bottom: var(--ks-spacing-2);
+.header-toggle {
+    position: absolute;
+    top: var(--ks-spacing-4);
+    right: var(--ks-spacing-4);
+    z-index: 1;
+    color: var(--ks-icon-muted);
 }
 </style>

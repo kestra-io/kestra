@@ -97,7 +97,7 @@ describe("KsTopNavBar", () => {
             props: {title: "Flows", sidebarCollapsed: true},
             global: globalConfig,
         })
-        const toggle = wrapper.find("button[aria-label='Toggle menu']")
+        const toggle = wrapper.find("[data-testid='topnav-sidebar-toggle']")
         expect(toggle.exists()).toBe(true)
         await toggle.trigger("click")
         expect(wrapper.emitted("sidebar-toggle")).toBeTruthy()
@@ -108,7 +108,7 @@ describe("KsTopNavBar", () => {
             props: {title: "Flows", sidebarCollapsed: false},
             global: globalConfig,
         })
-        expect(wrapper.find("button[aria-label='Toggle menu']").exists()).toBe(false)
+        expect(wrapper.find("[data-testid='topnav-sidebar-toggle']").exists()).toBe(false)
     })
 
     test("renders tab select when tabs are provided", () => {

@@ -146,6 +146,8 @@
         border-radius: 0.5rem;
         color: var(--ks-text-primary);
         overflow-y: auto;
+        display:flex;
+        flex-direction: column;
 
         > * {
             height: fit-content;

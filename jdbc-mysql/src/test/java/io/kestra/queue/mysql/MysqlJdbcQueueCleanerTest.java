@@ -14,7 +14,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 public class MysqlJdbcQueueCleanerTest extends AbstractJdbcQueueCleanerTest {
     @Test
     @Override
-    @FlakyTest
+    @FlakyTest(description = "Zero-retention queue cleanup races with DB transaction commit timing")
     protected void shouldClean() throws QueueException, InterruptedException {
         super.shouldClean();
     }

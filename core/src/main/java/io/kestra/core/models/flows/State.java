@@ -119,7 +119,7 @@ public class State {
             return Optional.empty();
         }
 
-        return Optional.of(this.histories.get(this.histories.size() - 1).getDate());
+        return Optional.of(this.histories.getLast().getDate());
     }
 
     public String humanDuration() {
@@ -135,7 +135,7 @@ public class State {
             return Instant.now();
         }
 
-        return this.histories.get(this.histories.size() - 1).getDate();
+        return this.histories.getLast().getDate();
     }
 
     public Instant minDate() {

@@ -18,6 +18,14 @@
         :defaultScope="false"
         :defaultTimeRange="false"
     />
+    <QuickFilters
+        v-if="triggersWithType.length"
+        :intervals="quickIntervals"
+        :timeRange="selectedTimeRange"
+        :intervalLabel="t('filter.timeRange_trigger.label')"
+        :showLevel="false"
+        @update:timeRange="onQuickFilterTimeRange"
+    />
 
     <KsDataTable
         v-if="triggersWithType.length"
@@ -98,6 +106,15 @@
                 </template>
                 <template v-else-if="col.prop === 'updatedAt'">
                     <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
+                </template>
+                <template v-else-if="col.prop === 'executionId'">
+                    <router-link
+                        v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
+                        :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
+                    >
+                        <KsId :value="scope.row.executionId" :shrink="true" />
+                    </router-link>
+                    <span v-else />
                 </template>
                 <template v-else>
                     {{ scope.row[col.prop] }}
@@ -295,7 +312,6 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
     import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
-    //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue"
     import Vars from "../executions/Vars.vue"
     import BackfillBanner from "./BackfillBanner.vue"
@@ -314,10 +330,13 @@
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
     import {useTriggerFilter} from "../filter/configurations"
+    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
+    import QuickFilters from "../filter/QuickFilters.vue"
 
     const triggerFilter = useTriggerFilter()
 
     const {t} = useI18n()
+    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
     const route = useRoute()
     const router = useRouter()
 
@@ -345,6 +364,11 @@
         {
             label: t("type"),
             prop: "type",
+            default: true,
+        },
+        {
+            label: t("execution id"),
+            prop: "executionId",
             default: true,
         },
         {

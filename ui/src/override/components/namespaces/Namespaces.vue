@@ -18,7 +18,6 @@
                 columns: {shown: false},
                 refresh: {shown: false}
             }"
-            :searchInputFullWidth="true"
             :buttons="{
                 savedFilters: {shown: false},
                 tableOptions: {shown: false}
@@ -78,7 +77,7 @@
 
     import {useRoute} from "vue-router"
     import useRouteContext from "../../../composables/useRouteContext"
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces"
+    import useNamespaces from "../../../composables/useNamespaces"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
 
@@ -92,6 +91,7 @@
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import {useAuthStore} from "override/stores/auth"
+    import {Namespace} from "@kestra-io/kestra-sdk"
 
     const namespacesFilter = useNamespacesFilter()
 
@@ -118,16 +118,16 @@
 
     const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
-        namespaces.value = await useNamespaces(
-            1000,
-            route.query?.["filters[q][EQUALS]"] === undefined ? undefined : {q: route.query["filters[q][EQUALS]"]},
-        ).all()
+        const filterParams = Object.fromEntries(
+            Object.entries(route.query).filter(([key]) => key.startsWith("filters[")),
+        )
+        namespaces.value = await useNamespaces(1000, filterParams).all()
     }
 
     watch(
-        () => route.query["filters[q][EQUALS]"],
+        () => route.query,
         () => loadData(),
-        {immediate: true},
+        {immediate: true, deep: true},
     )
 
     const miscStore = useMiscStore()
@@ -225,7 +225,7 @@
         border-radius: var(--kel-border-radius-round);
 
         &:hover {
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
         }
 
         .icon {

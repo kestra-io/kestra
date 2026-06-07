@@ -3,6 +3,7 @@ package io.kestra.core.exceptions;
 import java.io.Serial;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 
 /**
  * Exception that can be thrown when a Flow is not found.
@@ -31,5 +32,8 @@ public class FlowNotFoundException extends NotFoundException {
 
     public FlowNotFoundException(final Execution execution) {
         super(FLOW_NOT_FOUND_MESSAGE.formatted(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getId()));
+    }
+    public FlowNotFoundException(final ExecutionId executionId, Integer flowRevision) {
+        super(FLOW_NOT_FOUND_MESSAGE.formatted(executionId.tenantId(), executionId.namespace(), executionId.flowId(), flowRevision, executionId.executionId()));
     }
 }

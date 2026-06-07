@@ -14,6 +14,13 @@
             @search="search = $event"
             @filter="onFilterChange"
         />
+        <QuickFilters
+            :levels="VALUES.LEVELS"
+            :level="effectiveSelectedLogLevel?.value"
+            :showInterval="false"
+            :levelLabel="t('filter.level_log_executions.label')"
+            @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
+        />
         <div class="gantt-stage">
             <KsCard
                 id="gantt"
@@ -105,7 +112,7 @@
                                         <TaskRunDetails
                                             :taskRunId="item.id"
                                             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
-                                            :level="effectiveSelectedLogLevel"
+                                            :levelFilter="effectiveSelectedLogLevel"
                                             @follow="emit('follow', $event)"
                                             :targetFlow="executionsStore.flow"
                                             class="mh-100 mx-3"
@@ -136,12 +143,9 @@
     import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import {State, durationUtils} from "@kestra-io/design-system"
-    // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue"
-    // @ts-expect-error JS module without declarations
     import * as FlowUtils from "../../utils/flowUtils"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -161,7 +165,10 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import type {LevelFilterValue} from "@kestra-io/design-system"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import {useValues} from "../filter/composables/useValues"
+    import QuickFilters from "../filter/QuickFilters.vue"
 
     interface TaskRun {
         id: string;
@@ -256,14 +263,18 @@
 
     // Log level filter policy
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
-    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<string>({
-        defaultValue: () => defaultLogLevel.value,
+    const {
+        effectiveValue: effectiveSelectedLogLevel,
+        setRouteValue: setLevelRouteValue,
+    } = useRouteFilterPolicy<LevelFilterValue>({
+        defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
-        fallbackValue: () => "TRACE",
+        fallbackValue: () => ({value: "TRACE", direction: "min"}),
         readFromRoute: readRouteLevelFilter,
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
+    const {VALUES} = useValues("logs")
 
     // Computed properties
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
@@ -475,7 +486,7 @@
                 left,
                 tooltip,
                 color: colors[task.state.current],
-                running: State.isRunning(task.state.current),
+                running: Boolean(State.isRunning(task.state.current)),
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,
@@ -645,7 +656,7 @@
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: var(--ks-bg-body);
+                    background: var(--ks-bg-base);
                 }
 
                 &::-webkit-scrollbar-thumb {

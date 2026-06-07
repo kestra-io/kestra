@@ -77,5 +77,12 @@
                 width: 1px;
             }
         }
+
+        // Horizontal orientation: the connector spans the gap between steps,
+        // so it needs a height (not a width — width: 1px collapses it).
+        .kel-step.is-horizontal .kel-step__head .kel-step__line {
+            width: auto;
+            height: 2px;
+        }
     }
 </style>

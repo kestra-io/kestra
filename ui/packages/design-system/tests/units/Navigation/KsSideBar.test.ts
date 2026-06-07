@@ -1,3 +1,4 @@
+import {markRaw} from "vue"
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
@@ -112,6 +113,46 @@ describe("KsSideBarSection", () => {
         expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
     })
+
+    test("controlled mode: collapsed prop drives the displayed state", async () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true, collapsed: true},
+            slots: {default: "<a class='child'>Flows</a>"},
+        })
+        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
+
+        await wrapper.setProps({collapsed: false})
+        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("true")
+    })
+
+    test("controlled mode: clicking emits update:collapsed without mutating internal state", async () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true, collapsed: false},
+            slots: {default: "<a class='child'>Flows</a>"},
+        })
+
+        await wrapper.find("button.ks-sidebar-section__title").trigger("click")
+
+        expect(wrapper.emitted("update:collapsed")?.[0]).toEqual([true])
+        expect(wrapper.emitted("toggle")?.[0]).toEqual([true])
+        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("true")
+    })
+
+    test("controlled mode: defaultCollapsed change does NOT override the controlled value", async () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true, collapsed: true, defaultCollapsed: true},
+            slots: {default: "<a class='child'>Flows</a>"},
+        })
+        await wrapper.setProps({defaultCollapsed: false})
+        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
+    })
 })
 
 describe("KsSideBarItem", () => {
@@ -148,7 +189,7 @@ describe("KsSideBarItem", () => {
     test("renders the icon component when provided", () => {
         const wrapper = mount(KsSideBarItem, {
             global: globalConfig,
-            props: {title: "Flows", icon: FileTreeOutline},
+            props: {title: "Flows", icon: markRaw(FileTreeOutline)},
         })
         expect(wrapper.find(".ks-sidebar-item__icon").exists()).toBe(true)
     })

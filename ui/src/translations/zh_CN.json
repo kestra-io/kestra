@@ -31,10 +31,13 @@
     "add at position": "在 {position} <code>{task}</code> 添加",
     "add error handler": "添加错误处理程序",
     "add flow": "添加流程",
+    "add label": "添加label",
     "add task": "添加任务",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "add_new_item": "添加新项目",
     "additionalPlugins": "附加插件",
+    "admin": "管理员",
+    "admin_preferences": "Preferences",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -55,6 +58,7 @@
           "test": "正在为您生成测试 YAML..."
         },
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
+        "select_provider": "选择提供商",
         "title": "AI代理"
       }
     },
@@ -81,6 +85,7 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
+      "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",
       "create": "创建一个blueprint",
@@ -100,6 +105,7 @@
     },
     "bookmark": "书签",
     "bulk action async warning": "这可能需要一些时间。",
+    "bulk actions": "批量操作",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
     "bulk delete backfills": "删除 {count} 回填",
@@ -174,6 +180,7 @@
     "codeDisabled": "在Flow中禁用",
     "collapse": "折叠",
     "collapse all": "折叠所有",
+    "commit_id": "提交 id",
     "common": {
       "back": "返回"
     },
@@ -278,9 +285,25 @@
       "last7days": "最近7天",
       "leave empty for infinite": "留空表示无限持续时间或输入ISO 8601持续时间（例如：'P1DT1H1M1S'）",
       "never": "从不",
+      "next12hours": "接下来的12小时",
+      "next15minutes": "接下来的15分钟",
+      "next1hour": "接下来1小时",
+      "next24hours": "接下来的24小时",
+      "next30days": "接下来的30天",
+      "next365days": "接下来365天",
+      "next48hours": "接下来的48小时",
+      "next5minutes": "接下来的5分钟",
+      "next7days": "接下来的7天",
       "previousMonth": "上月",
       "previousWeek": "上周",
       "previousYear": "去年",
+      "short": {
+        "12h": "12小时",
+        "15m": "15分钟",
+        "1d": "1天",
+        "1h": "1小时",
+        "7d": "7天"
+      },
       "thisMonth": "本月",
       "thisMonthSoFar": "截至本月",
       "thisWeek": "本周",
@@ -531,6 +554,10 @@
         "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
         "title": "您还没有 Kill Switches！"
       },
+      "mcpToolFlows": {
+        "content": "通过向flow添加<code>McpToolTrigger</code>，将flow公开为MCP工具。请在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>的信息。",
+        "title": "此服务器上尚未注册任何工具flow。"
+      },
       "panels": {
         "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、上下文）以获取相关功能。",
         "title": "当前没有打开的面板。"
@@ -601,6 +628,7 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
+    "execution id": "执行 Id",
     "execution labels": "执行标签",
     "execution not found": "执行 <code>{executionId}</code> 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
@@ -672,6 +700,8 @@
       "title": "Kestra的最新动态"
     },
     "file preview truncated": "显示的内容已被截断",
+    "file unavailable": "文件不可用",
+    "file unavailable description": "该文件不再可用——可能已被清除或过期。",
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
     "files": "文件",
     "filter by log level": "按日志级别过滤",
@@ -856,6 +886,7 @@
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
     "last evaluation date": "上次评估日期",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最后执行日期",
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
@@ -880,6 +911,7 @@
       "raw": "时间视图",
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
+    "main_configuration": "主配置",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",
@@ -889,20 +921,23 @@
       "basic_auth": "基本认证",
       "bearer_token": "Bearer token 身份验证",
       "connect": "连接",
-      "connect_modal": {
+      "connect_tab": {
+        "auth_api_token_hint": "在启动客户端之前，将 <code>KESTRA_TOKEN</code> 设置为环境变量。",
+        "auth_basic_hint": "在启动客户端之前，将 <code>KESTRA_BASIC_AUTH</code> 设置为包含 base64 编码的 <code>username:password</code> 字符串的环境变量。",
+        "auth_oauth_browser_hint": "首次连接时，您的浏览器将打开身份提供商的登录页面。",
+        "auth_oauth_client_id_hint": "将 <code>&lt;client-id&gt;</code> 替换为 OAuth 客户端 ID，并在该客户端上将 <code>http://localhost:7777</code> 注册为有效的重定向 URI。",
         "claude_code": "Claude代码",
         "claude_code_hint": "在终端中运行以下命令：",
         "claude_desktop": "Claude 桌面版",
         "claude_desktop_hint": "请将以下内容添加到您的 claude_desktop_config.json 文件中：",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
         "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "client_picker_label": "选择您的 AI 客户端",
         "codex": "Codex (OpenAI)",
         "codex_hint": "将以下内容添加到您的codex.json MCP配置中：",
         "cursor": "光标",
         "cursor_hint": "将以下内容添加到 ~/.cursor/mcp.json：",
-        "done": "完成",
-        "server_url": "服务器 URL",
-        "title": "连接到 {name}"
+        "server_url": "服务器 URL"
       },
       "copy_url": "复制 URL",
       "create": "创建服务器",
@@ -911,19 +946,44 @@
       "id_placeholder": "例如 my-mcp-server",
       "instructions": "说明",
       "main_tenant": "main",
+      "no_oauth_providers": "此实例中未配置 OIDC 提供商",
       "no_servers": "未找到MCP服务器。创建您的第一个服务器以向外部AI代理公开MCP Tool triggers。",
+      "oauth": "OAuth",
+      "oauth_hint": "来自您的 OIDC 提供商的 Bearer JWT",
+      "oauth_provider": "OAuth 提供商",
+      "oauth_provider_placeholder": "选择已配置的 OIDC 提供商",
+      "oauth_provider_required": "当认证类型为 OAuth 时，OAuth 提供商为必填项",
       "page_description": "将您的Kestra flow公开为MCP兼容AI代理的工具",
       "private": "私有",
       "public": "公开",
       "save": "保存更改",
+      "scopes_supported": "支持的 scope",
+      "scopes_supported_hint": "此服务器 Protected Resource Metadata 文档中公告的 scope。符合规范的 MCP 客户端将其授权请求限制为此列表。留空以省略该字段，让客户端回退到 IdP 公告的 scope。",
+      "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP 服务器",
       "server_type": "服务器类型",
       "servers": "MCP 服务器",
       "tab_connect": "连接",
-      "tab_connect_placeholder": "连接详情即将推出。",
       "tab_edit": "编辑",
       "tab_tool_flows": "工具Flows",
       "tab_tool_flows_placeholder": "工具flow管理即将推出。",
+      "tools": {
+        "annotations": "注释",
+        "create_tool_flow": "创建工具flow",
+        "description": "描述",
+        "destructive": "破坏性",
+        "flow": "flow",
+        "idempotent": "幂等",
+        "no_tools": "没有符合您搜索的工具flow。",
+        "open_world": "Open world",
+        "read_only": "只读",
+        "return_direct": "直接返回",
+        "state": "状态",
+        "title": "标题",
+        "tool_name": "工具名称",
+        "trigger_id": "Trigger ID",
+        "view_flow": "打开 flow"
+      },
       "url_copied": "URL 已复制！",
       "username_password": "用户名和密码"
     },
@@ -935,6 +995,7 @@
     "modify inputs": "修改inputs",
     "modify_inputs": "修改输入",
     "monogram": "字母组合",
+    "more actions": "更多操作",
     "more_actions": "更多操作",
     "multi_panel_editor": {
       "close_all_panels": "关闭所有面板",
@@ -950,9 +1011,11 @@
       "create": {
         "file": "创建文件",
         "file_already_exists": "已存在同名文件",
+        "file_conflicts_with_folder": "已存在同名文件夹",
         "file_error": "创建文件时发生错误",
         "folder": "创建文件夹",
         "folder_already_exists": "已存在同名文件夹",
+        "folder_conflicts_with_file": "已存在同名文件",
         "folder_error": "创建文件夹时发生错误",
         "label": "创建"
       },
@@ -1055,6 +1118,7 @@
       "title": "开始自动化使用"
     },
     "no_code": {
+      "add_field": "添加{field}",
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
       "clearSelection": "清除选择",
@@ -1314,6 +1378,7 @@
       "next": "下一页",
       "previous": "上一页"
     },
+    "panel actions": "面板操作",
     "parent execution": "父执行",
     "password": "密码",
     "password empty constraint": "用户名或密码不正确",
@@ -1340,6 +1405,7 @@
       "toggle": "游乐场",
       "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
+    "playground actions": "游乐场操作",
     "plugin defaults exported": "插件默认值已导出",
     "plugin defaults imported": "插件默认值已导入",
     "plugin defaults not imported": "某些插件默认设置无法导入",
@@ -1364,10 +1430,51 @@
       "yaml_configuration": "YAML 配置"
     },
     "pluginPage": {
-      "alt": "插件图标",
+      "elementType": {
+        "apps": "应用程序",
+        "charts": "图表",
+        "conditions": "条件",
+        "logExporters": "日志导出器",
+        "secrets": "秘密",
+        "taskRunners": "任务运行器",
+        "tasks": "任务",
+        "triggers": "触发器"
+      },
+      "group": {
+        "blueprints": "蓝图 ({count})",
+        "plugins": "插件 ({count})",
+        "tasks": "任务 ({count})"
+      },
+      "header": {
+        "back": "返回插件",
+        "certified": "认证",
+        "enterpriseEdition": "企业版"
+      },
+      "loadError": "无法加载插件。请重试。",
+      "noResults": "没有插件符合您的搜索。",
+      "notFound": "未找到此插件。",
+      "overview": {
+        "createdBy": "由...创建",
+        "latest": "最新",
+        "linksResources": "链接和资源",
+        "managedBy": "由...管理",
+        "minKestraVersion": "与Kestra兼容的最低版本：{version}",
+        "minKestraVersionShort": "最低 Kestra 版本 {version}",
+        "pluginType": "插件类型",
+        "previousVersions": "先前版本",
+        "releaseNotes": "发行说明",
+        "title": "概览",
+        "versions": "版本"
+      },
       "search": "在{count}+个插件中搜索",
-      "title1": "插件是你的工作流构建块。",
-      "title2": "搜索任务和触发器以构建你的流程。"
+      "searchTasks": "搜索 {count} 个 task",
+      "sort": {
+        "mostUsed": "最常使用",
+        "nameAsc": "名称 A-Z",
+        "nameDesc": "名称 Z-A",
+        "newest": "最新"
+      },
+      "sortBy": "排序依据"
     },
     "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "plugins": {
@@ -1410,6 +1517,8 @@
     "relative": "相对",
     "relative end date": "相对结束日期",
     "relative start date": "相对开始日期",
+    "remove label": "移除标签",
+    "remove this item": "移除此项",
     "remove_bookmark": "您确定要删除此书签吗？",
     "replay": "重放",
     "replay confirm": "确定要重放此执行 <code>{id}</code> 并创建一个新的吗？",
@@ -1519,6 +1628,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "列表页面上自动数据刷新的秒数。",
+            "default_namespace": "用于在没有namespace的情况下创建新flow。",
+            "editor_type": "首次打开flow时显示的编辑器。",
+            "execute_default_tab": "导航到执行时选择的选项卡。",
+            "execute_flow": "触发运行后执行结果打开的位置。",
+            "flow_default_tab": "导航到flow时选择的选项卡。",
+            "log_display": "打开执行时日志的呈现方式。",
+            "log_level": "执行日志中显示的最低日志级别。",
+            "playground": "在编辑器游乐场中单独运行任务。"
+          },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
             "default_namespace": "默认命名空间",
@@ -1542,6 +1662,11 @@
           "label": "导出"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "用于在仪表板中显示日期的格式。",
+            "language": "菜单和标签的界面语言。",
+            "time_zone": "用于显示执行日期和计划触发器。"
+          },
           "fields": {
             "date_format": "日期格式",
             "time_zone": "时区"
@@ -1557,12 +1682,29 @@
           "unsaved_warning": "您有未保存的更改。您想在离开之前保存它们吗？"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "深色模式 2.0",
+            "light": "浅色模式",
+            "sync": "与系统同步"
+          },
+          "descriptions": {
+            "color_mode": "选择您偏好的界面主题。",
+            "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
+            "editor_font_family": "YAML编辑器中使用的等宽字体。",
+            "editor_font_size": "YAML和无代码编辑器中使用的字体大小。",
+            "editor_hover_description": "在编辑器中悬停时显示属性描述。",
+            "environment_color": "用于导航中当前环境的强调颜色。",
+            "environment_name": "当前环境的显示名称，显示在导航中。",
+            "logs_font_size": "日志查看器和终端中使用的字体大小。"
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "经典",
               "kestra": "Kestra",
               "label": "图表配色方案"
             },
+            "color_mode": "颜色模式",
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
@@ -1576,7 +1718,8 @@
           "label": "主题偏好"
         }
       },
-      "label": "设置"
+      "label": "设置",
+      "updated": "{name} 已更新"
     },
     "setup": {
       "config": {
@@ -1599,6 +1742,8 @@
         "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
       },
       "login": "登录",
+      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
+      "login_title": "登录",
       "logout": "注销",
       "steps": {
         "complete": "启动 Kestra UI",
@@ -1735,6 +1880,7 @@
     "to": "到",
     "to toggle": "切换",
     "toggle fullscreen": "切换全屏",
+    "toggle menu": "切换菜单",
     "toggle output": "切换输出",
     "toggle output display": "切换输出显示",
     "toggle periodic refresh each x seconds": "切换每隔 {interval} 秒的定期刷新",
@@ -1845,10 +1991,12 @@
     "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
+    "valid": "有效",
     "validate": "验证",
     "value": "值",
     "variables": "变量",
     "version": "版本",
+    "view metrics": "查看指标",
     "warning": "警告",
     "warning detected": "检测到警告",
     "warning flow with triggers": "此流程包含触发器，如果此流程依赖触发表达式，则手动执行将失败。",

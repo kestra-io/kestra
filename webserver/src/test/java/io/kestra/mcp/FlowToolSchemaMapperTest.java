@@ -107,7 +107,7 @@ class FlowToolSchemaMapperTest {
             ))
             .build(),
         InputConversionTestCase.builder()
-            .input(MultiselectInput.builder().type(Type.MULTISELECT).itemType(Type.STRING).values(List.of("x", "y")).build())
+            .input(MultiselectInput.builder().type(Type.MULTISELECT).itemType(Type.STRING).values(List.of(new io.kestra.core.models.flows.input.ValueOption("x", "x"), new io.kestra.core.models.flows.input.ValueOption("y", "y"))).build())
             .expectedSchema(Map.of("type", "array", "items", Map.of("type", "string", "enum", List.of("x", "y")), "uniqueItems", true))
             .build(),
         InputConversionTestCase.builder()
@@ -115,7 +115,7 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "string"))
             .build(),
         InputConversionTestCase.builder()
-            .input(SelectInput.builder().type(Type.SELECT).values(List.of("a", "b")).build())
+            .input(SelectInput.builder().type(Type.SELECT).values(List.of(new io.kestra.core.models.flows.input.ValueOption("a", "a"), new io.kestra.core.models.flows.input.ValueOption("b", "b"))).build())
             .expectedSchema(Map.of("type", "string", "enum", List.of("a", "b")))
             .build(),
         InputConversionTestCase.builder()

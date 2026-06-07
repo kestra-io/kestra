@@ -3,7 +3,7 @@ package io.kestra.core.utils;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
@@ -94,11 +94,11 @@ public class CountDownLatchTask extends Task implements RunnableTask<Output> {
     }
 
     @SuppressWarnings("unchecked")
-    public static CountDownLatchTask getTaskForCountDownLatch(CountDownLatch countDownLatch, CountDownLatch awaitCountDownLatch, Duration awaitCountDownLatchDuration, WorkerGroup workerGroup) {
+    public static CountDownLatchTask getTaskForCountDownLatch(CountDownLatch countDownLatch, CountDownLatch awaitCountDownLatch, Duration awaitCountDownLatchDuration, WorkerSelector workerSelector) {
         CountDownLatchTaskBuilder<?, ?> builder = builder()
             .id("unit-test")
             .type(CountDownLatchTask.class.getName())
-            .workerGroup(workerGroup);
+            .workerSelector(workerSelector);
 
         if (awaitCountDownLatch != null) {
             String awaitCountDownLatchKey = UUID.randomUUID().toString();

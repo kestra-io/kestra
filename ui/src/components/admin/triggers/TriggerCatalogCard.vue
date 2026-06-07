@@ -66,7 +66,7 @@
         flex-direction: column;
         gap: 0.5rem;
         padding: 1rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 0.5rem;
         background: var(--ks-background-card);
         transition: border-color 0.12s ease;

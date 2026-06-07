@@ -241,10 +241,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
-        boolean hasKindFilter = filters != null && filters.stream()
-            .anyMatch(f -> KIND.value().equalsIgnoreCase(f.field().name()));
+        boolean hasKindFilter = filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
         Condition dateFilterCondition = buildDateFilterCondition(filters, dateFilter);
         return hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+    }
+
+    private static boolean containsLeafForKind(QueryFilter filter) {
+        if (filter.isLeaf()) {
+            return filter.field() == QueryFilter.Field.KIND;
+        }
+        return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
     }
 
     private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {

@@ -15,10 +15,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout kestra
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout artifact-sdk
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: kestra-io/artifact-sdk
           token: ${{ secrets.GH_PERSONAL_TOKEN }}

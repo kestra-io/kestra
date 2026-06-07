@@ -53,6 +53,15 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
+  security:
+    filter:
+      enabled: false
+    csrf:
+      enabled: true
+      signature-key: ${kestra.encryption.secret-key:}
+      cookie-name: csrfToken
+      filter:
+        enabled: false
   caches:
     default:
       maximum-weight: 10485760

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,7 +29,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
@@ -48,7 +49,7 @@ import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
@@ -71,7 +72,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
 public abstract class AbstractServiceLivenessCoordinatorTest {
 
-    public static final String WORKER_GROUP_KEY = "workerGroupKey";
+    public static final String WORKER_QUEUE_UID = "worker-queue-id";
 
     @Inject
     private ApplicationContext applicationContext;
@@ -101,26 +102,26 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { WORKER_GROUP_KEY, "<null>" })
-    public void shouldResubmitTaskWhenWorkerIsStopped(String workerGroupKey) throws Exception {
-        workerGroupKey = "<null>".equals(workerGroupKey) ? null : workerGroupKey;
+    @ValueSource(strings = { WORKER_QUEUE_UID, "<null>" })
+    public void shouldResubmitTaskWhenWorkerIsStopped(String workerQueueId) throws Exception {
+        workerQueueId = "<null>".equals(workerQueueId) ? null : workerQueueId;
 
         CountDownLatch holdLatch = new CountDownLatch(1);
         CountDownLatch runningLatch = new CountDownLatch(1);
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
-        // GIVEN - create first worker with worker group key "workerGroupKey".
+        // GIVEN - create first worker with worker group key "workerQueueId".
         Worker worker = newWorker();
-        worker.start(1, workerGroupKey);
+        worker.start(1);
 
-        final WorkerTask workerTask = workerTaskWithLatch(holdLatch, workerGroupKey);
+        final WorkerTask workerTask = workerTaskWithLatch(holdLatch, workerQueueId);
         final AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
         workerTaskResultQueue.addListener(item ->
         {
             if (item.uid().equals(workerTask.uid())) {
                 if (item.getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
-                    resubmitLatch.countDown();
                     workerTaskResult.set(item);
+                    resubmitLatch.countDown();
                 }
 
                 if (item.getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
@@ -128,7 +129,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
                 }
             }
         });
-        workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
         assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
 
         // WHEN - stop first worker. The task is guaranteed to still be running because it is
@@ -140,7 +141,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         // WHEN - create second worker (this will revoke previously one).
         Worker newWorker = newWorker();
-        newWorker.start(1, workerGroupKey);
+        newWorker.start(1);
 
         // THEN - task should be re-emitted to the same worker group and processed successfully.
         assertThat(resubmitLatch.await(30, TimeUnit.SECONDS)).isTrue();
@@ -177,7 +178,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         CountDownLatch runningLatch = new CountDownLatch(1);
 
         Worker worker = newWorker();
-        worker.start(1, null);
+        worker.start(1);
 
         WorkerTask workerTask = workerTaskWithLatch(holdLatch, null);
         ignoreExecutionService.setIgnoredExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
@@ -206,7 +207,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.close();
 
         Worker newWorker = newWorker();
-        newWorker.start(1, null);
+        newWorker.start(1);
 
         // wait a little to be sure there is no resubmit
         Thread.sleep(500);
@@ -216,14 +217,14 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { WORKER_GROUP_KEY, "<null>" })
-    public void shouldResubmitTriggerWhenWorkerIsStopped(String workerGroupKey) throws Exception {
-        workerGroupKey = "<null>".equals(workerGroupKey) ? null : workerGroupKey;
+    @ValueSource(strings = { WORKER_QUEUE_UID, "<null>" })
+    public void shouldResubmitTriggerWhenWorkerIsStopped(String workerQueueId) throws Exception {
+        workerQueueId = "<null>".equals(workerQueueId) ? null : workerQueueId;
         // Given - create first worker.
         WorkerAgent worker = (WorkerAgent) newWorker();
-        worker.start(1, workerGroupKey);
+        worker.start(1);
 
-        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), workerGroupKey);
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), workerQueueId);
 
         CountDownLatch evaluatedLatch = new CountDownLatch(1);
         CountDownLatch receivedLatch = new CountDownLatch(1);
@@ -240,38 +241,35 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
         // WHEN - stop first worker.
         worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).
 
         // WHEN - create second worker (this will revoke previously one).
         WorkerAgent newWorker = (WorkerAgent) newWorker();
-        newWorker.start(1, workerGroupKey);
+        newWorker.start(1);
 
         // THEN
         assertThat(evaluatedLatch.await(30, TimeUnit.SECONDS)).isTrue();
         newWorker.close();
     }
 
-    @MockBean(WorkerGroupService.class)
-    WorkerGroupService workerGroupService() {
-        return new WorkerGroupService() {
-            @Override
-            public String resolveGroupFromKey(String workerGroupKey) {
-                return workerGroupKey;
-            }
-        };
+    @MockBean(WorkerQueueService.class)
+    WorkerQueueService workerGroupService() {
+        return new WorkerQueueService.Default();
     }
 
-    private WorkerTask workerTaskWithLatch(CountDownLatch holdLatch, String workerGroupKey) {
-        WorkerGroup workerGroup = workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null;
+    private WorkerTask workerTaskWithLatch(CountDownLatch holdLatch, String workerQueueId) {
+        WorkerSelector workerSelector = workerQueueId != null
+            ? new WorkerSelector(java.util.List.of(workerQueueId), null)
+            : null;
         // signalLatch satisfies the @NotNull countDownLatchKey constraint; not used in assertions.
         CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(
             new CountDownLatch(1),
             holdLatch,
             Duration.ofSeconds(30),
-            workerGroup
+            workerSelector
         );
 
         Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of());
@@ -284,12 +282,12 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .build();
     }
 
-    private WorkerTrigger workerTrigger(Duration sleep, String workerGroupKey) {
+    private WorkerTrigger workerTrigger(Duration sleep, String workerQueueId) {
         SleepTrigger trigger = SleepTrigger.builder()
             .type(SleepTrigger.class.getName())
             .id("unit-test")
             .duration(sleep.toMillis())
-            .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
+            .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.WorkerSelector(java.util.List.of(workerQueueId), null) : null)
             .build();
 
         Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);

@@ -25,7 +25,7 @@ import reactor.core.scheduler.Schedulers;
 
 @Filter("/api/v1/**")
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
-@Requires(property = "micronaut.security.enabled", notEquals = "true") // don't add this filter in EE
+@Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class AuthenticationFilter implements HttpServerFilter {
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
     /** @deprecated Use {@link BasicAuthService#BASIC_AUTH_COOKIE_NAME} */
@@ -46,8 +46,9 @@ public class AuthenticationFilter implements HttpServerFilter {
             .flux()
             .flatMap(basicAuthConfiguration ->
             {
-                boolean isConfigEndpoint = request.getPath().endsWith("/configs")
-                    || ((request.getPath().endsWith("/basicAuth") || request.getPath().endsWith("/basicAuthValidationErrors"))
+                String normalizedPath = normalizePath(request.getPath());
+                boolean isConfigEndpoint = "/api/v1/configs".equals(normalizedPath)
+                    || ((normalizedPath.matches("/api/v1(/[^/]+)?/basicAuth") || "/api/v1/basicAuthValidationErrors".equals(normalizedPath))
                         && !basicAuthService.isBasicAuthInitialized());
 
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.openUrls())
@@ -73,6 +74,10 @@ public class AuthenticationFilter implements HttpServerFilter {
 
                 return chain.proceed(request);
             });
+    }
+
+    private static String normalizePath(String path) {
+        return path.replaceAll("/+", "/");
     }
 
     @SuppressWarnings("rawtypes")

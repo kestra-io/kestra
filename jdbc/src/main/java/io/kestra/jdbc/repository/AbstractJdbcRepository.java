@@ -246,25 +246,40 @@ public abstract class AbstractJdbcRepository {
         List<QueryFilter> filters,
         String dateColumn,
         Resource resource) {
-        List<Condition> conditions = new ArrayList<>();
-        if (filters != null) {
-            QueryFilter.validateQueryFilters(filters, resource);
-            for (QueryFilter filter : filters) {
-                QueryFilter.Field field = filter.field();
-                QueryFilter.Op operation = filter.operation();
-                Object value = filter.value();
-                conditions.add(getConditionOnField(field, value, operation, dateColumn));
-            }
+        if (filters == null || filters.isEmpty()) {
+            return DSL.noCondition();
         }
-        return conditions.stream()
+        QueryFilter.validateQueryFilters(filters, resource);
+        return andOf(filters, dateColumn);
+    }
+
+    private Condition andOf(List<QueryFilter> items, String dateColumn) {
+        return items.stream()
+            .map(f -> toCondition(f, dateColumn))
             .reduce(DSL.noCondition(), Condition::and);
+    }
+
+    private Condition orOf(List<QueryFilter> items, String dateColumn) {
+        return items.stream()
+            .map(f -> toCondition(f, dateColumn))
+            .reduce(DSL.noCondition(), Condition::or);
+    }
+
+    private Condition toCondition(QueryFilter filter, String dateColumn) {
+        if (filter.isLeaf()) {
+            return getConditionOnField(filter.field(), filter.value(), filter.operation(), dateColumn);
+        }
+        return switch (filter.logical()) {
+            case AND -> andOf(filter.children(), dateColumn);
+            case OR -> orOf(filter.children(), dateColumn);
+        };
     }
 
     /**
      *
      * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
      */
-    protected Condition getConditionOnField(
+    protected final Condition getConditionOnField(
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
@@ -281,17 +296,26 @@ public abstract class AbstractJdbcRepository {
         if (field.equals(QueryFilter.Field.CHILD_FILTER)) {
             return handleChildFilter(value, operation);
         }
-        // Handling for Field.MIN_LEVEL
-        if (field.equals(QueryFilter.Field.MIN_LEVEL)) {
-            return handleMinLevelField(value, operation);
+        // Handling for Field.LEVEL
+        if (field.equals(QueryFilter.Field.LEVEL)) {
+            return handleLevelField(value, operation);
+        }
+        // Handling for Field.ATTEMPT_NUMBER — integer column, URL value arrives as String
+        // and Postgres won't auto-coerce '1' to integer. Parse before binding.
+        if (field.equals(QueryFilter.Field.ATTEMPT_NUMBER)) {
+            return handleAttemptNumberField(value, operation);
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
             if (dateColumn == null) {
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
             return getDateCondition(value, operation, dateColumn);
+        }
+
+        if (field == QueryFilter.Field.CREATED) {
+            return createdCondition(value, operation, dateColumn);
         }
 
         if (field == QueryFilter.Field.ENABLED) {
@@ -311,6 +335,10 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.NAME) {
             return nameCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.TAGS) {
+            return tagsCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
@@ -343,12 +371,36 @@ public abstract class AbstractJdbcRepository {
             return typeCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.TAGS) {
+            return tagsCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.RESOURCES) {
             return resourceTypesCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.DETAILS) {
             return detailsCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.TAGS) {
+            return tagsCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.LOCKED) {
+            return lockedCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.LAST_TRIGGERED_DATE) {
+            return lastTriggeredDateCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.NEXT_EXECUTION_DATE) {
+            return nextExecutionDateCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.TIME_RANGE) {
+            return timeRangeCondition(value, operation);
         }
 
         return defaultHandlers(field, value, operation);
@@ -452,6 +504,10 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
     }
 
+    protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.TAGS, value, operation);
+    }
+
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     protected Condition generateStateCondition(Object value, QueryFilter.Op operation) {
@@ -469,6 +525,29 @@ public abstract class AbstractJdbcRepository {
             case NOT_IN, NOT_EQUALS -> DSL.not(statesFilter(stateList));
             default -> throw new InvalidQueryFiltersException("Unsupported operation for State.Type: " + operation);
         };
+    }
+
+    protected Condition lockedCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: LOCKED");
+    }
+
+    protected Condition lastTriggeredDateCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: LAST_TRIGGERED_DATE");
+    }
+
+    protected Condition nextExecutionDateCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: NEXT_EXECUTION_DATE");
+    }
+
+    protected Condition timeRangeCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: TIME_RANGE");
+    }
+
+    protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {
+        if (dateColumn == null) {
+            throw new InvalidQueryFiltersException("When filtering on CREATED, dateColumn is required but was null");
+        }
+        return getDateCondition(value, operation, dateColumn);
     }
 
     protected Condition statusCondition(Object value, QueryFilter.Op operation) {
@@ -521,27 +600,54 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
-    private Condition handleMinLevelField(Object value, QueryFilter.Op operation) {
-        Level minLevel = value instanceof Level ? (Level) value : Level.valueOf((String) value);
+    private Condition handleLevelField(Object value, QueryFilter.Op operation) {
+        Level level = value instanceof Level ? (Level) value : Level.valueOf((String) value);
 
         return switch (operation) {
-            case EQUALS -> minLevelCondition(minLevel);
-            case NOT_EQUALS -> minLevelCondition(minLevel).not();
+            case GREATER_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMin(level));
+            case LESS_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMax(level));
             default -> throw new InvalidQueryFiltersException(
-                "Unsupported operation for MIN_LEVEL: " + operation
+                "Unsupported operation for LEVEL: " + operation
             );
         };
-    }
-
-    private Condition minLevelCondition(Level minLevel) {
-        return levelsCondition(LogEntry.findLevelsByMin(minLevel));
     }
 
     protected Condition levelsCondition(List<Level> levels) {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
-    private Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {
+    protected Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {
+        Name columnName = getColumnName(QueryFilter.Field.ATTEMPT_NUMBER);
+        return switch (operation) {
+            case EQUALS -> DSL.field(columnName).eq(toInteger(value));
+            case NOT_EQUALS -> DSL.field(columnName).ne(toInteger(value));
+            case IN -> DSL.field(columnName).in(toIntegerList(value));
+            case NOT_IN -> DSL.field(columnName).notIn(toIntegerList(value));
+            default -> throw new InvalidQueryFiltersException(
+                "Unsupported operation for ATTEMPT_NUMBER: " + operation
+            );
+        };
+    }
+
+    // ToDo: We should create reusable classes for type conversion
+    private static Integer toInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        return Integer.parseInt(value.toString());
+    }
+
+    private static List<Integer> toIntegerList(Object value) {
+        if (value instanceof List<?> list) {
+            return list.stream().map(AbstractJdbcRepository::toInteger).toList();
+        }
+        return List.of(toInteger(value));
+    }
+
+    Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {
         return switch (operation) {
             case LESS_THAN -> field(fieldName).lessThan(dateTime);
             case LESS_THAN_OR_EQUAL_TO -> field(fieldName).lessOrEqual(dateTime);

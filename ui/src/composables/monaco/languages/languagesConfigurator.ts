@@ -7,6 +7,7 @@ import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
 import {usePluginsStore} from "../../../stores/plugins"
 import {useFlowStore} from "../../../stores/flow"
+import {useMcpStore} from "../../../stores/mcp"
 import {useNamespacesStore} from "override/stores/namespaces"
 
 export default async function configure(
@@ -18,17 +19,18 @@ export default async function configure(
     domain?: string,
 ): Promise<void> {
     const namespacesStore = useNamespacesStore()
+    const mcpStore = useMcpStore()
     let yamlAutocompletion
     if (language === "yaml") {
         if (domain === "flow" || domain === "testsuites") {
             // flow completion seems to work fine for testsuites, quickwin
-            yamlAutocompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore)
+            yamlAutocompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore)
         } else {
             yamlAutocompletion = new YamlAutoCompletion()
         }
         await new YamlLanguageConfigurator(yamlAutocompletion).configure(pluginsStore, t, editorInstance)
     } else if(language.endsWith("-pebble")) {
-        const autoCompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, computed(() => flowStore.flowYaml))
+        const autoCompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, computed(() => flowStore.flowYaml))
         await new PebbleLanguageConfigurator(language, autoCompletion, computed(() => flowStore.flowYaml))
             .configure(pluginsStore, t, editorInstance)
     }

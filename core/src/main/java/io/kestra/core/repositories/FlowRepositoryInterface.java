@@ -127,6 +127,8 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
 
+    List<FlowWithSource> findRevisionsWithoutAcl(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
+
     Integer lastRevision(String tenantId, String namespace, String id);
 
     List<Flow> findAll(String tenantId);

@@ -25,9 +25,9 @@
                     <li>
                         <TriggerFlow
                             v-if="flowStore.flow"
-                            :disabled="flowStore.flow?.disabled || isReadOnly"
-                            :flowId="flowStore.flow?.id"
-                            :namespace="flowStore.flow?.namespace"
+                            :disabled="flowStore.flow.disabled ?? isReadOnly"
+                            :flowId="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -43,7 +43,7 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
-            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
@@ -69,6 +69,13 @@
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                 />
+                <QuickFilters
+                    :intervals="quickIntervals"
+                    :timeRange="selectedTimeRange"
+                    :intervalLabel="t('filter.timeRange.label')"
+                    :showLevel="false"
+                    @update:timeRange="onQuickFilterTimeRange"
+                />
             </template>
 
             <template v-if="showStatChart()" #top>
@@ -93,7 +100,7 @@
                 </KsButton>
 
                 <KsDropdown>
-                    <KsButton>
+                    <KsButton :aria-label="$t('bulk actions')">
                         <DotsVertical />
                     </KsButton>
                     <template #dropdown>
@@ -403,7 +410,6 @@
     import Sections from "../dashboard/sections/Sections.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
-    //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
@@ -426,9 +432,12 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
+    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
+    import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
+    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -611,19 +620,19 @@
         }
     }
 
-    const filterQuery = computed(() => {
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
-    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         if (!props.embed) {
             dataTable.value?.resetAndReload()
         }
-    }, {deep: true})
+    })
 
     const routeInfo = computed(() => ({title: t("executions")}))
     useRouteContext(routeInfo, props.embed)

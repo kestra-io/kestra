@@ -31,10 +31,13 @@
     "add at position": "Adicionar {position} <code>{task}</code>",
     "add error handler": "Adicionar um manipulador de erro",
     "add flow": "Adicionar flow",
+    "add label": "Adicionar label",
     "add task": "Adicionar uma task",
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "add_new_item": "Adicionar novo item",
     "additionalPlugins": "Plugins Adicionais",
+    "admin": "Administração",
+    "admin_preferences": "Preferences",
     "administration": "Administração",
     "advanced configuration": "Outras propriedades",
     "after": "depois",
@@ -55,6 +58,7 @@
           "test": "Gerando YAML de teste para você..."
         },
         "prompt_placeholder": "Insira instruções para criar seu flow Kestra. Exemplo de prompt: Crie um flow que execute toda segunda-feira às 9h.",
+        "select_provider": "Selecionar um provedor",
         "title": "Agente de IA"
       }
     },
@@ -81,6 +85,7 @@
     "before": "antes",
     "behavior": "Comportamento",
     "blueprints": {
+      "all": "Todos",
       "apps": "Blueprints do Aplicativo",
       "community": "Comunidade",
       "create": "Criar um blueprint",
@@ -100,6 +105,7 @@
     },
     "bookmark": "Favoritos",
     "bulk action async warning": "Isso pode levar alguns instantes.",
+    "bulk actions": "Ações em massa",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk delete": "Tem certeza de que deseja excluir <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
@@ -174,6 +180,7 @@
     "codeDisabled": "Desativado no Flow",
     "collapse": "Recolher",
     "collapse all": "Recolher tudo",
+    "commit_id": "ID do commit",
     "common": {
       "back": "Voltar"
     },
@@ -278,9 +285,25 @@
       "last7days": "Últimos 7 dias",
       "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (exemplo: 'P1DT1H1M1S)'",
       "never": "Nunca",
+      "next12hours": "Próximas 12 horas",
+      "next15minutes": "Próximos 15 minutos",
+      "next1hour": "Próxima 1 hora",
+      "next24hours": "Próximas 24 horas",
+      "next30days": "Próximos 30 dias",
+      "next365days": "Próximos 365 dias",
+      "next48hours": "Próximas 48 horas",
+      "next5minutes": "Próximos 5 minutos",
+      "next7days": "Próximos 7 dias",
       "previousMonth": "Mês anterior",
       "previousWeek": "Semana anterior",
       "previousYear": "Ano anterior",
+      "short": {
+        "12h": "12h",
+        "15m": "15min",
+        "1d": "1d",
+        "1h": "1h",
+        "7d": "7d"
+      },
       "thisMonth": "Este mês",
       "thisMonthSoFar": "Este mês até agora",
       "thisWeek": "Esta semana",
@@ -531,6 +554,10 @@
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente.",
         "title": "Você ainda não tem Kill Switches!"
       },
+      "mcpToolFlows": {
+        "content": "Exponha um flow como uma ferramenta MCP adicionando um <code>McpToolTrigger</code> a ele. Leia mais sobre o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> em nossa documentação.",
+        "title": "Ainda não há flows de ferramenta registrados neste servidor."
+      },
       "panels": {
         "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Namespace Files, Blueprints, Context) para recursos relacionados.",
         "title": "Atualmente, nenhum painel está aberto."
@@ -601,6 +628,7 @@
     "execute the flow": "Executar o flow <code>{id}</code>",
     "execution": "Execução",
     "execution already finished": "Execução <code>{executionId}</code> já finalizada",
+    "execution id": "Id de Execução",
     "execution labels": "Labels de execução",
     "execution not found": "Execução <code>{executionId}</code> não encontrada.",
     "execution not in state FAILED": "Execução <code>{executionId}</code> não está no estado FAILED",
@@ -672,6 +700,8 @@
       "title": "Novidades no Kestra"
     },
     "file preview truncated": "Conteúdo exibido foi truncado",
+    "file unavailable": "Arquivo indisponível",
+    "file unavailable description": "Este arquivo não está mais disponível — pode ter sido removido ou expirado.",
     "fileTypeNotAllowed": "Tipo de arquivo não permitido. Tipos aceitos: {types}",
     "files": "Arquivos",
     "filter by log level": "Filtrar por nível de log",
@@ -764,7 +794,7 @@
         "tooltip": "Ver aplicativos usando este flow"
       },
       "dependencies": {
-        "suffix": "Dependência(s)",
+        "suffix": "Dependências",
         "tooltip": "Visualizar dependências do flow"
       },
       "errors": {
@@ -856,6 +886,7 @@
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} nos últimos {days} dias",
     "last evaluation date": "Data da última avaliação",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",
@@ -880,6 +911,7 @@
       "raw": "Visualização temporal",
       "raw_details": "Mostrar logs completos de task e flow em formato bruto ordenado por timestamp"
     },
+    "main_configuration": "Configuração Principal",
     "management port": "Port de gerenciamento",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -889,20 +921,23 @@
       "basic_auth": "Autenticação Básica",
       "bearer_token": "Autenticação por token Bearer",
       "connect": "Conectar",
-      "connect_modal": {
+      "connect_tab": {
+        "auth_api_token_hint": "Defina <code>KESTRA_TOKEN</code> como variável de ambiente antes de iniciar o cliente.",
+        "auth_basic_hint": "Defina <code>KESTRA_BASIC_AUTH</code> como variável de ambiente contendo uma string <code>username:password</code> codificada em base64 antes de iniciar o cliente.",
+        "auth_oauth_browser_hint": "Seu navegador abrirá a página de login do provedor de identidade na primeira conexão.",
+        "auth_oauth_client_id_hint": "Substitua <code>&lt;client-id&gt;</code> pelo ID do cliente OAuth e registre <code>http://localhost:7777</code> como URI de redirecionamento válido nesse cliente.",
         "claude_code": "Código Claude",
         "claude_code_hint": "Execute o seguinte comando no seu terminal:",
         "claude_desktop": "Claude Desktop",
         "claude_desktop_hint": "Adicione o seguinte ao seu arquivo claude_desktop_config.json:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
         "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "client_picker_label": "Escolha seu cliente de IA",
         "codex": "Codex (OpenAI)",
         "codex_hint": "Adicione o seguinte ao seu arquivo de configuração codex.json MCP:",
         "cursor": "Cursor",
         "cursor_hint": "Adicione o seguinte a ~/.cursor/mcp.json:",
-        "done": "Concluído",
-        "server_url": "URL do Servidor",
-        "title": "Conectar-se a {name}"
+        "server_url": "URL do Servidor"
       },
       "copy_url": "Copiar URL",
       "create": "Criar Servidor",
@@ -911,19 +946,44 @@
       "id_placeholder": "por exemplo, meu-servidor-mcp",
       "instructions": "Instruções",
       "main_tenant": "principal",
+      "no_oauth_providers": "Nenhum provedor OIDC configurado nesta instância",
       "no_servers": "Nenhum servidor MCP encontrado. Crie seu primeiro servidor para expor triggers da ferramenta MCP a agentes de IA externos.",
+      "oauth": "OAuth",
+      "oauth_hint": "Bearer JWT do seu provedor OIDC",
+      "oauth_provider": "Provedor OAuth",
+      "oauth_provider_placeholder": "Selecione um provedor OIDC configurado",
+      "oauth_provider_required": "O provedor OAuth é obrigatório quando o tipo de autenticação é OAuth",
       "page_description": "Exponha seus flows do Kestra como ferramentas para agentes de IA compatíveis com MCP",
       "private": "Privado",
       "public": "Público",
       "save": "Salvar Alterações",
+      "scopes_supported": "Scopes suportados",
+      "scopes_supported_hint": "Scopes divulgados no documento Protected Resource Metadata deste servidor. Clientes MCP em conformidade com a especificação restringem sua solicitação de autorização a esta lista. Deixe vazio para omitir o campo e deixar os clientes recorrerem aos scopes divulgados pelo IdP.",
+      "scopes_supported_placeholder": "openid, profile, email",
       "server": "Servidor MCP",
       "server_type": "Tipo de Servidor",
       "servers": "Servidores MCP",
       "tab_connect": "Conectar",
-      "tab_connect_placeholder": "Detalhes da conexão em breve.",
       "tab_edit": "Editar",
       "tab_tool_flows": "Fluxos de Ferramentas",
       "tab_tool_flows_placeholder": "A gestão de tool flows estará disponível em breve.",
+      "tools": {
+        "annotations": "Anotações",
+        "create_tool_flow": "Criar um flow de ferramenta",
+        "description": "Descrição",
+        "destructive": "Destrutivo",
+        "flow": "flow",
+        "idempotent": "Idempotente",
+        "no_tools": "Nenhum flow de ferramenta corresponde à sua pesquisa.",
+        "open_world": "Open world",
+        "read_only": "Somente leitura",
+        "return_direct": "Retorno direto",
+        "state": "Estado",
+        "title": "Título",
+        "tool_name": "Nome da ferramenta",
+        "trigger_id": "ID do trigger",
+        "view_flow": "Abrir flow"
+      },
       "url_copied": "URL copiado!",
       "username_password": "Nome de usuário & senha"
     },
@@ -935,6 +995,7 @@
     "modify inputs": "Modificar inputs",
     "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
+    "more actions": "Mais ações",
     "more_actions": "Mais Ações",
     "multi_panel_editor": {
       "close_all_panels": "Fechar todos os painéis",
@@ -950,9 +1011,11 @@
       "create": {
         "file": "Criar arquivo",
         "file_already_exists": "Um arquivo com este nome já existe",
+        "file_conflicts_with_folder": "Uma pasta com este nome já existe",
         "file_error": "Ocorreu um erro ao criar o arquivo",
         "folder": "Criar pasta",
         "folder_already_exists": "Uma pasta com este nome já existe",
+        "folder_conflicts_with_file": "Um arquivo com este nome já existe",
         "folder_error": "Ocorreu um erro ao criar a pasta",
         "label": "Criar"
       },
@@ -1055,6 +1118,7 @@
       "title": "Comece a automatizar com"
     },
     "no_code": {
+      "add_field": "Adicionar {field}",
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
       "clearSelection": "Limpar seleção",
@@ -1314,6 +1378,7 @@
       "next": "Próxima página",
       "previous": "Página anterior"
     },
+    "panel actions": "Ações do painel",
     "parent execution": "Execução pai",
     "password": "Senha",
     "password empty constraint": "Nome de usuário ou senha incorretos",
@@ -1340,6 +1405,7 @@
       "toggle": "Playground",
       "tooltip_persistence": "Se você desligar e ligar o Playground novamente, as informações permanecem enquanto você estiver na página."
     },
+    "playground actions": "Ações do Playground",
     "plugin defaults exported": "Padrões do plugin exportados",
     "plugin defaults imported": "Padrões de plugin importados",
     "plugin defaults not imported": "Alguns padrões de plugin não puderam ser importados",
@@ -1364,10 +1430,51 @@
       "yaml_configuration": "Configuração YAML"
     },
     "pluginPage": {
-      "alt": "Ícone de Plugins",
+      "elementType": {
+        "apps": "Aplicativo",
+        "charts": "Gráfico",
+        "conditions": "Condição",
+        "logExporters": "Exportador de log",
+        "secrets": "Secreto",
+        "taskRunners": "Executor de task",
+        "tasks": "Tarefa",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Blueprints ({count})",
+        "plugins": "Plugins ({count})",
+        "tasks": "Tarefas ({count})"
+      },
+      "header": {
+        "back": "Voltar para plugins",
+        "certified": "Certificado",
+        "enterpriseEdition": "Edição Enterprise"
+      },
+      "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",
+      "noResults": "Nenhum plugin corresponde à sua pesquisa.",
+      "notFound": "Este plugin não pôde ser encontrado.",
+      "overview": {
+        "createdBy": "Criado por",
+        "latest": "Mais recente",
+        "linksResources": "Links e Recursos",
+        "managedBy": "Gerenciado por",
+        "minKestraVersion": "Versão mínima compatível do Kestra: {version}",
+        "minKestraVersionShort": "Versão mínima do Kestra {version}",
+        "pluginType": "Tipo de plugin",
+        "previousVersions": "Versões anteriores",
+        "releaseNotes": "Notas de versão",
+        "title": "Visão Geral",
+        "versions": "Versões"
+      },
       "search": "Pesquisar em mais de {count} plugins",
-      "title1": "Plugins são blocos de construção para seus workflows.",
-      "title2": "Pesquise por tasks e triggers para construir seu flow."
+      "searchTasks": "Pesquisar {count} tasks",
+      "sort": {
+        "mostUsed": "Mais usados",
+        "nameAsc": "Nome A-Z",
+        "nameDesc": "Nome Z-A",
+        "newest": "Mais recente"
+      },
+      "sortBy": "Ordenar por"
     },
     "plugin_default_already_exists": "O padrão do plugin para <code>{type}</code> já existe.",
     "plugins": {
@@ -1410,6 +1517,8 @@
     "relative": "Relativo",
     "relative end date": "Data de término relativa",
     "relative start date": "Data de início relativa",
+    "remove label": "Remover label",
+    "remove this item": "Remover este item",
     "remove_bookmark": "Tem certeza de que deseja remover este marcador?",
     "replay": "Repetir",
     "replay confirm": "Tem certeza de que deseja repetir esta execução <code>{id}</code> e criar uma nova?",
@@ -1519,6 +1628,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "Segundos entre atualizações automáticas de dados nas páginas de lista.",
+            "default_namespace": "Usado ao criar novos flows sem um namespace.",
+            "editor_type": "Editor exibido ao abrir um flow pela primeira vez.",
+            "execute_default_tab": "Aba selecionada ao navegar para uma execução.",
+            "execute_flow": "Onde os resultados da execução abrem após acionar uma execução.",
+            "flow_default_tab": "Aba selecionada ao navegar para um flow.",
+            "log_display": "Como os logs são apresentados ao abrir uma execução.",
+            "log_level": "Nível mínimo de log mostrado nos logs de execução.",
+            "playground": "Execute tasks individualmente no playground do editor."
+          },
           "fields": {
             "auto_refresh_interval": "Intervalo de Atualização Automática",
             "default_namespace": "Namespace Padrão",
@@ -1542,6 +1662,11 @@
           "label": "Exportar"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "Formato usado para exibir datas em todo o dashboard.",
+            "language": "Idioma da interface para menus e labels.",
+            "time_zone": "Usado para exibir datas de execução e triggers agendados."
+          },
           "fields": {
             "date_format": "Formato de Data",
             "time_zone": "Fuso Horário"
@@ -1557,12 +1682,29 @@
           "unsaved_warning": "Você tem alterações não salvas. Deseja salvá-las antes de sair?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "Dark 2.0",
+            "light": "Claro",
+            "sync": "Sincronizar com o sistema"
+          },
+          "descriptions": {
+            "color_mode": "Escolha o tema de interface preferido.",
+            "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
+            "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
+            "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
+            "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
+            "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
+            "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
+            "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais."
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Clássico",
               "kestra": "Kestra",
               "label": "Esquema de Cores do Gráfico"
             },
+            "color_mode": "Modo de cor",
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
@@ -1576,7 +1718,8 @@
           "label": "Preferências de Tema"
         }
       },
-      "label": "Configurações"
+      "label": "Configurações",
+      "updated": "{name} atualizado"
     },
     "setup": {
       "config": {
@@ -1599,6 +1742,8 @@
         "password_requirements": "Pelo menos 8 caracteres com 1 letra maiúscula e 1 número."
       },
       "login": "Login",
+      "login_subtitle": "Insira suas credenciais para acessar sua instância do Kestra",
+      "login_title": "Entrar",
       "logout": "Sair",
       "steps": {
         "complete": "Iniciar Kestra UI",
@@ -1735,6 +1880,7 @@
     "to": "Para",
     "to toggle": "alternar",
     "toggle fullscreen": "Alternar tela cheia",
+    "toggle menu": "Alternar menu",
     "toggle output": "Alternar outputs",
     "toggle output display": "Alternar exibição de output",
     "toggle periodic refresh each x seconds": "Alternar atualização periódica a cada {interval} segundos",
@@ -1845,10 +1991,12 @@
     "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Use esta versão ao trabalhar em um fundo escuro para garantir que nosso nome permaneça legível.",
+    "valid": "Válido",
     "validate": "Validar",
     "value": "Value",
     "variables": "Variáveis",
     "version": "Versão",
+    "view metrics": "Ver métricas",
     "warning": "Aviso",
     "warning detected": "Aviso(s) detectado(s)",
     "warning flow with triggers": "Este flow contém triggers e uma execução manual falhará se este flow depender de expressões de trigger.",

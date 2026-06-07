@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.WorkerGroups;
+import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.processors.WorkerJobProcessor;
 import io.kestra.worker.processors.WorkerJobProcessorFactory;
 import io.kestra.worker.queues.WorkerQueue;
@@ -42,6 +44,7 @@ public class WorkerJobExecutor {
     private final WorkerJobProcessorFactory workerJobProcessorFactory;
     private final ExecutorsUtils executorsUtils;
     private final MetricRegistry metricRegistry;
+    private final WorkerJobFetcher workerJobFetcher;
 
     private ExecutorService executorService;
     private List<WorkerJobConsumer> workerJobConsumers;
@@ -49,18 +52,20 @@ public class WorkerJobExecutor {
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
-    private static final AtomicInteger pendingJobCount = new AtomicInteger(0);
-    private static final AtomicInteger runningJobCount = new AtomicInteger(0);
+    private final AtomicInteger pendingJobCount = new AtomicInteger(0);
+    private final AtomicInteger runningJobCount = new AtomicInteger(0);
 
     @Inject
     public WorkerJobExecutor(final WorkerQueueRegistry workerQueueRegistry,
         final ExecutorsUtils executorsUtils,
         final WorkerJobProcessorFactory workerJobProcessorFactory,
-        final MetricRegistry metricRegistry) {
+        final MetricRegistry metricRegistry,
+        final WorkerJobFetcher workerJobFetcher) {
         this.workerJobProcessorFactory = workerJobProcessorFactory;
         this.workerQueueRegistry = workerQueueRegistry;
         this.executorsUtils = executorsUtils;
         this.metricRegistry = metricRegistry;
+        this.workerJobFetcher = workerJobFetcher;
     }
 
     public void start(final io.kestra.core.worker.models.WorkerContext context) {
@@ -76,7 +81,8 @@ public class WorkerJobExecutor {
                     workerJobQueue,
                     workerJobProcessorFactory,
                     context,
-                    executorService
+                    executorService,
+                    workerJobFetcher
                 );
                 this.workerJobConsumers.add(consumer);
                 // Consumers on virtual threads — they only poll and wait
@@ -88,7 +94,7 @@ public class WorkerJobExecutor {
             }
 
             // create metrics for pending and running job counts
-            String[] tags = { MetricRegistry.TAG_WORKER_GROUP, context.workerGroup() != null ? context.workerGroup() : "__default__" };
+            String[] tags = metricRegistry.workerGroupTags(context.workerGroupId());
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_PENDING_COUNT, MetricRegistry.METRIC_WORKER_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION, runningJobCount, tags);
         } else {
@@ -208,7 +214,7 @@ public class WorkerJobExecutor {
      * A {@link WorkerJobConsumer} is responsible for continuously polling
      * for new {@link WorkerJob} and processing them sequentially.
      */
-    private static class WorkerJobConsumer extends WorkerLoop {
+    private class WorkerJobConsumer extends WorkerLoop {
 
         private final AtomicReference<WorkerJobProcessor<WorkerJob>> running = new AtomicReference<>(null);
         private final AtomicReference<WorkerJob> workerJob = new AtomicReference<>(null);
@@ -217,17 +223,20 @@ public class WorkerJobExecutor {
         private final WorkerJobProcessorFactory workerJobProcessorFactory;
         private final io.kestra.core.worker.models.WorkerContext workerContext;
         private final ExecutorService taskExecutorService;
+        private final WorkerJobFetcher workerJobFetcher;
 
         public WorkerJobConsumer(int index,
             WorkerQueue<WorkerJob> workerJobQueue,
             WorkerJobProcessorFactory workerJobProcessorFactory,
             io.kestra.core.worker.models.WorkerContext workerContext,
-            ExecutorService taskExecutorService) {
+            ExecutorService taskExecutorService,
+            WorkerJobFetcher workerJobFetcher) {
             super("WorkerJobConsumer-" + index);
             this.workerJobQueue = workerJobQueue;
             this.workerJobProcessorFactory = workerJobProcessorFactory;
             this.workerContext = workerContext;
             this.taskExecutorService = taskExecutorService;
+            this.workerJobFetcher = workerJobFetcher;
         }
 
         /**
@@ -272,6 +281,12 @@ public class WorkerJobExecutor {
             } finally {
                 running.set(null);
                 workerJob.set(null);
+                // Signal the owning controller that this job has reached a terminal
+                // state on the worker, so the per-queue bucket slot reserved at
+                // dispatch is released. The WorkerTaskResult itself still travels
+                // via the dedicated Sender — this is just the capacity-accounting
+                // signal piggy-backed on the bidi stream.
+                workerJobFetcher.onJobCompleted(job.uid());
             }
         }
 

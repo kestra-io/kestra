@@ -727,6 +727,18 @@
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
         let queryFilter: Record<string, any> = {...restQuery}
 
+     // startDate/endDate and timeRange are mutually exclusive on the API.
+     // If a relative timeRange filter is present (either from the legacy DateFilter
+     // or from the new filter-chip system), drop the absolute date params so both
+     // are never sent together, which would cause HTTP 422.
+     const hasRelativeFilter =
+        queryFilter.timeRange ||
+        queryFilter["filters[timeRange][EQUALS]"]
+         if (hasRelativeFilter) {
+            delete queryFilter.startDate
+            delete queryFilter.endDate
+         }
+
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = props.namespace
         }

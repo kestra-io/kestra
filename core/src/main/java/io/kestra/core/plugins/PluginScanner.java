@@ -212,7 +212,7 @@ public class PluginScanner {
                 }
 
                 if (plugin.getClass().getName().equals("io.kestra.plugin.core.log.Log")) {
-                    log.info("RAGHFLOW TEST: Found Log Plugin -> {}", plugin.getClass().getName());
+                    log.info("dswFLOW TEST: Found Log Plugin -> {}", plugin.getClass().getName());
                 }
 
                 Plugin.getAliases(plugin.getClass()).forEach(alias -> aliases.put(alias, plugin.getClass()));

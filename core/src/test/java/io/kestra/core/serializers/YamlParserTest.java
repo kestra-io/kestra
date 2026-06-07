@@ -270,13 +270,13 @@ class YamlParserTest {
     }
 
     @Test
-    void raghAliasParser() throws IOException {
+    void dswAliasParser() throws IOException {
         String yaml =
             "id: alias-test\n" +
             "namespace: io.kestra.tests\n" +
             "tasks:\n" +
             "- id: t1\n" +
-            "  type: io.ragh.plugin.core.log.Log\n" +
+            "  type: io.dsw.plugin.core.log.Log\n" +
             "  message: hello\n";
 
         Map<String, Object> mapFlow =

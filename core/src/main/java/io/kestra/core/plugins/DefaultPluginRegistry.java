@@ -235,17 +235,17 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
         );
-// RAGHFLOW automatic alias registration ========================
+// dswFLOW automatic alias registration ========================
         for (Class<?> cls : plugin.allClass()) {
 
         String originalType = cls.getName();
 
         if (originalType.startsWith("io.kestra.plugin.")) {
 
-            String raghAlias =
+            String dswAlias =
                 originalType.replaceFirst(
                     "io\\.kestra\\.plugin\\.",
-                    "io.ragh.plugin."
+                    "io.dsw.plugin."
                 );
 
             Class<? extends Plugin> pluginClass =
@@ -255,19 +255,19 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 plugin.baseClass(pluginClass.getName());
 
             classes.put(
-                ClassTypeIdentifier.create(raghAlias),
+                ClassTypeIdentifier.create(dswAlias),
                 PluginClassAndMetadata.create(
                     plugin,
                     pluginClass,
                     pluginBaseClass,
-                    raghAlias
+                    dswAlias
                 )
             );
 
             log.debug(
-                "RAGHFLOW: {} -> {}",
+                "dswFLOW: {} -> {}",
                 originalType,
-                raghAlias
+                dswAlias
             );
         }
     }

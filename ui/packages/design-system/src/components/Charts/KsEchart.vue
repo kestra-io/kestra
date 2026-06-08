@@ -140,6 +140,7 @@
                 tooltip: {
                     trigger: "axis",
                     ...userTooltip,
+                    confine: false,
                     // Move the native tooltip offscreen so ECharts still computes
                     // the axis-pointer snap and calls our formatter, but nothing
                     // is visible to the user.

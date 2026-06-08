@@ -15,35 +15,43 @@
             </template>
         </div>
 
-        <section v-if="data?.results?.length" id="table">
-            <KsDataTable
-                :id="containerID"
-                :data="data.results"
-                :total="isPaginationEnabled(props.chart) ? data.total : 0"
-                :currentPage="pageNumber"
-                :pageSize="pageSize"
-                :height="240"
-                size="small"
-                noPaginationGutter
-                @page-changed="handlePageChange"
-            >
-                <KsTableColumn
-                    v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
-                    :label="value.displayName || key"
-                    :key
-                    :width="value.field === 'STATE' ? 140 : undefined"
+        <Motion
+            as="div"
+            :key="activeTab"
+            :initial="{opacity: 0, y: 4}"
+            :animate="{opacity: 1, y: 0}"
+            :transition="{duration: 0.15, ease: 'easeOut'}"
+        >
+            <section v-if="data?.results?.length" id="table">
+                <KsDataTable
+                    :id="containerID"
+                    :data="data.results"
+                    :total="isPaginationEnabled(props.chart) ? data.total : 0"
+                    :currentPage="pageNumber"
+                    :pageSize="pageSize"
+                    :height="240"
+                    size="small"
+                    noPaginationGutter
+                    @page-changed="handlePageChange"
                 >
-                    <template #default="scope">
-                        <template v-if="resolvedComponent(value.field) === undefined">
-                            {{ scope.row[key] }}
+                    <KsTableColumn
+                        v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
+                        :label="value.displayName || key"
+                        :key
+                        :width="value.field === 'STATE' ? 140 : undefined"
+                    >
+                        <template #default="scope">
+                            <template v-if="resolvedComponent(value.field) === undefined">
+                                {{ scope.row[key] }}
+                            </template>
+                            <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                         </template>
-                        <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
-                    </template>
-                </KsTableColumn>
-            </KsDataTable>
-        </section>
+                    </KsTableColumn>
+                </KsDataTable>
+            </section>
 
-        <KsEmpty v-else :description="EMPTY_TEXT" />
+            <KsEmpty v-else :description="EMPTY_TEXT" />
+        </Motion>
     </div>
 </template>
 
@@ -58,6 +66,7 @@
     import Link from "./table/columns/Link.vue"
     import Namespace from "./table/columns/Namespace.vue"
     import {KsExecutionStatus, cssVar} from "@kestra-io/design-system"
+    import {Motion} from "motion-v"
     import {useI18n} from "vue-i18n"
 
     const {t} = useI18n({useScope: "global"})

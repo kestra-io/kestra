@@ -54,7 +54,7 @@ import java.util.function.Supplier;
  * Supports three service discovery strategies:
  * <ul>
  * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
- * <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
+ * <li>DNS: DNS A-record resolution with gRPC load-balancing</li>
  * <li>STORAGE: Dynamic discovery via Kestra internal storage (controllers self-register)</li>
  * </ul>
  * <p>
@@ -275,16 +275,11 @@ public class GrpcChannelManager {
             throw new IllegalStateException("DNS configuration requires a hostname");
         }
 
-        String target = switch (dnsConfig.recordType()) {
-            case SRV -> {
-                log.info("Configuring DNS discovery with SRV records for: {}", dnsConfig.hostname());
-                yield "dns:///" + dnsConfig.hostname();
-            }
-            case A -> {
-                log.info("Configuring DNS discovery with A records for: {}:{}", dnsConfig.hostname(), dnsConfig.defaultPort());
-                yield "dns:///" + dnsConfig.hostname() + ":" + dnsConfig.defaultPort();
-            }
-        };
+        // The gRPC DNS name resolver performs A/AAAA record lookups of the hostname and connects to
+        // each resolved address on defaultPort. It does not query _grpc._tcp.<host> SRV records, so
+        // SRV-based discovery is intentionally not offered here.
+        log.info("Configuring DNS discovery with A records for: {}:{}", dnsConfig.hostname(), dnsConfig.defaultPort());
+        String target = "dns:///" + dnsConfig.hostname() + ":" + dnsConfig.defaultPort();
         return Grpc.newChannelBuilder(target, createChannelCredentials());
     }
 

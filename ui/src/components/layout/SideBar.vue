@@ -8,7 +8,6 @@
             >
                 <DockLeft />
             </KsIconButton>
-            <Environment />
         </template>
 
         <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
@@ -58,7 +57,6 @@
     import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
 
-    import Environment from "./Environment.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"

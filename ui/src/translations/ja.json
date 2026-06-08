@@ -453,6 +453,8 @@
     "disabled": "無効",
     "disabled flow desc": "このFlowは無効です。実行するには有効にしてください。",
     "disabled flow title": "このFlowは無効です",
+    "discard changes confirmation": "保存されていない変更があります。本当に破棄しますか？",
+    "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "display direct sub tasks count": "直接のサブタスク数を表示",
     "display flow {id} executions": "Flow {id}の実行を表示",
     "display metric for specific task": "特定のTaskのメトリクスを表示",

@@ -35,7 +35,7 @@
         <template #title-status>
             <span v-if="statusStyle" class="status-tag" :style="{color: `var(${statusStyle.textVar})`}">
                 <component :is="statusStyle.icon" class="status-tag__icon" />
-                <span v-if="statusStyle.label" class="status-tag__text">{{ statusStyle.label }}</span>
+                <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
                 <span v-else class="status-tag__text">
                     <Duration :histories="histories" :interval="100" />
                 </span>
@@ -424,11 +424,10 @@ button.playground-button {
 .status-tag {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px;
+    gap: var(--ks-spacing-1);
+    padding: 0.4rem;
     border-radius: var(--ks-radius-xs);
     background-color: var(--ks-bg-tag);
-    font-size: 14px;
     line-height: 1;
 }
 

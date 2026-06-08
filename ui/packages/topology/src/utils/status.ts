@@ -39,7 +39,7 @@ const SKIPPED: StatusStyle = {
     icon: SkipNextCircleOutline,
     textVar: "--ks-status-neutral",
     dimIcon: true,
-    label: "Skipped",
+    label: "skipped", // i18n key, translated at render
 }
 
 // Fallback for executed states not covered by the Figma design.

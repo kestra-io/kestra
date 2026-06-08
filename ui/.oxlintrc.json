@@ -32,7 +32,7 @@
   },
   "overrides": [
     {
-      "files": ["src/translations/check.js", "**/tests/**", "**/scripts/**"],
+      "files": ["src/translations/check.js", "**/tests/**", "**/scripts/**", "scripts/**"],
       "rules": {
         "no-console": "off"
       }

@@ -39,11 +39,13 @@ logger.warnOnce = (msg, options) => {
     loggerWarnOnce(msg, options)
 }
 
-import {commit} from "./plugins/commit"
+import {commit} from "./plugins/commit.ts"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 
-import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
-import {componentEntries} from "./packages/design-system/componentEntries.js"
+import kestraSdkPackageJson from "@kestra-io/kestra-sdk/package.json" with {type: "json"}
+import {componentEntries} from "./packages/design-system/componentEntries.ts"
+
+const kestraSdkExports = kestraSdkPackageJson.exports || {}
 
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}

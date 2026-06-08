@@ -33,40 +33,48 @@ describe("useDiscardGuard", () => {
     })
 
     test("pristine state proceeds immediately without confirmation", () => {
-        const {guardedClose} = mountGuard(() => false)
+        const {guardedClose, isConfirming} = mountGuard(() => false)
         const proceed = vi.fn()
 
         guardedClose(proceed)
 
         expect(confirmMock).not.toHaveBeenCalled()
         expect(proceed).toHaveBeenCalledTimes(1)
+        expect(isConfirming.value).toBe(false)
     })
 
     test("dirty state asks for confirmation and proceeds once confirmed", async () => {
         confirmMock.mockResolvedValue(undefined)
-        const {guardedClose} = mountGuard(() => true)
+        const {guardedClose, isConfirming} = mountGuard(() => true)
         const proceed = vi.fn()
+
+        expect(isConfirming.value).toBe(false)
 
         guardedClose(proceed)
 
         expect(confirmMock).toHaveBeenCalledTimes(1)
+        expect(isConfirming.value).toBe(true)
         expect(proceed).not.toHaveBeenCalled()
 
         await flushPromises()
 
         expect(proceed).toHaveBeenCalledTimes(1)
+        expect(isConfirming.value).toBe(false)
     })
 
     test("dirty state does not proceed when the user cancels", async () => {
         confirmMock.mockRejectedValue(new Error("cancel"))
-        const {guardedClose} = mountGuard(() => true)
+        const {guardedClose, isConfirming} = mountGuard(() => true)
         const proceed = vi.fn()
 
         guardedClose(proceed)
+        expect(isConfirming.value).toBe(true)
+
         await flushPromises()
 
         expect(confirmMock).toHaveBeenCalledTimes(1)
         expect(proceed).not.toHaveBeenCalled()
+        expect(isConfirming.value).toBe(false)
     })
 
     test("guard resets after cancel so a later close can confirm again", async () => {
@@ -85,10 +93,11 @@ describe("useDiscardGuard", () => {
 
     test("rapid repeated close attempts do not stack confirmations", () => {
         confirmMock.mockReturnValue(new Promise<void>(() => {}))
-        const {guardedClose} = mountGuard(() => true)
+        const {guardedClose, isConfirming} = mountGuard(() => true)
         const proceed = vi.fn()
 
         guardedClose(proceed)
+        expect(isConfirming.value).toBe(true)
         guardedClose(proceed)
 
         expect(confirmMock).toHaveBeenCalledTimes(1)

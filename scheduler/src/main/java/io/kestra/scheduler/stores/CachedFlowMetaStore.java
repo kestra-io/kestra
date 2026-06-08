@@ -147,7 +147,7 @@ public class CachedFlowMetaStore implements FlowMetaStore {
 
     private void loadCacheForAllVNodes(final Set<Integer> vNodes) {
         long start = System.currentTimeMillis();
-        LOG.info("Loading flows for vNodes {}", vNodes);
+        LOG.debug("Loading flows for vNodes {}", vNodes);
         // Create or warm up caches for new vNodes
         AtomicInteger count = new AtomicInteger(0);
         for (Integer vnode : vNodes) {
@@ -162,11 +162,11 @@ public class CachedFlowMetaStore implements FlowMetaStore {
                 return cache;
             });
         }
-        LOG.info("{} flows loaded for vNodes {} in {}ms", count, vNodes, System.currentTimeMillis() - start);
+        LOG.debug("{} flows loaded for vNodes {} in {}ms", count, vNodes, System.currentTimeMillis() - start);
     }
 
     public void clear() {
-        LOG.info("Clearing local cache");
+        LOG.debug("Clearing local cache");
         partitionedCache.values().forEach(Cache::invalidateAll);
         partitionedCache.clear();
     }

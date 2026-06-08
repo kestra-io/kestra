@@ -21,7 +21,6 @@ export type Chart = {
             enabled?: boolean;
             [key: string]: unknown;
         };
-        quickFilters?: boolean;
         legend?:{
             enabled?: boolean;
         };

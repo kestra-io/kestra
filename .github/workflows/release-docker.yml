@@ -39,7 +39,7 @@ jobs:
   helm-release:
     name: Helm release
     needs: publish-docker
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc')
     permissions:
       contents: read
       id-token: write

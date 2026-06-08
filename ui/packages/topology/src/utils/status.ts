@@ -2,7 +2,9 @@ import type {Component} from "vue"
 import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
 import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
 import SkipNextCircleOutline from "vue-material-design-icons/SkipNextCircleOutline.vue"
+import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
 import ProgressClock from "vue-material-design-icons/ProgressClock.vue"
+import Cancel from "vue-material-design-icons/Cancel.vue"
 import RotatingDots from "../assets/icons/RotatingDots.vue"
 
 export interface StatusStyle {
@@ -35,11 +37,25 @@ const RUNNING: StatusStyle = {
     border: "var(--ks-topology-border-running)",
 }
 
+const KILLING: StatusStyle = {
+    icon: StopCircleOutline,
+    textVar: "--ks-status-pending",
+    bg: "var(--ks-topology-bg-killing)",
+    border: "var(--ks-topology-border-killing)",
+}
+
 const SKIPPED: StatusStyle = {
     icon: SkipNextCircleOutline,
     textVar: "--ks-status-neutral",
     dimIcon: true,
     label: "skipped", // i18n key, translated at render
+}
+
+const CANCELLED: StatusStyle = {
+    icon: Cancel,
+    textVar: "--ks-status-neutral",
+    bg: "var(--ks-topology-bg-cancelled)",
+    border: "var(--ks-topology-border-cancelled)",
 }
 
 // Fallback for executed states not covered by the Figma design.
@@ -53,9 +69,9 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
     failed: ERROR,
     killed: ERROR,
     running: RUNNING,
-    killing: RUNNING,
+    killing: KILLING,
     skipped: SKIPPED,
-    cancelled: SKIPPED,
+    cancelled: CANCELLED,
 }
 
 export function getStatusStyle(state?: string | null): StatusStyle | undefined {

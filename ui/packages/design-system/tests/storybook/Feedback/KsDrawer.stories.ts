@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue"
+import {KsMessageBox} from "../../../src/components/Feedback/KsMessageBox"
 
 const meta: Meta<typeof KsDrawer> = {
     title: "Components/Feedback/KsDrawer",
@@ -136,9 +137,10 @@ export const ConfirmBeforeClose: Story = {
         setup() {
             const visible = ref(false)
             const beforeClose = (done: () => void) => {
-                if (window.confirm("Discard your changes?")) {
-                    done()
-                }
+                KsMessageBox
+                    .confirm("Discard your changes?", "Confirmation", {type: "warning", showCancelButton: true})
+                    .then(() => done())
+                    .catch(() => {})
             }
             return {visible, beforeClose}
         },

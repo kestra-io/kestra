@@ -159,6 +159,7 @@ section#charts {
             box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
         }
 
+
         #charts_buttons {
             opacity: 0;
             transition: opacity 0.2s ease;

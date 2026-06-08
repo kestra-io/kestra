@@ -344,6 +344,13 @@
     max-width: 34rem;
 }
 
+.cond-field :deep(.kel-select__wrapper),
+.cond-op :deep(.kel-select__wrapper),
+.cond-value-select :deep(.kel-select__wrapper),
+.cond-value-input :deep(.kel-input__inner) {
+    font-size: var(--ks-font-size-xs);
+}
+
 .cond-value-trigger {
     flex: 1;
     min-width: 8rem;

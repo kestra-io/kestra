@@ -70,14 +70,14 @@ const packageHash = computePackageHash(packageRoot, CONFIG_FILES)
 const cache = readCache(cacheFile)
 
 if (!force && cache.package === packageHash) {
-    console.log("Build cache hit — no source changes detected, skipping build.")
+    console.log("[Design System] Build cache hit — no source changes detected, skipping build.")
     process.exit(0)
 }
 
 if (force) {
-    console.log("--force flag set, rebuilding...")
+    console.log("[Design System] --force flag set, rebuilding...")
 } else {
-    console.log("Source changes detected, building...")
+    console.log("[Design System] Source changes detected, building...")
 }
 
 await tsdown.build(tsdownConfig)

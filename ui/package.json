@@ -10,7 +10,7 @@
     "scripts": {
         "dev": "vite --host",
         "prebuild": "npm run build:design",
-        "build": "vite build --emptyOutDir",
+        "build": "node scripts/build-with-cache.mjs",
         "postbuild": "npm run generate:dev-stubs --workspace=@kestra-io/design-system",
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",

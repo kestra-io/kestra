@@ -12,6 +12,7 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
+        :beforeClose="beforeClose"
     >
         <template #header>
             <h5>{{ $t("Set labels") }}</h5>
@@ -61,6 +62,8 @@
     import {useToast} from "../../utils/toast"
     const toast = useToast()
 
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+
     import resource from "../../models/resource"
     import action from "../../models/action"
 
@@ -87,6 +90,14 @@
     const isOpen = ref(false)
     const executionLabels = ref<Label[]>([])
     const isSaving = ref(false)
+
+    const meaningfulLabels = (labels: Label[]) =>
+        JSON.stringify((labels || []).filter(label => label.key || label.value))
+    const labelsBaseline = ref("[]")
+    const {guardedClose} = useDiscardGuard(
+        () => meaningfulLabels(executionLabels.value) !== labelsBaseline.value,
+    )
+    const beforeClose = (done: () => void) => guardedClose(() => done())
 
     const enabled = computed(() => {
         if (
@@ -148,6 +159,7 @@
             executionLabels.value = JSON.parse(JSON.stringify(source || []))
                 .filter((label: Label) => !toIgnore.some((prefix: string) => label.key?.startsWith(prefix)))
 
+            labelsBaseline.value = meaningfulLabels(executionLabels.value)
         } else {
             // when dialog closed, clear temp state (safe-guard)
             executionLabels.value = []

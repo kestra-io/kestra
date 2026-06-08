@@ -100,7 +100,7 @@
                                 }"
                                 class="me-1"
                             >
-                                {{ FILTERS.invisibleSpace(scope.row.id) }}
+                                <BreakableText :value="scope.row.id" />
                             </router-link>
                             <MarkdownTooltip
                                 :id="scope.row.namespace +
@@ -134,7 +134,7 @@
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('namespace')"
                         :formatter="(_: any, __: any, cellValue: string) =>
-                            FILTERS.invisibleSpace(cellValue)
+                            h(BreakableText, {value: cellValue})
                         "
                     />
 
@@ -253,11 +253,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useTemplateRef, watch} from "vue"
+    import {ref, computed, useTemplateRef, watch, h} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
-    import * as FILTERS from "../../utils/filters"
+    import BreakableText from "../BreakableText"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useFlowFilter} from "../filter/configurations"
     import useRestoreUrl from "../../composables/useRestoreUrl"

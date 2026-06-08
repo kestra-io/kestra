@@ -134,6 +134,7 @@
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
+        :beforeClose="beforeKvClose"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
@@ -252,6 +253,7 @@
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
@@ -378,6 +380,10 @@
         update: undefined,
         description: undefined,
     })
+
+    const kvBaseline = ref("")
+    const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
+    const beforeKvClose = (done: () => void) => guardKvClose(() => done())
 
     const {t} = useI18n()
 
@@ -638,7 +644,11 @@
     }
 
     watch(addKvDrawerVisible, (newValue) => {
-        if (!newValue) {
+        if (newValue) {
+            nextTick(() => {
+                kvBaseline.value = JSON.stringify(kv.value)
+            })
+        } else {
             resetKv()
         }
     })

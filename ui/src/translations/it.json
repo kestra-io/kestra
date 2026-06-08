@@ -453,6 +453,8 @@
     "disabled": "Disabilitato",
     "disabled flow desc": "Questo flow è disabilitato, per favore abilitalo per eseguirlo.",
     "disabled flow title": "Questo flow è disabilitato",
+    "discard changes confirmation": "Hai modifiche non salvate. Sei sicuro di volerle scartare?",
+    "discard execution confirmation": "Hai degli input non salvati. Sei sicuro di voler scartare questa esecuzione?",
     "display direct sub tasks count": "Visualizza conteggio subtasks diretti",
     "display flow {id} executions": "Visualizza esecuzioni del flow {id}",
     "display metric for specific task": "Visualizza metrica per un task specifico",

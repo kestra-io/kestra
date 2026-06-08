@@ -484,6 +484,8 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
+    "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
+    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "Default namespace": "Default namespace",
     "Default log level": "Default log level",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",

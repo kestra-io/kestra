@@ -9,6 +9,7 @@
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
+            :beforeClose="beforeClose"
         >
             <template #header>
                 <code>{{ taskId || task?.id || $t("add task") }}</code>
@@ -94,6 +95,7 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     interface Props {
         component?: string;
@@ -133,7 +135,10 @@
     const editorBindings = useEditorBindings()
 
     const taskYaml = ref("")
+    const taskBaseline = ref("")
     const isModalOpen = ref(false)
+    const {guardedClose} = useDiscardGuard(() => taskYaml.value !== taskBaseline.value)
+    const beforeClose = (done: () => void) => guardedClose(() => done())
     const activeTabs = ref(props.readOnly ? "source" : "form")
     const type = ref<string>()
     const revisions = ref<any[]>()
@@ -199,6 +204,7 @@
         } else if (props.task) {
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
+        taskBaseline.value = taskYaml.value
         if (props.task?.type) {
             pluginsStore.load({cls: props.task.type})
         }

@@ -138,6 +138,7 @@
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
+            :beforeClose="beforeSecretClose"
         >
             <KsForm class="ks-horizontal" :model="secret" :rules="rules" ref="form">
                 <KsFormItem
@@ -218,7 +219,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
+    import {ref, computed, watch, onMounted, nextTick, useTemplateRef} from "vue"
     import _merge from "lodash/merge"
 
     import Lock from "vue-material-design-icons/Lock.vue"
@@ -246,6 +247,7 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const secretsFilter = useSecretsFilter()
 
@@ -314,6 +316,10 @@
         update: undefined,
         updateValue: undefined,
     })
+
+    const secretBaseline = ref("")
+    const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
+    const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
 
     const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
 
@@ -585,7 +591,11 @@
     }
 
     watch(() => props.addSecretModalVisible, (newValue) => {
-        if (!newValue) {
+        if (newValue) {
+            nextTick(() => {
+                secretBaseline.value = JSON.stringify(secret.value)
+            })
+        } else {
             resetForm()
         }
     })

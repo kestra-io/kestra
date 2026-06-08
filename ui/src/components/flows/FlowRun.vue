@@ -159,6 +159,7 @@
     const emit = defineEmits<{
         executionTrigger: []
         updateInputs: [inputs: Record<string, unknown>]
+        updateInputsNoDefault: [inputs: Record<string, unknown>]
         updateLabels: [labels: Label[]]
     }>()
 
@@ -197,6 +198,14 @@
     const flowCanBeExecuted = computed(() =>
         flow.value && !flow.value.disabled && !haveBadLabels.value,
     )
+
+    const isDirty = computed(() =>
+        Object.keys(inputsNoDefaults.value).length > 0 ||
+        executionLabels.value.some(label => label.key || label.value) ||
+        scheduleDate.value !== undefined,
+    )
+
+    defineExpose({isDirty})
 
     const hasWebhookTriggers = computed(() => {
         if (!flow.value?.triggers) {
@@ -328,6 +337,10 @@
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)
+    }, {deep: true})
+
+    watch(inputsNoDefaults, () => {
+        emit("updateInputsNoDefault", inputsNoDefaults.value)
     }, {deep: true})
 
     watch(executionLabels, () => {

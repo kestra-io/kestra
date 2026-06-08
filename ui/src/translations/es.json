@@ -453,6 +453,8 @@
     "disabled": "Deshabilitado",
     "disabled flow desc": "Este flujo está deshabilitado, por favor habilítalo para poder ejecutarlo.",
     "disabled flow title": "Este flujo está deshabilitado",
+    "discard changes confirmation": "Tienes cambios no guardados. ¿Estás seguro de que deseas descartarlos?",
+    "discard execution confirmation": "Tienes entradas no guardadas. ¿Estás seguro de que deseas descartar esta ejecución?",
     "display direct sub tasks count": "Mostrar conteo directo de subtareas",
     "display flow {id} executions": "Mostrar ejecuciones del flujo {id}",
     "display metric for specific task": "Mostrar métrica para una tarea específica",

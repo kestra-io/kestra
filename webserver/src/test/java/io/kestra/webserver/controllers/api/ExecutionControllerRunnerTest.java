@@ -2632,7 +2632,7 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-    @FlakyTest
+    @FlakyTest(description = "SSE event stream race: Thread.sleep workaround can miss 'end' events under CI load")
     @Test
     @LoadFlows(
         value = { "flows/valids/subflow-parent.yaml",

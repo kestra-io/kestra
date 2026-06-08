@@ -118,14 +118,22 @@
         noPaginationGutter: false,
     })
 
+    export interface SortItem {
+        column: any; 
+        prop: string | null; 
+        order: string | null
+    }
+    
+
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
         "update:currentPage": [page: number]
         "update:pageSize": [size: number]
-        "sort-change": [sort: {column: any; prop: string; order: string | null}]
+        "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
+        "loaded": []
     }>()
 
     defineSlots<{
@@ -299,6 +307,8 @@
                 isReady.value = true
                 emit("ready")
             }
+            await nextTick()
+            emit("loaded")
         }
     }
 
@@ -367,7 +377,7 @@
         emit("page-changed", {page: 1, size})
     }
 
-    const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
+    const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
             internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {

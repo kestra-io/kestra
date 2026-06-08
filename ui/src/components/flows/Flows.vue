@@ -32,7 +32,7 @@
                 @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 @ready="ready = true"
                 @row-dblclick="onRowDoubleClick"
-                @sort-change="({prop, order}: {prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+                @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
                 :rowClassName="rowClasses"
                 :selectable="canCheck"
                 :selectionMapper="selectionMapper"
@@ -385,7 +385,7 @@
     const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
     const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace)
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
@@ -705,6 +705,10 @@
     cursor: pointer;
 }
 
+:deep(.flows-table) th.row-action .cell {
+    padding-right: var(--ks-spacing-4);
+}
+
 .header-actions-list {
     display: flex;
     list-style: none;
@@ -716,6 +720,8 @@
 .flow-actions-cell {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
+    padding-right: var(--ks-spacing-4);
 }
 </style>

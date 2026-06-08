@@ -3,6 +3,7 @@
         :modelValue="value"
         @update:model-value="emit('update:modelValue', $event)"
         filterable
+        :fit="fit"
         :placeholder="$t('revisions')"
     >
         <KsOption
@@ -20,7 +21,8 @@
 
     withDefaults(defineProps<{
         value?: string,
-        router?: boolean
+        router?: boolean,
+        fit?: boolean
     }>(), {
         value: "INFO",
         router: true,

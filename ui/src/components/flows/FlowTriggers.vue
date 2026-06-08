@@ -268,6 +268,7 @@
         </KsForm>
         <FlowRun
             @update-inputs="backfill.inputs = $event"
+            @update-inputs-no-default="backfillInputsNoDefault = $event"
             @update-labels="backfill.labels = $event"
             :selectedTrigger="selectedTrigger"
             :redirect="false"
@@ -356,9 +357,13 @@
     const isBackfillOpen = ref(false)
     const selectedTrigger = ref<any>(null)
 
+    // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
+    const backfillInputsNoDefault = ref<Record<string, unknown>>({})
+
     const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
         backfill.value.start ||
         backfill.value.end ||
+        Object.keys(backfillInputsNoDefault.value).length > 0 ||
         backfill.value.labels?.some((label: any) => label.key || label.value)
     ))
     const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
@@ -522,6 +527,7 @@
     const setBackfillModal = (trigger: any, bool: boolean) => {
         if (bool) {
             backfill.value = {start: null, end: null, inputs: null, labels: []}
+            backfillInputsNoDefault.value = {}
         }
         isBackfillOpen.value = bool
         selectedTrigger.value = trigger

@@ -159,6 +159,7 @@
     const emit = defineEmits<{
         executionTrigger: []
         updateInputs: [inputs: Record<string, unknown>]
+        updateInputsNoDefault: [inputs: Record<string, unknown>]
         updateLabels: [labels: Label[]]
     }>()
 
@@ -336,6 +337,10 @@
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)
+    }, {deep: true})
+
+    watch(inputsNoDefaults, () => {
+        emit("updateInputsNoDefault", inputsNoDefaults.value)
     }, {deep: true})
 
     watch(executionLabels, () => {

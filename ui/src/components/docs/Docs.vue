@@ -5,42 +5,59 @@
             <Toc />
         </template>
         <template #content>
-            <template v-if="ast?.body">
-                <h1>{{ routeInfo.title }}</h1>
-                <div class="markdown">
-                    <MDCRenderer
-                        :body="ast.body"
-                        :data="ast.data"
-                        :key="ast"
-                        :components="proseComponents"
-                    />
-                </div>
+            <template>
+                <KsMarkdown class="markdown" :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
             </template>
         </template>
     </DocsLayout>
 </template>
 
 <script setup lang="ts">
-    import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs"
+    import {computed,ref,watch} from "vue"
     import TopNavBar from "../layout/TopNavBar.vue"
     import {useDocStore} from "../../stores/doc"
     import DocsLayout from "./DocsLayout.vue"
     import Toc from "./Toc.vue"
-    import {computed,ref,watch,getCurrentInstance} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import PluginCount from "./PluginCount.vue"
+    import WhatsNew from "../content/WhatsNew.vue"
+    import SupportLinks from "../content/SupportLinks.vue"
+    import BigChildCards from "../content/BigChildCards.vue"
+    import CardLogos from "../content/CardLogos.vue"
+    import ChildReleases from "../content/ChildReleases.vue"
+    import DownloadLogoPack from "../content/DownloadLogoPack.vue"
+    import GuidesChildCard from "../content/GuidesChildCard.vue"
+    import HomePageButtons from "../content/HomePageButtons.vue"
+    import HomePageHeader from "../content/HomePageHeader.vue"
+    import ProseImg from "../content/ProseImg.vue"
+    import ProseA from "../content/ProseA.vue"
+    import ChildTableOfContents from "../content/ChildTableOfContents.vue"
+    import ChildCard from "../content/ChildCard.vue"
+
+    const markdownComponents = {
+        a: ProseA,
+        img: ProseImg,
+        BigChildCards: BigChildCards,
+        CardLogos: CardLogos,
+        ChildCard: ChildCard,
+        ChildReleases: ChildReleases,
+        ChildTableOfContents: ChildTableOfContents,
+        DownloadLogoPack: DownloadLogoPack,
+        GuidesChildCard: GuidesChildCard,
+        HomePageButtons: HomePageButtons,
+        HomePageHeader: HomePageHeader,
+        PluginCount: PluginCount,
+        SupportLinks: SupportLinks,
+        WhatsNew: WhatsNew,
+    }
 
     const route = useRoute()
     const {t} = useI18n()
     const docStore = useDocStore()
 
-    const ast = ref()
-    const proseComponents = Object.fromEntries(
-        Object.keys(getCurrentInstance()?.appContext.components ?? {})
-            .filter(name => name.startsWith("Prose"))
-            .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
-            .map(name => [name, "prose-" + name]),
-    )
+    const markdownContent = ref()
 
     const path = computed(() => {
         const routePath = Array.isArray(route.params.path) ? route.params.path.join("/") : route.params.path
@@ -60,8 +77,7 @@
             if (!("canShare" in navigator)) {
                 content = content.replaceAll(/\s*web-share\s*/g, "")
             }
-            const parse = await getMDCParser()
-            ast.value = await parse(content)
+            markdownContent.value = content
         },
         {immediate: true},
     )

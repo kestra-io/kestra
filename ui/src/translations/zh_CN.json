@@ -594,6 +594,7 @@
     "encoding": "编码",
     "end date": "结束日期",
     "end datetime": "结束日期时间",
+    "environment": "环境",
     "environment color setting": "环境颜色",
     "environment name setting": "环境名称",
     "error": "错误",
@@ -1742,6 +1743,8 @@
         "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
       },
       "login": "登录",
+      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
+      "login_title": "登录",
       "logout": "注销",
       "steps": {
         "complete": "启动 Kestra UI",

@@ -594,6 +594,7 @@
     "encoding": "Codifica",
     "end date": "Data di fine",
     "end datetime": "Data e ora di fine",
+    "environment": "Ambiente",
     "environment color setting": "Colore dell'ambiente",
     "environment name setting": "Nome dell'ambiente",
     "error": "Errore",
@@ -1742,6 +1743,8 @@
         "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero."
       },
       "login": "Accedi",
+      "login_subtitle": "Inserisci le tue credenziali per accedere alla tua istanza di Kestra",
+      "login_title": "Accedi",
       "logout": "Logout",
       "steps": {
         "complete": "Avvia Kestra UI",

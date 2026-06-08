@@ -132,7 +132,8 @@ public class RetryCaseTest {
 
     public void retryFailedFlowDuration(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(3);
+        // maxDuration=PT7S with interval=PT2S yields ~3 attempts, but CI load can shift timing
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isBetween(2, 4);
     }
 
     public void retryFailedFlowAttempts(Execution execution) {

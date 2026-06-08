@@ -594,6 +594,7 @@
     "encoding": "एन्कोडिंग",
     "end date": "समाप्ति तिथि",
     "end datetime": "समाप्ति दिनांक और समय",
+    "environment": "पर्यावरण",
     "environment color setting": "पर्यावरण रंग",
     "environment name setting": "पर्यावरण नाम",
     "error": "त्रुटि",
@@ -1742,6 +1743,8 @@
         "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।"
       },
       "login": "लॉगिन",
+      "login_subtitle": "अपने Kestra instance तक पहुँचने के लिए अपने क्रेडेंशियल्स दर्ज करें।",
+      "login_title": "साइन इन करें",
       "logout": "लॉगआउट",
       "steps": {
         "complete": "Kestra UI शुरू करें",

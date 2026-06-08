@@ -484,6 +484,8 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
+    "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
+    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "Default namespace": "Default namespace",
     "Default log level": "Default log level",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
@@ -675,6 +677,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "log expand setting": "Log default display",
+    "environment": "Environment",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",
@@ -1773,8 +1776,10 @@
     },
     "setup": {
       "login": "Login",
+      "login_title": "Sign in",
+      "login_subtitle": "Enter your credentials to access your Kestra instance",
       "logout": "Logout",
-      "troubleshooting": "Forgot Password?",
+      "troubleshooting": "Trouble signing in?",
       "steps": {
         "user": "Create admin user",
         "config": "Validate Configuration",

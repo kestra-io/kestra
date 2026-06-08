@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import io.kestra.core.async.AsyncOperationService;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -219,27 +218,30 @@ class DefaultSchedulerTest {
     }
 
     @Test
-    @FlakyTest
     void shouldStopAndRestartSchedulingLoopWhenEnteringAndExitingMaintenanceMode() {
         // GIVEN
         try (DefaultScheduler scheduler = createDefaultScheduler();) {
             scheduler.start(2);
             serviceLivenessStore.put(scheduler);
-            vNodeController.checkServicesAndRebalanceVNodes(); // manually rebalance vNodes
+            vNodeController.checkServicesAndRebalanceVNodes();
 
-            // WHEN
+            // WHEN — enter maintenance
             maintenanceService.setMaintenanceMode(true);
 
-            // THEN
-            assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
-            assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            // THEN — loops stop asynchronously, poll until they're all stopped
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            });
 
-            // WHEN
+            // WHEN — exit maintenance
             maintenanceService.setMaintenanceMode(false);
 
-            // THEN
-            assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
-            assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            // THEN — loops restart asynchronously, poll until they're all running
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            });
         }
     }
 

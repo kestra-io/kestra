@@ -32,7 +32,7 @@
                 @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 @ready="ready = true"
                 @row-dblclick="onRowDoubleClick"
-                @sort-change="({prop, order}: {prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+                @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
                 :rowClassName="rowClasses"
                 :selectable="canCheck"
                 :selectionMapper="selectionMapper"
@@ -218,7 +218,7 @@
                     </KsTableColumn>
                 </template>
 
-                <KsTableColumn columnKey="action" className="row-action">
+                <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
                     <template #default="scope">
                         <div class="flow-actions-cell">
                             <KsIconButton
@@ -705,9 +705,8 @@
     cursor: pointer;
 }
 
-:deep(.flows-table) .kel-table__body tr:not(:hover) .flow-actions-cell {
-    opacity: 0;
-    pointer-events: none;
+:deep(.flows-table) th.row-action .cell {
+    padding-right: var(--ks-spacing-4);
 }
 
 .header-actions-list {
@@ -721,8 +720,8 @@
 .flow-actions-cell {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
-    transition: opacity 0.15s ease;
-    padding: 0 var(--ks-spacing-2);
+    padding-right: var(--ks-spacing-4);
 }
 </style>

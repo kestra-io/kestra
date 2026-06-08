@@ -106,7 +106,7 @@ html.dark {
     }
 
     .vue-flow__node.topology-node-hovered .node-wrapper {
-        border-color: var(--ks-text-primary) !important;
+        border-color: var(--ks-border-default) !important;
     }
 
     .vue-flow__node.topology-node-drop-target .node-wrapper {

@@ -73,6 +73,7 @@ jobs:
     with:
       java-version: 25
       notify-in-slack-release-channel: false
+      use-kestra-base-images: true
     secrets: inherit
 
 

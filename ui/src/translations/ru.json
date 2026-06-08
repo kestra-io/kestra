@@ -594,6 +594,7 @@
     "encoding": "Кодировка",
     "end date": "Дата окончания",
     "end datetime": "Дата и время окончания",
+    "environment": "Окружение",
     "environment color setting": "Цвет окружения",
     "environment name setting": "Имя окружения",
     "error": "Ошибка",
@@ -1742,6 +1743,8 @@
         "password_requirements": "Не менее 8 символов, включая 1 заглавную букву и 1 цифру."
       },
       "login": "Войти",
+      "login_subtitle": "Введите свои учетные данные для доступа к вашему экземпляру Kestra",
+      "login_title": "Войти",
       "logout": "Выход",
       "steps": {
         "complete": "Запустить Kestra UI",

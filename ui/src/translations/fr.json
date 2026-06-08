@@ -1841,7 +1841,6 @@
         "username_hint": "Doit être une adresse e-mail valide."
       },
       "login": "Connexion",
-      "login_subtitle": "Entrez vos identifiants pour accéder à votre instance Kestra",
       "login_title": "Se connecter",
       "logout": "Déconnexion",
       "steps": {

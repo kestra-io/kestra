@@ -1841,7 +1841,6 @@
         "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
-      "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
       "login_title": "サインイン",
       "logout": "ログアウト",
       "steps": {

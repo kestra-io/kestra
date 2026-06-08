@@ -1841,7 +1841,6 @@
         "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
-      "login_subtitle": "Ingrese sus credenciales para acceder a su instancia de Kestra",
       "login_title": "Iniciar sesión",
       "logout": "Cerrar sesión",
       "steps": {

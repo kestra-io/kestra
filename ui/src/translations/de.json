@@ -1841,7 +1841,6 @@
         "username_hint": "Muss eine gültige E-Mail-Adresse sein."
       },
       "login": "Anmelden",
-      "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",
       "login_title": "Anmelden",
       "logout": "Abmelden",
       "steps": {

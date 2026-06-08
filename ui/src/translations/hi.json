@@ -1841,7 +1841,6 @@
         "username_hint": "मान्य ईमेल पता होना चाहिए।"
       },
       "login": "लॉगिन",
-      "login_subtitle": "अपने Kestra instance तक पहुँचने के लिए अपने क्रेडेंशियल्स दर्ज करें।",
       "login_title": "साइन इन करें",
       "logout": "लॉगआउट",
       "steps": {

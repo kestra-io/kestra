@@ -1841,7 +1841,6 @@
         "username_hint": "Deve essere un indirizzo email valido."
       },
       "login": "Accedi",
-      "login_subtitle": "Inserisci le tue credenziali per accedere alla tua istanza di Kestra",
       "login_title": "Accedi",
       "logout": "Logout",
       "steps": {

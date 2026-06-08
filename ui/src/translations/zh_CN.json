@@ -1841,7 +1841,6 @@
         "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
-      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
       "login_title": "登录",
       "logout": "注销",
       "steps": {

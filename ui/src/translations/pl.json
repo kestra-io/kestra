@@ -1841,7 +1841,6 @@
         "username_hint": "Musi być prawidłowym adresem e-mail."
       },
       "login": "Zaloguj się",
-      "login_subtitle": "Wprowadź swoje dane uwierzytelniające, aby uzyskać dostęp do instancji Kestra",
       "login_title": "Zaloguj się",
       "logout": "Wyloguj się",
       "steps": {

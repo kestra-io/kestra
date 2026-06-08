@@ -11,6 +11,13 @@
                     @click="selectTab(tab.key)"
                 >
                     {{ t(`dashboards.quick_filters.${tab.key}`) }}
+                    <Motion
+                        v-if="activeTab === tab.key"
+                        as="span"
+                        class="tab-indicator"
+                        layoutId="tab-indicator"
+                        :transition="{type: 'spring', stiffness: 400, damping: 30}"
+                    />
                 </button>
             </template>
         </div>
@@ -237,12 +244,11 @@
     color: var(--ks-text-secondary);
     background: none;
     border: none;
-    border-bottom: 2px solid transparent;
     cursor: pointer;
     white-space: nowrap;
     position: relative;
     bottom: -1px;
-    transition: color 0.15s;
+    transition: color 0.15s, font-weight 0.1s;
 
     &:hover {
         color: var(--tab-color);
@@ -250,9 +256,18 @@
 
     &.active {
         color: var(--tab-color);
-        border-bottom-color: var(--tab-color);
         font-weight: 600;
     }
+}
+
+.tab-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--tab-color);
+    border-radius: 1px 1px 0 0;
 }
 
 section#table :deep(.kel-scrollbar__thumb) {

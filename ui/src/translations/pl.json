@@ -453,6 +453,8 @@
     "disabled": "Wyłączone",
     "disabled flow desc": "Ten flow jest wyłączony, proszę włączyć go, aby go wykonać.",
     "disabled flow title": "Ten flow jest wyłączony",
+    "discard changes confirmation": "Masz niezapisane zmiany. Czy na pewno chcesz je odrzucić?",
+    "discard execution confirmation": "Masz niezapisane inputy. Czy na pewno chcesz odrzucić tę wykonanie?",
     "display direct sub tasks count": "Wyświetl bezpośrednią liczbę subtask",
     "display flow {id} executions": "Wyświetl wykonania flow {id}",
     "display metric for specific task": "Wyświetl metrykę dla specyficznego task",

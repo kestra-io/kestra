@@ -1,8 +1,18 @@
 {
   "en": {
+    "more actions": "More actions",
+    "toggle menu": "Toggle menu",
+    "panel actions": "Panel actions",
+    "playground actions": "Playground actions",
+    "bulk actions": "Bulk actions",
+    "view metrics": "View metrics",
+    "remove this item": "Remove this item",
+    "add label": "Add label",
+    "remove label": "Remove label",
     "id": "Id",
     "type": "Type",
     "ok": "OK",
+    "valid": "Valid",
     "close": "Close",
     "namespace": "Namespace",
     "description": "Description",
@@ -64,6 +74,7 @@
     "edit flow": "Edit flow",
     "executions": "Executions",
     "execution": "Execution",
+    "execution id": "Execution Id",
     "recent_executions": "Recent Executions",
     "details": "Details",
     "overview": "Overview",
@@ -366,6 +377,7 @@
       "github": "Open a GitHub issue"
     },
     "blueprints": {
+      "all": "All",
       "community": "Community",
       "create": "Create a blueprint",
       "edit": "Edit a blueprint",
@@ -472,6 +484,8 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
+    "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
+    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "Default namespace": "Default namespace",
     "Default log level": "Default log level",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
@@ -482,7 +496,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-      "404": {
+       "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -663,6 +677,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "log expand setting": "Log default display",
+    "environment": "Environment",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",
@@ -715,6 +730,8 @@
     "port": "Port",
     "management port": "Management port",
     "file preview truncated": "Displayed content has been truncated",
+    "file unavailable": "File unavailable",
+    "file unavailable description": "This file is no longer available — it may have been purged or expired.",
     "row count": "Row count",
     "encoding": "Encoding",
     "show": "Show",
@@ -758,9 +775,11 @@
         "label": "Create",
         "file": "Create file",
         "file_already_exists": "A file with this name already exists",
+        "file_conflicts_with_folder": "A folder with this name already exists",
         "file_error": "Error occurred while creating the file",
         "folder": "Create folder",
         "folder_already_exists": "A folder with this name already exists",
+        "folder_conflicts_with_file": "A file with this name already exists",
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
@@ -867,21 +886,57 @@
       }
     },
     "pluginPage": {
-      "title1": "Plugins are building blocks for your workflows.",
-      "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across {count}+ plugins",
-      "alt": "Plugins Icon",
+      "search": "Search across 1400+ plugins",
+      "searchTasks": "Search {count} tasks",
+      "noResults": "No plugins match your search.",
+      "loadError": "Could not load plugins. Please try again.",
+      "notFound": "This plugin could not be found.",
+      "elementType": {
+        "tasks": "Task",
+        "triggers": "Trigger",
+        "conditions": "Condition",
+        "taskRunners": "Task runner",
+        "charts": "Chart",
+        "apps": "App",
+        "logExporters": "Log exporter",
+        "secrets": "Secret"
+      },
+      "sortBy": "Sort by",
       "sort": {
-        "name_asc": "Name A-Z",
-        "name_desc": "Name Z-A",
+        "nameAsc": "Name A-Z",
+        "nameDesc": "Name Z-A",
         "newest": "Newest",
-        "most_used": "Most used"
+        "mostUsed": "Most used"
+      },
+      "group": {
+        "plugins": "Plugins ({count})",
+        "tasks": "Tasks ({count})",
+        "blueprints": "Blueprints ({count})"
+      },
+      "overview": {
+        "title": "Overview",
+        "versions": "Versions",
+        "latest": "Latest",
+        "releaseNotes": "Release notes",
+        "previousVersions": "Previous versions",
+        "createdBy": "Created by",
+        "managedBy": "Managed by",
+        "pluginType": "Plugin type",
+        "linksResources": "Links & Resources",
+        "minKestraVersion": "Min. compatible Kestra vers.: {version}",
+        "minKestraVersionShort": "Min. Kestra version {version}"
+      },
+      "header": {
+        "enterpriseEdition": "Enterprise Edition",
+        "certified": "Certified",
+        "back": "Back to plugins"
       }
     },
     "no inputs": "This flow has no inputs.",
     "admin_preferences": "Preferences",
     "settings": {
       "label": "Settings",
+      "updated": "{name} updated",
       "blocks": {
         "configuration": {
           "label": "Main Configuration",
@@ -897,12 +952,24 @@
             "flow_default_tab": "Default Flow Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
+          },
+          "descriptions": {
+            "default_namespace": "Used when creating new flows without a namespace.",
+            "log_level": "Minimum log level shown in execution logs.",
+            "log_display": "How logs are presented when opening an execution.",
+            "editor_type": "Editor shown when opening a flow for the first time.",
+            "execute_flow": "Where execution results open after triggering a run.",
+            "execute_default_tab": "Tab selected when navigating to an execution.",
+            "flow_default_tab": "Tab selected when navigating to a flow.",
+            "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
+            "playground": "Run tasks individually in the editor playground."
           }
         },
         "theme": {
-          "label": "Theme Preferences",
+          "label": "Appearance",
           "fields": {
             "theme": "Theme",
+            "color_mode": "Color mode",
             "editor_font_size": "Editor Font Size",
             "logs_font_size": "Logs Font Size",
             "editor_font_family": "Editor Font Family",
@@ -916,6 +983,22 @@
               "classic": "Classic",
               "kestra": "Kestra"
             }
+          },
+          "color_modes": {
+            "dark_2": "Dark 2.0",
+            "dark_1": "Dark 1.0",
+            "light": "Light",
+            "sync": "Sync with system"
+          },
+          "descriptions": {
+            "color_mode": "Choose your preferred interface theme.",
+            "logs_font_size": "Font size used in log viewers and terminals.",
+            "editor_font_family": "Monospace font used in the YAML editor.",
+            "editor_font_size": "Font size used in the YAML and no-code editors.",
+            "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
+            "editor_hover_description": "Show property descriptions on hover in the editor.",
+            "environment_name": "Display name for the current environment, shown in the navigation.",
+            "environment_color": "Accent color used for the current environment in the navigation."
           }
         },
         "localization": {
@@ -924,6 +1007,11 @@
           "fields": {
             "time_zone": "Time Zone",
             "date_format": "Date Format"
+          },
+          "descriptions": {
+            "language": "Interface language for menus and labels.",
+            "time_zone": "Used for displaying execution dates and scheduled triggers.",
+            "date_format": "Format used to display dates throughout the dashboard."
           }
         },
         "export": {
@@ -1412,6 +1500,7 @@
       "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
+      "add_field": "Add {field}",
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
@@ -1622,6 +1711,10 @@
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
       },
+      "mcpToolFlows": {
+        "title": "No tool flows are registered on this server yet.",
+        "content": "Expose a flow as an MCP tool by adding an <code>McpToolTrigger</code> to it. Read more about the <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in our documentation."
+      },
       "versionPlugin": {
         "title": "You have no versioned plugin yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
@@ -1683,8 +1776,10 @@
     },
     "setup": {
       "login": "Login",
+      "login_title": "Sign in",
+      "login_subtitle": "Enter your credentials to access your Kestra instance",
       "logout": "Logout",
-      "troubleshooting": "Forgot Password?",
+      "troubleshooting": "Trouble signing in?",
       "steps": {
         "user": "Create admin user",
         "config": "Validate Configuration",
@@ -1758,6 +1853,7 @@
       "flow": {
         "title": "AI Copilot",
         "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
+        "select_provider": "Select a provider",
         "generating": {
           "flow": "Generating Flow YAML for you...",
           "dashboard": "Generating Dashboard YAML for you...",
@@ -1997,7 +2093,8 @@
       "tab_tool_flows": "Tool Flows",
       "tab_tool_flows_placeholder": "Tool flows management is coming soon.",
       "tools": {
-        "no_tools": "No tool flows are registered on this server yet. Add an `McpToolTrigger` to a flow to expose it here.",
+        "no_tools": "No tool flows match your search.",
+        "create_tool_flow": "Create a tool flow",
         "tool_name": "Tool Name",
         "trigger_id": "Trigger ID",
         "title": "Title",

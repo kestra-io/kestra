@@ -9,6 +9,7 @@
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
+            :beforeClose="beforeClose"
         >
             <template #header>
                 <code>{{ taskId || task?.id || $t("add task") }}</code>
@@ -53,13 +54,14 @@
                     <template #label>
                         <span>{{ $t("source") }}</span>
                     </template>
-                    <Editor
+                    <KsEditor
+                        v-bind="editorBindings"
                         :readOnly="readOnly"
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
                         :schemaType="section.toLowerCase()"
-                        :fullHeight="false"
+                        :options="{fullHeight: false}"
                         :navbar="false"
                         lang="yaml"
                         @update:model-value="onInput"
@@ -82,17 +84,18 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
+    import {SECTIONS, KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import CodeTags from "vue-material-design-icons/CodeTags.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import Editor from "../inputs/Editor.vue"
     import TaskEditor from "../no-code/components/TaskEditor.vue"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     interface Props {
         component?: string;
@@ -129,9 +132,13 @@
 
     const pluginsStore = usePluginsStore()
 
+    const editorBindings = useEditorBindings()
 
     const taskYaml = ref("")
+    const taskBaseline = ref("")
     const isModalOpen = ref(false)
+    const {guardedClose} = useDiscardGuard(() => taskYaml.value !== taskBaseline.value)
+    const beforeClose = (done: () => void) => guardedClose(() => done())
     const activeTabs = ref(props.readOnly ? "source" : "form")
     const type = ref<string>()
     const revisions = ref<any[]>()
@@ -197,6 +204,7 @@
         } else if (props.task) {
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
+        taskBaseline.value = taskYaml.value
         if (props.task?.type) {
             pluginsStore.load({cls: props.task.type})
         }

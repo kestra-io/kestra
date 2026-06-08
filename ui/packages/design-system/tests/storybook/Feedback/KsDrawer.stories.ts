@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue"
+import {KsMessageBox} from "../../../src/components/Feedback/KsMessageBox"
 
 const meta: Meta<typeof KsDrawer> = {
     title: "Components/Feedback/KsDrawer",
@@ -87,6 +88,26 @@ export const CustomSize: Story = {
     }),
 }
 
+/** Resizable – drag the edge to resize (native Element Plus dragger); past 95% it counts as full screen */
+export const Resizable: Story = {
+    render: () => ({
+        components: {KsButton, KsDrawer},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open resizable drawer</ks-button>
+                <ks-drawer v-model="visible" resizable destroy-on-close>
+                    <template #header><span>Resizable drawer</span></template>
+                    <p style="padding:16px">Drag the edge to resize. Past 95% it is treated as full screen (the header icon flips).</p>
+                </ks-drawer>
+            </div>
+        `,
+    }),
+}
+
 /** Without header */
 export const NoHeader: Story = {
     render: () => ({
@@ -103,6 +124,32 @@ export const NoHeader: Story = {
                         <p style="margin:0 0 16px">No header bar. Manage close with your own UI.</p>
                         <ks-button type="primary" @click="visible = false">Dismiss</ks-button>
                     </div>
+                </ks-drawer>
+            </div>
+        `,
+    }),
+}
+
+/** Confirm before close – beforeClose intercepts accidental dismissal (X / Escape / overlay) */
+export const ConfirmBeforeClose: Story = {
+    render: () => ({
+        components: {KsButton, KsDrawer},
+        setup() {
+            const visible = ref(false)
+            const beforeClose = (done: () => void) => {
+                KsMessageBox
+                    .confirm("Discard your changes?", "Confirmation", {type: "warning", showCancelButton: true})
+                    .then(() => done())
+                    .catch(() => {})
+            }
+            return {visible, beforeClose}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open guarded drawer</ks-button>
+                <ks-drawer v-model="visible" :before-close="beforeClose" destroy-on-close>
+                    <template #header><h3>Edit something</h3></template>
+                    <p style="padding:16px">Try to close with the X, Escape, or the overlay — you are asked to confirm first.</p>
                 </ks-drawer>
             </div>
         `,

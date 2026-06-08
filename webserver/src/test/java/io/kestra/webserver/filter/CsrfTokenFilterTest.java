@@ -98,6 +98,37 @@ class CsrfTokenFilterTest {
     }
 
     @Test
+    void shouldAcceptPostWithCookieAndAllowedCorsOrigin() {
+        // Given - CORS origin from application-test.yml, no CSRF token needed
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/executions/webhook/unit_test/webhook_test", "")
+            .cookie(Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, basicAuthCookieValue()))
+            .header("Origin", "http://bad-origin");
+
+        // When/Then - should not be rejected by CSRF filter
+        try {
+            var response = client.toBlocking().exchange(request);
+            assertThat(response.getStatus().getCode()).isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
+        } catch (HttpClientResponseException e) {
+            assertThat(e.getStatus().getCode()).isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
+        }
+    }
+
+    @Test
+    void shouldRejectPostWithCookieAndUnknownCorsOrigin() {
+        // Given - unknown origin should NOT bypass CSRF
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/executions/webhook/unit_test/webhook_test", "")
+            .cookie(Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, basicAuthCookieValue()))
+            .header("Origin", "http://unknown-origin");
+
+        // When/Then
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(request)
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.FORBIDDEN.getCode());
+    }
+
+    @Test
     void shouldRejectPostWithCookieAndInvalidCsrfToken() {
         // Given - browser path with an invalid CSRF token
         MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/executions/webhook/unit_test/webhook_test", "")

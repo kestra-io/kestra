@@ -17,6 +17,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
     import {useDocStore} from "../../stores/doc"
+    import {getTheme} from "../../utils/utils"
 
     const docStore = useDocStore()
     const ready = ref(false)
@@ -26,7 +27,7 @@
     })
 
 
-    const theme = ref(localStorage.getItem("theme") === "dark" ? "dark" : "light")
+    const theme = ref(getTheme())
 </script>
 
 <style scoped lang="scss">

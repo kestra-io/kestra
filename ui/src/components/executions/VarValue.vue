@@ -16,7 +16,17 @@
             ({{ humanSize }})
         </KsButton>
     </KsButtonGroup>
-    <KsButtonGroup v-else-if="isURI(value)">
+    <KsButtonGroup v-else-if="Utils.isFile(value) && fileStatus === 'loading'">
+        <KsButton disabled loading size="small" type="primary">
+            {{ $t('download') }}
+        </KsButton>
+    </KsButtonGroup>
+    <KsTooltip v-else-if="Utils.isFile(value) && fileStatus === 'missing'" :content="$t('file unavailable description')">
+        <KsButton disabled size="small" type="primary" :icon="FileAlertOutline">
+            {{ $t('file unavailable') }}
+        </KsButton>
+    </KsTooltip>
+    <KsButtonGroup v-else-if="isURI(value) && !Utils.isFile(value)">
         <KsButton
             type="primary"
             tag="a"
@@ -33,12 +43,15 @@
         <em>null</em>
     </span>
     <div v-else-if="isComplexValue(value)">
-        <Editor
+        <KsEditor
+            v-bind="editorBindings"
             :readOnly="true"
-            :input="true"
-            :showScroll="true"
-            :fullHeight="false"
-            :customHeight="Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length))"
+            :inline="true"
+            :options="{
+                showScroll: true,
+                fullHeight: false,
+                customHeight: Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length)),
+            }"
             :navbar="false"
             :modelValue="JSON.stringify(getDisplayValue(value), null, 2)"
             lang="json"
@@ -54,8 +67,10 @@
     import {ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreview from "./FilePreview.vue"
-    import Editor from "../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
     import {useClient} from "@kestra-io/kestra-sdk"
     import * as Utils from "../../utils/utils"
@@ -78,7 +93,10 @@
         restrictUri: false,
     })
 
+    const editorBindings = useEditorBindings()
+
     const humanSize = ref<string>("")
+    const fileStatus = ref<"loading" | "available" | "missing">("loading")
 
     const isFileValid = (value: unknown): boolean => {
         return Utils.isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B"
@@ -143,11 +161,17 @@
 
     const getFileSize = async (): Promise<void> => {
         if (Utils.isFile(props.value) && props.execution?.id) {
-            try {
-                const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`)
+            humanSize.value = ""
+            fileStatus.value = "loading"
+            const response = await axios.get<FileMetadata>(
+                `${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`,
+                {validateStatus: (status: number) => status === 200 || status === 404 || status === 422},
+            )
+            if (response.status === 200) {
                 humanSize.value = Utils.humanFileSize(response.data.size)
-            } catch (error) {
-                console.error("Failed to fetch file size:", error)
+                fileStatus.value = "available"
+            } else {
+                fileStatus.value = "missing"
             }
         }
     }

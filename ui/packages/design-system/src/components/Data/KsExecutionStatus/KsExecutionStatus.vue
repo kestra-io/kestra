@@ -72,8 +72,8 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     user-select: none;
     vertical-align: middle;
     appearance: none;
-    border: 1px solid var(--ks-border-default);
-    border-radius: 100px;
+    border: none;
+    border-radius: var(--ks-radius-sm);
     background: var(--ks-bg-badge);
     font-family: inherit;
     height: 2rem;
@@ -105,7 +105,7 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
     &.ks-execution-status--small {
         height: 1.5rem;
-        padding: 0.3125rem 0.6875rem;
+        padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
     }
@@ -114,7 +114,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 @each $status in $statusList {
     .ks-execution-status--#{$status} {
         color: var(--ks-status-#{$status});
-        border-color: var(--ks-status-#{$status});
         background-color: var(--ks-status-background-#{$status});
     }
 }

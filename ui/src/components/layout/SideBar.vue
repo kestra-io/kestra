@@ -1,10 +1,13 @@
 <template>
     <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
         <template #header>
-            <div class="header-toolbar">
-                <SidebarToggleButton @toggle="onCollapse(true)" />
-            </div>
-            <Environment />
+            <KsIconButton
+                class="header-toggle"
+                aria-label="Toggle menu"
+                @click="onCollapse(true)"
+            >
+                <DockLeft />
+            </KsIconButton>
         </template>
 
         <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
@@ -51,10 +54,9 @@
     import {computed, h, defineComponent} from "vue"
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem} from "@kestra-io/design-system"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton} from "@kestra-io/design-system"
+    import DockLeft from "vue-material-design-icons/DockLeft.vue"
 
-    import Environment from "./Environment.vue"
-    import SidebarToggleButton from "./SidebarToggleButton.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
@@ -147,6 +149,7 @@
 
 <style scoped lang="scss">
 #side-menu {
+    position: relative;
     width: 215px;
     flex-shrink: 0;
     box-sizing: border-box;
@@ -163,10 +166,11 @@
     padding: 0 var(--ks-spacing-2);
 }
 
-.header-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: calc(-1 * var(--ks-spacing-4));
-    margin-bottom: var(--ks-spacing-2);
+.header-toggle {
+    position: absolute;
+    top: var(--ks-spacing-4);
+    right: var(--ks-spacing-4);
+    z-index: 1;
+    color: var(--ks-icon-muted);
 }
 </style>

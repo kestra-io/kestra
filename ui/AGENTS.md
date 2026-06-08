@@ -27,7 +27,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 3. **Typography comes from `KsText` or typography tokens.** Use `<KsText>` (with `size`, `type`, `tag`, `truncated`, `lineClamp`) for body copy. For headings or one-off needs, use the `$font-family-*` and `$font-size-*` SCSS variables only inside the design-system package — feature code should not redefine them.
 4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream.
 5. **No SCSS variables (`$...`) in feature components.** Use `var(--ks-*)` CSS custom properties inside `<style>` blocks. SCSS variables don't react to dark mode, can't be overridden at runtime, and bind your component to a specific theme. SCSS variables are only acceptable inside `ui/packages/design-system/` itself, in mixins, or for math at build time.
-6. **No magic numbers for theme values.** Spacing, radii, font sizes, and shadows must reference tokens or design-system SCSS variables — never `padding: 13px`, never `border-radius: 6px`. Use `rem` for sizing primitives and tokens for everything theme-aware.
+6. **No magic numbers for theme values.** Spacing, radii, font sizes, and shadows must reference tokens or design-system SCSS variables — never `padding: 13px`, never `border-radius: 6px`. For spacing (`padding`/`margin`/`gap`), reach for the `--ks-spacing-*` scale first (`--ks-spacing-1` = 0.25rem, `-2` = 0.5rem, `-3` = 0.75rem, `-4` = 1rem, `-5` = 1.5rem, `-6` = 2rem, `-7` = 2.5rem, `-8` = 3rem, `-10` = 4rem, `-12` = 5rem, `-16` = 6rem; declared in [`ks-tokens.scss`](packages/design-system/src/assets/styles/ks-tokens.scss)). Only fall back to a raw `rem` value when no token fits — never a hardcoded `px` value (`margin: 0 24px` → `margin: 0 var(--ks-spacing-5)`).
 7. **Never override Element Plus classes directly.** Don't write `.el-button { ... }` in feature code. If a `Ks*` component is missing a behavior, extend the component in the design system instead of patching CSS at the call site.
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
@@ -72,6 +72,7 @@ Reject (or ask to fix) anything that:
 - Adds a `Ks*` component without a Storybook story or test.
 - Mounts `KsDataTable` without binding `:currentPage` / `:pageSize` (or `v-model:currentPage` / `v-model:pageSize`) — pagination is controlled; see "Data tables & pagination state".
 - Watches a `computed` that returns a fresh object (spread / `{...}`) with `{deep: true}` — that fires on every dependency change regardless of content. See "The deep-watch / computed-spread trap".
+- Adds a modal/drawer where the user enters data without guarding accidental dismissal — see "Unsaved input in modals (discard guard)".
 
 ### Accessibility
 
@@ -174,6 +175,30 @@ watch(filterQueryKey, () => dataTable.value?.resetAndReload())
 ```
 
 The general rule: **if you find yourself reaching for `{deep: true}` on a computed source, the source should probably return a primitive (string / number) instead of an object.** Strings compare by value; references compare by identity. Picking the right primitive is the fix.
+
+### Unsaved input in modals (discard guard)
+
+Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. Use the shared `useDiscardGuard` composable — never reimplement the confirm-before-discard logic per modal.
+
+```ts
+// ui/src/composables/useDiscardGuard.ts (import path is relative to your component)
+import {useDiscardGuard} from "../../composables/useDiscardGuard"
+
+// isDirty: true when there is unsaved input worth a prompt
+const {guardedClose} = useDiscardGuard(() => /* isDirty */, {message: t("...")}) // message optional; defaults to "discard changes confirmation"
+const beforeClose = (done: () => void) => guardedClose(() => { reset(); done() })
+```
+
+```vue
+<KsDialog :beforeClose="beforeClose" ... />
+<KsDrawer  :beforeClose="beforeClose" ... />
+```
+
+Rules:
+- **Guard only *accidental* close paths** — overlay click, `Escape`, the `X`. These all go through `beforeClose`. Explicit **Cancel / Save** buttons set `v-model = false` directly and **must not** be guarded (the user already expressed intent; a prompt there is friction). Note: a programmatic `v-model = false` does **not** trigger `beforeClose` (Element Plus only calls it for user-initiated closes), which is exactly why Cancel/Save bypass it.
+- **`isDirty` is per-modal.** Compare current input against a baseline captured on open (`JSON.stringify` snapshot), or "any meaningful input"; **ignore empty rows** (e.g. a blank label/tag row is not dirty). Reset dirty-relevant state on open so a reopen starts clean.
+- **`KsDialog` and `KsDrawer` both expose a `beforeClose` prop** with signature `(done) => void` — call `done()` to proceed with closing. (Element Plus's `ElDrawer.beforeClose` is a prop, not an event; `KsDrawer` forwards it.)
+- **Don't guard** read-only viewers, action/confirmation dialogs, or ephemeral forms that reset on every open.
 
 ### Icons
 
@@ -357,6 +382,7 @@ If your `<style>` block needs to exist:
 
 - `useTheme()` — detects and tracks dark / light mode via MutationObserver. Use this instead of reading `document.documentElement` yourself.
 - `useFilters`, `useSavedFilters`, `useDefaultFilter`, `usePreAppliedFilters`, `useRouteFilterPolicy`, `useTableColumns`, `useDataOptions`, `useDragAndDrop`, `usePeriodicRefresh` — data-table filter composables
+- `useDiscardGuard(isDirty, {message?})` — confirm-before-discard for data-entry modals; see "Unsaved input in modals (discard guard)"
 
 ## Design tokens
 

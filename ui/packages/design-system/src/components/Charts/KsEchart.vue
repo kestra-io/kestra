@@ -6,6 +6,8 @@
         :content="tooltipContent"
         :rawContent="true"
         placement="bottom"
+        popperClass="ks-chart-tooltip"
+        :popperOptions="tooltipPopperOptions"
     >
         <div
             ref="wrapperRef"
@@ -138,6 +140,7 @@
                 tooltip: {
                     trigger: "axis",
                     ...userTooltip,
+                    confine: false,
                     // Move the native tooltip offscreen so ECharts still computes
                     // the axis-pointer snap and calls our formatter, but nothing
                     // is visible to the user.
@@ -167,6 +170,13 @@
     const wrapperRef = ref<HTMLElement | null>(null)
     const tooltipVisible = ref(false)
     const tooltipContent = ref("")
+
+    const tooltipPopperOptions = {
+        modifiers: [
+            {name: "flip", options: {rootBoundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {rootBoundary: "viewport", padding: 8}},
+        ],
+    }
 
     // Defer mounting VChart until the wrapper has real dimensions. ECharts
     // emits "Can't get DOM width or height" if it initializes inside a 0×0
@@ -258,5 +268,10 @@
     .ks-chart__inner {
         width: 100%;
         height: 100%;
+    }
+
+    :global(.ks-chart-tooltip) {
+        max-width: min(20rem, 90vw);
+        overflow-wrap: anywhere;
     }
 </style>

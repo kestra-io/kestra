@@ -1,12 +1,14 @@
 <template>
     <div class="basic-auth-login">
-        <div class="d-flex justify-content-center">
-            <Logo class="logo" />
+        <div class="basic-auth-login__brand">
+            <Logo class="basic-auth-login__logo" />
+            <KsText tag="h1" class="basic-auth-login__title">{{ $t("setup.login_title") }}</KsText>
+            <KsText tag="p" class="basic-auth-login__subtitle">{{ $t("setup.login_subtitle") }}</KsText>
         </div>
 
-        <KsForm @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
+        <KsForm @submit.prevent :model="credentials" ref="form" :rules="rules">
             <input type="hidden" name="from" :value="redirectPath">
-            <KsFormItem prop="username">
+            <KsFormItem prop="username" class="basic-auth-login__field">
                 <KsInput
                     name="username"
                     size="large"
@@ -18,14 +20,9 @@
                     <template #prepend>
                         <Account />
                     </template>
-                    <template #suffix v-if="getFieldError('username')">
-                        <KsTooltip placement="top" :content="getFieldError('username')">
-                            <InformationOutline class="validation-icon error" />
-                        </KsTooltip>
-                    </template>
                 </KsInput>
             </KsFormItem>
-            <KsFormItem prop="password">
+            <KsFormItem prop="password" class="basic-auth-login__field">
                 <KsInput
                     v-model="credentials.password"
                     size="large"
@@ -39,37 +36,33 @@
                     <template #prepend>
                         <Lock />
                     </template>
-                    <template #suffix v-if="getFieldError('password')">
-                        <KsTooltip placement="top" :content="getFieldError('password')">
-                            <InformationOutline class="validation-icon error" />
-                        </KsTooltip>
-                    </template>
                 </KsInput>
             </KsFormItem>
-            <KsFormItem>
+            <KsFormItem class="basic-auth-login__submit">
                 <KsButton
                     type="primary"
                     class="w-100"
                     size="large"
                     nativeType="submit"
                     @click.prevent="handleSubmit"
-                    :disabled="isLoginDisabled"
+                    :disabled="isLoading"
                     :loading="isLoading"
                 >
                     {{ $t("setup.login") }}
                 </KsButton>
             </KsFormItem>
-            <KsFormItem>
-                <KsButton
-                    type="default"
-                    class="w-100"
-                    size="large"
-                    @click="openTroubleshootingGuide"
-                >
-                    {{ $t("setup.troubleshooting") }}
-                </KsButton>
-            </KsFormItem>
         </KsForm>
+
+        <div class="basic-auth-login__footer">
+            <KsButton
+                text
+                type="primary"
+                :icon="OpenInNew"
+                @click="openTroubleshootingGuide"
+            >
+                {{ $t("setup.troubleshooting") }}
+            </KsButton>
+        </div>
     </div>
 </template>
 
@@ -84,7 +77,7 @@
 
     import Account from "vue-material-design-icons/Account.vue"
     import Lock from "vue-material-design-icons/Lock.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
@@ -143,22 +136,7 @@
         password: [{required: true, validator: validatePassword, trigger: "blur"}],
     }))
 
-    const getFieldError = (fieldName: string): string | undefined => {
-        if (!form.value) return undefined
-        const field = form.value.fields?.find((f: any) => f.prop === fieldName)
-        return field?.validateState === "error" ? field.validateMessage : undefined
-    }
-
     const redirectPath = computed(() => route.query.from as string | undefined)
-
-    const isLoginDisabled = computed(() =>
-        !credentials.value.username?.trim() ||
-        !credentials.value.password?.trim() ||
-        !EMAIL_REGEX.test(credentials.value.username) ||
-        !PASSWORD_REGEX.test(credentials.value.password) ||
-        !MailChecker.isValid(credentials.value.username) ||
-        isLoading.value,
-    )
 
     const axios = useClient()
 
@@ -289,25 +267,50 @@
     .basic-auth-login {
         width: 100%;
         max-width: 400px;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        .logo {
-            width: 250px;
-            margin-bottom: 40px;
+        padding: 2rem;
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg);
+        box-shadow: var(--ks-shadow-lg);
+
+        &__brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.75rem;
         }
 
-        .kel-button.kel-button--default {
-            background: var(--ks-bg-tag-hover);
+        &__logo {
+            width: 140px;
+            margin-bottom: 1.25rem;
+        }
 
-            html.dark & {
-                background: var(--ks-bg-input);
+        &__title {
+            margin: 0;
+            font-size: var(--ks-font-size-xl);
+            font-weight: 600;
+            color: var(--ks-text-primary);
+        }
 
-                &.kel-button {
-                    border: 0;
-                }
-            }
+        &__subtitle {
+            margin: 0.25rem 0 0;
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-secondary);
+        }
+
+        &__field {
+            margin-bottom: 1.75rem;
+        }
+
+        &__submit {
+            margin-bottom: 0;
+        }
+
+        &__footer {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.75rem;
         }
 
         .kel-form-item {
@@ -322,13 +325,6 @@
                         height: var(--ks-font-size-xl);
                         bottom: -0.250em;
                     }
-                }
-            }
-
-            .validation-icon {
-                font-size:  var(--ks-font-size-lg);
-                &.error {
-                    color: var(--ks-status-error);
                 }
             }
         }

@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter}" v-else>
+    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
             <slot name="navbar" />
         </nav>
@@ -56,7 +56,7 @@
             </template>
 
             <KsPagination
-                v-if="total && total > 0"
+                v-if="showPagination"
                 :currentPage="currentPageValue"
                 :pageSize="currentSizeValue"
                 :total
@@ -65,7 +65,7 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="mt-3"
+                class="my-3"
             />
         </div>
     </div>
@@ -101,6 +101,7 @@
         selectionMapper?: (element: any) => any
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
+        noGutter?: boolean
     }>(), {
         data: () => [],
         total: 0,
@@ -116,16 +117,25 @@
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
+        noGutter: false,
     })
+
+    export interface SortItem {
+        column: any; 
+        prop: string | null; 
+        order: string | null
+    }
+    
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
         "update:currentPage": [page: number]
         "update:pageSize": [size: number]
-        "sort-change": [sort: {column: any; prop: string; order: string | null}]
+        "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
+        "loaded": []
     }>()
 
     defineSlots<{
@@ -299,10 +309,18 @@
                 isReady.value = true
                 emit("ready")
             }
+            await nextTick()
+            emit("loaded")
         }
     }
 
     const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
+
+    const showPagination = computed(() => {
+        if (!props.total || props.total <= 0) return false
+        const minSize = props.pageSizeOptions.length ? Math.min(...props.pageSizeOptions) : DEFAULT_PAGE_SIZE
+        return props.total > minSize
+    })
 
     const reload = () => callLoad()
 
@@ -361,7 +379,7 @@
         emit("page-changed", {page: 1, size})
     }
 
-    const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
+    const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
             internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
@@ -409,6 +427,14 @@
 
         &.no-pagination-gutter .kel-pagination {
             padding-inline: 0;
+        }
+
+        &.no-gutter {
+            > .ks-data-table-navbar,
+            .ks-data-table-top,
+            .kel-pagination {
+                padding-inline: 0;
+            }
         }
 
         .kel-checkbox__inner {

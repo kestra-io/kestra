@@ -18,6 +18,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -394,15 +396,15 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/pause-delay.yaml" })
+    @LoadFlows(value = { "flows/valids/pause-delay.yaml" }, tenantId = "pause-run-delay")
     public void pauseRunDelay() throws Exception {
-        pauseTest.runDelay(runnerUtils);
+        pauseTest.runDelay("pause-run-delay", runnerUtils);
     }
 
     @Test
-    @LoadFlows({ "flows/valids/pause-duration-from-input.yaml" })
+    @LoadFlows(value = { "flows/valids/pause-duration-from-input.yaml" }, tenantId = "pause-run-duration")
     public void pauseRunDurationFromInput() throws Exception {
-        pauseTest.runDurationFromInput(runnerUtils);
+        pauseTest.runDurationFromInput("pause-run-duration", runnerUtils);
     }
 
     @Test
@@ -759,6 +761,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/waitfor-nested.yaml" }, tenantId = "waitfornested")
+    void waitforNestedThreeLevels() throws Exception {
+        loopUntilTestCaseTest.waitforNestedThreeLevels("waitfornested");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loopuntil-failed-flowable.yaml" }, tenantId = "loopuntilfailedflowable")
+    void loopUntilFailedFlowable() throws Exception {
+        loopUntilTestCaseTest.loopUntilFailedFlowable("loopuntilfailedflowable");
+    }
+
+    @Test
     @LoadFlows("flows/valids/errors.yaml")
     void errors() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -789,6 +803,49 @@ public abstract class AbstractRunnerTest {
 
         Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
         assertThat((String) outputs.get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}Z");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/sequential-sleep.yaml" }, tenantId = "killed-flowable")
+    void killedFlowableTaskRunShouldHaveTerminalAttempt() throws QueueException {
+        // Given — wait until the leaf sleep task is actually running so the Sequential flowable
+        // parent has a live attempt; killing too early could bypass the attempt-update path entirely.
+        Execution running = runnerUtils.runOneUntil(
+            "killed-flowable", NAMESPACE, "sequential-sleep", null, null, Duration.ofSeconds(30),
+            e -> e.getState().isRunning()
+                && e.getTaskRunList() != null
+                && e.getTaskRunList().stream().anyMatch(t -> "sleep".equals(t.getTaskId()) && t.getState().isRunning())
+        );
+
+        // When
+        Execution killed = runnerUtils.killExecution(running);
+
+        // Then — every task run (including the Sequential flowable parent) must be in a terminal
+        // state with its last attempt also terminal, so the UI doesn't show a stuck duration counter.
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        for (TaskRun taskRun : killed.getTaskRunList()) {
+            assertThat(taskRun.getState().isTerminated())
+                .as("taskRun '%s' must be terminal after kill", taskRun.getTaskId())
+                .isTrue();
+            List<TaskRunAttempt> attempts = taskRun.getAttempts();
+            if (attempts != null && !attempts.isEmpty()) {
+                assertThat(attempts.getLast().getState().isTerminated())
+                    .as("last attempt of taskRun '%s' must be terminal after kill", taskRun.getTaskId())
+                    .isTrue();
+            }
+        }
+        // Specifically verify the Sequential flowable parent (seq) has a non-empty attempt list
+        // and that its last attempt is terminal — this is the path fixed by the bug.
+        TaskRun seqTaskRun = killed.getTaskRunList().stream()
+            .filter(t -> "seq".equals(t.getTaskId()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Expected 'seq' task run not found"));
+        assertThat(seqTaskRun.getAttempts())
+            .as("Sequential flowable parent 'seq' must have at least one attempt after kill")
+            .isNotEmpty();
+        assertThat(seqTaskRun.getAttempts().getLast().getState().isTerminated())
+            .as("last attempt of 'seq' must be terminal after kill")
+            .isTrue();
     }
 
 }

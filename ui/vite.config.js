@@ -1,15 +1,41 @@
+// @ts-check
+
 import path from "path"
 import {createLogger, defineConfig, loadEnv} from "vite"
 import vue from "@vitejs/plugin-vue"
 import {federation} from "@module-federation/vite"
 
-// silence some scss warnings about sourceMaps of
-// element-plus/theme-chalk/src in the wrong directory
-// and will not be published in prod builds
+// Silence sourcemap warnings from node_modules that are harmless:
+// - "points to a source file outside its package" (element-plus, etc.)
+// - missing .map files inside monaco-editor (marked.umd.js.map, etc.)
 const logger = createLogger()
+/**
+ * @param {string} msg 
+ * @returns 
+ */
+const isNodeModulesSourcemapWarning = (msg) =>
+    (/sourcemap/i).test(msg) && msg.includes("node_modules") && (
+        msg.includes("points to a source file outside its package") ||
+        msg.includes("An error occurred while trying to read the map file")
+    )
+const loggerWarn = logger.warn.bind(logger)
+/**
+ * @param {string} msg 
+ * @param {any} options 
+ * @returns 
+ */
+logger.warn = (msg, options) => {
+    if (isNodeModulesSourcemapWarning(msg)) return
+    loggerWarn(msg, options)
+}
 const loggerWarnOnce = logger.warnOnce.bind(logger)
+/**
+ * @param {string} msg 
+ * @param {any} options 
+ * @returns 
+ */
 logger.warnOnce = (msg, options) => {
-    if (msg.includes("node_modules/element-plus/theme-chalk/src") && (/sourcemap/i).test(msg)) return
+    if (isNodeModulesSourcemapWarning(msg)) return
     loggerWarnOnce(msg, options)
 }
 
@@ -25,22 +51,6 @@ export default defineConfig(({mode}) => {
         base: "",
         build: {
             outDir: "../webserver/src/main/resources/ui",
-            rollupOptions: {
-                output: {
-                    advancedChunks: {
-                        groups: [
-                            {
-                                test: /src\/components\/dashboard/i,
-                                name: "dashboard",
-                            },
-                            {
-                                test: /src\/components\/flows/i,
-                                name: "flows",
-                            },
-                        ],
-                    },
-                },
-            },
         },
         server: {
             watch: {
@@ -62,14 +72,6 @@ export default defineConfig(({mode}) => {
             dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-                {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
-
-                // to be removed when all mdc import are removed
-                // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
-                {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "#build/mdc-image-component.mjs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "#mdc-imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "#mdc-configs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
             ],
         },
         plugins: [
@@ -87,21 +89,18 @@ export default defineConfig(({mode}) => {
                 shared: {
                     vue: {
                         singleton: true,
-                        eager: true,
-                        requiredVersion: "^3",
+                        
                     },
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
-                        eager: true,
                     },
                     // add all exports of @kestra-io/kestra-sdk as shared singletons
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
-                        .filter((key) => key !== ".")
+                        .filter((key) => key !== "." && !key.endsWith(".json"))
                         .map((key) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {
                                 singleton: true,
-                                eager: true,
                             }]
                         }),
                     ),
@@ -136,7 +135,6 @@ export default defineConfig(({mode}) => {
                 "lodash",
                 "debug",
                 "@braintree/sanitize-url",
-                "monaco-yaml/yaml.worker",
                 "lodash-es",
                 "nprogress",
                 // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.
@@ -153,11 +151,16 @@ export default defineConfig(({mode}) => {
                 "html-to-image",
                 "@module-federation/runtime",
                 "js-yaml",
+                "path-browserify",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",
                 "@kestra-io/design-system",
                 "@kestra-io/topology",
+                "monaco-editor",
+                "monaco-yaml",
+                "monaco-worker-manager",
+                "monaco-marker-data-provider",
             ],
         },
     }

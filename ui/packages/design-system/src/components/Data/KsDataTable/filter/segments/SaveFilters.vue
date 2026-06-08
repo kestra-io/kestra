@@ -24,7 +24,7 @@
                 </template>
             </KsAlert>
             <div>
-                <label>{{ $t("filter.name") }}</label>
+                <label>{{ $t("filter.name.label") }}</label>
                 <KsInput
                     v-model="filterName"
                     :placeholder="$t('filter.enter name')"
@@ -52,7 +52,7 @@
                             class="item"
                         >
                             <span class="key">{{ filter.keyLabel }}</span>
-                            <span class="comparator">{{ filter.comparatorLabel }}</span>
+                            <span class="comparator">{{ comparatorLabelFor(filter) }}</span>
                             <span class="value">{{ filter.valueLabel }}</span>
                         </div>
                     </div>
@@ -80,8 +80,17 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
+    import {useI18n} from "vue-i18n"
     import type {AppliedFilter, SavedFilter} from "../utils/filterTypes"
+    import {isDateRangeValue} from "../utils/filterChipFactory"
     import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
+
+    const {t} = useI18n({useScope: "global"})
+
+    // Range filters render a localized "between" label; everything else uses the
+    // comparator label baked into the model.
+    const comparatorLabelFor = (filter: AppliedFilter): string =>
+        isDateRangeValue(filter.value) ? t("filter.is_between") : filter.comparatorLabel
 
     const props = defineProps<{
         disabled: boolean;

@@ -21,7 +21,6 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :animated="animated"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -93,10 +92,11 @@
                 />
             </div>
             <div v-if="isShowConditionOpen">
-                <Editor
+                <KsEditor
+                    v-bind="editorBindings"
                     :readOnly="true"
-                    :input="true"
-                    :fullHeight="false"
+                    :inline="true"
+                    :options="{fullHeight: false}"
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
@@ -138,15 +138,14 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
-    import Editor from "./Editor.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
+    import {SECTIONS, KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useCoreStore} from "../../stores/core"
@@ -232,6 +231,8 @@
         {immediate: true},
     )
 
+    const editorBindings = useEditorBindings()
+
     const props = withDefaults(
         defineProps<{
             flowGraph: Record<string, any>;
@@ -244,7 +245,6 @@
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
             expandedSubflows?: string[];
-            animated?: boolean;
         }>(),
         {
             flowId: undefined,
@@ -256,7 +256,6 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
-            animated: true,
         })
 
     watch(

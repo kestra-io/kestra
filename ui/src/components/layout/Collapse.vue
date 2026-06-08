@@ -1,7 +1,7 @@
 <template>
     <div class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
-            <KsButton @click="isNavbarVisible = !isNavbarVisible">
+            <KsButton :tooltip="$t('toggle menu')" @click="isNavbarVisible = !isNavbarVisible">
                 <MenuIcon />
             </KsButton>
         </div>

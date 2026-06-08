@@ -78,11 +78,11 @@
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
-                                    <Editor
+                                    <KsEditor
+                                        v-bind="editorBindings"
                                         ref="debugEditor"
-                                        :fullHeight="false"
-                                        :customHeight="20"
-                                        :input="true"
+                                        :options="{fullHeight: false, customHeight: 20}"
+                                        :inline="true"
                                         :navbar="false"
                                         :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
@@ -102,13 +102,12 @@
                                         {{ $t("eval.title") }}
                                     </KsButton>
 
-                                    <Editor
+                                    <KsEditor
+                                        v-bind="editorBindings"
                                         v-if="debugExpression"
                                         :readOnly="true"
-                                        :input="true"
-                                        :showScroll="true"
-                                        :fullHeight="false"
-                                        :customHeight="20"
+                                        :inline="true"
+                                        :options="{showScroll: true, fullHeight: false, customHeight: 20}"
                                         :navbar="false"
                                         :modelValue="debugExpression"
                                         :lang="isJSON ? 'json' : ''"
@@ -164,10 +163,10 @@
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
 
-    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system"
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
-    import Editor from "../../inputs/Editor.vue"
     import VarValue from "../VarValue.vue"
     import SubFlowLink from "../../flows/SubFlowLink.vue"
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue"
@@ -177,6 +176,8 @@
     import * as Utils from "../../../utils/utils"
 
     const {t} = useI18n({useScope: "global"})
+
+    const editorBindings = useEditorBindings()
 
     const editorValue = ref<string>("")
     const debugCollapse = ref<string>("")
@@ -206,7 +207,7 @@
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined)
+            : ((cascader.value?.cascader?.getCheckedNodes(false)?.[0] as any)?.label as string | undefined)
         const taskRunList = [...execution.value?.taskRunList ?? []]
         return taskRunList.find((e) => e.taskId === filter)
     })
@@ -307,13 +308,8 @@
 
     const execution = computed(() => executionsStore.execution)
 
-    function isValidURL(url: string) {
-        try {
-            URL.canParse(url)
-            return true
-        } catch {
-            return false
-        }
+    function isValidURL(url: unknown): boolean {
+        return typeof url === "string" && URL.canParse(url)
     }
 
     const processedValue = (data: TransformedTask) => {
@@ -356,7 +352,7 @@
 
         if (!node?.length) return {label: undefined, value: undefined}
 
-        const {label, value} = node[0]
+        const {label, value} = node[0] as any
 
         return {label, value: value as string}
     }
@@ -423,8 +419,8 @@
                 if(status === 200 && data) {
                     tasksWithOutputs.value = []
                     for(const task of data){
-                        if(task.taskId){
-                            tasksWithOutputs.value?.push(task.taskId)
+                        if(task.taskRunId){
+                            tasksWithOutputs.value?.push(task.taskRunId)
                         }
                     }
                 }
@@ -435,17 +431,19 @@
     )
 
     const outputs = computed<TransformedTask[] | undefined>(() => {
-        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
-            return {
-                label: task.taskId,
-                value: task.taskId,
-                ...task,
-                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
-                icon: true,
-                leaf: !tasksWithOutputs.value?.includes(task.taskId), // Only mark tasks with outputs as non-leaf to trigger lazy loading
-                path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
-            }
-        })
+        const tasks = executionsStore?.execution?.taskRunList
+            ?.filter((task) => tasksWithOutputs.value?.includes(task.id))
+            ?.map((task) => {
+                return {
+                    label: task.taskId,
+                    value: task.taskId,
+                    ...task,
+                    iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
+                    icon: true,
+                    leaf: false,
+                    path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
+                }
+            })
 
         if(!tasks?.length) {
             return undefined
@@ -474,14 +472,14 @@
             getTaskRunOutputs(task.id, task.path).then((children) => {
                 let child: TransformedTask | undefined = children.filter(item => item.leaf === false)[0]
 
-                do {
+                while (child) {
                     selectedLocal.push(child.value)
-                    if(child?.path) {
+                    if(child.path) {
                         expandedValueLocal = child.path
                     }
 
-                    child = child.children?.filter(item => !item.heading)[0]
-                } while(child?.path)
+                    child = child.path ? child.children?.filter(item => !item.heading)[0] : undefined
+                }
 
                 selected.value = selectedLocal
                 if(expandedValueLocal){

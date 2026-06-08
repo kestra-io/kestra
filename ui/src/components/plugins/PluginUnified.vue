@@ -175,7 +175,7 @@
     const getSubgroupDisplayTitle = (subgroup: string) => formatPluginTitle(subgroupTitles.value[subgroup]) ?? formatPluginTitle(subgroup) ?? subgroup
 
     onMounted(async () => {
-        icons.value = await pluginsStore.groupIcons() ?? {}
+        icons.value = await pluginsStore.ensureGroupIcons() ?? {}
         await loadData()
     })
 

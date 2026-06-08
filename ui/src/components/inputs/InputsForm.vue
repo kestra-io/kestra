@@ -12,9 +12,10 @@
             <template #label>
                 <KsMarkdown :content="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                 :data-testid="`input-form-${input.id}`"
@@ -35,12 +36,12 @@
                 clearable
             >
                 <KsOption
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="item in (input.values ?? []).map(toOption)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                 >
-                    <KsMarkdown :content="item" />
+                    <KsMarkdown :content="item.label" />
                 </KsOption>
             </KsSelect>
             <KsRadioGroup
@@ -49,7 +50,7 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <KsRadio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
                 <KsInput
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
@@ -71,12 +72,12 @@
                 :allowCreate="input.allowCustomValue"
             >
                 <KsOption
-                    v-for="item in (input.values ?? input.options)"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                 >
-                    <KsMarkdown :content="item" />
+                    <KsMarkdown :content="item.label" />
                 </KsOption>
             </KsSelect>
             <KsInput
@@ -181,7 +182,7 @@
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
-                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" :tooltip="$t('remove this item')" />
                             <div class="d-flex flex-column controls-input">
                                 <ChevronUp @click="moveArrayItem(input, 'up', index)" />
                                 <ChevronDown @click="moveArrayItem(input, 'down', index)" />
@@ -206,19 +207,20 @@
                     </div>
                 </div>
             </div>
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
@@ -245,15 +247,14 @@
 
 <script setup lang="ts">
     import moment from "moment-timezone"
-    import {KsMessage} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
     import {Execution, useExecutionsStore} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
-    import Editor from "../../components/inputs/Editor.vue"
-    import {KsMarkdown} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {normalize, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
@@ -268,6 +269,8 @@
         message: string;
     }
 
+    type ValueOptionLike = string | {label: string; value: string};
+
     interface InputMetaData {
         id: string;
         type: InputType
@@ -276,8 +279,8 @@
         required?: boolean;
         defaults?: unknown;
         value?: unknown;
-        values?: string[];
-        options?: string[];
+        values?: ValueOptionLike[];
+        options?: ValueOptionLike[];
         errors?: InputError[];
         isDefault?: boolean;
         isRadio?: boolean;
@@ -287,6 +290,10 @@
         allowedFileExtensions?: string[];
         accept?: string;
         prefill?: unknown;
+    }
+
+    function toOption(item: ValueOptionLike): {label: string; value: string} {
+        return typeof item === "string" ? {label: item, value: item} : item
     }
 
     interface SelectedTrigger {
@@ -340,6 +347,7 @@
     const executionsStore = useExecutionsStore()
     const {t} = useI18n()
     const instance = getCurrentInstance()
+    const editorBindings = useEditorBindings()
 
     // Reactive state
     // Using 'any' type for v-model compatibility with various Element Plus components

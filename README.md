@@ -5,11 +5,11 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Event-Driven Declarative Orchestration Platform
+    Open-source orchestration platform for data, AI, and infrastructure workflows
 </h1>
 
 <div align="center">
- <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?color=blueviolet" alt="Last Version" /></a>
+ <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/v/tag/kestra-io/kestra.svg?sort=semver&include_prereleases&color=blueviolet" alt="Last Version" /></a>
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="License" /></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Github star" /></a> <br>
 <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?color=blueviolet" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
@@ -19,7 +19,7 @@
 <br />
 
 <p align="center">
-  <a href="https://twitter.com/kestra_io" style="margin: 0 10px;">
+  <a href="https://x.com/kestra_io" style="margin: 0 10px;">
         <img height="25" src="https://kestra.io/twitter.svg" alt="twitter" width="35" height="25" /></a>
   <a href="https://www.linkedin.com/company/kestra/" style="margin: 0 10px;">
         <img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" width="35" height="25" /></a> 
@@ -44,7 +44,21 @@
 
 ## 🌟 What is Kestra?
 
-Kestra is an open-source, event-driven orchestration platform that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable [workflows](https://kestra.io/docs/getting-started) directly from the UI in just a few lines of YAML.
+Kestra is an open-source, event-driven orchestration platform for data, AI, and infrastructure workflows. It unifies **scheduled** and **event-driven** automation behind a declarative, language-agnostic interface. By bringing **Infrastructure as Code** best practices to your data, process, and microservice pipelines, you can build reliable [workflows](https://kestra.io/docs/quickstart) directly from the UI in just a few lines of YAML.
+
+## 📖 Table of Contents
+
+- [🚀 Quick Start](#-quick-start)
+- [🧩 Plugin Ecosystem](#-plugin-ecosystem)
+- [📚 Key Concepts](#-key-concepts)
+- [🎨 Build Workflows Visually](#-build-workflows-visually)
+- [🔧 Extensible and Developer-Friendly](#-extensible-and-developer-friendly)
+- [🌐 Join the Community](#-join-the-community)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [⭐️ Stay Updated](#️-stay-updated)
+
+
 
 **Key Features:**
 - **Everything as Code and from the UI:** keep **workflows as code** with a **Git Version Control** integration, even when building them from the UI.
@@ -61,7 +75,9 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 
 
 <p align="center">
-  <img src="https://kestra.io/adding-tasks.gif" alt="Adding new tasks in the UI">
+  <video src="https://github.com/user-attachments/assets/8bb47d22-848d-4281-a0ca-9790803ce1ea" autoplay loop muted playsinline width="640">
+    Your browser does not support the video tag. <a href="https://go.kestra.io/video/product-overview">Watch the demo here</a>.
+  </video>
 </p>
 
 ---
@@ -72,7 +88,7 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 
 Deploy Kestra on AWS using our CloudFormation template:
 
-[![Launch Stack](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kestra-deployment-templates.s3.eu-west-3.amazonaws.com/aws/cloudformation/ec2-rds-s3/kestra-oss.yaml&stackName=kestra-oss)
+[![Launch Stack](https://cdn.jsdelivr.net/gh/buildkite/cloudformation-launch-stack-button-svg@master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kestra-deployment-templates.s3.eu-west-3.amazonaws.com/aws/cloudformation/ec2-rds-s3/kestra-oss.yaml&stackName=kestra-oss)
 
 ### Launch on Google Cloud (Terraform deployment)
 

@@ -14,7 +14,7 @@
                 class="header"
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
-                <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
+                <span :style="levelStyle" class="log-level">{{ levelLabel }}</span>
                 <span class="header-badge text-secondary">
                     {{ Filters.date(log.timestamp, "iso") }}
                 </span>
@@ -115,6 +115,11 @@
         return result
     })
 
+    const levelLabel = computed(() => {
+        const level = props.log?.level ?? ""
+        return level.charAt(0).toUpperCase() + level.slice(1).toLowerCase()
+    })
+
     const levelStyle = computed(() => {
         const lowerCaseLevel = props.log?.level?.toLowerCase()
         return {
@@ -188,10 +193,19 @@ div.line {
     }
 
     .log-level {
-        padding: .25rem;
-        margin-top: 0;
         display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 1;
+        white-space: nowrap;
         vertical-align: middle;
+        user-select: none;
+        font-family: var(--ks-font-family-sans);
+        font-weight: 500;
+        border: 1px solid;
+        border-radius: var(--ks-radius-sm);
+        padding: 0.5rem 0.75rem;
+        font-size: var(--ks-font-size-sm);
     }
 
     .log-content {
@@ -216,6 +230,9 @@ div.line {
             margin: 0;
             padding: 0;
             font-size: inherit;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
     }
 
@@ -244,11 +261,6 @@ div.line {
         & a {
             border-radius: var(--kel-border-radius-base);
         }
-
-        &.log-level {
-            white-space: pre;
-            border-radius: 4px;
-        }
     }
 
     .message {
@@ -260,12 +272,6 @@ div.line {
     p, :deep(.log-content p) {
         display: inline;
         margin-bottom: 0;
-    }
-
-    .log-level {
-        padding: 0.25rem;
-        border: 1px solid var(--ks-border-default);
-        user-select: none;
     }
 
     :deep(.clipboard) {

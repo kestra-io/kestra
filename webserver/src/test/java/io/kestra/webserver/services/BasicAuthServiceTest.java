@@ -83,7 +83,7 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    @FlakyTest
+    @FlakyTest(description = "Async event propagation race in BasicAuthService initialization")
     void isBasicAuthInitialized() {
         var tmpSettingsRepo = new InMemorySettingRepository();
         var basicAuthConfiguration = new ConfigWrapper(

@@ -12,9 +12,7 @@
                 @click="collapse()"
             >
                 <KsTooltip :content="$t('collapse')">
-                    <ArrowCollapse class="button-icon" alt="Collapse task" />
-
-
+                    <UnfoldLessHorizontal class="button-icon" alt="Collapse task" />
                 </KsTooltip>
             </span>
         </div>
@@ -22,7 +20,7 @@
 </template>
 <script setup lang="ts">
     import {computed} from "vue"
-    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
+    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import {KsTooltip} from "@kestra-io/design-system"
     import {EVENTS} from "../utils/constants"
     import * as Utils from "../utils/utils"
@@ -51,17 +49,12 @@
 </script>
 <style scoped lang="scss">
     .circle-button {
-        border-radius: 1rem;
-        width: 1rem;
-        height: 1rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         pointer-events: auto !important;
     }
 
     .button-icon {
         font-size: 0.75rem;
+        transform: rotate(45deg);
     }
 
     .cluster-badge {

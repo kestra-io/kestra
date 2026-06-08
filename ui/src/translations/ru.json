@@ -31,6 +31,7 @@
     "add at position": "Добавить {position} <code>{task}</code>",
     "add error handler": "Добавить обработчик ошибок",
     "add flow": "Добавить flow",
+    "add label": "Добавить label",
     "add task": "Добавить задачу",
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "add_new_item": "Добавить новый элемент",
@@ -57,6 +58,7 @@
           "test": "Генерация тестового YAML для вас..."
         },
         "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow. Пример запроса: Создайте flow, который запускается каждый понедельник в 9 утра.",
+        "select_provider": "Выберите провайдера",
         "title": "AI Агент"
       }
     },
@@ -83,6 +85,7 @@
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
+      "all": "Все",
       "apps": "Черновики приложений",
       "community": "Сообщество",
       "create": "Создать blueprint",
@@ -102,6 +105,7 @@
     },
     "bookmark": "Закладки",
     "bulk action async warning": "Это может занять несколько минут.",
+    "bulk actions": "Массовые действия",
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
     "bulk delete backfills": "Удалить {count} заполнение",
@@ -449,6 +453,8 @@
     "disabled": "Отключено",
     "disabled flow desc": "Этот flow отключен, пожалуйста, включите его для выполнения.",
     "disabled flow title": "Этот flow отключен",
+    "discard changes confirmation": "У вас есть несохраненные изменения. Вы уверены, что хотите их отменить?",
+    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "display direct sub tasks count": "Показать количество прямых подзадач",
     "display flow {id} executions": "Показать выполнения flow {id}",
     "display metric for specific task": "Показать метрику для конкретной задачи",
@@ -550,6 +556,10 @@
         "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
         "title": "У вас еще нет Kill Switches!"
       },
+      "mcpToolFlows": {
+        "content": "Представьте flow как инструмент MCP, добавив в него <code>McpToolTrigger</code>. Подробнее о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> читайте в нашей документации.",
+        "title": "На этом сервере еще не зарегистрированы tool flows."
+      },
       "panels": {
         "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Namespace Files, Blueprints, Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
@@ -586,6 +596,7 @@
     "encoding": "Кодировка",
     "end date": "Дата окончания",
     "end datetime": "Дата и время окончания",
+    "environment": "Окружение",
     "environment color setting": "Цвет окружения",
     "environment name setting": "Имя окружения",
     "error": "Ошибка",
@@ -620,6 +631,7 @@
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
+    "execution id": "Идентификатор выполнения",
     "execution labels": "Метки выполнения",
     "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
@@ -691,6 +703,8 @@
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
+    "file unavailable": "Файл недоступен",
+    "file unavailable description": "Этот файл больше недоступен — возможно, он был удален или срок его действия истек.",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
     "filter by log level": "Фильтр по уровню log",
@@ -958,11 +972,12 @@
       "tab_tool_flows_placeholder": "Управление flow инструментами скоро появится.",
       "tools": {
         "annotations": "Аннотации",
+        "create_tool_flow": "Создать flow инструмента",
         "description": "Описание",
         "destructive": "Деструктивный",
         "flow": "flow",
         "idempotent": "Идемпотентный",
-        "no_tools": "На этом сервере ещё не зарегистрировано ни одного tool flow. Добавьте `McpToolTrigger` в flow, чтобы отобразить его здесь.",
+        "no_tools": "Нет flow, соответствующих вашему запросу.",
         "open_world": "Open world",
         "read_only": "Только чтение",
         "return_direct": "Прямой возврат",
@@ -983,6 +998,7 @@
     "modify inputs": "Изменить inputs",
     "modify_inputs": "Изменить inputs",
     "monogram": "Монограмма",
+    "more actions": "Дополнительные действия",
     "more_actions": "Больше действий",
     "multi_panel_editor": {
       "close_all_panels": "Закрыть все панели",
@@ -998,9 +1014,11 @@
       "create": {
         "file": "Создать файл",
         "file_already_exists": "Файл с таким именем уже существует",
+        "file_conflicts_with_folder": "Папка с таким именем уже существует",
         "file_error": "Произошла ошибка при создании файла",
         "folder": "Создать папку",
         "folder_already_exists": "Папка с таким именем уже существует",
+        "folder_conflicts_with_file": "Файл с таким именем уже существует",
         "folder_error": "Произошла ошибка при создании папки",
         "label": "Создать"
       },
@@ -1103,6 +1121,7 @@
       "title": "Начните автоматизацию с"
     },
     "no_code": {
+      "add_field": "Добавить {field}",
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "clearSelection": "Очистить выбор",
@@ -1362,6 +1381,7 @@
       "next": "Следующая страница",
       "previous": "Предыдущая страница"
     },
+    "panel actions": "Действия панели",
     "parent execution": "Родительское выполнение",
     "password": "Пароль",
     "password empty constraint": "Неверное имя пользователя или пароль",
@@ -1388,6 +1408,7 @@
       "toggle": "Песочница",
       "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
     },
+    "playground actions": "Действия Playground",
     "plugin defaults exported": "Экспортированы значения по умолчанию плагина",
     "plugin defaults imported": "Параметры плагина по умолчанию импортированы",
     "plugin defaults not imported": "Некоторые значения по умолчанию для плагинов не удалось импортировать",
@@ -1412,16 +1433,51 @@
       "yaml_configuration": "Конфигурация YAML"
     },
     "pluginPage": {
-      "alt": "Иконка плагинов",
+      "elementType": {
+        "apps": "Приложение",
+        "charts": "График",
+        "conditions": "Условие",
+        "logExporters": "Экспортер логов",
+        "secrets": "Секрет",
+        "taskRunners": "Запуск задачи",
+        "tasks": "Задача",
+        "triggers": "Триггер"
+      },
+      "group": {
+        "blueprints": "Чертежи ({count})",
+        "plugins": "Плагины ({count})",
+        "tasks": "Задачи ({count})"
+      },
+      "header": {
+        "back": "Назад к плагинам",
+        "certified": "Сертифицированный",
+        "enterpriseEdition": "Энтерпрайз-версия"
+      },
+      "loadError": "Не удалось загрузить плагины. Пожалуйста, попробуйте снова.",
+      "noResults": "Нет плагинов, соответствующих вашему запросу.",
+      "notFound": "Этот плагин не найден.",
+      "overview": {
+        "createdBy": "Создано пользователем",
+        "latest": "Последние",
+        "linksResources": "Ссылки и ресурсы",
+        "managedBy": "Управляется",
+        "minKestraVersion": "Минимальная совместимая версия Kestra: {version}",
+        "minKestraVersionShort": "Минимальная версия Kestra {version}",
+        "pluginType": "Тип плагина",
+        "previousVersions": "Предыдущие версии",
+        "releaseNotes": "Примечания к выпуску",
+        "title": "Обзор",
+        "versions": "Версии"
+      },
       "search": "Поиск среди {count}+ плагинов",
+      "searchTasks": "Искать {count} tasks",
       "sort": {
-        "most_used": "Наиболее используемые",
-        "name_asc": "Имя A-Я",
-        "name_desc": "Имя Я-А",
+        "mostUsed": "Наиболее используемые",
+        "nameAsc": "Имя A-Я",
+        "nameDesc": "Имя Я-А",
         "newest": "Новейшие"
       },
-      "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
-      "title2": "Ищите tasks и triggers для создания вашего flow."
+      "sortBy": "Сортировать по"
     },
     "plugin_default_already_exists": "Плагин по умолчанию для <code>{type}</code> уже существует.",
     "plugins": {
@@ -1464,6 +1520,8 @@
     "relative": "Относительный",
     "relative end date": "Относительная дата окончания",
     "relative start date": "Относительная дата начала",
+    "remove label": "Удалить label",
+    "remove this item": "Удалить этот элемент",
     "remove_bookmark": "Вы уверены, что хотите удалить эту закладку?",
     "replay": "Повтор",
     "replay confirm": "Вы уверены, что хотите повторить это выполнение <code>{id}</code> и создать новое?",
@@ -1573,6 +1631,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "Секунды между автоматическими обновлениями данных на страницах списков.",
+            "default_namespace": "Используется при создании новых flow без namespace.",
+            "editor_type": "Редактор, отображаемый при открытии flow в первый раз.",
+            "execute_default_tab": "Вкладка выбрана при переходе к выполнению.",
+            "execute_flow": "Где результаты выполнения открываются после запуска.",
+            "flow_default_tab": "Вкладка выбрана при переходе к flow.",
+            "log_display": "Как отображаются логи при открытии выполнения.",
+            "log_level": "Минимальный уровень log, отображаемый в execution logs.",
+            "playground": "Запускайте задачи по отдельности в редакторе playground."
+          },
           "fields": {
             "auto_refresh_interval": "Интервал автоматического обновления",
             "default_namespace": "Namespace по умолчанию",
@@ -1596,6 +1665,11 @@
           "label": "Экспорт"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "Формат, используемый для отображения дат на панели управления.",
+            "language": "Язык интерфейса для меню и меток.",
+            "time_zone": "Используется для отображения дат выполнения и запланированных trigger."
+          },
           "fields": {
             "date_format": "Формат даты",
             "time_zone": "Часовой пояс"
@@ -1611,12 +1685,29 @@
           "unsaved_warning": "У вас есть несохраненные изменения. Хотите сохранить их перед выходом?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Темный 1.0",
+            "dark_2": "Темный 2.0",
+            "light": "Светлый",
+            "sync": "Синхронизировать с системой"
+          },
+          "descriptions": {
+            "color_mode": "Выберите предпочитаемый интерфейсный модус.",
+            "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
+            "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
+            "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
+            "editor_hover_description": "Показывать описания свойств при наведении в редакторе.",
+            "environment_color": "Цвет акцента, используемый для текущей среды в навигации.",
+            "environment_name": "Отображаемое имя для текущей среды, показанное в навигации.",
+            "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах."
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Классический",
               "kestra": "Kestra",
               "label": "Цветовая схема диаграммы"
             },
+            "color_mode": "Режим цвета",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
@@ -1630,7 +1721,8 @@
           "label": "Настройки темы"
         }
       },
-      "label": "Настройки"
+      "label": "Настройки",
+      "updated": "{name} обновлено"
     },
     "setup": {
       "config": {
@@ -1653,6 +1745,8 @@
         "password_requirements": "Не менее 8 символов, включая 1 заглавную букву и 1 цифру."
       },
       "login": "Войти",
+      "login_subtitle": "Введите свои учетные данные для доступа к вашему экземпляру Kestra",
+      "login_title": "Войти",
       "logout": "Выход",
       "steps": {
         "complete": "Запустить Kestra UI",
@@ -1789,6 +1883,7 @@
     "to": "До",
     "to toggle": "переключить",
     "toggle fullscreen": "Переключить полноэкранный режим",
+    "toggle menu": "Переключить меню",
     "toggle output": "Переключить выводы",
     "toggle output display": "Переключить отображение вывода",
     "toggle periodic refresh each x seconds": "Переключить периодическое обновление каждые {interval} секунд",
@@ -1899,10 +1994,12 @@
     "usage": "Использование",
     "use": "Использовать",
     "use_dark_background": "Используйте эту версию при работе на темном фоне, чтобы наше имя оставалось читаемым.",
+    "valid": "Действительный",
     "validate": "Проверить",
     "value": "Значение",
     "variables": "Переменные",
     "version": "Версия",
+    "view metrics": "Просмотр метрик",
     "warning": "Предупреждение",
     "warning detected": "Обнаружены предупреждения",
     "warning flow with triggers": "Этот flow содержит triggers, и ручное выполнение завершится неудачей, если этот flow зависит от trigger выражений.",

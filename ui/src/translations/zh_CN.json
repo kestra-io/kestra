@@ -453,6 +453,8 @@
     "disabled": "禁用",
     "disabled flow desc": "此流程已禁用，请启用以执行。",
     "disabled flow title": "此流程已禁用",
+    "discard changes confirmation": "您有未保存的更改。您确定要放弃它们吗？",
+    "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "display direct sub tasks count": "显示直接子任务数量",
     "display flow {id} executions": "显示流程 {id} 的执行",
     "display metric for specific task": "显示特定任务的指标",

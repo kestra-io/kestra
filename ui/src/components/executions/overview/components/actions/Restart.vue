@@ -7,8 +7,16 @@
         popperClass="ks-restart-tooltip--no-pointer"
         rawContent
     >
+        <NavBarAction
+            v-if="asItem"
+            :icon="icon"
+            :disabled="!enabled"
+            @click="isOpen = !isOpen"
+        >
+            {{ $t(replayOrRestart) }}
+        </NavBarAction>
         <component
-            v-if="component !== 'el-dropdown-item'"
+            v-else-if="component !== 'el-dropdown-item'"
             v-bind="$attrs"
             :is="component"
             :icon="icon"
@@ -173,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, inject} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
@@ -187,8 +195,12 @@
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {KsId} from "@kestra-io/design-system"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
+    import {asItemKey} from "../../../../layout/navBarActionsContext"
 
     defineOptions({inheritAttrs: false})
+
+    const asItem = inject(asItemKey, false)
 
     const props = defineProps({
         component: {type: String, default: "el-button"},

@@ -118,6 +118,7 @@
         width: 10px;
         height: 10px;
         margin-right: 5px;
+        border-radius: 50%;
     }
 }
 </style>

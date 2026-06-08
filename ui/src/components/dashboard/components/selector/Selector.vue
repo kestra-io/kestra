@@ -1,6 +1,6 @@
 <template>
     <template v-if="asItem">
-        <KsDropdownItem :icon="SwapHorizontal" @click="isOpen = true">
+        <KsDropdownItem :icon="ChartLineVariant" @click="isOpen = true">
             {{ selected?.title ?? $t("dashboards.default") }}
         </KsDropdownItem>
         <KsDialog
@@ -25,16 +25,16 @@
             />
         </KsDialog>
     </template>
-    <KsDropdown v-else trigger="click" hideOnClick placement="bottom-end">
+    <KsDropdown v-else trigger="click" hideOnClick :placement>
         <slot>
-            <KsButton :icon="SwapHorizontal" class="selected">
+            <KsButton :icon="ChartLineVariant" class="selected">
                 <span v-if="!verticalLayout" class="text-truncate">
                     {{ selected?.title ?? $t('dashboards.default') }}
                 </span>
             </KsButton>
         </slot>
         <template #dropdown>
-            <KsDropdownMenu class="p-3 dropdown">
+            <KsDropdownMenu class="p-2 dropdown">
                 <Content
                     :dashboards="dashboards"
                     :selected="selected"
@@ -73,7 +73,9 @@
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
 
-    import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue"
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
+
+    withDefaults(defineProps<{placement?: string}>(), {placement: "bottom-end"})
 
     const emits = defineEmits<{dashboard: [id: string]}>()
 
@@ -142,6 +144,9 @@
     }
 }
 .dropdown {
-    width: 300px;
+    width: 18rem;
+}
+.kel-dropdown {
+    line-height: 1.5;
 }
 </style>

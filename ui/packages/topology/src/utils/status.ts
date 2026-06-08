@@ -17,7 +17,7 @@ export interface StatusStyle {
 const SUCCESS: StatusStyle = {
     icon: CheckCircleOutline,
     textVar: "--ks-text-success",
-    bg: "color-mix(in srgb, var(--ks-status-success) 10%, var(--ks-bg-surface))",
+    bg: "var(--ks-topology-bg-success)",
     border: "var(--ks-border-success)",
 }
 

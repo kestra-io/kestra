@@ -1,6 +1,6 @@
 <template>
     <ExecutionPending
-        v-if="!isExecutionStarted"
+        v-if="isQueued"
         :execution="execution!"
     />
     <template v-else-if="execution && executionsStore.flow">
@@ -12,7 +12,7 @@
                     {{ t("execution_status") }}
                     <KsExecutionStatus :status="execution.state.current" />
                 </span>
-                <span class="gantt-empty-hint">{{ emptyStateHint }}</span>
+                <span v-if="emptyStateHint" class="gantt-empty-hint">{{ emptyStateHint }}</span>
             </template>
         </KsEmptyState>
         <template v-else>
@@ -404,20 +404,16 @@
             })
     })
 
-    const isExecutionStarted = computed<boolean>(() => {
-        return !!execution.value?.state?.current && !["CREATED", "QUEUED"].includes(execution.value.state.current)
-    })
 
-    // Supporting line shown under the status badge when the Gantt has no task runs to plot.
+    const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
+
     const emptyStateHint = computed<string>(() => {
         const current = execution.value?.state?.current
-        // The execution reached a terminal state (e.g. cancelled or failed by a
-        // concurrency limit) before any task started — nothing will ever be plotted.
-        if (current && !State.isRunning(current)) {
+        const isPending = current === "CREATED" || current === "QUEUED"
+        if (current && !isPending && !State.isRunning(current)) {
             return t("gantt_no_tasks_executed")
         }
-        // The execution is running but its first task run has not been created yet.
-        return t("execution_starts_progress")
+        return `${t("no_tasks_running")}\n${t("execution_starts_progress")}`
     })
 
     const hasValidDate = computed<boolean>(() => isFinite(delta()))

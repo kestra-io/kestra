@@ -9,7 +9,7 @@ const FLOW_ID = "qa_flow_concurrency";
 const EXECUTION_ID = "12HqIIvMvw5K1k5Zksxgus";
 
 // States the Gantt renders an empty view for (an execution with no task runs).
-const STATE_OPTIONS = ["CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
+const STATE_OPTIONS = ["CREATED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
 
 const FLOW = {
     id: FLOW_ID,
@@ -88,6 +88,10 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+export const Created: Story = {
+    args: { state: "CREATED" },
+};
 
 export const Cancelled: Story = {
     args: { state: "CANCELLED" },

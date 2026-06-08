@@ -10,6 +10,7 @@
                 :source="flowStore.flow?.source"
                 :execution="execution"
                 :expandedSubflows="expandedSubflows"
+                :horizontalDefault="horizontalDefault"
                 isReadOnly
                 @follow="$emit('follow', $event)"
                 viewType="topology"
@@ -30,6 +31,12 @@
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
+
+    withDefaults(defineProps<{
+        horizontalDefault?: boolean
+    }>(), {
+        horizontalDefault: undefined,
+    })
 
     const emit = defineEmits<{
         follow: [event: unknown]
@@ -193,7 +200,7 @@
 </script>
 <style scoped lang="scss">
     .kel-card {
-        height: calc(100vh - 174px);
+        height: var(--topology-height, calc(100vh - 174px));
         position: relative;
         background-color: var(--ks-bg-base);
 

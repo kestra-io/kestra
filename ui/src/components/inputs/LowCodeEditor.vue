@@ -104,10 +104,10 @@
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
-                <Editor
+                <KsEditor
                     :readOnly="true"
-                    :input="true"
-                    :fullHeight="false"
+                    :inline="true"
+                    :options="{fullHeight: false}"
                     :navbar="false"
                     :modelValue="selectedTask[customActionMeta.taskProp]"
                     :lang="customActionMeta.lang"
@@ -286,6 +286,13 @@
 
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+
+    watch(() => props.horizontalDefault, (value) => {
+        if (value !== undefined && value !== isHorizontal.value) {
+            isHorizontal.value = value
+            fitViewOrientation()
+        }
+    })
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const taskEditData = ref()
@@ -428,7 +435,7 @@
                     params: {
                         namespace: data.link.namespace,
                         flowId: data.link.id,
-                        tab: "topology",
+                        tab: "overview",
                         id: data.link.executionId,
                     },
                 }).href,

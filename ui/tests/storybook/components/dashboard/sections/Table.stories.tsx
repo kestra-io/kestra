@@ -35,26 +35,30 @@ const meta: Meta<typeof Table> = {
 
 export default meta;
 
+const id1 = "2wJlDoXRsMc7jXJfQUWTE7"
+const id2 = "2yiYHSqLwNbocm9FB8qK5L"
+const id3 = "2Iq5tjur4bB9fRYYazstV4"
+const id4 = "69d95APmpdw94OkaMduCep"
+
 export const SimpleExecutionsCase: StoryObj<typeof Table> = {
     render: () => ({
         setup() {
             const store = {} as any;
             store.post = async function (uri: string) {
                 if (uri.includes("charts/executions_finished")) {
-
                     return {
                         data: {
                             results: [
                                 {
                                     "namespace": "company.team",
-                                    "id": "2wJlDoXRsMc7jXJfQUWTE7",
+                                    "id": id1,
                                     "state": "RUNNING",
                                     "flow": "sleep",
                                     "start_date": "2025-11-25T09:28:00.000+00:00",
                                 },
                                 {
                                     "namespace": "company.team",
-                                    "id": "2yiYHSqLwNbocm9FB8qK5L",
+                                    "id": id2,
                                     "state": "RUNNING",
                                     "flow": "sleep",
                                     "start_date": "2025-11-25T09:28:00.000+00:00"
@@ -62,7 +66,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
                                 {
                                     "duration": 6,
                                     "namespace": "company.team",
-                                    "id": "2Iq5tjur4bB9fRYYazstV4",
+                                    "id": id3,
                                     "state": "SUCCESS",
                                     "flow": "sleep",
                                     "end_date": "2025-11-25T09:27:00.000+00:00",
@@ -70,7 +74,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
                                 },
                                 {
                                     "namespace": "company.team",
-                                    "id": "69d95APmpdw94OkaMduCep",
+                                    "id": id4,
                                     "state": "RUNNING",
                                     "flow": "sleep",
                                     "start_date": "2025-11-25T09:27:00.000+00:00"
@@ -79,6 +83,8 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
                             total: 4
                         }
                     }
+                } else {
+                    console.warn("Unknown URI", uri)
                 }
                 return {results: []}
             }
@@ -124,9 +130,9 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
     }),
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText("2wJlDoXR")).toBeVisible();
-        await expect(await canvas.findByText("2yiYHSqL")).toBeVisible();
-        await expect(await canvas.findByText("2Iq5tjur")).toBeVisible();
-        await expect(await canvas.findByText("69d95APm")).toBeVisible();
+        await expect(await canvas.findByText(id1.slice(0, 8))).toBeVisible();
+        await expect(await canvas.findByText(id2.slice(0, 8))).toBeVisible();
+        await expect(await canvas.findByText(id3.slice(0, 8))).toBeVisible();
+        await expect(await canvas.findByText(id4.slice(0, 8))).toBeVisible();
     }
 }

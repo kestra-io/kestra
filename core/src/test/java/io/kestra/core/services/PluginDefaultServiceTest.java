@@ -220,8 +220,10 @@ class PluginDefaultServiceTest {
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
         FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
 
-        // Then
-        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(2));
+        // Then — forced defaults follow admin-first precedence (kestra-ee#8262): they stamp over the
+        // accumulated result, so the LAST matching forced default wins. With two same-level forced
+        // defaults the later-declared one (set: 3) wins, not the earlier one.
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(3));
     }
 
     @Test

@@ -133,7 +133,7 @@ public class MiscController {
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
-            .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
+            .isAnonymousUsageEnabled(isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
             .preview(

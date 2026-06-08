@@ -453,6 +453,8 @@
     "disabled": "अक्षम",
     "disabled flow desc": "यह flow अक्षम है, कृपया इसे निष्पादित करने के लिए सक्षम करें।",
     "disabled flow title": "यह flow अक्षम है",
+    "discard changes confirmation": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप वाकई उन्हें छोड़ना चाहते हैं?",
+    "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "display direct sub tasks count": "प्रत्यक्ष उप-कार्य गणना प्रदर्शित करें",
     "display flow {id} executions": "Flow {id} निष्पादन प्रदर्शित करें",
     "display metric for specific task": "विशिष्ट task के लिए मेट्रिक प्रदर्शित करें",

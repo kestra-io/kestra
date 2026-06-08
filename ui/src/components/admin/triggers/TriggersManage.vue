@@ -127,9 +127,9 @@
                             v-if="scope.row.namespace && scope.row.flowId"
                             :to="{name: 'flows/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, id: scope.row.flowId}}"
                         >
-                            {{ invisibleSpace(scope.row.flowId) }}
+                            <BreakableText :value="scope.row.flowId" />
                         </router-link>
-                        <span v-else>{{ invisibleSpace(scope.row.flowId) }}</span>
+                        <span v-else><BreakableText :value="scope.row.flowId" /></span>
                         <MarkdownTooltip
                             v-if="scope.row.namespace && scope.row.flowId"
                             :id="scope.row.namespace + '-' + scope.row.flowId"
@@ -138,7 +138,7 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        {{ invisibleSpace(scope.row.namespace) }}
+                        <BreakableText :value="scope.row.namespace" />
                     </template>
                     <template v-else-if="col.prop === 'workerId'">
                         <KsId :value="scope.row.workerId" :shrink="true" />
@@ -329,7 +329,7 @@
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {invisibleSpace} from "../../../utils/filters"
+    import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
     import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
     import {useExecutionsStore} from "../../../stores/executions"

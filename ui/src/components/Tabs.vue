@@ -142,6 +142,10 @@
         {deep: true},
     )
 
+    watch(activeTab, () => {
+        selectedBlueprintId.value = undefined
+    })
+
     onMounted(syncStore)
     onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
 

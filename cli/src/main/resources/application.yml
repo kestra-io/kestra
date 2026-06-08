@@ -271,6 +271,12 @@ kestra:
   async-operations:
     wait-timeout: PT30S
 
+  tasks:
+    sdk:
+      authentication:
+        username: ${kestra.server.basic-auth.username:}
+        password: ${kestra.server.basic-auth.password:}  
+
 otel:
   exclusions:
     - /ping

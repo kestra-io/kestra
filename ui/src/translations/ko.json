@@ -453,6 +453,8 @@
     "disabled": "비활성화됨",
     "disabled flow desc": "이 flow는 비활성화되어 있습니다. 실행하려면 활성화하세요.",
     "disabled flow title": "이 flow는 비활성화되었습니다.",
+    "discard changes confirmation": "저장되지 않은 변경 사항이 있습니다. 정말로 취소하시겠습니까?",
+    "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "display direct sub tasks count": "직접 subtask 수 표시",
     "display flow {id} executions": "Flow {id} 실행 표시",
     "display metric for specific task": "특정 task의 메트릭 표시",

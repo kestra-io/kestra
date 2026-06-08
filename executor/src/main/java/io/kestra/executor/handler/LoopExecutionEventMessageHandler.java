@@ -2,6 +2,8 @@ package io.kestra.executor.handler;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import java.io.IOException;
 
 import io.kestra.core.models.executions.*;
@@ -56,8 +58,20 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     @Inject
     private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+
     @Override
     public Optional<ExecutorContext> handle(LoopExecutionEvent message) {
+        if (killSwitchService.evaluate(message.executionId()) != EvaluationType.PASS) {
+            log.warn("Ignoring loop execution event for sub-execution {} as there is a kill switch on it", message.executionId());
+            return Optional.empty();
+        }
+        if (killSwitchService.evaluate(message.loopRun().parent().getId()) != EvaluationType.PASS) {
+            log.warn("Ignoring loop execution event for parent execution {} as there is a kill switch on it", message.loopRun().parent().getId());
+            return Optional.empty();
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }

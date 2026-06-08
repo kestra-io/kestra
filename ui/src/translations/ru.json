@@ -453,6 +453,8 @@
     "disabled": "Отключено",
     "disabled flow desc": "Этот flow отключен, пожалуйста, включите его для выполнения.",
     "disabled flow title": "Этот flow отключен",
+    "discard changes confirmation": "У вас есть несохраненные изменения. Вы уверены, что хотите их отменить?",
+    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "display direct sub tasks count": "Показать количество прямых подзадач",
     "display flow {id} executions": "Показать выполнения flow {id}",
     "display metric for specific task": "Показать метрику для конкретной задачи",

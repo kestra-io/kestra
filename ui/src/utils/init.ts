@@ -161,16 +161,6 @@ export default async (
     createEventsRouter(app, router)
 
     app.component("RouterMd", RouterMd)
-    const components = {
-        ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),
-        ...(import.meta.glob("../../node_modules/@kestra-io/ui-libs/src/components/content/*.vue", {eager: true})),
-        ...(import.meta.glob("../components/content/*.vue", {eager: true})),
-    }
-    const componentsByName = Object.entries(components)
-        .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), (component as {default: unknown}).default])
-    const componentsNames = componentsByName.map(([name]) => name)
-    componentsByName.filter(([name], index) => componentsNames.lastIndexOf(name) === index)
-        .forEach(([name, component]) => app.component(name as string, component as Parameters<typeof app.component>[1]))
 
     app.config.globalProperties.append = (path: string, pathToAppend: string) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 

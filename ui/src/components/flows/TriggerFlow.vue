@@ -34,13 +34,13 @@
             <template #header>
                 <span v-html="t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </KsDialog>
         <KsDialog
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
-            :beforeClose="() => reset()"
+            :beforeClose="beforeSelectFlowClose"
             :appendToBody="true"
             :width="dialogWidth"
         >
@@ -77,7 +77,7 @@
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
             </KsForm>
@@ -91,6 +91,7 @@
     import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useApiStore} from "../../stores/api"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -128,6 +129,8 @@
 
     const isOpen = ref(false)
     const isSelectFlowOpen = ref(false)
+    const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
+    const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const localFlow = ref<ExecutableFlow | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
     const isLargeScreen = useMediaQuery("(min-width: 768px)")
@@ -167,9 +170,27 @@
         localNamespace.value = undefined
     }
 
+    const {guardedClose: guardExecuteClose} = useDiscardGuard(
+        () => flowRunRef.value?.isDirty,
+        {message: t("discard execution confirmation")},
+    )
+    const {guardedClose: guardSelectFlowClose} = useDiscardGuard(
+        () => selectFlowRunRef.value?.isDirty,
+        {message: t("discard execution confirmation")},
+    )
+
     function beforeClose(done: () => void) {
-        reset()
-        done()
+        guardExecuteClose(() => {
+            reset()
+            done()
+        })
+    }
+
+    function beforeSelectFlowClose(done: () => void) {
+        guardSelectFlowClose(() => {
+            reset()
+            done()
+        })
     }
 
     async function toggleModal(newValue?: boolean) {

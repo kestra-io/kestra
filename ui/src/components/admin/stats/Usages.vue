@@ -199,13 +199,17 @@
             align-items: center;
             justify-content: center;
             width: 24px;
-            height: 24px;
             flex-shrink: 0;
 
+            :deep(.material-design-icon) {
+                display: flex;
+                align-items: center;
+            }
+
             :deep(.material-design-icon__svg) {
+                display: block;
                 font-size: var(--ks-font-size-xl);
                 color: var(--ks-text-secondary);
-                vertical-align: middle;
             }
         }
 

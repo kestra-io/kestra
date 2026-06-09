@@ -28,6 +28,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.RegexUtils;
 import io.kestra.core.storages.StorageSplitInterface;
 
+import com.amazon.ion.util.IonStreamUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 
@@ -45,44 +46,46 @@ public abstract class StorageService {
             extension = fromPath.substring(fromPath.lastIndexOf('.'));
         }
 
-        boolean isIon = extension.equals(".ion");
+        try (BufferedInputStream inputStream = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)) {
+            inputStream.mark(FileSerde.BUFFER_SIZE);
+            byte[] header = inputStream.readNBytes(4);
+            inputStream.reset();
 
-        if (isIon) {
-            return splitIon(runContext, storageSplitInterface, from, extension);
-        } else {
-            return splitText(runContext, storageSplitInterface, from, extension);
+            if (IonStreamUtils.isIonBinary(header)) {
+                return splitIon(runContext, storageSplitInterface, inputStream, extension);
+            } else {
+                return splitText(runContext, storageSplitInterface, inputStream, extension);
+            }
         }
     }
 
-    private static List<URI> splitIon(RunContext runContext, StorageSplitInterface storageSplitInterface, URI from, String extension) throws IOException, IllegalVariableEvaluationException {
-        try (InputStream inputStream = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)) {
-            List<Path> splited;
+    private static List<URI> splitIon(RunContext runContext, StorageSplitInterface storageSplitInterface, InputStream inputStream, String extension) throws IOException, IllegalVariableEvaluationException {
+        List<Path> splited;
 
-            if (storageSplitInterface.getRegexPattern() != null) {
-                String renderedPattern = runContext.render(storageSplitInterface.getRegexPattern()).as(String.class).orElseThrow();
-                splited = splitIonByRegex(runContext, extension, inputStream, renderedPattern);
-            } else if (storageSplitInterface.getBytes() != null) {
-                ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
-                Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
+        if (storageSplitInterface.getRegexPattern() != null) {
+            String renderedPattern = runContext.render(storageSplitInterface.getRegexPattern()).as(String.class).orElseThrow();
+            splited = splitIonByRegex(runContext, extension, inputStream, renderedPattern);
+        } else if (storageSplitInterface.getBytes() != null) {
+            ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
+            Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
 
-                splited = splitIonByPredicate(runContext, extension, inputStream, (bytes, size) -> bytes >= convert.longValue());
-            } else if (storageSplitInterface.getPartitions() != null) {
-                splited = partitionIon(
-                    runContext, extension, inputStream,
-                    runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow()
-                );
-            } else if (storageSplitInterface.getRows() != null) {
-                Integer renderedRows = runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow();
-                splited = splitIonByPredicate(runContext, extension, inputStream, (bytes, size) -> size >= renderedRows);
-            } else {
-                throw new IllegalArgumentException("Invalid configuration with no size, count, rows, nor regexPattern");
-            }
-
-            return splited.stream()
-                .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
-                .toList();
+            splited = splitIonByPredicate(runContext, extension, inputStream, (bytes, size) -> bytes >= convert.longValue());
+        } else if (storageSplitInterface.getPartitions() != null) {
+            splited = partitionIon(
+                runContext, extension, inputStream,
+                runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow()
+            );
+        } else if (storageSplitInterface.getRows() != null) {
+            Integer renderedRows = runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow();
+            splited = splitIonByPredicate(runContext, extension, inputStream, (bytes, size) -> size >= renderedRows);
+        } else {
+            throw new IllegalArgumentException("Invalid configuration with no size, count, rows, nor regexPattern");
         }
+
+        return splited.stream()
+            .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
+            .toList();
     }
 
     private static List<Path> splitIonByPredicate(RunContext runContext, String extension, InputStream inputStream, BiFunction<Integer, Integer, Boolean> predicate)
@@ -188,43 +191,42 @@ public abstract class StorageService {
 
     // Text-based splitting for non-ION files (original behavior)
 
-    private static List<URI> splitText(RunContext runContext, StorageSplitInterface storageSplitInterface, URI from, String extension) throws IOException, IllegalVariableEvaluationException {
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.storage().getFile(from)))) {
-            List<Path> splited;
+    private static List<URI> splitText(RunContext runContext, StorageSplitInterface storageSplitInterface, InputStream inputStream, String extension) throws IOException, IllegalVariableEvaluationException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        List<Path> splited;
 
-            if (storageSplitInterface.getRegexPattern() != null) {
-                String renderedPattern = runContext.render(storageSplitInterface.getRegexPattern()).as(String.class).orElseThrow();
-                String separator = runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow();
-                splited = splitTextByRegex(runContext, extension, separator, bufferedReader, renderedPattern);
-            } else if (storageSplitInterface.getBytes() != null) {
-                ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
-                Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
+        if (storageSplitInterface.getRegexPattern() != null) {
+            String renderedPattern = runContext.render(storageSplitInterface.getRegexPattern()).as(String.class).orElseThrow();
+            String separator = runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow();
+            splited = splitTextByRegex(runContext, extension, separator, bufferedReader, renderedPattern);
+        } else if (storageSplitInterface.getBytes() != null) {
+            ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
+            Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
 
-                splited = splitTextByPredicate(
-                    runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, (bytes, size) -> bytes >= convert.longValue()
-                );
-            } else if (storageSplitInterface.getPartitions() != null) {
-                splited = partitionText(
-                    runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow()
-                );
-            } else if (storageSplitInterface.getRows() != null) {
-                Integer renderedRows = runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow();
-                splited = splitTextByPredicate(
-                    runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, (bytes, size) -> size >= renderedRows
-                );
-            } else {
-                throw new IllegalArgumentException("Invalid configuration with no size, count, rows, nor regexPattern");
-            }
-
-            return splited
-                .stream()
-                .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
-                .toList();
+            splited = splitTextByPredicate(
+                runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                bufferedReader, (bytes, size) -> bytes >= convert.longValue()
+            );
+        } else if (storageSplitInterface.getPartitions() != null) {
+            splited = partitionText(
+                runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                bufferedReader, runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow()
+            );
+        } else if (storageSplitInterface.getRows() != null) {
+            Integer renderedRows = runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow();
+            splited = splitTextByPredicate(
+                runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                bufferedReader, (bytes, size) -> size >= renderedRows
+            );
+        } else {
+            throw new IllegalArgumentException("Invalid configuration with no size, count, rows, nor regexPattern");
         }
+
+        return splited
+            .stream()
+            .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
+            .toList();
     }
 
     private static List<Path> splitTextByPredicate(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate)

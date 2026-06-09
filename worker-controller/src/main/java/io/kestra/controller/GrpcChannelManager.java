@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.ChannelCredentials;
 import io.grpc.Channel;
+import io.grpc.ConnectivityState;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -127,6 +128,17 @@ public class GrpcChannelManager {
      */
     public Channel getDefaultChannel() {
         return defaultChannel;
+    }
+
+    /**
+     * Returns the current connectivity state of the shared channel. Used by the worker
+     * to confirm a reconnection only once the transport is actually {@code READY}.
+     *
+     * @param requestConnection if {@code true}, nudges an idle channel to start connecting
+     * @return the channel's {@link ConnectivityState}
+     */
+    public ConnectivityState getState(boolean requestConnection) {
+        return defaultChannel.getState(requestConnection);
     }
 
     /**

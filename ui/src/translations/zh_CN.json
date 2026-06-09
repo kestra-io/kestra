@@ -1999,6 +1999,7 @@
     "value": "值",
     "variables": "变量",
     "variable_explorer": {
+      "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "树",

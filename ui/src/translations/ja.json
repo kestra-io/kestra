@@ -1999,6 +1999,7 @@
     "value": "Value",
     "variables": "変数",
     "variable_explorer": {
+      "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
       "tree": "ツリー",

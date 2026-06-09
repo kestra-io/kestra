@@ -1999,6 +1999,7 @@
     "value": "Value",
     "variables": "वेरिएबल्स",
     "variable_explorer": {
+      "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
       "tree": "ट्री",

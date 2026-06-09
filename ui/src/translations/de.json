@@ -1999,6 +1999,7 @@
     "value": "Value",
     "variables": "Variablen",
     "variable_explorer": {
+      "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder value suchen...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Baum",

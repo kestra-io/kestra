@@ -1999,6 +1999,7 @@
     "value": "Value",
     "variables": "변수",
     "variable_explorer": {
+      "title": "입력/출력",
       "search_placeholder": "Key 또는 value 검색...",
       "tasks_outputs": "Tasks outputs",
       "tree": "트리",

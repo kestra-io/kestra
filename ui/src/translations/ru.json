@@ -1999,6 +1999,7 @@
     "value": "Значение",
     "variables": "Переменные",
     "variable_explorer": {
+      "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Дерево",

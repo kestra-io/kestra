@@ -1999,6 +1999,7 @@
     "value": "Value",
     "variables": "Variables",
     "variable_explorer": {
+      "title": "Entrada/Salida",
       "search_placeholder": "Buscar Key o value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Árbol",

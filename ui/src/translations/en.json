@@ -17,7 +17,9 @@
     "namespace": "Namespace",
     "description": "Description",
     "show description": "Show a description",
+    "show details": "Show details",
     "show more details": "Show more details",
+    "skipped": "Skipped",
     "revision": "Revision",
     "Language": "Language",
     "Set default page": "Set default page",
@@ -497,7 +499,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-      "404": {
+       "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."

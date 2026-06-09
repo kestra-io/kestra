@@ -1998,6 +1998,18 @@
     "validate": "検証",
     "value": "Value",
     "variables": "変数",
+    "variable_explorer": {
+      "search_placeholder": "Key または value を検索...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "ツリー",
+      "raw_json": "Raw JSON",
+      "select_prompt": "value を確認する変数を選択してください。",
+      "empty": "この実行に利用可能な変数はありません。",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 件 ]",
+      "n_items": "[ {count} 件 ]"
+    },
     "version": "バージョン",
     "view metrics": "メトリクスを表示",
     "warning": "警告",

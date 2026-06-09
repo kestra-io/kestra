@@ -366,6 +366,18 @@
     "no_inputs": "No inputs available.",
     "input": "Input",
     "variables": "Variables",
+    "variable_explorer": {
+      "search_placeholder": "Search Key or value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "Tree",
+      "raw_json": "Raw JSON",
+      "select_prompt": "Select a variable to inspect its value.",
+      "empty": "No variables available for this execution.",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 item ]",
+      "n_items": "[ {count} items ]"
+    },
     "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {

@@ -12,8 +12,8 @@ import Overview from "../overview/Overview.vue"
 import DemoAuditLogs from "../../demo/AuditLogs.vue"
 import DemoAssets from "../../demo/Assets.vue"
 import ExecutionMetric from "../ExecutionMetric.vue"
-import ExecutionOutput from "../outputs/Wrapper.vue"
 import Dependencies from "../../dependencies/Dependencies.vue"
+import ExecutionVariableExplorer from "../outputs/ExecutionVariableExplorer.vue"
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -94,8 +94,8 @@ export function useExecutionRoot() {
             },
             {
                 name: "outputs",
-                component: ExecutionOutput,
-                title: t("outputs"),
+                component: ExecutionVariableExplorer,
+                title: t("inputs/outputs"),
                 maximized: true,
                 noOverflow: true,
             },

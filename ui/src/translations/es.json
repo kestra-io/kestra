@@ -1998,6 +1998,18 @@
     "validate": "Validar",
     "value": "Value",
     "variables": "Variables",
+    "variable_explorer": {
+      "search_placeholder": "Buscar Key o value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "Árbol",
+      "raw_json": "Raw JSON",
+      "select_prompt": "Selecciona una variable para inspeccionar su value.",
+      "empty": "No hay variables disponibles para esta ejecución.",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 elemento ]",
+      "n_items": "[ {count} elementos ]"
+    },
     "version": "Versión",
     "view metrics": "Ver métricas",
     "warning": "Advertencia",

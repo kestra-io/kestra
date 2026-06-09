@@ -1998,6 +1998,18 @@
     "validate": "Проверить",
     "value": "Значение",
     "variables": "Переменные",
+    "variable_explorer": {
+      "search_placeholder": "Поиск по Key или value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "Дерево",
+      "raw_json": "Raw JSON",
+      "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
+      "empty": "Нет переменных, доступных для этого выполнения.",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 элемент ]",
+      "n_items": "[ {count} элементов ]"
+    },
     "version": "Версия",
     "view metrics": "Просмотр метрик",
     "warning": "Предупреждение",

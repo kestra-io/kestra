@@ -1998,6 +1998,18 @@
     "validate": "验证",
     "value": "值",
     "variables": "变量",
+    "variable_explorer": {
+      "search_placeholder": "搜索 Key 或 value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "树",
+      "raw_json": "Raw JSON",
+      "select_prompt": "选择一个变量以查看其 value。",
+      "empty": "此执行没有可用的变量。",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 项 ]",
+      "n_items": "[ {count} 项 ]"
+    },
     "version": "版本",
     "view metrics": "查看指标",
     "warning": "警告",

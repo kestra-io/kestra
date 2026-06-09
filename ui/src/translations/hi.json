@@ -1998,6 +1998,18 @@
     "validate": "मान्य करें",
     "value": "Value",
     "variables": "वेरिएबल्स",
+    "variable_explorer": {
+      "search_placeholder": "Key या value खोजें...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "ट्री",
+      "raw_json": "Raw JSON",
+      "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
+      "empty": "इस निष्पादन के लिए कोई वेरिएबल उपलब्ध नहीं है।",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 आइटम ]",
+      "n_items": "[ {count} आइटम ]"
+    },
     "version": "संस्करण",
     "view metrics": "मेट्रिक्स देखें",
     "warning": "चेतावनी",

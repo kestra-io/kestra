@@ -1,22 +1,22 @@
 <template>
+    <NavBarAction
+        v-if="asItem && (isReplay || enabled)"
+        :icon="icon"
+        :disabled="!enabled"
+        @click="isOpen = !isOpen"
+    >
+        {{ $t(replayOrRestart) }}
+    </NavBarAction>
     <KsTooltip
-        v-if="isReplay || enabled"
+        v-else-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
         popperClass="ks-restart-tooltip--no-pointer"
         rawContent
     >
-        <NavBarAction
-            v-if="asItem"
-            :icon="icon"
-            :disabled="!enabled"
-            @click="isOpen = !isOpen"
-        >
-            {{ $t(replayOrRestart) }}
-        </NavBarAction>
         <component
-            v-else-if="component !== 'el-dropdown-item'"
+            v-if="component !== 'el-dropdown-item'"
             v-bind="$attrs"
             :is="component"
             :icon="icon"
@@ -26,7 +26,7 @@
         >
             {{ $t(replayOrRestart) }}
         </component>
-        <span v-else-if="component === 'el-dropdown-item'">
+        <span v-else>
             <component
                 v-bind="$attrs"
                 :is="component"

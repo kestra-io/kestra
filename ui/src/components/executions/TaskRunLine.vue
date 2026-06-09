@@ -194,7 +194,7 @@
     import AiIcon from "../ai/AiIcon.vue"
     import * as FlowUtils from "../../utils/flowUtils"
     import _groupBy from "lodash/groupBy"
-    import Duration from "../layout/Duration.vue"
+    import {Duration} from "@kestra-io/topology"
     import * as Utils from "../../utils/utils"
     import resource from "../../models/resource"
     import action from "../../models/action"

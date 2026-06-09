@@ -7,7 +7,6 @@ import {useExecutionsStore} from "../../../stores/executions"
 
 import Logs from "../Logs.vue"
 import Gantt from "../Gantt.vue"
-import Topology from "../Topology.vue"
 import Overview from "../overview/Overview.vue"
 import DemoAuditLogs from "../../demo/AuditLogs.vue"
 import DemoAssets from "../../demo/Assets.vue"
@@ -74,8 +73,6 @@ export function useExecutionRoot() {
                 name: "overview",
                 component: Overview,
                 title: t("overview"),
-                maximized: true,
-                noOverflow: true,
             },
             {
                 name: "gantt",
@@ -86,11 +83,6 @@ export function useExecutionRoot() {
                 name: "logs",
                 component: Logs,
                 title: t("logs"),
-            },
-            {
-                name: "topology",
-                component: Topology,
-                title: t("topology"),
             },
             {
                 name: "outputs",

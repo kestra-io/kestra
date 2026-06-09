@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
     >
         {{ $t('unqueue') }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -51,6 +51,7 @@
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
 
     interface Execution {
         id: string;

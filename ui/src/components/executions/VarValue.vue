@@ -72,7 +72,8 @@
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
+
     import * as Utils from "../../utils/utils"
 
     interface Execution {
@@ -157,22 +158,23 @@
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`
     }
 
-    const axios = useClient()
-
     const getFileSize = async (): Promise<void> => {
         if (Utils.isFile(props.value) && props.execution?.id) {
             humanSize.value = ""
             fileStatus.value = "loading"
-            const response = await axios.get<FileMetadata>(
-                `${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`,
-                {validateStatus: (status: number) => status === 200 || status === 404 || status === 422},
-            )
-            if (response.status === 200) {
-                humanSize.value = Utils.humanFileSize(response.data.size)
-                fileStatus.value = "available"
-            } else {
+
+            const data = await ExecutionsAPI.fileMetadatasFromExecution({
+                executionId: props.execution.id, 
+                path: props.value.toString(),
+            }, {
+                validateStatus: (status: number) => status === 200 || status === 404 || status === 422,
+            })
+            if(!data){
                 fileStatus.value = "missing"
-            }
+                return
+            }    
+            humanSize.value = Utils.humanFileSize(data.size)
+            fileStatus.value = "available"
         }
     }
 

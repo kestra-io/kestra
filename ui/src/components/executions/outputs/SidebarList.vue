@@ -10,7 +10,7 @@
 
         <KsScrollbar class="sections">
             <template v-if="visibleSections.length">
-                <KsCollapse v-model="openSections" class="sections-collapse" accordion>
+                <KsCollapse v-model="openSections" class="sections-collapse">
                     <KsCollapseItem
                         v-for="section in visibleSections"
                         :key="section.key"

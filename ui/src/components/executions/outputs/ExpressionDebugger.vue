@@ -138,8 +138,8 @@
     gap: var(--ks-spacing-3);
 
     .input {
-        min-height: 10rem;
-        border-radius: 4px;
+        min-height: 7rem;
+        border-radius: 8px;
         border: 1px solid var(--ks-border-default);
     }
 
@@ -161,6 +161,7 @@
 
     h2{
         margin: 0;
+        margin-top: 1.5rem;
         font-size: var(--ks-font-size-sm);
     }
 }

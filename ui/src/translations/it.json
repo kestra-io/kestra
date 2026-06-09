@@ -253,14 +253,6 @@
         "singular": "Dashboard"
       },
       "preview": "Anteprima Dashboard",
-      "quick_filters": {
-        "all": "Tutti",
-        "failed": "Fallito",
-        "paused": "In pausa",
-        "running": "In esecuzione",
-        "success": "Successo",
-        "warning": "Avviso"
-      },
       "switch": "Dashboard Switch"
     },
     "data": "Dati",

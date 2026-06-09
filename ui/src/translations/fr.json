@@ -253,14 +253,6 @@
         "singular": "Tableau de bord"
       },
       "preview": "Aperçu du Dashboard",
-      "quick_filters": {
-        "all": "Tout",
-        "failed": "Échoué",
-        "paused": "En pause",
-        "running": "En cours",
-        "success": "Succès",
-        "warning": "Avertissement"
-      },
       "switch": "Changer de tableau de bord"
     },
     "data": "Données",

@@ -96,8 +96,18 @@ public class Kestra implements Callable<Integer> {
             System.err.println("Could not initialize picocli CommandLine, err: " + e.getMessage());
             e.printStackTrace();
             exitCode = 1;
+        } catch (Exception e) {
+            // A failure while starting the application context (e.g. an invalid configuration
+            // triggering a BeanInstantiationException during eager bean init) escapes here.
+            // Catch it so the JVM fails fast with a non-zero exit code instead of hanging: the
+            // main thread would otherwise die while non-daemon threads from the partially-started
+            // context keep the process alive forever.
+            System.err.println("Could not start Kestra, err: " + e.getMessage());
+            e.printStackTrace();
+            exitCode = 1;
+        } finally {
+            applicationContext.close();
         }
-        applicationContext.close();
 
         // exit code
         return exitCode;

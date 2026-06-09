@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter}" v-else>
+    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
             <slot name="navbar" />
         </nav>
@@ -101,6 +101,7 @@
         selectionMapper?: (element: any) => any
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
+        noGutter?: boolean
     }>(), {
         data: () => [],
         total: 0,
@@ -116,6 +117,7 @@
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
+        noGutter: false,
     })
 
     export interface SortItem {
@@ -425,6 +427,14 @@
 
         &.no-pagination-gutter .kel-pagination {
             padding-inline: 0;
+        }
+
+        &.no-gutter {
+            > .ks-data-table-navbar,
+            .ks-data-table-top,
+            .kel-pagination {
+                padding-inline: 0;
+            }
         }
 
         .kel-checkbox__inner {

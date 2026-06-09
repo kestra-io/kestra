@@ -1803,6 +1803,7 @@
     "show": "Anzeigen",
     "show chart": "Diagramm anzeigen",
     "show description": "Beschreibung anzeigen",
+    "show details": "Details anzeigen",
     "show documentation": "Dokumentation anzeigen",
     "show more details": "Mehr Details anzeigen",
     "show task condition": "Bedingung des Tasks anzeigen",
@@ -1814,6 +1815,7 @@
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "showMore": "Mehr anzeigen",
     "side-by-side": "nebeneinander",
+    "skipped": "Übersprungen",
     "slack support": "Fragen Sie via Slack",
     "something_went_wrong": {
       "connection_lost": {

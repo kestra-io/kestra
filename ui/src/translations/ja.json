@@ -1803,6 +1803,7 @@
     "show": "表示",
     "show chart": "チャートを表示",
     "show description": "説明を表示",
+    "show details": "詳細を表示",
     "show documentation": "ドキュメントを表示",
     "show more details": "詳細を表示",
     "show task condition": "タスク条件を表示",
@@ -1814,6 +1815,7 @@
     "showLess": "表示を減らす",
     "showMore": "もっと表示",
     "side-by-side": "並列表示",
+    "skipped": "スキップされました",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
       "connection_lost": {

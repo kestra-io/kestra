@@ -1803,6 +1803,7 @@
     "show": "दिखाएं",
     "show chart": "चार्ट दिखाएं",
     "show description": "विवरण दिखाएं",
+    "show details": "विवरण दिखाएं",
     "show documentation": "दस्तावेज़ दिखाएं",
     "show more details": "अधिक विवरण दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
@@ -1814,6 +1815,7 @@
     "showLess": "कम दिखाएं",
     "showMore": "और दिखाएँ",
     "side-by-side": "साइड-बाय-साइड",
+    "skipped": "छोड़ा गया",
     "slack support": "किसी भी प्रश्न को Slack के माध्यम से पूछें",
     "something_went_wrong": {
       "connection_lost": {

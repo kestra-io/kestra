@@ -1803,6 +1803,7 @@
     "show": "Mostra",
     "show chart": "Mostra Grafico",
     "show description": "Mostra una descrizione",
+    "show details": "Mostra dettagli",
     "show documentation": "Mostra documentazione",
     "show more details": "Mostra più dettagli",
     "show task condition": "Mostra condizione del task",
@@ -1814,6 +1815,7 @@
     "showLess": "Mostra meno",
     "showMore": "Mostra di più",
     "side-by-side": "affiancato",
+    "skipped": "Saltato",
     "slack support": "Fai qualsiasi domanda via Slack",
     "something_went_wrong": {
       "connection_lost": {

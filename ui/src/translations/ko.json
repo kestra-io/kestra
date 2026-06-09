@@ -1803,6 +1803,7 @@
     "show": "보기",
     "show chart": "차트 보기",
     "show description": "설명을 표시",
+    "show details": "세부 정보 표시",
     "show documentation": "문서 보기",
     "show more details": "자세한 정보 보기",
     "show task condition": "작업 상태 표시",
@@ -1814,6 +1815,7 @@
     "showLess": "덜 보기",
     "showMore": "더 보기",
     "side-by-side": "나란히",
+    "skipped": "건너뜀",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {
       "connection_lost": {

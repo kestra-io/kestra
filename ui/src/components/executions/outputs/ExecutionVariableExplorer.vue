@@ -83,14 +83,12 @@
         KsIconButton,
         KsEditor,
     } from "@kestra-io/design-system"
-    import {useClient} from "@kestra-io/kestra-sdk"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
     import {useExecutionsStore} from "../../../stores/executions"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
-    import {apiUrl} from "override/utils/route"
 
     import SidebarList from "./SidebarList.vue"
     import VariableTreeView from "./VariableTreeView.vue"
@@ -99,7 +97,6 @@
 
     const {t} = useI18n({useScope: "global"})
     const editorBindings = useEditorBindings()
-    const axios = useClient()
 
     const executionsStore = useExecutionsStore()
     const execution = computed(() => executionsStore.execution)
@@ -161,14 +158,17 @@
             taskOutputs.value = {}
             if (!id) return
 
-            const {data, status} = await axios.get(`${apiUrl()}/outputs/${id}`, {
+
+            const data = await OutputsAPI.taskOutputsInformation({
+                executionId: id,
+            }, {
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
-            if (status === 200 && Array.isArray(data)) {
-                tasksWithOutputs.value = data
-                    .filter((task) => task.taskRunId)
-                    .map((task) => task.taskRunId)
-            }
+            
+            tasksWithOutputs.value = data
+                .map((task) => task.taskRunId)
+                .filter((taskRunId) => taskRunId !== undefined)
+            
         },
         {immediate: true},
     )

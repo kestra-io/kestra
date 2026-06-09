@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.worker.Controller;
 import io.kestra.core.worker.models.WorkerInfo;
 
@@ -14,6 +15,7 @@ import jakarta.inject.Inject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@FlakyTest(description = "Multiple subclasses share a Micronaut context with the same ${random.port} value; when one class stops the controller and another restarts it, the OS port may still be in TIME_WAIT causing bind failures")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractGrpcMetaStoreTest {
 

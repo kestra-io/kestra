@@ -61,6 +61,8 @@
 
     const executionsStore = useExecutionsStore()
 
+    const BIG_FILE_THRESHOLD = 10 * 1024 * 1024 // 10MB
+
     const props = defineProps<{
         path: string,
         executionId: string,
@@ -112,7 +114,7 @@
                 }
                 return
             }
-            bigFile.value = metadata.value.size >= 10_000_000
+            bigFile.value = metadata.value.size >= BIG_FILE_THRESHOLD
             if(bigFile.value) {
                 // For big files, we want to signal the user that it can take 
                 // significant time to load the preview, so we set maxRows to 

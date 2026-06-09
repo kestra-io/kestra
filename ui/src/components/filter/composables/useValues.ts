@@ -110,6 +110,11 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
                 description: t("filter.execution_kind.loop_description"),
                 value: "LOOP",
             },
+            {
+                label: t("filter.execution_kind.subflow_function"),
+                description: t("filter.execution_kind.subflow_function_description"),
+                value: "SUBFLOW_FUNCTION",
+            },
             ...(isOSS.value ? [] : [{
                 label: t("filter.execution_kind.test"),
                 description: t("filter.execution_kind.test_description"),

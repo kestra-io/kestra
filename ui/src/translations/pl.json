@@ -186,6 +186,7 @@
     "common": {
       "back": "Wstecz"
     },
+    "computing_input_values": "Obliczanie wartości input…",
     "concurrency": "Współbieżność",
     "concurrency limits": "Limity Równoczesności",
     "concurrency_limit": {

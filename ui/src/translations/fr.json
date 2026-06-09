@@ -186,6 +186,7 @@
     "common": {
       "back": "Retour"
     },
+    "computing_input_values": "Calcul des valeurs d'input en cours…",
     "concurrency": "Concurrence",
     "concurrency limits": "Limites de Concurrence",
     "concurrency_limit": {

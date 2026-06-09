@@ -186,6 +186,7 @@
     "common": {
       "back": "वापस"
     },
+    "computing_input_values": "input मानों की गणना की जा रही है…",
     "concurrency": "समानांतरता",
     "concurrency limits": "समानांतरता सीमाएँ",
     "concurrency_limit": {

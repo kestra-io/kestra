@@ -186,6 +186,7 @@
     "common": {
       "back": "返回"
     },
+    "computing_input_values": "正在计算 input 值…",
     "concurrency": "并发",
     "concurrency limits": "并发限制",
     "concurrency_limit": {

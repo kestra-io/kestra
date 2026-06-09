@@ -102,10 +102,12 @@ export default {
                 "playground":"Playground",
                 "loop": "Loop",
                 "test":"Test",
+                "subflow_function": "Subflow Function",
                 "normal_description": "Regular executions",
                 "playground_description": "Executions triggered from Playground mode",
                 "loop_description": "Executions created by the Loop task",
                 "test_description": "Executions triggered by Unit Tests",
+                "subflow_function_description": "Executions created by the subflow() function",
             },
             "scope": {
                 "label": "Scope",
@@ -461,7 +463,9 @@ export default {
                 "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Test",
+                "subflow_function": "Subflow-Funktion",
                 "test_description": "Ausführungen ausgelöst durch Unit Tests",
+                "subflow_function_description": "Ausführungen, die von der subflow()-Funktion erstellt wurden",
             },
             "filters_added": "{selected} von {total} Filtern hinzugefügt",
             "parentId": {
@@ -832,7 +836,9 @@ export default {
                 "playground_description": "Ejecuciones activadas desde el modo Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Prueba",
+                "subflow_function": "Función de subflow",
                 "test_description": "Ejecuciones activadas por Unit Tests",
+                "subflow_function_description": "Ejecuciones creadas por la función subflow()",
             },
             "filters_added": "{selected} de {total} filtros añadidos",
             "parentId": {
@@ -1203,7 +1209,9 @@ export default {
                 "playground_description": "Exécutions déclenchées depuis le mode Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Test",
+                "subflow_function": "Fonction subflow",
                 "test_description": "Exécutions déclenchées par les tests unitaires",
+                "subflow_function_description": "Exécutions créées par la fonction subflow()",
             },
             "filters_added": "{selected} sur {total} filtres ajoutés",
             "parentId": {
@@ -1574,7 +1582,9 @@ export default {
                 "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
                 "loop_description": "Executions created by the Loop task",
                 "test": "परीक्षण",
+                "subflow_function": "Subflow फ़ंक्शन",
                 "test_description": "यूनिट टेस्ट द्वारा ट्रिगर की गई Executions",
+                "subflow_function_description": "subflow() फ़ंक्शन द्वारा बनाई गई Executions",
             },
             "filters_added": "{total} में से {selected} फ़िल्टर जोड़े गए",
             "parentId": {
@@ -1945,7 +1955,9 @@ export default {
                 "playground_description": "Esecuzioni triggerate dalla modalità Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Test",
+                "subflow_function": "Funzione subflow",
                 "test_description": "Esecuzioni attivate dai Unit Test",
+                "subflow_function_description": "Esecuzioni create dalla funzione subflow()",
             },
             "filters_added": "{selected} di {total} filtri aggiunti",
             "parentId": {
@@ -2316,7 +2328,9 @@ export default {
                 "playground_description": "Playgroundモードからトリガーされた実行",
                 "loop_description": "Executions created by the Loop task",
                 "test": "テスト",
+                "subflow_function": "Subflow 関数",
                 "test_description": "ユニットテストによってトリガーされた実行",
+                "subflow_function_description": "subflow() 関数によって作成された実行",
             },
             "filters_added": "{total} 個のフィルターのうち {selected} 個が追加されました",
             "parentId": {
@@ -2687,7 +2701,9 @@ export default {
                 "playground_description": "플레이그라운드 모드에서 트리거된 실행",
                 "loop_description": "Executions created by the Loop task",
                 "test": "테스트",
+                "subflow_function": "Subflow 함수",
                 "test_description": "단위 테스트에 의해 트리거된 실행",
+                "subflow_function_description": "subflow() 함수에 의해 생성된 실행",
             },
             "filters_added": "{total}개의 필터 중 {selected}개 추가됨",
             "parentId": {
@@ -3058,7 +3074,9 @@ export default {
                 "playground_description": "Wykonania uruchomione z trybu Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Test",
+                "subflow_function": "Funkcja subflow",
                 "test_description": "Wykonania wyzwolone przez testy jednostkowe",
+                "subflow_function_description": "Wykonania utworzone przez funkcję subflow()",
             },
             "filters_added": "{selected} z {total} filtrów dodanych",
             "parentId": {
@@ -3429,7 +3447,9 @@ export default {
                 "playground_description": "Execuções acionadas a partir do modo Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Teste",
+                "subflow_function": "Função de subflow",
                 "test_description": "Execuções triggeradas por Unit Tests",
+                "subflow_function_description": "Execuções criadas pela função subflow()",
             },
             "filters_added": "{selected} de {total} filtros adicionados",
             "parentId": {
@@ -3800,7 +3820,9 @@ export default {
                 "playground_description": "Execuções acionadas a partir do modo Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Teste",
+                "subflow_function": "Função de subflow",
                 "test_description": "Execuções acionadas por Unit Tests",
+                "subflow_function_description": "Execuções criadas pela função subflow()",
             },
             "filters_added": "{selected} de {total} filtros adicionados",
             "parentId": {
@@ -4171,7 +4193,9 @@ export default {
                 "playground_description": "Запуски, инициированные из режима Playground",
                 "loop_description": "Executions created by the Loop task",
                 "test": "Тест",
+                "subflow_function": "Функция subflow",
                 "test_description": "Запуски, инициированные Unit Tests",
+                "subflow_function_description": "Запуски, созданные функцией subflow()",
             },
             "filters_added": "{selected} из {total} фильтров добавлено",
             "parentId": {
@@ -4542,7 +4566,9 @@ export default {
                 "playground_description": "从Playground模式触发的执行",
                 "loop_description": "Executions created by the Loop task",
                 "test": "测试",
+                "subflow_function": "Subflow 函数",
                 "test_description": "单元测试触发的执行",
+                "subflow_function_description": "由 subflow() 函数创建的执行",
             },
             "filters_added": "已添加 {total} 个过滤器中的 {selected} 个",
             "parentId": {

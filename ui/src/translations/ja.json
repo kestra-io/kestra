@@ -186,6 +186,7 @@
     "common": {
       "back": "戻る"
     },
+    "computing_input_values": "input値を計算しています…",
     "concurrency": "並行性",
     "concurrency limits": "同時実行制限",
     "concurrency_limit": {

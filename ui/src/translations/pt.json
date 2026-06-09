@@ -186,6 +186,7 @@
     "common": {
       "back": "Voltar"
     },
+    "computing_input_values": "Calculando valores de input…",
     "concurrency": "Concorrência",
     "concurrency limits": "Limites de Concurrency",
     "concurrency_limit": {

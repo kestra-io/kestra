@@ -186,6 +186,7 @@
     "common": {
       "back": "뒤로"
     },
+    "computing_input_values": "input 값을 계산하는 중…",
     "concurrency": "동시성",
     "concurrency limits": "동시성 제한",
     "concurrency_limit": {

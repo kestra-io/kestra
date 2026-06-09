@@ -18,22 +18,30 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
-    import {type Moment} from "moment"
+    import moment, {type Moment} from "moment"
     import {State, KsTooltip} from "@kestra-io/design-system"
     import * as Utils from "../utils/utils"
 
     const props = withDefaults(defineProps<{
-        histories: {
-            date: Moment;
+        histories?: {
+            date: string | number | Moment;
             state: string;
         }[];
         interval?: number;
     }>(), {
-        interval: 10,
+        histories: undefined,
+        interval: 100,
     })
 
+    const normalizedHistories = computed(() =>
+        (props.histories ?? []).map((h) => ({
+            date: moment(h.date),
+            state: h.state,
+        })),
+    )
+
     watch(
-        () => props.histories,
+        normalizedHistories,
         (newValue, oldValue) => {
             if (newValue?.[0]?.date?.valueOf() !== oldValue?.[0]?.date?.valueOf()) {
                 paint()
@@ -49,15 +57,15 @@
     })
 
     const start = computed(() => {
-        return props.histories?.[0]?.date?.valueOf() ?? null
+        return normalizedHistories.value?.[0]?.date?.valueOf() ?? null
     })
 
     const lastStep = computed(() => {
-        return props.histories?.length ? props.histories[props.histories.length - 1] : undefined
+        return normalizedHistories.value.length ? normalizedHistories.value[normalizedHistories.value.length - 1] : undefined
     })
 
     const filteredHistories = computed(() => {
-        return props.histories.filter((h) => h.date.isValid() && h.date && h.state)
+        return normalizedHistories.value.filter((h) => h.date.isValid() && h.date && h.state)
     })
 
     function paint() {
@@ -103,7 +111,13 @@
     }
 
     function squareClass(state: string) {
-        return "ks-duration-tt-square-" + state.toLowerCase()
+        let statusVarname = state.toLowerCase()
+
+        // Minor hack to reuse created color for submitted status.
+        // See https://github.com/kestra-io/kestra/issues/14876 for more details.
+        if (statusVarname === "submitted") statusVarname = "created"
+
+        return "ks-duration-tt-square-" + statusVarname
     }
 
     onBeforeUnmount(() => {

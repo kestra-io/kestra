@@ -1,6 +1,7 @@
 import "./vue-flow-styles.css"
 import "./topology.scss"
 export {default as Topology} from "./Topology.vue"
+export {default as Duration} from "./misc/Duration.vue"
 export {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
 export {EVENTS, NODE_SIZES} from "./utils/constants"
 export type {CustomActionConfig, ShowDetailsConfig} from "./utils/constants"

@@ -27,6 +27,7 @@
     "activate_basic_auth": "Activer l'authentification de base",
     "active": "Actif",
     "active-slots": "Slots actifs",
+    "actual state": "État actuel",
     "add": "Ajouter",
     "add at position": "Ajouter {position} <code>{task}</code>",
     "add error handler": "Gérer les erreurs",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Blocs d'application",
     "apps": "Applications",
+    "are you sure change state": "Êtes-vous sûr de vouloir changer l'état ?",
     "assets": {
       "title": "Ressources"
     },
@@ -251,6 +253,14 @@
         "singular": "Tableau de bord"
       },
       "preview": "Aperçu du Dashboard",
+      "quick_filters": {
+        "all": "Tout",
+        "failed": "Échoué",
+        "paused": "En pause",
+        "running": "En cours",
+        "success": "Succès",
+        "warning": "Avertissement"
+      },
       "switch": "Changer de tableau de bord"
     },
     "data": "Données",
@@ -888,6 +898,7 @@
     "labels": "Labels",
     "last 48 hours": "dernières 48 heures",
     "last X days count": "{count} lors des {days} derniers jours",
+    "last error was": "La dernière erreur était",
     "last evaluation date": "Date de la dernière évaluation",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Dernière exécution",
@@ -1536,7 +1547,7 @@
     "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
     "replay using": "Rejouer en utilisant",
     "replay with inputs": "Rejouer avec inputs",
-    "replayed": "Exécution rejouée",
+    "replayed": "L'exécution est rejouée",
     "required field": "Champ requis",
     "reset": "Recommencer",
     "restart": "Relancer",
@@ -1549,7 +1560,7 @@
       "button": "Redémarrer trigger",
       "tooltip": "Redémarrer le trigger"
     },
-    "restarted": "L'exécution est relancée",
+    "restarted": "L'exécution est redémarrée",
     "restore": "Restaurer",
     "restore confirm": "Êtes vous sûr de vouloir restaurer la révision <code>{revision}</code>?",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
@@ -1564,6 +1575,7 @@
     "revisions": "Révisions",
     "row count": "Nombre de lignes",
     "run task in playground": "Exécuter la task dans le playground",
+    "run timeline": "Chronologie d'Exécution",
     "runners": "Coureurs",
     "running": "RUNNING",
     "running duration": "Durée de traitement",
@@ -1615,9 +1627,11 @@
     },
     "see dependencies": "Voir les dépendances",
     "see full revision": "Voir la révision complète",
+    "see timeline": "Voir la chronologie",
     "see_all_states": "Voir tous les états",
     "seeing old revision": "Vous visualisez une ancienne revision : {revision}",
     "select": "Sélectionnez votre {{section}}",
+    "select a state": "Sélectionner un état",
     "select datetime": "Sélectionner une date",
     "select view": "Sélectionner la vue",
     "selected": "Sélectionné",
@@ -1803,6 +1817,7 @@
     "show": "Afficher",
     "show chart": "Afficher le graphique",
     "show description": "Afficher une description",
+    "show details": "Afficher les détails",
     "show documentation": "Afficher la documentation",
     "show more details": "Afficher plus de détails",
     "show task condition": "Afficher la condition de la task",
@@ -1814,6 +1829,7 @@
     "showLess": "Afficher moins",
     "showMore": "Afficher plus",
     "side-by-side": "côte à côte",
+    "skipped": "Ignoré",
     "slack support": "Demandez de l'aide sur notre Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2150,6 +2166,7 @@
     "worker information": "Informations sur le Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Clé ou valeur vide détecté dans les labels"
+    "wrong labels": "Clé ou valeur vide détecté dans les labels",
+    "yes": "Oui"
   }
 }

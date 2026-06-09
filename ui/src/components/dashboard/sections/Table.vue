@@ -240,8 +240,8 @@
     align-items: center;
     padding: var(--ks-spacing-2) var(--ks-spacing-3);
     font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--ks-text-secondary);
+    font-weight: 400;
+    color: var(--ks-text-inactive);
     background: none;
     border: none;
     cursor: pointer;
@@ -252,6 +252,7 @@
 
     &:hover {
         color: var(--tab-color);
+        font-weight: 500;
     }
 
     &.active {

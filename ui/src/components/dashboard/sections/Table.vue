@@ -173,7 +173,7 @@
         if (!hasQuickFilters.value || activeTab.value === "all") return null
         const tab = QUICK_FILTER_TABS.find(tab => tab.key === activeTab.value)
         if (!tab?.states.length) return null
-        return {field: "state", operation: "IN", value: tab.states}
+        return {field: "state", operation: "IN", value: [...tab.states]}
     })
 
     const getData = async () => {

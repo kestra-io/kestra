@@ -15,12 +15,14 @@
                 <div class="viewer">
                     <div class="viewer__header">
                         <KsSegmented
+                            v-if="isExpandableValue && !fileSelectedOutput" 
                             v-model="viewMode"
                             :options="viewModes"
                             size="small"
                         />
+                        <span v-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
                         <KsIconButton
-                            v-if="selectedValue !== undefined"
+                            v-if="selectedValue !== undefined && !fileSelectedOutput"
                             :aria-label="$t('copy')"
                             @click="copyValue"
                         >
@@ -33,7 +35,7 @@
                     </template>
 
                     <KsEditor
-                        v-else-if="viewMode === 'raw'"
+                        v-else-if="viewMode === 'raw' && isExpandableValue"
                         v-bind="editorBindings"
                         :readOnly="true"
                         :inline="true"
@@ -195,6 +197,16 @@
         taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}} 
     }
 
+    function isOutputTaskAFile(item: any): item is { uri: string } {
+        if(!item || typeof item !== "object") {
+            return false
+        }
+        if(!Utils.isFile(item.uri)) {
+            return false
+        }
+        return true
+    }
+
     const taskItems = computed<ExplorerItem[]>(() => {
         const taskRunList = execution.value?.taskRunList ?? []
         return taskRunList
@@ -202,7 +214,7 @@
             .map((task) => ({
                 label: task.taskId,
                 value: taskOutputs.value[task.id],
-                type: "object",
+                type: isOutputTaskAFile(taskOutputs.value[task.id]) ? "file" : "object",
                 preview: "",
                 expression: `outputs${formatStep(task.taskId)}`,
                 taskRunId: task.id,

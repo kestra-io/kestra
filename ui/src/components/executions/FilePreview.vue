@@ -32,15 +32,18 @@
     </div>
     <template v-else>
         <RawPreview v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
-        <KsButton
-            type="primary"
-            tag="a"
-            :href="itemUrl(path)"
-            :icon="Download"
-            rel="noopener noreferrer"
-        >
-            {{ $t('download') }}
-        </KsButton>
+        <div class="button-bar">
+            <KsButton
+                class=""
+                type="primary"
+                tag="a"
+                :href="itemUrl(path)"
+                :icon="Download"
+                rel="noopener noreferrer"
+            >
+                {{ $t('download') }}
+            </KsButton>
+        </div>
     </template>
 </template>
 
@@ -140,5 +143,10 @@
         align-items: end;
         gap: 1rem;
         margin-top: 2rem;
+    }
+    .button-bar {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1rem;
     }
 </style>

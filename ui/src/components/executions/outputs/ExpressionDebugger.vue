@@ -164,5 +164,9 @@
         margin-top: 1.5rem;
         font-size: var(--ks-font-size-sm);
     }
+
+    h2:first-of-type {
+        margin-top: 0;
+    }
 }
 </style>

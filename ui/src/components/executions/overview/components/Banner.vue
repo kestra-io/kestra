@@ -167,13 +167,9 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
-    import Repeat from "vue-material-design-icons/Repeat.vue"
     import Replay from "vue-material-design-icons/Replay.vue"
     import Creation from "vue-material-design-icons/Creation.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
-    import Restore from "vue-material-design-icons/Restore.vue"
-    import SitemapOutline from "vue-material-design-icons/SitemapOutline.vue"
-    import TimerSand from "vue-material-design-icons/TimerSand.vue"
     import ClockTimeFourOutline from "vue-material-design-icons/ClockTimeFourOutline.vue"
     import GraphOutline from "vue-material-design-icons/GraphOutline.vue"
 

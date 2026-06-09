@@ -20,7 +20,7 @@
                             :options="viewModes"
                             size="small"
                         />
-                        <span v-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
+                        <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
                         <KsIconButton
                             v-if="selectedValue !== undefined && !fileSelectedOutput"
                             :aria-label="$t('copy')"

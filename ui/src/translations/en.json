@@ -17,6 +17,9 @@
     "namespace": "Namespace",
     "description": "Description",
     "show description": "Show a description",
+    "show details": "Show details",
+    "show more details": "Show more details",
+    "skipped": "Skipped",
     "revision": "Revision",
     "Language": "Language",
     "Set default page": "Set default page",
@@ -1535,6 +1538,7 @@
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
           "workerGroup": "Worker Group",
+          "workerSelector": "Worker Selector",
           "checks": "Checks",
           "updated": "Updated"
         }

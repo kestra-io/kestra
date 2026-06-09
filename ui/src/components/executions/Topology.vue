@@ -195,6 +195,7 @@
     .kel-card {
         height: calc(100vh - 174px);
         position: relative;
+        background-color: var(--ks-bg-base);
 
         :deep(.kel-card__body) {
             height: 100%;

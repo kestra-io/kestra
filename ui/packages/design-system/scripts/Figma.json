@@ -975,6 +975,150 @@
             "rootAlias": "gray-neutral/100"
           },
           {
+            "name": "ks/topology-bg-cancelled",
+            "value": "#e9e9ee",
+            "var": "gray-neutral/100",
+            "rootAlias": "gray-neutral/100"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-killing",
+            "value": "#fffceb",
+            "var": "yellow/50",
+            "rootAlias": "yellow/50"
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#f9f5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#9869f71a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#ecfff5",
+            "var": "green/50",
+            "rootAlias": "green/50"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#43f6b61a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-cancelled",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#ed0011",
+            "var": "red/500",
+            "rootAlias": "red/500"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-killing",
+            "value": "#fce070",
+            "var": "yellow/300",
+            "rootAlias": "yellow/300"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-cancelled",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#ed0011",
+            "var": "red/500",
+            "rootAlias": "red/500"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#06f0b1",
+            "var": "green/400",
+            "rootAlias": "green/400"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
             "name": "ks/topology-dash",
             "value": "#adadbf",
             "var": "gray-neutral/300",
@@ -1766,9 +1910,9 @@
           },
           {
             "name": "ks/border-error",
-            "value": "#ed0011",
-            "var": "red/500",
-            "rootAlias": "red/500"
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
           },
           {
             "name": "ks/border-focus",
@@ -2267,6 +2411,150 @@
             "value": "#2c303f",
             "var": "gray-cool/600",
             "rootAlias": "gray-cool/600"
+          },
+          {
+            "name": "ks/topology-bg-cancelled",
+            "value": "#262a35",
+            "var": "gray-cool/700",
+            "rootAlias": "gray-cool/700"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#f73a3d1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#1761fd1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-killing",
+            "value": "#170d02",
+            "var": "yellow/1000",
+            "rootAlias": "yellow/1000"
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#0b021c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#7738f51a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#040c08",
+            "var": "green/1000",
+            "rootAlias": "green/1000"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#15b9831a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-cancelled",
+            "value": "#9797a6",
+            "var": "gray-cool/300",
+            "rootAlias": "gray-cool/300"
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-cancelled",
+            "value": "#20232d",
+            "var": "gray-cool/800",
+            "rootAlias": "gray-cool/800"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",
@@ -3060,9 +3348,9 @@
           },
           {
             "name": "ks/border-error",
-            "value": "#ed0011",
-            "var": "red/500",
-            "rootAlias": "red/500"
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
           },
           {
             "name": "ks/border-focus",
@@ -3561,6 +3849,150 @@
             "value": "#23252e",
             "var": "gray-neutral/800",
             "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/topology-bg-cancelled",
+            "value": "#2e2e3c",
+            "var": "gray-neutral/700",
+            "rootAlias": "gray-neutral/700"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#f73a3d1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#1761fd1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-killing",
+            "value": "#170d02",
+            "var": "yellow/1000",
+            "rootAlias": "yellow/1000"
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#0b021c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#7738f51a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#040c08",
+            "var": "green/1000",
+            "rootAlias": "green/1000"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#15b9831a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-cancelled",
+            "value": "#424256",
+            "var": "gray-neutral/600",
+            "rootAlias": "gray-neutral/600"
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-cancelled",
+            "value": "#23252e",
+            "var": "gray-neutral/800",
+            "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",

@@ -34,7 +34,7 @@
                 </span>
 
                 <span v-if="replayed" class="execution-banner__replay">
-                    <Restore />
+                    <Replay />
                     {{ t("replayed") }}
                 </span>
 
@@ -98,6 +98,10 @@
                 <KsButton :icon="ContentCopy" @click="copyLogs" link>
                     {{ t("copy logs") }}
                 </KsButton>
+
+                <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
+                    {{ t("fix_with_ai") }}
+                </KsButton>
             </div>
         </div>
 
@@ -137,6 +141,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
 
     import moment from "moment"
     import {KsExecutionStatus, State} from "@kestra-io/design-system"
@@ -163,6 +168,8 @@
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import Repeat from "vue-material-design-icons/Repeat.vue"
+    import Replay from "vue-material-design-icons/Replay.vue"
+    import Creation from "vue-material-design-icons/Creation.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import SitemapOutline from "vue-material-design-icons/SitemapOutline.vue"
@@ -174,8 +181,12 @@
     const emit = defineEmits<{follow: [event?: unknown]}>()
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
+    const router = useRouter()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
     const statusLabel = computed(() => {
         const status = props.execution.state.current
@@ -238,6 +249,38 @@
                 Utils.copy(response as string)
                 toast.success(t("copied"))
             })
+    }
+
+    const fixErrorWithAi = async () => {
+        const logs = await executionsStore
+            .loadLogs({
+                store: false,
+                executionId: props.execution.id,
+                params: {minLevel: "ERROR"},
+                showMessageOnError: false,
+            })
+            .catch(() => [])
+
+        const errorLines = (logs ?? [])
+            .map((l: {message?: string}) => l.message)
+            .filter(Boolean)
+            .join("\n")
+
+        const prompt = errorLines
+            ? `Fix the flow ${props.execution.flowId} as it generated the following error:\n${errorLines}`
+            : `Fix the flow ${props.execution.flowId} as its execution failed.`
+        window.sessionStorage.setItem("kestra-ai-prompt", prompt)
+
+        router.push({
+            name: "flows/update",
+            params: {
+                namespace: props.execution.namespace,
+                id: props.execution.flowId,
+                tab: "edit",
+                tenant: route.params?.tenant,
+            },
+            query: {ai: "open"},
+        })
     }
 </script>
 
@@ -383,6 +426,15 @@
                     color: var(--ks-text-primary);
                 }
             }
+
+            :deep(.fix-with-ai.kel-button) {
+                color: var(--ks-text-link);
+                box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
+
+                .material-design-icon {
+                    color: var(--ks-text-link);
+                }
+            }
         }
 
         &__meta {
@@ -391,7 +443,8 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: var(--ks-spacing-5);
+            row-gap: var(--ks-spacing-2);
+            column-gap: var(--ks-spacing-4);
             margin-left: calc(-1 * var(--ks-spacing-2));
             color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);

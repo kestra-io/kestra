@@ -1,5 +1,5 @@
 <template>
-    <KsDropdown trigger="click" placement="bottom-end">
+    <KsDropdown trigger="click" placement="bottom-end" :persistent="true">
         <KsButton link>
             <KsIcon><DotsVertical /></KsIcon>
             <span class="d-none d-lg-inline-block">{{ t("actions") }}</span>

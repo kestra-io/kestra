@@ -1536,7 +1536,7 @@
     "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
     "replay using": "Odtwórz używając",
     "replay with inputs": "Odtwórz z inputami",
-    "replayed": "Wykonanie zostało odtworzone",
+    "replayed": "Wykonanie jest odtwarzane",
     "required field": "Wymagane pole",
     "reset": "Restartuj",
     "restart": "Uruchom ponownie",

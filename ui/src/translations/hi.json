@@ -1536,7 +1536,7 @@
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "replay using": "पुनः चलाएं उपयोग करते हुए",
     "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
-    "replayed": "निष्पादन पुनः चलाया गया है",
+    "replayed": "निष्पादन को पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",
     "restart": "पुनः प्रारंभ करें",

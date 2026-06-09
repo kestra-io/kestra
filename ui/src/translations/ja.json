@@ -1536,7 +1536,7 @@
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "replay using": "を使用してリプレイ",
     "replay with inputs": "入力を使用してリプレイ",
-    "replayed": "実行がリプレイされました",
+    "replayed": "実行が再生されました",
     "required field": "必須フィールド",
     "reset": "再起動",
     "restart": "再起動",
@@ -1549,7 +1549,7 @@
       "button": "triggerを再起動",
       "tooltip": "トリガーを再起動する"
     },
-    "restarted": "実行が再起動されました",
+    "restarted": "実行が再開されました",
     "restore": "復元",
     "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "restore revision": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",

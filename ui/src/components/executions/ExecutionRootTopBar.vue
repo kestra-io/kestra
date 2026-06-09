@@ -151,6 +151,8 @@
     const overviewActions = computed(() => {
         if (!execution.value?.state) return []
         return [
+            {component: Restart},
+            {component: Restart, props: {isReplay: true}},
             {component: Kill},
             execution.value.state.current !== "PAUSED"
                 ? {component: Pause}

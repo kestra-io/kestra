@@ -149,7 +149,7 @@
 
     import ChangeExecutionStatus from "../../ChangeExecutionStatus.vue"
     import SetLabels from "../../SetLabels.vue"
-    import Duration from "../../../layout/Duration.vue"
+    import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"

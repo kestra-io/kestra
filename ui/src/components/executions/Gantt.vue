@@ -145,7 +145,7 @@
     import {useRoute} from "vue-router"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import {State, durationUtils} from "@kestra-io/design-system"
-    import Duration from "../layout/Duration.vue"
+    import {Duration} from "@kestra-io/topology"
     import * as FlowUtils from "../../utils/flowUtils"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"

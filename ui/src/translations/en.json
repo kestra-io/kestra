@@ -381,6 +381,10 @@
       "one_item": "[ 1 item ]",
       "n_items": "[ {count} items ]"
     },
+    "file_preview": {
+        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+        "load_anyway": "Load anyway"
+    },
     "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {

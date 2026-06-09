@@ -1544,7 +1544,7 @@
     "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
     "replay using": "Rejouer en utilisant",
     "replay with inputs": "Rejouer avec inputs",
-    "replayed": "Exécution rejouée",
+    "replayed": "L'exécution est rejouée",
     "required field": "Champ requis",
     "reset": "Recommencer",
     "restart": "Relancer",
@@ -1557,7 +1557,7 @@
       "button": "Redémarrer trigger",
       "tooltip": "Redémarrer le trigger"
     },
-    "restarted": "L'exécution est relancée",
+    "restarted": "L'exécution est redémarrée",
     "restore": "Restaurer",
     "restore confirm": "Êtes vous sûr de vouloir restaurer la révision <code>{revision}</code>?",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",

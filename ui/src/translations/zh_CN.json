@@ -1557,7 +1557,7 @@
       "button": "重新启动触发器",
       "tooltip": "重新启动trigger"
     },
-    "restarted": "执行已重新开始",
+    "restarted": "执行已重启",
     "restore": "恢复",
     "restore confirm": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "restore revision": "确定要恢复修订版 <code>{revision}</code> 吗？",

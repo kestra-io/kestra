@@ -1544,7 +1544,7 @@
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir con inputs",
-    "replayed": "La ejecución se ha repetido",
+    "replayed": "La ejecución se ha reproducido",
     "required field": "Campo requerido",
     "reset": "Reiniciar",
     "restart": "Reiniciar",
@@ -1557,7 +1557,7 @@
       "button": "Reiniciar trigger",
       "tooltip": "Reiniciar el trigger"
     },
-    "restarted": "La ejecución se ha reiniciado",
+    "restarted": "La ejecución se reinicia",
     "restore": "Restaurar",
     "restore confirm": "¿Estás seguro de restaurar la revisión <code>{revision}</code>?",
     "restore revision": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",

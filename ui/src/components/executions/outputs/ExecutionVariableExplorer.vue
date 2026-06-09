@@ -241,7 +241,15 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
-        expression.value = `{{ ${item.expression} }}`
+        // if there is only one item in the tree, select it by default to save users one click
+        // specially useful for files
+        if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
+            const onlyKey = Object.keys(selectedValue.value)[0]
+            expressionPath.value = `${item.expression}${formatStep(onlyKey)}`
+            expression.value = `{{ ${expressionPath.value} }}`
+        }else {
+            expression.value = `{{ ${item.expression} }}`
+        }
     }
 
     function onSelectPath(path: string) {

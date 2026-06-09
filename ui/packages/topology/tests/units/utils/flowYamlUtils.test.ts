@@ -1504,3 +1504,35 @@ namespace: company.team
         expect(YamlUtils.extractTypedBlocks(source)).toEqual([])
     })
 })
+
+describe("extractTypedBlocksWithMeta", () => {
+    test("returns blocks alongside top-level namespace and id in a single parse", () => {
+        const source = `id: my-flow
+namespace: company.team
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: admin1234
+`
+
+        const {blocks, namespace, id} = YamlUtils.extractTypedBlocksWithMeta(source)
+
+        expect(namespace).toBe("company.team")
+        expect(id).toBe("my-flow")
+        expect(blocks).toHaveLength(1)
+        expect(blocks[0].type).toBe("io.kestra.plugin.core.trigger.Webhook")
+    })
+
+    test("returns undefined namespace and id when not present in the source", () => {
+        const source = `triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: admin1234
+`
+
+        const {namespace, id} = YamlUtils.extractTypedBlocksWithMeta(source)
+
+        expect(namespace).toBeUndefined()
+        expect(id).toBeUndefined()
+    })
+})

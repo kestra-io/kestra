@@ -5,12 +5,13 @@ import {
     ARTIFACT_COPY_COMMAND,
     type ArtifactBlock,
 } from "../../../../../src/composables/monaco/artifacts"
+import {WEBHOOK_TRIGGER_TYPE} from "../../../../../src/utils/webhook"
 
 const t = (key: string) => key
 
 const webhookBlock: ArtifactBlock = {
-    type: "io.kestra.plugin.core.trigger.Webhook",
-    value: {id: "webhook", type: "io.kestra.plugin.core.trigger.Webhook", key: "admin1234"},
+    type: WEBHOOK_TRIGGER_TYPE,
+    value: {id: "webhook", type: WEBHOOK_TRIGGER_TYPE, key: "admin1234"},
     range: [40, 80, 80],
     path: "triggers",
 }
@@ -51,8 +52,8 @@ describe("provideEditorArtifacts", () => {
 
     it("skips a webhook-typed block that is not inside the triggers section", () => {
         const pluginDefaultBlock: ArtifactBlock = {
-            type: "io.kestra.plugin.core.trigger.Webhook",
-            value: {type: "io.kestra.plugin.core.trigger.Webhook", key: "shared"},
+            type: WEBHOOK_TRIGGER_TYPE,
+            value: {type: WEBHOOK_TRIGGER_TYPE, key: "shared"},
             range: [10, 40, 40],
             path: "pluginDefaults",
         }
@@ -61,7 +62,7 @@ describe("provideEditorArtifacts", () => {
     })
 
     it("does not register duplicate providers for the same type", () => {
-        const provider = {type: "io.kestra.plugin.core.trigger.Webhook", provide: () => []}
+        const provider = {type: WEBHOOK_TRIGGER_TYPE, provide: () => []}
         registerEditorArtifactProvider(provider)
 
         const artifacts = provideEditorArtifacts([webhookBlock], {namespace: "company.team", id: "my-flow", t})

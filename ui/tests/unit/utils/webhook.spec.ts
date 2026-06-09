@@ -9,6 +9,12 @@ describe("webhookUrl", () => {
         expect(url).toContain("/api/v1/main/executions/webhook/company.team/my-flow/admin1234")
     })
 
+    it("URL-encodes path segments that contain special characters", () => {
+        const url = webhookUrl({namespace: "company.team", id: "my flow", key: "key/with/slashes"})
+
+        expect(url).toContain("/executions/webhook/company.team/my%20flow/key%2Fwith%2Fslashes")
+    })
+
     it("exposes the canonical webhook trigger type", () => {
         expect(WEBHOOK_TRIGGER_TYPE).toBe("io.kestra.plugin.core.trigger.Webhook")
     })

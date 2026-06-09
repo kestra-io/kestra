@@ -800,6 +800,16 @@ export interface TypedBlock {
 }
 
 export function extractTypedBlocks(source: string): TypedBlock[] {
+    return extractTypedBlocksWithMeta(source).blocks
+}
+
+export interface FlowSourceData {
+    blocks: TypedBlock[];
+    namespace?: string;
+    id?: string;
+}
+
+export function extractTypedBlocksWithMeta(source: string): FlowSourceData {
     const yamlDoc = parseDocument(source) as any
     const blocks: TypedBlock[] = []
     visit(yamlDoc, {
@@ -814,7 +824,14 @@ export function extractTypedBlocks(source: string): TypedBlock[] {
             }
         },
     })
-    return blocks
+    const root = yamlDoc.contents
+    const namespace = isMap(root) ? root.get("namespace") : undefined
+    const id = isMap(root) ? root.get("id") : undefined
+    return {
+        blocks,
+        namespace: typeof namespace === "string" ? namespace : undefined,
+        id: typeof id === "string" ? id : undefined,
+    }
 }
 
 function extractAllTypes(source: string, validTypes: string[] = []){

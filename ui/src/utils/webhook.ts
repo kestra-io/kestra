@@ -9,6 +9,6 @@ export interface WebhookUrlParams {
 }
 
 export function webhookUrl({namespace, id, key}: WebhookUrlParams): string {
-    const url = `${apiUrl()}/executions/webhook/${namespace}/${id}/${key}`
+    const url = `${apiUrl()}/executions/webhook/${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/${encodeURIComponent(key)}`
     return /^https?:\/\//.test(url) ? url : `${window.location.origin}${url}`
 }

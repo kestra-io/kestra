@@ -641,13 +641,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 const source = model.getValue()
                 let artifacts
                 try {
-                    const blocks = YAML_UTILS.extractTypedBlocks(source)
-                    const parsed = YAML_UTILS.parse(source, false)
-                    artifacts = provideEditorArtifacts(blocks, {
-                        namespace: parsed?.namespace,
-                        id: parsed?.id,
-                        t,
-                    })
+                    const {blocks, namespace, id} = YAML_UTILS.extractTypedBlocksWithMeta(source)
+                    artifacts = provideEditorArtifacts(blocks, {namespace, id, t})
                 } catch {
                     return noLenses
                 }

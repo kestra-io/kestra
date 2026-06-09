@@ -125,10 +125,10 @@ charts:
           field: STATE
           displayName: State
 
-  - id: executions_in_progress
+  - id: recent_executions
     type: io.kestra.plugin.core.dashboard.chart.Table
     chartOptions:
-      displayName: Executions In Progress
+      displayName: Executions
       pagination:
         enabled: true
       width: 6
@@ -150,17 +150,6 @@ charts:
         state:
           field: STATE
           displayName: State
-      where:
-        - type: IN
-          field: STATE
-          values:
-            - CREATED
-            - RESTARTED
-            - QUEUED
-            - RUNNING
-            - PAUSED
-            - RETRYING
-            - KILLING
 
   - id: next_executions
     type: io.kestra.plugin.core.dashboard.chart.Table

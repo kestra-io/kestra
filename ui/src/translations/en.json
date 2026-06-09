@@ -499,7 +499,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-       "404": {
+      "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -1776,7 +1776,15 @@
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
       "chart_preview": "Click on a chart source code to see its preview",
-      "export": "Export to CSV"
+      "export": "Export to CSV",
+      "quick_filters": {
+        "all": "All",
+        "running": "Running",
+        "paused": "Paused",
+        "success": "Success",
+        "warning": "Warning",
+        "failed": "Failed"
+      }
     },
     "setup": {
       "login": "Login",

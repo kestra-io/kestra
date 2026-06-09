@@ -45,6 +45,9 @@ public class WorkerStreamContext<T> {
     private final StreamObserver<T> responseObserver;
     private final WorkerCapacityPolicy capacityPolicy;
 
+    /** Worker's advertised gRPC max inbound message size (bytes); 0 = not advertised. */
+    private volatile int maxInboundMessageSize;
+
     /**
      * Number of jobs the worker has capacity to receive.
      * Decremented when a job is sent, incremented when worker sends permits.
@@ -306,6 +309,11 @@ public class WorkerStreamContext<T> {
      */
     public int getInFlightCount() {
         return inFlightJobs.size();
+    }
+
+    /** Records the worker's advertised gRPC max inbound message size (bytes). */
+    public void setMaxInboundMessageSize(int maxInboundMessageSize) {
+        this.maxInboundMessageSize = maxInboundMessageSize;
     }
 
     /**

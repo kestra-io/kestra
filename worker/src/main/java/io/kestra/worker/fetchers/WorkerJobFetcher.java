@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.protobuf.ByteString;
 
 import io.kestra.controller.GrpcChannelManager;
+import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.grpc.WorkerJobPayload;
@@ -92,6 +93,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final GrpcChannelManager channelManager;
     private final WorkerQueueRegistry workerQueueRegistry;
     private final ExecutionKilledManager executionKilledManager;
+    private final GrpcConfiguration grpcConfiguration;
     private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
     private final List<WorkerMetadataChangeHandler> metadataChangeHandlers;
 
@@ -172,12 +174,14 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         final WorkerQueueRegistry workerQueueRegistry,
         final ExecutionKilledManager executionKilledManager,
         @Nullable @Named(WORKER_LOCAL_CLUSTER_EVENTS) final BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
-        final List<WorkerMetadataChangeHandler> metadataChangeHandlers) {
+        final List<WorkerMetadataChangeHandler> metadataChangeHandlers,
+        final GrpcConfiguration grpcConfiguration) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
         this.channelManager = channelManager;
         this.executionKilledManager = executionKilledManager;
+        this.grpcConfiguration = grpcConfiguration;
         this.clusterEventQueue = clusterEventQueue;
         this.metadataChangeHandlers = metadataChangeHandlers;
     }
@@ -308,6 +312,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                     .setWorkerId(workerContext.workerId())
                     .setWorkerGroupId(workerGroupId)
                     .setMaxConcurrency(maxConcurrency)
+                    .setMaxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
                     .build()
             );
         addPendingCompletions(requestBuilder);

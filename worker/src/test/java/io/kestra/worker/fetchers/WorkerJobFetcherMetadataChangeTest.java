@@ -8,6 +8,7 @@ import io.kestra.core.worker.WorkerMetadataChangeHandler;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.controller.GrpcChannelManager;
+import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,8 @@ class WorkerJobFetcherMetadataChangeTest {
             mock(WorkerQueueRegistry.class),
             mock(ExecutionKilledManager.class),
             (BroadcastQueueInterface<ClusterEvent>) mock(BroadcastQueueInterface.class),
-            handlers
+            handlers,
+            new GrpcConfiguration(false, 10485760)
         );
     }
 
@@ -93,7 +95,8 @@ class WorkerJobFetcherMetadataChangeTest {
             mock(WorkerQueueRegistry.class),
             killed,
             null,
-            List.of(handler)
+            List.of(handler),
+            new GrpcConfiguration(false, 10485760)
         );
 
         io.kestra.core.models.executions.ExecutionKilled k = io.kestra.core.models.executions.ExecutionKilledExecution.builder()

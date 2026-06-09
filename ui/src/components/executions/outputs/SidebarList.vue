@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, watch} from "vue"
 
     import {
         KsSearch,
@@ -98,7 +98,14 @@
             .filter((section) => section.items.length > 0)
     })
 
-    const openSections = ref<string[]>(["variables"])
+    const sectionsKeys = computed(() => props.sections.map((s) => s.key))
+
+    const openSections = ref<string[]>()
+
+    watch(sectionsKeys, (newKeys) => {
+        // By default, open all sections.
+        openSections.value = newKeys
+    }, {immediate: true})
 </script>
 
 <style scoped lang="scss">

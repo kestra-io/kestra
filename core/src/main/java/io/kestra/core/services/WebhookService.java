@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,9 +21,11 @@ import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -75,6 +78,9 @@ public class WebhookService {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     /**
      * Parse query parameters from the webhook request URI.
@@ -209,6 +215,36 @@ public class WebhookService {
             );
         })
             .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
+    }
+
+    /**
+     * Start the execution and block the calling thread until it reaches a terminal state, returning
+     * the terminal {@link Execution} (with computed flow-level outputs).
+     * <p>
+     * MUST only be called from a blocking-friendly thread (e.g. {@code TaskExecutors.IO}), never from
+     * a Netty event loop.
+     * <p>
+     * Unlike {@link #followExecution(Execution, Flow)}, this polls the execution repository rather than
+     * the streaming service: a fast subflow can terminate (and have its streaming events dropped, since
+     * no subscriber is registered for its id yet) before we could subscribe. Polling the repository is
+     * race-free for a fire-and-wait caller.
+     *
+     * @param execution The execution to start
+     * @param flow The flow associated with the execution
+     * @param completionTimeout The maximum time to wait for the execution to terminate
+     * @return the terminal execution
+     */
+    public Execution runAndWait(Execution execution, Flow flow, Duration completionTimeout) {
+        // wait for the executor to confirm the Create command, then poll until terminal state
+        startExecution(execution).block(asyncOperationsConfiguration.waitTimeout());
+
+        return Await.await()
+            .atMost(completionTimeout)
+            .pollInterval(Duration.ofMillis(100))
+            .until(
+                () -> executionRepository.findById(execution.getTenantId(), execution.getId()).orElse(null),
+                terminal -> terminal != null && streamingService.isStopFollow(flow, terminal)
+            );
     }
 
     /**

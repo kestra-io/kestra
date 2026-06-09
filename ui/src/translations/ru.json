@@ -1152,7 +1152,8 @@
           "taskDefaults": "Значения по умолчанию для Task",
           "updated": "Обновлено",
           "variables": "Переменные",
-          "workerGroup": "Группа Worker"
+          "workerGroup": "Группа Worker",
+          "workerSelector": "Селектор Worker"
         },
         "main": {
           "description": "Описание",

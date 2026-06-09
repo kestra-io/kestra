@@ -1152,7 +1152,8 @@
           "taskDefaults": "タスクデフォルト",
           "updated": "更新済み",
           "variables": "変数",
-          "workerGroup": "ワーカーグループ"
+          "workerGroup": "ワーカーグループ",
+          "workerSelector": "ワーカーセレクター"
         },
         "main": {
           "description": "説明",

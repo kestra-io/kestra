@@ -1152,7 +1152,8 @@
           "taskDefaults": "작업 기본값",
           "updated": "업데이트됨",
           "variables": "변수",
-          "workerGroup": "작업자 그룹"
+          "workerGroup": "작업자 그룹",
+          "workerSelector": "워커 선택기"
         },
         "main": {
           "description": "설명",

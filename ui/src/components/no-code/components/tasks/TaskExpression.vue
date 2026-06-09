@@ -61,8 +61,3 @@
     }
 </script>
 
-<style scoped lang="scss">
-:deep(.placeholder) {
-    top: -7px !important;
-}
-</style>

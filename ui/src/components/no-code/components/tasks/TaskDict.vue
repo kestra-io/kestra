@@ -151,7 +151,8 @@
     const emit = defineEmits(["update:modelValue"])
 
     function getKey(key: string) {
-        return props.root ? `${props.root}.${key}` : key
+        if (!props.root) return key
+        return key ? `${props.root}.${key}` : props.root
     }
 
     function isRequired(key: string) {

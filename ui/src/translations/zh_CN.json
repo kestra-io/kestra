@@ -1152,7 +1152,8 @@
           "taskDefaults": "任务默认值",
           "updated": "已更新",
           "variables": "变量",
-          "workerGroup": "工作组"
+          "workerGroup": "工作组",
+          "workerSelector": "Worker 选择器"
         },
         "main": {
           "description": "描述",

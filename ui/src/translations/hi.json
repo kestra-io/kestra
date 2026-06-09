@@ -1152,7 +1152,8 @@
           "taskDefaults": "डिफ़ॉल्ट Task",
           "updated": "अपडेट किया गया",
           "variables": "वेरिएबल्स",
-          "workerGroup": "वर्कर ग्रुप"
+          "workerGroup": "वर्कर ग्रुप",
+          "workerSelector": "वर्कर सेलेक्टर"
         },
         "main": {
           "description": "विवरण",

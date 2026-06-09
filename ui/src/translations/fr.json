@@ -1152,7 +1152,8 @@
           "taskDefaults": "Paramètres par défaut des Tasks",
           "updated": "Mis à jour",
           "variables": "Variables",
-          "workerGroup": "Groupe de Workers"
+          "workerGroup": "Groupe de Workers",
+          "workerSelector": "Sélecteur de Worker"
         },
         "main": {
           "description": "Description",

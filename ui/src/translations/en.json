@@ -1535,6 +1535,7 @@
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
           "workerGroup": "Worker Group",
+          "workerSelector": "Worker Selector",
           "checks": "Checks",
           "updated": "Updated"
         }

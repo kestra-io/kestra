@@ -1152,7 +1152,8 @@
           "taskDefaults": "Domyślne ustawienia Task",
           "updated": "Zaktualizowano",
           "variables": "Zmienne",
-          "workerGroup": "Grupa Worker"
+          "workerGroup": "Grupa Worker",
+          "workerSelector": "Selektor Worker"
         },
         "main": {
           "description": "Opis",

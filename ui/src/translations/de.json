@@ -1152,7 +1152,8 @@
           "taskDefaults": "Standardwerte für Tasks",
           "updated": "Aktualisiert",
           "variables": "Variablen",
-          "workerGroup": "Worker-Gruppe"
+          "workerGroup": "Worker-Gruppe",
+          "workerSelector": "Worker-Selektor"
         },
         "main": {
           "description": "Beschreibung",

@@ -1152,7 +1152,8 @@
           "taskDefaults": "Predeterminados de Task",
           "updated": "Actualizado",
           "variables": "Variables",
-          "workerGroup": "Grupo de Worker"
+          "workerGroup": "Grupo de Worker",
+          "workerSelector": "Selector de Worker"
         },
         "main": {
           "description": "Descripción",

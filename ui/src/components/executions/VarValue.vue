@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </KsButton>
-        <FilePreview v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
+        <FilePreviewDrawer v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <KsButton disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </KsButton>
@@ -68,7 +68,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
-    import FilePreview from "./FilePreview.vue"
+    import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
@@ -78,10 +78,6 @@
 
     interface Execution {
         id: string;
-    }
-
-    interface FileMetadata {
-        size: number;
     }
 
     const props = withDefaults(defineProps<{

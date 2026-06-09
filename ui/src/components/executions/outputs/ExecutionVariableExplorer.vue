@@ -43,6 +43,13 @@
                         lang="json"
                     />
 
+                    <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
+                        <FilePreview
+                            :path="fileSelectedOutput"
+                            :executionId="execution.id"
+                        />
+                    </div>
+
                     <VariableTreeView
                         v-else-if="isExpandableValue"
                         :value="selectedValue"
@@ -58,7 +65,7 @@
             </KsSplitterPanel>
 
             <!-- Right: evaluate a Pebble expression against the live execution -->
-            <KsSplitterPanel v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
+            <KsSplitterPanel v-if="!fileSelectedOutput" v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
                 <div class="debug">
                     <ExpressionDebugger
                         :execution="execution"
@@ -93,6 +100,8 @@
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
+    import * as Utils from "../../../utils/utils"
+    import FilePreview from "../FilePreview.vue"
 
     const {t} = useI18n({useScope: "global"})
     const editorBindings = useEditorBindings()
@@ -225,6 +234,19 @@
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
     )
 
+    const fileSelectedOutput = computed(() => {
+        if (!isExpandableValue.value) return undefined
+        try {
+            const fileMetadata = selectedValue.value as {uri?: string}
+            if (Utils.isFile(fileMetadata.uri)) {
+                return fileMetadata.uri
+            }
+        } catch {
+            // If the value is not an object or doesn't have a `uri` field, just ignore it.
+        }   
+        return undefined
+    })
+
     const rawValue = computed(() =>
         typeof selectedValue.value === "string"
             ? selectedValue.value
@@ -324,6 +346,10 @@
         font-size: var(--ks-font-size-sm);
         word-break: break-word;
         padding: .5rem 1rem;
+    }
+
+    .file-preview{
+        padding: 1rem;
     }
 }
 

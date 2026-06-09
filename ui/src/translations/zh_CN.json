@@ -251,6 +251,14 @@
         "singular": "仪表板"
       },
       "preview": "预览仪表板",
+      "quick_filters": {
+        "all": "全部",
+        "failed": "失败",
+        "paused": "已暂停",
+        "running": "运行中",
+        "success": "成功",
+        "warning": "警告"
+      },
       "switch": "切换仪表板"
     },
     "data": "数据",
@@ -1803,7 +1811,9 @@
     "show": "显示",
     "show chart": "显示图表",
     "show description": "显示描述",
+    "show details": "显示详情",
     "show documentation": "显示文档",
+    "show more details": "显示更多详情",
     "show task condition": "显示任务条件",
     "show task documentation": "显示任务文档",
     "show task documentation in editor": "在编辑器中显示任务文档",
@@ -1813,6 +1823,7 @@
     "showLess": "显示较少",
     "showMore": "显示更多",
     "side-by-side": "并排",
+    "skipped": "跳过",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
       "connection_lost": {

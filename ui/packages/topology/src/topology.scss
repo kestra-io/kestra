@@ -99,6 +99,17 @@ html.dark {
     }
 }
 
+.node-action-button {
+    .material-design-icon__svg {
+        fill: var(--ks-icon-muted);
+    }
+
+    &:hover .material-design-icon__svg,
+    &.active .material-design-icon__svg {
+        fill: var(--ks-icon-default);
+    }
+}
+
 .vue-flow__container {
     .vue-flow__node.topology-node-hovered,
     .vue-flow__node.topology-node-drop-target {
@@ -132,10 +143,10 @@ html.dark {
         fill: none;
     }
 
-    @each $name, $color in $node-colors {
-        .ks-topology-#{$name}-border {
-            background-color: rgba($color, 0.05);
-            border: 1px solid $color;
+    @each $type in (triggers, subflow, flowable-task, errors) {
+        .ks-topology-#{$type}-border {
+            background-color: var(--ks-topology-bg-#{$type});
+            border: 1px solid var(--ks-topology-border-#{$type});
         }
     }
 }
@@ -145,7 +156,8 @@ html.dark {
     .vue-flow__controls-button,
     .vue-flow__handle,
     .top-button-div,
-    .circle-button {
+    .circle-button,
+    .node-action-button {
         display: none !important;
     }
 }

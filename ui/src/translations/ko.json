@@ -251,6 +251,14 @@
         "singular": "대시보드"
       },
       "preview": "미리보기 대시보드",
+      "quick_filters": {
+        "all": "전체",
+        "failed": "실패",
+        "paused": "일시 중지됨",
+        "running": "실행 중",
+        "success": "성공",
+        "warning": "경고"
+      },
       "switch": "대시보드 전환"
     },
     "data": "데이터",
@@ -1803,7 +1811,9 @@
     "show": "보기",
     "show chart": "차트 보기",
     "show description": "설명을 표시",
+    "show details": "세부 정보 표시",
     "show documentation": "문서 보기",
+    "show more details": "자세한 정보 보기",
     "show task condition": "작업 상태 표시",
     "show task documentation": "task 문서 보기",
     "show task documentation in editor": "편집기에서 task 문서 보기",
@@ -1813,6 +1823,7 @@
     "showLess": "덜 보기",
     "showMore": "더 보기",
     "side-by-side": "나란히",
+    "skipped": "건너뜀",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {
       "connection_lost": {

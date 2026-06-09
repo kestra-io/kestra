@@ -251,6 +251,14 @@
         "singular": "Dashboard"
       },
       "preview": "Visualizar Dashboard",
+      "quick_filters": {
+        "all": "Todos",
+        "failed": "Falhou",
+        "paused": "Pausado",
+        "running": "Em execução",
+        "success": "Sucesso",
+        "warning": "Aviso"
+      },
       "switch": "Alternar Dashboard"
     },
     "data": "Dados",
@@ -1803,7 +1811,9 @@
     "show": "Mostrar",
     "show chart": "Mostrar Gráfico",
     "show description": "Mostrar uma descrição",
+    "show details": "Mostrar detalhes",
     "show documentation": "Mostrar documentação",
+    "show more details": "Mostrar mais detalhes",
     "show task condition": "Exibir condição da task",
     "show task documentation": "Mostrar documentação da task",
     "show task documentation in editor": "Mostrar documentação da task no editor",
@@ -1813,6 +1823,7 @@
     "showLess": "Mostrar menos",
     "showMore": "Mostrar mais",
     "side-by-side": "lado a lado",
+    "skipped": "Pulado",
     "slack support": "Faça qualquer pergunta via Slack",
     "something_went_wrong": {
       "connection_lost": {

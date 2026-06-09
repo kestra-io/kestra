@@ -251,6 +251,14 @@
         "singular": "Панель управления"
       },
       "preview": "Предварительный просмотр Dashboard",
+      "quick_filters": {
+        "all": "Все",
+        "failed": "Ошибка",
+        "paused": "Приостановлено",
+        "running": "Выполняется",
+        "success": "Успешно",
+        "warning": "Предупреждение"
+      },
       "switch": "Переключить Панель управления"
     },
     "data": "Данные",
@@ -1803,7 +1811,9 @@
     "show": "Показать",
     "show chart": "Показать диаграмму",
     "show description": "Показать описание",
+    "show details": "Показать детали",
     "show documentation": "Показать документацию",
+    "show more details": "Показать больше деталей",
     "show task condition": "Показать условие task",
     "show task documentation": "Показать документацию задачи",
     "show task documentation in editor": "Показать документацию задачи в редакторе",
@@ -1813,6 +1823,7 @@
     "showLess": "Показать меньше",
     "showMore": "Показать больше",
     "side-by-side": "бок о бок",
+    "skipped": "Пропущено",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {
       "connection_lost": {

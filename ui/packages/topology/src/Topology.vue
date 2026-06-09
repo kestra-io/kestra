@@ -10,6 +10,10 @@
     >
         <Background :patternColor="cssVariable('--ks-topology-bg')" />
 
+        <Panel position="top-right">
+            <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
+        </Panel>
+
         <template #node-cluster="clusterProps">
             <ClusterNode
                 v-bind="clusterProps"
@@ -104,9 +108,6 @@
             <ControlButton @click.stop="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
                 <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
             </ControlButton>
-            <ControlButton @click.stop="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
-                <InformationSlabCircleOutline />
-            </ControlButton>
             <ControlButton @click.stop="toggleDropdown">
                 <Download />
             </ControlButton>
@@ -127,7 +128,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow} from "@vue-flow/core"
+    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import type {XYPosition} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -143,9 +144,8 @@
     import AlignHorizontalCenter from "vue-material-design-icons/AlignHorizontalCenter.vue"
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import InformationSlabCircleOutline from "vue-material-design-icons/InformationSlabCircleOutline.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsSwitch} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
@@ -215,19 +215,12 @@
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
                 : {width: getNodeWidth(node), height: baseHeight}
 
-            if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                return {...dimensions, height: baseHeight}
+            if (props.execution && (VueFlowUtils.isTaskNode(node) || VueFlowUtils.isTriggerNode(node) || VueFlowUtils.isCustomNode(node))) {
+                dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
             }
 
-            if (showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                const taskType = node?.task?.type as string | undefined
-                const hasDetailsAction = Boolean(
-                    (taskType && props.customActions?.[taskType]) ||
-                        (taskType && props.showDetails?.[taskType]),
-                )
-                if (hasDetailsAction) {
-                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)}
-                }
+            if (VueFlowUtils.isTaskNode(node) && !showExtraDetails.value) {
+                return {...dimensions, height: baseHeight}
             }
 
             return dimensions
@@ -292,7 +285,8 @@
             collapsed.value = new Set<string>()
             hiddenNodes.value = []
             edgeReplacer.value = {}
-            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false, false))
+            clusterToNode.value = []
+            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
             const elements = VueFlowUtils.generateGraph(
                 props.id,
@@ -455,12 +449,13 @@
         return null
     }
 
-    const collapseCluster = (clusterUid: string, regenerate: boolean, recursive = false) => {
+    const collapseCluster = (clusterUid: string, regenerate: boolean) => {
         const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
 
-        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive))
+        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes)
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,
@@ -471,7 +466,7 @@
 
         for (let child of cluster.nodes) {
             if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
-                collapseCluster(child, false, true)
+                collapseCluster(child, false)
             }
         }
 
@@ -494,7 +489,7 @@
         clusterToNode.value = []
         collapsed.value.delete(expandData.id)
 
-        collapsed.value.forEach(n => collapseCluster(n, false, false))
+        collapsed.value.forEach(n => collapseCluster(n, false))
 
         generateGraph()
     }

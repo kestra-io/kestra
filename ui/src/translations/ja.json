@@ -251,6 +251,14 @@
         "singular": "ダッシュボード"
       },
       "preview": "プレビュー ダッシュボード",
+      "quick_filters": {
+        "all": "すべて",
+        "failed": "失敗",
+        "paused": "一時停止中",
+        "running": "実行中",
+        "success": "成功",
+        "warning": "警告"
+      },
       "switch": "ダッシュボードを切り替える"
     },
     "data": "データ",
@@ -1803,7 +1811,9 @@
     "show": "表示",
     "show chart": "チャートを表示",
     "show description": "説明を表示",
+    "show details": "詳細を表示",
     "show documentation": "ドキュメントを表示",
+    "show more details": "詳細を表示",
     "show task condition": "タスク条件を表示",
     "show task documentation": "taskのドキュメントを表示",
     "show task documentation in editor": "エディタでtaskのドキュメントを表示",
@@ -1813,6 +1823,7 @@
     "showLess": "表示を減らす",
     "showMore": "もっと表示",
     "side-by-side": "並列表示",
+    "skipped": "スキップされました",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
       "connection_lost": {

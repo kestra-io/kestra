@@ -12,3 +12,9 @@
         },
     })
 </script>
+
+<style scoped>
+.link {
+    color: var(--ks-text-link);
+}
+</style>

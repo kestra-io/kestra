@@ -56,7 +56,20 @@
         KsEmpty,
     } from "@kestra-io/design-system"
 
-    import type {ExplorerItem, ExplorerSection} from "./types"
+    export interface ExplorerItem {
+        label: string;
+        value: unknown;
+        type: string;
+        preview: string;
+        expression: string;
+        taskRunId?: string;
+    }
+
+    export interface ExplorerSection {
+        key: string;
+        label: string;
+        items: ExplorerItem[];
+    }
 
     const props = defineProps<{
         sections: ExplorerSection[];

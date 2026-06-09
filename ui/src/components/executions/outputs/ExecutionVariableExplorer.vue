@@ -90,10 +90,9 @@
     import {useExecutionsStore} from "../../../stores/executions"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
-    import SidebarList from "./SidebarList.vue"
+    import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
-    import type {ExplorerItem, ExplorerSection} from "./types"
 
     const {t} = useI18n({useScope: "global"})
     const editorBindings = useEditorBindings()

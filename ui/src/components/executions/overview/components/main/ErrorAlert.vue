@@ -45,7 +45,7 @@
     import LogLine from "../../../../logs/LogLine.vue"
 
     const MAX_PREVIEW_LOGS = 4
-    const EXCLUDED_METAS = ["namespace", "flowId", "executionId"]
+    const EXCLUDED_METAS: (keyof Log)[] = ["namespace", "flowId", "executionId"]
     const BACKTICKS_REGEX = /`([^`]*)`/g
 
     const props = defineProps<{execution: Execution}>()

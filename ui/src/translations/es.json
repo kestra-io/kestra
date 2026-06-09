@@ -1,5 +1,9 @@
 {
   "es": {
+    "back": "Atrás",
+    "next": "Siguiente",
+    "done": "Hecho",
+    "review your inputs": "Revise sus entradas",
     "Add flow": "Añadir flujo",
     "Default log level": "Nivel de log predeterminado",
     "Default namespace": "Namespace predeterminado",

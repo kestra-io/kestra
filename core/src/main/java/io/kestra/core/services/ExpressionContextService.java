@@ -7,6 +7,7 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.FlowGraph;
@@ -414,7 +415,8 @@ public class ExpressionContextService {
         if (flow.getInputs() == null || flow.getInputs().isEmpty()) {
             return List.of();
         }
-        return flow.getInputs().stream()
+        // Expand FORM inputs so suggestions are the resolvable nested paths (e.g. inputs.environment.region).
+        return Input.expandToLeaves(flow.getInputs()).stream()
             .map(input -> "inputs." + input.getId())
             .sorted()
             .toList();

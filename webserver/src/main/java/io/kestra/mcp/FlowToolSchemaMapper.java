@@ -40,7 +40,8 @@ public class FlowToolSchemaMapper {
                 a.returnDirect()
             ))
             .inputSchema(buildToolInputSchema(
-                    ListUtils.emptyOnNull(flow.getInputs())
+                    // Expand FORM inputs so MCP schema keys are the dotted leaf paths; FORM never reaches convert().
+                    Input.expandToLeaves(ListUtils.emptyOnNull(flow.getInputs()))
                 )
             )
             .outputSchema(
@@ -326,6 +327,7 @@ public class FlowToolSchemaMapper {
             case FLOAT -> "number";
             case BOOL -> "boolean";
             case ARRAY, MULTISELECT -> "array";
+            case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
         };
     }
 }

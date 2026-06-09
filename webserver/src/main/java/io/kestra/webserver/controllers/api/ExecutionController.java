@@ -68,6 +68,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
@@ -643,7 +644,9 @@ public class ExecutionController {
             .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
             .map(values ->
             {
-                Map<String, Object> inputsAsMap = values.stream().collect(HashMap::new, (m, v) -> m.put(v.input().getId(), v.value()), HashMap::putAll);
+                // values are keyed by expanded leaf id (FORM children are dotted, e.g. environment.region);
+                // nest them so checks referencing {{ inputs.environment.region }} resolve like the create path does.
+                Map<String, Object> inputsAsMap = MapUtils.flattenToNestedMap(values.stream().collect(HashMap::new, (m, v) -> m.put(v.input().getId(), v.value()), HashMap::putAll));
                 List<Check> checks = flowService.getFailedChecks(flow, inputsAsMap);
                 return ApiValidateExecutionInputsResponse.of(id, namespace, checks, values);
             });

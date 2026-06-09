@@ -102,7 +102,7 @@ public class McpToolService {
         Flow flow,
         McpToolTrigger toolTrigger
     ) {
-        final List<String> defaultsInputs = ListUtils.emptyOnNull(flow.getInputs())
+        final List<String> defaultsInputs = Input.expandToLeaves(ListUtils.emptyOnNull(flow.getInputs()))
             .stream().map(Input::getId).toList();
 
         return (exchange, request) -> {

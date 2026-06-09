@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import io.kestra.core.models.flows.input.*;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.InputValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,6 +18,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @SuperBuilder
 @Getter
@@ -41,6 +46,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = MultiselectInput.class, name = "MULTISELECT"),
         @JsonSubTypes.Type(value = YamlInput.class, name = "YAML"),
         @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
+        @JsonSubTypes.Type(value = FormInput.class, name = "FORM"),
     }
 )
 @InputValidation
@@ -90,4 +96,59 @@ public abstract class Input<T> implements Data {
     String displayName;
 
     public abstract void validate(T input) throws ConstraintViolationException;
+
+    /**
+     * Expands every {@link io.kestra.core.models.flows.input.FormInput} into copies of its children whose id is
+     * rewritten to the dotted path ({@code environment} + {@code .} + {@code region} -> {@code environment.region}).
+     * <p>
+     * The resolution core keys inputs by {@link #getId()} and reassembles dotted keys into a nested map via
+     * {@link io.kestra.core.utils.MapUtils#flattenToNestedMap(java.util.Map)}, so a leaf carrying the dotted id is all
+     * that is needed for the nested payload to materialize. {@code dependsOn} is intentionally NOT rewritten — authors
+     * reference siblings by their full dotted path; an unresolved bare ref is rejected loudly by flow validation.
+     * Forms cannot be nested (enforced by validation), so expansion is single-level.
+     *
+     * @return a flat list of leaf inputs with no {@code FORM} node surviving, or the input list unchanged when null/empty.
+     */
+    public static List<Input<?>> expandToLeaves(List<Input<?>> inputs) {
+        if (inputs == null || inputs.isEmpty()) {
+            return inputs;
+        }
+
+        List<Input<?>> leaves = new ArrayList<>();
+        for (Input<?> input : inputs) {
+            if (input instanceof io.kestra.core.models.flows.input.FormInput form) {
+                if (form.getInputs() != null) {
+                    for (Input<?> child : form.getInputs()) {
+                        leaves.add(copyWithId(child, form.getId() + "." + child.getId()));
+                    }
+                }
+            } else {
+                leaves.add(input);
+            }
+        }
+        return leaves;
+    }
+
+    /**
+     * Copies {@code input} with its {@code id} replaced by {@code newId}, preserving the concrete subtype.
+     * <p>
+     * Done via a Jackson round-trip rather than a builder: {@code @SuperBuilder(toBuilder=...)} does not generate
+     * {@code toBuilder()} on this abstract class, and the resolution core casts leaves to their concrete subtype
+     * ({@code (ArrayInput) input}, {@code case StringInput i -> ...}). The round-trip re-resolves the subtype through
+     * {@link JsonTypeInfo} on the {@code type} property, so {@code copyWithId(stringInput, ...) instanceof StringInput}.
+     */
+    private static Input<?> copyWithId(Input<?> input, String newId) {
+        Map<String, Object> map = JacksonMapper.toMap(input);
+        map.put("id", newId);
+        return JacksonMapper.toMap(map, Input.class);
+    }
+
+    /**
+     * @return all expanded leaf paths (e.g. {@code environment.region}, {@code credentials.api_key}, {@code api_key}),
+     * used by uniqueness validation to reject duplicate paths and prefix conflicts.
+     */
+    public static List<String> collectExpandedPaths(List<Input<?>> inputs) {
+        List<Input<?>> expanded = expandToLeaves(inputs);
+        return expanded == null ? List.of() : expanded.stream().map(Input::getId).toList();
+    }
 }

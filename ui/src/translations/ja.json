@@ -1,5 +1,9 @@
 {
   "ja": {
+    "back": "戻る",
+    "next": "次へ",
+    "done": "完了",
+    "review your inputs": "入力内容を確認してください",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",

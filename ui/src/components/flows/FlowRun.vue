@@ -18,11 +18,13 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        mode="wizard"
                         v-model="inputs"
                         :executeClicked="executeClicked"
                         @confirm="onSubmit"
                         @update:model-value-no-default="values => inputsNoDefaults=values"
                         @update:checks="onChecksUpdate"
+                        @update:on-recap="value => inputsOnRecap = value"
                     />
                     <KsText v-else type="info">
                         {{ $t('no inputs') }}
@@ -62,7 +64,7 @@
                         </KsButton>
                     </KsFormItem>
                 </div>
-                <div class="right-align">
+                <div class="right-align" v-if="!hasFormInputs || inputsOnRecap">
                     <KsFormItem class="submit">
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <KsButton
@@ -102,8 +104,9 @@
     import type {Flow} from "../../stores/flow"
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
-    import {normalize} from "../../utils/inputs"
+    import {normalize, flattenInputs} from "../../utils/inputs"
     import type {InputType} from "../../utils/inputs"
+    import get from "lodash/get"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Play from "vue-material-design-icons/Play.vue"
@@ -181,12 +184,17 @@
     const newTab = ref(localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB)
     const executeClicked = ref(false)
     const checks = ref<Check[]>([])
+    // wizard recap state: the footer Execute button only appears once every step is filled
+    const inputsOnRecap = ref(false)
 
     const form = ref<FormInstance | null>(null)
     const inputsFormRef = ref<InstanceType<typeof InputsForm> | null>(null)
 
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
+
+    // a flow with FORM inputs renders the wizard; the footer Execute is gated on the recap step
+    const hasFormInputs = computed(() => (flow.value?.inputs ?? []).some((input: {type?: string}) => input.type === "FORM"))
 
     // executionLabelsKey is used to force re-render of LabelInput when executionLabels changes
     const executionLabelsKey = computed(() => JSON.stringify(executionLabels.value))
@@ -253,13 +261,17 @@
             return
         }
 
-        const nonEmptyInputNames = Object.keys(execution.value?.inputs ?? {})
-        flow.value.inputs
-            .filter(input => nonEmptyInputNames.includes(input.id))
-            .forEach(input => {
-                const value = execution.value!.inputs![input.id]
-                inputsForm.inputsValues[input.id] = normalize(input.type as InputType, value)
-                const meta = inputsForm.inputsMetaData.find(m => m.id === input.id)
+        // execution.inputs is nested (FORM groups -> {environment:{region:"EU"}}); the model is
+        // flat-keyed by dotted leaf id, so walk each leaf's dotted path into the nested inputs.
+        const executionInputs = execution.value?.inputs ?? {}
+        flattenInputs(flow.value.inputs)
+            .forEach(leaf => {
+                const value = get(executionInputs, leaf.id)
+                if (value === undefined) {
+                    return
+                }
+                inputsForm.inputsValues[leaf.id] = normalize(leaf.type as InputType, value)
+                const meta = inputsForm.inputsMetaData.find(m => m.id === leaf.id)
                 if (meta) {
                     meta.isDefault = false
                 }

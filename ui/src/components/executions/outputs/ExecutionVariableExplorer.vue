@@ -27,35 +27,43 @@
                             <ContentCopy :size="16" />
                         </KsIconButton>
                     </div>
+                    
+                    <template v-if="selectedValue === undefined">
+                        <KsEmpty :description="$t('variable_explorer.select_prompt')" />
+                    </template>
 
-                    <KsScrollbar class="viewer__body">
-                        <template v-if="selectedValue === undefined">
-                            <KsEmpty :description="$t('variable_explorer.select_prompt')" />
-                        </template>
+                    <KsEditor
+                        v-else-if="viewMode === 'raw'"
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :options="{fullHeight: true}"
+                        :modelValue="rawValue"
+                        lang="json"
+                    />
 
-                        <KsEditor
-                            v-else-if="viewMode === 'raw'"
-                            v-bind="editorBindings"
-                            :readOnly="true"
-                            :inline="true"
-                            :navbar="false"
-                            :options="{fullHeight: true}"
-                            :modelValue="rawValue"
-                            lang="json"
-                        />
+                    <VariableTreeView
+                        v-else-if="isExpandableValue"
+                        :value="selectedValue"
+                        :basePath="selectedBase"
+                        :selectedPath="expressionPath"
+                        @select="onSelectPath"
+                    />
 
-                        <VariableTreeView
-                            v-else-if="isExpandableValue"
-                            :value="selectedValue"
-                            :basePath="selectedBase"
-                            :selectedPath="expressionPath"
-                            @select="onSelectPath"
-                        />
+                    <div v-else class="viewer__scalar">
+                        <code>{{ rawValue }}</code>
+                    </div>
+                </div>
+            </KsSplitterPanel>
 
-                        <div v-else class="viewer__scalar">
-                            <code>{{ rawValue }}</code>
-                        </div>
-                    </KsScrollbar>
+            <!-- Right: evaluate a Pebble expression against the live execution -->
+            <KsSplitterPanel v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
+                <div class="debug">
+                    <ExpressionDebugger
+                        :execution="execution"
+                        :expression="expression"
+                    />
                 </div>
             </KsSplitterPanel>
         </KsSplitter>
@@ -70,13 +78,13 @@
     import {
         KsSplitter,
         KsSplitterPanel,
-        KsScrollbar,
         KsEmpty,
         KsSegmented,
         KsIconButton,
         KsEditor,
     } from "@kestra-io/design-system"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -86,6 +94,7 @@
 
     import SidebarList from "./SidebarList.vue"
     import VariableTreeView from "./VariableTreeView.vue"
+    import ExpressionDebugger from "./ExpressionDebugger.vue"
     import type {ExplorerItem, ExplorerSection} from "./types"
 
     const {t} = useI18n({useScope: "global"})
@@ -168,12 +177,14 @@
         const id = execution.value?.id
         if (!id || !item.taskRunId || taskOutputs.value[item.taskRunId]) return
 
-        const {data, status} = await axios.get(`${apiUrl()}/outputs/${id}/${item.taskRunId}`, {
+        const data = await OutputsAPI.taskRunOutputs({
+            taskRunId: item.taskRunId,
+            executionId: id,
+        }, {
             validateStatus: (s: number) => s === 200 || s === 404,
         })
-        if (status === 200) {
-            taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data}
-        }
+
+        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}} 
     }
 
     const taskItems = computed<ExplorerItem[]>(() => {
@@ -207,8 +218,9 @@
 
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
-    // const expression = ref<string>("") // re-enable with the debug panel below
     const expressionPath = ref<string>("")
+    // Suggested expression handed to the debugger; follows the current selection.
+    const expression = ref<string>("")
 
     const isExpandableValue = computed(
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
@@ -229,13 +241,12 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
-        // expression.value = `{{ ${item.expression} }}`
-        // clearResult()
+        expression.value = `{{ ${item.expression} }}`
     }
 
     function onSelectPath(path: string) {
         expressionPath.value = path
-        // expression.value = `{{ ${path} }}`
+        expression.value = `{{ ${path} }}`
     }
 
     /* --------------------------------- Viewer -------------------------------- */
@@ -250,58 +261,10 @@
         navigator.clipboard?.writeText(rawValue.value)
     }
 
-    /* --------------------------------- Debug --------------------------------- */
-    // Disabled along with the debug panel in the template above. Re-enable both
-    // together (and the `expression` ref / VarValue import) to restore the
-    // "Debug Expression" evaluation feature.
-    /*
-    const result = ref<string | undefined>(undefined)
-    const resultIsJSON = ref(false)
-    const error = ref<string | undefined>(undefined)
-    const stackTrace = ref<string | undefined>(undefined)
-
-    const isFileResult = computed(() => result.value !== undefined && Utils.isFile(result.value))
-
-    function clearResult() {
-        result.value = undefined
-        error.value = undefined
-        stackTrace.value = undefined
-    }
-
-    function onDebug() {
-        const id = execution.value?.id
-        if (!id || !expression.value) return
-
-        clearResult()
-
-        axios
-            .post(`${apiUrl()}/executions/${id}/actions/eval`, expression.value, {
-                headers: {"Content-type": "text/plain"},
-            })
-            .then((response) => {
-                if (response.data.error) {
-                    error.value = response.data.error
-                    stackTrace.value = response.data.stackTrace
-                    return
-                }
-
-                try {
-                    result.value = JSON.stringify(JSON.parse(response.data.result), null, 2)
-                    resultIsJSON.value = true
-                } catch {
-                    result.value = response.data.result
-                    resultIsJSON.value = false
-                }
-            })
-            .catch((err) => {
-                error.value = err.message ?? "Failed to evaluate expression"
-            })
-    }
-    */
-
     /* --------------------------------- Layout -------------------------------- */
 
     const leftWidth = ref("25%")
+    const rightWidth = ref("30%")
     const isMobile = useMediaQuery("(max-width: 768px)")
 </script>
 
@@ -353,34 +316,16 @@
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
         word-break: break-word;
+        padding: .5rem 1rem;
     }
 }
 
 .debug {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-3);
     width: 100%;
     height: 100%;
     min-height: 0;
     padding: var(--ks-spacing-4);
     overflow-y: auto;
-
-    &__button {
-        align-self: stretch;
-    }
-
-    &__error {
-        overflow: auto;
-    }
-
-    &__stack {
-        margin-top: var(--ks-spacing-2);
-        margin-bottom: 0;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-size: var(--ks-font-size-xs);
-    }
 }
 
 @media (max-width: 768px) {

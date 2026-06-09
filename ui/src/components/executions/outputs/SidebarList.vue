@@ -1,15 +1,11 @@
 <template>
     <div class="sidebar">
         <div class="search">
-            <KsInput
+            <KsSearch
                 v-model="search"
                 :placeholder="$t('variable_explorer.search_placeholder')"
-                clearable
-            >
-                <template #prefix>
-                    <Magnify :size="16" />
-                </template>
-            </KsInput>
+                
+            />
         </div>
 
         <KsScrollbar class="sections">
@@ -27,19 +23,18 @@
                             </span>
                         </template>
 
-                        <KsCard
+                        <div
                             v-for="item in section.items"
                             :key="item.expression"
                             class="item"
                             :class="{'active': item.expression === selectedExpression}"
                             @click="$emit('select', item)"
                         >
-                            <div class="main">
-                                <span class="key">{{ item.label }}</span>
-                                <KsTag size="small">{{ item.type }}</KsTag>
-                            </div>
+                            <span class="key">{{ item.label }}</span>
+                            <KsTag class="card-tag" size="small">{{ item.type }}</KsTag>
+                            
                             <code class="preview">{{ item.preview }}</code>
-                        </KsCard>
+                        </div>
                     </KsCollapseItem>
                 </KsCollapse>
             </template>
@@ -53,15 +48,13 @@
     import {ref, computed} from "vue"
 
     import {
-        KsInput,
+        KsSearch,
         KsScrollbar,
         KsCollapse,
         KsCollapseItem,
         KsTag,
         KsEmpty,
     } from "@kestra-io/design-system"
-
-    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     import type {ExplorerItem, ExplorerSection} from "./types"
 
@@ -139,36 +132,40 @@
 }
 
 .item {
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-    padding: .5rem .75rem;
-    border-radius: 4px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+            "key tag"
+            "preview tag";
     cursor: pointer;
     margin-bottom: .5rem;
+    background-color: var(--ks-bg-surface);
+    border-radius: 4px;
+    padding: .75rem 1rem;
 
     &:hover {
         background-color: var(--ks-border-default);
     }
 
     &.active {
-        background-color: var(--ks-border-default);
         outline: 1px solid var(--ks-border-focus);
-    }
-
-    .main {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ks-spacing-2);
     }
 
     .key {
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
+        grid-area: key;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .card-tag{
+        grid-area: tag;
+        align-self: center;
     }
 
     .preview {
+        grid-area: preview;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         white-space: nowrap;

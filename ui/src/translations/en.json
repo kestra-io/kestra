@@ -304,7 +304,9 @@
     "eval": {
       "title": "Debug Expression",
       "render": "Render",
-      "tooltip": "Render any Pebble expression and inspect the Execution context."
+      "tooltip": "Render any Pebble expression and inspect the Execution context.",
+      "preview": "Preview",
+      "expression": "Expression"
     },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",

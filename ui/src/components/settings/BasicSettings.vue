@@ -144,23 +144,10 @@
 
             <SettingRow
                 :label="$t('settings.blocks.theme.fields.environment_name')"
-                :description="$t('settings.blocks.theme.descriptions.environment_name')"
+                :description="isEnvNameFromConfig ? $t('settings.blocks.theme.fields.environment_name_tooltip') : $t('settings.blocks.theme.descriptions.environment_name')"
             >
-                <KsTooltip
-                    v-if="isEnvNameFromConfig"
-                    :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
-                    placement="top"
-                >
-                    <KsInput
-                        :modelValue="settings.envName"
-                        @change="onEnvName"
-                        :placeholder="$t('name')"
-                        clearable
-                    />
-                </KsTooltip>
                 <KsInput
-                    v-else
-                    :modelValue="settings.envName"
+                    v-model="settings.envName"
                     @change="onEnvName"
                     :placeholder="$t('name')"
                     clearable

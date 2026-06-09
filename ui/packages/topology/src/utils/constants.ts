@@ -32,15 +32,22 @@ export interface ShowDetailsConfig {
 }
 
 export const NODE_SIZES = {
-    TASK_WIDTH: 184,
-    TASK_HEIGHT: 44,
-    TRIGGER_WIDTH: 184,
-    TRIGGER_HEIGHT: 44,
+    TASK_WIDTH: 218,
+    TASK_WIDTH_EXECUTION: 273,
+    TASK_HEIGHT: 56,
+    TRIGGER_WIDTH: 218,
+    TRIGGER_HEIGHT: 56,
     DOT_WIDTH: 5,
     DOT_HEIGHT: 5,
     COLLAPSED_CLUSTER_WIDTH: 150,
-    COLLAPSED_CLUSTER_HEIGHT: 44,
+    COLLAPSED_CLUSTER_HEIGHT: 40,
     TRIGGER_CLUSTER_WIDTH: 350,
     TRIGGER_CLUSTER_HEIGHT: 180,
-    TASK_EXPANDED_FALLBACK_HEIGHT: 140,
 } as const
+
+export const CLUSTER_TAG_STATUS: Record<string, string> = {
+    triggers: "success",
+    subflow: "running",
+    "flowable-task": "info",
+    errors: "error",
+}

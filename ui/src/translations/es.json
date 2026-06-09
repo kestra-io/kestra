@@ -27,6 +27,7 @@
     "activate_basic_auth": "Activar Autenticación Básica",
     "active": "Activo",
     "active-slots": "Ranuras activas",
+    "actual state": "Estado actual",
     "add": "Añadir",
     "add at position": "Añadir {position} <code>{task}</code>",
     "add error handler": "Añadir un manejador de errores",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Bloques de la App",
     "apps": "Aplicaciones",
+    "are you sure change state": "¿Está seguro de que desea cambiar el estado?",
     "assets": {
       "title": "Activos"
     },
@@ -251,6 +253,14 @@
         "singular": "Panel de control"
       },
       "preview": "Vista previa del Dashboard",
+      "quick_filters": {
+        "all": "Todos",
+        "failed": "Fallido",
+        "paused": "Pausado",
+        "running": "En ejecución",
+        "success": "Éxito",
+        "warning": "Advertencia"
+      },
       "switch": "Cambiar Dashboard"
     },
     "data": "Datos",
@@ -888,6 +898,7 @@
     "labels": "Etiquetas",
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} en los últimos {days} días",
+    "last error was": "Último error fue",
     "last evaluation date": "Última fecha de evaluación",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Fecha de última ejecución",
@@ -1152,7 +1163,8 @@
           "taskDefaults": "Predeterminados de Task",
           "updated": "Actualizado",
           "variables": "Variables",
-          "workerGroup": "Grupo de Worker"
+          "workerGroup": "Grupo de Worker",
+          "workerSelector": "Selector de Worker"
         },
         "main": {
           "description": "Descripción",
@@ -1535,7 +1547,7 @@
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir con inputs",
-    "replayed": "La ejecución se ha repetido",
+    "replayed": "La ejecución se ha reproducido",
     "required field": "Campo requerido",
     "reset": "Reiniciar",
     "restart": "Reiniciar",
@@ -1548,7 +1560,7 @@
       "button": "Reiniciar trigger",
       "tooltip": "Reiniciar el trigger"
     },
-    "restarted": "La ejecución se ha reiniciado",
+    "restarted": "La ejecución se reinicia",
     "restore": "Restaurar",
     "restore confirm": "¿Estás seguro de restaurar la revisión <code>{revision}</code>?",
     "restore revision": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",
@@ -1563,6 +1575,7 @@
     "revisions": "Revisiones",
     "row count": "Recuento de filas",
     "run task in playground": "Ejecutar task en el playground",
+    "run timeline": "Cronograma de Ejecución",
     "runners": "Corredores",
     "running": "RUNNING",
     "running duration": "Duración en ejecución",
@@ -1614,9 +1627,11 @@
     },
     "see dependencies": "Ver dependencias",
     "see full revision": "Ver revisión completa",
+    "see timeline": "Ver línea de tiempo",
     "see_all_states": "Ver todos los estados",
     "seeing old revision": "Estás viendo una revisión antigua: {revision}",
     "select": "Seleccione su {{section}}",
+    "select a state": "Seleccionar un estado",
     "select datetime": "Seleccionar una fecha",
     "select view": "Seleccionar vista",
     "selected": "Seleccionado",
@@ -1802,7 +1817,9 @@
     "show": "Mostrar",
     "show chart": "Mostrar Gráfico",
     "show description": "Mostrar una descripción",
+    "show details": "Mostrar detalles",
     "show documentation": "Mostrar documentación",
+    "show more details": "Mostrar más detalles",
     "show task condition": "Mostrar condición de task",
     "show task documentation": "Mostrar documentación de la task",
     "show task documentation in editor": "Mostrar documentación de la task en el editor",
@@ -1812,6 +1829,7 @@
     "showLess": "Mostrar menos",
     "showMore": "Mostrar más",
     "side-by-side": "lado a lado",
+    "skipped": "Omitido",
     "slack support": "Haz cualquier pregunta vía Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2166,7 @@
     "worker information": "Información del Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "No se permite una key o value vacía en las etiquetas"
+    "wrong labels": "No se permite una key o value vacía en las etiquetas",
+    "yes": "Sí"
   }
 }

@@ -27,6 +27,7 @@
     "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
     "active": "सक्रिय",
     "active-slots": "सक्रिय स्लॉट्स",
+    "actual state": "वास्तविक स्थिति",
     "add": "जोड़ें",
     "add at position": "{position} <code>{task}</code> जोड़ें",
     "add error handler": "एक त्रुटि हैंडलर जोड़ें",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "ऐप ब्लॉक्स",
     "apps": "ऐप्स",
+    "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "assets": {
       "title": "संपत्तियाँ"
     },
@@ -251,6 +253,14 @@
         "singular": "डैशबोर्ड"
       },
       "preview": "पूर्वावलोकन डैशबोर्ड",
+      "quick_filters": {
+        "all": "सभी",
+        "failed": "विफल",
+        "paused": "रुका हुआ",
+        "running": "चल रहा है",
+        "success": "सफलता",
+        "warning": "चेतावनी"
+      },
       "switch": "डैशबोर्ड स्विच करें"
     },
     "data": "डेटा",
@@ -888,6 +898,7 @@
     "labels": "labels",
     "last 48 hours": "पिछले 48 घंटे",
     "last X days count": "{दिनों} दिनों में {गिनती}",
+    "last error was": "अंतिम त्रुटि थी",
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -1152,7 +1163,8 @@
           "taskDefaults": "डिफ़ॉल्ट Task",
           "updated": "अपडेट किया गया",
           "variables": "वेरिएबल्स",
-          "workerGroup": "वर्कर ग्रुप"
+          "workerGroup": "वर्कर ग्रुप",
+          "workerSelector": "वर्कर सेलेक्टर"
         },
         "main": {
           "description": "विवरण",
@@ -1535,7 +1547,7 @@
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "replay using": "पुनः चलाएं उपयोग करते हुए",
     "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
-    "replayed": "निष्पादन पुनः चलाया गया है",
+    "replayed": "निष्पादन को पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",
     "restart": "पुनः प्रारंभ करें",
@@ -1548,7 +1560,7 @@
       "button": "Trigger पुनः प्रारंभ करें",
       "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
-    "restarted": "निष्पादन पुनः प्रारंभ किया गया है",
+    "restarted": "निष्पादन पुनः आरंभ किया गया है",
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "restore revision": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
@@ -1563,6 +1575,7 @@
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
+    "run timeline": "रन टाइमलाइन",
     "runners": "धावक",
     "running": "RUNNING",
     "running duration": "चलने की अवधि",
@@ -1614,9 +1627,11 @@
     },
     "see dependencies": "निर्भरताएँ देखें",
     "see full revision": "पूर्ण पुनरीक्षण देखें",
+    "see timeline": "समयरेखा देखें",
     "see_all_states": "सभी अवस्थाएँ देखें",
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
+    "select a state": "एक स्थिति चुनें",
     "select datetime": "एक तिथि चुनें",
     "select view": "दृश्य चुनें",
     "selected": "चयनित",
@@ -1802,7 +1817,9 @@
     "show": "दिखाएं",
     "show chart": "चार्ट दिखाएं",
     "show description": "विवरण दिखाएं",
+    "show details": "विवरण दिखाएं",
     "show documentation": "दस्तावेज़ दिखाएं",
+    "show more details": "अधिक विवरण दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
     "show task documentation": "Task दस्तावेज़ दिखाएं",
     "show task documentation in editor": "संपादक में Task दस्तावेज़ दिखाएं",
@@ -1812,6 +1829,7 @@
     "showLess": "कम दिखाएं",
     "showMore": "और दिखाएँ",
     "side-by-side": "साइड-बाय-साइड",
+    "skipped": "छोड़ा गया",
     "slack support": "किसी भी प्रश्न को Slack के माध्यम से पूछें",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2166,7 @@
     "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "labels में खाली key या value की अनुमति नहीं है"
+    "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
+    "yes": "हाँ"
   }
 }

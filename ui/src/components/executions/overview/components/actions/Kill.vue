@@ -1,5 +1,9 @@
 <template>
-    <KsDropdown v-if="enabled" placement="bottom-end" class="kill-dropdown">
+    <template v-if="enabled && asItem">
+        <NavBarAction :icon="StopCircleOutline" @click="kill(true)">{{ $t('kill parents and subflow') }}</NavBarAction>
+        <NavBarAction :icon="StopCircleOutline" @click="kill(false)">{{ $t('kill only parents') }}</NavBarAction>
+    </template>
+    <KsDropdown v-else-if="enabled" placement="bottom-end" class="kill-dropdown">
         <KsButton :icon="Circle" @click="kill(true)">
             {{ $t("kill") }}
         </KsButton>
@@ -23,11 +27,14 @@
         </template>
     </KsDropdown>
 </template>
+
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import Circle from "vue-material-design-icons/Circle.vue"
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
+    import {asItemKey} from "../../../../layout/navBarActionsContext"
 
     import {State} from "@kestra-io/design-system"
 
@@ -48,6 +55,8 @@
     const authStore = useAuthStore()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const asItem = inject(asItemKey, false)
 
     const user = computed(() => authStore.user)
 

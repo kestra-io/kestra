@@ -337,6 +337,7 @@
 
     const showPlaceholder = computed(() =>
         props.inline === true &&
+        !props.placeholder &&
         !mergedOptions.value.shouldFocus &&
         (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
         !isFocused.value,

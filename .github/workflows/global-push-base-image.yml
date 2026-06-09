@@ -1,7 +1,7 @@
 name: Build and Push Base Image
 
-# This workflow builds and pushes kestra-base:latest-no-plugins — a lightweight image
-# with just the JRE and uv pre-installed. Used as the foundation for Kestra Docker builds.
+# Builds and pushes kestra-base image variants to GHCR.
+# Four variants: JRE 21/25 × no-python/python+kestra-pip.
 
 on:
   schedule:
@@ -21,8 +21,37 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and Push kestra-base
+    name: Build and Push kestra-base (${{ matrix.variant.cache-tag }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant:
+          - cache-tag: latest-no-plugins
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest-no-plugins
+              ghcr.io/kestra-io/kestra-base:latest-jre25-no-plugins
+            jre: "25"
+            with-python: "false"
+            description: "Kestra base image (no plugins) — JRE 25 + uv pre-installed"
+          - cache-tag: latest
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest
+              ghcr.io/kestra-io/kestra-base:latest-jre25
+            jre: "25"
+            with-python: "true"
+            description: "Kestra base image — JRE 25 + uv + Python + kestra pip pre-installed"
+          - cache-tag: latest-jre21-no-plugins
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest-jre21-no-plugins
+            jre: "21"
+            with-python: "false"
+            description: "Kestra base image (no plugins) — JRE 21 + uv pre-installed"
+          - cache-tag: latest-jre21
+            tags: |
+              ghcr.io/kestra-io/kestra-base:latest-jre21
+            jre: "21"
+            with-python: "true"
+            description: "Kestra base image — JRE 21 + uv + Python + kestra pip pre-installed"
     steps:
       - uses: actions/checkout@v6
 
@@ -47,11 +76,11 @@ jobs:
           images: ghcr.io/kestra-io/kestra-base
           labels: |
             org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
+            org.opencontainers.image.description=${{ matrix.variant.description }}
             org.opencontainers.image.vendor=Kestra Technologies
           annotations: |
             org.opencontainers.image.title=kestra-base
-            org.opencontainers.image.description=Kestra base image (no plugins) — JRE + uv pre-installed
+            org.opencontainers.image.description=${{ matrix.variant.description }}
             org.opencontainers.image.vendor=Kestra Technologies
 
       - name: Build and push
@@ -61,12 +90,14 @@ jobs:
           file: Dockerfile.base
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.dry-run != true }}
-          tags: ghcr.io/kestra-io/kestra-base:latest-no-plugins
+          tags: ${{ matrix.variant.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:latest-no-plugins
+            JRE_VERSION=${{ matrix.variant.jre }}
+            WITH_PYTHON=${{ matrix.variant.with-python }}
+          cache-from: type=registry,ref=ghcr.io/kestra-io/kestra-base:${{ matrix.variant.cache-tag }}
           cache-to: type=inline
 
       - name: Slack - Notification

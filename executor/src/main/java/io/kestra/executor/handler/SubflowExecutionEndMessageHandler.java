@@ -2,6 +2,8 @@ package io.kestra.executor.handler;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -35,8 +37,20 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
     @Inject
     private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+
     @Override
     public void handle(SubflowExecutionEnd message) {
+        if (killSwitchService.evaluate(message.childExecution()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution end for child execution {} as there is a kill switch in it", message.childExecution().getId());
+            return;
+        }
+        if (killSwitchService.evaluate(message.parentExecutionId()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution end for parent execution {} as there is a kill switch in it", message.parentExecutionId());
+            return;
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }

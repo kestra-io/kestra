@@ -27,6 +27,7 @@
     "activate_basic_auth": "Aktywuj podstawowe uwierzytelnianie",
     "active": "Aktywny",
     "active-slots": "Aktywne sloty",
+    "actual state": "Aktualny stan",
     "add": "Dodaj",
     "add at position": "Dodaj {position} <code>{task}</code>",
     "add error handler": "Dodaj handler błędów",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Bloki aplikacji",
     "apps": "Aplikacje",
+    "are you sure change state": "Czy na pewno chcesz zmienić stan?",
     "assets": {
       "title": "Zasoby"
     },
@@ -896,6 +898,7 @@
     "labels": "Etykiety",
     "last 48 hours": "ostatnie 48 godzin",
     "last X days count": "{count} w ostatnich {days} dniach",
+    "last error was": "Ostatni błąd to",
     "last evaluation date": "Data ostatniej oceny",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data ostatniego wykonania",
@@ -1572,6 +1575,7 @@
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
     "run task in playground": "Uruchom task w playgroundzie",
+    "run timeline": "Uruchom oś czasu",
     "runners": "Biegacze",
     "running": "RUNNING",
     "running duration": "Czas trwania w trakcie działania",
@@ -1623,9 +1627,11 @@
     },
     "see dependencies": "Zobacz zależności",
     "see full revision": "Zobacz pełną wersję",
+    "see timeline": "Zobacz oś czasu",
     "see_all_states": "Zobacz wszystkie stany",
     "seeing old revision": "Widzisz starą wersję: {revision}",
     "select": "Wybierz swoją {{section}}",
+    "select a state": "Wybierz stan",
     "select datetime": "Wybierz datę",
     "select view": "Wybierz widok",
     "selected": "Wybrane",
@@ -2160,6 +2166,7 @@
     "worker information": "Informacje o Workerze",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach"
+    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
+    "yes": "Tak"
   }
 }

@@ -27,6 +27,7 @@
     "activate_basic_auth": "Activer l'authentification de base",
     "active": "Actif",
     "active-slots": "Slots actifs",
+    "actual state": "État actuel",
     "add": "Ajouter",
     "add at position": "Ajouter {position} <code>{task}</code>",
     "add error handler": "Gérer les erreurs",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Blocs d'application",
     "apps": "Applications",
+    "are you sure change state": "Êtes-vous sûr de vouloir changer l'état ?",
     "assets": {
       "title": "Ressources"
     },
@@ -896,6 +898,7 @@
     "labels": "Labels",
     "last 48 hours": "dernières 48 heures",
     "last X days count": "{count} lors des {days} derniers jours",
+    "last error was": "La dernière erreur était",
     "last evaluation date": "Date de la dernière évaluation",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Dernière exécution",
@@ -1572,6 +1575,7 @@
     "revisions": "Révisions",
     "row count": "Nombre de lignes",
     "run task in playground": "Exécuter la task dans le playground",
+    "run timeline": "Chronologie d'Exécution",
     "runners": "Coureurs",
     "running": "RUNNING",
     "running duration": "Durée de traitement",
@@ -1623,9 +1627,11 @@
     },
     "see dependencies": "Voir les dépendances",
     "see full revision": "Voir la révision complète",
+    "see timeline": "Voir la chronologie",
     "see_all_states": "Voir tous les états",
     "seeing old revision": "Vous visualisez une ancienne revision : {revision}",
     "select": "Sélectionnez votre {{section}}",
+    "select a state": "Sélectionner un état",
     "select datetime": "Sélectionner une date",
     "select view": "Sélectionner la vue",
     "selected": "Sélectionné",
@@ -2160,6 +2166,7 @@
     "worker information": "Informations sur le Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Clé ou valeur vide détecté dans les labels"
+    "wrong labels": "Clé ou valeur vide détecté dans les labels",
+    "yes": "Oui"
   }
 }

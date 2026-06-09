@@ -27,6 +27,7 @@
     "activate_basic_auth": "Activar Autenticación Básica",
     "active": "Activo",
     "active-slots": "Ranuras activas",
+    "actual state": "Estado actual",
     "add": "Añadir",
     "add at position": "Añadir {position} <code>{task}</code>",
     "add error handler": "Añadir un manejador de errores",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Bloques de la App",
     "apps": "Aplicaciones",
+    "are you sure change state": "¿Está seguro de que desea cambiar el estado?",
     "assets": {
       "title": "Activos"
     },
@@ -896,6 +898,7 @@
     "labels": "Etiquetas",
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} en los últimos {days} días",
+    "last error was": "Último error fue",
     "last evaluation date": "Última fecha de evaluación",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Fecha de última ejecución",
@@ -1572,6 +1575,7 @@
     "revisions": "Revisiones",
     "row count": "Recuento de filas",
     "run task in playground": "Ejecutar task en el playground",
+    "run timeline": "Cronograma de Ejecución",
     "runners": "Corredores",
     "running": "RUNNING",
     "running duration": "Duración en ejecución",
@@ -1623,9 +1627,11 @@
     },
     "see dependencies": "Ver dependencias",
     "see full revision": "Ver revisión completa",
+    "see timeline": "Ver línea de tiempo",
     "see_all_states": "Ver todos los estados",
     "seeing old revision": "Estás viendo una revisión antigua: {revision}",
     "select": "Seleccione su {{section}}",
+    "select a state": "Seleccionar un estado",
     "select datetime": "Seleccionar una fecha",
     "select view": "Seleccionar vista",
     "selected": "Seleccionado",
@@ -2160,6 +2166,7 @@
     "worker information": "Información del Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "No se permite una key o value vacía en las etiquetas"
+    "wrong labels": "No se permite una key o value vacía en las etiquetas",
+    "yes": "Sí"
   }
 }

@@ -27,6 +27,7 @@
     "activate_basic_auth": "启用基本身份验证",
     "active": "活动",
     "active-slots": "活动槽位",
+    "actual state": "实际状态",
     "add": "添加",
     "add at position": "在 {position} <code>{task}</code> 添加",
     "add error handler": "添加错误处理程序",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
+    "are you sure change state": "您确定要更改状态吗？",
     "assets": {
       "title": "资产"
     },
@@ -896,6 +898,7 @@
     "labels": "标签",
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
+    "last error was": "上次错误是",
     "last evaluation date": "上次评估日期",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最后执行日期",
@@ -1572,6 +1575,7 @@
     "revisions": "修订版",
     "row count": "行数",
     "run task in playground": "在playground中运行task",
+    "run timeline": "运行时间线",
     "runners": "运行者",
     "running": "运行",
     "running duration": "运行时间",
@@ -1623,9 +1627,11 @@
     },
     "see dependencies": "查看依赖关系",
     "see full revision": "查看完整修订版",
+    "see timeline": "查看时间线",
     "see_all_states": "查看所有状态",
     "seeing old revision": "你正在查看旧修订版：{revision}",
     "select": "选择您的{{section}}",
+    "select a state": "选择状态",
     "select datetime": "选择日期",
     "select view": "选择视图",
     "selected": "已选择",
@@ -2160,6 +2166,7 @@
     "worker information": "工作者信息",
     "workerId": "工作者ID",
     "workers": "工作者",
-    "wrong labels": "标签中不允许空键或值"
+    "wrong labels": "标签中不允许空键或值",
+    "yes": "是"
   }
 }

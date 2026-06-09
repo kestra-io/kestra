@@ -27,6 +27,7 @@
     "activate_basic_auth": "基本認証を有効化する",
     "active": "アクティブ",
     "active-slots": "アクティブスロット",
+    "actual state": "実際の状態",
     "add": "追加",
     "add at position": "{position}に<code>{task}</code>を追加",
     "add error handler": "エラーハンドラを追加",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
+    "are you sure change state": "状態を変更してもよろしいですか？",
     "assets": {
       "title": "アセット"
     },
@@ -896,6 +898,7 @@
     "labels": "ラベル",
     "last 48 hours": "過去48時間",
     "last X days count": "過去{days}日間に{count}",
+    "last error was": "最後のエラーは",
     "last evaluation date": "最終評価日",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最後の実行日",
@@ -1572,6 +1575,7 @@
     "revisions": "リビジョン",
     "row count": "行数",
     "run task in playground": "プレイグラウンドでタスクを実行",
+    "run timeline": "実行タイムライン",
     "runners": "ランナー",
     "running": "RUNNING",
     "running duration": "実行期間",
@@ -1623,9 +1627,11 @@
     },
     "see dependencies": "依存関係を表示",
     "see full revision": "完全なリビジョンを見る",
+    "see timeline": "タイムラインを見る",
     "see_all_states": "すべての状態を表示",
     "seeing old revision": "古いリビジョンを表示しています: {revision}",
     "select": "{{section}}を選択してください",
+    "select a state": "状態を選択",
     "select datetime": "日付を選択",
     "select view": "ビューを選択",
     "selected": "選択済み",
@@ -2160,6 +2166,7 @@
     "worker information": "ワーカー情報",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "ラベルには空のkeyまたはvalueを設定できません"
+    "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
+    "yes": "はい"
   }
 }

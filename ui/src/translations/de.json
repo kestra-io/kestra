@@ -27,6 +27,7 @@
     "activate_basic_auth": "Aktiviere Basis-Authentifizierung",
     "active": "Aktiv",
     "active-slots": "Aktive Slots",
+    "actual state": "Aktueller Zustand",
     "add": "Hinzufügen",
     "add at position": "{position} <code>{task}</code> hinzufügen",
     "add error handler": "Fehler-Handler hinzufügen",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
+    "are you sure change state": "Sind Sie sicher, dass Sie den Zustand ändern möchten?",
     "assets": {
       "title": "Vermögenswerte"
     },
@@ -888,6 +890,7 @@
     "labels": "Labels",
     "last 48 hours": "letzte 48 Stunden",
     "last X days count": "{count} in den letzten {days} Tagen",
+    "last error was": "Letzter Fehler war",
     "last evaluation date": "Letztes Bewertungsdatum",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Letztes Ausführungsdatum",
@@ -1564,6 +1567,7 @@
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",
+    "run timeline": "Ablaufzeitachse",
     "runners": "Läufer",
     "running": "RUNNING",
     "running duration": "Laufzeitdauer",
@@ -1615,9 +1619,11 @@
     },
     "see dependencies": "Abhängigkeiten anzeigen",
     "see full revision": "Vollständige Revision anzeigen",
+    "see timeline": "Zeitachse anzeigen",
     "see_all_states": "Alle Zustände anzeigen",
     "seeing old revision": "Sie sehen eine alte Revision: {revision}",
     "select": "Wählen Sie Ihren {{section}} aus",
+    "select a state": "Wählen Sie einen Zustand",
     "select datetime": "Datum auswählen",
     "select view": "Ansicht auswählen",
     "selected": "Ausgewählt",
@@ -2150,6 +2156,7 @@
     "worker information": "Worker-Informationen",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt"
+    "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
+    "yes": "Ja"
   }
 }

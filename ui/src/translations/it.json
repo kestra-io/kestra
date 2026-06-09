@@ -27,6 +27,7 @@
     "activate_basic_auth": "Attiva l'Autenticazione di Base",
     "active": "Attivo",
     "active-slots": "Slot attivi",
+    "actual state": "Stato attuale",
     "add": "Aggiungi",
     "add at position": "Aggiungi {position} <code>{task}</code>",
     "add error handler": "Aggiungi un gestore errori",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Blocchi App",
     "apps": "Applicazioni",
+    "are you sure change state": "Sei sicuro di voler cambiare lo stato?",
     "assets": {
       "title": "Risorse"
     },
@@ -888,6 +890,7 @@
     "labels": "Etichette",
     "last 48 hours": "ultime 48 ore",
     "last X days count": "{count} negli ultimi {days} giorni",
+    "last error was": "L'ultimo errore è stato",
     "last evaluation date": "Data ultima valutazione",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data ultima esecuzione",
@@ -1564,6 +1567,7 @@
     "revisions": "Revisions",
     "row count": "Conteggio righe",
     "run task in playground": "Esegui task nel playground",
+    "run timeline": "Cronologia Esecuzione",
     "runners": "Corridori",
     "running": "RUNNING",
     "running duration": "Durata in esecuzione",
@@ -1615,9 +1619,11 @@
     },
     "see dependencies": "Vedi dipendenze",
     "see full revision": "Vedi revisione completa",
+    "see timeline": "Vedi cronologia",
     "see_all_states": "Vedi tutti gli stati",
     "seeing old revision": "Stai vedendo una vecchia revisione: {revision}",
     "select": "Seleziona il tuo {{section}}",
+    "select a state": "Seleziona uno stato",
     "select datetime": "Seleziona una data",
     "select view": "Seleziona vista",
     "selected": "Selezionato",
@@ -2150,6 +2156,7 @@
     "worker information": "Informazioni sul Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette"
+    "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
+    "yes": "Sì"
   }
 }

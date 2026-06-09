@@ -27,6 +27,7 @@
     "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
     "active": "सक्रिय",
     "active-slots": "सक्रिय स्लॉट्स",
+    "actual state": "वास्तविक स्थिति",
     "add": "जोड़ें",
     "add at position": "{position} <code>{task}</code> जोड़ें",
     "add error handler": "एक त्रुटि हैंडलर जोड़ें",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "ऐप ब्लॉक्स",
     "apps": "ऐप्स",
+    "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "assets": {
       "title": "संपत्तियाँ"
     },
@@ -888,6 +890,7 @@
     "labels": "labels",
     "last 48 hours": "पिछले 48 घंटे",
     "last X days count": "{दिनों} दिनों में {गिनती}",
+    "last error was": "अंतिम त्रुटि थी",
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -1549,7 +1552,7 @@
       "button": "Trigger पुनः प्रारंभ करें",
       "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
-    "restarted": "निष्पादन पुनः प्रारंभ किया गया है",
+    "restarted": "निष्पादन पुनः आरंभ किया गया है",
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "restore revision": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
@@ -1564,6 +1567,7 @@
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
+    "run timeline": "रन टाइमलाइन",
     "runners": "धावक",
     "running": "RUNNING",
     "running duration": "चलने की अवधि",
@@ -1615,9 +1619,11 @@
     },
     "see dependencies": "निर्भरताएँ देखें",
     "see full revision": "पूर्ण पुनरीक्षण देखें",
+    "see timeline": "समयरेखा देखें",
     "see_all_states": "सभी अवस्थाएँ देखें",
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
+    "select a state": "एक स्थिति चुनें",
     "select datetime": "एक तिथि चुनें",
     "select view": "दृश्य चुनें",
     "selected": "चयनित",
@@ -2150,6 +2156,7 @@
     "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "labels में खाली key या value की अनुमति नहीं है"
+    "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
+    "yes": "हाँ"
   }
 }

@@ -369,6 +369,7 @@
     "input": "Input",
     "variables": "Variables",
     "variable_explorer": {
+      "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Tree",

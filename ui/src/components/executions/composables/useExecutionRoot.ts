@@ -95,7 +95,7 @@ export function useExecutionRoot() {
             {
                 name: "outputs",
                 component: ExecutionVariableExplorer,
-                title: t("inputs/outputs"),
+                title: t("variable_explorer.title"),
                 maximized: true,
                 noOverflow: true,
             },

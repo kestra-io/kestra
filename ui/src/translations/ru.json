@@ -1536,7 +1536,7 @@
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
     "replay using": "Повторное воспроизведение с использованием",
     "replay with inputs": "Воспроизвести с inputами",
-    "replayed": "Выполнение повторено",
+    "replayed": "Выполнение воспроизводится",
     "required field": "Обязательное поле",
     "reset": "Перезапустить",
     "restart": "Перезапуск",

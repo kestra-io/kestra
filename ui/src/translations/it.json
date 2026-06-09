@@ -1536,7 +1536,7 @@
     "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
     "replay using": "Riproduci utilizzando",
     "replay with inputs": "Riesegui con input",
-    "replayed": "L'esecuzione è stata ripetuta",
+    "replayed": "L'esecuzione è ripetuta",
     "required field": "Campo obbligatorio",
     "reset": "Riavvia",
     "restart": "Riavvia",
@@ -1549,7 +1549,7 @@
       "button": "Riavvia trigger",
       "tooltip": "Riavvia il trigger"
     },
-    "restarted": "L'esecuzione è stata riavviata",
+    "restarted": "L'esecuzione è riavviata",
     "restore": "Ripristina",
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "restore revision": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",

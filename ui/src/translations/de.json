@@ -1536,7 +1536,7 @@
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
     "replay using": "Wiederholen mit",
     "replay with inputs": "Wiedergabe mit Inputs",
-    "replayed": "Ausführung ist wiederholt",
+    "replayed": "Die Ausführung wird wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",
     "restart": "Neustart",
@@ -1549,7 +1549,7 @@
       "button": "Trigger neu starten",
       "tooltip": "Den Trigger neu starten"
     },
-    "restarted": "Ausführung ist neu gestartet",
+    "restarted": "Die Ausführung wird neu gestartet",
     "restore": "Wiederherstellen",
     "restore confirm": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "restore revision": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",

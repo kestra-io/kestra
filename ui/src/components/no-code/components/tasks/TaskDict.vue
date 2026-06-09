@@ -38,7 +38,7 @@
         </Wrapper>
     </template>
     <template v-else>
-        <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
+        <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
             <KsCol :span="6">
                 <InputText
                     :ref="el => { if (el) keyInputRefs[index] = el }"
@@ -47,6 +47,7 @@
                     margin="m-0"
                     placeholder="Key"
                     :haveError="duplicatedKeys.includes(item[0])"
+                    :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"
                 />
             </KsCol>
             <KsCol :span="16">

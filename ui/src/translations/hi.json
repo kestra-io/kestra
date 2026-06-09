@@ -251,6 +251,14 @@
         "singular": "डैशबोर्ड"
       },
       "preview": "पूर्वावलोकन डैशबोर्ड",
+      "quick_filters": {
+        "all": "सभी",
+        "failed": "FAILED",
+        "paused": "PAUSED",
+        "running": "RUNNING",
+        "success": "सफलता",
+        "warning": "चेतावनी"
+      },
       "switch": "डैशबोर्ड स्विच करें"
     },
     "data": "डेटा",

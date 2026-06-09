@@ -251,6 +251,14 @@
         "singular": "Панель управления"
       },
       "preview": "Предварительный просмотр Dashboard",
+      "quick_filters": {
+        "all": "Все",
+        "failed": "FAILED",
+        "paused": "Пауза",
+        "running": "RUNNING",
+        "success": "Успех",
+        "warning": "Предупреждение"
+      },
       "switch": "Переключить Панель управления"
     },
     "data": "Данные",

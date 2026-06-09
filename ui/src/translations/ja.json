@@ -251,6 +251,14 @@
         "singular": "ダッシュボード"
       },
       "preview": "プレビュー ダッシュボード",
+      "quick_filters": {
+        "all": "すべて",
+        "failed": "FAILED",
+        "paused": "一時停止中",
+        "running": "RUNNING",
+        "success": "成功",
+        "warning": "警告"
+      },
       "switch": "ダッシュボードを切り替える"
     },
     "data": "データ",

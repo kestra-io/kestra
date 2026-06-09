@@ -251,6 +251,14 @@
         "singular": "仪表板"
       },
       "preview": "预览仪表板",
+      "quick_filters": {
+        "all": "全部",
+        "failed": "FAILED",
+        "paused": "暂停",
+        "running": "RUNNING",
+        "success": "成功",
+        "warning": "警告"
+      },
       "switch": "切换仪表板"
     },
     "data": "数据",

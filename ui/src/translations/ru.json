@@ -212,6 +212,7 @@
     "copied": "Скопировано",
     "copied_logs_to_clipboard": "Скопированные logs в буфер обмена.",
     "copy": "Копировать",
+    "copy all logs": "Скопировать все Logs",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",
     "copy_and_close": "Копировать и закрыть",

@@ -518,6 +518,7 @@
       }
     },
     "back_to_dashboard": "Back to dashboard",
+    "copy all logs": "Copy All Logs",
     "copy logs": "Copy logs",
     "fix_with_ai": "Fix with AI",
     "download logs": "Download logs",
@@ -1783,7 +1784,15 @@
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
       "chart_preview": "Click on a chart source code to see its preview",
-      "export": "Export to CSV"
+      "export": "Export to CSV",
+      "quick_filters": {
+        "all": "All",
+        "running": "Running",
+        "paused": "Paused",
+        "success": "Success",
+        "warning": "Warning",
+        "failed": "Failed"
+      }
     },
     "setup": {
       "login": "Login",

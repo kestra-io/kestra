@@ -9,7 +9,7 @@
                 class="form-control me-2"
                 :placeholder="$t('key')"
                 :modelValue="(label.key as string | undefined)"
-                :disabled="localExisting.includes(label.key || '')"
+                :disabled="existingRows.has(label)"
                 @update:model-value="update(index, $event, 'key')"
             />
             <KsInput
@@ -48,7 +48,7 @@
     }>()
 
     const locals = ref<Label[]>([])
-    const localExisting = ref<string[]>([])
+    const existingRows = ref<Set<Label>>(new Set())
 
     const addItem = () => {
         locals.value.push({key: null, value: null})
@@ -78,6 +78,11 @@
             }
         }
 
-        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || []
+        const existingKeys = new Set((props.existingLabels ?? []).map((label) => label.key ?? ""))
+        existingRows.value = new Set(
+            locals.value
+                .filter((label) => label.key != null && existingKeys
+                    .has(label.key)),
+        )
     })
 </script>

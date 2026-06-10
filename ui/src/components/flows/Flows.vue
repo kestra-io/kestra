@@ -20,219 +20,217 @@
         </template>
     </TopNavBar>
     <section :class="{container: topbar}">
-        <div>
-            <KsDataTable
-                ref="dataTable"
-                :loadData="loadData"
-                :data="flowStore.flows"
-                :total="flowStore.total"
-                :currentPage="urlPage"
-                :pageSize="urlSize"
-                :defaultSort="{prop: 'id', order: 'ascending'}"
-                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-                @ready="ready = true"
-                @row-dblclick="onRowDoubleClick"
-                @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
-                :rowClassName="rowClasses"
-                :selectable="canCheck"
-                :selectionMapper="selectionMapper"
-                :no-data-text="$t('no_results.flows')"
-                class="flows-table"
-                :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+        <KsDataTable
+            ref="dataTable"
+            :loadData="loadData"
+            :data="flowStore.flows"
+            :total="flowStore.total"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
+            :defaultSort="{prop: 'id', order: 'ascending'}"
+            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @ready="ready = true"
+            @row-dblclick="onRowDoubleClick"
+            @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+            :rowClassName="rowClasses"
+            :selectable="canCheck"
+            :selectionMapper="selectionMapper"
+            :no-data-text="$t('no_results.flows')"
+            class="flows-table"
+            :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+        >
+            <template #navbar>
+                <KSFilter
+                    :configuration="flowFilter"
+                    :properties="{
+                        shown: true,
+                        columns: optionalColumns,
+                        storageKey: 'flows'
+                    }"
+                    :prefix="'flows'"
+                    :tableOptions="{
+                        columns: {shown: true},
+                        chart: {shown: false},
+                        refresh: {shown: true, callback: refresh}
+                    }"
+                    @update-properties="updateDisplayColumns"
+                    :defaultScope="defaultScopeFilter"
+                />
+            </template>
+
+            <template #bulk-actions>
+                <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
+                    {{ $t("export") }}
+                </KsButton>
+                <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                    {{ $t("delete") }}
+                </KsButton>
+                <KsButton
+                    v-if="canUpdate && anyFlowDisabled()"
+                    @click="enableFlows"
+                    :icon="FileDocumentCheckOutline"
+                >
+                    {{ $t("enable") }}
+                </KsButton>
+                <KsButton
+                    v-if="canUpdate && anyFlowEnabled()"
+                    @click="disableFlows"
+                    :icon="FileDocumentRemoveOutline"
+                >
+                    {{ $t("disable") }}
+                </KsButton>
+            </template>
+
+            <KsTableColumn
+                prop="id"
+                sortable="custom"
+                :sortOrders="['ascending', 'descending']"
+                :label="$t('id')"
             >
-                <template #navbar>
-                    <KSFilter
-                        :configuration="flowFilter"
-                        :properties="{
-                            shown: true,
-                            columns: optionalColumns,
-                            storageKey: 'flows'
-                        }"
-                        :prefix="'flows'"
-                        :tableOptions="{
-                            columns: {shown: true},
-                            chart: {shown: false},
-                            refresh: {shown: true, callback: refresh}
-                        }"
-                        @update-properties="updateDisplayColumns"
-                        :defaultScope="defaultScopeFilter"
-                    />
+                <template #default="scope">
+                    <div class="flow-id">
+                        <router-link
+                            :to="{
+                                name: 'flows/update',
+                                params: {
+                                    namespace: scope.row.namespace,
+                                    id: scope.row.id,
+                                },
+                            }"
+                            class="me-1"
+                        >
+                            <BreakableText :value="scope.row.id" />
+                        </router-link>
+                        <MarkdownTooltip
+                            :id="scope.row.namespace +
+                                '-' +
+                                scope.row.id
+                            "
+                            :description="scope.row.description"
+                            :title="scope.row.namespace +
+                                '.' +
+                                scope.row.id
+                            "
+                        />
+                    </div>
                 </template>
+            </KsTableColumn>
 
-                <template #bulk-actions>
-                    <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
-                        {{ $t("export") }}
-                    </KsButton>
-                    <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
-                        {{ $t("delete") }}
-                    </KsButton>
-                    <KsButton
-                        v-if="canUpdate && anyFlowDisabled()"
-                        @click="enableFlows"
-                        :icon="FileDocumentCheckOutline"
-                    >
-                        {{ $t("enable") }}
-                    </KsButton>
-                    <KsButton
-                        v-if="canUpdate && anyFlowEnabled()"
-                        @click="disableFlows"
-                        :icon="FileDocumentRemoveOutline"
-                    >
-                        {{ $t("disable") }}
-                    </KsButton>
-                </template>
-
+            <template v-for="colProp in displayColumns" :key="colProp">
                 <KsTableColumn
-                    prop="id"
-                    sortable="custom"
-                    :sortOrders="['ascending', 'descending']"
-                    :label="$t('id')"
+                    v-if="colProp === 'labels'"
+                    :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <div class="flow-id">
+                        <Labels :labels="scope.row.labels" @click.prevent.stop />
+                    </template>
+                </KsTableColumn>
+
+                <KsTableColumn
+                    v-else-if="colProp === 'namespace'"
+                    prop="namespace"
+                    sortable="custom"
+                    :sortOrders="['ascending', 'descending']"
+                    :label="$t('namespace')"
+                    :formatter="(_: any, __: any, cellValue: string) =>
+                        h(BreakableText, {value: cellValue})
+                    "
+                />
+
+                <KsTableColumn
+                    v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
+                    prop="state.startDate"
+                    :label="$t('last execution date')"
+                >
+                    <template #default="scope">
+                        <div @click.prevent.stop>
                             <router-link
+                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
                                 :to="{
-                                    name: 'flows/update',
+                                    name: 'executions/update',
                                     params: {
                                         namespace: scope.row.namespace,
-                                        id: scope.row.id,
-                                    },
+                                        flowId: scope.row.id,
+                                        id: getLastExecution(scope.row).id
+                                    }
                                 }"
-                                class="me-1"
                             >
-                                <BreakableText :value="scope.row.id" />
+                                <KsDateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
                             </router-link>
-                            <MarkdownTooltip
-                                :id="scope.row.namespace +
-                                    '-' +
-                                    scope.row.id
-                                "
-                                :description="scope.row.description"
-                                :title="scope.row.namespace +
-                                    '.' +
-                                    scope.row.id
-                                "
-                            />
                         </div>
                     </template>
                 </KsTableColumn>
 
-                <template v-for="colProp in displayColumns" :key="colProp">
-                    <KsTableColumn
-                        v-if="colProp === 'labels'"
-                        :label="$t('labels')"
-                    >
-                        <template #default="scope">
-                            <Labels :labels="scope.row.labels" @click.prevent.stop />
-                        </template>
-                    </KsTableColumn>
-
-                    <KsTableColumn
-                        v-else-if="colProp === 'namespace'"
-                        prop="namespace"
-                        sortable="custom"
-                        :sortOrders="['ascending', 'descending']"
-                        :label="$t('namespace')"
-                        :formatter="(_: any, __: any, cellValue: string) =>
-                            h(BreakableText, {value: cellValue})
-                        "
-                    />
-
-                    <KsTableColumn
-                        v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
-                        prop="state.startDate"
-                        :label="$t('last execution date')"
-                    >
-                        <template #default="scope">
-                            <div @click.prevent.stop>
-                                <router-link
-                                    v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row.namespace,
-                                            flowId: scope.row.id,
-                                            id: getLastExecution(scope.row).id
-                                        }
-                                    }"
-                                >
-                                    <KsDateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
-                                </router-link>
-                            </div>
-                        </template>
-                    </KsTableColumn>
-
-                    <KsTableColumn
-                        v-else-if="colProp === 'state.current' && user?.hasAny(resource.EXECUTION)"
-                        prop="state.current"
-                        :label="$t('last execution status')"
-                    >
-                        <template #default="scope">
-                            <div
-                                @click.prevent.stop
-                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                                class="d-flex justify-content-between align-items-center"
-                            >
-                                <router-link
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row.namespace,
-                                            flowId: scope.row.id,
-                                            id: getLastExecution(scope.row).id
-                                        }
-                                    }"
-                                >
-                                    <KsExecutionStatus :status="getLastExecution(scope.row).status" size="small" />
-                                </router-link>
-                            </div>
-                        </template>
-                    </KsTableColumn>
-
-                    <KsTableColumn
-                        v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
-                        prop="state"
-                        :label="$t('execution statistics')"
-                        className="row-graph"
-                    >
-                        <template #default="scope">
-                            <TimeSeries
-                                :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                                :filters="chartFilters()"
-                                showDefault
-                                short
-                                :flow="scope.row.id"
-                                :namespace="scope.row.namespace"
-                            />
-                        </template>
-                    </KsTableColumn>
-
-                    <KsTableColumn
-                        v-else-if="colProp === 'triggers'"
-                        :label="$t('triggers')"
-                        className="row-action"
-                    >
-                        <template #default="scope">
-                            <TriggerAvatar :flow="scope.row" />
-                        </template>
-                    </KsTableColumn>
-                </template>
-
-                <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+                <KsTableColumn
+                    v-else-if="colProp === 'state.current' && user?.hasAny(resource.EXECUTION)"
+                    prop="state.current"
+                    :label="$t('last execution status')"
+                >
                     <template #default="scope">
-                        <div class="flow-actions-cell">
-                            <KsIconButton
-                                v-if="canExecute(scope.row)"
-                                :tooltip="t('execute')"
-                                @click="openExecuteModal(scope.row)"
+                        <div
+                            @click.prevent.stop
+                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                            class="d-flex justify-content-between align-items-center"
+                        >
+                            <router-link
+                                :to="{
+                                    name: 'executions/update',
+                                    params: {
+                                        namespace: scope.row.namespace,
+                                        flowId: scope.row.id,
+                                        id: getLastExecution(scope.row).id
+                                    }
+                                }"
                             >
-                                <Play />
-                            </KsIconButton>
+                                <KsExecutionStatus :status="getLastExecution(scope.row).status" size="small" />
+                            </router-link>
                         </div>
                     </template>
                 </KsTableColumn>
-            </KsDataTable>
-        </div>
+
+                <KsTableColumn
+                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
+                    prop="state"
+                    :label="$t('execution statistics')"
+                    className="row-graph"
+                >
+                    <template #default="scope">
+                        <TimeSeries
+                            :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                            :filters="chartFilters()"
+                            showDefault
+                            short
+                            :flow="scope.row.id"
+                            :namespace="scope.row.namespace"
+                        />
+                    </template>
+                </KsTableColumn>
+
+                <KsTableColumn
+                    v-else-if="colProp === 'triggers'"
+                    :label="$t('triggers')"
+                    className="row-action"
+                >
+                    <template #default="scope">
+                        <TriggerAvatar :flow="scope.row" />
+                    </template>
+                </KsTableColumn>
+            </template>
+
+            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+                <template #default="scope">
+                    <div class="flow-actions-cell">
+                        <KsIconButton
+                            v-if="canExecute(scope.row)"
+                            :tooltip="t('execute')"
+                            @click="openExecuteModal(scope.row)"
+                        >
+                            <Play />
+                        </KsIconButton>
+                    </div>
+                </template>
+            </KsTableColumn>
+        </KsDataTable>
 
         <KsDialog
             v-model="showRunModal"

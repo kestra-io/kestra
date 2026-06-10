@@ -8,7 +8,7 @@
             <slot name="navbar" />
         </nav>
 
-        <div v-ks-loading="isLoading">
+        <div style="flex: 1; display: flex; flex-direction: column;" v-ks-loading="isLoading">
             <div v-if="$slots.top" class="ks-data-table-top">
                 <slot name="top" />
             </div>
@@ -43,7 +43,7 @@
                         :rowKey
                         :expandRowKeys="composedExpandRowKeys"
                         :rowClassName="composedRowClassName"
-                        :emptyText="data && data.length === 0 ? noDataText : ''"
+                        :emptyText="noDataText"
                         @selection-change="selectionChanged"
                         @select="onSelect"
                         @sort-change="onSortChange"
@@ -51,6 +51,14 @@
                     >
                         <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
                         <slot />
+                        <template #empty>
+                            <div class="empty-state">
+                                <FilterRemoveOutlineIcon class="empty-icon" />
+                                <strong>{{noDataText}}</strong>
+                                <p>Looks like there's nothing here… yet!</p>
+                                <p>Adjust your filters, or give it another go!</p>
+                            </div>
+                        </template>
                     </KsTable>
                 </div>
             </template>
@@ -79,6 +87,7 @@
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
+    import FilterRemoveOutlineIcon from "vue-material-design-icons/FilterRemoveOutline.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -410,6 +419,9 @@
 <style lang="scss">
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
 
         > .ks-data-table-navbar,
         .ks-data-table-top {
@@ -445,10 +457,15 @@
             background: transparent;
             border: 0.8px solid var(--ks-border-strong);
         }
+
+        .kel-scrollbar__view {
+            height: 100%;
+        }
     }
 
     .ks-data-table-content {
         position: relative;
+        height:100%;
 
         &.no-selection-gutter {
             .kel-table th.kel-table__cell:first-child > .cell,
@@ -482,6 +499,38 @@
         .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
+        }
+    }
+</style>
+
+<style lang="scss" scoped>
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        strong{
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-sm);
+            line-height: 2rem;
+            font-weight: 600;
+        }
+        p {
+            line-height: 1rem;
+            margin: 0;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+        }
+
+        .empty-icon{
+            height: 24px;
+            width: 24px;
+            margin: 8px;
+            :deep(.material-design-icon__svg) {
+                width: 100%;
+                height: 100%;
+            }
         }
     }
 </style>

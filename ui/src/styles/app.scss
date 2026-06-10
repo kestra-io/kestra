@@ -89,6 +89,10 @@ main {
     section.container:has(.ks-data-table-wrapper),
     section.main-container:has(.ks-data-table-wrapper) {
         padding-inline: 0;
+        margin-bottom: 0;
+        &:has(.empty-state) {
+            flex:1;
+        }
     }
 
 

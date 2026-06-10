@@ -166,7 +166,7 @@
 
     const tabColor = (tab: {key: string}) =>
         tab.key === "all"
-            ? cssVar("--ks-btn-primary-bg-default")
+            ? cssVar("--ks-text-primary")
             : cssVar(TAB_STATUS_TOKEN[tab.key] ?? "")
 
     const activeStateFilter = computed((): FilterObject | null => {

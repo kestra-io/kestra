@@ -82,7 +82,6 @@ class BasicAuthServiceTest {
             .containsExactlyInAnyOrder("/ping", "/api/v1/executions/webhook/", "/api/v1/main/executions/webhook/");
     }
 
-    @Test
     @FlakyTest(description = "Async event propagation race in BasicAuthService initialization")
     void isBasicAuthInitialized() {
         var tmpSettingsRepo = new InMemorySettingRepository();

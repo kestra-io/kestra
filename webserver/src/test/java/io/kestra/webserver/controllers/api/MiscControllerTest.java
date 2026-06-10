@@ -96,7 +96,6 @@ class MiscControllerTest {
         assertThat(response.getIsAiApiKeyConfigured()).isNotNull();
     }
 
-    @Test
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     void getEmptyValidationErrors() {
         List<String> response = client.toBlocking().retrieve(GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);
@@ -138,7 +137,6 @@ class MiscControllerTest {
     }
 
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
-    @Test
     void basicAuth() {
         assertThatCode(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class)).doesNotThrowAnyException();
 
@@ -179,7 +177,6 @@ class MiscControllerTest {
         }
     }
 
-    @Test
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     void canTriggerAWebhookWithoutBasicAuth() {
         String uid = "someUid2";

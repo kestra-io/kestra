@@ -230,7 +230,6 @@ class DockerTest extends AbstractTaskRunnerTest {
         }
     }
 
-    @Test
     @FlakyTest(description = "Docker container lifecycle timing varies across CI environments")
     void interruptAfterResume() throws Exception {
         var taskRunId = IdUtils.create();

@@ -141,7 +141,6 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @FlakyTest(description = "AllowFailure + retry + shared KV state can deadlock; flow gets stuck in RUNNING under CI load")
-    @Test
     @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
     void retryWithFlowableErrors(Execution execution) {
         retryCaseTest.retryWithFlowableErrors(execution);

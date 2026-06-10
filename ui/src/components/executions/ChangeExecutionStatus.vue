@@ -182,8 +182,12 @@
         }
 
         &__select {
-            width: 9.5rem;
+            width: 120px;
             flex-shrink: 0;
+
+            :deep(.kel-select__wrapper) {
+                padding: 4px 8px 5px 4px;
+            }
         }
 
         &__footer {

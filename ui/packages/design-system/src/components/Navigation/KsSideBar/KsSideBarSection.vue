@@ -12,8 +12,10 @@
         </button>
         <div v-else-if="title" class="ks-sidebar-section__title">{{ title }}</div>
 
-        <div v-show="!collapsible || !collapsed" class="ks-sidebar-section__body">
-            <slot />
+        <div class="ks-sidebar-section__body" :class="{'is-open': isOpen}">
+            <div class="ks-sidebar-section__body-inner" :inert="isOpen ? undefined : true">
+                <slot />
+            </div>
         </div>
     </section>
 </template>
@@ -42,6 +44,7 @@
 
     const isControlled = computed(() => props.collapsed !== undefined)
     const collapsed = computed<boolean>(() => isControlled.value ? props.collapsed as boolean : internal.value)
+    const isOpen = computed<boolean>(() => !props.collapsible || !collapsed.value)
 
     watch(() => props.defaultCollapsed, (next) => {
         if (!isControlled.value && !next) internal.value = false
@@ -101,5 +104,20 @@
     &.is-collapsed {
         transform: rotate(-90deg);
     }
+}
+
+.ks-sidebar-section__body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &.is-open {
+        grid-template-rows: 1fr;
+    }
+}
+
+.ks-sidebar-section__body-inner {
+    min-height: 0;
+    overflow: hidden;
 }
 </style>

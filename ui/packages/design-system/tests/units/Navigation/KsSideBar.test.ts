@@ -91,16 +91,18 @@ describe("KsSideBarSection", () => {
         const btn = wrapper.find("button.ks-sidebar-section__title")
 
         // Initially expanded
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeUndefined()
         expect(btn.attributes("aria-expanded")).toBe("true")
 
         await btn.trigger("click")
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(btn.attributes("aria-expanded")).toBe("false")
         expect(wrapper.emitted("toggle")?.[0]).toEqual([true])
 
         await btn.trigger("click")
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
         expect(wrapper.emitted("toggle")?.[1]).toEqual([false])
     })
 
@@ -110,7 +112,8 @@ describe("KsSideBarSection", () => {
             props: {title: "Workspace", collapsible: true, defaultCollapsed: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
     })
 
@@ -120,11 +123,13 @@ describe("KsSideBarSection", () => {
             props: {title: "Workspace", collapsible: true, collapsed: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
 
         await wrapper.setProps({collapsed: false})
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeUndefined()
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("true")
     })
 
@@ -139,7 +144,7 @@ describe("KsSideBarSection", () => {
 
         expect(wrapper.emitted("update:collapsed")?.[0]).toEqual([true])
         expect(wrapper.emitted("toggle")?.[0]).toEqual([true])
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("true")
     })
 
@@ -150,7 +155,8 @@ describe("KsSideBarSection", () => {
             slots: {default: "<a class='child'>Flows</a>"},
         })
         await wrapper.setProps({defaultCollapsed: false})
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
     })
 })

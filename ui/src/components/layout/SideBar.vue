@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -18,19 +18,25 @@
                 />
             </div>
             <KsSideBarSection
-                v-else
+                v-else-if="getDisplayedItems(section).length > 0"
                 :title="section.title"
                 collapsible
                 :collapsed="getSectionCollapsed(section)"
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
-                <template v-for="(item, iIdx) in section.child" :key="item.id ?? `i-${iIdx}`">
+                <Motion
+                    v-for="(item, iIdx) in getDisplayedItems(section)"
+                    :key="item.id"
+                    as="div"
+                    :initial="{opacity: 0, x: -10}"
+                    :animate="{opacity: 1, x: 0}"
+                    :transition="{...ITEM_SPRING, delay: itemEntranceDelay(section, iIdx)}"
+                >
                     <MenuLink
-                        v-if="!item.hidden"
                         :item="item"
                         :active="isItemActive(item)"
                     />
-                </template>
+                </Motion>
             </KsSideBarSection>
         </template>
 
@@ -46,23 +52,60 @@
 
         <template #footer>
             <slot name="footer" />
+            <div class="sidebar-customize-trigger">
+                <KsButton
+                    type="text"
+                    size="small"
+                    class="customize-btn"
+                    @click="showCustomizeModal = true"
+                >
+                    {{ $t("customize sidebar") }}
+                </KsButton>
+            </div>
         </template>
     </KsSideBar>
+
+    <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
+
+    <Teleport to="body">
+        <div
+            v-if="contextMenu.visible"
+            class="sidebar-context-menu"
+            role="menu"
+            :style="{left: `${contextMenu.x}px`, top: `${contextMenu.y}px`}"
+        >
+            <button ref="contextMenuItem" type="button" role="menuitem" class="sidebar-context-menu__item" @click="openCustomizeFromContextMenu">
+                <SquareEditOutline :size="16" />
+                {{ $t("customize sidebar") }}
+            </button>
+        </div>
+    </Teleport>
 </template>
 
 <script setup lang="ts">
-    import {computed, h, defineComponent} from "vue"
+    import {computed, h, ref, defineComponent, onUnmounted, nextTick} from "vue"
+
+    defineOptions({inheritAttrs: false})
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton} from "@kestra-io/design-system"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton} from "@kestra-io/design-system"
+    import {Motion} from "motion-v"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
+    import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
     import BookmarkLinkList from "./BookmarkLinkList.vue"
+    import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
+    import {
+        menuSectionId,
+        resolveSectionItemIds,
+        pickItemsByIds,
+        isMenuItemVisible,
+    } from "../../utils/menuCustomization"
     import type {MenuItem} from "override/components/useLeftMenu"
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         menu: MenuItem[],
         showLink?: boolean,
         logoTo?: object,
@@ -80,6 +123,49 @@
     const $route = useRoute()
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
+    const showCustomizeModal = ref(false)
+    const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
+    const contextMenuItem = ref<HTMLButtonElement | null>(null)
+
+    const CONTEXT_MENU_WIDTH = 200
+    const CONTEXT_MENU_HEIGHT = 60
+
+    const ITEM_SPRING = {type: "spring", stiffness: 420, damping: 30, mass: 0.6}
+
+    function itemEntranceDelay(section: MenuItem, localIndex: number): number {
+        let offset = 0
+        for (const candidate of props.menu) {
+            if (candidate === section) break
+            if (candidate.child) offset += getDisplayedItems(candidate).length
+        }
+        return Math.min((offset + localIndex) * 0.04, 0.6)
+    }
+
+    function onContextMenu(event: MouseEvent) {
+        const x = Math.max(0, Math.min(event.clientX, window.innerWidth - CONTEXT_MENU_WIDTH))
+        const y = Math.max(0, Math.min(event.clientY, window.innerHeight - CONTEXT_MENU_HEIGHT))
+        contextMenu.value = {visible: true, x, y}
+        document.addEventListener("click", hideContextMenu)
+        document.addEventListener("keydown", onContextMenuKeydown)
+        nextTick(() => contextMenuItem.value?.focus())
+    }
+
+    function hideContextMenu() {
+        contextMenu.value.visible = false
+        document.removeEventListener("click", hideContextMenu)
+        document.removeEventListener("keydown", onContextMenuKeydown)
+    }
+
+    function onContextMenuKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") hideContextMenu()
+    }
+
+    function openCustomizeFromContextMenu() {
+        hideContextMenu()
+        showCustomizeModal.value = true
+    }
+
+    onUnmounted(hideContextMenu)
 
     function onCollapse(folded: boolean) {
         layoutStore.setSideMenuCollapsed(folded)
@@ -98,21 +184,23 @@
 
     const FAVOURITES_SECTION_ID = "favourites"
 
-    function sectionId(section: MenuItem): string {
-        return section.id ?? section.title.toLowerCase().replaceAll(" ", "-")
-    }
-
     function getCollapsedById(id: string, fallback: boolean): boolean {
         const stored = layoutStore.menuSectionsCollapsed[id]
         return stored !== undefined ? stored : fallback
     }
 
     function getSectionCollapsed(section: MenuItem): boolean {
-        return getCollapsedById(sectionId(section), !sectionHasActiveChild(section))
+        return getCollapsedById(menuSectionId(section), !sectionHasActiveChild(section))
     }
 
     function onSectionCollapseChange(section: MenuItem, collapsed: boolean) {
-        layoutStore.setMenuSectionCollapsed(sectionId(section), collapsed)
+        layoutStore.setMenuSectionCollapsed(menuSectionId(section), collapsed)
+    }
+
+    function getDisplayedItems(section: MenuItem): MenuItem[] {
+        const ids = resolveSectionItemIds(props.menu, layoutStore.menuItemOrder, menuSectionId(section))
+        return pickItemsByIds(props.menu, ids)
+            .filter((item) => isMenuItemVisible(layoutStore.menuItemVisibility, item))
     }
 
     // Inline adapter: maps a MenuItem to <KsSideBarItem>, wiring vue-router navigation
@@ -123,15 +211,15 @@
             item: {type: Object as PropType<MenuItem>, required: true},
             active: {type: Boolean, default: false},
         },
-        setup(props) {
-            const hrefString = computed(() => (typeof props.item.href === "string" ? props.item.href : ""))
-            const locked = computed(() => Boolean(props.item.attributes?.locked))
+        setup(itemProps) {
+            const hrefString = computed(() => (typeof itemProps.item.href === "string" ? itemProps.item.href : ""))
+            const locked = computed(() => Boolean(itemProps.item.attributes?.locked))
 
             return () => {
                 const itemNode = (extraProps: Record<string, unknown> = {}) => h(KsSideBarItem, {
-                    title: props.item.title,
-                    icon: props.item.icon?.element,
-                    active: props.active,
+                    title: itemProps.item.title,
+                    icon: itemProps.item.icon?.element,
+                    active: itemProps.active,
                     locked: locked.value,
                     ...extraProps,
                 })
@@ -154,7 +242,7 @@
     flex-shrink: 0;
     box-sizing: border-box;
     overflow: hidden;
-    transition: width 0.25s ease, border-right-width 0.25s ease;
+    transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-right-width 0.32s ease;
 
     &.is-collapsed {
         width: 0;
@@ -172,5 +260,53 @@
     right: var(--ks-spacing-4);
     z-index: 1;
     color: var(--ks-icon-muted);
+}
+
+.sidebar-customize-trigger {
+    padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
+
+    .customize-btn {
+        width: 100%;
+        justify-content: flex-start;
+        color: var(--ks-text-dim);
+        font-size: var(--ks-font-size-xs);
+
+        &:hover {
+            color: var(--ks-text-secondary);
+        }
+    }
+}
+
+.sidebar-context-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 12rem;
+    padding: var(--ks-spacing-1);
+    background: var(--ks-bg-elevated);
+    border: var(--ks-border-width-thin) solid var(--ks-border-strong);
+    border-radius: var(--ks-radius-base);
+    box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        width: 100%;
+        padding: var(--ks-spacing-2);
+        border: 0;
+        border-radius: var(--ks-radius-xs);
+        background: transparent;
+        color: var(--ks-text-primary);
+        font: inherit;
+        font-size: var(--ks-font-size-xs);
+        text-align: left;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: var(--ks-bg-hover-elevated);
+            outline: none;
+        }
+    }
 }
 </style>

@@ -74,8 +74,6 @@
         } else {
             locals.value = labels
         }
-
-        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || []
     }
 
     onMounted(() => {

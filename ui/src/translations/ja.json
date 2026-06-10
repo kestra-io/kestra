@@ -212,6 +212,7 @@
     "copied": "コピーされました",
     "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
+    "copy all logs": "すべてのLogをコピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
     "copy_and_close": "コピーして閉じる",

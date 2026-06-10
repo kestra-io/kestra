@@ -212,6 +212,7 @@
     "copied": "복사됨",
     "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
     "copy": "복사",
+    "copy all logs": "모든 Log 복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
     "copy_and_close": "복사하고 닫기",

@@ -15,7 +15,7 @@
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
                 <span :style="levelStyle" class="log-level">{{ levelLabel }}</span>
-                <span class="header-badge text-secondary">
+                <span class="header-badge">
                     {{ Filters.date(log.timestamp, "iso") }}
                 </span>
                 <span v-for="(meta, x) in metaWithValue" :key="x">
@@ -123,9 +123,8 @@
     const levelStyle = computed(() => {
         const lowerCaseLevel = props.log?.level?.toLowerCase()
         return {
-            "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
             "color": `var(--ks-log-${lowerCaseLevel})`,
-            "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
+            "background-color": `color-mix(in srgb, var(--ks-log-${lowerCaseLevel}) 10%, var(--ks-bg-badge))`,
         }
     })
 
@@ -196,15 +195,14 @@ div.line {
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        line-height: 1;
+        gap: var(--ks-spacing-1);
         white-space: nowrap;
         vertical-align: middle;
         user-select: none;
         font-family: var(--ks-font-family-sans);
         font-weight: 500;
-        border: 1px solid;
-        border-radius: var(--ks-radius-sm);
-        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        padding: 0.125rem var(--ks-spacing-2);
         font-size: var(--ks-font-size-sm);
     }
 
@@ -247,6 +245,7 @@ div.line {
         vertical-align: baseline;
         width: auto;
         min-width: 40px;
+        color: var(--ks-text-secondary);
 
         span:first-child {
             margin-right: 6px;
@@ -260,6 +259,17 @@ div.line {
 
         & a {
             border-radius: var(--kel-border-radius-base);
+        }
+    }
+
+     .property {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        .kel-tag {
+            font-family: var(--kbs-body-font-family);
+            user-select: none;
         }
     }
 

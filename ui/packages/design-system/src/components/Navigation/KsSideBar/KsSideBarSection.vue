@@ -12,28 +12,15 @@
         </button>
         <div v-else-if="title" class="ks-sidebar-section__title">{{ title }}</div>
 
-        <AnimatePresence :initial="false">
-            <Motion
-                v-if="!collapsible || !collapsed"
-                class="ks-sidebar-section__body"
-                :initial="{height: 0, opacity: 0}"
-                :animate="{height: 'auto', opacity: 1}"
-                :exit="{height: 0, opacity: 0}"
-                :transition="BODY_SPRING"
-                :style="{overflow: 'hidden'}"
-            >
-                <slot />
-            </Motion>
-        </AnimatePresence>
+        <div v-show="!collapsible || !collapsed" class="ks-sidebar-section__body">
+            <slot />
+        </div>
     </section>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {Motion, AnimatePresence} from "motion-v"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-
-    const BODY_SPRING = {type: "spring", stiffness: 400, damping: 35, mass: 0.7}
 
     const props = withDefaults(defineProps<{
         title?: string

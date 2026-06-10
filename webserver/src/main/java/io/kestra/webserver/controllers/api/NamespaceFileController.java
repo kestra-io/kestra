@@ -141,7 +141,7 @@ public class NamespaceFileController {
             throw new FileNotFoundException("File not found: " + encodedPath.getPath());
         }
 
-        return namespaceFileMetadata.map(metadata -> new NamespaceFileRevision(metadata.getVersion()));
+        return namespaceFileMetadata.map(metadata -> new NamespaceFileRevision(metadata.getRevision()));
     }
 
     @ExecuteOn(TaskExecutors.IO)

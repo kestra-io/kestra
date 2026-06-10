@@ -61,18 +61,16 @@
     <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
 
     <Teleport to="body">
-        <KsMenu
+        <div
             v-if="contextMenu.visible"
             class="sidebar-context-menu"
             :style="{left: `${contextMenu.x}px`, top: `${contextMenu.y}px`}"
         >
-            <KsMenuItem @click="openCustomizeFromContextMenu">
-                <span class="sidebar-context-menu__label">
-                    <SquareEditOutline :size="16" />
-                    {{ $t("customize sidebar") }}
-                </span>
-            </KsMenuItem>
-        </KsMenu>
+            <button type="button" class="sidebar-context-menu__item" @click="openCustomizeFromContextMenu">
+                <SquareEditOutline :size="16" />
+                {{ $t("customize sidebar") }}
+            </button>
+        </div>
     </Teleport>
 </template>
 
@@ -253,13 +251,33 @@
 .sidebar-context-menu {
     position: fixed;
     z-index: 9999;
-    border: var(--ks-border-width-thin) solid var(--ks-border-default);
+    min-width: 12rem;
+    padding: var(--ks-spacing-1);
+    background: var(--ks-bg-elevated);
+    border: var(--ks-border-width-thin) solid var(--ks-border-strong);
+    border-radius: var(--ks-radius-base);
+    box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
 
-    &__label {
+    &__item {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);
-        font-size: var(--ks-font-size-sm);
+        width: 100%;
+        padding: var(--ks-spacing-2);
+        border: 0;
+        border-radius: var(--ks-radius-xs);
+        background: transparent;
+        color: var(--ks-text-primary);
+        font: inherit;
+        font-size: var(--ks-font-size-xs);
+        text-align: left;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: var(--ks-bg-hover-elevated);
+            outline: none;
+        }
     }
 }
 </style>

@@ -242,7 +242,7 @@
     flex-shrink: 0;
     box-sizing: border-box;
     overflow: hidden;
-    transition: width 0.25s ease, border-right-width 0.25s ease;
+    transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-right-width 0.32s ease;
 
     &.is-collapsed {
         width: 0;

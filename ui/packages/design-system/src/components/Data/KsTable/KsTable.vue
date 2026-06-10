@@ -100,6 +100,7 @@
         background-color: var(--ks-bg-overlay);
         border: none;
         font-size: var(--ks-font-size-sm);
+        height: 100%;
 
         &--striped {
             .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {

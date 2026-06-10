@@ -325,14 +325,14 @@
 
 .search-container {
     position: relative;
-    flex: 0 0 200px;
+    flex-basis: 300px;
+    flex-wrap: nowrap;
     min-width: 150px;
-    max-width: 200px;
 
     &.search-grow {
         flex: 2 1 auto;
         max-width: none;
-        min-width: 200px;
+        min-width: 300px;
     }
 
     &.read-only {

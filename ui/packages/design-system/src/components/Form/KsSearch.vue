@@ -2,6 +2,7 @@
     <ElInput
         v-model="model"
         class="ks-search"
+        type="search"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @change="emit('change', $event)"
     >
@@ -51,7 +52,6 @@
         width: 100%;
 
         .kel-input__wrapper {
-            gap: 8px;
             border-radius: 8px;
             background-color: var(--ks-bg-input);
             border: 1px solid var(--ks-border-subtle);
@@ -78,6 +78,13 @@
 
         .kel-input__inner {
             font-size: var(--ks-font-size-sm);
+            // remove the little cross on the search input
+            -webkit-appearance: none;
+            appearance: none;
+            &::-webkit-search-cancel-button {
+                -webkit-appearance: none;
+                appearance: none;
+            }
 
             &::placeholder {
                 font-size: var(--ks-font-size-xs);

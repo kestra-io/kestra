@@ -3,19 +3,6 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
-        <SaveFilters
-            v-if="!filter.searchInputFullWidth.value && filter.buttons.value?.savedFilters?.shown !== false"
-            :disabled="
-                (!filter.hasAppliedFilters.value && !filter.searchQuery.value) || filter.readOnly.value
-            "
-            :appliedFilters="filter.appliedFilters.value"
-            :editingFilter="filter.editingFilter.value"
-            :savedFilters="filter.savedFilters.value"
-            @save="handleSave"
-            @edit="handleEdit"
-            @close-edit="filter.closeEditFilter"
-        />
-
         <KsPopover
             v-if="filter.buttons.value?.savedFilters?.shown !== false"
             v-model:visible="isSavedFiltersVisible"
@@ -28,7 +15,7 @@
             @hide="isSavedFiltersVisible = false"
         >
             <template #reference>
-                <KsButton type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
+                <KsButton type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value" plain>
                     <KsTooltip :content="$t('filter.saved tooltip')" placement="top">
                         <span class="saved-content">
                             {{ $t("filter.saved") }}
@@ -61,6 +48,19 @@
         >
             {{ $t("filter.refresh") }}
         </KsButton>
+
+        <SaveFilters
+            v-if="!filter.searchInputFullWidth.value && filter.buttons.value?.savedFilters?.shown !== false"
+            :disabled="
+                (!filter.hasAppliedFilters.value && !filter.searchQuery.value) || filter.readOnly.value
+            "
+            :appliedFilters="filter.appliedFilters.value"
+            :editingFilter="filter.editingFilter.value"
+            :savedFilters="filter.savedFilters.value"
+            @save="handleSave"
+            @edit="handleEdit"
+            @close-edit="filter.closeEditFilter"
+        />
 
         <KsTooltip
             :content="viewModeTooltip"
@@ -162,6 +162,7 @@
         margin: 0;
         font-size: var(--ks-font-size-sm);
         box-shadow: var(--ks-box-shadow);
+        background-color: transparent;
 
         .saved-content {
             display: flex;
@@ -172,6 +173,7 @@
         .saved-count {
             margin-left: 0.375rem;
             background-color: var(--ks-bg-tag);
+            border: none;
             &:hover {
                 background-color: var(--ks-bg-tag-hover);
             }

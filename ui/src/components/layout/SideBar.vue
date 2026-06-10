@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="showCustomizeModal = true">
+    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -59,14 +59,30 @@
     </KsSideBar>
 
     <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
+
+    <Teleport to="body">
+        <KsMenu
+            v-if="contextMenu.visible"
+            class="sidebar-context-menu"
+            :style="{left: `${contextMenu.x}px`, top: `${contextMenu.y}px`}"
+        >
+            <KsMenuItem @click="openCustomizeFromContextMenu">
+                <span class="sidebar-context-menu__label">
+                    <SquareEditOutline :size="16" />
+                    {{ $t("customize sidebar") }}
+                </span>
+            </KsMenuItem>
+        </KsMenu>
+    </Teleport>
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref, defineComponent} from "vue"
+    import {computed, h, ref, defineComponent, onUnmounted} from "vue"
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
+    import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
@@ -99,6 +115,30 @@
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
     const showCustomizeModal = ref(false)
+    const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
+
+    function onContextMenu(event: MouseEvent) {
+        contextMenu.value = {visible: true, x: event.clientX, y: event.clientY}
+        document.addEventListener("click", hideContextMenu)
+        document.addEventListener("keydown", onContextMenuKeydown)
+    }
+
+    function hideContextMenu() {
+        contextMenu.value.visible = false
+        document.removeEventListener("click", hideContextMenu)
+        document.removeEventListener("keydown", onContextMenuKeydown)
+    }
+
+    function onContextMenuKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") hideContextMenu()
+    }
+
+    function openCustomizeFromContextMenu() {
+        hideContextMenu()
+        showCustomizeModal.value = true
+    }
+
+    onUnmounted(hideContextMenu)
 
     function onCollapse(folded: boolean) {
         layoutStore.setSideMenuCollapsed(folded)
@@ -207,6 +247,19 @@
         &:hover {
             color: var(--ks-text-secondary);
         }
+    }
+}
+
+.sidebar-context-menu {
+    position: fixed;
+    z-index: 9999;
+    border: var(--ks-border-width-thin) solid var(--ks-border-default);
+
+    &__label {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-sm);
     }
 }
 </style>

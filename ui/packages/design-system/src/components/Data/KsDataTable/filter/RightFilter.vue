@@ -3,16 +3,6 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
-        <KsButton
-            v-if="filter.tableOptions.value?.refresh?.shown"
-            @click="filter.refreshData"
-            :icon="Refresh"
-            :size="'default'"
-            class="refresh-button"
-        >
-            {{ $t("filter.refresh") }}
-        </KsButton>
-
         <SaveFilters
             v-if="!filter.searchInputFullWidth.value && filter.buttons.value?.savedFilters?.shown !== false"
             :disabled="
@@ -61,6 +51,16 @@
                 @close="isSavedFiltersVisible = false"
             />
         </KsPopover>
+
+        <KsButton
+            v-if="filter.tableOptions.value?.refresh?.shown"
+            @click="filter.refreshData"
+            :icon="Refresh"
+            :size="'default'"
+            class="refresh-button"
+        >
+            {{ $t("filter.refresh") }}
+        </KsButton>
 
         <KsTooltip
             :content="viewModeTooltip"

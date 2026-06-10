@@ -228,7 +228,6 @@
 .filter {
     display: flex;
     flex-direction: column;
-    margin-bottom: 1rem;
     width: 100%;
     border-radius: 0.5rem;
 

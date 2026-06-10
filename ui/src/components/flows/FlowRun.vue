@@ -147,6 +147,11 @@
             flowCanBeExecuted() {
                 return this.flow && !this.flow.disabled && !this.haveBadLabels;
             },
+            isDirty() {
+                return Object.keys(this.inputsNoDefaults).length > 0 ||
+                    this.executionLabels.some(label => label.key || label.value) ||
+                    this.scheduleDate !== undefined;
+            },
             hasWebhookTriggers() {
                 if (!this.flow?.triggers) {
                     return false;

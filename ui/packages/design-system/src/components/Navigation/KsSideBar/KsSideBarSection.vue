@@ -8,9 +8,13 @@
             @click="toggle"
         >
             <span class="ks-sidebar-section__title-text">{{ title }}</span>
+            <slot name="suffix" />
             <ChevronDown :size="14" class="ks-sidebar-section__chevron" :class="{'is-collapsed': collapsed}" />
         </button>
-        <div v-else-if="title" class="ks-sidebar-section__title">{{ title }}</div>
+        <div v-else-if="title" class="ks-sidebar-section__title">
+            <span class="ks-sidebar-section__title-text">{{ title }}</span>
+            <slot name="suffix" />
+        </div>
 
         <div class="ks-sidebar-section__body" :class="{'is-open': isOpen}">
             <div class="ks-sidebar-section__body-inner" :inert="isOpen ? undefined : true">
@@ -62,6 +66,7 @@
 
     defineSlots<{
         default?(): unknown
+        suffix?(): unknown
     }>()
 </script>
 
@@ -75,7 +80,8 @@
 }
 
 .ks-sidebar-section__title {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     align-items: center;
     gap: var(--ks-spacing-1);
     padding: var(--ks-spacing-3) 0 0;
@@ -87,6 +93,12 @@
     border: none;
     text-align: left;
     font-family: inherit;
+    box-sizing: border-box;
+}
+
+.ks-sidebar-section__title-text {
+    flex: 1;
+    min-width: 0;
 }
 
 .ks-sidebar-section__title.is-collapsible {

@@ -12,6 +12,7 @@ import KsPie from "./components/Charts/KsPie.vue"
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
+import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
@@ -207,6 +208,7 @@ const components: Record<string, Component> = {
     KsAutocomplete,
     KsAvatar,
     KsBadge,
+    KsNewBadge,
     KsBreadcrumb,
     KsButton,
     KsButtonGroup,
@@ -312,6 +314,7 @@ export {
     KsAutocomplete,
     KsAvatar,
     KsBadge,
+    KsNewBadge,
     KsBreadcrumb,
     KsButton,
     KsButtonGroup,
@@ -438,6 +441,7 @@ declare module "vue" {
         KsAutocomplete: typeof KsAutocomplete
         KsAvatar: typeof KsAvatar
         KsBadge: typeof KsBadge
+        KsNewBadge: typeof KsNewBadge
         KsBreadcrumb: typeof KsBreadcrumb
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup

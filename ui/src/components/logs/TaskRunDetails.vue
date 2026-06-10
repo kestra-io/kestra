@@ -20,7 +20,7 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <KsCard class="attempt-wrapper">
+                <KsCard class="attempt-wrapper" shadow="never" :class="{'attempt-wrapper--transparent': hideTaskHeader}">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
                         :followedExecution="followedExecution"
@@ -32,6 +32,7 @@
                         "
                         :shownAttemptsUid="shownAttemptsUid"
                         :logs="filteredLogs"
+                        :hideHeader="hideTaskHeader"
                         @toggle-show-attempt="toggleShowAttempt"
                         @swap-displayed-attempt="swapDisplayedAttempt"
                         @update-logs="loadLogs"
@@ -202,7 +203,7 @@
                 </KsCard>
                 <div
                     v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive"
-                    style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
+                    style="display:flex; align-items: center; gap: 10px; margin: 12px 0"
                 >
                     <KsButton
                         :tag="RouterLink"
@@ -213,13 +214,14 @@
                                 'filters[kind][EQUALS]': 'LOOP',
                             }
                         }"
+                        size="small"
                     >
                         Iterations
                     </KsButton>
                     <KsProgress
                         :percentage="Math.ceil((loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.iterationCount ?? 1) * 100)"
-                        :strokeWidth="24"
-                        :textInside="true"
+                        :strokeWidth="7"
+                        :radius="81"
                         class="progress-bar"
                     >
                         <span>{{ loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.iterationCount ?? '?' }}</span>
@@ -285,6 +287,7 @@
         showProgressBar?: boolean
         level?: string
         showLogs?: boolean
+        hideTaskHeader?: boolean
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -301,6 +304,7 @@
         showProgressBar: true,
         level: undefined,
         showLogs: undefined,
+        hideTaskHeader: false,
     })
 
     const emit = defineEmits<{
@@ -993,12 +997,27 @@
   .progress-bar {
     margin-block: .5rem;
     flex: 1;
+
+    :deep(.kel-progress__text) {
+      font-size: var(--ks-font-size-sm) !important;
+      color: var(--ks-text-secondary);
+    }
   }
 
   .attempt-wrapper {
     background-color: var(--ks-bg-input);
     margin-bottom: 0;
     border: 1px solid var(--ks-border-default);
+
+    &.attempt-wrapper--transparent {
+      background-color: transparent;
+      border: none;
+
+      .line {
+        border-top: none;
+        padding-inline: 0;
+      }
+    }
 
     :deep(.kel-card__body) {
       padding: 0;

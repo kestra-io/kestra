@@ -512,7 +512,7 @@
 
     const currentTaskRunsLogIndicesByLevel = computed(() =>
         currentTaskRuns.value.reduce(
-            (currentTaskRunsLogIndicesByLevel: Record<string, string[]>, taskRun: any, taskRunIndex: number) => { // FIXME: any
+            (indicesByLevel: Record<string, string[]>, taskRun: any, taskRunIndex: number) => { // FIXME: any
                 if (shouldDisplayLogs(taskRun)) {
                     const currentTaskRunLogs =
                         logsWithIndexByAttemptUid.value[
@@ -522,12 +522,12 @@
                             )
                         ]
                     currentTaskRunLogs?.forEach((log: any) => { // FIXME: any
-                        ;(currentTaskRunsLogIndicesByLevel[log.level] ??= []).push(
+                        ;(indicesByLevel[log.level] ??= []).push(
                             taskRunIndex + "/" + log.index,
                         )
                     })
                 }
-                return currentTaskRunsLogIndicesByLevel
+                return indicesByLevel
             },
             {},
         ),

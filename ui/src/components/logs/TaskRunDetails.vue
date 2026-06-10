@@ -20,7 +20,7 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <KsCard class="attempt-wrapper" :class="{'attempt-wrapper--transparent': hideTaskHeader}">
+                <KsCard class="attempt-wrapper" shadow="never" :class="{'attempt-wrapper--transparent': hideTaskHeader}">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
                         :followedExecution="followedExecution"

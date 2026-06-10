@@ -123,7 +123,7 @@
                     <History />
                     {{ execution.flowRevision }} {{ t("revision") }}(s)
                 </span>
-                <span class="footer-stat">
+                <span class="footer-stat footer-stat--duration">
                     <ClockTimeFourOutline />
                     <Duration :histories="execution.state.histories" />
                 </span>
@@ -524,6 +524,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         font-weight: 400;
+        font-variant-numeric: tabular-nums;
 
         .material-design-icon {
             color: var(--ks-text-muted);

@@ -123,7 +123,7 @@
                     <History />
                     {{ execution.flowRevision }} {{ t("revision") }}(s)
                 </span>
-                <span class="footer-stat footer-stat--duration">
+                <span class="footer-stat">
                     <ClockTimeFourOutline />
                     <Duration :histories="execution.state.histories" />
                 </span>

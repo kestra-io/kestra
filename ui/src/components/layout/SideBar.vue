@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="onContextMenu">
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -64,9 +64,10 @@
         <div
             v-if="contextMenu.visible"
             class="sidebar-context-menu"
+            role="menu"
             :style="{left: `${contextMenu.x}px`, top: `${contextMenu.y}px`}"
         >
-            <button type="button" class="sidebar-context-menu__item" @click="openCustomizeFromContextMenu">
+            <button ref="contextMenuItem" type="button" role="menuitem" class="sidebar-context-menu__item" @click="openCustomizeFromContextMenu">
                 <SquareEditOutline :size="16" />
                 {{ $t("customize sidebar") }}
             </button>
@@ -75,7 +76,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref, defineComponent, onUnmounted} from "vue"
+    import {computed, h, ref, defineComponent, onUnmounted, nextTick} from "vue"
+
+    defineOptions({inheritAttrs: false})
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton} from "@kestra-io/design-system"
@@ -114,11 +117,18 @@
     const bookmarksStore = useBookmarksStore()
     const showCustomizeModal = ref(false)
     const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
+    const contextMenuItem = ref<HTMLButtonElement | null>(null)
+
+    const CONTEXT_MENU_WIDTH = 200
+    const CONTEXT_MENU_HEIGHT = 60
 
     function onContextMenu(event: MouseEvent) {
-        contextMenu.value = {visible: true, x: event.clientX, y: event.clientY}
+        const x = Math.max(0, Math.min(event.clientX, window.innerWidth - CONTEXT_MENU_WIDTH))
+        const y = Math.max(0, Math.min(event.clientY, window.innerHeight - CONTEXT_MENU_HEIGHT))
+        contextMenu.value = {visible: true, x, y}
         document.addEventListener("click", hideContextMenu)
         document.addEventListener("keydown", onContextMenuKeydown)
+        nextTick(() => contextMenuItem.value?.focus())
     }
 
     function hideContextMenu() {

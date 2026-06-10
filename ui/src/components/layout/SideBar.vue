@@ -1,76 +1,69 @@
 <template>
-    <Motion
-        as="div"
-        class="side-menu-shell"
-        :animate="{width: collapsed ? 0 : SIDEBAR_WIDTH}"
-        :transition="SIDEBAR_SPRING"
-    >
-        <KsSideBar id="side-menu" v-bind="$attrs" @contextmenu.prevent="onContextMenu">
-            <template #header>
-                <KsIconButton
-                    class="header-toggle"
-                    aria-label="Toggle menu"
-                    @click="onCollapse(true)"
-                >
-                    <DockLeft />
-                </KsIconButton>
-            </template>
-
-            <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
-                <div v-if="!section.child" class="top-level-link">
-                    <MenuLink
-                        :item="section"
-                        :active="isItemActive(section)"
-                    />
-                </div>
-                <KsSideBarSection
-                    v-else-if="getDisplayedItems(section).length > 0"
-                    :title="section.title"
-                    collapsible
-                    :collapsed="getSectionCollapsed(section)"
-                    @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
-                >
-                    <Motion
-                        v-for="(item, iIdx) in getDisplayedItems(section)"
-                        :key="item.id"
-                        as="div"
-                        :initial="{opacity: 0, x: -10}"
-                        :animate="{opacity: 1, x: 0}"
-                        :transition="{...ITEM_SPRING, delay: itemEntranceDelay(section, iIdx)}"
-                    >
-                        <MenuLink
-                            :item="item"
-                            :active="isItemActive(item)"
-                        />
-                    </Motion>
-                </KsSideBarSection>
-            </template>
-
-            <KsSideBarSection
-                v-if="bookmarksStore.pages?.length"
-                title="Favourites"
-                collapsible
-                :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
-                @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="onContextMenu">
+        <template #header>
+            <KsIconButton
+                class="header-toggle"
+                aria-label="Toggle menu"
+                @click="onCollapse(true)"
             >
-                <BookmarkLinkList :pages="bookmarksStore.pages" />
-            </KsSideBarSection>
+                <DockLeft />
+            </KsIconButton>
+        </template>
 
-            <template #footer>
-                <slot name="footer" />
-                <div class="sidebar-customize-trigger">
-                    <KsButton
-                        type="text"
-                        size="small"
-                        class="customize-btn"
-                        @click="showCustomizeModal = true"
-                    >
-                        {{ $t("customize sidebar") }}
-                    </KsButton>
-                </div>
-            </template>
-        </KsSideBar>
-    </Motion>
+        <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
+            <div v-if="!section.child" class="top-level-link">
+                <MenuLink
+                    :item="section"
+                    :active="isItemActive(section)"
+                />
+            </div>
+            <KsSideBarSection
+                v-else-if="getDisplayedItems(section).length > 0"
+                :title="section.title"
+                collapsible
+                :collapsed="getSectionCollapsed(section)"
+                @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
+            >
+                <Motion
+                    v-for="(item, iIdx) in getDisplayedItems(section)"
+                    :key="item.id"
+                    as="div"
+                    :initial="{opacity: 0, x: -10}"
+                    :animate="{opacity: 1, x: 0}"
+                    :transition="{...ITEM_SPRING, delay: itemEntranceDelay(section, iIdx)}"
+                >
+                    <MenuLink
+                        :item="item"
+                        :active="isItemActive(item)"
+                    />
+                </Motion>
+            </KsSideBarSection>
+        </template>
+
+        <KsSideBarSection
+            v-if="bookmarksStore.pages?.length"
+            title="Favourites"
+            collapsible
+            :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
+            @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
+        >
+            <BookmarkLinkList :pages="bookmarksStore.pages" />
+        </KsSideBarSection>
+
+        <template #footer>
+            <slot name="footer" />
+            <div class="sidebar-customize-trigger">
+                <KsButton
+                    type="text"
+                    size="small"
+                    class="customize-btn"
+                    @click="showCustomizeModal = true"
+                >
+                    {{ $t("customize sidebar") }}
+                </KsButton>
+            </div>
+        </template>
+    </KsSideBar>
 
     <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
 
@@ -136,9 +129,7 @@
 
     const CONTEXT_MENU_WIDTH = 200
     const CONTEXT_MENU_HEIGHT = 60
-    const SIDEBAR_WIDTH = 215
 
-    const SIDEBAR_SPRING = {type: "spring", stiffness: 320, damping: 34, mass: 0.9}
     const ITEM_SPRING = {type: "spring", stiffness: 420, damping: 30, mass: 0.6}
 
     function itemEntranceDelay(section: MenuItem, localIndex: number): number {
@@ -245,16 +236,18 @@
 </script>
 
 <style scoped lang="scss">
-.side-menu-shell {
-    flex-shrink: 0;
-    overflow: hidden;
-}
-
 #side-menu {
     position: relative;
     width: 215px;
+    flex-shrink: 0;
     box-sizing: border-box;
     overflow: hidden;
+    transition: width 0.25s ease, border-right-width 0.25s ease;
+
+    &.is-collapsed {
+        width: 0;
+        border-right-width: 0;
+    }
 }
 
 .top-level-link {

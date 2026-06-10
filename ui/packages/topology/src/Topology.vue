@@ -10,7 +10,7 @@
     >
         <Background :patternColor="cssVariable('--ks-topology-bg')" />
 
-        <Panel position="top-right">
+        <Panel v-if="showDetailsToggle" position="top-right">
             <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
         </Panel>
 
@@ -176,6 +176,7 @@
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
+        showDetailsToggle?: boolean;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -194,6 +195,7 @@
         getNodeDimensions: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
+        showDetailsToggle: true,
     })
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)

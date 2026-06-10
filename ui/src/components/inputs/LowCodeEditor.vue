@@ -21,6 +21,7 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
+            :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -183,6 +184,12 @@
             }
         }
         return result
+    })
+
+    const hasExtraDetails = computed(() => {
+        const types = taskAdditionalInfoRemote.value
+        const graph = playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph
+        return (graph?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
     })
 
     const taskMetrics = (taskId: string | undefined) =>

@@ -11,7 +11,7 @@
             <CheckCircleOutline v-if="type === 'success'" />
             <InformationOutline v-if="type === 'info'" />
             <AlertCircleOutline v-if="type === 'warning'" />
-            <AlertOutline v-if="type === 'error'" />
+            <AlertBoxOutline v-if="type === 'error'" />
         </template>
     </ElAlert>
 </template>
@@ -21,7 +21,7 @@
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
+    import AlertBoxOutline from "vue-material-design-icons/AlertBoxOutline.vue"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 

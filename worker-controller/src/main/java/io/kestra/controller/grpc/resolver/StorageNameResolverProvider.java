@@ -46,7 +46,7 @@ public class StorageNameResolverProvider extends NameResolverProvider {
         if (!SCHEME.equals(targetUri.getScheme())) {
             return null;
         }
-        return new StorageNameResolver(addressSupplier, refreshInterval);
+        return new StorageNameResolver(addressSupplier, refreshInterval, args.getSynchronizationContext());
     }
 
     @Override

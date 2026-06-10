@@ -866,6 +866,25 @@ public class WorkerJobDispatcher {
 
         // The permit and bucket slot were already atomically reserved in findAndReserveWorker.
 
+        WorkerJobResponse response = WorkerJobResponse.newBuilder()
+            .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
+            .addJobs(
+                WorkerJobPayload.newBuilder()
+                    .setJobId(jobId)
+                    .setJobData(MessageFormats.JSON.toByteString(job))
+                    .build()
+            )
+            .build();
+
+        // Reject a payload the worker's gRPC channel could never receive: dispatching it would
+        // trigger RESOURCE_EXHAUSTED on the worker stream, hot-loop reconnects, and hang the
+        // execution in RUNNING forever. Fail the job cleanly instead.
+        int workerLimit = context.getMaxInboundMessageSize();
+        if (workerLimit > 0 && response.getSerializedSize() > workerLimit) {
+            rejectOversizedJob(context, job, dispatchWorkerQueueId, bucket, response.getSerializedSize(), workerLimit);
+            return;
+        }
+
         // 1. PERSIST before sending (critical for recovery)
         persistJobToStateStore(context, job, dispatchWorkerQueueId);
 
@@ -874,16 +893,6 @@ public class WorkerJobDispatcher {
 
         // 3. Send to worker
         try {
-            WorkerJobResponse response = WorkerJobResponse.newBuilder()
-                .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
-                .addJobs(
-                    WorkerJobPayload.newBuilder()
-                        .setJobId(jobId)
-                        .setJobData(MessageFormats.JSON.toByteString(job))
-                        .build()
-                )
-                .build();
-
             context.sendResponse(response);
             log.debug("Dispatched job {} to worker {}", jobId, context.getWorkerId());
             metricRegistry.counter(
@@ -939,6 +948,38 @@ public class WorkerJobDispatcher {
 
         // Re-queue the job
         requeue(originalEvent);
+    }
+
+    /**
+     * Rejects a job whose serialized payload exceeds the worker's advertised gRPC inbound
+     * limit. Releases the reserved permit and bucket and fails the job cleanly so the
+     * execution terminates instead of hanging while the worker hot-loops reconnecting.
+     */
+    private void rejectOversizedJob(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
+        String dispatchWorkerQueueId, String bucket, int payloadSize, int workerLimit) {
+        log.error("Job {} payload ({} bytes) exceeds worker {} max inbound gRPC message size ({} bytes); failing the job instead of dispatching",
+            job.uid(), payloadSize, context.getWorkerId(), workerLimit);
+
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
+            metricRegistry.workerGroupAndQueueTags(context.getWorkerGroupId(), dispatchWorkerQueueId)
+        ).increment();
+
+        // Release the permit + bucket reserved in findAndReserveWorker (the job is not dispatched).
+        context.addPermits(1);
+        context.releaseBucket(bucket);
+
+        // Fail the job cleanly so the execution reaches a terminal state.
+        if (job instanceof WorkerTask workerTask) {
+            try {
+                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().fail()));
+            } catch (QueueException e) {
+                log.error("Failed to emit FAILED result for oversized job {}: {}", job.uid(), e.getMessage(), e);
+            }
+        } else if (job instanceof WorkerTrigger workerTrigger) {
+            triggerEventQueue.send(new TriggerEvaluated(workerTrigger.triggerId(), null));
+        }
     }
 
     /**

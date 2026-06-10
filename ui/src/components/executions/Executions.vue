@@ -181,7 +181,7 @@
                 :label="col.label"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
                 :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
-                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => invisibleSpace(cellValue)) : undefined"
+                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => h(BreakableText, {value: cellValue})) : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
                 :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
             >
@@ -196,14 +196,14 @@
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                        <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
+                        <span :title="scope.row?.namespace"><BreakableText :value="scope.row?.namespace" /></span>
                     </template>
                     <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
                         <router-link
                             :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
                             }"
                         >
-                            {{ invisibleSpace(scope.row?.flowId) }}
+                            <BreakableText :value="scope.row?.flowId" />
                         </router-link>
                     </template>
                     <template v-else-if="col.prop === 'labels'">
@@ -416,7 +416,7 @@
     import {filterValidLabels} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {invisibleSpace} from "../../utils/filters"
+    import BreakableText from "../BreakableText"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 

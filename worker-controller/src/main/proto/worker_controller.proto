@@ -48,6 +48,9 @@ message WorkerConnectionInfo {
 
   // Maximum concurrent jobs this worker can handle (based on thread count)
   int32 maxConcurrency = 3;
+
+  // Worker's gRPC max inbound message size (bytes).
+  int32 max_inbound_message_size = 4;
 }
 
 // Controller -> Worker: Jobs to be executed

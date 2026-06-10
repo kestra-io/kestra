@@ -1,13 +1,18 @@
 package io.kestra.executor.handler;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.micronaut.test.annotation.MockBean;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.GenericFlow;
@@ -17,12 +22,16 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.executor.ExecutorContext;
 
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 class ExecutionKilledExecutionMessageHandlerTest {
@@ -37,6 +46,19 @@ class ExecutionKilledExecutionMessageHandlerTest {
 
     @Inject
     private BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue;
+
+    @Inject
+    KillSwitchService killSwitchService;
+
+    @MockBean(KillSwitchService.class)
+    KillSwitchService killSwitchService() {
+        return mock(KillSwitchService.class);
+    }
+
+    @BeforeEach
+    void setUp() {
+        when(killSwitchService.evaluate(anyString())).thenReturn(EvaluationType.PASS);
+    }
 
     @Test
     void shouldReturnEmptyForNonExistingExecution() {
@@ -159,6 +181,20 @@ class ExecutionKilledExecutionMessageHandlerTest {
         assertThat(event.operationId()).isEqualTo(operationId);
         assertThat(event.itemId()).isEqualTo(executionId);
         assertThat(event.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.FAILED);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenKillSwitchIsIgnore() {
+        // Given — execution is ignored by the kill switch
+        when(killSwitchService.evaluate("exec-ignored")).thenReturn(EvaluationType.IGNORE);
+        var message = ExecutionKilledExecution.builder()
+            .tenantId("tenant").executionId("exec-ignored").isOnKillCascade(false).build();
+
+        // When
+        Optional<ExecutorContext> result = executionKilledExecutionMessageHandler.handle(message);
+
+        // Then
+        assertThat(result).isEmpty();
     }
 
     private CompletableFuture<AsyncOperationProcessedEvent> subscribeForOperation(String operationId) {

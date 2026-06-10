@@ -10,7 +10,7 @@
             :isAllowedEdit="isAllowedEdit"
             :source="source"
             :toggleOrientationButton="toggleOrientationButton"
-            :flowGraph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
+            :flowGraph="effectiveFlowGraph"
             :flowId="flowId"
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
@@ -21,6 +21,7 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
+            :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -104,10 +105,10 @@
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
-                <Editor
+                <KsEditor
                     :readOnly="true"
-                    :input="true"
-                    :fullHeight="false"
+                    :inline="true"
+                    :options="{fullHeight: false}"
                     :navbar="false"
                     :modelValue="selectedTask[customActionMeta.taskProp]"
                     :lang="customActionMeta.lang"
@@ -169,6 +170,9 @@
 
     const execution = computed(() => executionsStore.execution as any as Execution)
 
+    const effectiveFlowGraph = computed(() =>
+        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+    )
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
@@ -183,6 +187,11 @@
             }
         }
         return result
+    })
+
+    const hasExtraDetails = computed(() => {
+        const types = taskAdditionalInfoRemote.value
+        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
     })
 
     const taskMetrics = (taskId: string | undefined) =>
@@ -286,6 +295,13 @@
 
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+
+    watch(() => props.horizontalDefault, (value) => {
+        if (value !== undefined && value !== isHorizontal.value) {
+            isHorizontal.value = value
+            fitViewOrientation()
+        }
+    })
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const taskEditData = ref()
@@ -428,7 +444,7 @@
                     params: {
                         namespace: data.link.namespace,
                         flowId: data.link.id,
-                        tab: "topology",
+                        tab: "overview",
                         id: data.link.executionId,
                     },
                 }).href,

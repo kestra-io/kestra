@@ -17,10 +17,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
+import io.kestra.executor.KillSwitchActionService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
@@ -69,6 +72,11 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
+
     private final Tracer tracer;
 
     @Inject
@@ -78,6 +86,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionEvent message) {
+        EvaluationType evaluationType = killSwitchService.evaluate(message);
+        if (evaluationType != EvaluationType.PASS) {
+            var execution = executionStateStore.findById(message.executionId());
+            if (execution != null && evaluationType.isKillSwitched(execution)) {
+                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+                return Optional.empty();
+            }
+        }
+
         return executionStateStore.lock(
             message.executionId(), execution -> tracer.inCurrentContext(
                 execution,

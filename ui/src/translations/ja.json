@@ -27,6 +27,7 @@
     "activate_basic_auth": "基本認証を有効化する",
     "active": "アクティブ",
     "active-slots": "アクティブスロット",
+    "actual state": "実際の状態",
     "add": "追加",
     "add at position": "{position}に<code>{task}</code>を追加",
     "add error handler": "エラーハンドラを追加",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
+    "are you sure change state": "状態を変更してもよろしいですか？",
     "assets": {
       "title": "アセット"
     },
@@ -210,6 +212,7 @@
     "copied": "コピーされました",
     "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
+    "copy all logs": "すべてのLogをコピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
     "copy_and_close": "コピーして閉じる",
@@ -251,6 +254,14 @@
         "singular": "ダッシュボード"
       },
       "preview": "プレビュー ダッシュボード",
+      "quick_filters": {
+        "all": "すべて",
+        "failed": "失敗",
+        "paused": "一時停止中",
+        "running": "実行中",
+        "success": "成功",
+        "warning": "警告"
+      },
       "switch": "ダッシュボードを切り替える"
     },
     "data": "データ",
@@ -453,6 +464,8 @@
     "disabled": "無効",
     "disabled flow desc": "このFlowは無効です。実行するには有効にしてください。",
     "disabled flow title": "このFlowは無効です",
+    "discard changes confirmation": "保存されていない変更があります。本当に破棄しますか？",
+    "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "display direct sub tasks count": "直接のサブタスク数を表示",
     "display flow {id} executions": "Flow {id}の実行を表示",
     "display metric for specific task": "特定のTaskのメトリクスを表示",
@@ -594,6 +607,7 @@
     "encoding": "エンコーディング",
     "end date": "終了日",
     "end datetime": "終了日時",
+    "environment": "環境",
     "environment color setting": "環境色",
     "environment name setting": "環境名",
     "error": "エラー",
@@ -885,6 +899,7 @@
     "labels": "ラベル",
     "last 48 hours": "過去48時間",
     "last X days count": "過去{days}日間に{count}",
+    "last error was": "最後のエラーは",
     "last evaluation date": "最終評価日",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最後の実行日",
@@ -1149,7 +1164,8 @@
           "taskDefaults": "タスクデフォルト",
           "updated": "更新済み",
           "variables": "変数",
-          "workerGroup": "ワーカーグループ"
+          "workerGroup": "ワーカーグループ",
+          "workerSelector": "ワーカーセレクター"
         },
         "main": {
           "description": "説明",
@@ -1532,7 +1548,7 @@
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "replay using": "を使用してリプレイ",
     "replay with inputs": "入力を使用してリプレイ",
-    "replayed": "実行がリプレイされました",
+    "replayed": "実行が再生されました",
     "required field": "必須フィールド",
     "reset": "再起動",
     "restart": "再起動",
@@ -1545,7 +1561,7 @@
       "button": "triggerを再起動",
       "tooltip": "トリガーを再起動する"
     },
-    "restarted": "実行が再起動されました",
+    "restarted": "実行が再開されました",
     "restore": "復元",
     "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "restore revision": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
@@ -1560,6 +1576,7 @@
     "revisions": "リビジョン",
     "row count": "行数",
     "run task in playground": "プレイグラウンドでタスクを実行",
+    "run timeline": "実行タイムライン",
     "runners": "ランナー",
     "running": "RUNNING",
     "running duration": "実行期間",
@@ -1611,9 +1628,11 @@
     },
     "see dependencies": "依存関係を表示",
     "see full revision": "完全なリビジョンを見る",
+    "see timeline": "タイムラインを見る",
     "see_all_states": "すべての状態を表示",
     "seeing old revision": "古いリビジョンを表示しています: {revision}",
     "select": "{{section}}を選択してください",
+    "select a state": "状態を選択",
     "select datetime": "日付を選択",
     "select view": "ビューを選択",
     "selected": "選択済み",
@@ -1799,7 +1818,9 @@
     "show": "表示",
     "show chart": "チャートを表示",
     "show description": "説明を表示",
+    "show details": "詳細を表示",
     "show documentation": "ドキュメントを表示",
+    "show more details": "詳細を表示",
     "show task condition": "タスク条件を表示",
     "show task documentation": "taskのドキュメントを表示",
     "show task documentation in editor": "エディタでtaskのドキュメントを表示",
@@ -1809,6 +1830,7 @@
     "showLess": "表示を減らす",
     "showMore": "もっと表示",
     "side-by-side": "並列表示",
+    "skipped": "スキップされました",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
       "connection_lost": {
@@ -2145,6 +2167,7 @@
     "worker information": "ワーカー情報",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "ラベルには空のkeyまたはvalueを設定できません"
+    "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
+    "yes": "はい"
   }
 }

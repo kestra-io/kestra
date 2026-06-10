@@ -27,6 +27,7 @@
     "activate_basic_auth": "Ativar Autenticação Básica",
     "active": "Ativo",
     "active-slots": "Slots ativos",
+    "actual state": "Estado atual",
     "add": "Adicionar",
     "add at position": "Adicionar {position} <code>{task}</code>",
     "add error handler": "Adicionar um manipulador de erro",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Blocos do App",
     "apps": "Aplicativos",
+    "are you sure change state": "Tem certeza de que deseja alterar o estado?",
     "assets": {
       "title": "Ativos"
     },
@@ -210,6 +212,7 @@
     "copied": "Copiado",
     "copied_logs_to_clipboard": "Logs copiados para a área de transferência.",
     "copy": "Copiar",
+    "copy all logs": "Copiar Todos os Logs",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
     "copy_and_close": "Copiar e fechar",
@@ -251,6 +254,14 @@
         "singular": "Dashboard"
       },
       "preview": "Visualizar Dashboard",
+      "quick_filters": {
+        "all": "Todos",
+        "failed": "Falhou",
+        "paused": "Pausado",
+        "running": "Em execução",
+        "success": "Sucesso",
+        "warning": "Aviso"
+      },
       "switch": "Alternar Dashboard"
     },
     "data": "Dados",
@@ -453,6 +464,8 @@
     "disabled": "Desativado",
     "disabled flow desc": "Este flow está desativado, por favor, ative-o para executá-lo.",
     "disabled flow title": "Este flow está desativado",
+    "discard changes confirmation": "Você tem alterações não salvas. Tem certeza de que deseja descartá-las?",
+    "discard execution confirmation": "Você tem inputs não salvos. Tem certeza de que deseja descartar esta execução?",
     "display direct sub tasks count": "Exibir contagem direta de subtasks",
     "display flow {id} executions": "Exibir execuções do flow {id}",
     "display metric for specific task": "Exibir métrica para uma task específica",
@@ -594,6 +607,7 @@
     "encoding": "Codificação",
     "end date": "Data de término",
     "end datetime": "Data e hora de término",
+    "environment": "Ambiente",
     "environment color setting": "Cor do ambiente",
     "environment name setting": "Nome do ambiente",
     "error": "Erro",
@@ -885,6 +899,7 @@
     "labels": "Labels",
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} nos últimos {days} dias",
+    "last error was": "O último erro foi",
     "last evaluation date": "Data da última avaliação",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data da última execução",
@@ -1149,7 +1164,8 @@
           "taskDefaults": "Padrões de Task",
           "updated": "Atualizado",
           "variables": "Variáveis",
-          "workerGroup": "Grupo de Worker"
+          "workerGroup": "Grupo de Worker",
+          "workerSelector": "Seletor de Worker"
         },
         "main": {
           "description": "Descrição",
@@ -1532,7 +1548,7 @@
     "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir com inputs",
-    "replayed": "Execução foi repetida",
+    "replayed": "A execução é Reexecutada",
     "required field": "Campo obrigatório",
     "reset": "Reiniciar",
     "restart": "Reiniciar",
@@ -1545,7 +1561,7 @@
       "button": "Reiniciar trigger",
       "tooltip": "Reiniciar o trigger"
     },
-    "restarted": "Execução foi reiniciada",
+    "restarted": "A execução foi reiniciada",
     "restore": "Restaurar",
     "restore confirm": "Tem certeza de que deseja restaurar a revisão <code>{revision}</code>?",
     "restore revision": "Tem certeza de que deseja restaurar a revisão <code>{revision}</code>?",
@@ -1560,6 +1576,7 @@
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
     "run task in playground": "Executar task no playground",
+    "run timeline": "Linha do Tempo de Execução",
     "runners": "Corredores",
     "running": "Executando",
     "running duration": "Duração em execução",
@@ -1611,9 +1628,11 @@
     },
     "see dependencies": "Ver dependências",
     "see full revision": "Ver revisão completa",
+    "see timeline": "Ver linha do tempo",
     "see_all_states": "Ver todos os estados",
     "seeing old revision": "Você está vendo uma revisão antiga: {revision}",
     "select": "Selecione sua {{section}}",
+    "select a state": "Selecione um estado",
     "select datetime": "Selecione uma data",
     "select view": "Selecionar visualização",
     "selected": "Selecionado",
@@ -1799,7 +1818,9 @@
     "show": "Mostrar",
     "show chart": "Mostrar Gráfico",
     "show description": "Mostrar uma descrição",
+    "show details": "Mostrar detalhes",
     "show documentation": "Mostrar documentação",
+    "show more details": "Mostrar mais detalhes",
     "show task condition": "Exibir condição da task",
     "show task documentation": "Mostrar documentação da task",
     "show task documentation in editor": "Mostrar documentação da task no editor",
@@ -1809,6 +1830,7 @@
     "showLess": "Mostrar menos",
     "showMore": "Mostrar mais",
     "side-by-side": "lado a lado",
+    "skipped": "Pulado",
     "slack support": "Faça qualquer pergunta via Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2145,6 +2167,7 @@
     "worker information": "Informações do Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Chave ou valor vazio não é permitido em labels"
+    "wrong labels": "Chave ou valor vazio não é permitido em labels",
+    "yes": "Sim"
   }
 }

@@ -127,9 +127,9 @@
                             v-if="scope.row.namespace && scope.row.flowId"
                             :to="{name: 'flows/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, id: scope.row.flowId}}"
                         >
-                            {{ invisibleSpace(scope.row.flowId) }}
+                            <BreakableText :value="scope.row.flowId" />
                         </router-link>
-                        <span v-else>{{ invisibleSpace(scope.row.flowId) }}</span>
+                        <span v-else><BreakableText :value="scope.row.flowId" /></span>
                         <MarkdownTooltip
                             v-if="scope.row.namespace && scope.row.flowId"
                             :id="scope.row.namespace + '-' + scope.row.flowId"
@@ -138,7 +138,7 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        {{ invisibleSpace(scope.row.namespace) }}
+                        <BreakableText :value="scope.row.namespace" />
                     </template>
                     <template v-else-if="col.prop === 'workerId'">
                         <KsId :value="scope.row.workerId" :shrink="true" />
@@ -271,7 +271,7 @@
             <Vars :data="detailsData" />
         </KsDrawer>
 
-        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
             <template #header>
                 <span v-html="$t('backfill executions')" />
             </template>
@@ -301,6 +301,7 @@
             </KsForm>
             <FlowRun
                 @update-inputs="backfill.inputs = $event"
+                @update-inputs-no-default="backfillInputsNoDefault = $event"
                 @update-labels="backfill.labels = $event"
                 :selectedTrigger="selectedTrigger"
                 :redirect="false"
@@ -328,7 +329,7 @@
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {invisibleSpace} from "../../../utils/filters"
+    import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
     import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
     import {useExecutionsStore} from "../../../stores/executions"
@@ -336,6 +337,7 @@
     import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
     import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -398,6 +400,17 @@
         inputs: null,
         labels: [],
     })
+
+    // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
+    const backfillInputsNoDefault = ref<Record<string, unknown>>({})
+
+    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+        backfill.value.start ||
+        backfill.value.end ||
+        Object.keys(backfillInputsNoDefault.value).length > 0 ||
+        backfill.value.labels?.some((label: any) => label.key || label.value)
+    ))
+    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
 
     const optionalColumns = computed<ColumnConfig[]>(() => [
         {
@@ -564,6 +577,8 @@
             flowId: trigger.flowId,
             store: true,
         }).then(() => {
+            backfill.value = {start: null, end: null, inputs: null, labels: []}
+            backfillInputsNoDefault.value = {}
             isBackfillOpen.value = bool
             selectedTrigger.value = trigger
         })

@@ -27,6 +27,7 @@
     "activate_basic_auth": "Aktywuj podstawowe uwierzytelnianie",
     "active": "Aktywny",
     "active-slots": "Aktywne sloty",
+    "actual state": "Aktualny stan",
     "add": "Dodaj",
     "add at position": "Dodaj {position} <code>{task}</code>",
     "add error handler": "Dodaj handler błędów",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Bloki aplikacji",
     "apps": "Aplikacje",
+    "are you sure change state": "Czy na pewno chcesz zmienić stan?",
     "assets": {
       "title": "Zasoby"
     },
@@ -210,6 +212,7 @@
     "copied": "Skopiowano",
     "copied_logs_to_clipboard": "Skopiowano logi do schowka.",
     "copy": "Kopiuj",
+    "copy all logs": "Skopiuj wszystkie Logi",
     "copy logs": "Kopiuj logs",
     "copy url": "Kopiuj URL",
     "copy_and_close": "Skopiuj i zamknij",
@@ -251,6 +254,14 @@
         "singular": "Dashboard"
       },
       "preview": "Podgląd Dashboardu",
+      "quick_filters": {
+        "all": "Wszystkie",
+        "failed": "Nieudane",
+        "paused": "Wstrzymano",
+        "running": "Uruchomione",
+        "success": "Sukces",
+        "warning": "Ostrzeżenie"
+      },
       "switch": "Przełącz Dashboard"
     },
     "data": "Dane",
@@ -453,6 +464,8 @@
     "disabled": "Wyłączone",
     "disabled flow desc": "Ten flow jest wyłączony, proszę włączyć go, aby go wykonać.",
     "disabled flow title": "Ten flow jest wyłączony",
+    "discard changes confirmation": "Masz niezapisane zmiany. Czy na pewno chcesz je odrzucić?",
+    "discard execution confirmation": "Masz niezapisane inputy. Czy na pewno chcesz odrzucić tę wykonanie?",
     "display direct sub tasks count": "Wyświetl bezpośrednią liczbę subtask",
     "display flow {id} executions": "Wyświetl wykonania flow {id}",
     "display metric for specific task": "Wyświetl metrykę dla specyficznego task",
@@ -594,6 +607,7 @@
     "encoding": "Kodowanie",
     "end date": "Data zakończenia",
     "end datetime": "Data i godzina zakończenia",
+    "environment": "Środowisko",
     "environment color setting": "Kolor środowiska",
     "environment name setting": "Nazwa środowiska",
     "error": "Błąd",
@@ -885,6 +899,7 @@
     "labels": "Etykiety",
     "last 48 hours": "ostatnie 48 godzin",
     "last X days count": "{count} w ostatnich {days} dniach",
+    "last error was": "Ostatni błąd to",
     "last evaluation date": "Data ostatniej oceny",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data ostatniego wykonania",
@@ -1149,7 +1164,8 @@
           "taskDefaults": "Domyślne ustawienia Task",
           "updated": "Zaktualizowano",
           "variables": "Zmienne",
-          "workerGroup": "Grupa Worker"
+          "workerGroup": "Grupa Worker",
+          "workerSelector": "Selektor Worker"
         },
         "main": {
           "description": "Opis",
@@ -1532,7 +1548,7 @@
     "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
     "replay using": "Odtwórz używając",
     "replay with inputs": "Odtwórz z inputami",
-    "replayed": "Wykonanie zostało odtworzone",
+    "replayed": "Wykonanie jest odtwarzane",
     "required field": "Wymagane pole",
     "reset": "Restartuj",
     "restart": "Uruchom ponownie",
@@ -1560,6 +1576,7 @@
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
     "run task in playground": "Uruchom task w playgroundzie",
+    "run timeline": "Uruchom oś czasu",
     "runners": "Biegacze",
     "running": "RUNNING",
     "running duration": "Czas trwania w trakcie działania",
@@ -1611,9 +1628,11 @@
     },
     "see dependencies": "Zobacz zależności",
     "see full revision": "Zobacz pełną wersję",
+    "see timeline": "Zobacz oś czasu",
     "see_all_states": "Zobacz wszystkie stany",
     "seeing old revision": "Widzisz starą wersję: {revision}",
     "select": "Wybierz swoją {{section}}",
+    "select a state": "Wybierz stan",
     "select datetime": "Wybierz datę",
     "select view": "Wybierz widok",
     "selected": "Wybrane",
@@ -1799,7 +1818,9 @@
     "show": "Pokaż",
     "show chart": "Pokaż Wykres",
     "show description": "Pokaż opis",
+    "show details": "Pokaż szczegóły",
     "show documentation": "Pokaż dokumentację",
+    "show more details": "Pokaż więcej szczegółów",
     "show task condition": "Pokaż warunek taska",
     "show task documentation": "Pokaż dokumentację task",
     "show task documentation in editor": "Pokaż dokumentację task w edytorze",
@@ -1809,6 +1830,7 @@
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej",
     "side-by-side": "obok siebie",
+    "skipped": "Pominięto",
     "slack support": "Zadaj pytanie przez Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2145,6 +2167,7 @@
     "worker information": "Informacje o Workerze",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach"
+    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
+    "yes": "Tak"
   }
 }

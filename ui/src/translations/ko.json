@@ -27,6 +27,7 @@
     "activate_basic_auth": "기본 인증 활성화",
     "active": "활성화됨",
     "active-slots": "활성 슬롯",
+    "actual state": "현재 상태",
     "add": "추가",
     "add at position": "{position} <code>{task}</code> 추가",
     "add error handler": "오류 처리기 추가",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
+    "are you sure change state": "상태를 변경하시겠습니까?",
     "assets": {
       "title": "자산"
     },
@@ -210,6 +212,7 @@
     "copied": "복사됨",
     "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
     "copy": "복사",
+    "copy all logs": "모든 Log 복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
     "copy_and_close": "복사하고 닫기",
@@ -251,6 +254,14 @@
         "singular": "대시보드"
       },
       "preview": "미리보기 대시보드",
+      "quick_filters": {
+        "all": "전체",
+        "failed": "실패",
+        "paused": "일시 중지됨",
+        "running": "실행 중",
+        "success": "성공",
+        "warning": "경고"
+      },
       "switch": "대시보드 전환"
     },
     "data": "데이터",
@@ -453,6 +464,8 @@
     "disabled": "비활성화됨",
     "disabled flow desc": "이 flow는 비활성화되어 있습니다. 실행하려면 활성화하세요.",
     "disabled flow title": "이 flow는 비활성화되었습니다.",
+    "discard changes confirmation": "저장되지 않은 변경 사항이 있습니다. 정말로 취소하시겠습니까?",
+    "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "display direct sub tasks count": "직접 subtask 수 표시",
     "display flow {id} executions": "Flow {id} 실행 표시",
     "display metric for specific task": "특정 task의 메트릭 표시",
@@ -594,6 +607,7 @@
     "encoding": "인코딩",
     "end date": "종료 날짜",
     "end datetime": "종료 날짜 및 시간",
+    "environment": "환경",
     "environment color setting": "환경 색상",
     "environment name setting": "환경 이름",
     "error": "오류",
@@ -885,6 +899,7 @@
     "labels": "라벨",
     "last 48 hours": "지난 48시간",
     "last X days count": "지난 {days}일 동안 {count}",
+    "last error was": "마지막 오류는",
     "last evaluation date": "마지막 평가 날짜",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "마지막 실행 날짜",
@@ -1149,7 +1164,8 @@
           "taskDefaults": "작업 기본값",
           "updated": "업데이트됨",
           "variables": "변수",
-          "workerGroup": "작업자 그룹"
+          "workerGroup": "작업자 그룹",
+          "workerSelector": "워커 선택기"
         },
         "main": {
           "description": "설명",
@@ -1532,7 +1548,7 @@
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "replay using": "사용하여 재실행",
     "replay with inputs": "입력과 함께 재실행",
-    "replayed": "재실행되었습니다.",
+    "replayed": "실행이 재생되었습니다.",
     "required field": "필수 필드",
     "reset": "재시작",
     "restart": "재시작",
@@ -1560,6 +1576,7 @@
     "revisions": "수정본들",
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",
+    "run timeline": "실행 타임라인",
     "runners": "러너",
     "running": "실행 중",
     "running duration": "실행 중 지속 시간",
@@ -1611,9 +1628,11 @@
     },
     "see dependencies": "종속성 보기",
     "see full revision": "전체 수정본 보기",
+    "see timeline": "타임라인 보기",
     "see_all_states": "모든 상태 보기",
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "select": "{{section}}을 선택하세요",
+    "select a state": "상태 선택",
     "select datetime": "날짜 선택",
     "select view": "보기 선택",
     "selected": "선택됨",
@@ -1799,7 +1818,9 @@
     "show": "보기",
     "show chart": "차트 보기",
     "show description": "설명을 표시",
+    "show details": "세부 정보 표시",
     "show documentation": "문서 보기",
+    "show more details": "자세한 정보 보기",
     "show task condition": "작업 상태 표시",
     "show task documentation": "task 문서 보기",
     "show task documentation in editor": "편집기에서 task 문서 보기",
@@ -1809,6 +1830,7 @@
     "showLess": "덜 보기",
     "showMore": "더 보기",
     "side-by-side": "나란히",
+    "skipped": "건너뜀",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {
       "connection_lost": {
@@ -2145,6 +2167,7 @@
     "worker information": "작업자 정보",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다"
+    "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
+    "yes": "네"
   }
 }

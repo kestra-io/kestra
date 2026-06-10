@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
+    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="showCustomizeModal = true">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -18,15 +18,14 @@
                 />
             </div>
             <KsSideBarSection
-                v-else
+                v-else-if="getDisplayedItems(section).length > 0"
                 :title="section.title"
                 collapsible
                 :collapsed="getSectionCollapsed(section)"
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
-                <template v-for="(item, iIdx) in section.child" :key="item.id ?? `i-${iIdx}`">
+                <template v-for="item in getDisplayedItems(section)" :key="item.id">
                     <MenuLink
-                        v-if="!item.hidden"
                         :item="item"
                         :active="isItemActive(item)"
                     />
@@ -46,23 +45,42 @@
 
         <template #footer>
             <slot name="footer" />
+            <div class="sidebar-customize-trigger">
+                <KsButton
+                    type="text"
+                    size="small"
+                    class="customize-btn"
+                    @click="showCustomizeModal = true"
+                >
+                    {{ $t("customize sidebar") }}
+                </KsButton>
+            </div>
         </template>
     </KsSideBar>
+
+    <SidebarCustomizeModal v-model="showCustomizeModal" :menu="menu" />
 </template>
 
 <script setup lang="ts">
-    import {computed, h, defineComponent} from "vue"
+    import {computed, h, ref, defineComponent} from "vue"
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton} from "@kestra-io/design-system"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
 
     import BookmarkLinkList from "./BookmarkLinkList.vue"
+    import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
+    import {
+        menuSectionId,
+        resolveSectionItemIds,
+        pickItemsByIds,
+        isMenuItemVisible,
+    } from "../../utils/menuCustomization"
     import type {MenuItem} from "override/components/useLeftMenu"
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         menu: MenuItem[],
         showLink?: boolean,
         logoTo?: object,
@@ -80,6 +98,7 @@
     const $route = useRoute()
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
+    const showCustomizeModal = ref(false)
 
     function onCollapse(folded: boolean) {
         layoutStore.setSideMenuCollapsed(folded)
@@ -98,21 +117,23 @@
 
     const FAVOURITES_SECTION_ID = "favourites"
 
-    function sectionId(section: MenuItem): string {
-        return section.id ?? section.title.toLowerCase().replaceAll(" ", "-")
-    }
-
     function getCollapsedById(id: string, fallback: boolean): boolean {
         const stored = layoutStore.menuSectionsCollapsed[id]
         return stored !== undefined ? stored : fallback
     }
 
     function getSectionCollapsed(section: MenuItem): boolean {
-        return getCollapsedById(sectionId(section), !sectionHasActiveChild(section))
+        return getCollapsedById(menuSectionId(section), !sectionHasActiveChild(section))
     }
 
     function onSectionCollapseChange(section: MenuItem, collapsed: boolean) {
-        layoutStore.setMenuSectionCollapsed(sectionId(section), collapsed)
+        layoutStore.setMenuSectionCollapsed(menuSectionId(section), collapsed)
+    }
+
+    function getDisplayedItems(section: MenuItem): MenuItem[] {
+        const ids = resolveSectionItemIds(props.menu, layoutStore.menuItemOrder, menuSectionId(section))
+        return pickItemsByIds(props.menu, ids)
+            .filter((item) => isMenuItemVisible(layoutStore.menuItemVisibility, item))
     }
 
     // Inline adapter: maps a MenuItem to <KsSideBarItem>, wiring vue-router navigation
@@ -123,15 +144,15 @@
             item: {type: Object as PropType<MenuItem>, required: true},
             active: {type: Boolean, default: false},
         },
-        setup(props) {
-            const hrefString = computed(() => (typeof props.item.href === "string" ? props.item.href : ""))
-            const locked = computed(() => Boolean(props.item.attributes?.locked))
+        setup(itemProps) {
+            const hrefString = computed(() => (typeof itemProps.item.href === "string" ? itemProps.item.href : ""))
+            const locked = computed(() => Boolean(itemProps.item.attributes?.locked))
 
             return () => {
                 const itemNode = (extraProps: Record<string, unknown> = {}) => h(KsSideBarItem, {
-                    title: props.item.title,
-                    icon: props.item.icon?.element,
-                    active: props.active,
+                    title: itemProps.item.title,
+                    icon: itemProps.item.icon?.element,
+                    active: itemProps.active,
                     locked: locked.value,
                     ...extraProps,
                 })
@@ -172,5 +193,20 @@
     right: var(--ks-spacing-4);
     z-index: 1;
     color: var(--ks-icon-muted);
+}
+
+.sidebar-customize-trigger {
+    padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
+
+    .customize-btn {
+        width: 100%;
+        justify-content: flex-start;
+        color: var(--ks-text-dim);
+        font-size: var(--ks-font-size-xs);
+
+        &:hover {
+            color: var(--ks-text-secondary);
+        }
+    }
 }
 </style>

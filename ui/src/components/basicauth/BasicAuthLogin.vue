@@ -1,9 +1,7 @@
 <template>
     <div class="oss-login">
-        <div class="oss-login__brand">
-            <img src="../../assets/icon.svg" alt="Kestra" class="oss-login__icon" />
-            <h1 class="oss-login__title">{{ $t("setup.login_title") }}</h1>
-        </div>
+        <img src="../../assets/monogram.svg" alt="Kestra" class="oss-login__icon" />
+        <h1 class="oss-login__title">{{ $t("setup.login_title") }}</h1>
 
         <form class="oss-login__form" @submit.prevent="handleSubmit">
             <input type="hidden" name="from" :value="redirectPath">
@@ -38,8 +36,8 @@
                     @blur="validatePasswordField"
                 />
                 <button class="login-field__eye" type="button" @click="showPasswordText = !showPasswordText" tabindex="-1">
-                    <EyeOutline v-if="!showPasswordText" />
-                    <EyeOffOutline v-else />
+                    <Eye v-if="!showPasswordText" />
+                    <EyeOff v-else />
                 </button>
             </div>
             <p v-if="errors.password" class="login-field-error">{{ errors.password }}</p>
@@ -48,11 +46,11 @@
                 <span v-if="!isLoading">{{ $t("setup.login") }}</span>
                 <span v-else class="login-btn__spinner" />
             </button>
-        </form>
 
-        <button class="login-trouble" type="button" @click="openTroubleshootingGuide">
-            {{ $t("setup.troubleshooting") }}
-        </button>
+            <button class="login-trouble" type="button" @click="openTroubleshootingGuide">
+                {{ $t("setup.troubleshooting") }}
+            </button>
+        </form>
     </div>
 </template>
 
@@ -66,8 +64,8 @@
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
-    import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue"
+    import Eye from "vue-material-design-icons/Eye.vue"
+    import EyeOff from "vue-material-design-icons/EyeOff.vue"
 
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
@@ -229,13 +227,6 @@
         gap: var(--ks-spacing-6);
         width: 320px;
 
-        &__brand {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--ks-spacing-4);
-        }
-
         &__icon {
             width: 3.9286rem;
             height: 3.9286rem;
@@ -295,7 +286,7 @@
             font-family: inherit;
 
             &::placeholder {
-                color: var(--ks-text-secondary);
+                color: var(--ks-text-primary);
             }
         }
 

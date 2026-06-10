@@ -96,24 +96,36 @@
         </template>
 
         <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
-            <ControlButton @click.stop="zoomIn()">
-                <Plus />
-            </ControlButton>
-            <ControlButton @click.stop="zoomOut()">
-                <Minus />
-            </ControlButton>
-            <ControlButton @click.stop="fitView()">
-                <Fullscreen />
-            </ControlButton>
-            <ControlButton @click.stop="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
-                <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
-            </ControlButton>
-            <ControlButton @click.stop="toggleDropdown">
-                <Download />
-            </ControlButton>
-            <ControlButton @click.stop="uncollapseAll()" v-if="collapsed.size > 0">
-                <ArrowExpandAll />
-            </ControlButton>
+            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="top">
+                <ControlButton @click.stop="zoomIn()">
+                    <Plus />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="top">
+                <ControlButton @click.stop="zoomOut()">
+                    <Minus />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="top">
+                <ControlButton @click.stop="fitView()">
+                    <Fullscreen />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="top">
+                <ControlButton @click.stop="emit('toggle-orientation', $event)">
+                    <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('download')" placement="top">
+                <ControlButton @click.stop="toggleDropdown">
+                    <Download />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="top">
+                <ControlButton @click.stop="uncollapseAll()">
+                    <ArrowExpandAll />
+                </ControlButton>
+            </KsTooltip>
             <ul v-if="isDropdownOpen" class="exporting">
                 <li @click="exportAsImage('jpeg')" class="item">
                     Export as .JPEG
@@ -145,7 +157,7 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State, KsSwitch} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"

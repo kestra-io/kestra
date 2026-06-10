@@ -19,7 +19,6 @@ import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -383,16 +382,8 @@ public class PluginController {
             );
         }
 
-        if (pluginTasks.isEmpty()) {
-            throw new NotFoundException();
-        }
-
         Set<String> groups = pluginTasks.keySet();
         List<RegisteredPlugin> plugins = pluginRegistry.plugins(registeredPlugin -> groups.contains(registeredPlugin.group()));
-
-        if (ListUtils.isEmpty(plugins)) {
-            throw new NotFoundException();
-        }
 
         Map<String, List<PluginUiModuleWithGroup>> manifest = new HashMap<>();
         for (RegisteredPlugin plugin : plugins) {

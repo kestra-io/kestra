@@ -52,7 +52,7 @@
         fontSize: "0.75rem",
         lineHeight: "1.5",
         padding: "0.625rem 0.75rem",
-        color: "var(--ks-content-primary)",
+        color: "var(--ks-text-primary)",
     }
 
     const pluginsStore = usePluginsStore()
@@ -102,13 +102,13 @@
         text-overflow: ellipsis;
         font-size: 0.875rem;
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .trigger-description {
         font-size: 0.75rem;
         line-height: 1.4;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-tertiary);
         min-height: calc(1.4em * 2);
         display: -webkit-box;
         line-clamp: 2;
@@ -122,7 +122,7 @@
             padding: 1px 0.25rem;
             border-radius: 3px;
             background: var(--ks-tag-background);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 </style>

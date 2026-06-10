@@ -48,7 +48,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
-- Use semantic tokens, not raw colors. `var(--ks-content-link)` communicates intent; `var(--ks-content-blue-500)` does not exist for a reason.
+- Use semantic tokens, not raw colors. `var(--ks-text-link)` communicates intent; `var(--ks-text-blue-500)` does not exist for a reason.
 - Co-locate component-specific tokens (e.g. `--ks-card-shadow`) in the component's SCSS, but always derive them from semantic tokens.
 
 ### When extending the design system
@@ -81,7 +81,7 @@ Reject (or ask to fix) anything that:
 - Use semantic HTML inside slots: real `<button>`, `<a>`, `<label>`, headings in document order. Don't fake interactivity with `<div @click>`.
 - `KsDialog`, `KsDrawer`, `KsPopover` already manage focus trap and `Escape`-to-close — don't reimplement these in feature code.
 - Keep tab order logical; rely on the DOM order rather than `tabindex` hacks.
-- Color contrast comes for free as long as you use `--ks-content-*` against `--ks-background-*` pairings. If you mix-and-match, verify with the browser inspector.
+- Color contrast comes for free as long as you use `--ks-text-*` against `--ks-background-*` pairings. If you mix-and-match, verify with the browser inspector.
 
 ### Internationalization
 
@@ -394,7 +394,7 @@ Token families currently exposed:
 
 - `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-bg-success`, `--ks-background-failed`, …)
 - `--ks-border-*` — primary / secondary borders, plus per-state borders
-- `--ks-content-*` — text colors (primary, inverse, link, link-hover, per-state)
+- `--ks-text-*` — text colors (primary, inverse, link, link-hover, per-state)
 - `--ks-button-*` — button background and content variants (primary / secondary / success, idle / hover / active, …)
 - `--ks-badge-*`, `--ks-tag-*`, `--ks-card-*`, `--ks-dialog-*`, `--ks-dropdown-*`, `--ks-tooltip-*`, `--ks-select-*`, `--ks-scrollbar-*` — component-specific tokens
 - `--ks-status-*` — palette for charts; pair with `cssVar("--ks-status-success")` in JS

@@ -158,7 +158,7 @@
         }
 
         p {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
         }
     }

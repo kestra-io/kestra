@@ -92,17 +92,17 @@
         background: var(--ks-background-card);
         font-size: 0.75rem;
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .category-description {
         font-size: 0.8125rem;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-tertiary);
     }
 
     .empty-row {
         padding: 1.5rem 1rem;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-tertiary);
         font-size: 0.8125rem;
     }
 
@@ -117,10 +117,10 @@
         margin-left: -0.5rem;
         font-size: 0.8125rem;
         font-weight: 500;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
 
         &:hover {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-tertiary);
         }
     }
 </style>

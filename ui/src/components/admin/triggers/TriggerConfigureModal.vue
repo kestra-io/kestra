@@ -281,7 +281,7 @@
             margin: 0;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -292,7 +292,7 @@
             margin-top: 0.125rem;
             font-size: 0.75rem;
             font-family: var(--ks-font-family-mono);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -316,7 +316,7 @@
             margin-top: 0.5rem;
             margin-bottom: 0;
             font-size: 0.8125rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 

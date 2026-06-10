@@ -18,7 +18,7 @@
             </template>
 
             <template v-else>
-                <div ref="container" class="ks-data-table-content" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                     <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                         <KsBulkSelect
                             :selectAll="queryBulkAction"
@@ -151,6 +151,7 @@
     const slots = useSlots()
     const attrs = useAttrs()
     const hasNavBar = computed(() => !!slots["navbar"])
+    const hasSelectionColumn = computed(() => props.selectable && props.showSelection)
     const hasTableSlot = computed(() => !!slots["table"])
     const hasBulkActions = computed(() => !!slots["bulk-actions"])
     const hasEmpty = computed(() => !!slots["empty"])
@@ -448,6 +449,13 @@
 
     .ks-data-table-content {
         position: relative;
+
+        &.no-selection-gutter {
+            .kel-table th.kel-table__cell:first-child > .cell,
+            .kel-table td.kel-table__cell:first-child > .cell {
+                padding-left: var(--ks-spacing-5);
+            }
+        }
 
         .bulk-select-header {
             z-index: 1;

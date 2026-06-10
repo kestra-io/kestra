@@ -12,8 +12,8 @@
         </button>
         <div v-else-if="title" class="ks-sidebar-section__title">{{ title }}</div>
 
-        <div class="ks-sidebar-section__body" :class="{'is-open': !collapsible || !collapsed}">
-            <div class="ks-sidebar-section__body-inner">
+        <div class="ks-sidebar-section__body" :class="{'is-open': isOpen}">
+            <div class="ks-sidebar-section__body-inner" :inert="isOpen ? undefined : true">
                 <slot />
             </div>
         </div>
@@ -44,6 +44,7 @@
 
     const isControlled = computed(() => props.collapsed !== undefined)
     const collapsed = computed<boolean>(() => isControlled.value ? props.collapsed as boolean : internal.value)
+    const isOpen = computed<boolean>(() => !props.collapsible || !collapsed.value)
 
     watch(() => props.defaultCollapsed, (next) => {
         if (!isControlled.value && !next) internal.value = false

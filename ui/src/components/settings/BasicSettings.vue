@@ -487,7 +487,7 @@
 
     function onTheme(value: string) {
         settings.theme = value as SelectedTheme
-        Utils.switchTheme(miscStore, value)
+        Utils.switchTheme(miscStore, value as SelectedTheme)
         notifySaved(`${THEME}.fields.color_mode`, `${THEME}.descriptions.color_mode`)
     }
 

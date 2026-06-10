@@ -212,6 +212,7 @@
     "copied": "已复制",
     "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
     "copy": "复制",
+    "copy all logs": "复制所有日志",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
     "copy_and_close": "复制并关闭",

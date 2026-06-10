@@ -10,7 +10,7 @@
             :isAllowedEdit="isAllowedEdit"
             :source="source"
             :toggleOrientationButton="toggleOrientationButton"
-            :flowGraph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
+            :flowGraph="effectiveFlowGraph"
             :flowId="flowId"
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
@@ -21,6 +21,7 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
+            :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -169,6 +170,9 @@
 
     const execution = computed(() => executionsStore.execution as any as Execution)
 
+    const effectiveFlowGraph = computed(() =>
+        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+    )
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
@@ -183,6 +187,11 @@
             }
         }
         return result
+    })
+
+    const hasExtraDetails = computed(() => {
+        const types = taskAdditionalInfoRemote.value
+        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
     })
 
     const taskMetrics = (taskId: string | undefined) =>

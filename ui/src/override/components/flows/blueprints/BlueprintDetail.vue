@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-ks-loading="!blueprint">
+    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb">
         <template #actions>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
@@ -197,6 +197,7 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
+                    kind: route.params?.kind || props.kind,
                     tab: tab.value,
                 },
             })

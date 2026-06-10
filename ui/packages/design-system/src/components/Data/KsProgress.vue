@@ -56,7 +56,7 @@
         :deep(.kel-progress-bar__outer) {
             border-radius: v-bind(borderRadius);
 
-            background-color: var(--ks-bg-base);
+            background-color: var(--ks-bg-hover);
         }
 
         :deep(.kel-progress-bar__inner) {

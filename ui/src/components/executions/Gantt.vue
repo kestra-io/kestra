@@ -927,6 +927,7 @@
 
     .cursor-icon {
         cursor: pointer;
+        color: var(--ks-icon-muted);
     }
 
     :deep(.log-wrapper) {

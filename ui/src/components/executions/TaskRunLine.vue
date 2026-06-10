@@ -211,77 +211,79 @@
 </script>
 
 <style scoped lang="scss">
-
-  .task-duration {
-    padding: .375rem 0;
-  }
-
-  .taskrun-header, .attempt-header {
-    display: flex;
-    gap: .5rem;
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid var(--ks-border-default);
-
-    > * {
-      display: flex;
-      align-items: center;
+    .task-duration {
+        padding: .375rem 0;
     }
 
-    small {
-      font-family: var(--kel-font-family-monospace);
-      font-size: var(--ks-font-size-xs)
-    }
+    .taskrun-header,
+    .attempt-header {
+        display: flex;
+        gap: .5rem;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--ks-border-default);
 
-    .task-duration small {
-      white-space: nowrap;
-      color: var(--ks-text-secondary);
-    }
+        >* {
+            display: flex;
+            align-items: center;
+        }
 
-  }
+        small {
+            font-family: var(--kel-font-family-monospace);
+            font-size: var(--ks-font-size-xs)
+        }
 
-  .taskrun-header {
-    background-color: var(--ks-bg-surface);
-    .task-icon {
-      width: 36px;
-      padding: 6px 6px 6px 0;
-      border-radius: 0.5rem;
-      margin-left: -0.5rem;
-    }
-
-    .task-id {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding: .375rem 0;
-
-      span span {
-        color: var(--ks-text-primary);
-        font-size: var(--ks-font-size-sm);
-      }
-    }
-  }
-
-  .attempt-header.attempt-header--flush {
-    border-bottom: none;
-    padding: 0;
-  }
-
-  .attempt-header {
-    .kel-select {
-      width: 115px;
-      height: 32px;
-
-      :deep(.kel-select__wrapper) {
-        height: 32px;
-        min-height: 32px;
-      }
+        .task-duration small {
+            white-space: nowrap;
+            color: var(--ks-text-secondary);
+        }
 
     }
 
-    .attempt-number {
-      background: var(--ks-bg-tag);
-      padding: .375rem .75rem;
-      white-space: nowrap;
+    .taskrun-header {
+        background-color: var(--ks-bg-surface);
+
+        .task-icon {
+            width: 36px;
+            padding: 6px 6px 6px 0;
+            border-radius: 0.5rem;
+            margin-left: -0.5rem;
+        }
+
+        .task-id {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: .375rem 0;
+
+            span span {
+                color: var(--ks-text-primary);
+                font-size: var(--ks-font-size-sm);
+            }
+        }
     }
-  }
+
+    .attempt-header.attempt-header--flush {
+        border-bottom: none;
+        padding: 0;
+        padding-bottom: 1rem;
+    }
+
+    .attempt-header {
+        .kel-select {
+            width: 115px;
+            height: 32px;
+
+            :deep(.kel-select__wrapper) {
+                height: 32px;
+                min-height: 32px;
+            }
+
+        }
+
+        .attempt-number {
+            background: var(--ks-bg-tag);
+            padding: .375rem .75rem;
+            white-space: nowrap;
+        }
+    }
 </style>

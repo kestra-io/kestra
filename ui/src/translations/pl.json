@@ -230,6 +230,7 @@
     "current": "bieżący",
     "current execution": "Bieżące wykonanie",
     "custom value": "Wartość niestandardowa",
+    "customize sidebar": "Dostosuj pasek boczny",
     "dark_version": "Ciemna wersja",
     "dashboards": {
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
@@ -482,6 +483,7 @@
     "download logs": "Pobierz logs",
     "download_logos": "Pobierz Pakiet Logo",
     "draft_available": "Szkic zmiany jest dostępny w edytorze",
+    "drop items here": "Upuść elementy tutaj",
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "duration": "Czas trwania",
     "dynamic": "Dynamiczny",
@@ -1551,6 +1553,7 @@
     "replayed": "Wykonanie jest odtwarzane",
     "required field": "Wymagane pole",
     "reset": "Restartuj",
+    "reset to defaults": "Resetuj do ustawień domyślnych",
     "restart": "Uruchom ponownie",
     "restart change revision": "Możesz zmienić wersję, która będzie używana do nowego wykonania.",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić wykonanie <code>{id}</code>?",
@@ -1699,6 +1702,15 @@
           "label": "Zapisz preferencje",
           "unsaved_title": "Niezapisane zmiany",
           "unsaved_warning": "Masz niezapisane zmiany. Czy chcesz je zapisać przed opuszczeniem?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Pokaż, ukryj i zmień kolejność elementów w pasku bocznym."
+          },
+          "fields": {
+            "items": "Elementy nawigacyjne"
+          },
+          "label": "Pasek boczny"
         },
         "theme": {
           "color_modes": {

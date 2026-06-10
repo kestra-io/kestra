@@ -402,6 +402,10 @@ export default {
             "in any": "in beliebigen",
             "apply": "Filter anwenden",
             "apply filter": "Filter anwenden",
+            "attemptNumber": {
+                "description": "Nach Versuchsnummer des Task-Runs filtern",
+                "label": "Versuchsnummer",
+            },
             "cancel": "Abbrechen",
             "childFilter": {
                 "description": "Nach Ausführungshierarchie filtern",
@@ -512,6 +516,10 @@ export default {
             "level_log_executions": {
                 "label": "Log-Ebene",
             },
+            "member": {
+                "description": "Nach Mitglied filtern",
+                "label": "Mitglied",
+            },
             "metric": {
                 "description": "Nach Metriktyp filtern",
                 "label": "Metrik",
@@ -534,6 +542,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Zurücksetzen",
             "raw_view": "Als Text bearbeiten",
+            "refresh": "Aktualisieren",
             "remove_condition_group": "Diese Bedingungsgruppe entfernen",
             "reset": "Alle löschen",
             "reset_all": "Alle Filter zurücksetzen",
@@ -658,6 +667,14 @@ export default {
                 "description": "Nach Aufgabe filtern",
                 "label": "Aufgabe",
             },
+            "taskId": {
+                "description": "Nach Task-Identifikator filtern",
+                "label": "Task-ID",
+            },
+            "taskRunId": {
+                "description": "Nach Task-Run-Identifikator filtern",
+                "label": "Task-Run-ID",
+            },
             "timeRange": {
                 "description": "Nach Ausführungszeit filtern",
                 "label": "Intervall",
@@ -772,6 +789,10 @@ export default {
             "in any": "en cualquiera",
             "apply": "Aplicar filtros",
             "apply filter": "Aplicar filtro",
+            "attemptNumber": {
+                "description": "Filtrar por número de intento de task run",
+                "label": "Número de intento",
+            },
             "cancel": "Cancelar",
             "childFilter": {
                 "description": "Filtrar por jerarquía de ejecución",
@@ -882,6 +903,10 @@ export default {
             "level_log_executions": {
                 "label": "Nivel de Log",
             },
+            "member": {
+                "description": "Filtrar por miembro",
+                "label": "Miembro",
+            },
             "metric": {
                 "description": "Filtrar por tipo de métrica",
                 "label": "Métrica",
@@ -904,6 +929,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Revertir",
             "raw_view": "Editar como texto",
+            "refresh": "Actualizar",
             "remove_condition_group": "Eliminar este grupo de condiciones",
             "reset": "Borrar todo",
             "reset_all": "Restablecer todos los filtros",
@@ -1028,6 +1054,14 @@ export default {
                 "description": "Filtrar por nombre de task",
                 "label": "Tarea",
             },
+            "taskId": {
+                "description": "Filtrar por identificador de task",
+                "label": "ID de Task",
+            },
+            "taskRunId": {
+                "description": "Filtrar por identificador de task run",
+                "label": "ID de Task Run",
+            },
             "timeRange": {
                 "description": "Filtrar por tiempo de ejecución",
                 "label": "Intervalo",
@@ -1142,6 +1176,10 @@ export default {
             "in any": "dans tout",
             "apply": "Appliquer des filtres",
             "apply filter": "Appliquer le filtre",
+            "attemptNumber": {
+                "description": "Filtrer par numéro de tentative de task run",
+                "label": "Numéro de tentative",
+            },
             "cancel": "Annuler",
             "childFilter": {
                 "description": "Filtrer par hiérarchie d'exécution",
@@ -1252,6 +1290,10 @@ export default {
             "level_log_executions": {
                 "label": "Niveau de Log",
             },
+            "member": {
+                "description": "Filtrer par membre",
+                "label": "Membre",
+            },
             "metric": {
                 "description": "Filtrer par type de métrique",
                 "label": "Métrique",
@@ -1274,6 +1316,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Annuler les modifications",
             "raw_view": "Modifier en texte",
+            "refresh": "Actualiser",
             "remove_condition_group": "Supprimer ce groupe de conditions",
             "reset": "Tout effacer",
             "reset_all": "Réinitialiser tous les filtres",
@@ -1398,6 +1441,14 @@ export default {
                 "description": "Filtrer par nom de task",
                 "label": "Tâche",
             },
+            "taskId": {
+                "description": "Filtrer par identifiant de task",
+                "label": "ID de task",
+            },
+            "taskRunId": {
+                "description": "Filtrer par identifiant de task run",
+                "label": "ID de task run",
+            },
             "timeRange": {
                 "description": "Filtrer par temps d'exécution",
                 "label": "Intervalle",
@@ -1512,6 +1563,10 @@ export default {
             "in any": "किसी में भी",
             "apply": "फ़िल्टर लागू करें",
             "apply filter": "फ़िल्टर लागू करें",
+            "attemptNumber": {
+                "description": "task run प्रयास संख्या द्वारा फ़िल्टर करें",
+                "label": "प्रयास संख्या",
+            },
             "cancel": "रद्द करें",
             "childFilter": {
                 "description": "कार्यक्रम पदानुक्रम द्वारा फ़िल्टर करें",
@@ -1622,6 +1677,10 @@ export default {
             "level_log_executions": {
                 "label": "लॉग स्तर",
             },
+            "member": {
+                "description": "सदस्य द्वारा फ़िल्टर करें",
+                "label": "सदस्य",
+            },
             "metric": {
                 "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें",
                 "label": "मेट्रिक",
@@ -1644,6 +1703,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "पूर्ववत करें",
             "raw_view": "पाठ के रूप में संपादित करें",
+            "refresh": "ताज़ा करें",
             "remove_condition_group": "इस शर्त समूह को हटाएं",
             "reset": "सभी साफ़ करें",
             "reset_all": "सभी फ़िल्टर रीसेट करें",
@@ -1768,6 +1828,14 @@ export default {
                 "description": "कार्य का नाम द्वारा फ़िल्टर करें",
                 "label": "कार्य",
             },
+            "taskId": {
+                "description": "task पहचानकर्ता द्वारा फ़िल्टर करें",
+                "label": "Task ID",
+            },
+            "taskRunId": {
+                "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें",
+                "label": "Task Run ID",
+            },
             "timeRange": {
                 "description": "कार्य समय द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
@@ -1882,6 +1950,10 @@ export default {
             "in any": "in qualsiasi",
             "apply": "Applica filtri",
             "apply filter": "Applica filtro",
+            "attemptNumber": {
+                "description": "Filtra per numero di tentativo del task run",
+                "label": "Numero di tentativo",
+            },
             "cancel": "Annulla",
             "childFilter": {
                 "description": "Filtra per gerarchia di esecuzione",
@@ -1992,6 +2064,10 @@ export default {
             "level_log_executions": {
                 "label": "Livello Log",
             },
+            "member": {
+                "description": "Filtra per membro",
+                "label": "Membro",
+            },
             "metric": {
                 "description": "Filtra per tipo di metrica",
                 "label": "Metrica",
@@ -2014,6 +2090,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Ripristina",
             "raw_view": "Modifica come testo",
+            "refresh": "Aggiorna",
             "remove_condition_group": "Rimuovi questo gruppo di condizioni",
             "reset": "Cancella tutto",
             "reset_all": "Reimposta tutti i filtri",
@@ -2138,6 +2215,14 @@ export default {
                 "description": "Filtra per nome task",
                 "label": "Task",
             },
+            "taskId": {
+                "description": "Filtra per identificatore del task",
+                "label": "ID del task",
+            },
+            "taskRunId": {
+                "description": "Filtra per identificatore del task run",
+                "label": "ID del task run",
+            },
             "timeRange": {
                 "description": "Filtra per tempo di esecuzione",
                 "label": "Intervallo",
@@ -2252,6 +2337,10 @@ export default {
             "in any": "すべて",
             "apply": "フィルターを適用",
             "apply filter": "フィルターを適用",
+            "attemptNumber": {
+                "description": "task run の試行回数でフィルター",
+                "label": "試行回数",
+            },
             "cancel": "キャンセル",
             "childFilter": {
                 "description": "実行階層でフィルター",
@@ -2362,6 +2451,10 @@ export default {
             "level_log_executions": {
                 "label": "ログレベル",
             },
+            "member": {
+                "description": "メンバーでフィルター",
+                "label": "メンバー",
+            },
             "metric": {
                 "description": "メトリックタイプでフィルター",
                 "label": "メトリック",
@@ -2384,6 +2477,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "元に戻す",
             "raw_view": "テキストで編集",
+            "refresh": "更新",
             "remove_condition_group": "この条件グループを削除",
             "reset": "すべてクリア",
             "reset_all": "すべてのフィルターをリセット",
@@ -2508,6 +2602,14 @@ export default {
                 "description": "タスク名でフィルター",
                 "label": "タスク",
             },
+            "taskId": {
+                "description": "task 識別子でフィルター",
+                "label": "Task ID",
+            },
+            "taskRunId": {
+                "description": "task run 識別子でフィルター",
+                "label": "Task Run ID",
+            },
             "timeRange": {
                 "description": "実行時間でフィルター",
                 "label": "インターバル",
@@ -2622,6 +2724,10 @@ export default {
             "in any": "모두",
             "apply": "필터 적용",
             "apply filter": "필터 적용",
+            "attemptNumber": {
+                "description": "task run 시도 횟수로 필터링",
+                "label": "시도 횟수",
+            },
             "cancel": "취소",
             "childFilter": {
                 "description": "실행 계층별 필터링",
@@ -2732,6 +2838,10 @@ export default {
             "level_log_executions": {
                 "label": "로그 레벨",
             },
+            "member": {
+                "description": "멤버로 필터링",
+                "label": "멤버",
+            },
             "metric": {
                 "description": "메트릭 유형별 필터",
                 "label": "메트릭",
@@ -2754,6 +2864,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "되돌리기",
             "raw_view": "텍스트로 편집",
+            "refresh": "새로고침",
             "remove_condition_group": "이 조건 그룹 제거",
             "reset": "모두 지우기",
             "reset_all": "모든 필터 재설정",
@@ -2878,6 +2989,14 @@ export default {
                 "description": "작업 이름으로 필터링",
                 "label": "작업",
             },
+            "taskId": {
+                "description": "task 식별자로 필터링",
+                "label": "Task ID",
+            },
+            "taskRunId": {
+                "description": "task run 식별자로 필터링",
+                "label": "Task Run ID",
+            },
             "timeRange": {
                 "description": "실행 시간으로 필터링",
                 "label": "간격",
@@ -2992,6 +3111,10 @@ export default {
             "in any": "w dowolnym",
             "apply": "Zastosuj filtry",
             "apply filter": "Zastosuj filtr",
+            "attemptNumber": {
+                "description": "Filtruj według numeru próby task run",
+                "label": "Numer próby",
+            },
             "cancel": "Anuluj",
             "childFilter": {
                 "description": "Filtruj według hierarchii wykonania",
@@ -3102,6 +3225,10 @@ export default {
             "level_log_executions": {
                 "label": "Poziom Logowania",
             },
+            "member": {
+                "description": "Filtruj według członka",
+                "label": "Członek",
+            },
             "metric": {
                 "description": "Filtruj według typu metryki",
                 "label": "Metryka",
@@ -3124,6 +3251,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Przywróć",
             "raw_view": "Edytuj jako tekst",
+            "refresh": "Odśwież",
             "remove_condition_group": "Usuń tę grupę warunków",
             "reset": "Wyczyść wszystko",
             "reset_all": "Resetuj wszystkie filtry",
@@ -3248,6 +3376,14 @@ export default {
                 "description": "Filtruj według nazwy taska",
                 "label": "Zadanie",
             },
+            "taskId": {
+                "description": "Filtruj według identyfikatora task",
+                "label": "Identyfikator task",
+            },
+            "taskRunId": {
+                "description": "Filtruj według identyfikatora task run",
+                "label": "Identyfikator task run",
+            },
             "timeRange": {
                 "description": "Filtruj według czasu wykonania",
                 "label": "Interwał",
@@ -3362,6 +3498,10 @@ export default {
             "in any": "em qualquer",
             "apply": "Aplicar filtros",
             "apply filter": "Aplicar filtro",
+            "attemptNumber": {
+                "description": "Filtrar por número de tentativa da task run",
+                "label": "Número da Tentativa",
+            },
             "cancel": "Cancelar",
             "childFilter": {
                 "description": "Filtrar por hierarquia de execução",
@@ -3472,6 +3612,10 @@ export default {
             "level_log_executions": {
                 "label": "Nível de Log",
             },
+            "member": {
+                "description": "Filtrar por membro",
+                "label": "Membro",
+            },
             "metric": {
                 "description": "Filtrar por tipo de métrica",
                 "label": "Métrica",
@@ -3494,6 +3638,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Reverter",
             "raw_view": "Editar como texto",
+            "refresh": "Atualizar",
             "remove_condition_group": "Remover este grupo de condições",
             "reset": "Limpar tudo",
             "reset_all": "Redefinir todos os filtros",
@@ -3618,6 +3763,14 @@ export default {
                 "description": "Filtrar por nome da task",
                 "label": "Tarefa",
             },
+            "taskId": {
+                "description": "Filtrar por identificador da task",
+                "label": "ID da Task",
+            },
+            "taskRunId": {
+                "description": "Filtrar por identificador da task run",
+                "label": "ID da Task Run",
+            },
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
@@ -3732,6 +3885,10 @@ export default {
             "in any": "em qualquer",
             "apply": "Aplicar filtros",
             "apply filter": "Aplicar filtro",
+            "attemptNumber": {
+                "description": "Filtrar por número de tentativa da task run",
+                "label": "Número da Tentativa",
+            },
             "cancel": "Cancelar",
             "childFilter": {
                 "description": "Filtrar por hierarquia de execução",
@@ -3842,6 +3999,10 @@ export default {
             "level_log_executions": {
                 "label": "Nível de Log",
             },
+            "member": {
+                "description": "Filtrar por membro",
+                "label": "Membro",
+            },
             "metric": {
                 "description": "Filtrar por tipo de métrica",
                 "label": "Métrica",
@@ -3864,6 +4025,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Reverter",
             "raw_view": "Editar como texto",
+            "refresh": "Atualizar",
             "remove_condition_group": "Remover este grupo de condições",
             "reset": "Limpar tudo",
             "reset_all": "Redefinir todos os filtros",
@@ -3988,6 +4150,14 @@ export default {
                 "description": "Filtrar por nome da task",
                 "label": "Tarefa",
             },
+            "taskId": {
+                "description": "Filtrar por identificador da task",
+                "label": "ID da Task",
+            },
+            "taskRunId": {
+                "description": "Filtrar por identificador da task run",
+                "label": "ID da Task Run",
+            },
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
@@ -4102,6 +4272,10 @@ export default {
             "in any": "в любом",
             "apply": "Применить фильтры",
             "apply filter": "Применить фильтр",
+            "attemptNumber": {
+                "description": "Фильтр по номеру попытки task run",
+                "label": "Номер попытки",
+            },
             "cancel": "Отменить",
             "childFilter": {
                 "description": "Фильтр по иерархии выполнения",
@@ -4212,6 +4386,10 @@ export default {
             "level_log_executions": {
                 "label": "Уровень Log",
             },
+            "member": {
+                "description": "Фильтр по участнику",
+                "label": "Участник",
+            },
             "metric": {
                 "description": "Фильтр по типу метрики",
                 "label": "Метрика",
@@ -4234,6 +4412,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "Вернуть",
             "raw_view": "Редактировать как текст",
+            "refresh": "Обновить",
             "remove_condition_group": "Удалить эту группу условий",
             "reset": "Очистить все",
             "reset_all": "Сбросить все фильтры",
@@ -4358,6 +4537,14 @@ export default {
                 "description": "Фильтр по имени task",
                 "label": "Задача",
             },
+            "taskId": {
+                "description": "Фильтр по идентификатору task",
+                "label": "ID task",
+            },
+            "taskRunId": {
+                "description": "Фильтр по идентификатору task run",
+                "label": "ID task run",
+            },
             "timeRange": {
                 "description": "Фильтр по времени выполнения",
                 "label": "Интервал",
@@ -4472,6 +4659,10 @@ export default {
             "in any": "任意",
             "apply": "应用过滤器",
             "apply filter": "应用过滤器",
+            "attemptNumber": {
+                "description": "按 task run 尝试次数筛选",
+                "label": "尝试次数",
+            },
             "cancel": "取消",
             "childFilter": {
                 "description": "按执行层级筛选",
@@ -4582,6 +4773,10 @@ export default {
             "level_log_executions": {
                 "label": "日志级别",
             },
+            "member": {
+                "description": "按成员筛选",
+                "label": "成员",
+            },
             "metric": {
                 "description": "按指标类型筛选",
                 "label": "指标",
@@ -4604,6 +4799,7 @@ export default {
             "raw_placeholder": "filters[field][op]=value…",
             "raw_revert": "还原",
             "raw_view": "以文本方式编辑",
+            "refresh": "刷新",
             "remove_condition_group": "移除此条件组",
             "reset": "清除所有",
             "reset_all": "重置所有过滤器",
@@ -4727,6 +4923,14 @@ export default {
             "task": {
                 "description": "按任务名称筛选",
                 "label": "任务",
+            },
+            "taskId": {
+                "description": "按 task 标识符筛选",
+                "label": "Task ID",
+            },
+            "taskRunId": {
+                "description": "按 task run 标识符筛选",
+                "label": "Task Run ID",
             },
             "timeRange": {
                 "description": "按执行时间筛选",

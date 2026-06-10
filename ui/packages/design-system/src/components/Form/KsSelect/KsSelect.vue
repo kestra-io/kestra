@@ -1,5 +1,5 @@
 <template>
-    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
+    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -22,8 +22,10 @@
 </template>
 
 <script setup lang="ts">
-    import {type Component} from "vue"
+    import {type Component, computed, h, markRaw} from "vue"
     import {ElSelect} from "element-plus"
+    import Loading from "vue-material-design-icons/Loading.vue"
+    import KsIcon from "../../Basic/KsIcon.vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -49,6 +51,7 @@
         popperClass?: string
         showArrow?: boolean
         suffixIcon?: Component | string
+        loading?: boolean
         fit?: boolean
     }>(), {
         placeholder: undefined,
@@ -60,6 +63,7 @@
         popperOffset: undefined,
         popperClass: undefined,
         suffixIcon: undefined,
+        loading: undefined,
     })
 
     const emit = defineEmits<{
@@ -75,13 +79,29 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["fit"])
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
+
+    // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
+    // list on `!loading`, so forwarding would hide still-valid options while they
+    // recompute. We only surface a spinning suffix icon, leaving the dropdown usable.
+    const LoadingSpinner = markRaw({
+        render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
+    }) as Component
+
+    const resolvedSuffixIcon = computed<Component | string | undefined>(
+        () => props.loading ? LoadingSpinner : props.suffixIcon,
+    )
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/select';
     @use 'element-plus/theme-chalk/src/select-dropdown';
+
+    @keyframes kel-select-loading-rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
 
     .kel-select {
         --kel-disabled-text-color: var(--ks-text-inactive);
@@ -146,6 +166,10 @@
 
         .kel-select__caret {
             color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
+        }
+
+        .kel-icon.is-loading svg {
+            animation: kel-select-loading-rotate 2s linear infinite;
         }
 
         .kel-select__wrapper {

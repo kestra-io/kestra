@@ -952,6 +952,7 @@
       "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시"
     },
     "main_configuration": "주요 설정",
+    "manage labels": "label 관리",
     "management port": "관리 포트",
     "mark as": "<code>{status}</code>로 표시",
     "max": "Max",
@@ -1671,7 +1672,6 @@
     "sequential": "순차적",
     "server type": "서버 유형",
     "services": "서비스",
-    "set_extra_labels": "추가 label 설정",
     "settings": {
       "blocks": {
         "configuration": {

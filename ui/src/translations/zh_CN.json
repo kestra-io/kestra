@@ -952,6 +952,7 @@
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
     "main_configuration": "主配置",
+    "manage labels": "管理labels",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",
@@ -1671,7 +1672,6 @@
     "sequential": "顺序",
     "server type": "服务器类型",
     "services": "服务",
-    "set_extra_labels": "设置额外的labels",
     "settings": {
       "blocks": {
         "configuration": {

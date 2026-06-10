@@ -952,6 +952,7 @@
       "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示"
     },
     "main_configuration": "メイン設定",
+    "manage labels": "ラベルを管理",
     "management port": "管理ポート",
     "mark as": "<code>{status}</code>としてマーク",
     "max": "Max",
@@ -1671,7 +1672,6 @@
     "sequential": "逐次",
     "server type": "サーバータイプ",
     "services": "サービス",
-    "set_extra_labels": "追加のラベルを設定",
     "settings": {
       "blocks": {
         "configuration": {

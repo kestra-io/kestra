@@ -952,6 +952,7 @@
       "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं"
     },
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
+    "manage labels": "labels प्रबंधित करें",
     "management port": "प्रबंधन पोर्ट",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "max": "अधिकतम",
@@ -1671,7 +1672,6 @@
     "sequential": "अनुक्रमिक",
     "server type": "सर्वर प्रकार",
     "services": "सेवाएँ",
-    "set_extra_labels": "अतिरिक्त labels सेट करें",
     "settings": {
       "blocks": {
         "configuration": {

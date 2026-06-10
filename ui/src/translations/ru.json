@@ -952,6 +952,7 @@
       "raw_details": "Показать полные task logs и flow логи в формате необработанных временных меток"
     },
     "main_configuration": "Основная конфигурация",
+    "manage labels": "Управление labels",
     "management port": "Порт управления",
     "mark as": "Пометить как <code>{status}</code>",
     "max": "Макс",
@@ -1671,7 +1672,6 @@
     "sequential": "Последовательный",
     "server type": "Тип сервера",
     "services": "Сервисы",
-    "set_extra_labels": "Установить дополнительные labels",
     "settings": {
       "blocks": {
         "configuration": {

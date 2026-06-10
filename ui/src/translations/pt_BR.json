@@ -952,6 +952,7 @@
       "raw_details": "Mostrar logs completos de task e flow em formato bruto ordenado por timestamp"
     },
     "main_configuration": "Configuração Principal",
+    "manage labels": "Gerenciar labels",
     "management port": "Port de gerenciamento",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -1671,7 +1672,6 @@
     "sequential": "Sequencial",
     "server type": "Tipo de servidor",
     "services": "Serviços",
-    "set_extra_labels": "Definir labels extras",
     "settings": {
       "blocks": {
         "configuration": {

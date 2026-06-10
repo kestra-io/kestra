@@ -952,6 +952,7 @@
       "raw_details": "Mostra i task logs e i flow logs completi in un formato grezzo ordinato per timestamp"
     },
     "main_configuration": "Configurazione Principale",
+    "manage labels": "Gestisci etichette",
     "management port": "Porta di gestione",
     "mark as": "Contrassegna come <code>{status}</code>",
     "max": "Max",
@@ -1671,7 +1672,6 @@
     "sequential": "Sequenziale",
     "server type": "Tipo di server",
     "services": "Servizi",
-    "set_extra_labels": "Imposta etichette extra",
     "settings": {
       "blocks": {
         "configuration": {

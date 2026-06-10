@@ -79,7 +79,7 @@
     margin-bottom: var(--ks-spacing-2);
     font-size: var(--ks-font-size-xs);
     font-weight: 400;
-    color: var(--ks-text-dim);
+    color: var(--ks-text-primary);
     background: none;
     border: none;
     text-align: left;

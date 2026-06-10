@@ -107,13 +107,15 @@
 
         <div class="execution-banner__footer">
             <div class="execution-banner__labels">
-                <LabelMultiple class="footer-labels-icon" />
-                <span
-                    v-for="(label, idx) in execution.labels"
-                    :key="idx"
-                    class="label-tag"
-                >{{ label.key }}: {{ label.value }}</span>
-                <SetLabels :execution />
+                <LabelMultiple class="icon" />
+                <div class="list">
+                    <span
+                        v-for="(label, idx) in execution.labels"
+                        :key="idx"
+                        class="label-tag"
+                    >{{ label.key }}: {{ label.value }}</span>
+                    <SetLabels :execution />
+                </div>
             </div>
 
             <div class="execution-banner__stats">
@@ -312,14 +314,22 @@
 
         &__labels {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: var(--ks-spacing-2);
-            flex-wrap: wrap;
             min-width: 0;
 
-            .footer-labels-icon {
+            .icon {
                 color: var(--ks-text-muted);
                 flex-shrink: 0;
+                margin-top: 0.125rem;
+            }
+
+            .list {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: var(--ks-spacing-2);
+                min-width: 0;
             }
         }
 

@@ -1037,7 +1037,16 @@
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
         },
-        "reset_section_to_defaults": "Restore this section's default values"
+        "reset_section_to_defaults": "Restore this section's default values",
+        "sidebar": {
+          "label": "Sidebar",
+          "fields": {
+            "items": "Navigation Items"
+          },
+          "descriptions": {
+            "items": "Show, hide, and reorder items in the sidebar."
+          }
+        }
       }
     },
     "apps": "Apps",
@@ -1413,6 +1422,9 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
+    "customize sidebar": "Customize sidebar",
+    "reset to defaults": "Reset to defaults",
+    "drop items here": "Drop items here",
     "files": "Namespace Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",

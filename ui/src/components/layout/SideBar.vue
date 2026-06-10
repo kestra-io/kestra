@@ -24,6 +24,9 @@
                 :collapsed="getSectionCollapsed(section)"
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
+                <template v-if="getSectionCollapsed(section) && sectionHasNewChild(section)" #suffix>
+                    <KsNewBadge>{{ t("new") }}</KsNewBadge>
+                </template>
                 <Motion
                     v-for="(item, iIdx) in getDisplayedItems(section)"
                     :key="item.id"
@@ -35,6 +38,7 @@
                     <MenuLink
                         :item="item"
                         :active="isItemActive(item)"
+                        :isNew="isItemNew(item)"
                     />
                 </Motion>
             </KsSideBarSection>
@@ -83,12 +87,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref, defineComponent, onUnmounted, nextTick} from "vue"
+    import {computed, h, ref, defineComponent, onUnmounted, nextTick, watch} from "vue"
 
     defineOptions({inheritAttrs: false})
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton, KsNewBadge} from "@kestra-io/design-system"
     import {Motion} from "motion-v"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
@@ -97,6 +102,7 @@
     import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
+    import {useFeatureSpotlightStore} from "../../stores/featureSpotlight"
     import {
         menuSectionId,
         resolveSectionItemIds,
@@ -121,8 +127,10 @@
     }>()
 
     const $route = useRoute()
+    const {t} = useI18n({useScope: "global"})
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
+    const featureSpotlightStore = useFeatureSpotlightStore()
     const showCustomizeModal = ref(false)
     const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
     const contextMenuItem = ref<HTMLButtonElement | null>(null)
@@ -182,6 +190,20 @@
         return Boolean(section.child?.some((child) => !child.hidden && isItemActive(child)))
     }
 
+    watch(() => $route.name, () => {
+        for (const item of props.menu.flatMap((section) => section.child ?? [section])) {
+            if (item.id && isItemActive(item)) featureSpotlightStore.markSeenById(item.id)
+        }
+    }, {immediate: true})
+
+    function isItemNew(item: MenuItem): boolean {
+        return featureSpotlightStore.hasUnseenForId(item.id)
+    }
+
+    function sectionHasNewChild(section: MenuItem): boolean {
+        return getDisplayedItems(section).some((item) => isItemNew(item))
+    }
+
     const FAVOURITES_SECTION_ID = "favourites"
 
     function getCollapsedById(id: string, fallback: boolean): boolean {
@@ -210,6 +232,7 @@
         props: {
             item: {type: Object as PropType<MenuItem>, required: true},
             active: {type: Boolean, default: false},
+            isNew: {type: Boolean, default: false},
         },
         setup(itemProps) {
             const hrefString = computed(() => (typeof itemProps.item.href === "string" ? itemProps.item.href : ""))
@@ -222,7 +245,9 @@
                     active: itemProps.active,
                     locked: locked.value,
                     ...extraProps,
-                })
+                }, itemProps.isNew ? {
+                    suffix: () => h(KsNewBadge, null, {default: () => t("new")}),
+                } : undefined)
 
                 if (!hrefString.value) return itemNode()
 

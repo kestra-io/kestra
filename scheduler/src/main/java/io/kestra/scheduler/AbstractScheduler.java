@@ -402,21 +402,15 @@ public abstract class AbstractScheduler implements Scheduler {
                         RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules())
                             .orElseGet(() -> schedule.defaultRecoverMissedSchedules(runContext));
                         try {
-                            Trigger lastUpdate = trigger.get();
-                            if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
-                                ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
-                                if (previousDate.isAfter(trigger.get().getDate())) {
-                                    lastUpdate = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
-
-                                    this.triggerState.update(lastUpdate);
-                                }
-                            } else {
-                                ZonedDateTime nextEvaluationDate = schedule.nextEvaluationDate();
-                                if (recoverMissedSchedules == RecoverMissedSchedules.NONE && !Objects.equals(trigger.get().getNextExecutionDate(), nextEvaluationDate)) {
-                                    lastUpdate = trigger.get().toBuilder().nextExecutionDate(nextEvaluationDate).build();
-
-                                    this.triggerState.update(lastUpdate);
-                                }
+                            // Re-read the trigger from its store rather than trusting the snapshot taken at the start of this
+                            // method: the executor may have just unlocked it (cleared the executionId) concurrently, and acting
+                            // on a stale snapshot could resurrect that lock.
+                            Trigger current = this.triggerState.findLast(trigger.get()).orElse(trigger.get());
+                            Trigger lastUpdate = current;
+                            Optional<Trigger> toPersist = computeScheduleInitialization(schedule, current, recoverMissedSchedules, conditionContext);
+                            if (toPersist.isPresent()) {
+                                lastUpdate = toPersist.get();
+                                this.triggerState.update(lastUpdate);
                             }
                             // Used for schedulableNextDate
                             FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
@@ -435,6 +429,34 @@ public abstract class AbstractScheduler implements Scheduler {
         }
 
         this.isReady = true;
+    }
+
+    /**
+     * Computes the Schedule trigger state to persist when the flow-change listener re-initializes a trigger.
+     * Returns an empty {@link Optional} when nothing should be written.
+     *
+     * @param current the current trigger state to base the decision on
+     */
+    @VisibleForTesting
+    static Optional<Trigger> computeScheduleInitialization(Schedulable schedule, Trigger current, RecoverMissedSchedules recoverMissedSchedules, ConditionContext conditionContext) throws Exception {
+        // Never rewrite a locked trigger (an execution is in flight). Its next execution date is owned by the
+        // execution-termination path; rewriting it here from a possibly stale snapshot could resurrect a stale
+        // executionId and lock the trigger forever.
+        if (current.getExecutionId() != null) {
+            return Optional.empty();
+        }
+        if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
+            ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
+            if (previousDate.isAfter(current.getDate())) {
+                return Optional.of(current.toBuilder().nextExecutionDate(previousDate).build());
+            }
+        } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
+            ZonedDateTime nextEvaluationDate = schedule.nextEvaluationDate();
+            if (!Objects.equals(current.getNextExecutionDate(), nextEvaluationDate)) {
+                return Optional.of(current.toBuilder().nextExecutionDate(nextEvaluationDate).build());
+            }
+        }
+        return Optional.empty();
     }
 
     private void enterMaintenance() {

@@ -105,6 +105,7 @@ class LogConsumerTest {
         assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(10);
     }
 
+    @Test
     @FlakyTest(description = "Docker log delivery timing is non-deterministic under CI load")
     void logs() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();

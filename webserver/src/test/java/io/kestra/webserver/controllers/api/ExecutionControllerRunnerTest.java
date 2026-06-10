@@ -2633,6 +2633,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @FlakyTest(description = "SSE event stream race: Thread.sleep workaround can miss 'end' events under CI load")
+    @Test
     @LoadFlows(
         value = { "flows/valids/subflow-parent.yaml",
             "flows/valids/subflow-child.yaml",

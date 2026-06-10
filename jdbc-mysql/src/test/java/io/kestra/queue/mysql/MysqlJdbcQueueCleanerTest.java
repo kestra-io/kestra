@@ -12,6 +12,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 @MicronautTest(rebuildContext = true)
 @Property(name = "kestra.jdbc.queue.cleaner.retention", value = "PT0S")
 public class MysqlJdbcQueueCleanerTest extends AbstractJdbcQueueCleanerTest {
+    @Test
     @Override
     @FlakyTest(description = "Zero-retention queue cleanup races with DB transaction commit timing")
     protected void shouldClean() throws QueueException, InterruptedException {

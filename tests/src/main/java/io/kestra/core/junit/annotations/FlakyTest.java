@@ -6,7 +6,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 
 /**
  * used to document that a test is flaky and needs to be reworked
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.Test;
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Tag("flaky")
-@Test
 public @interface FlakyTest {
 
     /**

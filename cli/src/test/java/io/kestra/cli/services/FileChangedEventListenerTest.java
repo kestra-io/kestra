@@ -60,6 +60,7 @@ class FileChangedEventListenerTest {
     }
 
     @FlakyTest(description = "OS file watcher events are non-deterministic; CI filesystems may delay or batch inotify events")
+    @Test
     void test() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test");
         // remove the flow if it already exists
@@ -98,6 +99,7 @@ class FileChangedEventListenerTest {
     }
 
     @FlakyTest(description = "OS file watcher events are non-deterministic; CI filesystems may delay or batch inotify events")
+    @Test
     void testWithPluginDefault() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");
         // remove the flow if it already exists

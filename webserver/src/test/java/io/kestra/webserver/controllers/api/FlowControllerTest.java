@@ -695,6 +695,7 @@ class FlowControllerTest {
     }
 
     @FlakyTest(description = "CI load can cause ReadTimeoutException instead of HttpClientResponseException on PUT to non-existent flow")
+    @Test
     void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE, "a");
         Flow assertFlow = parseFlow(flow);

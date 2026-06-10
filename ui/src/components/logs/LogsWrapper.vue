@@ -204,7 +204,6 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,

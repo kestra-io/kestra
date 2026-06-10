@@ -131,7 +131,7 @@ export function levelOrLower(level: LevelKey) {
     return levels.reverse()
 }
 
-type DownloadableLog = Pick<Log, "level" | "timestamp" | "message">
+type DownloadableLog = Pick<Log, "timestamp" | "message"> & {level?: Log["level"]}
 
 export function formatLogsAsText(logs: DownloadableLog[]): string {
     return logs

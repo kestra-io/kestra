@@ -46,7 +46,7 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch} from "vue"
+    import {computed, nextTick, ref, watch, type CSSProperties} from "vue"
     import Convert from "ansi-to-html"
     import xss from "xss"
     import MenuRight from "vue-material-design-icons/MenuRight.vue"
@@ -190,7 +190,7 @@
 
     const structured = computed(() => (props.raw || !logsPrettyJson.value ? undefined : parseStructured(props.log.message)))
 
-    const messageStyle = computed(() => (logsBodyClamp.value > 0 && logsDensity.value !== "compact"
+    const messageStyle = computed<CSSProperties>(() => (logsBodyClamp.value > 0 && logsDensity.value !== "compact"
         ? {display: "-webkit-box", "-webkit-line-clamp": String(logsBodyClamp.value), "-webkit-box-orient": "vertical", overflow: "hidden"}
         : {}))
 

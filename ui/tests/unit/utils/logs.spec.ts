@@ -32,13 +32,13 @@ function log(message: string, over: Partial<Log> = {}): Log {
 
 describe("detectStructured", () => {
     it("detects objects and arrays", () => {
-        expect(detectStructured('{"a":1}')).toBe(true)
+        expect(detectStructured("{\"a\":1}")).toBe(true)
         expect(detectStructured("  [1,2,3]  ")).toBe(true)
     })
 
     it("rejects non-structured, partial, and empty input", () => {
         expect(detectStructured("ok: deploy started")).toBe(false)
-        expect(detectStructured('{"a":1')).toBe(false)
+        expect(detectStructured("{\"a\":1")).toBe(false)
         expect(detectStructured("")).toBe(false)
         expect(detectStructured(null)).toBe(false)
         expect(detectStructured(undefined)).toBe(false)
@@ -48,13 +48,13 @@ describe("detectStructured", () => {
 
 describe("parseStructured", () => {
     it("parses valid JSON payloads", () => {
-        expect(parseStructured('{"event":"deploy.completed","n":3}')).toEqual({event: "deploy.completed", n: 3})
+        expect(parseStructured("{\"event\":\"deploy.completed\",\"n\":3}")).toEqual({event: "deploy.completed", n: 3})
         expect(parseStructured("[1,2]")).toEqual([1, 2])
     })
 
     it("returns undefined for invalid, non-structured, or oversized input", () => {
         expect(parseStructured("plain text")).toBeUndefined()
-        expect(parseStructured('{"a":}')).toBeUndefined()
+        expect(parseStructured("{\"a\":}")).toBeUndefined()
         const huge = "[" + "0,".repeat(STRUCTURED_PARSE_LIMIT) + "0]"
         expect(parseStructured(huge)).toBeUndefined()
     })

@@ -66,7 +66,7 @@
     .kel-dialog {
         --kel-dialog-bg-color: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
-        border-radius: 14px;
+        border-radius: var(--ks-radius-xl);
 
         .kel-dialog__header {
             font-size: var(--ks-font-size-base);
@@ -98,9 +98,8 @@
             padding-right: var(--kel-dialog-padding-primary);
             width: calc(100% + var(--kel-dialog-padding-primary) * 2);
             background-color: var(--ks-bg-base);
-            border-bottom-left-radius: 0.875rem;
-            border-bottom-right-radius: 0.875rem;
-            overflow: hidden;
+            border-bottom-left-radius: var(--ks-radius-xl);
+            border-bottom-right-radius: var(--ks-radius-xl);
         }
     }
 </style>

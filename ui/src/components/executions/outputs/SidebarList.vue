@@ -19,7 +19,7 @@
                         <template #title>
                             <span class="section-title">
                                 <span>{{ section.label }}</span>
-                                <span class="count">{{ section.items.length }}</span>
+                                <KsTag>{{ section.items.length }}</KsTag>
                             </span>
                         </template>
 
@@ -136,19 +136,6 @@
     display: flex;
     align-items: center;
     gap: var(--ks-spacing-2);
-
-    .count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 1.25rem;
-        height: 1.25rem;
-        padding: 0 .25rem;
-        border-radius: 2px;
-        background-color: var(--ks-border-default);
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
-    }
 }
 
 .item {

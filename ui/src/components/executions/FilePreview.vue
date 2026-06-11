@@ -1,5 +1,6 @@
 <template>
     <FilePreviewForm
+        v-if="isTextFile"
         v-model:encoding="encodingModel" 
         v-model:maxPreview="maxPreview" 
         v-model:forceEditor="forceEditor" 
@@ -31,8 +32,14 @@
         Loading...
     </div>
     <template v-else>
-        <RawPreview v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
         <div class="button-bar">
+            <KsText>
+                {{ path.split("/").slice(-1)[0] }}
+            </KsText>
+            <KsTag>
+                {{ humanSize }}
+            </KsTag>
+            <div style="flex:1"/>
             <KsButton
                 class=""
                 type="primary"
@@ -44,6 +51,7 @@
                 {{ $t('download') }}
             </KsButton>
         </div>
+        <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
     </template>
 </template>
 
@@ -86,6 +94,33 @@
             path: props.path,
         })
     }
+
+    const isTextFile = computed(() => {
+        return preview.value && isTextString(preview.value.content)
+    })
+
+    function isTextString(str: string, sampleSize = 8192) {
+        const sample = str.slice(0, sampleSize)
+        if (sample.length === 0) return true
+
+        let nonText = 0
+        for (let i = 0; i < sample.length; i++) {
+            const code = sample.charCodeAt(i)
+
+            // Null character — strong binary signal
+            if (code === 0x00) return false
+
+            const isPrintable =
+                (code >= 0x09 && code <= 0x0D) || // tab, LF, VT, FF, CR
+                (code >= 0x20 && code <= 0x7E) || // printable ASCII
+                code >= 0x80                      // extended / unicode
+
+            if (!isPrintable) nonText++
+        }
+
+        return nonText / sample.length <= 0.10
+    }
+
 
     const humanSize = computed(() => {
         return metadata.value?.size ? Utils.humanFileSize(metadata.value.size) : undefined
@@ -148,7 +183,9 @@
     }
     .button-bar {
         display: flex;
-        justify-content: flex-end;
-        margin-top: 1rem;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-block: 1rem;
     }
 </style>

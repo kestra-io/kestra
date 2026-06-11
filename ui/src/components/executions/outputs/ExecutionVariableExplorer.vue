@@ -278,14 +278,21 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
+        // if the selectedValue is in the flow Outputs section,
+        // it needs the `execution.` prefix to be debuggable.
+        const baseExpressionPath = sections.value.find((section) => 
+            section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
+            ? `execution.${item.expression}` 
+            : item.expression
+
         // if there is only one item in the tree, select it by default to save users one click
         // specially useful for files
         if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
             const onlyKey = Object.keys(selectedValue.value)[0]
-            expressionPath.value = `${item.expression}${formatStep(onlyKey)}`
-            expression.value = `{{ ${expressionPath.value} }}`
+            const fullExpressionPath = `${baseExpressionPath}${formatStep(onlyKey)}`
+            expression.value = `{{ ${fullExpressionPath} }}`
         }else {
-            expression.value = `{{ ${item.expression} }}`
+            expression.value = `{{ ${baseExpressionPath} }}`
         }
     }
 

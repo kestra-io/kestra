@@ -96,7 +96,7 @@
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        padding: var(--ks-spacing-2);
         background: none;
         border: none;
         border-radius: var(--ks-radius-sm);

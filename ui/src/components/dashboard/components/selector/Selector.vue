@@ -146,7 +146,4 @@
 .dropdown {
     width: 18rem;
 }
-.kel-dropdown {
-    line-height: 1.5;
-}
 </style>

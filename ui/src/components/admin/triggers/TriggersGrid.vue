@@ -8,16 +8,20 @@
                     @search="searchQuery = $event"
                 />
             </div>
-            <KsRadioGroup v-model="activeCategoryFilter" class="filter-group">
-                <KsRadioButton
+            <div class="category-tags">
+                <KsCheckTag
                     v-for="value in FILTER_VALUES"
                     :key="value"
-                    :value="value"
-                    :label="value"
+                    pill
+                    :checked="activeFilter === value"
+                    @change="activeFilter = value"
                 >
+                    <template v-if="GROUP_ICONS[value]" #icon>
+                        <component :is="GROUP_ICONS[value]" :size="16" class="group-icon" />
+                    </template>
                     {{ $t(`triggers_add_filter_${value}`) }}
-                </KsRadioButton>
-            </KsRadioGroup>
+                </KsCheckTag>
+            </div>
         </div>
 
         <div v-if="loading" class="state-empty">
@@ -33,10 +37,7 @@
             <TriggersCategorySection
                 v-for="section in visibleSections"
                 :key="section.key"
-                :title="$t(`triggers_add_category_${section.key}_title`)"
-                :description="$t(`triggers_add_category_${section.key}_description`)"
                 :triggers="groupedTriggers[section.key]"
-                :expandAll="section.expandAll"
                 @add="openConfigureModal"
             />
         </template>
@@ -51,11 +52,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue"
+    import {computed, markRaw, onMounted, ref, type Component} from "vue"
 
     import SearchField from "../../layout/SearchField.vue"
     import TriggersCategorySection from "./TriggersCategorySection.vue"
     import TriggerConfigureModal from "./TriggerConfigureModal.vue"
+
+    import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
+    import AvTimer from "vue-material-design-icons/AvTimer.vue"
+    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
     import {MCP_TOOL_TYPE} from "./triggerCatalog"
@@ -64,10 +69,16 @@
     const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const
 
     type TriggerGroup = typeof TRIGGER_GROUPS[number];
-    type CategoryFilter = typeof FILTER_VALUES[number];
+    type FilterValue = typeof FILTER_VALUES[number];
 
-    const SECTIONS: { key: TriggerGroup; expandAll?: boolean }[] = [
-        {key: "core", expandAll: true},
+    const GROUP_ICONS: Partial<Record<FilterValue, Component>> = markRaw({
+        core: BriefcaseOutline,
+        realtime: AvTimer,
+        app: LayersTripleOutline,
+    })
+
+    const SECTIONS: { key: TriggerGroup }[] = [
+        {key: "core"},
         {key: "realtime"},
         {key: "app"},
     ]
@@ -76,7 +87,7 @@
 
     const loading = ref(true)
     const searchQuery = ref("")
-    const activeCategoryFilter = ref<CategoryFilter>("all")
+    const activeFilter = ref<FilterValue>("all")
     const allTriggers = ref<TriggerPluginDto[]>([])
     const selectedTrigger = ref<TriggerPluginDto | null>(null)
     const configureModalVisible = ref(false)
@@ -104,7 +115,7 @@
     })
 
     const visibleSections = computed(() =>
-        SECTIONS.filter(s => activeCategoryFilter.value === "all" || activeCategoryFilter.value === s.key),
+        SECTIONS.filter(s => activeFilter.value === "all" || activeFilter.value === s.key),
     )
 
     const hasAnyVisibleTrigger = computed(() =>
@@ -147,6 +158,15 @@
         position: relative;
         flex: 1 1 17.5rem;
         max-width: 32.5rem;
+    }
+
+    .category-tags {
+        display: flex;
+        gap: var(--ks-spacing-2);
+    }
+
+    .group-icon {
+        color: var(--ks-icon-active);
     }
 
     .state-empty {

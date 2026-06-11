@@ -247,6 +247,10 @@
     )
 
     const fileSelectedOutput = computed(() => {
+        // if an input file is selected, show the contents of the file
+        if(typeof selectedValue.value === "string" && Utils.isFile(selectedValue.value)){
+            return selectedValue.value
+        }
         if (!isExpandableValue.value) return undefined
         try {
             const fileMetadata = selectedValue.value as {uri?: string}

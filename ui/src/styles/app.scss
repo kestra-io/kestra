@@ -86,6 +86,10 @@ main {
         padding: 0;
     }
 
+    section.container:has(.dashboard-sections-container) {
+        padding-inline: 0;
+    }
+
     section.container:has(:is(.ks-data-table-wrapper, .full-width-table)),
     section.main-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
         padding-inline: 0;

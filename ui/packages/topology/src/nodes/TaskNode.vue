@@ -434,7 +434,6 @@ button.playground-button {
 .status-tag__text {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
-    font-family: var(--ks-font-family-mono);
 }
 
 .details-wrapper {

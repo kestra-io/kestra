@@ -33,7 +33,6 @@
                         :label="$t('execution labels')"
                     >
                         <LabelInput
-                            :key="executionLabelsKey"
                             v-model:labels="executionLabels"
                         />
                     </KsFormItem>
@@ -187,9 +186,6 @@
 
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
-
-    // executionLabelsKey is used to force re-render of LabelInput when executionLabels changes
-    const executionLabelsKey = computed(() => JSON.stringify(executionLabels.value))
 
     const haveBadLabels = computed(() =>
         executionLabels.value.some(label => (label.key && !label.value) || (!label.key && label.value)),

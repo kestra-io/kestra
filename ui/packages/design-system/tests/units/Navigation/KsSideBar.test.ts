@@ -159,6 +159,25 @@ describe("KsSideBarSection", () => {
         expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
     })
+
+    test("renders the suffix slot inside the collapsible title", () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true},
+            slots: {suffix: "<span class='dot'>•</span>"},
+        })
+        expect(wrapper.find("button.ks-sidebar-section__title .dot").exists()).toBe(true)
+    })
+
+    test("renders the suffix slot inside the non-collapsible title", () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace"},
+            slots: {suffix: "<span class='dot'>•</span>"},
+        })
+        expect(wrapper.find(".ks-sidebar-section__title .dot").exists()).toBe(true)
+        expect(wrapper.find(".ks-sidebar-section__title-text").text()).toBe("Workspace")
+    })
 })
 
 describe("KsSideBarItem", () => {

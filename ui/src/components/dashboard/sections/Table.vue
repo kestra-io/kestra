@@ -166,7 +166,7 @@
 
     const tabColor = (tab: {key: string}) =>
         tab.key === "all"
-            ? cssVar("--ks-text-primary")
+            ? cssVar("--ks-text-link")
             : cssVar(TAB_STATUS_TOKEN[tab.key] ?? "")
 
     const activeStateFilter = computed((): FilterObject | null => {
@@ -240,7 +240,7 @@
     align-items: center;
     padding: var(--ks-spacing-2) var(--ks-spacing-3);
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--ks-text-secondary);
     background: none;
     border: none;
@@ -252,6 +252,7 @@
 
     &:hover {
         color: var(--tab-color);
+        font-weight: 500;
     }
 
     &.active {

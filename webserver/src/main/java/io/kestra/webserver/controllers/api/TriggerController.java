@@ -687,6 +687,8 @@ public class TriggerController {
 
         if (disabled) {
             builder = builder.nextExecutionDate(null);
+        } else if (trigger instanceof Schedulable) {
+            builder = builder.nextExecutionDate(ZonedDateTime.now());
         }
 
         Trigger updated = builder.build();

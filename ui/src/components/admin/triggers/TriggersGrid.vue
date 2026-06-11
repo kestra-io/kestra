@@ -46,7 +46,7 @@
         />
 
         <div v-else class="card-grid">
-            <TriggerCatalogCard
+            <TriggerCard
                 v-for="trigger in visibleTriggers"
                 :key="trigger.type"
                 :trigger="trigger"
@@ -54,7 +54,7 @@
             />
         </div>
 
-        <TriggerConfigureModal
+        <AddTriggerModal
             v-if="selectedTrigger"
             v-model:visible="configureModalVisible"
             :trigger="selectedTrigger"
@@ -71,8 +71,8 @@
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
 
     import SearchField from "../../layout/SearchField.vue"
-    import TriggerCatalogCard from "./TriggerCatalogCard.vue"
-    import TriggerConfigureModal from "./TriggerConfigureModal.vue"
+    import TriggerCard from "./TriggerCard.vue"
+    import AddTriggerModal from "./AddTriggerModal.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
     import {triggerDisplayName} from "./triggerCatalog"

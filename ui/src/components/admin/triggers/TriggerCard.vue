@@ -41,7 +41,7 @@
                 <span class="tag">{{ $t(`triggers_add_filter_${trigger.group}`) }}</span>
                 <KsTag
                     v-if="trigger.ee"
-                    type="info"
+                    type="warning"
                     size="small"
                     :title="$t('triggers_add_ee_tooltip')"
                 >
@@ -211,6 +211,10 @@
                 margin-left: auto;
                 flex-shrink: 0;
                 padding: 0 var(--ks-spacing-3);
+
+                .plus-icon {
+                    color: var(--ks-icon-muted);
+                }
             }
         }
     }

@@ -2037,6 +2037,7 @@
     "watch": "监视",
     "watch_video": "观看视频",
     "webhook": {
+      "copy_url": "复制 webhook URL",
       "curl_command": "Webhook cURL 命令",
       "curl_note": "使用此 cURL 命令通过 webhook 触发 flow，并使用自定义 JSON 负载",
       "no_triggers": "此flow没有启用的webhook triggers",

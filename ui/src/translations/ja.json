@@ -2037,6 +2037,7 @@
     "watch": "ウォッチ",
     "watch_video": "ビデオを見る",
     "webhook": {
+      "copy_url": "Webhook URLをコピー",
       "curl_command": "Webhook cURL コマンド",
       "curl_note": "このcURLコマンドを使用して、カスタムJSONペイロードでwebhookを介してflowをtriggerします。",
       "no_triggers": "このflowには有効なWebhookトリガーがありません",

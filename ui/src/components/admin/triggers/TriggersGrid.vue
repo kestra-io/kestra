@@ -64,12 +64,10 @@
     import TriggerConfigureModal from "./TriggerConfigureModal.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
-    import {MCP_TOOL_TYPE} from "./triggerCatalog"
 
     const TRIGGER_GROUPS = ["core", "realtime", "app"] as const
     const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const
 
-    type TriggerGroup = typeof TRIGGER_GROUPS[number];
     type FilterValue = typeof FILTER_VALUES[number];
 
     const GROUP_ICONS: Partial<Record<FilterValue, Component>> = markRaw({
@@ -87,32 +85,17 @@
     const selectedTrigger = ref<TriggerPluginDto | null>(null)
     const configureModalVisible = ref(false)
 
-    const groupedTriggers = computed(() => {
+    const visibleTriggers = computed(() => {
         const q = searchQuery.value.trim().toLowerCase()
-        const matches = (tr: TriggerPluginDto) =>
+        const matchesSearch = (tr: TriggerPluginDto) =>
             !q ||
             tr.name.toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
             (tr.description ?? "").toLowerCase().includes(q)
 
-        const inGroup = (group: TriggerGroup) =>
-            allTriggers.value.filter(tr => tr.group === group && matches(tr))
-
-        return {
-            core: inGroup("core").sort((a, b) => {
-                if (a.type === MCP_TOOL_TYPE) return -1
-                if (b.type === MCP_TOOL_TYPE) return 1
-                return a.name.localeCompare(b.name)
-            }),
-            realtime: inGroup("realtime"),
-            app: inGroup("app"),
-        }
-    })
-
-    const visibleTriggers = computed(() => {
-        const groups: readonly TriggerGroup[] =
-            activeFilter.value === "all" ? TRIGGER_GROUPS : [activeFilter.value as TriggerGroup]
-        return groups.flatMap(group => groupedTriggers.value[group])
+        return allTriggers.value.filter(tr =>
+            (activeFilter.value === "all" || tr.group === activeFilter.value) && matchesSearch(tr),
+        )
     })
 
     const hasAnyVisibleTrigger = computed(() => visibleTriggers.value.length > 0)

@@ -230,6 +230,7 @@
     "current": "corrente",
     "current execution": "Esecuzione corrente",
     "custom value": "Valore personalizzato",
+    "customize sidebar": "Personalizza barra laterale",
     "dark_version": "Versione scura",
     "dashboards": {
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
@@ -482,6 +483,7 @@
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
     "draft_available": "Una bozza di modifica è disponibile nell'editor",
+    "drop items here": "Trascina gli elementi qui",
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "duration": "Durata",
     "dynamic": "Dinamico",
@@ -1551,6 +1553,7 @@
     "replayed": "L'esecuzione è ripetuta",
     "required field": "Campo obbligatorio",
     "reset": "Riavvia",
+    "reset to defaults": "Reimposta ai valori predefiniti",
     "restart": "Riavvia",
     "restart change revision": "Puoi cambiare la revisione che verrà utilizzata per la nuova esecuzione.",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
@@ -1699,6 +1702,15 @@
           "label": "Salva Preferenze",
           "unsaved_title": "Modifiche non salvate",
           "unsaved_warning": "Hai modifiche non salvate. Vuoi salvarle prima di uscire?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Mostra, nascondi e riordina gli elementi nella barra laterale."
+          },
+          "fields": {
+            "items": "Elementi di Navigazione"
+          },
+          "label": "Barra laterale"
         },
         "theme": {
           "color_modes": {

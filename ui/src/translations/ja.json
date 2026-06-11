@@ -230,6 +230,7 @@
     "current": "現在",
     "current execution": "現在の実行",
     "custom value": "カスタム value",
+    "customize sidebar": "サイドバーをカスタマイズ",
     "dark_version": "ダークバージョン",
     "dashboards": {
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
@@ -482,6 +483,7 @@
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
     "draft_available": "エディターでドラフト変更が利用可能です",
+    "drop items here": "ここにアイテムをドロップしてください",
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "duration": "期間",
     "dynamic": "動的",
@@ -1551,6 +1553,7 @@
     "replayed": "実行が再生されました",
     "required field": "必須フィールド",
     "reset": "再起動",
+    "reset to defaults": "デフォルトにリセット",
     "restart": "再起動",
     "restart change revision": "新しい実行に使用されるリビジョンを変更できます。",
     "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
@@ -1699,6 +1702,15 @@
           "label": "設定を保存",
           "unsaved_title": "未保存の変更",
           "unsaved_warning": "保存されていない変更があります。離れる前に保存しますか？"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "サイドバーの項目を表示、非表示、および並べ替えします。"
+          },
+          "fields": {
+            "items": "ナビゲーション項目"
+          },
+          "label": "サイドバー"
         },
         "theme": {
           "color_modes": {

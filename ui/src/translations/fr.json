@@ -230,6 +230,7 @@
     "current": "actuel",
     "current execution": "Exécution en cours",
     "custom value": "Valeur personnalisée",
+    "customize sidebar": "Personnaliser la barre latérale",
     "dark_version": "Version sombre",
     "dashboards": {
       "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
@@ -482,6 +483,7 @@
     "download logs": "Télécharger les logs",
     "download_logos": "Télécharger le pack de logos",
     "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
+    "drop items here": "Déposez les éléments ici",
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "duration": "Durée",
     "dynamic": "Dynamique",
@@ -1551,6 +1553,7 @@
     "replayed": "L'exécution est rejouée",
     "required field": "Champ requis",
     "reset": "Recommencer",
+    "reset to defaults": "Réinitialiser aux valeurs par défaut",
     "restart": "Relancer",
     "restart change revision": "Vous pouvez changer la révision qui sera utilisé pour la nouvelle exécution relancée.",
     "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
@@ -1699,6 +1702,15 @@
           "label": "Enregistrer les préférences",
           "unsaved_title": "Modifications non enregistrées",
           "unsaved_warning": "Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Afficher, masquer et réorganiser les éléments dans la barre latérale."
+          },
+          "fields": {
+            "items": "Éléments de Navigation"
+          },
+          "label": "Barre latérale"
         },
         "theme": {
           "color_modes": {

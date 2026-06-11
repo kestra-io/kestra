@@ -230,6 +230,7 @@
     "current": "현재",
     "current execution": "현재 실행",
     "custom value": "사용자 정의 value",
+    "customize sidebar": "사이드바 사용자 정의",
     "dark_version": "다크 버전",
     "dashboards": {
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
@@ -482,6 +483,7 @@
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
+    "drop items here": "여기에 항목을 드롭하세요",
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "duration": "지속 시간",
     "dynamic": "동적",
@@ -1551,6 +1553,7 @@
     "replayed": "실행이 재생되었습니다.",
     "required field": "필수 필드",
     "reset": "재시작",
+    "reset to defaults": "기본값으로 재설정",
     "restart": "재시작",
     "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
@@ -1699,6 +1702,15 @@
           "label": "환경 설정 저장",
           "unsaved_title": "저장되지 않은 변경 사항",
           "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "사이드바에서 항목을 표시, 숨기기 및 재정렬합니다."
+          },
+          "fields": {
+            "items": "네비게이션 항목"
+          },
+          "label": "사이드바"
         },
         "theme": {
           "color_modes": {

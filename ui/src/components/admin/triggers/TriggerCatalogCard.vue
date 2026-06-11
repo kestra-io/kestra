@@ -108,7 +108,7 @@
     .trigger-description {
         font-size: 0.75rem;
         line-height: 1.4;
-        color: var(--ks-text-tertiary);
+        color: var(--ks-text-secondary);
         min-height: calc(1.4em * 2);
         display: -webkit-box;
         line-clamp: 2;

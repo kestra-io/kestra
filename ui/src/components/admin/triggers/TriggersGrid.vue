@@ -22,6 +22,17 @@
                     {{ $t(`triggers_add_filter_${value}`) }}
                 </KsCheckTag>
             </div>
+            <div class="sort-by">
+                <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
+                <KsSelect v-model="sortBy" size="small" class="sort-select">
+                    <KsOption
+                        v-for="option in SORT_OPTIONS"
+                        :key="option.value"
+                        :value="option.value"
+                        :label="$t(option.labelKey)"
+                    />
+                </KsSelect>
+            </div>
         </div>
 
         <div v-if="loading" class="state-loading">
@@ -64,11 +75,17 @@
     import TriggerConfigureModal from "./TriggerConfigureModal.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
+    import {triggerDisplayName} from "./triggerCatalog"
 
     const TRIGGER_GROUPS = ["core", "realtime", "app"] as const
     const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const
+    const SORT_OPTIONS = [
+        {value: "nameAsc", labelKey: "pluginPage.sort.nameAsc"},
+        {value: "nameDesc", labelKey: "pluginPage.sort.nameDesc"},
+    ] as const
 
     type FilterValue = typeof FILTER_VALUES[number];
+    type SortKey = typeof SORT_OPTIONS[number]["value"];
 
     const GROUP_ICONS: Partial<Record<FilterValue, Component>> = markRaw({
         core: BriefcaseOutline,
@@ -76,11 +93,20 @@
         app: LayersTripleOutline,
     })
 
+    const nameAsc = (a: TriggerPluginDto, b: TriggerPluginDto) =>
+        triggerDisplayName(a).localeCompare(triggerDisplayName(b))
+
+    const COMPARATORS: Record<SortKey, (a: TriggerPluginDto, b: TriggerPluginDto) => number> = {
+        nameAsc,
+        nameDesc: (a, b) => nameAsc(b, a),
+    }
+
     const pluginsStore = usePluginsStore()
 
     const loading = ref(true)
     const searchQuery = ref("")
     const activeFilter = ref<FilterValue>("all")
+    const sortBy = ref<SortKey>("nameAsc")
     const allTriggers = ref<TriggerPluginDto[]>([])
     const selectedTrigger = ref<TriggerPluginDto | null>(null)
     const configureModalVisible = ref(false)
@@ -93,9 +119,9 @@
             tr.type.toLowerCase().includes(q) ||
             (tr.description ?? "").toLowerCase().includes(q)
 
-        return allTriggers.value.filter(tr =>
-            (activeFilter.value === "all" || tr.group === activeFilter.value) && matchesSearch(tr),
-        )
+        return allTriggers.value
+            .filter(tr => (activeFilter.value === "all" || tr.group === activeFilter.value) && matchesSearch(tr))
+            .sort(COMPARATORS[sortBy.value] ?? nameAsc)
     })
 
     const hasAnyVisibleTrigger = computed(() => visibleTriggers.value.length > 0)
@@ -142,6 +168,24 @@
 
             .group-icon {
                 color: var(--ks-icon-active);
+            }
+        }
+
+        .sort-by {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            margin-left: auto;
+            flex: 0 0 auto;
+
+            .sort-label {
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-xs);
+                white-space: nowrap;
+            }
+
+            .sort-select {
+                width: 8.75rem;
             }
         }
     }

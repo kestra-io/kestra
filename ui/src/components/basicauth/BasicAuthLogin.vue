@@ -6,41 +6,47 @@
         <form class="oss-login__form" @submit.prevent="handleSubmit">
             <input type="hidden" name="from" :value="redirectPath">
 
-            <div class="login-field" :class="{'login-field--error': errors.username}">
-                <AccountOutline class="login-field__icon" />
-                <input
-                    class="login-field__input"
-                    name="username"
-                    id="input-username"
-                    v-model="credentials.username"
-                    :placeholder="$t('email')"
-                    type="email"
-                    required
-                    autocomplete="username"
-                    @blur="validateEmailField"
-                />
+            <div class="login-field-group">
+                <div class="login-field" :class="{'login-field--error': errors.username}">
+                    <AccountOutline class="login-field__icon" />
+                    <input
+                        class="login-field__input"
+                        name="username"
+                        id="input-username"
+                        v-model="credentials.username"
+                        :placeholder="$t('email')"
+                        type="email"
+                        required
+                        autocomplete="username"
+                        @blur="validateEmailField"
+                        @input="errors.username = undefined"
+                    />
+                </div>
+                <p v-if="errors.username" class="login-field-error">{{ errors.username }}</p>
             </div>
-            <p v-if="errors.username" class="login-field-error">{{ errors.username }}</p>
 
-            <div class="login-field" :class="{'login-field--error': errors.password}">
-                <LockOutline class="login-field__icon" />
-                <input
-                    class="login-field__input"
-                    name="password"
-                    id="input-password"
-                    v-model="credentials.password"
-                    :type="showPasswordText ? 'text' : 'password'"
-                    :placeholder="$t('password')"
-                    required
-                    autocomplete="current-password"
-                    @blur="validatePasswordField"
-                />
-                <button class="login-field__eye" type="button" @click="showPasswordText = !showPasswordText" tabindex="-1">
-                    <Eye v-if="!showPasswordText" />
-                    <EyeOff v-else />
-                </button>
+            <div class="login-field-group">
+                <div class="login-field" :class="{'login-field--error': errors.password}">
+                    <LockOutline class="login-field__icon" />
+                    <input
+                        class="login-field__input"
+                        name="password"
+                        id="input-password"
+                        v-model="credentials.password"
+                        :type="showPasswordText ? 'text' : 'password'"
+                        :placeholder="$t('password')"
+                        required
+                        autocomplete="current-password"
+                        @blur="validatePasswordField"
+                        @input="errors.password = undefined"
+                    />
+                    <button class="login-field__eye" type="button" @click="showPasswordText = !showPasswordText" tabindex="-1">
+                        <Eye v-if="!showPasswordText" />
+                        <EyeOff v-else />
+                    </button>
+                </div>
+                <p v-if="errors.password" class="login-field-error">{{ errors.password }}</p>
             </div>
-            <p v-if="errors.password" class="login-field-error">{{ errors.password }}</p>
 
             <button class="login-btn" type="submit" :disabled="isLoading">
                 <span v-if="!isLoading">{{ $t("setup.login") }}</span>
@@ -60,7 +66,6 @@
     import {useI18n} from "vue-i18n"
     import {KsMessage} from "@kestra-io/design-system"
     import {useClient} from "@kestra-io/kestra-sdk"
-    import MailChecker from "mailchecker"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -95,7 +100,6 @@
     const errors = ref<{username?: string; password?: string}>({})
 
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
     const redirectPath = computed(() => route.query.from as string | undefined)
 
@@ -105,20 +109,13 @@
             errors.value.username = t("setup.validation.email_required")
         } else if (!EMAIL_REGEX.test(val)) {
             errors.value.username = t("setup.validation.email_invalid")
-        } else if (!MailChecker.isValid(val)) {
-            errors.value.username = t("setup.validation.email_temporary_not_allowed")
         } else {
             errors.value.username = undefined
         }
     }
 
     function validatePasswordField() {
-        const val = credentials.value.password
-        if (!val || !PASSWORD_REGEX.test(val)) {
-            errors.value.password = t("setup.validation.password_invalid")
-        } else {
-            errors.value.password = undefined
-        }
+        errors.value.password = credentials.value.password ? undefined : t("setup.validation.password_required")
     }
 
     function isFormValid() {
@@ -311,8 +308,15 @@
         }
     }
 
+    .login-field-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+        width: 100%;
+    }
+
     .login-field-error {
-        margin-top: calc(-1 * var(--ks-spacing-2));
+        margin: 0;
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-error);
     }

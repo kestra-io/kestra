@@ -1,4 +1,5 @@
 <template>
+    
     <template v-if="initialInputs">
         <KsFormItem
             v-for="input in inputsMetaData"
@@ -251,7 +252,7 @@
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
-    import {Execution, useExecutionsStore} from "../../stores/executions"
+    import {Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -264,33 +265,9 @@
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import {Flow} from "../../stores/flow"
+    import {InputMetaData} from "../../stores/executions"
 
-    interface InputError {
-        message: string;
-    }
 
-    type ValueOptionLike = string | {label: string; value: string};
-
-    interface InputMetaData {
-        id: string;
-        type: InputType
-        displayName?: string;
-        description?: string;
-        required?: boolean;
-        defaults?: unknown;
-        value?: unknown;
-        values?: ValueOptionLike[];
-        options?: ValueOptionLike[];
-        errors?: InputError[];
-        isDefault?: boolean;
-        isRadio?: boolean;
-        allowCustomValue?: boolean;
-        min?: number;
-        max?: number;
-        allowedFileExtensions?: string[];
-        accept?: string;
-        prefill?: unknown;
-    }
 
     function toOption(item: ValueOptionLike): {label: string; value: string} {
         return typeof item === "string" ? {label: item, value: item} : item
@@ -298,23 +275,6 @@
 
     interface SelectedTrigger {
         inputs?: Record<string, unknown>;
-    }
-
-    interface ValidationResponse {
-        checks?: unknown[];
-        inputs: Array<{
-            enabled: boolean;
-            input: InputMetaData;
-            errors?: InputError[];
-            value?: unknown;
-            isDefault?: boolean;
-        }>;
-    }
-
-    interface ValidationEventPayload {
-        formData: FormData | undefined;
-        inputsMetaData: InputMetaData[];
-        callback: (response: ValidationResponse) => void;
     }
 
     // Props
@@ -338,7 +298,7 @@
     const emit = defineEmits<{
         "update:modelValue": [value: Record<string, unknown>];
         "update:modelValueNoDefault": [value: Record<string, unknown>];
-        "update:checks": [checks: unknown[]];
+        "update:checks": [checks: Check[]];
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
     }>()
@@ -578,10 +538,10 @@
             return undefined
         }
 
-        if (input.type === "BOOLEAN") {
+        if (["BOOLEAN", "BOOL"].includes(input.type)) {
             return [{
                 validator: (_rule, val: unknown, callback: (error?: Error) => void) => {
-                    if (val === "undefined") {
+                    if (typeof val === "undefined") {
                         return callback(new Error(t("is required", {field: input.displayName || input.id})))
                     }
                     callback()

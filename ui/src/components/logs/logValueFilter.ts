@@ -1,11 +1,11 @@
-export const FILTERABLE_LOG_FIELDS: Record<string, {for: string; out: string}> = {
+export const FILTERABLE_LOG_FIELDS = {
     namespace: {for: "IN", out: "NOT_IN"},
     flowId: {for: "EQUALS", out: "NOT_EQUALS"},
     taskId: {for: "EQUALS", out: "NOT_EQUALS"},
     triggerId: {for: "EQUALS", out: "NOT_EQUALS"},
     taskRunId: {for: "EQUALS", out: "NOT_EQUALS"},
     attemptNumber: {for: "EQUALS", out: "NOT_EQUALS"},
-}
+} as const
 
 export const isFilterableLogField = (field: string): boolean =>
     Object.prototype.hasOwnProperty.call(FILTERABLE_LOG_FIELDS, field)
@@ -17,7 +17,7 @@ export const buildValueFilterQuery = (
     negate: boolean,
     pageKey = "page",
 ): Record<string, any> | null => {
-    const comparators = FILTERABLE_LOG_FIELDS[field]
+    const comparators = FILTERABLE_LOG_FIELDS[field as keyof typeof FILTERABLE_LOG_FIELDS]
     if (!comparators) return null
 
     const comparator = negate ? comparators.out : comparators.for

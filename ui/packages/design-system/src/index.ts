@@ -101,6 +101,7 @@ import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
+import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
 import KsPageHeader from "./components/Data/KsPageHeader.vue"
@@ -291,6 +292,7 @@ const components: Record<string, Component> = {
     KsTooltip,
     KsTopNavBar,
     KsTree,
+    KsJsonTree,
     KsUpload,
     KsSubMenu,
     KsPageHeader,
@@ -396,6 +398,7 @@ export {
     KsTooltip,
     KsTopNavBar,
     KsTree,
+    KsJsonTree,
     KsUpload,
     KsSubMenu,
     KsPageHeader,
@@ -520,6 +523,7 @@ declare module "vue" {
         KsTooltip: typeof KsTooltip
         KsTopNavBar: typeof KsTopNavBar
         KsTree: typeof KsTree
+        KsJsonTree: typeof KsJsonTree
         KsUpload: typeof KsUpload
     }
 }

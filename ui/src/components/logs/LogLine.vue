@@ -34,7 +34,7 @@
                     >{{ meta.value }}</LogValueActions>
                 </span>
             </div>
-            <JsonTree
+            <KsJsonTree
                 v-if="structured !== undefined"
                 class="log-json"
                 :value="structured"
@@ -52,7 +52,6 @@
     import MenuRight from "vue-material-design-icons/MenuRight.vue"
     import linkify, {processLinkTags} from "./linkify"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import JsonTree from "./JsonTree.vue"
     import LogValueActions from "./LogValueActions.vue"
     import {isFilterableLogField} from "./logValueFilter"
     import {LevelKey, parseStructured} from "../../utils/logs"

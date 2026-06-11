@@ -21,7 +21,7 @@
                 </span>
             </button>
             <div v-if="expanded" class="children">
-                <JsonTree
+                <KsJsonTree
                     v-for="entry in entries"
                     :key="entry.key"
                     :value="entry.value"

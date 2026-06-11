@@ -392,15 +392,17 @@ Tokens are CSS custom properties declared in [`ks-theme-light.scss`](packages/de
 
 Token families currently exposed:
 
-- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-bg-success`, `--ks-background-failed`, …)
-- `--ks-border-*` — primary / secondary borders, plus per-state borders
-- `--ks-text-*` — text colors (primary, inverse, link, link-hover, per-state)
-- `--ks-button-*` — button background and content variants (primary / secondary / success, idle / hover / active, …)
-- `--ks-badge-*`, `--ks-tag-*`, `--ks-card-*`, `--ks-dialog-*`, `--ks-dropdown-*`, `--ks-tooltip-*`, `--ks-select-*`, `--ks-scrollbar-*` — component-specific tokens
-- `--ks-status-*` — palette for charts; pair with `cssVar("--ks-status-success")` in JS
-- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-dots-*` — domain-specific surfaces
+- `--ks-bg-*` — backgrounds: surfaces (`base`, `surface`, `elevated`, `sidebar`, `input`, `overlay`, `scrim`), interaction states (`hover`, `hover-elevated`, `active`, `inactive`), component fills (`badge`, `tag`, `tag-hover`, `tag-active`, `tag-inactive`), plus per-state (`--ks-bg-success`, `--ks-bg-error`, `--ks-bg-warning`, `--ks-bg-info`)
+- `--ks-border-*` — `default` / `subtle` / `strong` borders, `focus`, plus per-state (`error`, `success`, `warning`, `info`)
+- `--ks-text-*` — text colors: `primary`, `secondary`, `dim`, `muted`, `inactive`, `link`, named (`blue`, `green`), plus per-state (`error`, `success`, `warning`, `info`)
+- `--ks-icon-*` — icon colors: `default`, `hover`, `active`, `inactive`, `muted`, plus per-state
+- `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
+- `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
+- `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
+- `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 
-When a needed token is missing, **add it** to both `ks-theme-light.scss`,`ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
+When a needed token is missing, **add it** to all three of `ks-theme-light.scss`, `ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
 
 **SCSS variables — only inside `ui/packages/design-system/`, never in feature code:**
 

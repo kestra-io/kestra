@@ -2037,6 +2037,7 @@
     "watch": "देखें",
     "watch_video": "वीडियो देखें",
     "webhook": {
+      "copy_url": "वेबहुक URL कॉपी करें",
       "curl_command": "Webhook cURL कमांड",
       "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
       "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",

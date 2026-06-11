@@ -2037,6 +2037,7 @@
     "watch": "Oglądaj",
     "watch_video": "Obejrzyj wideo",
     "webhook": {
+      "copy_url": "Skopiuj URL webhooka",
       "curl_command": "Polecenie cURL Webhook",
       "curl_note": "Użyj tej komendy cURL, aby triggerować flow za pomocą webhook z niestandardowym ładunkiem JSON.",
       "no_triggers": "Ten flow nie ma włączonych webhook triggerów",

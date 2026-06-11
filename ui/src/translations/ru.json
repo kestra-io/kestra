@@ -2037,6 +2037,7 @@
     "watch": "Наблюдение",
     "watch_video": "Смотреть видео",
     "webhook": {
+      "copy_url": "Скопировать URL вебхука",
       "curl_command": "Команда cURL для Webhook",
       "curl_note": "Используйте эту команду cURL, чтобы trigger flow через webhook с пользовательским JSON payload",
       "no_triggers": "Этот flow не имеет включенных webhook trigger",

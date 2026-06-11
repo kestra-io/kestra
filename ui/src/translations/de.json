@@ -230,6 +230,7 @@
     "current": "aktuell",
     "current execution": "Aktuelle Ausführung",
     "custom value": "Benutzerdefinierter Wert",
+    "customize sidebar": "Seitenleiste anpassen",
     "dark_version": "Dunkler Modus",
     "dashboards": {
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
@@ -482,6 +483,7 @@
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
+    "drop items here": "Elemente hier ablegen",
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "duration": "Dauer",
     "dynamic": "Dynamisch",
@@ -1551,6 +1553,7 @@
     "replayed": "Die Ausführung wird wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",
+    "reset to defaults": "Zurücksetzen auf Standardwerte",
     "restart": "Neustart",
     "restart change revision": "Sie können die Revision ändern, die für die neue Ausführung verwendet wird.",
     "restart confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> neu starten möchten?",
@@ -1699,6 +1702,15 @@
           "label": "Präferenzen speichern",
           "unsaved_title": "Nicht gespeicherte Änderungen",
           "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Elemente in der Seitenleiste anzeigen, ausblenden und neu anordnen."
+          },
+          "fields": {
+            "items": "Navigationspunkte"
+          },
+          "label": "Seitenleiste"
         },
         "theme": {
           "color_modes": {

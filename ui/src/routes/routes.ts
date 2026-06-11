@@ -51,7 +51,27 @@ const routes: KestraRouteRecord[] = [
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
     },
-    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
+    {
+        name: "executions/update",
+        path: "/:tenant?/executions/:namespace/:flowId/:id",
+        component: () => import("../components/executions/ExecutionRoot.vue"),
+        // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
+        // `/:id` URLs to the matching child route, preserving params and query.
+        redirect: (to) => {
+            const tab = (to.params.tab as string) || localStorage.getItem("executeDefaultTab") || "overview"
+            return {name: `executions/update/${tab}`, params: to.params, query: to.query}
+        },
+        children: [
+            {name: "executions/update/overview", path: "overview", component: () => import("../components/executions/overview/Overview.vue"), meta: {tab: "overview"}},
+            {name: "executions/update/gantt", path: "gantt", component: () => import("../components/executions/Gantt.vue"), meta: {tab: "gantt"}},
+            {name: "executions/update/logs", path: "logs", component: () => import("../components/executions/Logs.vue"), meta: {tab: "logs"}},
+            {name: "executions/update/outputs", path: "outputs", component: () => import("../components/executions/outputs/ExecutionVariableExplorer.vue"), meta: {tab: "outputs", maximized: true, noOverflow: true}},
+            {name: "executions/update/metrics", path: "metrics", component: () => import("../components/executions/ExecutionMetric.vue"), meta: {tab: "metrics"}},
+            {name: "executions/update/dependencies", path: "dependencies", component: () => import("../components/dependencies/Dependencies.vue"), props: {isReadOnly: true}, meta: {tab: "dependencies", maximized: true}},
+            {name: "executions/update/auditlogs", path: "auditlogs", component: () => import("../components/demo/AuditLogs.vue"), meta: {tab: "auditlogs", maximized: true, locked: true}},
+            {name: "executions/update/assets", path: "assets", component: () => import("../components/demo/Assets.vue"), props: {topbar: false}, meta: {tab: "assets", maximized: true, locked: true}},
+        ],
+    },
 
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},

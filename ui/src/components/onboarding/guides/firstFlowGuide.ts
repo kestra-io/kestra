@@ -213,7 +213,8 @@ tasks:
         overlayPosition: {vertical: "bottom", horizontal: "right"},
         targetSelector: "[data-onboarding-target=\"execution-gantt\"], #gantt",
         validate: ({routeName}) => {
-            if (routeName !== "executions/update") {
+            // Execution tabs are now child routes (e.g. "executions/update/gantt").
+            if (!routeName?.startsWith("executions/update")) {
                 return {ok: false, level: "info", message: "onboarding.validation.view_logs_status"}
             }
             return {ok: true}

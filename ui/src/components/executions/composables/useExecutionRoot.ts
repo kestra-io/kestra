@@ -1,23 +1,13 @@
 import {ref, computed, onMounted, onUnmounted, watch} from "vue"
-import {useRoute, useRouter} from "vue-router"
+import {useRoute} from "vue-router"
 import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 
-import Logs from "../Logs.vue"
-import Gantt from "../Gantt.vue"
-import Overview from "../overview/Overview.vue"
-import DemoAuditLogs from "../../demo/AuditLogs.vue"
-import DemoAssets from "../../demo/Assets.vue"
-import ExecutionMetric from "../ExecutionMetric.vue"
-import Dependencies from "../../dependencies/Dependencies.vue"
-import ExecutionVariableExplorer from "../outputs/ExecutionVariableExplorer.vue"
-
 export function useExecutionRoot() {
     const {t} = useI18n()
     const route = useRoute()
-    const router = useRouter()
 
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
@@ -67,62 +57,45 @@ export function useExecutionRoot() {
         executionsStore.followExecution(route.params as any, t)
     }
 
+    // Bar metadata only: the rendered component, its props and section flags now live
+    // on the matching child route (see routes.ts) and are resolved by `<router-view>`.
     const getBaseTabs = () => {
         return [
             {
                 name: "overview",
-                component: Overview,
                 title: t("overview"),
             },
             {
                 name: "gantt",
-                component: Gantt,
                 title: t("gantt"),
             },
             {
                 name: "logs",
-                component: Logs,
                 title: t("logs"),
             },
             {
                 name: "outputs",
-                component: ExecutionVariableExplorer,
                 title: t("variable_explorer.title"),
-                maximized: true,
-                noOverflow: true,
             },
             {
                 name: "metrics",
-                component: ExecutionMetric,
                 title: t("metrics"),
             },
             {
                 name: "dependencies",
-                component: Dependencies,
                 title: t("dependencies"),
                 count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
                 disabled: !dependenciesCount.value,
-                maximized: true,
-                props: {
-                    isReadOnly: true,
-                },
             },
             {
                 name: "auditlogs",
-                component: DemoAuditLogs,
                 title: t("auditlogs"),
-                maximized: true,
                 locked: true,
             },
             {
                 name: "assets",
-                component: DemoAssets,
                 title: t("assets.title"),
-                maximized: true,
                 locked: true,
-                props: {
-                    topbar: false,
-                },
             },
         ]
     }
@@ -131,11 +104,7 @@ export function useExecutionRoot() {
 
     const setupLifecycle = () => {
         onMounted(async () => {
-            if (!route.params.tab) {
-                const tab = localStorage.getItem("executeDefaultTab") || undefined
-                router.replace({name: "executions/update", params: {...route.params, tab}})
-            }
-
+            // The default-tab redirect now lives on the parent route record (routes.ts).
             follow()
             window.addEventListener("popstate", follow)
 

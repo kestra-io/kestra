@@ -33,7 +33,7 @@
                 </KsTooltip>
             </div>
             <div class="logs-toolbar__actions">
-                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
+                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
                 <LogDisplaySettings />
                 <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
                 <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
@@ -50,7 +50,7 @@
             :levelToHighlight="cursorLogLevel"
             @log-cursor="logCursor = $event"
             :logCursor="logCursor"
-            @follow="emit('follow', $event)"
+           
             @opened-taskruns-count="openedTaskrunsCount = $event"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
             :targetFlow="executionsStore.flow"
@@ -157,9 +157,6 @@
     const {t} = useI18n()
     const toast = useToast()
 
-    const emit = defineEmits<{
-        follow: [event: unknown]
-    }>()
 
     const props = withDefaults(defineProps<{
         playground?: boolean

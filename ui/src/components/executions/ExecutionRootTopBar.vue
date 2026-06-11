@@ -11,13 +11,40 @@
         <template #actions>
             <slot name="actions" />
             <div
-                v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'"
+                v-if="hasVisibleActions && activeTab !== 'auditlogs'"
                 class="d-flex align-items-center gap-2"
             >
+                <ul v-if="!isOverviewTab" class="d-none d-xl-flex align-items-center">
+                    <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
+                        <KsButton
+                            class="execution-edit-flow-button"
+                            :icon="Pencil"
+                            @click="editFlow"
+                        >
+                            {{ $t("edit flow") }}
+                        </KsButton>
+                    </li>
+                </ul>
+
+                <KsDropdown v-if="!isOverviewTab" class="d-flex d-xl-none align-items-center">
+                    <KsButton>
+                        <KsIcon><DotsVertical /></KsIcon>
+                        <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
+                    </KsButton>
+                    <template #dropdown>
+                        <KsDropdownMenu>
+                            <KsDropdownItem v-if="isAllowedEdit" @click="editFlow">
+                                <KsIcon><Pencil /></KsIcon>
+                                {{ $t("edit flow") }}
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
+                    </template>
+                </KsDropdown>
+
                 <ExecutionActions
-                    v-if="execution && executionActions.length"
-                    :actions="executionActions"
-                    :execution
+                    v-if="execution && isOverviewTab && overviewActions.length"
+                    :actions="overviewActions"
+                    :execution="execution"
                 />
 
                 <div
@@ -46,6 +73,9 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
     import {State} from "@kestra-io/design-system"
 
     import Badge from "../global/Badge.vue"
@@ -54,7 +84,6 @@
     import ExecutionActions from "./ExecutionActions.vue"
     import Api from "./overview/components/actions/Api.vue"
     import Delete from "./overview/components/actions/Delete.vue"
-    import EditFlow from "./overview/components/actions/EditFlow.vue"
     import ForceRun from "./overview/components/actions/ForceRun.vue"
     import Kill from "./overview/components/actions/Kill.vue"
     import Pause from "./overview/components/actions/Pause.vue"
@@ -66,16 +95,24 @@
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useActiveTab} from "../../composables/useActiveTab"
 
     defineProps<{
         // FIXME: any - routeInfo shape varies across usage
         routeInfo: any // FIXME: any
     }>()
 
+    const router = useRouter()
+    const route = useRoute()
+    const activeTab = useActiveTab()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
     const execution = computed(() => executionsStore.execution)
+
+    const isAllowedEdit = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),
+    )
 
     const isAllowedTrigger = computed(() =>
         execution.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, execution.value.namespace),
@@ -113,10 +150,13 @@
         execution.value && isAllowedTrigger.value && !primaryAction.value,
     )
 
-    const executionActions = computed(() => {
+    const isOverviewTab = computed(() =>
+        !activeTab.value || activeTab.value === "overview",
+    )
+
+    const overviewActions = computed(() => {
         if (!execution.value?.state) return []
         return [
-            {component: EditFlow},
             {component: Restart},
             {component: Restart, props: {isReplay: true}},
             {component: Kill},
@@ -132,9 +172,10 @@
     })
 
     const hasVisibleActions = computed(() =>
+        isAllowedEdit.value ||
         primaryAction.value ||
         fallbackToExecute.value ||
-        executionActions.value.length > 0,
+        (isOverviewTab.value && overviewActions.value.length > 0),
     )
 
     const isATestExecution = computed(() =>
@@ -142,4 +183,14 @@
             (label: {key: string; value: string}) => label.key === "system.test" && label.value === "true",
         ) ?? false,
     )
+
+    function editFlow() {
+        router.push({
+            name: "flows/update/edit", params: {
+                namespace: route.params.namespace as string,
+                id: route.params.flowId as string,
+                tenant: route.params.tenant as string,
+            },
+        })
+    }
 </script>

@@ -11,6 +11,7 @@
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
+        @echarts-click="emit('echarts-click', $event)"
     />
 </template>
 
@@ -31,6 +32,7 @@
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
+        "echarts-click": [params: unknown]
     }>()
 
     const props = withDefaults(

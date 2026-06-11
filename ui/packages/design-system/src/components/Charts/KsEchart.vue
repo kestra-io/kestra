@@ -26,6 +26,7 @@
                 autoresize
                 @mouseover="emit('echarts-mouseover', $event)"
                 @mouseout="emit('echarts-mouseout', $event)"
+                @click="emit('echarts-click', $event)"
             />
         </div>
     </KsTooltip>
@@ -84,6 +85,7 @@
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
+        "echarts-click": [params: unknown]
     }>()
 
     const props = withDefaults(

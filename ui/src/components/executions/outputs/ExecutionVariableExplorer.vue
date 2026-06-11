@@ -47,6 +47,7 @@
 
                     <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
                         <FilePreview
+                            :key="fileSelectedOutput"
                             :path="fileSelectedOutput"
                             :executionId="execution.id"
                         />

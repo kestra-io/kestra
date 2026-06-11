@@ -114,7 +114,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
+                @update:model-value="onChangeBool(input)"
                 class="w-100 boolean-inputs"
             />
             <KsDatePicker
@@ -250,7 +250,7 @@
     import {KsMessage, KsEditor} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
     import {Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
@@ -265,8 +265,6 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import {Flow} from "../../stores/flow"
     import {InputMetaData} from "../../stores/executions"
-
-
 
     function toOption(item: ValueOptionLike): {label: string; value: string} {
         return typeof item === "string" ? {label: item, value: item} : item
@@ -387,6 +385,10 @@
         }
     }
 
+    function onChangeBool(input: InputMetaData): void {
+        onChange(input)
+    }
+
     function onChange(input: InputMetaData): void {
         // give 2 seconds for the user to finish their edit
         // and for the server to return with validated content
@@ -492,7 +494,7 @@
 
         const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
 
-        const metadataCallback = (response: ValidationResponse): void => {
+        const metadataCallback = async (response: ValidationResponse) => {
             emit("update:checks", response.checks || [])
             inputsMetaData.value = response.inputs.reduce((acc: InputMetaData[], it) => {
                 if (it.enabled) {
@@ -505,6 +507,7 @@
                 }
                 return acc
             }, [])
+            await nextTick()
             updateDefaults()
         }
 
@@ -522,9 +525,7 @@
             emit("validation", {
                 formData: formData,
                 inputsMetaData: inputsMetaData.value,
-                callback: (response: ValidationResponse) => {
-                    metadataCallback(response)
-                },
+                callback: metadataCallback,
             })
         }
     }
@@ -666,7 +667,7 @@
                     // only revalidate if values are stable for more than 500ms
                     // to avoid too many calls to the server
                     debouncedValidation()
-                    emit("update:modelValue", {...inputsValues})
+                    modelValue.value = {...inputsValues}
                     emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val))
@@ -676,7 +677,7 @@
 
         // on first load default values need to be sent to the parent
         // since they are part of the actual value
-        emit("update:modelValue", {...inputsValues})
+        modelValue.value = {...inputsValues}
     })
 
     // Lifecycle hooks

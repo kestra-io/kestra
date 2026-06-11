@@ -369,12 +369,11 @@
 
         if (newExecution.id !== props.execution.id) {
             window.location.href = router.resolve({
-                name: "executions/update",
+                name: "executions/update/gantt",
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,
                     id: newExecution.id,
-                    tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant,
                 },
             }).href

@@ -11,7 +11,7 @@
         <template #actions>
             <slot name="actions" />
             <div
-                v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'"
+                v-if="hasVisibleActions && activeTab !== 'auditlogs'"
                 class="d-flex align-items-center gap-2"
             >
                 <ul v-if="!isOverviewTab" class="d-none d-xl-flex align-items-center">
@@ -95,6 +95,7 @@
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useActiveTab} from "../../composables/useActiveTab"
 
     defineProps<{
         // FIXME: any - routeInfo shape varies across usage
@@ -103,6 +104,7 @@
 
     const router = useRouter()
     const route = useRoute()
+    const activeTab = useActiveTab()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
@@ -149,7 +151,7 @@
     )
 
     const isOverviewTab = computed(() =>
-        !route.params.tab || route.params.tab === "overview",
+        !activeTab.value || activeTab.value === "overview",
     )
 
     const overviewActions = computed(() => {

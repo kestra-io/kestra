@@ -88,10 +88,6 @@
 
     const props = defineProps<{ execution: Execution }>()
 
-    const emit = defineEmits<{
-        follow: [];
-    }>()
-
     const {t} = useI18n({useScope: "global"})
     const toast = useToast()
     const executionsStore = useExecutionsStore()
@@ -137,7 +133,9 @@
         const execution = await executionsStore.waitForStateChange(props.execution) as Execution
 
         executionsStore.execution = execution
-        emit("follow")
+        // Re-subscribe to the execution SSE stream directly via the store
+        // instead of bubbling a `follow` event up to the route component.
+        executionsStore.followExecution({id: props.execution.id}, t)
         toast.success(t("change execution state done"))
     }
 </script>

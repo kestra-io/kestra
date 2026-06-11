@@ -3,7 +3,6 @@
         <ExecutionRootTopBar :routeInfo="routeInfo" />
         <Tabs
             :routeName="routeName"
-            @follow="follow"
             :tabs="tabs"
         />
     </template>
@@ -21,7 +20,7 @@
 
     const executionsStore = useExecutionsStore()
 
-    const {routeInfo, routeName, ready, follow, tabs, setupLifecycle} = useExecutionRoot()
+    const {routeInfo, routeName, ready, tabs, setupLifecycle} = useExecutionRoot()
 
     useRouteContext(routeInfo as any, false)
 

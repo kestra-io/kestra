@@ -85,10 +85,6 @@
         attemptIndex: undefined,
     })
 
-    const emit = defineEmits<{
-        follow: []
-    }>()
-
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
@@ -162,7 +158,9 @@
             .then((execution: unknown) => {
                 // FIXME: any
                 ;(executionsStore as any).execution = execution // FIXME: any
-                emit("follow")
+                // Re-subscribe to the execution SSE stream directly via the store
+                // instead of bubbling a `follow` event up to the route component.
+                executionsStore.followExecution({id: (props.execution as {id: string}).id}, t)
 
                 toast.success(t("change state done"))
             })

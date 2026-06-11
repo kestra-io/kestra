@@ -2,7 +2,7 @@
     <div class="execution-banner">
         <div class="execution-banner__content">
             <div class="execution-banner__state">
-                <ChangeExecutionStatus :execution @follow="emit('follow', $event)">
+                <ChangeExecutionStatus :execution>
                     <template #trigger="{visible, enabled}">
                         <KsExecutionStatus
                             class="execution-banner__status"
@@ -176,7 +176,6 @@
     import GraphOutline from "vue-material-design-icons/GraphOutline.vue"
 
     const props = defineProps<{execution: Execution}>()
-    const emit = defineEmits<{follow: [event?: unknown]}>()
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()

@@ -12,11 +12,10 @@ export function openFlowInNewTab(target: OpenFlowTarget, router: Router): void {
 
     const resolved = target.executionId
         ? router.resolve({
-            name: "executions/update",
+            name: `executions/update/${target.tab ?? "topology"}`,
             params: {
                 namespace: target.namespace,
                 flowId: target.flowId,
-                tab: target.tab ?? "topology",
                 id: target.executionId,
                 tenant,
             },

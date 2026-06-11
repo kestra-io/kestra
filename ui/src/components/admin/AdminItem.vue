@@ -78,6 +78,7 @@
 <style scoped lang="scss">
     .admin-item {
         margin: 0;
+        --ks-sidebar-item-title-color: currentColor;
     }
 
     .admin-item__version {

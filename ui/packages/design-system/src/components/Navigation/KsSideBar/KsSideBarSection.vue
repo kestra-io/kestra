@@ -83,12 +83,12 @@
     display: flex;
     width: 100%;
     align-items: center;
-    gap: var(--ks-spacing-1);
+    gap: var(--ks-spacing-2);
     padding: var(--ks-spacing-3) 0 0;
     margin-bottom: var(--ks-spacing-2);
     font-size: var(--ks-font-size-xs);
     font-weight: 400;
-    color: var(--ks-text-primary);
+    color: var(--ks-text-dim);
     background: none;
     border: none;
     text-align: left;
@@ -97,7 +97,6 @@
 }
 
 .ks-sidebar-section__title-text {
-    flex: 1;
     min-width: 0;
 }
 

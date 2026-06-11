@@ -27,20 +27,13 @@
                 <template v-if="getSectionCollapsed(section) && sectionHasNewChild(section)" #suffix>
                     <KsNewBadge>{{ t("new") }}</KsNewBadge>
                 </template>
-                <Motion
-                    v-for="(item, iIdx) in getDisplayedItems(section)"
+                <MenuLink
+                    v-for="item in getDisplayedItems(section)"
                     :key="item.id"
-                    as="div"
-                    :initial="{opacity: 0, x: -10}"
-                    :animate="{opacity: 1, x: 0}"
-                    :transition="{...ITEM_SPRING, delay: itemEntranceDelay(section, iIdx)}"
-                >
-                    <MenuLink
-                        :item="item"
-                        :active="isItemActive(item)"
-                        :isNew="isItemNew(item)"
-                    />
-                </Motion>
+                    :item="item"
+                    :active="isItemActive(item)"
+                    :isNew="isItemNew(item)"
+                />
             </KsSideBarSection>
         </template>
 
@@ -56,16 +49,6 @@
 
         <template #footer>
             <slot name="footer" />
-            <div class="sidebar-customize-trigger">
-                <KsButton
-                    type="text"
-                    size="small"
-                    class="customize-btn"
-                    @click="showCustomizeModal = true"
-                >
-                    {{ $t("customize sidebar") }}
-                </KsButton>
-            </div>
         </template>
     </KsSideBar>
 
@@ -93,8 +76,7 @@
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton, KsNewBadge} from "@kestra-io/design-system"
-    import {Motion} from "motion-v"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsNewBadge} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
@@ -137,17 +119,6 @@
 
     const CONTEXT_MENU_WIDTH = 200
     const CONTEXT_MENU_HEIGHT = 60
-
-    const ITEM_SPRING = {type: "spring", stiffness: 420, damping: 30, mass: 0.6}
-
-    function itemEntranceDelay(section: MenuItem, localIndex: number): number {
-        let offset = 0
-        for (const candidate of props.menu) {
-            if (candidate === section) break
-            if (candidate.child) offset += getDisplayedItems(candidate).length
-        }
-        return Math.min((offset + localIndex) * 0.04, 0.6)
-    }
 
     function onContextMenu(event: MouseEvent) {
         const x = Math.max(0, Math.min(event.clientX, window.innerWidth - CONTEXT_MENU_WIDTH))
@@ -285,21 +256,6 @@
     right: var(--ks-spacing-4);
     z-index: 1;
     color: var(--ks-icon-muted);
-}
-
-.sidebar-customize-trigger {
-    padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
-
-    .customize-btn {
-        width: 100%;
-        justify-content: flex-start;
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-xs);
-
-        &:hover {
-            color: var(--ks-text-secondary);
-        }
-    }
 }
 
 .sidebar-context-menu {

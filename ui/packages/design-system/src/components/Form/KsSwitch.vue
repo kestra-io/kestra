@@ -64,7 +64,7 @@
                 border-radius: 7px;
                 background-color: palette.$base-gray-neutral-white;
                 box-shadow: 0 1px 4px var(--ks-shadow-element);
-                transition: left 0.2s ease, width 0.2s ease;
+                transition: left 0.2s ease;
             }
         }
 
@@ -80,14 +80,6 @@
             }
         }
 
-        &:hover:not(.is-disabled):not(.is-checked) .kel-switch__core .kel-switch__action {
-            width: 18px;
-        }
-
-        &.is-checked:hover:not(.is-disabled) .kel-switch__core .kel-switch__action {
-            width: 18px;
-            left: calc(100% - 21px);
-        }
 
         &.is-disabled {
             opacity: 1;

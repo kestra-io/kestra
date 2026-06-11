@@ -212,6 +212,7 @@
     "copied": "已复制",
     "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
     "copy": "复制",
+    "copy all logs": "复制所有日志",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
     "copy_and_close": "复制并关闭",
@@ -229,6 +230,7 @@
     "current": "当前",
     "current execution": "当前执行",
     "custom value": "自定义值",
+    "customize sidebar": "自定义侧边栏",
     "dark_version": "深色版本",
     "dashboards": {
       "chart_preview": "单击图表源代码以查看其预览",
@@ -481,6 +483,7 @@
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
     "draft_available": "编辑器中有可用的草稿更改",
+    "drop items here": "将项目拖放到此处",
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "duration": "持续时间",
     "dynamic": "动态",
@@ -1550,6 +1553,7 @@
     "replayed": "执行已重放",
     "required field": "必填字段",
     "reset": "重置",
+    "reset to defaults": "重置为默认值",
     "restart": "重新开始",
     "restart change revision": "你可以更改用于新执行的修订版。",
     "restart confirm": "确定要重新开始执行 <code>{id}</code> 吗？",
@@ -1698,6 +1702,15 @@
           "label": "保存偏好设置",
           "unsaved_title": "未保存的更改",
           "unsaved_warning": "您有未保存的更改。您想在离开之前保存它们吗？"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "在侧边栏中显示、隐藏和重新排序项目。"
+          },
+          "fields": {
+            "items": "导航项"
+          },
+          "label": "侧边栏"
         },
         "theme": {
           "color_modes": {
@@ -2037,6 +2050,7 @@
     "watch": "监视",
     "watch_video": "观看视频",
     "webhook": {
+      "copy_url": "复制 webhook URL",
       "curl_command": "Webhook cURL 命令",
       "curl_note": "使用此 cURL 命令通过 webhook 触发 flow，并使用自定义 JSON 负载",
       "no_triggers": "此flow没有启用的webhook triggers",

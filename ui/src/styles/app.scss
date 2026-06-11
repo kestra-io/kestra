@@ -86,9 +86,29 @@ main {
         padding: 0;
     }
 
-    section.container:has(.ks-data-table-wrapper),
-    section.main-container:has(.ks-data-table-wrapper) {
+    section.container:has(.dashboard-sections-container) {
         padding-inline: 0;
+    }
+
+    section.container:has(:is(.ks-data-table-wrapper, .full-width-table)),
+    section.main-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
+        padding-inline: 0;
+        margin-bottom: 0;
+        &:has(.empty-state) {
+            flex: 1;
+            min-height: 0;
+
+            :has(.ks-data-table-wrapper) {
+                height: 100%;
+            }
+        }
+    }
+
+    .full-width-table {
+        th.kel-table__cell:first-child > .cell,
+        td.kel-table__cell:first-child > .cell {
+            padding-left: var(--ks-spacing-5);
+        }
     }
 
 

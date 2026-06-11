@@ -33,7 +33,6 @@
                         :label="$t('execution labels')"
                     >
                         <LabelInput
-                            :key="executionLabelsKey"
                             v-model:labels="executionLabels"
                         />
                     </KsFormItem>
@@ -102,6 +101,7 @@
     import type {Flow} from "../../stores/flow"
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
+    import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {normalize} from "../../utils/inputs"
     import type {InputType} from "../../utils/inputs"
     import type {FormInstance} from "@kestra-io/design-system"
@@ -188,9 +188,6 @@
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
-    // executionLabelsKey is used to force re-render of LabelInput when executionLabels changes
-    const executionLabelsKey = computed(() => JSON.stringify(executionLabels.value))
-
     const haveBadLabels = computed(() =>
         executionLabels.value.some(label => (label.key && !label.value) || (!label.key && label.value)),
     )
@@ -212,7 +209,7 @@
             return false
         }
         return flow.value.triggers.some(trigger =>
-            trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
+            trigger.type === WEBHOOK_TRIGGER_TYPE &&
             ("disabled" in trigger ? trigger.disabled === undefined || trigger.disabled === false : true),
         )
     })

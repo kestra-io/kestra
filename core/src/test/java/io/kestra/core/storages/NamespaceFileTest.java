@@ -157,6 +157,16 @@ class NamespaceFileTest {
     }
 
     @Test
+    void shouldThrowOnForwardSlashPathTraversal() {
+        // GHSA-h7c7-3mfc-m7pj: on a Windows JVM Path.of("/x/../../../foo.txt").toString()
+        // produces "\x\..\..\..\foo.txt"; toLogicalPath() converts backslashes back to "/",
+        // so the guard must catch the forward-slash form regardless of host OS.
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("/x/../../../escaped.txt")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("x/../../../escaped.txt")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("/x/y/../../..")));
+    }
+
+    @Test
     void shouldAllowLegitimatePathsWithSingleDotAndMultiLevelDirs() {
         assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/foo/./bar")))).isEqualTo("/foo/bar");
         assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/foo/bar")))).isEqualTo("/foo/bar");

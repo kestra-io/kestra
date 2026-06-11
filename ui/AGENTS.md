@@ -322,6 +322,7 @@ If your `<style>` block needs to exist:
 | `KsTable` / `KsTableColumn` | Basic table |
 | `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
 | `KsBadge` | Small indicator badge |
+| `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |

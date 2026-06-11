@@ -36,6 +36,7 @@
                     <KsSelect
                         v-model="selectedStatus"
                         :required="true"
+                        :teleported="false"
                         class="change-state__select"
                     >
                         <template #label="{value}">
@@ -101,7 +102,6 @@
 
     const POPPER_STYLE = {
         padding: "0",
-        overflow: "hidden",
         borderRadius: "0.875rem",
         background: "var(--ks-bg-elevated)",
         boxShadow: "0px 8px 24px 0px var(--ks-shadow-elevated)",
@@ -182,8 +182,12 @@
         }
 
         &__select {
-            width: 9.5rem;
+            width: 120px;
             flex-shrink: 0;
+
+            :deep(.kel-select__wrapper) {
+                padding: 4px 8px 5px 4px;
+            }
         }
 
         &__footer {
@@ -193,6 +197,8 @@
             gap: var(--ks-spacing-4);
             padding: var(--ks-spacing-3) var(--ks-spacing-4);
             border-top: 1px solid var(--ks-border-default);
+            border-bottom-left-radius: 0.875rem;
+            border-bottom-right-radius: 0.875rem;
             background: var(--ks-bg-base);
         }
 

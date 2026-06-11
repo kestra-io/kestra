@@ -8,7 +8,7 @@
         </template>
     </TopNavBar>
 
-    <el-row class="p-5">
+    <el-row class="p-4">
         <div v-if="loading" class="mcp-list__loading">
             <el-icon class="is-loading" :size="32">
                 <Loading />

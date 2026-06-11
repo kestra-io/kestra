@@ -537,6 +537,7 @@
       }
     },
     "back_to_dashboard": "Back to dashboard",
+    "copy all logs": "Copy All Logs",
     "copy logs": "Copy logs",
     "fix_with_ai": "Fix with AI",
     "download logs": "Download logs",
@@ -1055,7 +1056,16 @@
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
         },
-        "reset_section_to_defaults": "Restore this section's default values"
+        "reset_section_to_defaults": "Restore this section's default values",
+        "sidebar": {
+          "label": "Sidebar",
+          "fields": {
+            "items": "Navigation Items"
+          },
+          "descriptions": {
+            "items": "Show, hide, and reorder items in the sidebar."
+          }
+        }
       }
     },
     "apps": "Apps",
@@ -1373,7 +1383,8 @@
       "curl_command": "Webhook cURL command",
       "payload": "Webhook Payload (JSON)",
       "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
-      "no_triggers": "This flow has no enabled webhook triggers"
+      "no_triggers": "This flow has no enabled webhook triggers",
+      "copy_url": "Copy webhook URL"
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -1431,6 +1442,9 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
+    "customize sidebar": "Customize sidebar",
+    "reset to defaults": "Reset to defaults",
+    "drop items here": "Drop items here",
     "files": "Namespace Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",

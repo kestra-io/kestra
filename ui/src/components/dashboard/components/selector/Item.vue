@@ -1,39 +1,46 @@
 <template>
-    <KsDropdownItem
-        class="dashboard-row"
-        :class="{active}"
-        :icon="active ? CheckBold : undefined"
-    >
-        <span class="label">{{ dashboard.title }}</span>
+    <KsDropdownItem>
+        <div class="dashboard-row">
+            <span class="lead">
+                <KsIcon v-if="active">
+                    <CheckBold />
+                </KsIcon>
+            </span>
 
-        <KsIconButton
-            v-if="dashboard.id !== 'default'"
-            class="action bookmark"
-            :class="{'is-default': dashboard.isDefault}"
-            :tooltip="$t('default')"
-            @click.stop="setAsDefault(dashboard.id)"
-        >
-            <component :is="dashboard.isDefault ? Bookmark : BookmarkOutline" />
-        </KsIconButton>
+            <span class="label">{{ dashboard.title }}</span>
 
-        <span class="spacer" />
-
-        <KsIconButton
-            v-if="dashboard.id !== 'default'"
-            class="action"
-            :tooltip="$t('edit')"
-            @click.stop="edit(dashboard.id)"
-        >
-            <Pencil />
-        </KsIconButton>
-        <KsIconButton
-            v-if="dashboard.id !== 'default' && remove"
-            class="action mx-0"
-            :tooltip="$t('delete')"
-            @click.stop="remove(dashboard)"
-        >
-            <DeleteOutline />
-        </KsIconButton>
+            <span v-if="dashboard.id !== 'default'" class="actions">
+                <span class="action">
+                    <KsIconButton
+                        class="bookmark"
+                        :class="{'is-default': dashboard.isDefault}"
+                        :tooltip="$t('default')"
+                        placement="top"
+                        @click.stop="setAsDefault(dashboard.id)"
+                    >
+                        <component :is="dashboard.isDefault ? Bookmark : BookmarkOutline" />
+                    </KsIconButton>
+                </span>
+                <span class="action">
+                    <KsIconButton
+                        :tooltip="$t('edit')"
+                        placement="top"
+                        @click.stop="edit(dashboard.id)"
+                    >
+                        <Pencil />
+                    </KsIconButton>
+                </span>
+                <span v-if="remove" class="action">
+                    <KsIconButton
+                        :tooltip="$t('delete')"
+                        placement="top"
+                        @click.stop="remove(dashboard)"
+                    >
+                        <DeleteOutline />
+                    </KsIconButton>
+                </span>
+            </span>
+        </div>
     </KsDropdownItem>
 </template>
 
@@ -54,8 +61,22 @@
 
 <style scoped lang="scss">
 .dashboard-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: var(--ks-spacing-1);
+    min-height: 1.75rem;
+
+    .lead {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ks-icon-size-sm);
+    }
+
     .label {
-        flex: 0 1 auto;
+        flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
         white-space: nowrap;
@@ -63,8 +84,20 @@
         font-size: var(--ks-font-size-sm);
     }
 
-    .spacer {
-        flex: 1 1 auto;
+    .actions {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+
+        .action {
+            display: none;
+            align-items: center;
+        }
+    }
+
+    &:hover .actions .action {
+        display: inline-flex;
     }
 }
 </style>

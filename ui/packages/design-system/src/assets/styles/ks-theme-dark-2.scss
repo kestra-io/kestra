@@ -35,7 +35,7 @@ html.dark-2 {
 
     /* border */
     #{--ks-border-default}: $base-gray-neutral-700;
-    #{--ks-border-error}: $base-red-500;
+    #{--ks-border-error}: $base-red-400;
     #{--ks-border-focus}: $base-primary-300;
     #{--ks-border-info}: $base-blue-300;
     #{--ks-border-strong}: $base-gray-neutral-600;
@@ -141,5 +141,29 @@ html.dark-2 {
 
     /* topology */
     #{--ks-topology-bg}: $base-gray-neutral-800;
+    #{--ks-topology-bg-cancelled}: $base-gray-neutral-700;
+    #{--ks-topology-bg-errors}: rgba($base-red-400, 0.1);
+    #{--ks-topology-bg-flowable-task}: rgba($base-blue-500, 0.1);
+    #{--ks-topology-bg-killing}: $base-yellow-1000;
+    #{--ks-topology-bg-running}: $base-primary-1000;
+    #{--ks-topology-bg-subflow}: rgba($base-primary-400, 0.1);
+    #{--ks-topology-bg-success}: $base-green-1000;
+    #{--ks-topology-bg-triggers}: rgba($base-green-500, 0.1);
+    #{--ks-topology-border-cancelled}: $base-gray-neutral-600;
+    #{--ks-topology-border-errors}: $base-red-400;
+    #{--ks-topology-border-flowable-task}: $base-blue-500;
+    #{--ks-topology-border-killing}: $base-yellow-500;
+    #{--ks-topology-border-running}: $base-primary-300;
+    #{--ks-topology-border-subflow}: $base-primary-300;
+    #{--ks-topology-border-success}: $base-green-700;
+    #{--ks-topology-border-triggers}: $base-green-500;
+    #{--ks-topology-btn-cancelled}: $base-gray-neutral-800;
+    #{--ks-topology-btn-errors}: $base-red-400;
+    #{--ks-topology-btn-flowable-task}: $base-blue-500;
+    #{--ks-topology-btn-killing}: $base-yellow-500;
+    #{--ks-topology-btn-running}: $base-primary-300;
+    #{--ks-topology-btn-subflow}: $base-primary-300;
+    #{--ks-topology-btn-success}: $base-green-700;
+    #{--ks-topology-btn-triggers}: $base-green-500;
     #{--ks-topology-dash}: $base-gray-neutral-300;
 }

@@ -136,7 +136,7 @@
         .kel-select__wrapper {
             background-color: var(--ks-bg-input);
             min-height: 30px;
-            padding: 4px 8px 4px 16px;
+            padding: 4px 8px 4px 10px;
             font-size: var(--ks-font-size-xs);
             box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
 

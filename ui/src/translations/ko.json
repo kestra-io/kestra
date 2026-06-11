@@ -27,6 +27,7 @@
     "activate_basic_auth": "기본 인증 활성화",
     "active": "활성화됨",
     "active-slots": "활성 슬롯",
+    "actual state": "현재 상태",
     "add": "추가",
     "add at position": "{position} <code>{task}</code> 추가",
     "add error handler": "오류 처리기 추가",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
+    "are you sure change state": "상태를 변경하시겠습니까?",
     "assets": {
       "title": "자산"
     },
@@ -210,6 +212,7 @@
     "copied": "복사됨",
     "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
     "copy": "복사",
+    "copy all logs": "모든 Log 복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
     "copy_and_close": "복사하고 닫기",
@@ -227,6 +230,7 @@
     "current": "현재",
     "current execution": "현재 실행",
     "custom value": "사용자 정의 value",
+    "customize sidebar": "사이드바 사용자 정의",
     "dark_version": "다크 버전",
     "dashboards": {
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
@@ -251,6 +255,14 @@
         "singular": "대시보드"
       },
       "preview": "미리보기 대시보드",
+      "quick_filters": {
+        "all": "전체",
+        "failed": "실패",
+        "paused": "일시 중지됨",
+        "running": "실행 중",
+        "success": "성공",
+        "warning": "경고"
+      },
       "switch": "대시보드 전환"
     },
     "data": "데이터",
@@ -471,6 +483,7 @@
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
+    "drop items here": "여기에 항목을 드롭하세요",
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "duration": "지속 시간",
     "dynamic": "동적",
@@ -888,6 +901,7 @@
     "labels": "라벨",
     "last 48 hours": "지난 48시간",
     "last X days count": "지난 {days}일 동안 {count}",
+    "last error was": "마지막 오류는",
     "last evaluation date": "마지막 평가 날짜",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "마지막 실행 날짜",
@@ -1152,7 +1166,8 @@
           "taskDefaults": "작업 기본값",
           "updated": "업데이트됨",
           "variables": "변수",
-          "workerGroup": "작업자 그룹"
+          "workerGroup": "작업자 그룹",
+          "workerSelector": "워커 선택기"
         },
         "main": {
           "description": "설명",
@@ -1535,9 +1550,10 @@
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "replay using": "사용하여 재실행",
     "replay with inputs": "입력과 함께 재실행",
-    "replayed": "재실행되었습니다.",
+    "replayed": "실행이 재생되었습니다.",
     "required field": "필수 필드",
     "reset": "재시작",
+    "reset to defaults": "기본값으로 재설정",
     "restart": "재시작",
     "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
@@ -1563,6 +1579,7 @@
     "revisions": "수정본들",
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",
+    "run timeline": "실행 타임라인",
     "runners": "러너",
     "running": "실행 중",
     "running duration": "실행 중 지속 시간",
@@ -1614,9 +1631,11 @@
     },
     "see dependencies": "종속성 보기",
     "see full revision": "전체 수정본 보기",
+    "see timeline": "타임라인 보기",
     "see_all_states": "모든 상태 보기",
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "select": "{{section}}을 선택하세요",
+    "select a state": "상태 선택",
     "select datetime": "날짜 선택",
     "select view": "보기 선택",
     "selected": "선택됨",
@@ -1683,6 +1702,15 @@
           "label": "환경 설정 저장",
           "unsaved_title": "저장되지 않은 변경 사항",
           "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "사이드바에서 항목을 표시, 숨기기 및 재정렬합니다."
+          },
+          "fields": {
+            "items": "네비게이션 항목"
+          },
+          "label": "사이드바"
         },
         "theme": {
           "color_modes": {
@@ -1802,7 +1830,9 @@
     "show": "보기",
     "show chart": "차트 보기",
     "show description": "설명을 표시",
+    "show details": "세부 정보 표시",
     "show documentation": "문서 보기",
+    "show more details": "자세한 정보 보기",
     "show task condition": "작업 상태 표시",
     "show task documentation": "task 문서 보기",
     "show task documentation in editor": "편집기에서 task 문서 보기",
@@ -1812,6 +1842,7 @@
     "showLess": "덜 보기",
     "showMore": "더 보기",
     "side-by-side": "나란히",
+    "skipped": "건너뜀",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2179,7 @@
     "worker information": "작업자 정보",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다"
+    "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
+    "yes": "네"
   }
 }

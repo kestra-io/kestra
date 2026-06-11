@@ -27,6 +27,7 @@
     "activate_basic_auth": "Активировать Basic Authentication",
     "active": "Активно",
     "active-slots": "Активные слоты",
+    "actual state": "Фактическое состояние",
     "add": "Добавить",
     "add at position": "Добавить {position} <code>{task}</code>",
     "add error handler": "Добавить обработчик ошибок",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Блоки приложения",
     "apps": "Приложения",
+    "are you sure change state": "Вы уверены, что хотите изменить состояние?",
     "assets": {
       "title": "Активы"
     },
@@ -210,6 +212,7 @@
     "copied": "Скопировано",
     "copied_logs_to_clipboard": "Скопированные logs в буфер обмена.",
     "copy": "Копировать",
+    "copy all logs": "Скопировать все Logs",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",
     "copy_and_close": "Копировать и закрыть",
@@ -227,6 +230,7 @@
     "current": "текущий",
     "current execution": "Текущее выполнение",
     "custom value": "Пользовательское значение",
+    "customize sidebar": "Настроить боковую панель",
     "dark_version": "Темная версия",
     "dashboards": {
       "chart_preview": "Нажмите на исходный код диаграммы, чтобы увидеть его предварительный просмотр",
@@ -251,6 +255,14 @@
         "singular": "Панель управления"
       },
       "preview": "Предварительный просмотр Dashboard",
+      "quick_filters": {
+        "all": "Все",
+        "failed": "Ошибка",
+        "paused": "Приостановлено",
+        "running": "Выполняется",
+        "success": "Успешно",
+        "warning": "Предупреждение"
+      },
       "switch": "Переключить Панель управления"
     },
     "data": "Данные",
@@ -471,6 +483,7 @@
     "download logs": "Скачать логи",
     "download_logos": "Скачать пакет логотипов",
     "draft_available": "Черновик изменений доступен в редакторе",
+    "drop items here": "Перетащите элементы сюда",
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "duration": "Длительность",
     "dynamic": "Динамический",
@@ -888,6 +901,7 @@
     "labels": "Метки",
     "last 48 hours": "последние 48 часов",
     "last X days count": "{count} за последние {days} дней",
+    "last error was": "Последняя ошибка была",
     "last evaluation date": "Дата последней оценки",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Дата последнего выполнения",
@@ -1152,7 +1166,8 @@
           "taskDefaults": "Значения по умолчанию для Task",
           "updated": "Обновлено",
           "variables": "Переменные",
-          "workerGroup": "Группа Worker"
+          "workerGroup": "Группа Worker",
+          "workerSelector": "Селектор Worker"
         },
         "main": {
           "description": "Описание",
@@ -1535,9 +1550,10 @@
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
     "replay using": "Повторное воспроизведение с использованием",
     "replay with inputs": "Воспроизвести с inputами",
-    "replayed": "Выполнение повторено",
+    "replayed": "Выполнение воспроизведено",
     "required field": "Обязательное поле",
     "reset": "Перезапустить",
+    "reset to defaults": "Сбросить настройки по умолчанию",
     "restart": "Перезапуск",
     "restart change revision": "Вы можете изменить редакцию, которая будет использоваться для нового выполнения.",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",
@@ -1563,6 +1579,7 @@
     "revisions": "Редакции",
     "row count": "Количество строк",
     "run task in playground": "Запустить task в playground",
+    "run timeline": "Хронология выполнения",
     "runners": "Запуски",
     "running": "RUNNING",
     "running duration": "Время выполнения",
@@ -1614,9 +1631,11 @@
     },
     "see dependencies": "Просмотреть зависимости",
     "see full revision": "Посмотреть полную редакцию",
+    "see timeline": "Просмотреть временную шкалу",
     "see_all_states": "Просмотреть все состояния",
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "select": "Выберите ваш {{section}}",
+    "select a state": "Выберите состояние",
     "select datetime": "Выберите дату",
     "select view": "Выберите вид",
     "selected": "Выбрано",
@@ -1683,6 +1702,15 @@
           "label": "Сохранить настройки",
           "unsaved_title": "Несохраненные изменения",
           "unsaved_warning": "У вас есть несохраненные изменения. Хотите сохранить их перед выходом?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Показать, скрыть и изменить порядок элементов в боковой панели."
+          },
+          "fields": {
+            "items": "Элементы навигации"
+          },
+          "label": "Боковая панель"
         },
         "theme": {
           "color_modes": {
@@ -1802,7 +1830,9 @@
     "show": "Показать",
     "show chart": "Показать диаграмму",
     "show description": "Показать описание",
+    "show details": "Показать детали",
     "show documentation": "Показать документацию",
+    "show more details": "Показать больше деталей",
     "show task condition": "Показать условие task",
     "show task documentation": "Показать документацию задачи",
     "show task documentation in editor": "Показать документацию задачи в редакторе",
@@ -1812,6 +1842,7 @@
     "showLess": "Показать меньше",
     "showMore": "Показать больше",
     "side-by-side": "бок о бок",
+    "skipped": "Пропущено",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2179,7 @@
     "worker information": "Информация о Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Пустой key или value не допускается в метках"
+    "wrong labels": "Пустой key или value не допускается в метках",
+    "yes": "Да"
   }
 }

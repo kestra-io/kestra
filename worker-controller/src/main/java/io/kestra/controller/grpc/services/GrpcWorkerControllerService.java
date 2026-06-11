@@ -129,6 +129,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(
                         workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
                     );
+                    context.setMaxInboundMessageSize(connInfo.getMaxInboundMessageSize());
                     contextRef.set(context);
 
                     // Register with dispatcher

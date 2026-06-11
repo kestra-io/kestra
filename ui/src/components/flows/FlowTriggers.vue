@@ -122,7 +122,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn columnKey="backfill" :label="$t('backfill')" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="backfill" :label="$t('backfill')" v-if="userCan(action.BACKFILL)">
             <template #default="scope">
                 <template v-if="isSchedule(scope.row.type) && !scope.row.backfill">
                     <KsButton
@@ -148,7 +148,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn columnKey="disable" :label="$t('enabled')" className="row-action" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="disable" :label="$t('enabled')" className="row-action" v-if="userCan(action.DISABLE)">
             <template #default="scope">
                 <KsTooltip
                     v-if="hasTrigger(scope.row)"
@@ -182,7 +182,7 @@
                                 {{ $t("details") }}
                             </KsDropdownItem>
                             <KsDropdownItem
-                                v-if="userCan(action.UPDATE)"
+                                v-if="userCan(action.RESTART)"
                                 :disabled="!scope.row.locked"
                                 @click="restart(scope.row)"
                             >
@@ -190,7 +190,7 @@
                                 {{ $t("restart") }}
                             </KsDropdownItem>
                             <KsDropdownItem
-                                v-if="userCan(action.UPDATE)"
+                                v-if="userCan(action.UNLOCK)"
                                 :disabled="!scope.row.locked"
                                 @click="unlock(scope.row)"
                             >
@@ -512,7 +512,7 @@
 
     const userCan = (act: any) => {
         if (!flowStore.flow) return false
-        return authStore.user?.isAllowed(resource.EXECUTION, act ? act : action.VIEW, flowStore.flow?.namespace)
+        return authStore.user?.isAllowed(resource.TRIGGER, act ? act : action.VIEW, flowStore.flow?.namespace)
     }
 
     const loadData = () => {

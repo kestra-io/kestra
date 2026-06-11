@@ -27,6 +27,7 @@
     "activate_basic_auth": "Aktywuj podstawowe uwierzytelnianie",
     "active": "Aktywny",
     "active-slots": "Aktywne sloty",
+    "actual state": "Aktualny stan",
     "add": "Dodaj",
     "add at position": "Dodaj {position} <code>{task}</code>",
     "add error handler": "Dodaj handler błędów",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Bloki aplikacji",
     "apps": "Aplikacje",
+    "are you sure change state": "Czy na pewno chcesz zmienić stan?",
     "assets": {
       "title": "Zasoby"
     },
@@ -210,6 +212,7 @@
     "copied": "Skopiowano",
     "copied_logs_to_clipboard": "Skopiowano logi do schowka.",
     "copy": "Kopiuj",
+    "copy all logs": "Skopiuj wszystkie Logi",
     "copy logs": "Kopiuj logs",
     "copy url": "Kopiuj URL",
     "copy_and_close": "Skopiuj i zamknij",
@@ -227,6 +230,7 @@
     "current": "bieżący",
     "current execution": "Bieżące wykonanie",
     "custom value": "Wartość niestandardowa",
+    "customize sidebar": "Dostosuj pasek boczny",
     "dark_version": "Ciemna wersja",
     "dashboards": {
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
@@ -251,6 +255,14 @@
         "singular": "Dashboard"
       },
       "preview": "Podgląd Dashboardu",
+      "quick_filters": {
+        "all": "Wszystkie",
+        "failed": "Nieudane",
+        "paused": "Wstrzymano",
+        "running": "Uruchomione",
+        "success": "Sukces",
+        "warning": "Ostrzeżenie"
+      },
       "switch": "Przełącz Dashboard"
     },
     "data": "Dane",
@@ -471,6 +483,7 @@
     "download logs": "Pobierz logs",
     "download_logos": "Pobierz Pakiet Logo",
     "draft_available": "Szkic zmiany jest dostępny w edytorze",
+    "drop items here": "Upuść elementy tutaj",
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "duration": "Czas trwania",
     "dynamic": "Dynamiczny",
@@ -888,6 +901,7 @@
     "labels": "Etykiety",
     "last 48 hours": "ostatnie 48 godzin",
     "last X days count": "{count} w ostatnich {days} dniach",
+    "last error was": "Ostatni błąd to",
     "last evaluation date": "Data ostatniej oceny",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data ostatniego wykonania",
@@ -1152,7 +1166,8 @@
           "taskDefaults": "Domyślne ustawienia Task",
           "updated": "Zaktualizowano",
           "variables": "Zmienne",
-          "workerGroup": "Grupa Worker"
+          "workerGroup": "Grupa Worker",
+          "workerSelector": "Selektor Worker"
         },
         "main": {
           "description": "Opis",
@@ -1535,9 +1550,10 @@
     "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
     "replay using": "Odtwórz używając",
     "replay with inputs": "Odtwórz z inputami",
-    "replayed": "Wykonanie zostało odtworzone",
+    "replayed": "Wykonanie jest odtwarzane",
     "required field": "Wymagane pole",
     "reset": "Restartuj",
+    "reset to defaults": "Resetuj do ustawień domyślnych",
     "restart": "Uruchom ponownie",
     "restart change revision": "Możesz zmienić wersję, która będzie używana do nowego wykonania.",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić wykonanie <code>{id}</code>?",
@@ -1563,6 +1579,7 @@
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
     "run task in playground": "Uruchom task w playgroundzie",
+    "run timeline": "Uruchom oś czasu",
     "runners": "Biegacze",
     "running": "RUNNING",
     "running duration": "Czas trwania w trakcie działania",
@@ -1614,9 +1631,11 @@
     },
     "see dependencies": "Zobacz zależności",
     "see full revision": "Zobacz pełną wersję",
+    "see timeline": "Zobacz oś czasu",
     "see_all_states": "Zobacz wszystkie stany",
     "seeing old revision": "Widzisz starą wersję: {revision}",
     "select": "Wybierz swoją {{section}}",
+    "select a state": "Wybierz stan",
     "select datetime": "Wybierz datę",
     "select view": "Wybierz widok",
     "selected": "Wybrane",
@@ -1683,6 +1702,15 @@
           "label": "Zapisz preferencje",
           "unsaved_title": "Niezapisane zmiany",
           "unsaved_warning": "Masz niezapisane zmiany. Czy chcesz je zapisać przed opuszczeniem?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Pokaż, ukryj i zmień kolejność elementów w pasku bocznym."
+          },
+          "fields": {
+            "items": "Elementy nawigacyjne"
+          },
+          "label": "Pasek boczny"
         },
         "theme": {
           "color_modes": {
@@ -1802,7 +1830,9 @@
     "show": "Pokaż",
     "show chart": "Pokaż Wykres",
     "show description": "Pokaż opis",
+    "show details": "Pokaż szczegóły",
     "show documentation": "Pokaż dokumentację",
+    "show more details": "Pokaż więcej szczegółów",
     "show task condition": "Pokaż warunek taska",
     "show task documentation": "Pokaż dokumentację task",
     "show task documentation in editor": "Pokaż dokumentację task w edytorze",
@@ -1812,6 +1842,7 @@
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej",
     "side-by-side": "obok siebie",
+    "skipped": "Pominięto",
     "slack support": "Zadaj pytanie przez Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2179,7 @@
     "worker information": "Informacje o Workerze",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach"
+    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
+    "yes": "Tak"
   }
 }

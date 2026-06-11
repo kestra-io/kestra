@@ -20,7 +20,7 @@
     }>(), {
         component: "el-button",
         tabFlow: "overview",
-        tabExecution: "topology",
+        tabExecution: "overview",
         executionId: undefined,
         namespace: undefined,
         flowId: undefined,

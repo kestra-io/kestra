@@ -144,23 +144,10 @@
 
             <SettingRow
                 :label="$t('settings.blocks.theme.fields.environment_name')"
-                :description="$t('settings.blocks.theme.descriptions.environment_name')"
+                :description="isEnvNameFromConfig ? $t('settings.blocks.theme.fields.environment_name_tooltip') : $t('settings.blocks.theme.descriptions.environment_name')"
             >
-                <KsTooltip
-                    v-if="isEnvNameFromConfig"
-                    :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
-                    placement="top"
-                >
-                    <KsInput
-                        :modelValue="settings.envName"
-                        @change="onEnvName"
-                        :placeholder="$t('name')"
-                        clearable
-                    />
-                </KsTooltip>
                 <KsInput
-                    v-else
-                    :modelValue="settings.envName"
+                    v-model="settings.envName"
                     @change="onEnvName"
                     :placeholder="$t('name')"
                     clearable
@@ -176,6 +163,17 @@
                     @change="onEnvColor"
                     showAlpha
                 />
+            </SettingRow>
+        </Block>
+
+        <Block :heading="$t('settings.blocks.sidebar.label')">
+            <SettingRow
+                :label="$t('settings.blocks.sidebar.fields.items')"
+                :description="$t('settings.blocks.sidebar.descriptions.items')"
+            >
+                <KsButton @click="showSidebarCustomize = true">
+                    {{ $t("customize sidebar") }}
+                </KsButton>
             </SettingRow>
         </Block>
 
@@ -218,10 +216,12 @@
             </SettingRow>
         </Block>
     </Wrapper>
+
+    <SidebarCustomizeModal v-model="showSidebarCustomize" :menu="menu" />
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import moment from "moment-timezone"
 
@@ -234,6 +234,7 @@
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../stores/layout"
+    import {useLeftMenu} from "override/components/useLeftMenu"
 
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue"
@@ -242,6 +243,8 @@
     import Block from "./components/block/Block.vue"
     import SettingRow from "./components/block/SettingRow.vue"
     import ThemePicker, {type ThemeOption} from "./components/block/ThemePicker.vue"
+    import SidebarCustomizeModal from "../layout/SidebarCustomizeModal.vue"
+    import {KsButton} from "@kestra-io/design-system"
 
     const FONT_SIZES = [10, 11, 12, 13, 14, 15, 16, 18, 20]
     const AUTO_REFRESH_INTERVALS = [5, 10, 15, 30, 60, 120]
@@ -275,6 +278,8 @@
     const toast = useToast()
     const miscStore = useMiscStore()
     const layoutStore = useLayoutStore()
+    const {menu} = useLeftMenu()
+    const showSidebarCustomize = ref(false)
 
     const routeInfo = computed(() => ({title: t("settings.label")}))
     useRouteContext(routeInfo)

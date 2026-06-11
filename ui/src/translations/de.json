@@ -27,6 +27,7 @@
     "activate_basic_auth": "Aktiviere Basis-Authentifizierung",
     "active": "Aktiv",
     "active-slots": "Aktive Slots",
+    "actual state": "Aktueller Zustand",
     "add": "Hinzufügen",
     "add at position": "{position} <code>{task}</code> hinzufügen",
     "add error handler": "Fehler-Handler hinzufügen",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
+    "are you sure change state": "Sind Sie sicher, dass Sie den Zustand ändern möchten?",
     "assets": {
       "title": "Vermögenswerte"
     },
@@ -210,6 +212,7 @@
     "copied": "Kopiert",
     "copied_logs_to_clipboard": "Logs in die Zwischenablage kopiert.",
     "copy": "Kopieren",
+    "copy all logs": "Alle Logs kopieren",
     "copy logs": "Logs kopieren",
     "copy url": "URL kopieren",
     "copy_and_close": "Kopieren und schließen",
@@ -227,6 +230,7 @@
     "current": "aktuell",
     "current execution": "Aktuelle Ausführung",
     "custom value": "Benutzerdefinierter Wert",
+    "customize sidebar": "Seitenleiste anpassen",
     "dark_version": "Dunkler Modus",
     "dashboards": {
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
@@ -251,6 +255,14 @@
         "singular": "Dashboard"
       },
       "preview": "Vorschau-Dashboard",
+      "quick_filters": {
+        "all": "Alle",
+        "failed": "Fehlgeschlagen",
+        "paused": "Pausiert",
+        "running": "Läuft",
+        "success": "Erfolg",
+        "warning": "Warnung"
+      },
       "switch": "Dashboard wechseln"
     },
     "data": "Daten",
@@ -471,6 +483,7 @@
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
+    "drop items here": "Elemente hier ablegen",
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "duration": "Dauer",
     "dynamic": "Dynamisch",
@@ -888,6 +901,7 @@
     "labels": "Labels",
     "last 48 hours": "letzte 48 Stunden",
     "last X days count": "{count} in den letzten {days} Tagen",
+    "last error was": "Letzter Fehler war",
     "last evaluation date": "Letztes Bewertungsdatum",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Letztes Ausführungsdatum",
@@ -1152,7 +1166,8 @@
           "taskDefaults": "Standardwerte für Tasks",
           "updated": "Aktualisiert",
           "variables": "Variablen",
-          "workerGroup": "Worker-Gruppe"
+          "workerGroup": "Worker-Gruppe",
+          "workerSelector": "Worker-Selektor"
         },
         "main": {
           "description": "Beschreibung",
@@ -1535,9 +1550,10 @@
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
     "replay using": "Wiederholen mit",
     "replay with inputs": "Wiedergabe mit Inputs",
-    "replayed": "Ausführung ist wiederholt",
+    "replayed": "Die Ausführung wird wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",
+    "reset to defaults": "Zurücksetzen auf Standardwerte",
     "restart": "Neustart",
     "restart change revision": "Sie können die Revision ändern, die für die neue Ausführung verwendet wird.",
     "restart confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> neu starten möchten?",
@@ -1548,7 +1564,7 @@
       "button": "Trigger neu starten",
       "tooltip": "Den Trigger neu starten"
     },
-    "restarted": "Ausführung ist neu gestartet",
+    "restarted": "Die Ausführung wird neu gestartet",
     "restore": "Wiederherstellen",
     "restore confirm": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "restore revision": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
@@ -1563,6 +1579,7 @@
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",
+    "run timeline": "Ablaufzeitachse",
     "runners": "Läufer",
     "running": "RUNNING",
     "running duration": "Laufzeitdauer",
@@ -1614,9 +1631,11 @@
     },
     "see dependencies": "Abhängigkeiten anzeigen",
     "see full revision": "Vollständige Revision anzeigen",
+    "see timeline": "Zeitachse anzeigen",
     "see_all_states": "Alle Zustände anzeigen",
     "seeing old revision": "Sie sehen eine alte Revision: {revision}",
     "select": "Wählen Sie Ihren {{section}} aus",
+    "select a state": "Wählen Sie einen Zustand",
     "select datetime": "Datum auswählen",
     "select view": "Ansicht auswählen",
     "selected": "Ausgewählt",
@@ -1683,6 +1702,15 @@
           "label": "Präferenzen speichern",
           "unsaved_title": "Nicht gespeicherte Änderungen",
           "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Elemente in der Seitenleiste anzeigen, ausblenden und neu anordnen."
+          },
+          "fields": {
+            "items": "Navigationspunkte"
+          },
+          "label": "Seitenleiste"
         },
         "theme": {
           "color_modes": {
@@ -1802,7 +1830,9 @@
     "show": "Anzeigen",
     "show chart": "Diagramm anzeigen",
     "show description": "Beschreibung anzeigen",
+    "show details": "Details anzeigen",
     "show documentation": "Dokumentation anzeigen",
+    "show more details": "Mehr Details anzeigen",
     "show task condition": "Bedingung des Tasks anzeigen",
     "show task documentation": "Task-Dokumentation anzeigen",
     "show task documentation in editor": "Task-Dokumentation im Editor anzeigen",
@@ -1812,6 +1842,7 @@
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "showMore": "Mehr anzeigen",
     "side-by-side": "nebeneinander",
+    "skipped": "Übersprungen",
     "slack support": "Fragen Sie via Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2179,7 @@
     "worker information": "Worker-Informationen",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt"
+    "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
+    "yes": "Ja"
   }
 }

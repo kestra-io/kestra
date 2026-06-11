@@ -27,6 +27,7 @@
     "activate_basic_auth": "Attiva l'Autenticazione di Base",
     "active": "Attivo",
     "active-slots": "Slot attivi",
+    "actual state": "Stato attuale",
     "add": "Aggiungi",
     "add at position": "Aggiungi {position} <code>{task}</code>",
     "add error handler": "Aggiungi un gestore errori",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Blocchi App",
     "apps": "Applicazioni",
+    "are you sure change state": "Sei sicuro di voler cambiare lo stato?",
     "assets": {
       "title": "Risorse"
     },
@@ -210,6 +212,7 @@
     "copied": "Copiato",
     "copied_logs_to_clipboard": "Log copiati negli appunti.",
     "copy": "Copia",
+    "copy all logs": "Copia tutti i Log",
     "copy logs": "Copia logs",
     "copy url": "Copia URL",
     "copy_and_close": "Copia e chiudi",
@@ -227,6 +230,7 @@
     "current": "corrente",
     "current execution": "Esecuzione corrente",
     "custom value": "Valore personalizzato",
+    "customize sidebar": "Personalizza barra laterale",
     "dark_version": "Versione scura",
     "dashboards": {
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
@@ -251,6 +255,14 @@
         "singular": "Dashboard"
       },
       "preview": "Anteprima Dashboard",
+      "quick_filters": {
+        "all": "Tutti",
+        "failed": "Fallito",
+        "paused": "In pausa",
+        "running": "In esecuzione",
+        "success": "Successo",
+        "warning": "Avviso"
+      },
       "switch": "Dashboard Switch"
     },
     "data": "Dati",
@@ -471,6 +483,7 @@
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
     "draft_available": "Una bozza di modifica è disponibile nell'editor",
+    "drop items here": "Trascina gli elementi qui",
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "duration": "Durata",
     "dynamic": "Dinamico",
@@ -888,6 +901,7 @@
     "labels": "Etichette",
     "last 48 hours": "ultime 48 ore",
     "last X days count": "{count} negli ultimi {days} giorni",
+    "last error was": "L'ultimo errore è stato",
     "last evaluation date": "Data ultima valutazione",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data ultima esecuzione",
@@ -1152,7 +1166,8 @@
           "taskDefaults": "Predefiniti Task",
           "updated": "Aggiornato",
           "variables": "Variabili",
-          "workerGroup": "Gruppo Worker"
+          "workerGroup": "Gruppo Worker",
+          "workerSelector": "Selettore Worker"
         },
         "main": {
           "description": "Descrizione",
@@ -1535,9 +1550,10 @@
     "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
     "replay using": "Riproduci utilizzando",
     "replay with inputs": "Riesegui con input",
-    "replayed": "L'esecuzione è stata ripetuta",
+    "replayed": "L'esecuzione è ripetuta",
     "required field": "Campo obbligatorio",
     "reset": "Riavvia",
+    "reset to defaults": "Reimposta ai valori predefiniti",
     "restart": "Riavvia",
     "restart change revision": "Puoi cambiare la revisione che verrà utilizzata per la nuova esecuzione.",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
@@ -1548,7 +1564,7 @@
       "button": "Riavvia trigger",
       "tooltip": "Riavvia il trigger"
     },
-    "restarted": "L'esecuzione è stata riavviata",
+    "restarted": "L'esecuzione è riavviata",
     "restore": "Ripristina",
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "restore revision": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
@@ -1563,6 +1579,7 @@
     "revisions": "Revisions",
     "row count": "Conteggio righe",
     "run task in playground": "Esegui task nel playground",
+    "run timeline": "Cronologia Esecuzione",
     "runners": "Corridori",
     "running": "RUNNING",
     "running duration": "Durata in esecuzione",
@@ -1614,9 +1631,11 @@
     },
     "see dependencies": "Vedi dipendenze",
     "see full revision": "Vedi revisione completa",
+    "see timeline": "Vedi cronologia",
     "see_all_states": "Vedi tutti gli stati",
     "seeing old revision": "Stai vedendo una vecchia revisione: {revision}",
     "select": "Seleziona il tuo {{section}}",
+    "select a state": "Seleziona uno stato",
     "select datetime": "Seleziona una data",
     "select view": "Seleziona vista",
     "selected": "Selezionato",
@@ -1683,6 +1702,15 @@
           "label": "Salva Preferenze",
           "unsaved_title": "Modifiche non salvate",
           "unsaved_warning": "Hai modifiche non salvate. Vuoi salvarle prima di uscire?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Mostra, nascondi e riordina gli elementi nella barra laterale."
+          },
+          "fields": {
+            "items": "Elementi di Navigazione"
+          },
+          "label": "Barra laterale"
         },
         "theme": {
           "color_modes": {
@@ -1802,7 +1830,9 @@
     "show": "Mostra",
     "show chart": "Mostra Grafico",
     "show description": "Mostra una descrizione",
+    "show details": "Mostra dettagli",
     "show documentation": "Mostra documentazione",
+    "show more details": "Mostra più dettagli",
     "show task condition": "Mostra condizione del task",
     "show task documentation": "Mostra la documentazione del task",
     "show task documentation in editor": "Mostra la documentazione del task nell'editor",
@@ -1812,6 +1842,7 @@
     "showLess": "Mostra meno",
     "showMore": "Mostra di più",
     "side-by-side": "affiancato",
+    "skipped": "Saltato",
     "slack support": "Fai qualsiasi domanda via Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -2148,6 +2179,7 @@
     "worker information": "Informazioni sul Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette"
+    "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
+    "yes": "Sì"
   }
 }

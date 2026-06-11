@@ -3,12 +3,17 @@ package io.kestra.executor.handler;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.LoopRun;
@@ -21,12 +26,16 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.executor.ExecutorContext;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.log.Log;
 
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest
 class LoopExecutionEventMessageHandlerTest {
@@ -41,6 +50,19 @@ class LoopExecutionEventMessageHandlerTest {
 
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    KillSwitchService killSwitchService;
+
+    @MockBean(KillSwitchService.class)
+    KillSwitchService killSwitchService() {
+        return mock(KillSwitchService.class);
+    }
+
+    @BeforeEach
+    void setUp() {
+        when(killSwitchService.evaluate(anyString())).thenReturn(EvaluationType.PASS);
+    }
 
     @Test
     void shouldReturnEmptyForNonExistingExecution() {
@@ -124,6 +146,36 @@ class LoopExecutionEventMessageHandlerTest {
 
         // Then — handler emits next loop execution and returns empty (null from inner lambda)
         assertThat(maybeExecutor).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyWhenSubExecutionKillSwitched() {
+        // Given — sub execution is kill-switched
+        var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
+        var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null);
+        when(killSwitchService.evaluate("sub-exec-1")).thenReturn(EvaluationType.IGNORE);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(message);
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyWhenParentExecutionKillSwitched() {
+        // Given — sub execution passes but parent is kill-switched
+        var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
+        var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null);
+        when(killSwitchService.evaluate(execution.getId())).thenReturn(EvaluationType.IGNORE);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(message);
+
+        // Then
+        assertThat(result).isEmpty();
     }
 
     private Flow loopFlow() {

@@ -5,8 +5,6 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Concurrency;
@@ -32,6 +30,8 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.flow.Loop;
@@ -58,12 +58,15 @@ import static io.kestra.core.utils.Rethrow.*;
 @Slf4j
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
-    private static final String IGNORING_EXECUTION_MSG = "Ignoring execution {} because there is a kill switch on it";
 
     @Inject
     private DispatchQueueInterface<Execution> executionQueue;
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    @Inject
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
     @Inject
     private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
     @Inject
@@ -80,10 +83,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     @Inject
     private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
     @Inject
     private ExecutorService executorService;
     @Inject
@@ -317,32 +316,25 @@ public class DefaultExecutor extends AbstractService implements Executor {
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
-    // The execution queue is used to send newly created executions, so the first step is to create the execution inside the database
     private void executionQueue(Either<Execution, DeserializationException> either) {
         if (either.isRight()) {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-
-        Execution message = either.getLeft();
-
+        Execution execution = either.getLeft();
+        // Always persist first so the execution is present in the DB even if kill-switched.
         try {
-            // we create the execution even if skipped, so it is at least present in the DB
-            executionStateStore.create(message);
+            executionStateStore.create(execution);
         } catch (Exception e) {
-            log.error("Unable to create execution {}", message.getId(), e);
+            log.error("Unable to create execution {}", execution.getId(), e);
         }
-
-        EvaluationType evaluationType = killSwitchService.evaluate(message);
-        if (evaluationType.isKillSwitched(message)) {
-            killSwitchActionService.handle(evaluationType, message.getTenantId(), message.getId());
+        EvaluationType evaluationType = killSwitchService.evaluate(execution);
+        if (evaluationType.isKillSwitched(execution)) {
+            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
             return;
         }
-
-        var eventType = message.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
-        var executionEvent = new ExecutionEvent(message, eventType);
-        Optional<ExecutorContext> maybeExecutor = executionEventMessageHandler.handle(executionEvent);
-        maybeExecutor.ifPresent(this::toExecution);
+        var eventType = execution.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
+        executionEventMessageHandler.handle(new ExecutionEvent(execution, eventType)).ifPresent(this::toExecution);
     }
 
     private void executionCommandQueue(Either<ExecutionCommand, DeserializationException> either) {
@@ -359,19 +351,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-
-        ExecutionEvent message = either.getLeft();
-        EvaluationType evaluationType = killSwitchService.evaluate(message);
-        if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.executionId());
-            if (evaluationType.isKillSwitched(execution)) {
-                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-                return;
-            }
-        }
-
-        Optional<ExecutorContext> maybeExecutor = executionEventMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        executionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -379,16 +359,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage(), either.getRight());
             return;
         }
-
-        WorkerTaskResult message = either.getLeft();
-        EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
-        if (evaluationType != EvaluationType.PASS) {
-            killSwitchActionService.handle(evaluationType, message.getTaskRun().getTenantId(), message.getTaskRun().getExecutionId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = workerTaskResultMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        workerTaskResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void killQueue(Either<ExecutionKilled, DeserializationException> either) {
@@ -409,17 +380,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        if (killSwitchService.evaluate(killedExecution.getExecutionId()) == EvaluationType.IGNORE) { // we process other types of evaluation
-            log.warn(IGNORING_EXECUTION_MSG, killedExecution.getExecutionId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = executionKilledExecutionMessageHandler.handle(killedExecution);
-
         // Transmit the new execution state. Note that the execution
         // will eventually transition to KILLED state before sub-flow executions are actually killed.
         // This behavior is acceptable due to the fire-and-forget nature of the killing event.
-        maybeExecutor.ifPresent(executor -> this.toExecution(executor, true));
+        executionKilledExecutionMessageHandler.handle(killedExecution).ifPresent(executor -> this.toExecution(executor, true));
     }
 
     private void subflowExecutionResultQueue(Either<SubflowExecutionResult, DeserializationException> either) {
@@ -427,21 +391,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a subflow execution result: {}", either.getRight().getMessage());
             return;
         }
-
-        SubflowExecutionResult message = either.getLeft();
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
-        if (killSwitchService.evaluate(message.getExecutionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution result for child execution {} as there is a kill switch in it", message.getExecutionId());
-            return;
-        }
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
-        if (killSwitchService.evaluate(message.getParentTaskRun()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution result for parent execution {} as there is a kill switch in it", message.getParentTaskRun().getExecutionId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = subflowExecutionResultMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        subflowExecutionResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
@@ -449,20 +399,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
             return;
         }
-
-        SubflowExecutionEnd message = either.getLeft();
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
-        if (killSwitchService.evaluate(message.childExecution()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution end for child execution {} as there is a kill switch in it", message.childExecution().getId());
-            return;
-        }
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
-        if (killSwitchService.evaluate(message.parentExecutionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution end for parent execution {} as there is a kill switch in it", message.parentExecutionId());
-            return;
-        }
-
-        subflowExecutionEndMessageHandler.handle(message);
+        subflowExecutionEndMessageHandler.handle(either.getLeft());
     }
 
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {
@@ -470,10 +407,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a multiple condition event: {}", either.getRight().getMessage());
             return;
         }
-
-        MultipleConditionEvent multipleConditionEvent = either.getLeft();
-
-        multipleConditionEventMessageHandler.handle(multipleConditionEvent);
+        multipleConditionEventMessageHandler.handle(either.getLeft());
     }
 
     private void loopExecutionEventQueue(Either<LoopExecutionEvent, DeserializationException> either) {
@@ -481,20 +415,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a loop execution event: {}", either.getRight().getMessage());
             return;
         }
-
-        LoopExecutionEvent message = either.getLeft();
-        // skip if there is a kill switch on the loop sub-execution or the parent execution
-        if (killSwitchService.evaluate(message.executionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring loop execution event for sub-execution {} as there is a kill switch on it", message.executionId());
-            return;
-        }
-        if (killSwitchService.evaluate(message.loopRun().parent().getId()) != EvaluationType.PASS) {
-            log.warn("Ignoring loop execution event for parent execution {} as there is a kill switch on it", message.loopRun().parent().getId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = loopExecutionEventMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        loopExecutionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     /**

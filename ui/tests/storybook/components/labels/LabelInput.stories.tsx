@@ -26,3 +26,15 @@ WithValue.args = {
     value: "example-value",
   }],
 };
+
+export const WithExistingLabels = Template.bind({});
+WithExistingLabels.args = {
+  labels: [{
+    key: "existing-label",
+    value: "existing-value",
+  }],
+  existingLabels: [{
+    key: "existing-label",
+    value: "existing-value",
+  }],
+};

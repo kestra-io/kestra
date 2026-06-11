@@ -332,6 +332,30 @@ class TriggerControllerTest {
     }
 
     @Test
+    void enableScheduleTriggerResetsNextExecutionDate() {
+        // Re-enabling a Schedule trigger must reset nextExecutionDate to ~now so the scheduler resumes
+        // from the next future slot instead of recovering/skipping the upcoming one (regression of kestra-ee#8344).
+        String namespace = IdUtils.create();
+        Flow flow = generateFlowWithTrigger(namespace);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
+
+        // A disabled schedule trigger has no nextExecutionDate, as left after disabling.
+        Trigger triggerDisabled = createTriggerFromFlow(flow, true);
+        jdbcTriggerRepository.save(triggerDisabled);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(List.of(triggerDisabled), false)
+            ), BulkResponse.class
+        );
+
+        assertThat(bulkResponse.getCount()).isEqualTo(1);
+        Trigger updated = jdbcTriggerRepository.findLast(triggerDisabled).get();
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isNotNull();
+    }
+
+    @Test
     void enableByQuery() {
         String namespace = IdUtils.create();
         Flow flow1 = generateFlowWithTrigger(namespace);

@@ -49,16 +49,6 @@
 
         <template #footer>
             <slot name="footer" />
-            <div class="sidebar-customize-trigger">
-                <KsButton
-                    type="text"
-                    size="small"
-                    class="customize-btn"
-                    @click="showCustomizeModal = true"
-                >
-                    {{ $t("customize sidebar") }}
-                </KsButton>
-            </div>
         </template>
     </KsSideBar>
 
@@ -86,7 +76,7 @@
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton, KsNewBadge} from "@kestra-io/design-system"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsNewBadge} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
@@ -266,21 +256,6 @@
     right: var(--ks-spacing-4);
     z-index: 1;
     color: var(--ks-icon-muted);
-}
-
-.sidebar-customize-trigger {
-    padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
-
-    .customize-btn {
-        width: 100%;
-        justify-content: flex-start;
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-xs);
-
-        &:hover {
-            color: var(--ks-text-secondary);
-        }
-    }
 }
 
 .sidebar-context-menu {

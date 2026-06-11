@@ -161,6 +161,82 @@ class GrpcWorkerIOSenderTest {
         assertThat(received.getOutputs()).isEqualTo(Map.of("key", "value"));
     }
 
+    @Test
+    void shouldRequeueAndRedeliverWhenSendFailsWithRetryableError() throws Exception {
+        // Given - first send fails with UNAVAILABLE (controller unreachable), subsequent sends succeed
+        AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(inv -> {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            if (callCount.getAndIncrement() == 0) {
+                obs.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
+
+        // When - the first send fails and the result is re-queued instead of dropped...
+        taskResultSender.send(List.of(result));
+        // ...and the next loop iteration redrives it (the second send succeeds)
+        taskResultSender.doOnLoop();
+
+        // Then - the controller eventually receives the result (initial attempt + redelivery)
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(5))
+            .untilAsserted(() -> verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
+                .sendWorkerTaskResults(captor.capture(), any()));
+
+        WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
+        assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
+        assertThat(redelivered.getOutputs()).isEqualTo(Map.of("key", "value"));
+    }
+
+    @Test
+    void shouldRedeliverFallbackResultWhenFallbackResendFailsWithRetryableError() throws Exception {
+        // Given - the initial send is rejected with RESOURCE_EXHAUSTED (outputs too large), so the fallback
+        // mapper fires and resends a stripped failed-state result; that fallback resend then fails once with
+        // UNAVAILABLE (transient partition) before finally succeeding on redelivery.
+        AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(inv -> {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            int call = callCount.getAndIncrement();
+            if (call == 0) {
+                obs.onError(new StatusRuntimeException(Status.RESOURCE_EXHAUSTED.withDescription("outputs exceeds maximum size")));
+            } else if (call == 1) {
+                obs.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
+
+        // When - RESOURCE_EXHAUSTED triggers the fallback resend, which fails transiently and is re-queued...
+        taskResultSender.send(List.of(result));
+        // ...and the next loop iteration redrives the fallback result (the third send succeeds)
+        taskResultSender.doOnLoop();
+
+        // Then - the failed-state result (no outputs) is eventually delivered rather than dropped
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(5))
+            .untilAsserted(() -> verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(3))
+                .sendWorkerTaskResults(captor.capture(), any()));
+
+        WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
+        assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
+        assertThat(redelivered.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(redelivered.getOutputs()).isNull();
+    }
+
     private static WorkerTaskResult buildTaskResult(Map<String, Object> outputs) {
         TaskRun taskRun = TaskRun.builder()
             .id(IdUtils.create())

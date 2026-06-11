@@ -61,7 +61,7 @@ for (const [index, mode] of modes.entries()) {
     )
 
     if(normalizedTheme === "dark") {
-        fs.writeFileSync(path.resolve(TESTS_DIR, "storybook/Basic/theme-variables.json"), JSON.stringify(semantic.map(c =>  `--${c.name.replace(/\//g, "-")}`.toLowerCase()), null, 2))
+        fs.writeFileSync(path.resolve(TESTS_DIR, "storybook/Basic/Color-variables.json"), JSON.stringify(semantic.map(c =>  `--${c.name.replace(/\//g, "-")}`.toLowerCase()), null, 2))
     }
 }
 

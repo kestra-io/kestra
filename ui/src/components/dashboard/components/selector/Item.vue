@@ -1,5 +1,5 @@
 <template>
-    <KsDropdownItem>
+    <KsDropdownItem class="dashboard-item">
         <div class="dashboard-row">
             <span class="lead">
                 <KsIcon v-if="active">
@@ -86,18 +86,13 @@
 
     .actions {
         flex: 0 0 auto;
-        display: inline-flex;
+        display: none;
         align-items: center;
         gap: var(--ks-spacing-1);
-
-        .action {
-            display: none;
-            align-items: center;
-        }
     }
+}
 
-    &:hover .actions .action {
-        display: inline-flex;
-    }
+.dashboard-item:hover .actions {
+    display: inline-flex;
 }
 </style>

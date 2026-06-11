@@ -101,6 +101,7 @@
     import type {Flow} from "../../stores/flow"
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
+    import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {normalize} from "../../utils/inputs"
     import type {InputType} from "../../utils/inputs"
     import type {FormInstance} from "@kestra-io/design-system"
@@ -208,7 +209,7 @@
             return false
         }
         return flow.value.triggers.some(trigger =>
-            trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
+            trigger.type === WEBHOOK_TRIGGER_TYPE &&
             ("disabled" in trigger ? trigger.disabled === undefined || trigger.disabled === false : true),
         )
     })

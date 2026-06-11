@@ -8,40 +8,53 @@
                     @search="searchQuery = $event"
                 />
             </div>
-            <KsRadioGroup v-model="activeCategoryFilter" class="filter-group">
-                <KsRadioButton
+            <div class="category-tags">
+                <KsCheckTag
                     v-for="value in FILTER_VALUES"
                     :key="value"
-                    :value="value"
-                    :label="value"
+                    pill
+                    :checked="activeFilter === value"
+                    @change="activeFilter = value"
                 >
+                    <template v-if="GROUP_ICONS[value]" #icon>
+                        <component :is="GROUP_ICONS[value]" :size="16" class="group-icon" />
+                    </template>
                     {{ $t(`triggers_add_filter_${value}`) }}
-                </KsRadioButton>
-            </KsRadioGroup>
+                </KsCheckTag>
+            </div>
+            <div class="sort-by">
+                <span class="sort-label">{{ $t("pluginPage.sortBy") }}</span>
+                <KsSelect v-model="sortBy" size="small" class="sort-select">
+                    <KsOption
+                        v-for="option in SORT_OPTIONS"
+                        :key="option.value"
+                        :value="option.value"
+                        :label="$t(option.labelKey)"
+                    />
+                </KsSelect>
+            </div>
         </div>
 
-        <div v-if="loading" class="state-empty">
+        <div v-if="loading" class="state-loading">
             <KsSkeleton :rows="3" animated />
         </div>
 
-        <div v-else-if="!hasAnyVisibleTrigger" class="state-empty">
-            <h4>{{ $t("triggers_add_empty_title") }}</h4>
-            <p>{{ $t("triggers_add_empty_hint") }}</p>
-        </div>
+        <KsTableEmpty
+            v-else-if="!hasAnyVisibleTrigger"
+            class="triggers-empty"
+            :title="$t('triggers_add_empty_title')"
+        />
 
-        <template v-else>
-            <TriggersCategorySection
-                v-for="section in visibleSections"
-                :key="section.key"
-                :title="$t(`triggers_add_category_${section.key}_title`)"
-                :description="$t(`triggers_add_category_${section.key}_description`)"
-                :triggers="groupedTriggers[section.key]"
-                :expandAll="section.expandAll"
+        <div v-else class="card-grid">
+            <TriggerCard
+                v-for="trigger in visibleTriggers"
+                :key="trigger.type"
+                :trigger="trigger"
                 @add="openConfigureModal"
             />
-        </template>
+        </div>
 
-        <TriggerConfigureModal
+        <AddTriggerModal
             v-if="selectedTrigger"
             v-model:visible="configureModalVisible"
             :trigger="selectedTrigger"
@@ -51,65 +64,67 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue"
+    import {computed, markRaw, onMounted, ref, type Component} from "vue"
+
+    import AvTimer from "vue-material-design-icons/AvTimer.vue"
+    import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
+    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
 
     import SearchField from "../../layout/SearchField.vue"
-    import TriggersCategorySection from "./TriggersCategorySection.vue"
-    import TriggerConfigureModal from "./TriggerConfigureModal.vue"
+    import TriggerCard from "./TriggerCard.vue"
+    import AddTriggerModal from "./AddTriggerModal.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
-    import {MCP_TOOL_TYPE} from "./triggerCatalog"
+    import {triggerDisplayName} from "./triggerCatalog"
 
     const TRIGGER_GROUPS = ["core", "realtime", "app"] as const
     const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const
+    const SORT_OPTIONS = [
+        {value: "nameAsc", labelKey: "pluginPage.sort.nameAsc"},
+        {value: "nameDesc", labelKey: "pluginPage.sort.nameDesc"},
+    ] as const
 
-    type TriggerGroup = typeof TRIGGER_GROUPS[number];
-    type CategoryFilter = typeof FILTER_VALUES[number];
+    type FilterValue = typeof FILTER_VALUES[number];
+    type SortKey = typeof SORT_OPTIONS[number]["value"];
 
-    const SECTIONS: { key: TriggerGroup; expandAll?: boolean }[] = [
-        {key: "core", expandAll: true},
-        {key: "realtime"},
-        {key: "app"},
-    ]
+    const GROUP_ICONS: Partial<Record<FilterValue, Component>> = markRaw({
+        core: BriefcaseOutline,
+        realtime: AvTimer,
+        app: LayersTripleOutline,
+    })
+
+    const nameAsc = (a: TriggerPluginDto, b: TriggerPluginDto) =>
+        triggerDisplayName(a).localeCompare(triggerDisplayName(b))
+
+    const COMPARATORS: Record<SortKey, (a: TriggerPluginDto, b: TriggerPluginDto) => number> = {
+        nameAsc,
+        nameDesc: (a, b) => nameAsc(b, a),
+    }
 
     const pluginsStore = usePluginsStore()
 
     const loading = ref(true)
     const searchQuery = ref("")
-    const activeCategoryFilter = ref<CategoryFilter>("all")
+    const activeFilter = ref<FilterValue>("all")
+    const sortBy = ref<SortKey>("nameAsc")
     const allTriggers = ref<TriggerPluginDto[]>([])
     const selectedTrigger = ref<TriggerPluginDto | null>(null)
     const configureModalVisible = ref(false)
 
-    const groupedTriggers = computed(() => {
+    const visibleTriggers = computed(() => {
         const q = searchQuery.value.trim().toLowerCase()
-        const matches = (tr: TriggerPluginDto) =>
+        const matchesSearch = (tr: TriggerPluginDto) =>
             !q ||
             tr.name.toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
             (tr.description ?? "").toLowerCase().includes(q)
 
-        const inGroup = (group: TriggerGroup) =>
-            allTriggers.value.filter(tr => tr.group === group && matches(tr))
-
-        return {
-            core: inGroup("core").sort((a, b) => {
-                if (a.type === MCP_TOOL_TYPE) return -1
-                if (b.type === MCP_TOOL_TYPE) return 1
-                return a.name.localeCompare(b.name)
-            }),
-            realtime: inGroup("realtime"),
-            app: inGroup("app"),
-        }
+        return allTriggers.value
+            .filter(tr => (activeFilter.value === "all" || tr.group === activeFilter.value) && matchesSearch(tr))
+            .sort(COMPARATORS[sortBy.value] ?? nameAsc)
     })
 
-    const visibleSections = computed(() =>
-        SECTIONS.filter(s => activeCategoryFilter.value === "all" || activeCategoryFilter.value === s.key),
-    )
-
-    const hasAnyVisibleTrigger = computed(() =>
-        Object.values(groupedTriggers.value).some(triggers => triggers.length > 0),
-    )
+    const hasAnyVisibleTrigger = computed(() => visibleTriggers.value.length > 0)
 
     function openConfigureModal(trigger: TriggerPluginDto) {
         selectedTrigger.value = trigger
@@ -141,25 +156,51 @@
         gap: 0.75rem;
         align-items: center;
         flex-wrap: wrap;
+
+        .search-wrapper {
+            flex: 1 1 17.5rem;
+            max-width: 32.5rem;
+        }
+
+        .category-tags {
+            display: flex;
+            gap: var(--ks-spacing-2);
+
+            .group-icon {
+                color: var(--ks-icon-active);
+            }
+        }
+
+        .sort-by {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            margin-left: auto;
+            flex: 0 0 auto;
+
+            .sort-label {
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-xs);
+                white-space: nowrap;
+            }
+
+            .sort-select {
+                width: 8.75rem;
+            }
+        }
     }
 
-    .search-wrapper {
-        position: relative;
-        flex: 1 1 17.5rem;
-        max-width: 32.5rem;
-    }
-
-    .state-empty {
+    .state-loading {
         padding: 3rem 1rem;
-        text-align: center;
+    }
 
-        h4 {
-            margin-bottom: 0.5rem;
-        }
+    .triggers-empty {
+        min-height: 60vh;
+    }
 
-        p {
-            color: var(--ks-content-secondary);
-            margin: 0;
-        }
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(21.875rem, 1fr));
+        gap: 1rem;
     }
 </style>

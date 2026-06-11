@@ -1,0 +1,71 @@
+import type {RouteRecordRaw} from "vue-router"
+
+/** Parent route name for the Executions detail page. */
+export const EXECUTION_PARENT_ROUTE = "executions/update"
+
+/**
+ * Single source of truth for the Executions detail tabs.
+ *
+ * Each entry is the vue-router child route that `<router-view>` renders; the
+ * horizontal tab bar is derived from these records (see {@link useExecutionRoot}),
+ * so tabs are defined once and colocated with the routes they map to.
+ *
+ * - `path` equals the tab token, keeping URLs byte-identical to the legacy
+ *   `:tab` param.
+ * - `meta.tab` is the tab token (resolved by `useActiveTab`).
+ * - `meta.title` is the i18n key resolved to the bar label.
+ * - `meta.maximized` / `meta.noOverflow` drive the content section layout.
+ * - `meta.locked` flags an Enterprise-locked tab (lock badge in the bar).
+ */
+export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/overview`,
+        path: "overview",
+        component: () => import("./overview/Overview.vue"),
+        meta: {tab: "overview", title: "overview"},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/gantt`,
+        path: "gantt",
+        component: () => import("./Gantt.vue"),
+        meta: {tab: "gantt", title: "gantt"},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/logs`,
+        path: "logs",
+        component: () => import("./Logs.vue"),
+        meta: {tab: "logs", title: "logs"},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/outputs`,
+        path: "outputs",
+        component: () => import("./outputs/ExecutionVariableExplorer.vue"),
+        meta: {tab: "outputs", title: "variable_explorer.title", maximized: true, noOverflow: true},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/metrics`,
+        path: "metrics",
+        component: () => import("./ExecutionMetric.vue"),
+        meta: {tab: "metrics", title: "metrics"},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/dependencies`,
+        path: "dependencies",
+        component: () => import("../dependencies/Dependencies.vue"),
+        props: {isReadOnly: true},
+        meta: {tab: "dependencies", title: "dependencies", maximized: true},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/auditlogs`,
+        path: "auditlogs",
+        component: () => import("../demo/AuditLogs.vue"),
+        meta: {tab: "auditlogs", title: "auditlogs", maximized: true, locked: true},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/assets`,
+        path: "assets",
+        component: () => import("../demo/Assets.vue"),
+        props: {topbar: false},
+        meta: {tab: "assets", title: "assets.title", maximized: true, locked: true},
+    },
+]

@@ -4,6 +4,7 @@ import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
+import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -46,7 +47,7 @@ export function useExecutionRoot() {
         }
     })
 
-    const routeName = computed(() => route.params && route.params.id ? "executions/update" : "")
+    const routeName = computed(() => route.params && route.params.id ? EXECUTION_PARENT_ROUTE : "")
 
     const ready = computed(() => {
         return executionsStore.execution !== undefined
@@ -57,47 +58,26 @@ export function useExecutionRoot() {
         executionsStore.followExecution(route.params as any, t)
     }
 
-    // Bar metadata only: the rendered component, its props and section flags now live
-    // on the matching child route (see routes.ts) and are resolved by `<router-view>`.
+    // The bar is derived from the canonical tab/route definitions (executionTabs.ts):
+    // the component, props and section flags live on each child route and are resolved
+    // by `<router-view>`; here we only build the bar metadata from their `meta`.
     const getBaseTabs = () => {
-        return [
-            {
-                name: "overview",
-                title: t("overview"),
-            },
-            {
-                name: "gantt",
-                title: t("gantt"),
-            },
-            {
-                name: "logs",
-                title: t("logs"),
-            },
-            {
-                name: "outputs",
-                title: t("variable_explorer.title"),
-            },
-            {
-                name: "metrics",
-                title: t("metrics"),
-            },
-            {
-                name: "dependencies",
-                title: t("dependencies"),
-                count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
-                disabled: !dependenciesCount.value,
-            },
-            {
-                name: "auditlogs",
-                title: t("auditlogs"),
-                locked: true,
-            },
-            {
-                name: "assets",
-                title: t("assets.title"),
-                locked: true,
-            },
-        ]
+        return EXECUTION_TAB_ROUTES.map((tabRoute) => {
+            const meta = tabRoute.meta ?? {}
+            const name = meta.tab as string
+            return {
+                name,
+                title: t(meta.title as string),
+                locked: meta.locked as boolean | undefined,
+                // Dependencies surfaces a live count and is disabled when there are none.
+                ...(name === "dependencies"
+                    ? {
+                        count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
+                        disabled: !dependenciesCount.value,
+                    }
+                    : {}),
+            }
+        })
     }
 
     const tabs = computed(() => getBaseTabs())

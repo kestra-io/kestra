@@ -1,23 +1,23 @@
 <template>
     <div class="label-input">
-        <KsButton class="label-input__add" :icon="Plus" @click="addItem">
+        <KsButton class="label-input-add" :icon="Plus" @click="addItem">
             {{ $t("add label") }}
         </KsButton>
 
         <div
-            class="label-input__row"
+            class="label-input-row"
             v-for="(label, index) in locals"
             :key="index"
         >
             <KsInput
-                class="label-input__field"
+                class="label-input-field"
                 :placeholder="$t('key')"
                 :modelValue="(label.key as string | undefined)"
                 :disabled="existingRows.has(label)"
                 @update:model-value="update(index, $event, 'key')"
             />
             <KsInput
-                class="label-input__field"
+                class="label-input-field"
                 :placeholder="$t('value')"
                 :modelValue="(label.value as string | undefined)"
                 @update:model-value="update(index, $event, 'value')"
@@ -110,20 +110,20 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
+    }
 
-        &__add {
-            align-self: flex-start;
-        }
+    .label-input-add {
+        align-self: flex-start;
+    }
 
-        &__row {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-        }
+    .label-input-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__field {
-            flex: 1;
-            min-width: 0;
-        }
+    .label-input-field {
+        flex: 1;
+        min-width: 0;
     }
 </style>

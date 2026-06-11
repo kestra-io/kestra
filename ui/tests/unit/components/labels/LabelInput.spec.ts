@@ -27,30 +27,30 @@ const mountInput = async (props = {}) => {
 describe("LabelInput", () => {
     test("shows one empty row when there are no labels", async () => {
         const wrapper = await mountInput({labels: []})
-        expect(wrapper.findAll(".label-input__row")).toHaveLength(1)
+        expect(wrapper.findAll(".label-input-row")).toHaveLength(1)
     })
 
     test("renders one row per provided label", async () => {
         const wrapper = await mountInput({labels: [{key: "a", value: "1"}, {key: "b", value: "2"}]})
-        expect(wrapper.findAll(".label-input__row")).toHaveLength(2)
+        expect(wrapper.findAll(".label-input-row")).toHaveLength(2)
     })
 
     test("the Add label button appends a fresh empty row", async () => {
         const wrapper = await mountInput({labels: [{key: "a", value: "1"}]})
-        await wrapper.find(".label-input__add").trigger("click")
-        expect(wrapper.findAll(".label-input__row")).toHaveLength(2)
+        await wrapper.find(".label-input-add").trigger("click")
+        expect(wrapper.findAll(".label-input-row")).toHaveLength(2)
     })
 
     test("removing the last row leaves zero rows", async () => {
         const wrapper = await mountInput({labels: [{key: "a", value: "1"}]})
-        await wrapper.find(".label-input__row button").trigger("click")
-        expect(wrapper.findAll(".label-input__row")).toHaveLength(0)
+        await wrapper.find(".label-input-row button").trigger("click")
+        expect(wrapper.findAll(".label-input-row")).toHaveLength(0)
     })
 
     test("locks the key field for existing labels but keeps the value editable", async () => {
         const labels = [{key: "team", value: "data"}]
         const wrapper = await mountInput({labels, existingLabels: labels})
-        const inputs = wrapper.find(".label-input__row").findAll("input")
+        const inputs = wrapper.find(".label-input-row").findAll("input")
         expect(inputs[0].attributes("disabled")).toBeDefined()
         expect(inputs[1].attributes("disabled")).toBeUndefined()
     })
@@ -58,14 +58,14 @@ describe("LabelInput", () => {
     test("a newly added row has an editable key", async () => {
         const labels = [{key: "team", value: "data"}]
         const wrapper = await mountInput({labels, existingLabels: labels})
-        await wrapper.find(".label-input__add").trigger("click")
-        const rows = wrapper.findAll(".label-input__row")
+        await wrapper.find(".label-input-add").trigger("click")
+        const rows = wrapper.findAll(".label-input-row")
         expect(rows[1].findAll("input")[0].attributes("disabled")).toBeUndefined()
     })
 
     test("emits update:labels with the new row count when a label is added", async () => {
         const wrapper = await mountInput({labels: [{key: "a", value: "1"}]})
-        await wrapper.find(".label-input__add").trigger("click")
+        await wrapper.find(".label-input-add").trigger("click")
         const events = wrapper.emitted("update:labels")
         expect(events).toBeTruthy()
         expect(events![events!.length - 1][0]).toHaveLength(2)

@@ -3,9 +3,8 @@
  * This is not a visual test, but it can be used to generate a visual test by taking a screenshot of the rendered output.
  */
 
-
 import type {Meta, StoryObj} from "@storybook/vue3"
-import themeVariables from "./theme-variables.json" with {type: "json"}
+import themeVariables from "./Color-variables.json" with {type: "json"}
 import { ref } from "vue"
 
 export default {
@@ -47,7 +46,7 @@ export const AllColors: Story = {
                             <h2 style="margin:0">{category}</h2>
                             <div style="display:flex;flex-wrap:wrap;gap:12px">
                                 {names.map(name => (
-                                    <div key={name} style="display:flex;align-items:center;gap:12px;min-width:300px;" onClick={() => copyToClipboard(`var(${name})`)}>
+                                    <div key={name} style="cursor:pointer;display:flex;align-items:center;gap:12px;min-width:300px;" onClick={() => copyToClipboard(`var(${name})`)}>
                                         <div style={{width: "24px", height: "24px", backgroundColor: `var(${name})`, border: "1px solid #ccc", borderRadius: "4px"}} />
                                         {
                                             copiedValue.value === `var(${name})`?

@@ -1,5 +1,4 @@
 <template>
-    
     <template v-if="initialInputs">
         <KsFormItem
             v-for="input in inputsMetaData"
@@ -277,17 +276,17 @@
         inputs?: Record<string, unknown>;
     }
 
+    const modelValue = defineModel<Record<string, unknown>>()
+
     // Props
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;
-        modelValue?: Record<string, unknown>;
         initialInputs?: InputMetaData[];
         flow?: Flow;
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
     }>(), {
         executeClicked: false,
-        modelValue: () => ({}),
         initialInputs: () => [],
         flow: undefined,
         execution: undefined,
@@ -296,7 +295,6 @@
 
     // Emits
     const emit = defineEmits<{
-        "update:modelValue": [value: Record<string, unknown>];
         "update:modelValueNoDefault": [value: Record<string, unknown>];
         "update:checks": [checks: Check[]];
         "confirm": [];
@@ -311,7 +309,7 @@
 
     // Reactive state
     // Using 'any' type for v-model compatibility with various Element Plus components
-    const inputsValues = reactive<Record<string, any>>({...props.modelValue})
+    const inputsValues = reactive<Record<string, any>>({...modelValue.value})
     const previousInputsValues = ref<Record<string, any>>({})
     const inputsMetaData = ref<InputMetaData[]>([])
     const multiSelectInputs = reactive<Record<string, any>>({})
@@ -396,8 +394,8 @@
             inputsValidated.value.add(input.id)
         }, 2000)
         input.isDefault = false
-        emit("update:modelValue", {...inputsValues})
-        emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
+        modelValue.value = {...inputsValues}
+        emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
     }
 
     function onSubmit(): void {
@@ -466,12 +464,12 @@
         onChange(input)
     }
 
-    function inputsValuesWithNoDefault(): Record<string, unknown> {
+    const inputsValuesWithNoDefault = computed<Record<string, unknown>>(() => {
         return inputsMetaData.value.reduce((acc: Record<string, unknown>, input) => {
             acc[input.id] = input.isDefault ? undefined : inputsValues[input.id]
             return acc
         }, {})
-    }
+    })
 
     function numberHint(input: InputMetaData): string | false {
         const {min, max} = input
@@ -492,9 +490,7 @@
             return
         }
 
-        const inputsValuesNoDefault = inputsValuesWithNoDefault()
-
-        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesNoDefault)
+        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
 
         const metadataCallback = (response: ValidationResponse): void => {
             emit("update:checks", response.checks || [])
@@ -671,7 +667,7 @@
                     // to avoid too many calls to the server
                     debouncedValidation()
                     emit("update:modelValue", {...inputsValues})
-                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
+                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val))
             },

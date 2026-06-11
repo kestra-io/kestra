@@ -507,7 +507,8 @@
                 }
                 return acc
             }, [])
-            await nextTick()
+            await nextTick() // wait for the DOM to update validations before updating defaults
+            // NOTE: validations happen mostly using an object updated in the parent form.
             updateDefaults()
         }
 

@@ -1957,7 +1957,6 @@
     "triggers_add_card_add_to_flow": "flow에 추가",
     "triggers_add_category_empty": "이 카테고리에 trigger가 없습니다.",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
-    "triggers_add_empty_hint": "다른 검색어를 시도하거나 모든 카테고리를 탐색하세요.",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_filter_all": "모두",
     "triggers_add_filter_app": "앱",

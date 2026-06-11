@@ -24,23 +24,24 @@
             </div>
         </div>
 
-        <div v-if="loading" class="state-empty">
+        <div v-if="loading" class="state-loading">
             <KsSkeleton :rows="3" animated />
         </div>
 
-        <div v-else-if="!hasAnyVisibleTrigger" class="state-empty">
-            <h4>{{ $t("triggers_add_empty_title") }}</h4>
-            <p>{{ $t("triggers_add_empty_hint") }}</p>
-        </div>
+        <KsTableEmpty
+            v-else-if="!hasAnyVisibleTrigger"
+            class="triggers-empty"
+            :title="$t('triggers_add_empty_title')"
+        />
 
-        <template v-else>
-            <TriggersCategorySection
-                v-for="section in visibleSections"
-                :key="section.key"
-                :triggers="groupedTriggers[section.key]"
+        <div v-else class="card-grid">
+            <TriggerCatalogCard
+                v-for="trigger in visibleTriggers"
+                :key="trigger.type"
+                :trigger="trigger"
                 @add="openConfigureModal"
             />
-        </template>
+        </div>
 
         <TriggerConfigureModal
             v-if="selectedTrigger"
@@ -54,13 +55,13 @@
 <script setup lang="ts">
     import {computed, markRaw, onMounted, ref, type Component} from "vue"
 
-    import SearchField from "../../layout/SearchField.vue"
-    import TriggersCategorySection from "./TriggersCategorySection.vue"
-    import TriggerConfigureModal from "./TriggerConfigureModal.vue"
-
-    import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
     import AvTimer from "vue-material-design-icons/AvTimer.vue"
+    import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
+
+    import SearchField from "../../layout/SearchField.vue"
+    import TriggerCatalogCard from "./TriggerCatalogCard.vue"
+    import TriggerConfigureModal from "./TriggerConfigureModal.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
     import {MCP_TOOL_TYPE} from "./triggerCatalog"
@@ -76,12 +77,6 @@
         realtime: AvTimer,
         app: LayersTripleOutline,
     })
-
-    const SECTIONS: { key: TriggerGroup }[] = [
-        {key: "core"},
-        {key: "realtime"},
-        {key: "app"},
-    ]
 
     const pluginsStore = usePluginsStore()
 
@@ -114,13 +109,13 @@
         }
     })
 
-    const visibleSections = computed(() =>
-        SECTIONS.filter(s => activeFilter.value === "all" || activeFilter.value === s.key),
-    )
+    const visibleTriggers = computed(() => {
+        const groups: readonly TriggerGroup[] =
+            activeFilter.value === "all" ? TRIGGER_GROUPS : [activeFilter.value as TriggerGroup]
+        return groups.flatMap(group => groupedTriggers.value[group])
+    })
 
-    const hasAnyVisibleTrigger = computed(() =>
-        Object.values(groupedTriggers.value).some(triggers => triggers.length > 0),
-    )
+    const hasAnyVisibleTrigger = computed(() => visibleTriggers.value.length > 0)
 
     function openConfigureModal(trigger: TriggerPluginDto) {
         selectedTrigger.value = trigger
@@ -152,34 +147,33 @@
         gap: 0.75rem;
         align-items: center;
         flex-wrap: wrap;
+
+        .search-wrapper {
+            flex: 1 1 17.5rem;
+            max-width: 32.5rem;
+        }
+
+        .category-tags {
+            display: flex;
+            gap: var(--ks-spacing-2);
+
+            .group-icon {
+                color: var(--ks-icon-active);
+            }
+        }
     }
 
-    .search-wrapper {
-        position: relative;
-        flex: 1 1 17.5rem;
-        max-width: 32.5rem;
-    }
-
-    .category-tags {
-        display: flex;
-        gap: var(--ks-spacing-2);
-    }
-
-    .group-icon {
-        color: var(--ks-icon-active);
-    }
-
-    .state-empty {
+    .state-loading {
         padding: 3rem 1rem;
-        text-align: center;
+    }
 
-        h4 {
-            margin-bottom: 0.5rem;
-        }
+    .triggers-empty {
+        min-height: 60vh;
+    }
 
-        p {
-            color: var(--ks-content-secondary);
-            margin: 0;
-        }
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(21.875rem, 1fr));
+        gap: 1rem;
     }
 </style>

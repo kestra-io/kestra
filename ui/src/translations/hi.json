@@ -1957,7 +1957,6 @@
     "triggers_add_card_add_to_flow": "flow में जोड़ें",
     "triggers_add_category_empty": "इस श्रेणी में कोई triggers नहीं हैं।",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
-    "triggers_add_empty_hint": "कोई अन्य खोज शब्द आज़माएं या सभी श्रेणियों को ब्राउज़ करें।",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_filter_all": "सभी",
     "triggers_add_filter_app": "ऐप",

@@ -1957,7 +1957,6 @@
     "triggers_add_card_add_to_flow": "Ajouter au flow",
     "triggers_add_category_empty": "Aucun trigger dans cette catégorie.",
     "triggers_add_ee_tooltip": "Ce trigger nécessite l'édition Enterprise.",
-    "triggers_add_empty_hint": "Essayez un autre terme de recherche ou parcourez toutes les catégories.",
     "triggers_add_empty_title": "Aucun trigger trouvé",
     "triggers_add_filter_all": "Tous",
     "triggers_add_filter_app": "Application",

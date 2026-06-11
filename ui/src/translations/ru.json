@@ -1957,7 +1957,6 @@
     "triggers_add_card_add_to_flow": "Добавить в flow",
     "triggers_add_category_empty": "В этой категории нет triggers.",
     "triggers_add_ee_tooltip": "Этот trigger требует Enterprise Edition.",
-    "triggers_add_empty_hint": "Попробуйте другой поисковый запрос или просмотрите все категории.",
     "triggers_add_empty_title": "Триггеры не найдены",
     "triggers_add_filter_all": "Все",
     "triggers_add_filter_app": "Приложение",

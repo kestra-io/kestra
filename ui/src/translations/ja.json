@@ -1957,7 +1957,6 @@
     "triggers_add_card_add_to_flow": "flowに追加",
     "triggers_add_category_empty": "このカテゴリにはトリガーがありません。",
     "triggers_add_ee_tooltip": "このtriggerはEnterprise Editionが必要です。",
-    "triggers_add_empty_hint": "別の検索用語を試すか、すべてのカテゴリを閲覧してください。",
     "triggers_add_empty_title": "トリガーが見つかりません",
     "triggers_add_filter_all": "すべて",
     "triggers_add_filter_app": "アプリケーション",

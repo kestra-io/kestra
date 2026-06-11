@@ -1957,7 +1957,6 @@
     "triggers_add_card_add_to_flow": "添加到flow",
     "triggers_add_category_empty": "此类别中没有trigger。",
     "triggers_add_ee_tooltip": "此trigger需要企业版。",
-    "triggers_add_empty_hint": "尝试不同的搜索词或浏览所有类别。",
     "triggers_add_empty_title": "未找到trigger",
     "triggers_add_filter_all": "全部",
     "triggers_add_filter_app": "应用程序",

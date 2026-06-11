@@ -12,9 +12,10 @@
             :key="dashboard.id"
             :dashboard
             :active="dashboard.id === selected?.id"
-            :edit="(id: string) => $emit('edit', id)"
-            :remove="(d: {id: string; title: string}) => $emit('remove', d)"
-            :setAsDefault="(id: string) => $emit('setDefault', id)"
+            deletable
+            @set-default="$emit('setDefault', $event)"
+            @edit="$emit('edit', $event)"
+            @remove="$emit('remove', $event)"
             @click="$emit('select', dashboard.id)"
         />
         <span v-if="!filtered.length" class="empty">

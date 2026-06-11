@@ -16,7 +16,7 @@
                         :class="{'is-default': dashboard.isDefault}"
                         :tooltip="$t('default')"
                         placement="top"
-                        @click.stop="setAsDefault(dashboard.id)"
+                        @click.stop="$emit('setDefault', dashboard.id)"
                     >
                         <component :is="dashboard.isDefault ? Bookmark : BookmarkOutline" />
                     </KsIconButton>
@@ -25,16 +25,16 @@
                     <KsIconButton
                         :tooltip="$t('edit')"
                         placement="top"
-                        @click.stop="edit(dashboard.id)"
+                        @click.stop="$emit('edit', dashboard.id)"
                     >
                         <Pencil />
                     </KsIconButton>
                 </span>
-                <span v-if="remove" class="action">
+                <span v-if="deletable" class="action">
                     <KsIconButton
                         :tooltip="$t('delete')"
                         placement="top"
-                        @click.stop="remove(dashboard)"
+                        @click.stop="$emit('remove', dashboard)"
                     >
                         <DeleteOutline />
                     </KsIconButton>
@@ -54,9 +54,12 @@
     defineProps<{
         dashboard: {id: string, title: string, isDefault: boolean},
         active?: boolean,
-        setAsDefault: (id: string) => void,
-        edit: (id: string) => void,
-        remove?: (dashboard: {id: string, title: string}) => void}>()
+        deletable?: boolean}>()
+
+    defineEmits<{
+        setDefault: [id: string],
+        edit: [id: string],
+        remove: [dashboard: {id: string, title: string}]}>()
 </script>
 
 <style scoped lang="scss">

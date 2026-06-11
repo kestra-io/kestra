@@ -3,7 +3,6 @@
         v-model="search"
         :placeholder="$t('search')"
         clearable
-        class="search"
     />
 
     <div class="items">
@@ -12,13 +11,12 @@
             :key="dashboard.id"
             :dashboard
             :active="dashboard.id === selected?.id"
-            deletable
             @set-default="$emit('setDefault', $event)"
             @edit="$emit('edit', $event)"
             @remove="$emit('remove', $event)"
             @click="$emit('select', dashboard.id)"
         />
-        <span v-if="!filtered.length" class="empty">
+        <span v-if="!filtered.length">
             {{ $t("dashboards.empty") }}
         </span>
     </div>
@@ -30,7 +28,7 @@
         :icon="Plus"
         tag="router-link"
         :to="{name: 'dashboards/create', query}"
-        class="create w-100"
+        class="w-100"
     >
         {{ $t("dashboards.creation.label") }}
     </KsButton>

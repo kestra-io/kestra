@@ -12,8 +12,6 @@
             <span v-if="dashboard.id !== 'default'" class="actions">
                 <span class="action">
                     <KsIconButton
-                        class="bookmark"
-                        :class="{'is-default': dashboard.isDefault}"
                         :tooltip="$t('default')"
                         placement="top"
                         @click.stop="$emit('setDefault', dashboard.id)"
@@ -30,7 +28,7 @@
                         <Pencil />
                     </KsIconButton>
                 </span>
-                <span v-if="deletable" class="action">
+                <span class="action">
                     <KsIconButton
                         :tooltip="$t('delete')"
                         placement="top"
@@ -53,8 +51,7 @@
 
     defineProps<{
         dashboard: {id: string, title: string, isDefault: boolean},
-        active?: boolean,
-        deletable?: boolean}>()
+        active?: boolean}>()
 
     defineEmits<{
         setDefault: [id: string],

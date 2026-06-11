@@ -11,8 +11,10 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.empty" #empty>
-            <slot name="empty" />
+        <template #empty>
+            <slot name="empty">
+                <KsTableEmpty :title="emptyText" />
+            </slot>
         </template>
     </ElTable>
 </template>
@@ -22,6 +24,7 @@
     import {ElTable} from "element-plus"
     import type {TableInstance} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import KsTableEmpty from "../KsTableEmpty.vue"
 
     defineOptions({inheritAttrs: false})
 

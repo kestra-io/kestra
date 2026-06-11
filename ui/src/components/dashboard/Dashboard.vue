@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" :class="{filterPadding: padding}">
+    <section id="filter" class="filterPadding">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
@@ -24,7 +24,13 @@
         />
     </section>
 
-    <Sections ref="dashboardComponent" :dashboard :charts :showDefault="isDashboardBundledWithUI" :padding="padding" />
+    <Sections
+        ref="dashboardComponent"
+        :dashboard
+        :charts
+        :showDefault="isDashboardBundledWithUI"
+        :padding="true"
+    />
 </template>
 
 <script setup lang="ts">
@@ -92,8 +98,6 @@
             return "home"
         }
     })
-
-    const padding = computed(() => dashboardLocation.value === "home")
 
     const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []})
     const isDashboardBundledWithUI = ref<boolean>(false)

@@ -263,8 +263,6 @@ triggers:
 
 <style lang="scss" scoped>
     .mcp-tools {
-        padding: 1.5rem;
-
         &__mono {
             font-family: var(--ks-font-family-mono);
             font-size: 0.8125rem;

@@ -93,6 +93,7 @@ import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTabsToggle from "./components/Navigation/KsTabs/KsTabsToggle.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
+import KsTableEmpty from "./components/Data/KsTableEmpty.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
@@ -284,6 +285,7 @@ const components: Record<string, Component> = {
     KsTabsToggle,
     KsTable,
     KsTableColumn,
+    KsTableEmpty,
     KsTag,
     KsTaskIcon,
     KsText,
@@ -390,6 +392,7 @@ export {
     KsTabsToggle,
     KsTable,
     KsTableColumn,
+    KsTableEmpty,
     KsTag,
     KsTaskIcon,
     KsText,
@@ -515,6 +518,7 @@ declare module "vue" {
         KsTabsToggle: typeof KsTabsToggle
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
+        KsTableEmpty: typeof KsTableEmpty
         KsTag: typeof KsTag
         KsTaskIcon: typeof KsTaskIcon
         KsText: typeof KsText

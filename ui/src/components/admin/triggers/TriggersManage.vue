@@ -204,8 +204,6 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @change="(value: string | number | boolean) => setDisabled(scope.row, Boolean(value))"
-                            inlinePrompt
-                            class="switch-text"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -872,17 +870,6 @@
 
             .kel-icon {
                 display: none;
-            }
-        }
-
-        :deep(.kel-switch) {
-            .is-text {
-                padding: 0 3px;
-                color: inherit;
-            }
-
-            &.is-checked .is-text {
-                color: var(--ks-text-inverse);
             }
         }
 

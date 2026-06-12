@@ -25,6 +25,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
@@ -42,6 +43,7 @@ import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
+import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
@@ -121,6 +123,7 @@ public class TriggerEventHandler {
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
+            case TriggerWorkerLost evt -> onTriggerWorkerLost(clock, evt);
             // Commands
             case CreateBackfillTrigger evt -> onCreateBackfill(clock, evt);
             case SetPauseBackfillTrigger evt -> onSetPauseBackfillTrigger(clock, evt);
@@ -317,17 +320,55 @@ public class TriggerEventHandler {
     }
 
     /**
-     * Handler method for {@link ResetTrigger}.
+     * Handler method for {@link TriggerReceived}.
      *
      * @param event the event.
      */
     void onTriggerReceived(Clock clock, TriggerReceived event) {
+        Optional<TriggerState> maybeState = findTriggerState(event);
+        if (maybeState.isEmpty()) {
+            // The trigger was deleted while its worker job was in flight: kill the instance
+            // the worker just started. Only do so when the state is truly missing, not when
+            // the event was de-duplicated.
+            if (triggerStateStore.findById(event.id()).isEmpty()) {
+                sendExecutionKilled(event.id());
+            }
+            return;
+        }
+        TriggerState state = maybeState.get();
+        // The trigger was disabled while its worker job was in flight: the kill broadcast
+        // found no holder at that time, so kill the instance now that a worker reports it.
+        if (state.isDisabled()) {
+            maySendExecutionKilled(state);
+        }
+        triggerStateStore.save(
+            state
+                .lastEventId(clock, event.eventId())
+                .workerId(clock, event.workerId())
+        );
+    }
+
+    /**
+     * Handler method for {@link TriggerWorkerLost}.
+     * <p>
+     * The worker holding the trigger is gone without reporting a result: release the lock so an
+     * eligible trigger is resubmitted from the current flow definition, while a disabled one stays off.
+     *
+     * @param event the event.
+     */
+    void onTriggerWorkerLost(Clock clock, TriggerWorkerLost event) {
         findTriggerState(event).ifPresent(state ->
         {
-            state = state
-                .lastEventId(clock, event.eventId())
-                .workerId(clock, event.workerId());
-            triggerStateStore.save(state);
+            if (state.getWorkerId() != null && !state.getWorkerId().equals(event.workerUid())) {
+                // The trigger is already held by another worker.
+                return;
+            }
+            triggerStateStore.save(
+                state
+                    .lastEventId(clock, event.eventId())
+                    .locked(clock, false)
+                    .workerId(clock, null)
+            );
         });
     }
 
@@ -404,22 +445,26 @@ public class TriggerEventHandler {
      */
     private void maySendExecutionKilled(TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
-            try {
-                this.executionKilledQueue.emit(
-                    ExecutionKilledTrigger
-                        .builder()
-                        // Trigger kills are not processed by the Executor: emit them directly in the
-                        // EXECUTED state, the only state forwarded to the workers.
-                        .state(ExecutionKilled.State.EXECUTED)
-                        .tenantId(state.getTenantId())
-                        .namespace(state.getNamespace())
-                        .flowId(state.getFlowId())
-                        .triggerId(state.getTriggerId())
-                        .build()
-                );
-            } catch (QueueException e) {
-                Logs.logTrigger(state, Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
-            }
+            sendExecutionKilled(state);
+        }
+    }
+
+    private void sendExecutionKilled(TriggerId id) {
+        try {
+            this.executionKilledQueue.emit(
+                ExecutionKilledTrigger
+                    .builder()
+                    // Trigger kills are not processed by the Executor: emit them directly in the
+                    // EXECUTED state, the only state forwarded to the workers.
+                    .state(ExecutionKilled.State.EXECUTED)
+                    .tenantId(id.getTenantId())
+                    .namespace(id.getNamespace())
+                    .flowId(id.getFlowId())
+                    .triggerId(id.getTriggerId())
+                    .build()
+            );
+        } catch (QueueException e) {
+            Logs.logTrigger(id, Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
         }
     }
 

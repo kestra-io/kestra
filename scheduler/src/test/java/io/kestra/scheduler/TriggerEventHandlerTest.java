@@ -37,7 +37,9 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
+import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
+import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
@@ -555,6 +557,80 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
+    }
+
+    @Test
+    void shouldUnlockTriggerWhenWorkerLost() {
+        // GIVEN — a realtime trigger held by the worker that was lost
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the trigger is released so the scheduler can resubmit it
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getWorkerId()).isNull();
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldIgnoreWorkerLostWhenTriggerHeldByAnotherWorker() {
+        // GIVEN — the trigger was already re-assigned to another worker
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-2");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
+    }
+
+    @Test
+    void shouldKillRealtimeTriggerWhenReceivedWhileDisabled() throws QueueException {
+        // GIVEN — a realtime trigger disabled while its worker job was still queued
+        TriggerState realtimeState = TriggerState.of(triggerId, TriggerType.REALTIME, null, true, 0);
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerReceived event = new TriggerReceived(triggerId, "worker-1");
+
+        // WHEN — a worker reports holding the disabled trigger
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the instance is killed
+        Mockito.verify(executionKilledQueue).emit(Mockito.any(ExecutionKilledTrigger.class));
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
+    }
+
+    @Test
+    void shouldKillTriggerWhenReceivedGivenMissingState() throws QueueException {
+        // GIVEN — the trigger was deleted while its worker job was still queued
+        handler = newTriggerEventHandler(List.of());
+        TriggerReceived event = new TriggerReceived(triggerId, "worker-1");
+
+        // WHEN — a worker reports holding the deleted trigger
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the instance is killed
+        Mockito.verify(executionKilledQueue).emit(Mockito.any(ExecutionKilledTrigger.class));
     }
 
     @Test

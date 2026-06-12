@@ -249,9 +249,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     if (evaluation != null) {
                         triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
                     } else {
-                        // The realtime trigger stream errored without producing a FAILED execution
-                        // (failOnTriggerError=false): notify the scheduler directly so the trigger
-                        // is unlocked and resubmitted instead of staying locked forever.
+                        // The realtime trigger stream ended without producing an execution — clean
+                        // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
+                        // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
                         triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED));
                     }
                     if (isTerminalRealtimeResult(evaluation)) {
@@ -268,8 +268,8 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     /**
      * A realtime trigger sends one result per emitted execution while it keeps running on the worker;
      * those results must not release its WorkerJobRunning entry, which the liveness coordinator relies
-     * on to resubmit the trigger when the worker dies. Only a terminal result does — a FAILED
-     * evaluation, or an error reported without an evaluation.
+     * on to notify the scheduler when the worker dies. Only a terminal result does — a FAILED
+     * evaluation, or a stream end reported without an evaluation.
      */
     static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
         return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());

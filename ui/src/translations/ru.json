@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Выражение",
+      "preview": "Предварительный просмотр",
       "render": "Отобразить выражение",
       "title": "Отладка выражения",
       "tooltip": "Выполните любое выражение Pebble и проверьте контекст выполнения."
@@ -719,6 +721,10 @@
     "file unavailable": "Файл недоступен",
     "file unavailable description": "Этот файл больше недоступен — возможно, он был удален или срок его действия истек.",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
+    "file_preview": {
+      "big_file_warning": "Этот файл имеет размер {size}. Загрузка может занять некоторое время и заблокировать ваш браузер. Вы все равно хотите его загрузить?",
+      "load_anyway": "Загрузить в любом случае"
+    },
     "files": "Файлы",
     "filter by log level": "Фильтр по уровню log",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "Действительный",
     "validate": "Проверить",
     "value": "Значение",
-    "variables": "Переменные",
     "variable_explorer": {
-      "title": "Ввод/Вывод",
-      "search_placeholder": "Поиск по Key или value...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "Дерево",
-      "raw_json": "Raw JSON",
-      "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
       "empty": "Нет переменных, доступных для этого выполнения.",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count} элементов ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 элемент ]",
-      "n_items": "[ {count} элементов ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Поиск по Key или value...",
+      "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Ввод/Вывод",
+      "tree": "Дерево"
     },
+    "variables": "Переменные",
     "version": "Версия",
     "view metrics": "Просмотр метрик",
     "warning": "Предупреждение",

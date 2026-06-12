@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "표현식",
+      "preview": "미리보기",
       "render": "식 렌더링",
       "title": "디버그 표현식",
       "tooltip": "모든 Pebble 표현식을 렌더링하고 실행 컨텍스트를 검사합니다."
@@ -719,6 +721,10 @@
     "file unavailable": "파일을 사용할 수 없음",
     "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다 — 삭제되었거나 만료되었을 수 있습니다.",
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
+    "file_preview": {
+      "big_file_warning": "이 파일의 크기는 {size}입니다. 브라우저가 차단될 수 있으니 로드하는 데 시간이 걸릴 수 있습니다. 그래도 로드하시겠습니까?",
+      "load_anyway": "그래도 로드하기"
+    },
     "files": "파일",
     "filter by log level": "Log 레벨로 필터링",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "유효",
     "validate": "유효성 검사",
     "value": "Value",
-    "variables": "변수",
     "variable_explorer": {
-      "title": "입력/출력",
-      "search_placeholder": "Key 또는 value 검색...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "트리",
-      "raw_json": "Raw JSON",
-      "select_prompt": "value를 확인할 변수를 선택하세요.",
       "empty": "이 실행에 사용할 수 있는 변수가 없습니다.",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count}개 항목 ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1개 항목 ]",
-      "n_items": "[ {count}개 항목 ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key 또는 value 검색...",
+      "select_prompt": "value를 확인할 변수를 선택하세요.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "입력/출력",
+      "tree": "트리"
     },
+    "variables": "변수",
     "version": "버전",
     "view metrics": "메트릭 보기",
     "warning": "경고",

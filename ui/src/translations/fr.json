@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Expression",
+      "preview": "Aperçu",
       "render": "Rendre l'expression",
       "title": "Expression de débogage",
       "tooltip": "Vous devez choisir une tâche pour évaluer une expression."
@@ -719,6 +721,10 @@
     "file unavailable": "Fichier indisponible",
     "file unavailable description": "Ce fichier n'est plus disponible — il a peut-être été supprimé ou expiré.",
     "fileTypeNotAllowed": "Type de fichier non autorisé. Types acceptés : {types}",
+    "file_preview": {
+      "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
+      "load_anyway": "Charger quand même"
+    },
     "files": "Fichiers",
     "filter by log level": "Filtrer par niveau de log",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "Valide",
     "validate": "Valider",
     "value": "Valeur",
-    "variables": "Variables",
     "variable_explorer": {
-      "title": "Entrée/Sortie",
-      "search_placeholder": "Rechercher une Key ou une value...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "Arborescence",
-      "raw_json": "Raw JSON",
-      "select_prompt": "Sélectionnez une variable pour inspecter sa value.",
       "empty": "Aucune variable disponible pour cette exécution.",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count} éléments ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 élément ]",
-      "n_items": "[ {count} éléments ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Rechercher une Key ou une value...",
+      "select_prompt": "Sélectionnez une variable pour inspecter sa value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Entrée/Sortie",
+      "tree": "Arborescence"
     },
+    "variables": "Variables",
     "version": "Version",
     "view metrics": "Voir les métriques",
     "warning": "Avertissement",

@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "अभिव्यक्ति",
+      "preview": "पूर्वावलोकन",
       "render": "एक्सप्रेशन रेंडर करें",
       "title": "डिबग अभिव्यक्ति",
       "tooltip": "किसी भी Pebble अभिव्यक्ति को प्रस्तुत करें और निष्पादन संदर्भ का निरीक्षण करें।"
@@ -719,6 +721,10 @@
     "file unavailable": "फ़ाइल उपलब्ध नहीं है",
     "file unavailable description": "यह फ़ाइल अब उपलब्ध नहीं है — इसे हटाया जा सकता है या इसकी समय सीमा समाप्त हो गई है।",
     "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
+    "file_preview": {
+      "big_file_warning": "यह फ़ाइल {size} है। इसे लोड करने में कुछ समय लग सकता है जिससे आपका ब्राउज़र ब्लॉक हो सकता है। क्या आप इसे फिर भी लोड करना चाहते हैं?",
+      "load_anyway": "फिर भी लोड करें"
+    },
     "files": "फ़ाइलें",
     "filter by log level": "Log स्तर द्वारा फ़िल्टर करें",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "मान्य",
     "validate": "मान्य करें",
     "value": "Value",
-    "variables": "वेरिएबल्स",
     "variable_explorer": {
-      "title": "इनपुट/आउटपुट",
-      "search_placeholder": "Key या value खोजें...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "ट्री",
-      "raw_json": "Raw JSON",
-      "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
       "empty": "इस निष्पादन के लिए कोई वेरिएबल उपलब्ध नहीं है।",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count} आइटम ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 आइटम ]",
-      "n_items": "[ {count} आइटम ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key या value खोजें...",
+      "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
+      "tasks_outputs": "Tasks outputs",
+      "title": "इनपुट/आउटपुट",
+      "tree": "ट्री"
     },
+    "variables": "वेरिएबल्स",
     "version": "संस्करण",
     "view metrics": "मेट्रिक्स देखें",
     "warning": "चेतावनी",

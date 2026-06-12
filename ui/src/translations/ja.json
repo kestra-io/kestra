@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "式",
+      "preview": "プレビュー",
       "render": "式をレンダリング",
       "title": "デバッグ式",
       "tooltip": "任意のPebble式をレンダリングし、実行コンテキストを検査します。"
@@ -719,6 +721,10 @@
     "file unavailable": "ファイルが利用できません",
     "file unavailable description": "このファイルは利用できなくなりました — 削除されたか、有効期限が切れた可能性があります。",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
+    "file_preview": {
+      "big_file_warning": "このファイルのサイズは{size}です。読み込みに時間がかかり、ブラウザがブロックされる可能性があります。それでも読み込みますか？",
+      "load_anyway": "読み込みを続行"
+    },
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "有効",
     "validate": "検証",
     "value": "Value",
-    "variables": "変数",
     "variable_explorer": {
-      "title": "入力/出力",
-      "search_placeholder": "Key または value を検索...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "ツリー",
-      "raw_json": "Raw JSON",
-      "select_prompt": "value を確認する変数を選択してください。",
       "empty": "この実行に利用可能な変数はありません。",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count} 件 ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 件 ]",
-      "n_items": "[ {count} 件 ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key または value を検索...",
+      "select_prompt": "value を確認する変数を選択してください。",
+      "tasks_outputs": "Tasks outputs",
+      "title": "入力/出力",
+      "tree": "ツリー"
     },
+    "variables": "変数",
     "version": "バージョン",
     "view metrics": "メトリクスを表示",
     "warning": "警告",

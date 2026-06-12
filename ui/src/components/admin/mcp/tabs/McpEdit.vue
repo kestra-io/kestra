@@ -195,10 +195,10 @@
 
     const canSave = computed(() =>
         isUpdate.value
-            ? authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.UPDATE) ?? true
-            : authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE) ?? true,
+            ? authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.UPDATE) ?? true
+            : authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.CREATE) ?? true,
     )
-    const canDelete = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.DELETE) ?? true)
+    const canDelete = computed(() => authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.DELETE) ?? true)
     const readOnly = computed(() => !canSave.value)
 
     interface McpForm {

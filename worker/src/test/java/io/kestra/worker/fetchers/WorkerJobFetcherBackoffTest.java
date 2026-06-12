@@ -1,6 +1,7 @@
 package io.kestra.worker.fetchers;
 
 import io.kestra.controller.GrpcChannelManager;
+import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
@@ -20,7 +21,8 @@ class WorkerJobFetcherBackoffTest {
             mock(WorkerQueueRegistry.class),
             mock(ExecutionKilledManager.class),
             null,
-            List.of()
+            List.of(),
+            mock(GrpcConfiguration.class)
         );
     }
 

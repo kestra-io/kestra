@@ -212,6 +212,7 @@
     "copied": "복사됨",
     "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
     "copy": "복사",
+    "copy all logs": "모든 Log 복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
     "copy_and_close": "복사하고 닫기",
@@ -229,6 +230,7 @@
     "current": "현재",
     "current execution": "현재 실행",
     "custom value": "사용자 정의 value",
+    "customize sidebar": "사이드바 사용자 정의",
     "dark_version": "다크 버전",
     "dashboards": {
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
@@ -481,6 +483,7 @@
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
+    "drop items here": "여기에 항목을 드롭하세요",
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "duration": "지속 시간",
     "dynamic": "동적",
@@ -629,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "표현식",
+      "preview": "미리보기",
       "render": "식 렌더링",
       "title": "디버그 표현식",
       "tooltip": "모든 Pebble 표현식을 렌더링하고 실행 컨텍스트를 검사합니다."
@@ -716,6 +721,10 @@
     "file unavailable": "파일을 사용할 수 없음",
     "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다 — 삭제되었거나 만료되었을 수 있습니다.",
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
+    "file_preview": {
+      "big_file_warning": "이 파일의 크기는 {size}입니다. 브라우저가 차단될 수 있으니 로드하는 데 시간이 걸릴 수 있습니다. 그래도 로드하시겠습니까?",
+      "load_anyway": "그래도 로드하기"
+    },
     "files": "파일",
     "filter by log level": "Log 레벨로 필터링",
     "filters": {
@@ -1550,6 +1559,7 @@
     "replayed": "실행이 재생되었습니다.",
     "required field": "필수 필드",
     "reset": "재시작",
+    "reset to defaults": "기본값으로 재설정",
     "restart": "재시작",
     "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
@@ -1698,6 +1708,15 @@
           "label": "환경 설정 저장",
           "unsaved_title": "저장되지 않은 변경 사항",
           "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "사이드바에서 항목을 표시, 숨기기 및 재정렬합니다."
+          },
+          "fields": {
+            "items": "네비게이션 항목"
+          },
+          "label": "사이드바"
         },
         "theme": {
           "color_modes": {
@@ -1942,15 +1961,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "추가",
     "triggers_add_card_add_to_flow": "flow에 추가",
-    "triggers_add_category_app_description": "외부 리소스를 주기적으로 확인하여 변경 사항을 검사합니다.",
-    "triggers_add_category_app_title": "앱 Triggers",
-    "triggers_add_category_core_description": "대부분의 워크플로우에 필수적인 내장 트리거.",
-    "triggers_add_category_core_title": "코어 Triggers",
     "triggers_add_category_empty": "이 카테고리에 trigger가 없습니다.",
-    "triggers_add_category_realtime_description": "메시징 시스템의 이벤트에 즉시 반응하십시오.",
-    "triggers_add_category_realtime_title": "실시간 Triggers",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
-    "triggers_add_empty_hint": "다른 검색어를 시도하거나 모든 카테고리를 탐색하세요.",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_filter_all": "모두",
     "triggers_add_filter_app": "앱",
@@ -1968,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "트리거 ID",
     "triggers_add_modal_trigger_id_placeholder": "이 trigger의 고유 식별자",
     "triggers_add_search_placeholder": "트리거 검색...",
-    "triggers_add_see_less": "간단히 보기",
-    "triggers_add_see_more": "더 보기 ({count} 더 보기)",
     "triggers_header_description": "트리거를 찾아보고 추가하고 관리하여 flow를 자동화하세요. flow를 AI 도구로 노출하거나, 스케줄링, webhook trigger 추가, 외부 앱의 변경 사항 폴링, 실시간 이벤트 리스너 중에서 선택하세요.",
     "triggers_state": {
       "options": {
@@ -2015,6 +2025,19 @@
     "valid": "유효",
     "validate": "유효성 검사",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "이 실행에 사용할 수 있는 변수가 없습니다.",
+      "n_items": "[ {count}개 항목 ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1개 항목 ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key 또는 value 검색...",
+      "select_prompt": "value를 확인할 변수를 선택하세요.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "입력/출력",
+      "tree": "트리"
+    },
     "variables": "변수",
     "version": "버전",
     "view metrics": "메트릭 보기",
@@ -2024,6 +2047,7 @@
     "watch": "시청",
     "watch_video": "비디오 보기",
     "webhook": {
+      "copy_url": "웹훅 URL 복사",
       "curl_command": "Webhook cURL 명령어",
       "curl_note": "이 cURL 명령어를 사용하여 사용자 정의 JSON 페이로드로 웹훅을 통해 flow를 trigger하십시오.",
       "no_triggers": "이 flow에는 활성화된 webhook trigger가 없습니다.",

@@ -212,6 +212,7 @@
     "copied": "コピーされました",
     "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
+    "copy all logs": "すべてのLogをコピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
     "copy_and_close": "コピーして閉じる",
@@ -229,6 +230,7 @@
     "current": "現在",
     "current execution": "現在の実行",
     "custom value": "カスタム value",
+    "customize sidebar": "サイドバーをカスタマイズ",
     "dark_version": "ダークバージョン",
     "dashboards": {
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
@@ -481,6 +483,7 @@
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
     "draft_available": "エディターでドラフト変更が利用可能です",
+    "drop items here": "ここにアイテムをドロップしてください",
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "duration": "期間",
     "dynamic": "動的",
@@ -629,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "式",
+      "preview": "プレビュー",
       "render": "式をレンダリング",
       "title": "デバッグ式",
       "tooltip": "任意のPebble式をレンダリングし、実行コンテキストを検査します。"
@@ -716,6 +721,10 @@
     "file unavailable": "ファイルが利用できません",
     "file unavailable description": "このファイルは利用できなくなりました — 削除されたか、有効期限が切れた可能性があります。",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
+    "file_preview": {
+      "big_file_warning": "このファイルのサイズは{size}です。読み込みに時間がかかり、ブラウザがブロックされる可能性があります。それでも読み込みますか？",
+      "load_anyway": "読み込みを続行"
+    },
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
     "filters": {
@@ -1550,6 +1559,7 @@
     "replayed": "実行が再生されました",
     "required field": "必須フィールド",
     "reset": "再起動",
+    "reset to defaults": "デフォルトにリセット",
     "restart": "再起動",
     "restart change revision": "新しい実行に使用されるリビジョンを変更できます。",
     "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
@@ -1698,6 +1708,15 @@
           "label": "設定を保存",
           "unsaved_title": "未保存の変更",
           "unsaved_warning": "保存されていない変更があります。離れる前に保存しますか？"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "サイドバーの項目を表示、非表示、および並べ替えします。"
+          },
+          "fields": {
+            "items": "ナビゲーション項目"
+          },
+          "label": "サイドバー"
         },
         "theme": {
           "color_modes": {
@@ -1942,15 +1961,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "追加",
     "triggers_add_card_add_to_flow": "flowに追加",
-    "triggers_add_category_app_description": "外部リソースの変更を定期的にチェックします。",
-    "triggers_add_category_app_title": "アプリケーショントリガー",
-    "triggers_add_category_core_description": "ほとんどのワークフローに不可欠なビルトイントリガー。",
-    "triggers_add_category_core_title": "コアトリガー",
     "triggers_add_category_empty": "このカテゴリにはトリガーがありません。",
-    "triggers_add_category_realtime_description": "メッセージングシステムからのイベントに即座に反応します。",
-    "triggers_add_category_realtime_title": "リアルタイムトリガー",
     "triggers_add_ee_tooltip": "このtriggerはEnterprise Editionが必要です。",
-    "triggers_add_empty_hint": "別の検索用語を試すか、すべてのカテゴリを閲覧してください。",
     "triggers_add_empty_title": "トリガーが見つかりません",
     "triggers_add_filter_all": "すべて",
     "triggers_add_filter_app": "アプリケーション",
@@ -1968,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "トリガーID",
     "triggers_add_modal_trigger_id_placeholder": "このtriggerのユニークな識別子",
     "triggers_add_search_placeholder": "トリガーを検索...",
-    "triggers_add_see_less": "表示を減らす",
-    "triggers_add_see_more": "さらに表示（{count} 件の追加）",
     "triggers_header_description": "トリガーを閲覧、追加、管理して、flowを自動化します。flowをAIツールとして公開する、スケジューリング、Webhookトリガーの追加、外部アプリの変更をポーリング、またはリアルタイムイベントリスナーから選択します。",
     "triggers_state": {
       "options": {
@@ -2015,6 +2025,19 @@
     "valid": "有効",
     "validate": "検証",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "この実行に利用可能な変数はありません。",
+      "n_items": "[ {count} 件 ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 件 ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key または value を検索...",
+      "select_prompt": "value を確認する変数を選択してください。",
+      "tasks_outputs": "Tasks outputs",
+      "title": "入力/出力",
+      "tree": "ツリー"
+    },
     "variables": "変数",
     "version": "バージョン",
     "view metrics": "メトリクスを表示",
@@ -2024,6 +2047,7 @@
     "watch": "ウォッチ",
     "watch_video": "ビデオを見る",
     "webhook": {
+      "copy_url": "Webhook URLをコピー",
       "curl_command": "Webhook cURL コマンド",
       "curl_note": "このcURLコマンドを使用して、カスタムJSONペイロードでwebhookを介してflowをtriggerします。",
       "no_triggers": "このflowには有効なWebhookトリガーがありません",

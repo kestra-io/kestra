@@ -582,7 +582,8 @@ class TriggerEventHandlerTest {
         // GIVEN — a locked realtime trigger whose creation failed on the worker
         TriggerState realtimeState = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, false, 0)
-            .locked(CLOCK, true);
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
         TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, "exec-123", State.Type.FAILED);
@@ -594,6 +595,7 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getWorkerId()).isNull();
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -641,7 +643,8 @@ class TriggerEventHandlerTest {
         // GIVEN — a polling trigger locked at submission whose evaluation matched nothing
         TriggerState pollingState = TriggerState
             .of(triggerId, TriggerType.POLLING, null, false, 0)
-            .locked(CLOCK, true);
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
         triggerStateStore.save(pollingState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         TriggerEvaluated event = new TriggerEvaluated(triggerId, null);
@@ -653,6 +656,7 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getWorkerId()).isNull();
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 

@@ -301,7 +301,9 @@ public class TriggerEventHandler {
                 // No execution was created (poll matched nothing, or the job was rejected before
                 // dispatch): release the lock taken at submission, otherwise the trigger would
                 // never be eligible for scheduling again.
-                newState = newState.locked(clock, false);
+                newState = newState
+                    .locked(clock, false)
+                    .workerId(clock, null);
             }
 
             newState = newState.lastEventId(clock, event.eventId());

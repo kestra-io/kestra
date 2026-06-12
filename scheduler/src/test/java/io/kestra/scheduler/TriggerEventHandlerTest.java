@@ -491,6 +491,46 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldKeepRealtimeTriggerLockedWhenTerminatedExecutionIsNotFailed() {
+        // GIVEN — a realtime trigger locked because it is running on a worker
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .locked(CLOCK, true);
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, "exec-123", State.Type.SUCCESS);
+
+        // WHEN — an execution emitted by the running trigger terminates
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the event is ignored and the trigger stays locked
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getLastEventId()).isNull();
+    }
+
+    @Test
+    void shouldUnlockRealtimeTriggerWhenTerminatedExecutionIsFailed() {
+        // GIVEN — a locked realtime trigger whose creation failed on the worker
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .locked(CLOCK, true);
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, "exec-123", State.Type.FAILED);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the FAILED creation execution unlocks the trigger so it can be resubmitted
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
     void shouldExecuteFailedTriggerGivenFlowAndFailedEvaluationWhenHandled() {
         // GIVEN
         triggerStateStore.save(triggerState);

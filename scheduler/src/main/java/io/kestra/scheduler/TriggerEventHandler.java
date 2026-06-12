@@ -20,6 +20,7 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -244,6 +245,21 @@ public class TriggerEventHandler {
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
         findTriggerState(event).ifPresent(state ->
         {
+            // A running realtime trigger emits many executions whose terminations must not release the
+            // trigger's lock — unlocking here would resubmit a trigger that is still running on a worker.
+            // The only expected termination signal for a realtime trigger is the FAILED execution
+            // produced when the trigger could not be started.
+            if (TriggerType.REALTIME.equals(state.getType()) && !State.Type.FAILED.equals(event.executionState())) {
+                Logs.logTrigger(
+                    event.id(),
+                    Level.WARN,
+                    "Ignoring event '{}' for execution '{}' in state '{}'. Cause: a realtime trigger is only unlocked by a FAILED trigger-creation execution.",
+                    event.type(),
+                    event.executionId(),
+                    event.executionState()
+                );
+                return;
+            }
             triggerStateStore.save(
                 state
                     .lastEventId(clock, event.eventId())

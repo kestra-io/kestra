@@ -59,6 +59,7 @@ function installSurveyHooksOnce() {
 }
 
 export async function initPostHogForSetup(config: Config): Promise<void> {
+    if (import.meta.env.MODE === "development") return
     try {
         const uid = ensureUid()
 
@@ -76,12 +77,28 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
 
         if (!apiConfig?.posthog?.token) return
 
+        let redirectErrors = 0
+        const REDIRECT_ERROR_THRESHOLD = 3
+
         posthog.init(apiConfig.posthog.token, {
             api_host: apiConfig.posthog.apiHost,
             ui_host: "https://eu.posthog.com",
             capture_pageview: false,
             capture_pageleave: true,
             autocapture: false,
+            on_request_error: (res) => {
+                // 301/308 redirects that the browser can't follow (CORS) arrive here
+                // as status 0 (network error) or the redirect status itself.
+                // After a few consecutive failures, stop surveys from hammering the network.
+                if (res.statusCode === 0 || res.statusCode === 301 || res.statusCode === 308) {
+                    redirectErrors++
+                    if (redirectErrors >= REDIRECT_ERROR_THRESHOLD) {
+                        posthog.set_config({disable_surveys: true})
+                    }
+                } else {
+                    redirectErrors = 0
+                }
+            },
         })
 
         posthog.register_for_session(statsGlobalData(config, uid));

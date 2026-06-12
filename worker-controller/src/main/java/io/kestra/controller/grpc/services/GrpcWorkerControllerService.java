@@ -16,6 +16,8 @@ import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
@@ -238,18 +240,33 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             var evaluation = workerTriggerResult.evaluation();
 
             switch (workerTriggerResult.type()) {
-                case POLLING -> triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                case POLLING -> {
+                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+                }
                 case REALTIME -> {
                     if (evaluation != null) {
                         triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
                     }
+                    if (isTerminalRealtimeResult(evaluation)) {
+                        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+                    }
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + workerTriggerResult.type());
             }
-            workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
         });
         responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();
+    }
+
+    /**
+     * A realtime trigger sends one result per emitted execution while it keeps running on the worker;
+     * those results must not release its WorkerJobRunning entry, which the liveness coordinator relies
+     * on to resubmit the trigger when the worker dies. Only a terminal result does — a FAILED
+     * evaluation, or an error reported without an evaluation.
+     */
+    static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
+        return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
     }
 
     @Override

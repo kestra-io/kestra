@@ -570,6 +570,55 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldUnlockTriggerWhenEvaluatedWithoutExecution() {
+        // GIVEN — a polling trigger locked at submission whose evaluation matched nothing
+        TriggerState pollingState = TriggerState
+            .of(triggerId, TriggerType.POLLING, null, false, 0)
+            .locked(CLOCK, true);
+        triggerStateStore.save(pollingState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerEvaluated event = new TriggerEvaluated(triggerId, null);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the lock is released so the trigger is eligible for the next evaluation
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldKeepTriggerLockedWhenEvaluatedWithExecution() {
+        // GIVEN — a polling trigger locked at submission whose evaluation created an execution
+        TriggerState pollingState = TriggerState
+            .of(triggerId, TriggerType.POLLING, null, false, 0)
+            .locked(CLOCK, true);
+        triggerStateStore.save(pollingState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerEvaluated event = new TriggerEvaluated(
+            triggerId, new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.CREATED,
+                null,
+                null,
+                null,
+                null,
+                null
+            )
+        );
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the lock is held until the created execution terminates
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+    }
+
+    @Test
     void shouldBackfillTriggerGivenValidFlowAndTriggerWhenHandled() {
         // GIVEN
         triggerStateStore.save(triggerState);

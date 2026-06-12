@@ -292,6 +292,11 @@ public class TriggerEventHandler {
                 if (data.getRight() != null && !data.getRight().isAllowConcurrent()) {
                     newState = newState.executionId(clock, event.evaluation().executionId());
                 }
+            } else {
+                // No execution was created (poll matched nothing, or the job was rejected before
+                // dispatch): release the lock taken at submission, otherwise the trigger would
+                // never be eligible for scheduling again.
+                newState = newState.locked(clock, false);
             }
 
             newState = newState.lastEventId(clock, event.eventId());

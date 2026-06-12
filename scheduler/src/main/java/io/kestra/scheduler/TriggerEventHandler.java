@@ -222,6 +222,11 @@ public class TriggerEventHandler {
         findTriggerState(event).ifPresent(state ->
         {
             boolean wasDisabled = state.isDisabled();
+            // Stop the running instance: the disabled flag alone has no effect on a realtime
+            // trigger already running on a worker.
+            if (!wasDisabled && event.disabled()) {
+                maySendExecutionKilled(state);
+            }
             state = state
                 .lastEventId(clock, event.eventId())
                 .disabled(clock, event.disabled());
@@ -353,6 +358,9 @@ public class TriggerEventHandler {
         {
             Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
             if (data.getRight() != null) {
+                // Kill the running instance so the updated definition is applied: its termination
+                // unlocks the state and the scheduler resubmits the trigger with the new configuration.
+                maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
                     .update(clock, data.getRight())
@@ -384,16 +392,23 @@ public class TriggerEventHandler {
         triggerStateStore.findById(event.id()).ifPresent(state ->
         {
             triggerStateStore.delete(event.id());
-            maySendExecutionKilled(event, state);
+            maySendExecutionKilled(state);
         });
     }
 
-    private void maySendExecutionKilled(TriggerDeleted event, TriggerState state) {
+    /**
+     * Kills the running instance of a realtime trigger, if any. A realtime trigger runs for its whole
+     * lifetime on a worker and is not affected by state changes (update, disable, delete) until killed.
+     */
+    private void maySendExecutionKilled(TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
             try {
                 this.executionKilledQueue.emit(
                     ExecutionKilledTrigger
                         .builder()
+                        // Trigger kills are not processed by the Executor: emit them directly in the
+                        // EXECUTED state, the only state forwarded to the workers.
+                        .state(ExecutionKilled.State.EXECUTED)
                         .tenantId(state.getTenantId())
                         .namespace(state.getNamespace())
                         .flowId(state.getFlowId())
@@ -401,7 +416,7 @@ public class TriggerEventHandler {
                         .build()
                 );
             } catch (QueueException e) {
-                Logs.logTrigger(event.id(), Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
+                Logs.logTrigger(state, Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
             }
         }
     }

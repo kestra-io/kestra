@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
@@ -488,6 +489,72 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getExecutionId()).isNull();
+    }
+
+    @Test
+    void shouldKillRunningRealtimeTriggerWhenUpdated() throws QueueException {
+        // GIVEN — a realtime trigger running on a worker (locked) whose definition changed
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .locked(CLOCK, true);
+        triggerStateStore.save(realtimeState);
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TriggerSchedulerTest.TestRealTimeTrigger.builder()
+                .id(triggerId.getTriggerId())
+                .type(TriggerSchedulerTest.TestRealTimeTrigger.class.getName())
+                .build()
+        );
+        handler = newTriggerEventHandler(List.of(flow));
+        TriggerUpdated event = new TriggerUpdated(triggerId, flow.getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the running instance is killed so the new definition is applied on resubmission
+        ArgumentCaptor<ExecutionKilled> killed = ArgumentCaptor.forClass(ExecutionKilled.class);
+        Mockito.verify(executionKilledQueue).emit(killed.capture());
+        assertThat(killed.getValue()).isInstanceOf(ExecutionKilledTrigger.class);
+        assertThat(((ExecutionKilledTrigger) killed.getValue()).getTriggerId()).isEqualTo(triggerId.getTriggerId());
+        // EXECUTED is the only state forwarded to the workers
+        assertThat(killed.getValue().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
+    }
+
+    @Test
+    void shouldKillRunningRealtimeTriggerWhenDisabled() throws QueueException {
+        // GIVEN — a realtime trigger running on a worker (locked)
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .locked(CLOCK, true);
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the running instance is killed and the state disabled
+        Mockito.verify(executionKilledQueue).emit(Mockito.any(ExecutionKilledTrigger.class));
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldNotKillRealtimeTriggerWhenReEnabled() throws QueueException {
+        // GIVEN — a disabled realtime trigger
+        TriggerState realtimeState = TriggerState.of(triggerId, TriggerType.REALTIME, null, true, 0);
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Mockito.verifyNoInteractions(executionKilledQueue);
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
     }
 
     @Test

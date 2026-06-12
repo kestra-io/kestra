@@ -1,4 +1,4 @@
-import axios from "axios"
+import {useClient} from "@kestra-io/kestra-sdk"
 import {defineStore} from "pinia"
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
@@ -49,16 +49,17 @@ export interface McpTool {
 }
 
 export const useMcpStore = defineStore("mcp", () => {
+    const axios = useClient()
     const server = ref<McpServer | null>(null)
 
     const list = async (): Promise<{results: McpServer[], total: number}> => {
-        const {data} = await axios.get(`${apiUrl()}/mcp/servers`, {withCredentials: true})
+        const {data} = await axios.get(`${apiUrl()}/mcp/servers`)
         return data
     }
 
     const load = async (id: string): Promise<void> => {
         try {
-            const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}`, {withCredentials: true})
+            const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}`)
             server.value = data
         } catch {
             server.value = null
@@ -66,26 +67,26 @@ export const useMcpStore = defineStore("mcp", () => {
     }
 
     const create = async (payload: McpServerPayload): Promise<McpServer> => {
-        const {data} = await axios.post(`${apiUrl()}/mcp/servers`, payload, {withCredentials: true})
+        const {data} = await axios.post(`${apiUrl()}/mcp/servers`, payload)
         return data
     }
 
     const update = async (id: string, payload: McpServerPayload): Promise<McpServer> => {
-        const {data} = await axios.put(`${apiUrl()}/mcp/servers/${id}`, payload, {withCredentials: true})
+        const {data} = await axios.put(`${apiUrl()}/mcp/servers/${id}`, payload)
         return data
     }
 
     const remove = async (id: string): Promise<void> => {
-        await axios.delete(`${apiUrl()}/mcp/servers/${id}`, {withCredentials: true})
+        await axios.delete(`${apiUrl()}/mcp/servers/${id}`)
     }
 
     const toggle = async (id: string): Promise<McpServer> => {
-        const {data} = await axios.patch(`${apiUrl()}/mcp/servers/${id}/toggle`, undefined, {withCredentials: true})
+        const {data} = await axios.patch(`${apiUrl()}/mcp/servers/${id}/toggle`)
         return data
     }
 
     const listTools = async (id: string): Promise<McpTool[]> => {
-        const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}/tools`, {withCredentials: true})
+        const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}/tools`)
         return data
     }
 

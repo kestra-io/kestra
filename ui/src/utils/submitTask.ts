@@ -53,7 +53,7 @@ export const executeTask = (
     }, 
     flow: Flow, 
     values: Record<string, any>,
-    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
+    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
 ): Promise<Execution> => {
     const formData = inputsToFormData(submitor, flow.inputs, values)
     const executionsStore = useExecutionsStore()

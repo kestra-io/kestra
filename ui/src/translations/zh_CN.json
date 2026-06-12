@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "表达式",
+      "preview": "预览",
       "render": "渲染表达式",
       "title": "调试表达式",
       "tooltip": "渲染任何Pebble表达式并检查执行上下文。"
@@ -719,6 +721,10 @@
     "file unavailable": "文件不可用",
     "file unavailable description": "该文件不再可用——可能已被清除或过期。",
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
+    "file_preview": {
+      "big_file_warning": "此文件大小为{size}。加载可能需要一些时间，并可能阻塞您的浏览器。您是否仍然要加载它？",
+      "load_anyway": "仍然加载"
+    },
     "files": "文件",
     "filter by log level": "按日志级别过滤",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "有效",
     "validate": "验证",
     "value": "值",
-    "variables": "变量",
     "variable_explorer": {
-      "title": "输入/输出",
-      "search_placeholder": "搜索 Key 或 value...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "树",
-      "raw_json": "Raw JSON",
-      "select_prompt": "选择一个变量以查看其 value。",
       "empty": "此执行没有可用的变量。",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count} 项 ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 项 ]",
-      "n_items": "[ {count} 项 ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "搜索 Key 或 value...",
+      "select_prompt": "选择一个变量以查看其 value。",
+      "tasks_outputs": "Tasks outputs",
+      "title": "输入/输出",
+      "tree": "树"
     },
+    "variables": "变量",
     "version": "版本",
     "view metrics": "查看指标",
     "warning": "警告",

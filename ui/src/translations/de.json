@@ -632,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Ausdruck",
+      "preview": "Vorschau",
       "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
@@ -719,6 +721,10 @@
     "file unavailable": "Datei nicht verfügbar",
     "file unavailable description": "Diese Datei ist nicht mehr verfügbar – sie wurde möglicherweise gelöscht oder ist abgelaufen.",
     "fileTypeNotAllowed": "Dateityp nicht erlaubt. Akzeptierte Typen: {types}",
+    "file_preview": {
+      "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
+      "load_anyway": "Trotzdem laden"
+    },
     "files": "Dateien",
     "filter by log level": "Nach Log-Ebene filtern",
     "filters": {
@@ -2019,20 +2025,20 @@
     "valid": "Gültig",
     "validate": "Validieren",
     "value": "Value",
-    "variables": "Variablen",
     "variable_explorer": {
-      "title": "Eingabe/Ausgabe",
-      "search_placeholder": "Key oder value suchen...",
-      "tasks_outputs": "Tasks outputs",
-      "tree": "Baum",
-      "raw_json": "Raw JSON",
-      "select_prompt": "Wählen Sie eine Variable aus, um ihren value anzuzeigen.",
       "empty": "Keine Variablen für diese Ausführung verfügbar.",
-      "one_key": "\\{ 1 key \\}",
+      "n_items": "[ {count} Elemente ]",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 Element ]",
-      "n_items": "[ {count} Elemente ]"
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key oder value suchen...",
+      "select_prompt": "Wählen Sie eine Variable aus, um ihren value anzuzeigen.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Eingabe/Ausgabe",
+      "tree": "Baum"
     },
+    "variables": "Variablen",
     "version": "Version",
     "view metrics": "Metriken anzeigen",
     "warning": "Warnung",

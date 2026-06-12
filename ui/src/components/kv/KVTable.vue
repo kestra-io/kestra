@@ -342,7 +342,7 @@
                 kvs: undefined,
                 namespaceIterator: undefined,
                 viewKvDrawerVisible: false,
-                viewKv: {},
+                viewKv: {} as {namespace?: string; key?: string; type?: string; value?: string; description?: string},
                 rules: {
                     key: [
                         {required: true, trigger: "change"},

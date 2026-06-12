@@ -24,7 +24,7 @@ export function useBaseNamespacesStore() {
     const total = ref(0);
     const existing = ref(true);
 
-    async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+    async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean, resource?: string}) {
         const response = await this.$http.post(`${apiUrlWithTenant(this.vuexStore, this.$router.currentRoute)}/namespaces/autocomplete`, options ?? {});
         autocomplete.value = response.data;
         return response.data;

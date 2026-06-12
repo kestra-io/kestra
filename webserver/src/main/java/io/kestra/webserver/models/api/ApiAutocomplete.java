@@ -20,4 +20,7 @@ public class ApiAutocomplete {
     List<String> ids;
     @Parameter(description = "Return only existing namespace")
     boolean existingOnly;
+    @Parameter(description = "Authorize discovery through this resource permission instead of NAMESPACE (e.g. KVSTORE); only honored in Enterprise Edition")
+    @Nullable
+    String resource;
 }

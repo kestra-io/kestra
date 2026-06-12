@@ -70,6 +70,18 @@
             </template>
         </el-table-column>
 
+        <el-table-column v-if="!paneView" column-key="view" class-name="row-action">
+            <template #default="scope">
+                <el-tooltip v-if="!canUpdate(scope.row) && canRead(scope.row)" :content="$t('show')">
+                    <el-button
+                        :icon="Eye"
+                        link
+                        @click="viewKvModal(scope.row.namespace, scope.row.key, scope.row.description)"
+                    />
+                </el-tooltip>
+            </template>
+        </el-table-column>
+
         <el-table-column v-if="!paneView" column-key="update" class-name="row-action">
             <template #default="scope">
                 <el-button
@@ -104,6 +116,7 @@
                     v-model="kv.namespace"
                     :readonly="kv.update"
                     :include-system-namespace="true"
+                    resource="KVSTORE"
                     all
                 />
             </el-form-item>
@@ -190,6 +203,30 @@
         </template>
     </Drawer>
 
+    <Drawer
+        v-if="viewKvDrawerVisible"
+        v-model="viewKvDrawerVisible"
+        :title="$t('show')"
+    >
+        <el-form class="ks-horizontal">
+            <el-form-item v-if="viewKv.namespace" :label="$t('namespace')">
+                <el-input :model-value="viewKv.namespace" disabled />
+            </el-form-item>
+            <el-form-item :label="$t('key')">
+                <el-input :model-value="viewKv.key" disabled />
+            </el-form-item>
+            <el-form-item :label="$t('kv.type')">
+                <el-input :model-value="viewKv.type" disabled />
+            </el-form-item>
+            <el-form-item :label="$t('value')">
+                <el-input type="textarea" :rows="5" :model-value="viewKv.value" readonly />
+            </el-form-item>
+            <el-form-item v-if="viewKv.description" :label="$t('description')">
+                <el-input :model-value="viewKv.description" disabled />
+            </el-form-item>
+        </el-form>
+    </Drawer>
+
     <drawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
@@ -209,6 +246,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import Check from "vue-material-design-icons/Check.vue";
+    import Eye from "vue-material-design-icons/Eye.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import Utils from "../../utils/utils";
@@ -229,6 +267,8 @@
     import action from "../../models/action";
     import permission from "../../models/permission";
     import {useAuthStore} from "override/stores/auth"
+    import {formatKvValueForDisplay} from "./kvValueDisplay";
+    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
 
     export default {
         inheritAttrs: false,
@@ -301,6 +341,8 @@
                 },
                 kvs: undefined,
                 namespaceIterator: undefined,
+                viewKvDrawerVisible: false,
+                viewKv: {},
                 rules: {
                     key: [
                         {required: true, trigger: "change"},
@@ -334,6 +376,21 @@
             canDelete(kv: {namespace: string}) {
                 return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
+            canRead(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.READ, kv.namespace)
+            },
+            async viewKvModal(namespace, key, description) {
+                const {type, value} = await this.namespacesStore.kv({namespace, key});
+                const timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || undefined;
+                this.viewKv = {
+                    namespace,
+                    key,
+                    type,
+                    value: formatKvValueForDisplay(type, value, timezone),
+                    description,
+                };
+                this.viewKvDrawerVisible = true;
+            },
             jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 try {
                     const parsed = JSON.parse(value);
@@ -357,7 +414,9 @@
                 let kvFetch;
                 if (this.namespace === undefined) {
                     if (this.namespaceIterator === undefined) {
-                        this.namespaceIterator = useNamespaces(this.$store, 20);
+                        // Authorize namespace discovery through the KVSTORE permission so a user with
+                        // only KV access (no NAMESPACE permission) can still find their namespaces.
+                        this.namespaceIterator = useNamespaces(this.$store, 20, {resource: permission.KVSTORE});
                     }
 
                     const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);

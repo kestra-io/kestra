@@ -45,14 +45,18 @@
 
     const {t} = useI18n();
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
-        taggable?: boolean
+        taggable?: boolean,
+        // When set, authorize namespace discovery through this resource permission (e.g. KVSTORE)
+        // instead of NAMESPACE, so users entitled to the resource can list their namespaces.
+        resource?: string
     }>(), {
         multiple: false,
-        clearable: true
+        clearable: true,
+        resource: undefined
     });
 
     const modelValue = defineModel<string | string[]>();
@@ -74,6 +78,7 @@
         namespacesStore.loadAutocomplete({
             q: search,
             ids: modelValue.value as string[] ?? [],
+            ...(props.resource ? {resource: props.resource} : {}),
         })
     }
 

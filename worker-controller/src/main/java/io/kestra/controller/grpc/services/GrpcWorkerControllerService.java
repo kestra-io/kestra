@@ -25,6 +25,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
+import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.worker.models.WorkerTriggerResult;
@@ -247,6 +248,11 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 case REALTIME -> {
                     if (evaluation != null) {
                         triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
+                    } else {
+                        // The realtime trigger stream errored without producing a FAILED execution
+                        // (failOnTriggerError=false): notify the scheduler directly so the trigger
+                        // is unlocked and resubmitted instead of staying locked forever.
+                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED));
                     }
                     if (isTerminalRealtimeResult(evaluation)) {
                         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());

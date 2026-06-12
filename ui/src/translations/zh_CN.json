@@ -867,6 +867,8 @@
     "form error": "表单错误",
     "from": "从",
     "gantt": "甘特图",
+    "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
+    "gantt_no_tasks_match_filters": "没有任务符合所选过滤器。<br> 尝试调整搜索、状态或log-level过滤器。",
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",

@@ -867,6 +867,8 @@
     "form error": "Formularfehler",
     "from": "Von",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Diese Ausführung endete, ohne dass eine Task ausgeführt wurde. Überprüfen Sie die Übersicht und die Logs, um den Grund zu erfahren.",
+    "gantt_no_tasks_match_filters": "Keine Tasks entsprechen den ausgewählten Filtern. <br> Versuchen Sie, die Such-, Zustands- oder Log-Ebenen-Filter anzupassen.",
     "healthcheck date": "HealthCheck-Datum",
     "hide task documentation": "Task-Dokumentation ausblenden",
     "home": "Startseite",

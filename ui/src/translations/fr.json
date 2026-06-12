@@ -867,6 +867,8 @@
     "form error": "Formulaire invalid",
     "from": "De",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Cette exécution s'est terminée sans exécuter de tâche.  \nConsultez son aperçu et ses logs pour en connaître la raison.",
+    "gantt_no_tasks_match_filters": "Aucune tâche ne correspond aux filtres sélectionnés. <br> Essayez d'ajuster les filtres de recherche, d'état ou de niveau de log.",
     "healthcheck date": "Dernier Healthcheck",
     "hide task documentation": "Cacher la documentation des tâches",
     "home": "Accueil",

@@ -867,6 +867,8 @@
     "form error": "Errore del modulo",
     "from": "Da",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Questa esecuzione è terminata senza eseguire alcun task. Controlla la sua panoramica e i log per il motivo.",
+    "gantt_no_tasks_match_filters": "Nessun task corrisponde ai filtri selezionati. <br> Prova a modificare i filtri di ricerca, stato o livello di log.",
     "healthcheck date": "Data di HealthCheck",
     "hide task documentation": "Nascondi la documentazione del task",
     "home": "Home",

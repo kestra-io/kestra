@@ -867,6 +867,8 @@
     "form error": "फ़ॉर्म त्रुटि",
     "from": "से",
     "gantt": "गैंट",
+    "gantt_no_tasks_executed": "यह execution बिना किसी task के चलाए समाप्त हो गया।  \nकारण के लिए इसका अवलोकन और logs जांचें।",
+    "gantt_no_tasks_match_filters": "कोई task चयनित फ़िल्टर से मेल नहीं खाता। <br> खोज, स्थिति, या log-level फ़िल्टर को समायोजित करने का प्रयास करें।",
     "healthcheck date": "HealthCheck तिथि",
     "hide task documentation": "Task दस्तावेज़ छिपाएं",
     "home": "होम",

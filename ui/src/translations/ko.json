@@ -867,6 +867,8 @@
     "form error": "양식 오류",
     "from": "시작",
     "gantt": "간트",
+    "gantt_no_tasks_executed": "이 실행은 어떤 task도 실행하지 않고 종료되었습니다.  \n개요와 logs를 확인하여 이유를 알아보세요.",
+    "gantt_no_tasks_match_filters": "선택한 필터와 일치하는 task가 없습니다. <br> 검색, 상태 또는 log-level 필터를 조정해 보세요.",
     "healthcheck date": "HealthCheck 날짜",
     "hide task documentation": "task 문서 숨기기",
     "home": "홈",

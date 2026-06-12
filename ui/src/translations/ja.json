@@ -867,6 +867,8 @@
     "form error": "フォームエラー",
     "from": "から",
     "gantt": "ガント",
+    "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
+    "gantt_no_tasks_match_filters": "選択したフィルターに一致するタスクがありません。<br> 検索、状態、またはログレベルのフィルターを調整してみてください。",
     "healthcheck date": "HealthCheck日",
     "hide task documentation": "taskのドキュメントを非表示",
     "home": "ホーム",

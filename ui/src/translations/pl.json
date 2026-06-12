@@ -867,6 +867,8 @@
     "form error": "Błąd formularza",
     "from": "Od",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Ta wykonanie zakończyło się bez uruchomienia żadnego taska.\nSprawdź jego podsumowanie i logi, aby poznać przyczynę.",
+    "gantt_no_tasks_match_filters": "Brak zadań pasujących do wybranych filtrów. <br> Spróbuj dostosować filtry wyszukiwania, stanu lub poziomu logów.",
     "healthcheck date": "Data HealthCheck",
     "hide task documentation": "Ukryj dokumentację task",
     "home": "Strona główna",

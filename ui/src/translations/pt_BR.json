@@ -867,6 +867,8 @@
     "form error": "Erro no formulário",
     "from": "De",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Esta execução terminou sem executar nenhuma task.  \nVerifique sua visão geral e logs para encontrar o motivo.",
+    "gantt_no_tasks_match_filters": "Nenhuma task corresponde aos filtros selecionados. <br> Tente ajustar os filtros de busca, estado ou nível de log.",
     "healthcheck date": "Data do HealthCheck",
     "hide task documentation": "Ocultar documentação da task",
     "home": "Início",

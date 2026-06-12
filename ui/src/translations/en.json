@@ -83,6 +83,8 @@
     "details": "Details",
     "overview": "Overview",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
+    "gantt_no_tasks_match_filters": "No tasks match the selected filters. <br> Try adjusting the search, state, or log-level filters.",
     "logs": "Logs",
     "no_logs_data": "No Data",
     "no_logs_data_description": "No logs found for the selected filters. <br> Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",

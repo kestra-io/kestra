@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.cli.ReadinessBanner;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.services.IgnoreExecutionService;
@@ -96,6 +97,8 @@ public class WebServerCommand extends AbstractServerCommand {
         }
 
         log.info("Webserver started");
+        embeddedServer.ifPresent(server ->
+            ReadinessBanner.printWhenQuiet("✅ Kestra is ready! Open the UI at: " + server.getURL()));
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
         return 0;
     }

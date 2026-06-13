@@ -386,6 +386,37 @@ class NamespaceFileControllerTest {
             client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo/../../test.txt&to=/bar", null)));
     }
 
+    @Test
+    void shouldRejectForwardSlashPathTraversalOnWriteAndDelete() throws IOException, URISyntaxException {
+        // GHSA-h7c7-3mfc-m7pj: the old guard used File.separator ('\' on Windows) to build
+        // its check strings, so forward-slash HTTP URI payloads like /x/../../../foo.txt were
+        // never matched on a Windows JVM, allowing arbitrary file write and delete.
+        // Verify that POST (write) and DELETE are both rejected with the fixed guard.
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/safe.txt"), new ByteArrayInputStream("safe".getBytes()));
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "x.txt", "OWNED via path traversal".getBytes())
+            .build();
+
+        // Write primitive: POST with a forward-slash traversal path must be rejected
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/x/../../../escaped.txt", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            ));
+
+        // Delete primitive: DELETE with a forward-slash traversal path must be rejected
+        Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/x/../../../safe.txt", null)
+            ));
+
+        // The legitimate file must be unaffected
+        assertThat(namespaceStorage.exists(Path.of("/safe.txt"))).isTrue();
+    }
+
     private void assertForbiddenErrorThrown(Executable executable) {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, executable);
         assertThat(httpClientResponseException.getMessage()).startsWith("Illegal argument: Forbidden path: ");

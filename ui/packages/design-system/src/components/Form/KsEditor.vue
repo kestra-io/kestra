@@ -337,6 +337,7 @@
 
     const showPlaceholder = computed(() =>
         props.inline === true &&
+        !props.placeholder &&
         !mergedOptions.value.shouldFocus &&
         (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
         !isFocused.value,
@@ -1531,6 +1532,11 @@
 
     .disable-text {
         color: var(--ks-text-inactive) !important;
+    }
+
+    .monaco-editor .codelens-decoration > a:hover,
+    .monaco-editor .codelens-decoration > a:hover .codicon {
+        color: var(--ks-text-link) !important;
     }
 
     .ks-monaco-editor {

@@ -44,9 +44,10 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         isMounted = false
     })
 
-    async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[]) {
+    async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[], appendFilters?: FilterObject[]) {
         const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? [])
-        const parameters: Parameters = {...pagination, filters: (filters ?? {})}
+        const allFilters = appendFilters?.length ? [...(filters as FilterObject[]), ...appendFilters] : filters
+        const parameters: Parameters = {...pagination, filters: (allFilters ?? {})}
 
         let result
         if (!props.showDefault) {

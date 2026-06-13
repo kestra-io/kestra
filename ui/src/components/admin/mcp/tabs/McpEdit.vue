@@ -144,18 +144,17 @@
             </el-form-item>
 
             <div class="mcp-edit__actions">
-                <el-button v-if="canSave" type="primary" :loading="saving" @click="save">
+                <KsButton v-if="canSave" type="primary" @click="save">
                     {{ isUpdate ? t("mcp.save") : t("mcp.create") }}
-                </el-button>
-                <el-button
+                </KsButton>
+                <KsButton
                     v-if="isUpdate && !mcpStore.server?.isDefault && canDelete"
                     type="danger"
                     plain
-                    :loading="deleting"
                     @click="confirmDelete"
                 >
                     {{ t("delete") }}
-                </el-button>
+                </KsButton>
             </div>
         </el-form>
     </div>
@@ -196,10 +195,10 @@
 
     const canSave = computed(() =>
         isUpdate.value
-            ? authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.UPDATE) ?? true
-            : authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE) ?? true,
+            ? authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.UPDATE) ?? true
+            : authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.CREATE) ?? true,
     )
-    const canDelete = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.DELETE) ?? true)
+    const canDelete = computed(() => authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.DELETE) ?? true)
     const readOnly = computed(() => !canSave.value)
 
     interface McpForm {
@@ -234,8 +233,6 @@
 
     const formRef = ref<FormInstance>()
     const form = ref<McpForm>(defaultForm())
-    const saving = ref(false)
-    const deleting = ref(false)
 
     watch(() => mcpStore.server, (server) => {
         if (server) {
@@ -264,7 +261,6 @@
         if (!formRef.value) return
         await formRef.value.validate(async (valid) => {
             if (!valid) return
-            saving.value = true
             try {
                 const payload = {
                     id: form.value.id,
@@ -288,20 +284,19 @@
                         params: {id: created.id, tab: "edit"},
                     })
                 }
-            } finally {
-                saving.value = false
+            } catch (e) {
+                console.error("Failed to save MCP server", e)
             }
         })
     }
 
     const confirmDelete = async (): Promise<void> => {
         if (!confirm(t("mcp.delete_confirm"))) return
-        deleting.value = true
         try {
             await mcpStore.remove(mcpStore.server!.id)
             router.push({name: "admin/mcp-servers"})
-        } finally {
-            deleting.value = false
+        } catch (e) {
+            console.error("Failed to delete MCP server", e)
         }
     }
 </script>

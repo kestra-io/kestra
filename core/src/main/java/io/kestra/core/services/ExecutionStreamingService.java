@@ -118,6 +118,20 @@ public class ExecutionStreamingService {
                 this.queueSubscriber.resume();
             }
         }
+
+        // Guard against the race where the queue was already running (other subscribers
+        // exist) and the terminal FollowExecutionEvent arrived and was consumed before
+        // this subscriber was registered. In that case the event is lost and Flux.last()
+        // would hang forever. Recover by checking the current execution state: if it is
+        // already in a terminal state, deliver the "end" event directly.
+        // FluxSink is thread-safe: duplicate complete() calls are no-ops, and next()
+        // after complete() is silently dropped, so double-delivery is harmless.
+        executionRepository.findById(flow.getTenantId(), executionId).ifPresent(execution -> {
+            if (isStopFollow(flow, execution)) {
+                sink.next(Event.of(execution).id("end"));
+                sink.complete();
+            }
+        });
     }
 
     /**

@@ -27,6 +27,7 @@
     "activate_basic_auth": "Attiva l'Autenticazione di Base",
     "active": "Attivo",
     "active-slots": "Slot attivi",
+    "actual state": "Stato attuale",
     "add": "Aggiungi",
     "add at position": "Aggiungi {position} <code>{task}</code>",
     "add error handler": "Aggiungi un gestore errori",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Blocchi App",
     "apps": "Applicazioni",
+    "are you sure change state": "Sei sicuro di voler cambiare lo stato?",
     "assets": {
       "title": "Risorse"
     },
@@ -210,6 +212,7 @@
     "copied": "Copiato",
     "copied_logs_to_clipboard": "Log copiati negli appunti.",
     "copy": "Copia",
+    "copy all logs": "Copia tutti i Log",
     "copy logs": "Copia logs",
     "copy url": "Copia URL",
     "copy_and_close": "Copia e chiudi",
@@ -227,6 +230,7 @@
     "current": "corrente",
     "current execution": "Esecuzione corrente",
     "custom value": "Valore personalizzato",
+    "customize sidebar": "Personalizza barra laterale",
     "dark_version": "Versione scura",
     "dashboards": {
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
@@ -251,6 +255,14 @@
         "singular": "Dashboard"
       },
       "preview": "Anteprima Dashboard",
+      "quick_filters": {
+        "all": "Tutti",
+        "failed": "Fallito",
+        "paused": "In pausa",
+        "running": "In esecuzione",
+        "success": "Successo",
+        "warning": "Avviso"
+      },
       "switch": "Dashboard Switch"
     },
     "data": "Dati",
@@ -453,6 +465,8 @@
     "disabled": "Disabilitato",
     "disabled flow desc": "Questo flow è disabilitato, per favore abilitalo per eseguirlo.",
     "disabled flow title": "Questo flow è disabilitato",
+    "discard changes confirmation": "Hai modifiche non salvate. Sei sicuro di volerle scartare?",
+    "discard execution confirmation": "Hai degli input non salvati. Sei sicuro di voler scartare questa esecuzione?",
     "display direct sub tasks count": "Visualizza conteggio subtasks diretti",
     "display flow {id} executions": "Visualizza esecuzioni del flow {id}",
     "display metric for specific task": "Visualizza metrica per un task specifico",
@@ -469,6 +483,7 @@
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
     "draft_available": "Una bozza di modifica è disponibile nell'editor",
+    "drop items here": "Trascina gli elementi qui",
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "duration": "Durata",
     "dynamic": "Dinamico",
@@ -594,6 +609,7 @@
     "encoding": "Codifica",
     "end date": "Data di fine",
     "end datetime": "Data e ora di fine",
+    "environment": "Ambiente",
     "environment color setting": "Colore dell'ambiente",
     "environment name setting": "Nome dell'ambiente",
     "error": "Errore",
@@ -616,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Espressione",
+      "preview": "Anteprima",
       "render": "Espressione di Render",
       "title": "Espressione di Debug",
       "tooltip": "Esegui qualsiasi espressione Pebble e ispeziona il contesto dell'esecuzione."
@@ -703,6 +721,10 @@
     "file unavailable": "File non disponibile",
     "file unavailable description": "Questo file non è più disponibile — potrebbe essere stato eliminato o scaduto.",
     "fileTypeNotAllowed": "Tipo di file non consentito. Tipi accettati: {types}",
+    "file_preview": {
+      "big_file_warning": "Questo file è {size}. Potrebbe richiedere del tempo per caricarsi bloccando il tuo browser. Vuoi caricarlo comunque?",
+      "load_anyway": "Carica comunque"
+    },
     "files": "File",
     "filter by log level": "Filtra per livello di log",
     "filters": {
@@ -885,6 +907,7 @@
     "labels": "Etichette",
     "last 48 hours": "ultime 48 ore",
     "last X days count": "{count} negli ultimi {days} giorni",
+    "last error was": "L'ultimo errore è stato",
     "last evaluation date": "Data ultima valutazione",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data ultima esecuzione",
@@ -1149,7 +1172,8 @@
           "taskDefaults": "Predefiniti Task",
           "updated": "Aggiornato",
           "variables": "Variabili",
-          "workerGroup": "Gruppo Worker"
+          "workerGroup": "Gruppo Worker",
+          "workerSelector": "Selettore Worker"
         },
         "main": {
           "description": "Descrizione",
@@ -1532,9 +1556,10 @@
     "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
     "replay using": "Riproduci utilizzando",
     "replay with inputs": "Riesegui con input",
-    "replayed": "L'esecuzione è stata ripetuta",
+    "replayed": "L'esecuzione è ripetuta",
     "required field": "Campo obbligatorio",
     "reset": "Riavvia",
+    "reset to defaults": "Reimposta ai valori predefiniti",
     "restart": "Riavvia",
     "restart change revision": "Puoi cambiare la revisione che verrà utilizzata per la nuova esecuzione.",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
@@ -1545,7 +1570,7 @@
       "button": "Riavvia trigger",
       "tooltip": "Riavvia il trigger"
     },
-    "restarted": "L'esecuzione è stata riavviata",
+    "restarted": "L'esecuzione è riavviata",
     "restore": "Ripristina",
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "restore revision": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
@@ -1560,6 +1585,7 @@
     "revisions": "Revisions",
     "row count": "Conteggio righe",
     "run task in playground": "Esegui task nel playground",
+    "run timeline": "Cronologia Esecuzione",
     "runners": "Corridori",
     "running": "RUNNING",
     "running duration": "Durata in esecuzione",
@@ -1611,9 +1637,11 @@
     },
     "see dependencies": "Vedi dipendenze",
     "see full revision": "Vedi revisione completa",
+    "see timeline": "Vedi cronologia",
     "see_all_states": "Vedi tutti gli stati",
     "seeing old revision": "Stai vedendo una vecchia revisione: {revision}",
     "select": "Seleziona il tuo {{section}}",
+    "select a state": "Seleziona uno stato",
     "select datetime": "Seleziona una data",
     "select view": "Seleziona vista",
     "selected": "Selezionato",
@@ -1680,6 +1708,15 @@
           "label": "Salva Preferenze",
           "unsaved_title": "Modifiche non salvate",
           "unsaved_warning": "Hai modifiche non salvate. Vuoi salvarle prima di uscire?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Mostra, nascondi e riordina gli elementi nella barra laterale."
+          },
+          "fields": {
+            "items": "Elementi di Navigazione"
+          },
+          "label": "Barra laterale"
         },
         "theme": {
           "color_modes": {
@@ -1799,7 +1836,9 @@
     "show": "Mostra",
     "show chart": "Mostra Grafico",
     "show description": "Mostra una descrizione",
+    "show details": "Mostra dettagli",
     "show documentation": "Mostra documentazione",
+    "show more details": "Mostra più dettagli",
     "show task condition": "Mostra condizione del task",
     "show task documentation": "Mostra la documentazione del task",
     "show task documentation in editor": "Mostra la documentazione del task nell'editor",
@@ -1809,6 +1848,7 @@
     "showLess": "Mostra meno",
     "showMore": "Mostra di più",
     "side-by-side": "affiancato",
+    "skipped": "Saltato",
     "slack support": "Fai qualsiasi domanda via Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -1921,15 +1961,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "Aggiungi",
     "triggers_add_card_add_to_flow": "Aggiungi al flow",
-    "triggers_add_category_app_description": "Controlla periodicamente le risorse esterne per eventuali modifiche.",
-    "triggers_add_category_app_title": "Trigger dell'app",
-    "triggers_add_category_core_description": "Trigger integrati essenziali per la maggior parte dei flussi di lavoro.",
-    "triggers_add_category_core_title": "Trigger Principali",
     "triggers_add_category_empty": "Nessun trigger in questa categoria.",
-    "triggers_add_category_realtime_description": "Reagisci istantaneamente agli eventi dai sistemi di messaggistica.",
-    "triggers_add_category_realtime_title": "Trigger in tempo reale",
     "triggers_add_ee_tooltip": "Questo trigger richiede l'Enterprise Edition.",
-    "triggers_add_empty_hint": "Prova un altro termine di ricerca o sfoglia tutte le categorie.",
     "triggers_add_empty_title": "Nessun trigger trovato",
     "triggers_add_filter_all": "Tutti",
     "triggers_add_filter_app": "App",
@@ -1947,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "ID del trigger",
     "triggers_add_modal_trigger_id_placeholder": "Identificatore univoco per questo trigger",
     "triggers_add_search_placeholder": "Cerca trigger...",
-    "triggers_add_see_less": "Vedi meno",
-    "triggers_add_see_more": "Vedi di più ({count} in più)",
     "triggers_header_description": "Sfoglia, aggiungi e gestisci i trigger per automatizzare i tuoi flow. Scegli tra esporre il tuo flow come uno strumento AI, pianificare, aggiungere un webhook trigger, controllare le modifiche nelle app esterne o ascoltare eventi in tempo reale.",
     "triggers_state": {
       "options": {
@@ -1994,6 +2025,19 @@
     "valid": "Valido",
     "validate": "Valida",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "Nessuna variabile disponibile per questa esecuzione.",
+      "n_items": "[ {count} elementi ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 elemento ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Cerca Key o value...",
+      "select_prompt": "Seleziona una variabile per ispezionarne la value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Input/Output",
+      "tree": "Albero"
+    },
     "variables": "Variabili",
     "version": "Versione",
     "view metrics": "Visualizza metriche",
@@ -2003,6 +2047,7 @@
     "watch": "Guarda",
     "watch_video": "Guarda Video",
     "webhook": {
+      "copy_url": "Copia URL del webhook",
       "curl_command": "Comando cURL Webhook",
       "curl_note": "Usa questo comando cURL per trigger il flow tramite webhook con payload JSON personalizzato",
       "no_triggers": "Questo flow non ha webhook trigger abilitati",
@@ -2145,6 +2190,7 @@
     "worker information": "Informazioni sul Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette"
+    "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
+    "yes": "Sì"
   }
 }

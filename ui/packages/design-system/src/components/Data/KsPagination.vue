@@ -72,7 +72,7 @@
         .kel-pagination__sizes {
             .kel-select {
                 width: auto;
-                min-width: 110px;
+                min-width: 130px;
             }
         }
 

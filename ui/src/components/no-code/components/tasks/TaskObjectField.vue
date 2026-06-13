@@ -212,6 +212,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
         font-size: var(--ks-font-size-sm);
     }
 

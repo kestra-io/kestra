@@ -14,6 +14,7 @@ const meta: Meta<typeof KsExecutionStatus> = {
         status: {control: "select", options: [...statuses]},
         size: {control: "select", options: ["large", "default", "small"]},
         icon: {control: "boolean"},
+        glow: {control: "boolean"},
         title: {control: "text"},
     },
     parameters: {
@@ -64,6 +65,18 @@ export const Sizes: Story = {
                 <ks-execution-status status="SUCCESS" icon size="small" />
                 <ks-execution-status status="SUCCESS" icon size="default" />
                 <ks-execution-status status="SUCCESS" icon size="large" />
+            </div>
+        `,
+    }),
+}
+
+export const Glow: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:48px;display:flex;flex-wrap:wrap;gap:32px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" glow />
             </div>
         `,
     }),

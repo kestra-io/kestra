@@ -28,10 +28,12 @@
         title?: string;
         icon?: boolean;
         size?: "large" | "default" | "small";
+        glow?: boolean;
     }>(), {
         icon: true,
         size: "default",
         title: undefined,
+        glow: false,
     })
 
     defineSlots<{
@@ -50,6 +52,7 @@
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
         props.size !== "default" && `ks-execution-status--${props.size}`,
+        props.glow && "ks-execution-status--glow",
     ].filter(Boolean))
 </script>
 
@@ -115,6 +118,10 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     .ks-execution-status--#{$status} {
         color: var(--ks-status-#{$status});
         background-color: var(--ks-status-background-#{$status});
+
+        &.ks-execution-status--glow {
+            box-shadow: 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+        }
     }
 }
 </style>

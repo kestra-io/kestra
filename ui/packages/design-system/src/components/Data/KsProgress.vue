@@ -21,6 +21,7 @@
         status?: "" | "success" | "exception" | "warning"
         striped?: boolean
         stripedFlow?: boolean
+        radius?: number | string
     }>(), {
         left: undefined,
         percentage: undefined,
@@ -30,11 +31,17 @@
         showText: undefined,
         status: undefined,
         strokeLinecap: "square",
+        radius: undefined,
     })
 
     const left = computed(() => `${props.left ?? 0}%`)
+    const borderRadius = computed(() =>
+        props.radius === undefined
+            ? "var(--kel-border-radius-small)"
+            : typeof props.radius === "number" ? `${props.radius}px` : props.radius,
+    )
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["radius"])
 </script>
 
 <style lang="scss">
@@ -47,13 +54,13 @@
 
     .kel-progress {
         :deep(.kel-progress-bar__outer) {
-            border-radius: var(--kel-border-radius-small);
+            border-radius: v-bind(borderRadius);
 
-            background-color: var(--ks-bg-base);
+            background-color: var(--ks-bg-hover);
         }
 
         :deep(.kel-progress-bar__inner) {
-            border-radius: var(--kel-border-radius-small);
+            border-radius: v-bind(borderRadius);
             left: v-bind(left);
         }
     }

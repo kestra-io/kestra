@@ -57,6 +57,13 @@ class PebbleExpressionServiceTest {
         assertThat(kv.arguments().get(1).defaultValue()).isEqualTo("flow.namespace");
         assertThat(kv.arguments().get(2).defaultValue()).isNull();
 
+        // env function
+        PebbleFunction env = findFunction("env");
+        assertThat(env.arguments()).extracting(PebbleFunction.Argument::name)
+            .containsExactly("name", "default");
+        assertThat(env.arguments().get(0).defaultValue()).isEqualTo("'ENV_NAME'");
+        assertThat(env.arguments().get(1).defaultValue()).isNull();
+
         // randomInt function
         PebbleFunction randomInt = findFunction("randomInt");
         assertThat(randomInt.arguments()).extracting(PebbleFunction.Argument::name)

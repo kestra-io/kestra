@@ -27,6 +27,7 @@
     "activate_basic_auth": "启用基本身份验证",
     "active": "活动",
     "active-slots": "活动槽位",
+    "actual state": "实际状态",
     "add": "添加",
     "add at position": "在 {position} <code>{task}</code> 添加",
     "add error handler": "添加错误处理程序",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
+    "are you sure change state": "您确定要更改状态吗？",
     "assets": {
       "title": "资产"
     },
@@ -210,6 +212,7 @@
     "copied": "已复制",
     "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
     "copy": "复制",
+    "copy all logs": "复制所有日志",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
     "copy_and_close": "复制并关闭",
@@ -227,6 +230,7 @@
     "current": "当前",
     "current execution": "当前执行",
     "custom value": "自定义值",
+    "customize sidebar": "自定义侧边栏",
     "dark_version": "深色版本",
     "dashboards": {
       "chart_preview": "单击图表源代码以查看其预览",
@@ -251,6 +255,14 @@
         "singular": "仪表板"
       },
       "preview": "预览仪表板",
+      "quick_filters": {
+        "all": "全部",
+        "failed": "失败",
+        "paused": "已暂停",
+        "running": "运行中",
+        "success": "成功",
+        "warning": "警告"
+      },
       "switch": "切换仪表板"
     },
     "data": "数据",
@@ -453,6 +465,8 @@
     "disabled": "禁用",
     "disabled flow desc": "此流程已禁用，请启用以执行。",
     "disabled flow title": "此流程已禁用",
+    "discard changes confirmation": "您有未保存的更改。您确定要放弃它们吗？",
+    "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "display direct sub tasks count": "显示直接子任务数量",
     "display flow {id} executions": "显示流程 {id} 的执行",
     "display metric for specific task": "显示特定任务的指标",
@@ -469,6 +483,7 @@
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
     "draft_available": "编辑器中有可用的草稿更改",
+    "drop items here": "将项目拖放到此处",
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "duration": "持续时间",
     "dynamic": "动态",
@@ -594,6 +609,7 @@
     "encoding": "编码",
     "end date": "结束日期",
     "end datetime": "结束日期时间",
+    "environment": "环境",
     "environment color setting": "环境颜色",
     "environment name setting": "环境名称",
     "error": "错误",
@@ -616,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "表达式",
+      "preview": "预览",
       "render": "渲染表达式",
       "title": "调试表达式",
       "tooltip": "渲染任何Pebble表达式并检查执行上下文。"
@@ -703,6 +721,10 @@
     "file unavailable": "文件不可用",
     "file unavailable description": "该文件不再可用——可能已被清除或过期。",
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
+    "file_preview": {
+      "big_file_warning": "此文件大小为{size}。加载可能需要一些时间，并可能阻塞您的浏览器。您是否仍然要加载它？",
+      "load_anyway": "仍然加载"
+    },
     "files": "文件",
     "filter by log level": "按日志级别过滤",
     "filters": {
@@ -885,6 +907,7 @@
     "labels": "标签",
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
+    "last error was": "上次错误是",
     "last evaluation date": "上次评估日期",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最后执行日期",
@@ -1149,7 +1172,8 @@
           "taskDefaults": "任务默认值",
           "updated": "已更新",
           "variables": "变量",
-          "workerGroup": "工作组"
+          "workerGroup": "工作组",
+          "workerSelector": "Worker 选择器"
         },
         "main": {
           "description": "描述",
@@ -1535,6 +1559,7 @@
     "replayed": "执行已重放",
     "required field": "必填字段",
     "reset": "重置",
+    "reset to defaults": "重置为默认值",
     "restart": "重新开始",
     "restart change revision": "你可以更改用于新执行的修订版。",
     "restart confirm": "确定要重新开始执行 <code>{id}</code> 吗？",
@@ -1545,7 +1570,7 @@
       "button": "重新启动触发器",
       "tooltip": "重新启动trigger"
     },
-    "restarted": "执行已重新开始",
+    "restarted": "执行已重启",
     "restore": "恢复",
     "restore confirm": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "restore revision": "确定要恢复修订版 <code>{revision}</code> 吗？",
@@ -1560,6 +1585,7 @@
     "revisions": "修订版",
     "row count": "行数",
     "run task in playground": "在playground中运行task",
+    "run timeline": "运行时间线",
     "runners": "运行者",
     "running": "运行",
     "running duration": "运行时间",
@@ -1611,9 +1637,11 @@
     },
     "see dependencies": "查看依赖关系",
     "see full revision": "查看完整修订版",
+    "see timeline": "查看时间线",
     "see_all_states": "查看所有状态",
     "seeing old revision": "你正在查看旧修订版：{revision}",
     "select": "选择您的{{section}}",
+    "select a state": "选择状态",
     "select datetime": "选择日期",
     "select view": "选择视图",
     "selected": "已选择",
@@ -1680,6 +1708,15 @@
           "label": "保存偏好设置",
           "unsaved_title": "未保存的更改",
           "unsaved_warning": "您有未保存的更改。您想在离开之前保存它们吗？"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "在侧边栏中显示、隐藏和重新排序项目。"
+          },
+          "fields": {
+            "items": "导航项"
+          },
+          "label": "侧边栏"
         },
         "theme": {
           "color_modes": {
@@ -1799,7 +1836,9 @@
     "show": "显示",
     "show chart": "显示图表",
     "show description": "显示描述",
+    "show details": "显示详情",
     "show documentation": "显示文档",
+    "show more details": "显示更多详情",
     "show task condition": "显示任务条件",
     "show task documentation": "显示任务文档",
     "show task documentation in editor": "在编辑器中显示任务文档",
@@ -1809,6 +1848,7 @@
     "showLess": "显示较少",
     "showMore": "显示更多",
     "side-by-side": "并排",
+    "skipped": "跳过",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
       "connection_lost": {
@@ -1921,15 +1961,8 @@
     "triggers": "触发器",
     "triggers_add_card_add": "添加",
     "triggers_add_card_add_to_flow": "添加到flow",
-    "triggers_add_category_app_description": "定期检查外部资源的变化。",
-    "triggers_add_category_app_title": "应用 Triggers",
-    "triggers_add_category_core_description": "内置触发器是大多数工作流所必需的。",
-    "triggers_add_category_core_title": "核心触发器",
     "triggers_add_category_empty": "此类别中没有trigger。",
-    "triggers_add_category_realtime_description": "即时响应来自消息系统的事件。",
-    "triggers_add_category_realtime_title": "实时触发器",
     "triggers_add_ee_tooltip": "此trigger需要企业版。",
-    "triggers_add_empty_hint": "尝试不同的搜索词或浏览所有类别。",
     "triggers_add_empty_title": "未找到trigger",
     "triggers_add_filter_all": "全部",
     "triggers_add_filter_app": "应用程序",
@@ -1947,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "触发器ID",
     "triggers_add_modal_trigger_id_placeholder": "此trigger的唯一标识符",
     "triggers_add_search_placeholder": "搜索 triggers...",
-    "triggers_add_see_less": "查看较少",
-    "triggers_add_see_more": "查看更多（还有 {count} 个）",
     "triggers_header_description": "浏览、添加和管理触发器以自动化您的flows。您可以选择将flow公开为AI工具、进行调度、添加webhook trigger、轮询外部应用程序中的更改或实时事件监听器。",
     "triggers_state": {
       "options": {
@@ -1994,6 +2025,19 @@
     "valid": "有效",
     "validate": "验证",
     "value": "值",
+    "variable_explorer": {
+      "empty": "此执行没有可用的变量。",
+      "n_items": "[ {count} 项 ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 项 ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "搜索 Key 或 value...",
+      "select_prompt": "选择一个变量以查看其 value。",
+      "tasks_outputs": "Tasks outputs",
+      "title": "输入/输出",
+      "tree": "树"
+    },
     "variables": "变量",
     "version": "版本",
     "view metrics": "查看指标",
@@ -2003,6 +2047,7 @@
     "watch": "监视",
     "watch_video": "观看视频",
     "webhook": {
+      "copy_url": "复制 webhook URL",
       "curl_command": "Webhook cURL 命令",
       "curl_note": "使用此 cURL 命令通过 webhook 触发 flow，并使用自定义 JSON 负载",
       "no_triggers": "此flow没有启用的webhook triggers",
@@ -2145,6 +2190,7 @@
     "worker information": "工作者信息",
     "workerId": "工作者ID",
     "workers": "工作者",
-    "wrong labels": "标签中不允许空键或值"
+    "wrong labels": "标签中不允许空键或值",
+    "yes": "是"
   }
 }

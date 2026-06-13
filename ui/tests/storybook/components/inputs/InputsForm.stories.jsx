@@ -1,6 +1,7 @@
 import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
+import {KsForm} from "@kestra-io/design-system";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
@@ -41,11 +42,11 @@ const Sut = defineComponent((props) => {
 
     const values = ref({});
     return () => (<>
-        <ks-form label-position="top">
+        <KsForm label-position="top" model={values.value}>
             <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={{namespace: "ns1", id: "flowid1"}}
                         onUpdate:modelValue={(value) => values.value = value}
             />
-        </ks-form>
+        </KsForm>
         <pre data-testid="test-content">{
             JSON.stringify(values.value, null, 2)
         }</pre>
@@ -93,6 +94,12 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent)
                 .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
         });
+
+        await waitFor(function testBooleanField() {
+            // check that we do not have validation error for boolean field
+            // since it has a default value
+            expect(can.queryByText("Boolean field for required is required")).toBeNull();
+        });
     },
     render() {
         return <Sut inputs={[
@@ -128,7 +135,13 @@ export const InputTypes = {
             {
                 id: "duration_field",
                 type: "DURATION",
-                displayName: "Duration select input",
+                displayName: "Duration field",
+            },
+            {
+                id: "boolean_field",
+                type: "BOOL",
+                displayName: "Boolean field for required",
+                defaults: true  
             }]}
         />;
     }

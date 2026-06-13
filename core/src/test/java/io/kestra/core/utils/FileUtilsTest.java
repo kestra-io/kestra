@@ -44,6 +44,11 @@ class FileUtilsTest {
         "kestra:///ns/flow/exec/abc%5C%2E%2E%5C%2E%2E%5Cetc%5Cpasswd",
         // mixed separators
         "kestra:///ns/flow/exec/abc/..%5C..%5Cetc%5Cpasswd",
+        // GHSA-h7c7-3mfc-m7pj: on a Windows JVM File.separator is '\', so the old guard
+        // checked for "..\" and "\.." and never matched forward-slash HTTP URI payloads.
+        // These must be rejected regardless of the host OS.
+        "kestra:///ns/flow/exec/x/../../../escaped.txt",
+        "kestra:///ns/flow/exec/x%2F..%2F..%2F..%2Fescaped.txt",
     })
     void isParentTraversal_true(String path) {
         assertThat(FileUtils.isParentTraversal(URI.create(path))).isTrue();
@@ -59,6 +64,13 @@ class FileUtilsTest {
         "..\\" + "etc\\passwd",
         "ns\\exec\\..\\.." + "\\etc\\passwd",
         "ns/exec/abc\\..\\..\\.." + "\\etc\\passwd",
+        // GHSA-h7c7-3mfc-m7pj: forward-slash payloads that bypass the old Windows guard
+        // (which checked "..\\" and "\\.." from File.separator and never matched "/" paths).
+        // These represent the decoded form of HTTP query-param paths, as they arrive after
+        // URI.getPath() decodes percent-encoding.
+        "/x/../../../escaped.txt",
+        "x/../../../escaped.txt",
+        "/x/y/../../..",
     })
     void isParentTraversalString_true(String path) {
         assertThat(FileUtils.isParentTraversal(path)).isTrue();

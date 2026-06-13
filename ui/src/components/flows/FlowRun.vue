@@ -33,7 +33,6 @@
                         :label="$t('execution labels')"
                     >
                         <LabelInput
-                            :key="executionLabelsKey"
                             v-model:labels="executionLabels"
                         />
                     </KsFormItem>
@@ -67,7 +66,7 @@
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <KsButton
                                 :icon="buttonIcon"
-                                :disabled="!flowCanBeExecuted || hasBlockingChecks()"
+                                :disabled="!flowCanBeExecuted || hasBlockingChecks"
                                 class="flow-run-trigger-button"
                                 type="primary"
                                 nativeType="submit"
@@ -98,10 +97,11 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
-    import type {Label, Execution} from "../../stores/executions"
+    import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
+    import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {normalize} from "../../utils/inputs"
     import type {InputType} from "../../utils/inputs"
     import type {FormInstance} from "@kestra-io/design-system"
@@ -111,12 +111,6 @@
     import WebhookCurl from "./WebhookCurl.vue"
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
-
-    interface Check {
-        message: string
-        style: string
-        behavior: string
-    }
 
     
     type AlertType = "success" | "warning" | "info" | "error"
@@ -159,6 +153,7 @@
     const emit = defineEmits<{
         executionTrigger: []
         updateInputs: [inputs: Record<string, unknown>]
+        updateInputsNoDefault: [inputs: Record<string, unknown>]
         updateLabels: [labels: Label[]]
     }>()
 
@@ -187,9 +182,6 @@
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
-    // executionLabelsKey is used to force re-render of LabelInput when executionLabels changes
-    const executionLabelsKey = computed(() => JSON.stringify(executionLabels.value))
-
     const haveBadLabels = computed(() =>
         executionLabels.value.some(label => (label.key && !label.value) || (!label.key && label.value)),
     )
@@ -198,19 +190,27 @@
         flow.value && !flow.value.disabled && !haveBadLabels.value,
     )
 
+    const isDirty = computed(() =>
+        Object.keys(inputsNoDefaults.value).length > 0 ||
+        executionLabels.value.some(label => label.key || label.value) ||
+        scheduleDate.value !== undefined,
+    )
+
+    defineExpose({isDirty})
+
     const hasWebhookTriggers = computed(() => {
         if (!flow.value?.triggers) {
             return false
         }
         return flow.value.triggers.some(trigger =>
-            trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
+            trigger.type === WEBHOOK_TRIGGER_TYPE &&
             ("disabled" in trigger ? trigger.disabled === undefined || trigger.disabled === false : true),
         )
     })
 
-    function hasBlockingChecks() {
+    const hasBlockingChecks = computed(() => {
         return checks.value.filter(check => check.behavior === "BLOCK_EXECUTION").length > 0
-    }
+    })
 
     function getExecutionLabels(): Label[] {
         if (!execution.value?.labels) {
@@ -230,8 +230,8 @@
         return getExecutionLabels().length > 0
     }
 
-    function onChecksUpdate(values: unknown[]) {
-        checks.value = values as Check[]
+    function onChecksUpdate(values: Check[]) {
+        checks.value = values
     }
 
     function fillInputsFromExecution() {
@@ -328,6 +328,10 @@
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)
+    }, {deep: true})
+
+    watch(inputsNoDefaults, () => {
+        emit("updateInputsNoDefault", inputsNoDefaults.value)
     }, {deep: true})
 
     watch(executionLabels, () => {

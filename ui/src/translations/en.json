@@ -17,6 +17,9 @@
     "namespace": "Namespace",
     "description": "Description",
     "show description": "Show a description",
+    "show details": "Show details",
+    "show more details": "Show more details",
+    "skipped": "Skipped",
     "revision": "Revision",
     "Language": "Language",
     "Set default page": "Set default page",
@@ -214,14 +217,14 @@
     "restart": "Restart",
     "restart latest revision": "Restart latest revision",
     "restart tooltip": "Restart the execution from the <code>{state}</code> task",
-    "restarted": "Execution is restarted",
+    "restarted": "Execution is Restarted",
     "restart confirm": "Are you sure you want to restart execution <code>{id}</code>?",
     "restart change revision": "You can change the revision that will be used for the new execution.",
     "replay": "Replay",
     "replay from task tooltip": "Create a similar execution starting from task <code>{taskId}</code>",
     "replay from beginning tooltip": "Create a similar execution starting from the beginning",
     "replay latest revision": "Replay using latest revision",
-    "replayed": "Execution is replayed",
+    "replayed": "Execution is Replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
     "replay with inputs": "Replay with inputs",
     "reuse_original_inputs": "Reuse original inputs",
@@ -230,6 +233,10 @@
     "prefill inputs": "Prefill",
     "current": "current",
     "change state": "Change state",
+    "actual state": "Actual state",
+    "select a state": "Select a state",
+    "are you sure change state": "Are you sure you want to change the state?",
+    "yes": "Yes",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
     "change queue confirm": "Are you sure you want to change the queue state for the execution <code>{id}</code>?<br/>",
@@ -304,7 +311,9 @@
     "eval": {
       "title": "Debug Expression",
       "render": "Render",
-      "tooltip": "Render any Pebble expression and inspect the Execution context."
+      "tooltip": "Render any Pebble expression and inspect the Execution context.",
+      "preview": "Preview",
+      "expression": "Expression"
     },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",
@@ -366,6 +375,23 @@
     "no_inputs": "No inputs available.",
     "input": "Input",
     "variables": "Variables",
+    "variable_explorer": {
+      "title": "Input/Output",
+      "search_placeholder": "Search Key or value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "Tree",
+      "raw_json": "Raw JSON",
+      "select_prompt": "Select a variable to inspect its value.",
+      "empty": "No variables available for this execution.",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 item ]",
+      "n_items": "[ {count} items ]"
+    },
+    "file_preview": {
+        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+        "load_anyway": "Load anyway"
+    },
     "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {
@@ -425,22 +451,13 @@
     "triggers_tabs_add": "Add",
     "triggers_tabs_manage": "Manage",
     "triggers_add_search_placeholder": "Search triggers...",
-    "triggers_add_filter_all": "All",
     "triggers_add_filter_core": "Core",
     "triggers_add_filter_realtime": "Realtime",
+    "triggers_add_filter_all": "All",
     "triggers_add_filter_app": "App",
-    "triggers_add_see_more": "See more ({count} more)",
-    "triggers_add_see_less": "See less",
     "triggers_add_empty_title": "No triggers found",
-    "triggers_add_empty_hint": "Try a different search term or browse all categories.",
     "triggers_add_ee_tooltip": "This trigger requires Enterprise Edition.",
     "triggers_add_category_empty": "No triggers in this category.",
-    "triggers_add_category_core_title": "Core Triggers",
-    "triggers_add_category_core_description": "Built-in triggers essential for most workflows.",
-    "triggers_add_category_realtime_title": "Realtime Triggers",
-    "triggers_add_category_realtime_description": "React instantly to events from messaging systems.",
-    "triggers_add_category_app_title": "App Triggers",
-    "triggers_add_category_app_description": "Periodically check external resources for changes.",
     "triggers_add_card_add_to_flow": "Add to flow",
     "triggers_add_card_add": "Add",
     "triggers_add_modal_title": "{name}",
@@ -484,6 +501,8 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
+    "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
+    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "Default namespace": "Default namespace",
     "Default log level": "Default log level",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
@@ -509,6 +528,7 @@
       }
     },
     "back_to_dashboard": "Back to dashboard",
+    "copy all logs": "Copy All Logs",
     "copy logs": "Copy logs",
     "fix_with_ai": "Fix with AI",
     "download logs": "Download logs",
@@ -604,6 +624,8 @@
     "in-our-documentation": "in our documentation.",
     "dependencies": "Dependencies",
     "see dependencies": "See dependencies",
+    "see timeline": "See timeline",
+    "run timeline": "Run Timeline",
     "dependencies missing acls": "No permissions on this flow",
     "dependencies delete flow": "This flow has dependencies. Deleting it will prevent their dependencies to be executed.<br /><br /> Here is the list of affected flows:",
     "expand dependencies": "Expand dependencies",
@@ -675,6 +697,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "log expand setting": "Log default display",
+    "environment": "Environment",
     "environment name setting": "Environment name",
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",
@@ -1024,7 +1047,16 @@
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
         },
-        "reset_section_to_defaults": "Restore this section's default values"
+        "reset_section_to_defaults": "Restore this section's default values",
+        "sidebar": {
+          "label": "Sidebar",
+          "fields": {
+            "items": "Navigation Items"
+          },
+          "descriptions": {
+            "items": "Show, hide, and reorder items in the sidebar."
+          }
+        }
       }
     },
     "apps": "Apps",
@@ -1342,7 +1374,8 @@
       "curl_command": "Webhook cURL command",
       "payload": "Webhook Payload (JSON)",
       "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
-      "no_triggers": "This flow has no enabled webhook triggers"
+      "no_triggers": "This flow has no enabled webhook triggers",
+      "copy_url": "Copy webhook URL"
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -1400,6 +1433,9 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
+    "customize sidebar": "Customize sidebar",
+    "reset to defaults": "Reset to defaults",
+    "drop items here": "Drop items here",
     "files": "Namespace Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
@@ -1413,6 +1449,7 @@
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
+    "last error was": "Last error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of",
     "execution replayed": "This execution has been replayed.",
@@ -1532,6 +1569,7 @@
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
           "workerGroup": "Worker Group",
+          "workerSelector": "Worker Selector",
           "checks": "Checks",
           "updated": "Updated"
         }
@@ -1769,7 +1807,15 @@
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
       "chart_preview": "Click on a chart source code to see its preview",
-      "export": "Export to CSV"
+      "export": "Export to CSV",
+      "quick_filters": {
+        "all": "All",
+        "running": "Running",
+        "paused": "Paused",
+        "success": "Success",
+        "warning": "Warning",
+        "failed": "Failed"
+      }
     },
     "setup": {
       "login": "Login",

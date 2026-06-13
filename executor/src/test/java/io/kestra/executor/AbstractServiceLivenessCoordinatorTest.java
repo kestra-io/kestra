@@ -41,9 +41,9 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.worker.models.WorkerTriggerResult;
-import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
+import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
@@ -218,7 +218,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = { WORKER_QUEUE_UID, "<null>" })
-    public void shouldResubmitTriggerWhenWorkerIsStopped(String workerQueueId) throws Exception {
+    public void shouldNotifyTriggerWorkerLostWhenWorkerIsStopped(String workerQueueId) throws Exception {
         workerQueueId = "<null>".equals(workerQueueId) ? null : workerQueueId;
         // Given - create first worker.
         WorkerAgent worker = (WorkerAgent) newWorker();
@@ -226,7 +226,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), workerQueueId);
 
-        CountDownLatch evaluatedLatch = new CountDownLatch(1);
+        CountDownLatch lostLatch = new CountDownLatch(1);
         CountDownLatch receivedLatch = new CountDownLatch(1);
         triggerEventQueue.addListener(event ->
         {
@@ -236,8 +236,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             if (event instanceof TriggerReceived) {
                 receivedLatch.countDown();
             }
-            if (event instanceof TriggerEvaluated) {
-                evaluatedLatch.countDown();
+            if (event instanceof TriggerWorkerLost) {
+                lostLatch.countDown();
             }
         });
 
@@ -250,8 +250,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         WorkerAgent newWorker = (WorkerAgent) newWorker();
         newWorker.start(1);
 
-        // THEN
-        assertThat(evaluatedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        // THEN - the scheduler is notified instead of the job being re-emitted to a worker.
+        assertThat(lostLatch.await(30, TimeUnit.SECONDS)).isTrue();
         newWorker.close();
     }
 

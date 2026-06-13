@@ -27,6 +27,7 @@
     "activate_basic_auth": "Активировать Basic Authentication",
     "active": "Активно",
     "active-slots": "Активные слоты",
+    "actual state": "Фактическое состояние",
     "add": "Добавить",
     "add at position": "Добавить {position} <code>{task}</code>",
     "add error handler": "Добавить обработчик ошибок",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "Блоки приложения",
     "apps": "Приложения",
+    "are you sure change state": "Вы уверены, что хотите изменить состояние?",
     "assets": {
       "title": "Активы"
     },
@@ -210,6 +212,7 @@
     "copied": "Скопировано",
     "copied_logs_to_clipboard": "Скопированные logs в буфер обмена.",
     "copy": "Копировать",
+    "copy all logs": "Скопировать все Logs",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",
     "copy_and_close": "Копировать и закрыть",
@@ -227,6 +230,7 @@
     "current": "текущий",
     "current execution": "Текущее выполнение",
     "custom value": "Пользовательское значение",
+    "customize sidebar": "Настроить боковую панель",
     "dark_version": "Темная версия",
     "dashboards": {
       "chart_preview": "Нажмите на исходный код диаграммы, чтобы увидеть его предварительный просмотр",
@@ -251,6 +255,14 @@
         "singular": "Панель управления"
       },
       "preview": "Предварительный просмотр Dashboard",
+      "quick_filters": {
+        "all": "Все",
+        "failed": "Ошибка",
+        "paused": "Приостановлено",
+        "running": "Выполняется",
+        "success": "Успешно",
+        "warning": "Предупреждение"
+      },
       "switch": "Переключить Панель управления"
     },
     "data": "Данные",
@@ -453,6 +465,8 @@
     "disabled": "Отключено",
     "disabled flow desc": "Этот flow отключен, пожалуйста, включите его для выполнения.",
     "disabled flow title": "Этот flow отключен",
+    "discard changes confirmation": "У вас есть несохраненные изменения. Вы уверены, что хотите их отменить?",
+    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "display direct sub tasks count": "Показать количество прямых подзадач",
     "display flow {id} executions": "Показать выполнения flow {id}",
     "display metric for specific task": "Показать метрику для конкретной задачи",
@@ -469,6 +483,7 @@
     "download logs": "Скачать логи",
     "download_logos": "Скачать пакет логотипов",
     "draft_available": "Черновик изменений доступен в редакторе",
+    "drop items here": "Перетащите элементы сюда",
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "duration": "Длительность",
     "dynamic": "Динамический",
@@ -594,6 +609,7 @@
     "encoding": "Кодировка",
     "end date": "Дата окончания",
     "end datetime": "Дата и время окончания",
+    "environment": "Окружение",
     "environment color setting": "Цвет окружения",
     "environment name setting": "Имя окружения",
     "error": "Ошибка",
@@ -616,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Выражение",
+      "preview": "Предварительный просмотр",
       "render": "Отобразить выражение",
       "title": "Отладка выражения",
       "tooltip": "Выполните любое выражение Pebble и проверьте контекст выполнения."
@@ -703,6 +721,10 @@
     "file unavailable": "Файл недоступен",
     "file unavailable description": "Этот файл больше недоступен — возможно, он был удален или срок его действия истек.",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
+    "file_preview": {
+      "big_file_warning": "Этот файл имеет размер {size}. Загрузка может занять некоторое время и заблокировать ваш браузер. Вы все равно хотите его загрузить?",
+      "load_anyway": "Загрузить в любом случае"
+    },
     "files": "Файлы",
     "filter by log level": "Фильтр по уровню log",
     "filters": {
@@ -885,6 +907,7 @@
     "labels": "Метки",
     "last 48 hours": "последние 48 часов",
     "last X days count": "{count} за последние {days} дней",
+    "last error was": "Последняя ошибка была",
     "last evaluation date": "Дата последней оценки",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Дата последнего выполнения",
@@ -1149,7 +1172,8 @@
           "taskDefaults": "Значения по умолчанию для Task",
           "updated": "Обновлено",
           "variables": "Переменные",
-          "workerGroup": "Группа Worker"
+          "workerGroup": "Группа Worker",
+          "workerSelector": "Селектор Worker"
         },
         "main": {
           "description": "Описание",
@@ -1532,9 +1556,10 @@
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
     "replay using": "Повторное воспроизведение с использованием",
     "replay with inputs": "Воспроизвести с inputами",
-    "replayed": "Выполнение повторено",
+    "replayed": "Выполнение воспроизведено",
     "required field": "Обязательное поле",
     "reset": "Перезапустить",
+    "reset to defaults": "Сбросить настройки по умолчанию",
     "restart": "Перезапуск",
     "restart change revision": "Вы можете изменить редакцию, которая будет использоваться для нового выполнения.",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",
@@ -1560,6 +1585,7 @@
     "revisions": "Редакции",
     "row count": "Количество строк",
     "run task in playground": "Запустить task в playground",
+    "run timeline": "Хронология выполнения",
     "runners": "Запуски",
     "running": "RUNNING",
     "running duration": "Время выполнения",
@@ -1611,9 +1637,11 @@
     },
     "see dependencies": "Просмотреть зависимости",
     "see full revision": "Посмотреть полную редакцию",
+    "see timeline": "Просмотреть временную шкалу",
     "see_all_states": "Просмотреть все состояния",
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "select": "Выберите ваш {{section}}",
+    "select a state": "Выберите состояние",
     "select datetime": "Выберите дату",
     "select view": "Выберите вид",
     "selected": "Выбрано",
@@ -1680,6 +1708,15 @@
           "label": "Сохранить настройки",
           "unsaved_title": "Несохраненные изменения",
           "unsaved_warning": "У вас есть несохраненные изменения. Хотите сохранить их перед выходом?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Показать, скрыть и изменить порядок элементов в боковой панели."
+          },
+          "fields": {
+            "items": "Элементы навигации"
+          },
+          "label": "Боковая панель"
         },
         "theme": {
           "color_modes": {
@@ -1799,7 +1836,9 @@
     "show": "Показать",
     "show chart": "Показать диаграмму",
     "show description": "Показать описание",
+    "show details": "Показать детали",
     "show documentation": "Показать документацию",
+    "show more details": "Показать больше деталей",
     "show task condition": "Показать условие task",
     "show task documentation": "Показать документацию задачи",
     "show task documentation in editor": "Показать документацию задачи в редакторе",
@@ -1809,6 +1848,7 @@
     "showLess": "Показать меньше",
     "showMore": "Показать больше",
     "side-by-side": "бок о бок",
+    "skipped": "Пропущено",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -1921,15 +1961,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "Добавить",
     "triggers_add_card_add_to_flow": "Добавить в flow",
-    "triggers_add_category_app_description": "Периодически проверять внешние ресурсы на изменения.",
-    "triggers_add_category_app_title": "Триггеры приложения",
-    "triggers_add_category_core_description": "Встроенные триггеры, необходимые для большинства рабочих процессов.",
-    "triggers_add_category_core_title": "Триггеры Core",
     "triggers_add_category_empty": "В этой категории нет triggers.",
-    "triggers_add_category_realtime_description": "Реагируйте мгновенно на события из систем обмена сообщениями.",
-    "triggers_add_category_realtime_title": "Триггеры в реальном времени",
     "triggers_add_ee_tooltip": "Этот trigger требует Enterprise Edition.",
-    "triggers_add_empty_hint": "Попробуйте другой поисковый запрос или просмотрите все категории.",
     "triggers_add_empty_title": "Триггеры не найдены",
     "triggers_add_filter_all": "Все",
     "triggers_add_filter_app": "Приложение",
@@ -1947,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "Идентификатор Trigger",
     "triggers_add_modal_trigger_id_placeholder": "Уникальный идентификатор для этого trigger",
     "triggers_add_search_placeholder": "Поиск triggers...",
-    "triggers_add_see_less": "Скрыть",
-    "triggers_add_see_more": "Смотреть больше ({count} еще)",
     "triggers_header_description": "Просматривайте, добавляйте и управляйте triggers для автоматизации ваших flows. Выберите из вариантов: сделать ваш flow инструментом AI, запланировать, добавить webhook trigger, опрос изменений во внешних приложениях или слушатели событий в реальном времени.",
     "triggers_state": {
       "options": {
@@ -1994,6 +2025,19 @@
     "valid": "Действительный",
     "validate": "Проверить",
     "value": "Значение",
+    "variable_explorer": {
+      "empty": "Нет переменных, доступных для этого выполнения.",
+      "n_items": "[ {count} элементов ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 элемент ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Поиск по Key или value...",
+      "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Ввод/Вывод",
+      "tree": "Дерево"
+    },
     "variables": "Переменные",
     "version": "Версия",
     "view metrics": "Просмотр метрик",
@@ -2003,6 +2047,7 @@
     "watch": "Наблюдение",
     "watch_video": "Смотреть видео",
     "webhook": {
+      "copy_url": "Скопировать URL вебхука",
       "curl_command": "Команда cURL для Webhook",
       "curl_note": "Используйте эту команду cURL, чтобы trigger flow через webhook с пользовательским JSON payload",
       "no_triggers": "Этот flow не имеет включенных webhook trigger",
@@ -2145,6 +2190,7 @@
     "worker information": "Информация о Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Пустой key или value не допускается в метках"
+    "wrong labels": "Пустой key или value не допускается в метках",
+    "yes": "Да"
   }
 }

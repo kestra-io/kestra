@@ -104,6 +104,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--ks-sidebar-item-title-color, var(--ks-text-primary));
+}
+
+.ks-sidebar-item.is-locked .ks-sidebar-item__title {
+    color: var(--ks-text-inactive);
 }
 
 .ks-sidebar-item__lock {

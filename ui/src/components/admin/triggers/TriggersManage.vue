@@ -127,9 +127,9 @@
                             v-if="scope.row.namespace && scope.row.flowId"
                             :to="{name: 'flows/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, id: scope.row.flowId}}"
                         >
-                            {{ invisibleSpace(scope.row.flowId) }}
+                            <BreakableText :value="scope.row.flowId" />
                         </router-link>
-                        <span v-else>{{ invisibleSpace(scope.row.flowId) }}</span>
+                        <span v-else><BreakableText :value="scope.row.flowId" /></span>
                         <MarkdownTooltip
                             v-if="scope.row.namespace && scope.row.flowId"
                             :id="scope.row.namespace + '-' + scope.row.flowId"
@@ -138,7 +138,7 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        {{ invisibleSpace(scope.row.namespace) }}
+                        <BreakableText :value="scope.row.namespace" />
                     </template>
                     <template v-else-if="col.prop === 'workerId'">
                         <KsId :value="scope.row.workerId" :shrink="true" />
@@ -179,7 +179,7 @@
                             {{ scope.row.backfill.paused ? $t("paused") : $t("running") }}
                         </KsTag>
                     </template>
-                    <template v-else-if="isSchedule(scope.row.type) && authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE)">
+                    <template v-else-if="isSchedule(scope.row.type) && authStore.user?.hasAnyAction(resource.TRIGGER, action.BACKFILL)">
                         <KsButton
                             :icon="CalendarCollapseHorizontalOutline"
                             @click="setBackfillModal(scope.row, true)"
@@ -193,7 +193,7 @@
                 </template>
             </KsTableColumn>
 
-            <KsTableColumn :label="$t('enabled')" columnKey="disable" className="row-action">
+            <KsTableColumn v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DISABLE)" :label="$t('enabled')" columnKey="disable" className="row-action">
                 <template #default="scope">
                     <KsTooltip
                         v-if="!scope.row.missingSource"
@@ -204,8 +204,6 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @change="(value: string | number | boolean) => setDisabled(scope.row, Boolean(value))"
-                            inlinePrompt
-                            class="switch-text"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -216,7 +214,7 @@
             </KsTableColumn>
 
             <KsTableColumn
-                v-if="authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE)"
+                v-if="authStore.user?.hasAny(resource.TRIGGER)"
                 columnKey="row-actions"
                 className="row-action"
             >
@@ -235,6 +233,7 @@
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.RESTART)"
                                     :disabled="!scope.row.locked"
                                     @click="restart(scope.row)"
                                 >
@@ -242,6 +241,7 @@
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK)"
                                     :disabled="!scope.row.locked"
                                     @click="unlock(scope.row)"
                                 >
@@ -249,6 +249,7 @@
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
                                     @click="confirmDeleteTrigger(scope.row)"
@@ -271,7 +272,7 @@
             <Vars :data="detailsData" />
         </KsDrawer>
 
-        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
             <template #header>
                 <span v-html="$t('backfill executions')" />
             </template>
@@ -301,6 +302,7 @@
             </KsForm>
             <FlowRun
                 @update-inputs="backfill.inputs = $event"
+                @update-inputs-no-default="backfillInputsNoDefault = $event"
                 @update-labels="backfill.labels = $event"
                 :selectedTrigger="selectedTrigger"
                 :redirect="false"
@@ -328,7 +330,7 @@
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {invisibleSpace} from "../../../utils/filters"
+    import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
     import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
     import {useExecutionsStore} from "../../../stores/executions"
@@ -336,6 +338,7 @@
     import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
     import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -398,6 +401,17 @@
         inputs: null,
         labels: [],
     })
+
+    // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
+    const backfillInputsNoDefault = ref<Record<string, unknown>>({})
+
+    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+        backfill.value.start ||
+        backfill.value.end ||
+        Object.keys(backfillInputsNoDefault.value).length > 0 ||
+        backfill.value.labels?.some((label: any) => label.key || label.value)
+    ))
+    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
 
     const optionalColumns = computed<ColumnConfig[]>(() => [
         {
@@ -468,7 +482,7 @@
         updateVisibleColumns(newColumns)
     }
 
-    const canCheck = computed(() => authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE) ?? false)
+    const canCheck = computed(() => authStore.user?.hasAny(resource.TRIGGER) ?? false)
 
     const selectionMapper = (row: any) => ({
         namespace: row.namespace,
@@ -564,6 +578,8 @@
             flowId: trigger.flowId,
             store: true,
         }).then(() => {
+            backfill.value = {start: null, end: null, inputs: null, labels: []}
+            backfillInputsNoDefault.value = {}
             isBackfillOpen.value = bool
             selectedTrigger.value = trigger
         })
@@ -857,19 +873,8 @@
             }
         }
 
-        :deep(.kel-switch) {
-            .is-text {
-                padding: 0 3px;
-                color: inherit;
-            }
-
-            &.is-checked .is-text {
-                color: var(--ks-content-inverse);
-            }
-        }
-
         :deep(.kel-table) a {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -884,7 +889,7 @@
     }
 
     .header-tooltip-icon {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: help;
         display: inline-flex;
         align-items: center;
@@ -903,6 +908,6 @@
         max-width: 25rem;
         white-space: normal;
         word-break: break-word;
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 </style>

@@ -122,7 +122,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn columnKey="backfill" :label="$t('backfill')" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="backfill" :label="$t('backfill')" v-if="userCan(action.BACKFILL)">
             <template #default="scope">
                 <template v-if="isSchedule(scope.row.type) && !scope.row.backfill">
                     <KsButton
@@ -148,7 +148,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn columnKey="disable" :label="$t('enabled')" className="row-action" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="disable" :label="$t('enabled')" className="row-action" v-if="userCan(action.DISABLE)">
             <template #default="scope">
                 <KsTooltip
                     v-if="hasTrigger(scope.row)"
@@ -182,7 +182,7 @@
                                 {{ $t("details") }}
                             </KsDropdownItem>
                             <KsDropdownItem
-                                v-if="userCan(action.UPDATE)"
+                                v-if="userCan(action.RESTART)"
                                 :disabled="!scope.row.locked"
                                 @click="restart(scope.row)"
                             >
@@ -190,7 +190,7 @@
                                 {{ $t("restart") }}
                             </KsDropdownItem>
                             <KsDropdownItem
-                                v-if="userCan(action.UPDATE)"
+                                v-if="userCan(action.UNLOCK)"
                                 :disabled="!scope.row.locked"
                                 @click="unlock(scope.row)"
                             >
@@ -238,7 +238,7 @@
         </template>
     </Empty>
 
-    <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
         <template #header>
             <span v-html="$t('backfill executions')" />
         </template>
@@ -268,6 +268,7 @@
         </KsForm>
         <FlowRun
             @update-inputs="backfill.inputs = $event"
+            @update-inputs-no-default="backfillInputsNoDefault = $event"
             @update-labels="backfill.labels = $event"
             :selectedTrigger="selectedTrigger"
             :redirect="false"
@@ -329,6 +330,7 @@
     import {useTriggerStore} from "../../stores/trigger"
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useTriggerFilter} from "../filter/configurations"
     import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
     import QuickFilters from "../filter/QuickFilters.vue"
@@ -354,6 +356,17 @@
     const triggers = ref<any[]>([])
     const isBackfillOpen = ref(false)
     const selectedTrigger = ref<any>(null)
+
+    // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
+    const backfillInputsNoDefault = ref<Record<string, unknown>>({})
+
+    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+        backfill.value.start ||
+        backfill.value.end ||
+        Object.keys(backfillInputsNoDefault.value).length > 0 ||
+        backfill.value.labels?.some((label: any) => label.key || label.value)
+    ))
+    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
     const triggerId = ref<string | undefined>()
 
     const reloadLogs = ref<number | undefined>()
@@ -499,7 +512,7 @@
 
     const userCan = (act: any) => {
         if (!flowStore.flow) return false
-        return authStore.user?.isAllowed(resource.EXECUTION, act ? act : action.VIEW, flowStore.flow?.namespace)
+        return authStore.user?.isAllowed(resource.TRIGGER, act ? act : action.VIEW, flowStore.flow?.namespace)
     }
 
     const loadData = () => {
@@ -512,6 +525,10 @@
     }
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
+        if (bool) {
+            backfill.value = {start: null, end: null, inputs: null, labels: []}
+            backfillInputsNoDefault.value = {}
+        }
         isBackfillOpen.value = bool
         selectedTrigger.value = trigger
     }

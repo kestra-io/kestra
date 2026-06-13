@@ -956,7 +956,8 @@
         align-items: center;
         gap: var(--ks-spacing-2);
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xl);
     }
 
     .gantt-empty-hint {
@@ -964,6 +965,7 @@
         margin-top: var(--ks-spacing-3);
         color: var(--ks-text-secondary);
         white-space: pre-line;
+        font-size: var(--ks-font-size-md);
     }
 
     :deep(.vue-recycle-scroller__item-view) {

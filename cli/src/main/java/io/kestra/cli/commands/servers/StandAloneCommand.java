@@ -137,7 +137,11 @@ public class StandAloneCommand extends AbstractServerCommand {
                 standAloneRunner.setIndexerEnabled(false);
             }
 
+            // standAloneRunner.run() blocks until every service (executor, worker, scheduler,
+            // indexer, controller) confirms RUNNING state, so the server is fully ready here.
             standAloneRunner.run();
+
+            embeddedServer.ifPresent(server -> System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
 
             if (fileWatcher != null) {
                 fileWatcher.startListeningFromConfig();

@@ -28,17 +28,25 @@ public final class ReadinessBanner {
      * Default time the log stream must stay silent before the banner is considered "last".
      *
      * <p>Several services finish booting on their own staggered timers — notably the liveness
-     * coordinator, which elects a leader and kicks off trigger scheduling only a few seconds after
-     * the other services report RUNNING. That late burst sits in a lull after the initial
-     * "...started" lines, so the quiet window must be long enough to bridge it; otherwise the
-     * banner prints in the gap and ends up buried again.
+     * coordinator, which elects a leader and kicks off trigger scheduling a few seconds after the
+     * other services report RUNNING. That late burst sits in a lull after the initial "...started"
+     * lines, so the quiet window must be long enough to bridge it; otherwise the banner prints in
+     * the gap and ends up buried again.
+     *
+     * <p>This is deliberately silence-driven rather than a fixed wall-clock wait: the appender
+     * resets the timer on every log event, so the banner only prints once the stream has genuinely
+     * gone quiet. Because those staggered timers are governed by Kestra's own configuration
+     * (liveness/heartbeat intervals), not by how fast the machine boots, the resulting output is
+     * consistent across devices — a slow machine simply reaches the same quiet state later. The
+     * window is sized comfortably above the observed startup burst gap so it stays robust to
+     * machine-to-machine variance.
      */
-    public static final long DEFAULT_QUIET_PERIOD_MILLIS = 5_000L;
+    public static final long DEFAULT_QUIET_PERIOD_MILLIS = 8_000L;
 
     /**
      * Default safety cap on how long to wait for the log stream to go quiet.
      */
-    public static final long DEFAULT_MAX_WAIT_MILLIS = 30_000L;
+    public static final long DEFAULT_MAX_WAIT_MILLIS = 60_000L;
 
     private static final long POLL_INTERVAL_MILLIS = 50L;
 

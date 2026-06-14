@@ -1,7 +1,5 @@
-$step-icon-size: 43px;
 $checkbox-size: 18px;
 $radio-size: 18px;
-$step-line-offset: 21px;
 $checkbox-border-color: #918BA9;
 $checkbox-checked-color: #8405FF;
 $survey-group-spacing: 0.75rem;
@@ -123,38 +121,6 @@ $survey-group-spacing: 0.75rem;
   margin-bottom: 0;
 }
 
-.kel-step {
-  :deep(.kel-step__head > .kel-step__icon) {
-    width: $step-icon-size !important;
-    height: $step-icon-size !important;
-  }
-
-  :deep(.kel-step__line) {
-    left: $step-line-offset;
-  }
-
-
-
-    :deep(.kel-step__title) {
-    vertical-align: middle;
-    line-height: $step-icon-size;
-    color: var(--ks-text-inactive);
-
-    &.is-process {
-      color: var(--ks-text-primary);
-      font-weight: 400;
-      font-size: var(--ks-font-size-base);
-    }
-  }
-
-      &.is-vertical {
-      gap: 2rem;
-    }
-}
-
-.primary-icon :deep(.kel-step__icon-inner) {
-  color: var(--ks-text-primary);
-}
 
 .survey-radio-group {
   display: grid;

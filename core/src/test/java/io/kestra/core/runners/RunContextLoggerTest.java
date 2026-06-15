@@ -22,6 +22,8 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -209,5 +211,86 @@ class RunContextLoggerTest {
 
         assertThat(queueLogs).containsExactlyInAnyOrder(e1, e2);
         assertThat(followQueueLogs).containsExactlyInAnyOrder(FollowLogEvent.from(e1), FollowLogEvent.from(e2));
+    }
+
+    @Test
+    void transformPreservesMDC() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry logEntry = LogEntry.of(execution);
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            logEntry,
+            Level.TRACE,
+            false
+        );
+        // initializeLogger() populates the per-run LoggerContext's MDC adapter on this thread.
+        ch.qos.logback.classic.Logger perRunLogger =
+            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+
+        LoggingEvent original = new LoggingEvent(
+            RunContextLoggerTest.class.getName(),
+            perRunLogger,
+            ch.qos.logback.classic.Level.INFO,
+            "msg",
+            null,
+            null
+        );
+        ILoggingEvent transformed = new TransformExposingAppender(runContextLogger, perRunLogger)
+            .transform(original);
+
+        // Clear the per-run MDC adapter so the lazy lookup in getMDCPropertyMap() would
+        // hit an empty map. The only remaining path to non-empty MDC is the eager snapshot
+        // set by lle.setMDCPropertyMap(...) inside transform(). Removing that call makes
+        // this assertion fail.
+        perRunLogger.getLoggerContext().getMDCAdapter().clear();
+
+        assertThat(transformed.getMDCPropertyMap())
+            .containsEntry("tenantId", logEntry.getTenantId())
+            .containsEntry("namespace", logEntry.getNamespace())
+            .containsEntry("flowId", logEntry.getFlowId())
+            .containsEntry("executionId", logEntry.getExecutionId());
+    }
+
+    @Test
+    void resetMDCClearsThePerRunAdapter() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry logEntry = LogEntry.of(execution);
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            logEntry,
+            Level.TRACE,
+            false
+        );
+        ch.qos.logback.classic.Logger perRunLogger =
+            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        var adapter = perRunLogger.getLoggerContext().getMDCAdapter();
+
+        assertThat(adapter.getCopyOfContextMap())
+            .containsEntry("tenantId", logEntry.getTenantId())
+            .containsEntry("namespace", logEntry.getNamespace())
+            .containsEntry("flowId", logEntry.getFlowId())
+            .containsEntry("executionId", logEntry.getExecutionId());
+
+        runContextLogger.resetMDC();
+
+        assertThat(adapter.getCopyOfContextMap()).isNullOrEmpty();
+    }
+
+    /**
+     * Exposes the protected {@link RunContextLogger.BaseAppender#transform} for the test.
+     */
+    private static final class TransformExposingAppender extends RunContextLogger.BaseAppender {
+        TransformExposingAppender(RunContextLogger runContextLogger, ch.qos.logback.classic.Logger logger) {
+            super(runContextLogger, logger);
+        }
+
+        @Override
+        protected void append(ILoggingEvent event) {
+            // unused
+        }
     }
 }

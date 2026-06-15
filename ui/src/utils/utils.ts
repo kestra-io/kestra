@@ -164,41 +164,52 @@ export function switchTheme(miscStore: any, theme?: string) {
         }
     }
 
+    const disableTransitions = document.createElement("style")
+    disableTransitions.appendChild(document.createTextNode("*,*::before,*::after{transition:none !important}"))
+    document.head.appendChild(disableTransitions)
+
     // class name
     const htmlClass = document.getElementsByTagName("html")[0].classList
 
+    const themeClasses = ["dark", "light", "syncWithSystem", "dark-2"]
     function removeClasses() {
-        htmlClass.forEach((cls) => {
-            if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
-                htmlClass.remove(cls)
-            }
-        })
+        themeClasses.forEach((cls) => htmlClass.remove(cls))
     }
     removeClasses()
 
     if (theme === "syncWithSystem") {
-        removeClasses()
         const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
         htmlClass.add(theme, systemTheme)
     }
+    else if (theme === "dark-2") {
+        htmlClass.add("dark", "dark-2")
+    }
     else {
-        removeClasses()
         htmlClass.add(theme)
     }
 
     miscStore.theme = theme
 
     localStorage.setItem("theme", theme)
+
+    void document.body.offsetHeight
+    requestAnimationFrame(() => disableTransitions.remove())
+}
+
+export type SelectedTheme = "syncWithSystem" | "dark" | "dark-2" | "light"
+
+export function getSelectedTheme(): SelectedTheme {
+    return (localStorage.getItem("theme") as SelectedTheme | null) ?? "syncWithSystem"
 }
 
 export function getTheme(): "light" | "dark" {
-    let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light"
+    let theme = getSelectedTheme()
 
     if (theme === "syncWithSystem") {
-        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     }
 
-    return theme
+    return theme === "light" ? "light" : "dark"
 }
 
 export function getLang() {
@@ -283,7 +294,10 @@ export function getParentNamespaces(namespace: string): string[] {
 
 export const useTheme = () => {
     const miscStore = useMiscStore()
-    return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark")
+    return computed<"light" | "dark">(() => {
+        void miscStore.theme
+        return getTheme()
+    })
 }
 
 export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {

@@ -10,7 +10,7 @@
             :isAllowedEdit="isAllowedEdit"
             :source="source"
             :toggleOrientationButton="toggleOrientationButton"
-            :flowGraph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
+            :flowGraph="effectiveFlowGraph"
             :flowId="flowId"
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
@@ -21,7 +21,7 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :animated="animated"
+            :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -93,10 +93,11 @@
                 />
             </div>
             <div v-if="isShowConditionOpen">
-                <Editor
+                <KsEditor
+                    v-bind="editorBindings"
                     :readOnly="true"
-                    :input="true"
-                    :fullHeight="false"
+                    :inline="true"
+                    :options="{fullHeight: false}"
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
@@ -104,10 +105,10 @@
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
-                <Editor
+                <KsEditor
                     :readOnly="true"
-                    :input="true"
-                    :fullHeight="false"
+                    :inline="true"
+                    :options="{fullHeight: false}"
                     :navbar="false"
                     :modelValue="selectedTask[customActionMeta.taskProp]"
                     :lang="customActionMeta.lang"
@@ -138,15 +139,14 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
-    import Editor from "./Editor.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
+    import {SECTIONS, KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useCoreStore} from "../../stores/core"
@@ -170,6 +170,9 @@
 
     const execution = computed(() => executionsStore.execution as any as Execution)
 
+    const effectiveFlowGraph = computed(() =>
+        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+    )
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
@@ -184,6 +187,11 @@
             }
         }
         return result
+    })
+
+    const hasExtraDetails = computed(() => {
+        const types = taskAdditionalInfoRemote.value
+        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
     })
 
     const taskMetrics = (taskId: string | undefined) =>
@@ -232,6 +240,8 @@
         {immediate: true},
     )
 
+    const editorBindings = useEditorBindings()
+
     const props = withDefaults(
         defineProps<{
             flowGraph: Record<string, any>;
@@ -244,7 +254,6 @@
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
             expandedSubflows?: string[];
-            animated?: boolean;
         }>(),
         {
             flowId: undefined,
@@ -256,7 +265,6 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
-            animated: true,
         })
 
     watch(
@@ -287,6 +295,13 @@
 
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+
+    watch(() => props.horizontalDefault, (value) => {
+        if (value !== undefined && value !== isHorizontal.value) {
+            isHorizontal.value = value
+            fitViewOrientation()
+        }
+    })
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const taskEditData = ref()
@@ -429,7 +444,7 @@
                     params: {
                         namespace: data.link.namespace,
                         flowId: data.link.id,
-                        tab: "topology",
+                        tab: "overview",
                         id: data.link.executionId,
                     },
                 }).href,

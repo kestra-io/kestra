@@ -1,27 +1,13 @@
-FROM eclipse-temurin:25-jre
-
-ARG KESTRA_PLUGINS=""
-ARG APT_PACKAGES=""
-ARG PYTHON_LIBRARIES=""
+ARG BASE_IMAGE="ghcr.io/kestra-io/kestra-base:latest-no-plugins"
+FROM ${BASE_IMAGE}
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-WORKDIR /app
-
-RUN groupadd kestra && \
-    useradd -m -g kestra kestra
-
 COPY --chown=kestra:kestra docker /
 
-RUN apt-get update -y && \
-    apt-get upgrade -y && \
-    apt-get install curl -y && \
-    if [ -n "${APT_PACKAGES}" ]; then apt-get install -y --no-install-recommends ${APT_PACKAGES}; fi && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
-    curl -LsSf https://astral.sh/uv/0.6.17/install.sh | sh && mv /root/.local/bin/uv /bin && mv /root/.local/bin/uvx /bin && \
-    if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
-    if [ -n "${PYTHON_LIBRARIES}" ]; then uv venv /app/.venv && uv pip install --python /app/.venv/bin/python ${PYTHON_LIBRARIES}; fi && \
+RUN --mount=type=bind,target=/mnt/context \
+    mkdir -p /app/plugins && \
+    { cp -r /mnt/context/plugins/. /app/plugins/ 2>/dev/null || true; } && \
     chown -R kestra:kestra /app
 
 USER kestra

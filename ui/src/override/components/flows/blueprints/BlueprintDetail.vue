@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-ks-loading="!blueprint">
+    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb">
         <template #actions>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
@@ -51,11 +51,12 @@
             <KsCol :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <KsCard>
-                    <Editor
+                    <KsEditor
+                        v-bind="editorBindings"
                         class="position-relative"
                         :readOnly="true"
-                        :input="true"
-                        :fullHeight="false"
+                        :inline="true"
+                        :options="{fullHeight: false}"
                         :modelValue="blueprint?.source"
                         lang="yaml"
                         :navbar="false"
@@ -63,7 +64,7 @@
                         <template #absolute>
                             <CopyToClipboard :text="blueprint?.source" />
                         </template>
-                    </Editor>
+                    </KsEditor>
                 </KsCard>
                 <template v-if="blueprint?.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
@@ -95,11 +96,11 @@
 
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
-    import Editor from "../../../../components/inputs/Editor.vue"
     import TopNavBar from "../../../../components/layout/TopNavBar.vue"
     import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue"
     import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue"
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import {KsTaskIcon, KsMarkdown, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../../composables/useEditorBindings"
 
     import {useFlowStore} from "../../../../stores/flow"
     import {usePluginsStore} from "../../../../stores/plugins"
@@ -135,6 +136,8 @@
     const flowStore = useFlowStore()
     const apiStore = useApiStore()
 
+    const editorBindings = useEditorBindings()
+
     const flowGraph = ref()
     const blueprint = ref()
     const tab = ref("")
@@ -163,6 +166,7 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
+                    kind: props.kind,
                     tab: route.params?.tab || tab.value,
                 },
             },
@@ -193,6 +197,7 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
+                    kind: route.params?.kind || props.kind,
                     tab: tab.value,
                 },
             })
@@ -310,33 +315,18 @@
         .plugins-container {
             display: flex;
             flex-wrap: wrap;
+            gap: var(--ks-spacing-4);
+
             > div {
-                background: var(--ks-bg-surface);
-                border-radius: var(--kel-border-radius-base);
-                min-width : 100px;
-                width: 100px;
-                height : 100px;
-                padding: 1rem;
-                margin-right: 1rem;
-                margin-bottom: 1rem;
                 display: flex;
-                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                width: 3rem;
+                height: 3rem;
+                padding: var(--ks-spacing-2);
+                background: var(--ks-bg-surface);
                 border: 1px solid var(--ks-border-default);
-
-                :deep(.wrapper) {
-                    .icon {
-                        height: 100%;
-                        margin: 0;
-                    }
-
-                    .hover {
-                        position: static;
-                        background: none;
-                        border-top: 0;
-                        font-size: var(--ks-font-size-sm);
-                    }
-
-                }
+                border-radius: var(--ks-radius-base);
             }
         }
     }

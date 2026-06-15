@@ -28,13 +28,15 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final PluginDefaultService pluginDefaultService;
     private final ConcurrentHashMap<String, FlowWithSource> cache = new ConcurrentHashMap<>();
     private final BroadcastQueueInterface<FlowInterface> flowQueue;
+    private final FlowWithDefaultCache withDefaultCache;
 
     private QueueSubscriber<FlowInterface> subscriber;
 
-    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, BroadcastQueueInterface<FlowInterface> flowQueue) {
+    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, BroadcastQueueInterface<FlowInterface> flowQueue, FlowWithDefaultCache withDefaultCache) {
         this.flowRepository = flowRepository;
         this.pluginDefaultService = pluginDefaultService;
         this.flowQueue = flowQueue;
+        this.withDefaultCache = withDefaultCache;
 
         flowRepository.findAllWithSourceForAllTenants().forEach(it -> cache.put(it.uidWithoutRevision(), it));
     }
@@ -64,6 +66,9 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
                         log.error("Unable to inject version defaults for flow {}", flow.getId(), e);
                     }
                 }
+
+                // always clear the withDefault cache so it's recomputed
+                withDefaultCache.invalidate(flow.uid());
             }
         });
     }
@@ -94,11 +99,20 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
         return (Optional) Optional
             .ofNullable(flow)
             // this can happen if an execution is still running with an old revision or if the flow was deleted
-            .or(() -> flowRepository.findByIdWithSource(tenantId, namespace, id, revision)); // TODO evaluate if a cache is needed here
+            .or(() -> flowRepository.findByIdWithSource(tenantId, namespace, id, revision));
     }
 
     @Override
     public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
-        return findByExecution(execution).map(it -> pluginDefaultService.injectDefaults(it, execution));
+        var flowId = FlowId.uid(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()));
+        var fromCache = withDefaultCache.getIfPresent(flowId);
+        if (fromCache.isPresent()) {
+            return fromCache;
+        }
+
+        var flowWithDefault = findByExecution(execution).map(it -> pluginDefaultService.injectDefaults(it, execution));
+        flowWithDefault.ifPresent(it -> withDefaultCache.put(flowId, it));
+        return flowWithDefault;
     }
+
 }

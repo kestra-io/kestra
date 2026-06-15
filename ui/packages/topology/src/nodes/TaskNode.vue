@@ -7,115 +7,42 @@
         :class="classes"
         :icons="icons"
         :iconComponent="iconComponent"
-        @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
-        @expand="emit(EVENTS.EXPAND, expandData)"
-        @open-link="emit(EVENTS.OPEN_LINK, $event)"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
+        <template #badge>
+            <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
+        </template>
         <template #details>
             <Transition name="details-slide">
                 <div v-if="globalShowExtraDetails" class="details-wrapper">
                     <slot name="details" />
-                    <div v-if="actionConfig && data.node.task" class="view-details-action">
-                        <button
-                            type="button"
-                            class="view-details-button"
-                            aria-label="Show details"
-                            @click.stop="onShowDetails()"
-                        >
-                            Show details
-                        </button>
-                    </div>
                 </div>
             </Transition>
         </template>
         <template #content>
-            <ExecutionInformations
-                v-if="taskExecution && globalShowExtraDetails"
-                :execution="taskExecution"
-                :task="data.node.task"
-                :color="color"
-                :uid="data.node.uid"
-                :state="state"
-            />
-
-            <template v-if="data.node.task">
-                <button v-if="playgroundEnabled && playgroundReadyToStart" type="button" class="playground-button" @click="emit(EVENTS.RUN_TASK, {task: data.node.task})">
-                    <KsTooltip style="display: flex;" :content="$t('run task in playground')">
-                        <PlayIcon class="button-play-icon" :alt="$t('run task in playground')" />
-                    </KsTooltip>
-                </button>
-                <div
-                    v-else-if="state"
-                    class="playground-button"
-                    :style="{
-                        color: `var(--ks-content-${state?.toLowerCase()})`,
-                        backgroundColor: `var(--ks-background-${state?.toLowerCase()})`
-                    }"
-                >
-                    <KsTooltip style="display: flex;" :content="iconAlt ? $t(iconAlt) : undefined">
-                        <RotatingDots v-if="state === State.RUNNING" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <CheckIcon v-else-if="state === State.SUCCESS" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <AlertIcon v-else-if="state === State.WARNING" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <SkipForwardIcon v-else-if="state === State.SKIPPED" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                        <AlertCircleIcon v-else-if="state === State.FAILED" :alt="iconAlt ? $t(iconAlt) : undefined" />
-                    </KsTooltip>
-                </div>
-            </template>
+            <button
+                v-if="data.node.task && playgroundEnabled && playgroundReadyToStart"
+                type="button"
+                class="playground-button"
+                @click="emit(EVENTS.RUN_TASK, {task: data.node.task})"
+            >
+                <KsTooltip style="display: flex;" :content="$t('run task in playground')">
+                    <PlayIcon class="button-play-icon" :alt="$t('run task in playground')" />
+                </KsTooltip>
+            </button>
         </template>
-        <template #badge-button-before>
-            <span
-                v-if="data.node.task && data.node.task.runIf"
-                class="circle-button"
-                :style="{backgroundColor: 'var(--ks-node-warning)'}"
-                @click="emit(EVENTS.SHOW_CONDITION, {id: taskId, task: data.node.task, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('show task condition')">
-                    <SendLock class="button-icon" alt="Show condition" />
-                </KsTooltip>
+        <template #title-status>
+            <span v-if="statusStyle" class="status-tag" :style="{color: `var(${statusStyle.textVar})`}">
+                <component :is="statusStyle.icon" class="status-tag__icon" />
+                <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
+                <span v-else class="status-tag__text">
+                    <Duration :histories="histories" :interval="100" />
+                </span>
             </span>
-            <span
-                v-if="taskExecution"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.SHOW_LOGS, {id: taskId, execution: taskExecution, taskRuns})"
-            >
-                <KsTooltip :content="$t('show task logs')">
-                    <TextBoxSearch class="button-icon" alt="Show logs" />
-                </KsTooltip>
-            </span>
-
-            <span
-                v-if="!taskExecution && !data.isReadOnly && data.isFlowable"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.ADD_ERROR, {task: data.node.task})"
-            >
-                <KsTooltip :content="$t('add error handler')">
-                    <AlertOutline class="button-icon" alt="Add error handler" />
-                </KsTooltip>
-            </span>
-            <span
-                v-if="!taskExecution && !data.isReadOnly"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.EDIT, {task: data.node.task, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('edit')">
-                    <Pencil class="button-icon" alt="Edit task" />
-                </KsTooltip>
-            </span>
-            <span
-                v-if="!taskExecution && !data.isReadOnly"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                @click="emit(EVENTS.DELETE, {id: taskId, section: SECTIONS.TASKS})"
-            >
-                <KsTooltip :content="$t('delete')">
-                    <Delete class="button-icon" alt="Delete task" />
-                </KsTooltip>
-            </span>
+        </template>
+        <template #title-actions>
+            <NodeMenu :actions="actions" />
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -123,36 +50,43 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
+    import moment from "moment"
+    import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
     import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
-    import ExecutionInformations from "../misc/ExecutionInformations.vue"
+    import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
+    import {getStatusStyle} from "../utils/status"
     import BasicNode from "./BasicNode.vue"
+    import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
     } from "../injectionKeys"
 
-    import Pencil from "vue-material-design-icons/Pencil.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
-    import CheckIcon from "vue-material-design-icons/Check.vue"
-    import AlertCircleIcon from "vue-material-design-icons/AlertCircle.vue"
-    import AlertIcon from "vue-material-design-icons/Alert.vue"
-    import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue"
-    import RotatingDots from "../assets/icons/RotatingDots.vue"
     
 
     interface TaskType {
         id: string;
         type: string;
         default: null;
+        description?: string;
         runIf?: unknown;
+        taskRunner?: {
+            type?: string;
+        };
         subflowId?: {
             namespace: string;
             flowId: string;
@@ -172,6 +106,7 @@
         color?: string;
         isReadOnly?: boolean;
         isFlowable?: boolean;
+        expandable?: boolean;
         link?: {
             namespace: string;
             id: string;
@@ -184,6 +119,8 @@
         taskId: string;
         state: {
             current: [string, string];
+            duration?: string;
+            histories?: {date: string; state: string}[];
         };
         outputs?: {
             executionId?: string;
@@ -243,9 +180,21 @@
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
 
-    const color = computed(() => props.data.color ?? "primary")
-
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const runnerType = computed(() => props.data.node?.task?.taskRunner?.type)
+
+    const runnerLabel = computed(() => {
+        const type = runnerType.value
+        if (!type) return ""
+        const parts = type.split(".")
+        const cls = parts.at(-1) ?? ""
+        const runnerIdx = parts.indexOf("runner")
+        const plugin = runnerIdx > 0 ? parts[runnerIdx - 1] : ""
+        const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "")
+        if (!plugin || cls.toLowerCase().includes(plugin.toLowerCase())) return titleCase(cls)
+        return `${plugin.toUpperCase()} ${titleCase(cls)}`
+    })
 
     const taskExecution = computed(() => {
         const executionId = props.data.executionId
@@ -309,6 +258,17 @@
             Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
     }))
 
+    const statusStyle = computed(() => getStatusStyle(state.value))
+
+    const histories = computed(() => {
+        const run = taskRuns.value?.[0]
+        if (!run?.state?.histories?.length) return []
+        return run.state.histories.map((h: {date: string; state: string}) => ({
+            date: moment(h.date),
+            state: h.state,
+        }))
+    })
+
     const expandData = computed<ExpandData>(() => ({
         id: props.id,
         type: String(props.data.node.task.type),
@@ -344,6 +304,91 @@
         return undefined
     })
 
+    const {t} = useI18n()
+
+    const actions = computed<NodeAction[]>(() => {
+        const task = props.data.node.task
+        const readOnly = props.data.isReadOnly
+        const list: NodeAction[] = []
+
+        if (task?.description) {
+            list.push({
+                key: "description",
+                label: t("show description"),
+                icon: InformationOutline,
+                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
+            })
+        }
+        if (task?.runIf) {
+            list.push({
+                key: "condition",
+                label: t("show task condition"),
+                icon: SendLock,
+                onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
+            })
+        }
+        if (taskExecution.value) {
+            list.push({
+                key: "logs",
+                label: t("show task logs"),
+                icon: TextBoxSearch,
+                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+            })
+        }
+        if (dataWithLink.value.link) {
+            list.push({
+                key: "open",
+                label: t("open"),
+                icon: OpenInNew,
+                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
+            })
+        }
+        if (props.data.expandable) {
+            list.push({
+                key: "expand",
+                label: t("expand"),
+                icon: UnfoldMoreHorizontal,
+                onClick: () => emit(EVENTS.EXPAND, expandData.value),
+            })
+        }
+        if (!taskExecution.value && !readOnly && props.data.isFlowable) {
+            list.push({
+                key: "add-error",
+                label: t("add error handler"),
+                icon: AlertOutline,
+                onClick: () => emit(EVENTS.ADD_ERROR, {task}),
+            })
+        }
+        if (!readOnly) {
+            list.push({
+                key: "edit",
+                label: t("edit"),
+                icon: Pencil,
+                onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
+            })
+        }
+        if (actionConfig.value && task) {
+            list.push({
+                key: "show-details",
+                label: actionConfig.value.config.label || t("show details"),
+                icon: EyeOutline,
+                onClick: () => onShowDetails(),
+            })
+        }
+        if (!readOnly) {
+            list.push({
+                key: "delete",
+                label: t("delete"),
+                icon: Delete,
+                danger: true,
+                divided: true,
+                onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
+            })
+        }
+
+        return list
+    })
+
     function onShowDetails() {
         if (!actionConfig.value || !props.data.node.task) return
         if (actionConfig.value.eventName === EVENTS.SHOW_CUSTOM_ACTION) {
@@ -353,24 +398,6 @@
         }
     }
 
-    const iconAlt = computed(() => {
-        if (state.value === State.RUNNING) {
-            return "task is running"
-        }
-        if (state.value === State.SUCCESS) {
-            return "task was successful"
-        }
-        if (state.value === State.WARNING) {
-            return "task sent a warning"
-        }
-        if (state.value === State.SKIPPED) {
-            return "task was skipped"
-        }
-        if (state.value === State.FAILED) {
-            return "task failed"
-        }
-        return undefined
-    })
 </script>
 
 <style lang="scss" scoped>
@@ -394,46 +421,41 @@ button.playground-button {
     background-color: var(--ks-playground-bg-color);
 }
 
-.view-details-action {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 6px;
-    padding: 0 8px 8px;
-}
-
-.view-details-button {
+.status-tag {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    box-sizing: border-box;
-    appearance: none;
-    margin: 0;
-    padding: 4px 10px;
-    border: 1px solid var(--ks-border-primary);
-    border-radius: 999px;
-    background-color: var(--ks-bg-surface);
-    color: var(--ks-text-secondary);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
-    line-height: 1.2;
+    gap: var(--ks-spacing-1);
+    padding: 0.4rem;
+    border-radius: var(--ks-radius-xs);
+    background-color: var(--ks-bg-tag);
+    line-height: 1;
+}
+
+.status-tag__text {
+    font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
-    text-transform: none;
-    box-shadow: none;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
 
-    &:hover {
-        border-color: var(--ks-border-active);
-        background-color: var(--ks-button-background-secondary-hover);
-        color: var(--ks-text-primary);
-    }
+.details-wrapper {
+    font-size: var(--ks-font-size-2xs);
 
-    &:focus-visible {
-        outline: 2px solid var(--ks-border-active);
-        outline-offset: 2px;
+    &:has(> *) {
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-base);
     }
+}
+
+.runner-badge {
+    align-self: flex-start;
+    padding: 0 var(--ks-spacing-2);
+    border-radius: var(--ks-radius-base);
+    background-color: var(--ks-bg-tag);
+    color: var(--ks-text-info);
+    font-size: var(--ks-font-size-2xs);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .details-slide-enter-active,

@@ -16,12 +16,12 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.4.1"
+    id "com.gradleup.shadow" version "9.4.2"
     id "application"
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.3.0.8198"
+    id "org.sonarqube" version "7.3.1.8318"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -32,7 +32,7 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "3.0.3"
+    id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.36.0"
 
@@ -62,18 +62,6 @@ application {
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
-    }
-}
-
-
-abstract class GenericLocationProvider implements CommandLineArgumentProvider {
-    @InputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
-    abstract RegularFileProperty getDistribution()
-
-    @Override
-    Iterable<String> asArguments() {
-        ["-javaagent:${distribution.get().asFile.absolutePath}"]
     }
 }
 
@@ -181,6 +169,7 @@ allprojects {
             api group: 'commons-io', name: 'commons-io'
             api group: 'org.apache.commons', name: 'commons-lang3'
             api "io.swagger.core.v3:swagger-annotations"
+            api "com.google.code.findbugs:jsr305" // brings @CheckReturnValue and already in path in core
         }
     }
 }
@@ -202,10 +191,6 @@ subprojects {subProj ->
         }
 
         configurations {
-            agent {
-                canBeResolved = true
-                canBeConsumed = true
-            }
             mockitoAgent
         }
 
@@ -242,10 +227,6 @@ subprojects {subProj ->
             // awaitility
             testImplementation 'org.awaitility:awaitility'
 
-            agent "org.aspectj:aspectjweaver:1.9.25.1"
-
-            testImplementation platform("io.qameta.allure:allure-bom")
-            testImplementation "io.qameta.allure:allure-junit5"
         }
 
         def commonTestConfig = { Test t ->
@@ -373,17 +354,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
             commonTestConfig(t)
-            jvmArgumentProviders.add(
-                objects.newInstance(GenericLocationProvider).tap {
-                    distribution = configurations.mockitoAgent.singleFile
-                }
-            )
-
-            jvmArgumentProviders.add(
-                objects.newInstance(GenericLocationProvider).tap {
-                    distribution = configurations.agent.singleFile
-                }
-            )
+            jvmArgs "-javaagent:${configurations.mockitoAgent.singleFile}"
         }
 
         tasks.named('check') {
@@ -404,10 +375,77 @@ subprojects {subProj ->
     }
 }
 
+// Collect test task outcomes as they execute (for test-metadata.json)
+def testTaskOutcomes = new java.util.concurrent.ConcurrentHashMap<String, String>()
+gradle.taskGraph.afterTask { Task task ->
+    if (task instanceof Test) {
+        def state = task.state
+        String outcome
+        if (state.noSource) {
+            outcome = 'NO_SOURCE'
+        } else if (state.failure != null) {
+            outcome = 'FAILED'
+        } else if (state.didWork) {
+            outcome = 'SUCCESS'
+        } else if (state.upToDate) {
+            outcome = 'UP_TO_DATE'
+        } else if (state.skipped) {
+            outcome = 'SKIPPED'
+        } else {
+            outcome = 'FROM_CACHE'
+        }
+        testTaskOutcomes.put(task.project.name + ':' + task.name, outcome)
+    }
+}
+
+// Workaround for https://github.com/gradle/gradle/issues/36699
+// Gradle's test task `timeout` kills the JVM hard, so JUnit XML reports are never
+// generated for timed-out modules. This task captures per-module task states so that
+// kestra-devtools can detect missing results and report them in PR comments.
+// Remove this task once Gradle supports graceful test task timeouts.
+tasks.register('generateTestMetadata') {
+    group = 'verification'
+    description = 'Generates build/test-metadata.json with per-module test task states for CI reporting.'
+    mustRunAfter(subprojects.collectMany { it.tasks.withType(Test) })
+    def outputFile = layout.buildDirectory.file('test-metadata.json')
+    outputs.file(outputFile)
+    outputs.upToDateWhen { false }
+    doLast {
+        def timeoutMin = (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+        def modules = new LinkedHashMap<String, Object>()
+        subprojects.each { sub ->
+            def hasTestSources = sub.file('src/test/java').isDirectory() &&
+                sub.fileTree('src/test/java').files.size() > 0
+            if (!hasTestSources && sub.file('src/test/kotlin').isDirectory()) {
+                hasTestSources = sub.fileTree('src/test/kotlin').files.size() > 0
+            }
+            def xmlDir = sub.file("build/test-results/test")
+            def hasXmlResults = xmlDir.isDirectory() &&
+                sub.fileTree(dir: xmlDir, includes: ['TEST-*.xml']).files.size() > 0
+            def state = testTaskOutcomes.getOrDefault(sub.name + ':test', 'NOT_RUN')
+
+            modules.put(sub.name, [
+                state: state,
+                hasTestSources: hasTestSources,
+                hasXmlResults: hasXmlResults
+            ])
+        }
+        def metadata = [
+            modules: modules,
+            timeoutMinutes: timeoutMin
+        ]
+        def json = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+        outputFile.get().asFile.parentFile.mkdirs()
+        outputFile.get().asFile.text = json
+        logger.lifecycle("Test metadata written to ${outputFile.get().asFile.path}")
+    }
+}
+
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
     dependsOn(tasks.named('flakyTest'))
     finalizedBy jacocoTestReport
+    finalizedBy tasks.named('generateTestMetadata')
 }
 
 tasks.register('unitTest') {
@@ -581,13 +619,13 @@ tasks.register('executableJar', Zip) {
 tasks.register('runLocal') {
     group = "application"
     description = "Run Kestra as server local"
-    dependsOn ':cli:runLocal'
+    dependsOn ':ui:assembleFrontend', ':cli:runLocal'
 }
 
 tasks.register('runStandalone') {
     group = "application"
     description = "Run Kestra as server standalone"
-    dependsOn ':cli:runStandalone'
+    dependsOn ':ui:assembleFrontend', ':cli:runStandalone'
 }
 
 /**********************************************************************************************************************\

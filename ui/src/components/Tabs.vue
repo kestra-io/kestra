@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, h, defineComponent, type Component} from "vue"
+    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, h, defineComponent, toHandlers, type Component} from "vue"
     import {useRoute} from "vue-router"
     import EnterpriseBadge from "./EnterpriseBadge.vue"
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
@@ -142,6 +142,10 @@
         {deep: true},
     )
 
+    watch(activeTab, () => {
+        selectedBlueprintId.value = undefined
+    })
+
     onMounted(syncStore)
     onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
 
@@ -165,7 +169,7 @@
                 return h(tab.component as Component, {
                     ...tab.props,
                     ...attrsWithoutClass.value,
-                    ...tab["v-on"],
+                    ...toHandlers(tab["v-on"] ?? {}),
                     namespace: getNamespaceToForward(tab),
                     embed: tab.props?.embed ?? true,
                     onGoToDetail: (id: string) => (selectedBlueprintId.value = id),

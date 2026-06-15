@@ -235,7 +235,7 @@ class McpToolControllerRunnerTest {
     private String saveServer(boolean disabled, String instructions) {
         String serverName = "server-" + IdUtils.create();
         McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverName, null,
-            instructions, null, null, disabled, false, false, null, null);
+            instructions, null, null, null, null, disabled, false, false, null, null);
         return mcpServerRepository.save(null, mcpServer).id();
     }
 

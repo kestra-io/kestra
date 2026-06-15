@@ -1,11 +1,12 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <KsTaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <KsTaskIcon v-if="!isPlaceholder" :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <PlusBoxOutline v-else class="placeholder-icon" />
         </div>
 
-        <div class="flex-grow-1 label">
-            {{ title ?? identifier }}
+        <div class="flex-grow-1 label" :class="{placeholder: isPlaceholder}">
+            {{ isPlaceholder ? placeholderLabel : (title ?? identifier) }}
         </div>
 
         <button v-if="playgroundStore.enabled && element.id && isTask" @click.stop="playgroundStore.runUntilTask(element.id)" type="button" class="playground-run-task">
@@ -13,6 +14,7 @@
         </button>
 
         <button
+            v-if="!isPlaceholder"
             class="delete-element"
             type="button"
             @click.prevent.stop="emits('removeElement')"
@@ -30,10 +32,12 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import PlayIcon from "vue-material-design-icons/Play.vue"
+    import PlusBoxOutline from "vue-material-design-icons/PlusBoxOutline.vue"
     import {usePluginsStore} from "../../../../../stores/plugins"
     import {usePlaygroundStore} from "../../../../../stores/playground"
 
 
+    import {capitalCase} from "change-case"
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../../utils/icons"
     import {
         EDIT_TASK_FUNCTION_INJECTION_KEY,
@@ -67,10 +71,20 @@
 
     const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {})
 
+    const elementValue = computed(() => props.element[props.typeFieldSchema])
+
     const identifier = computed(() => {
         return props.element.id
             ?? props.element[props.typeFieldSchema]
             ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`
+    })
+
+    const isPlaceholder = computed(() => !elementValue.value && props.elementIndex === undefined)
+
+    const placeholderLabel = computed(() => {
+        const field = props.parentPathComplete.split(".").pop()?.replace(/\[\d+\]$/, "") ?? ""
+        const human = /^\d*$/.test(field) ? "" : capitalCase(field)
+        return human ? t("no_code.add_field", {field: human}) : t("add")
     })
 
     const handleClick = () => {
@@ -97,11 +111,24 @@
 
     & > .icon {
         width: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .placeholder-icon {
+            display: inline-flex;
+            font-size: 1.25rem;
+            color: var(--ks-text-link);
+        }
     }
 
     & > .label {
         color: inherit;
         font-size: $code-font-sm;
+
+        &.placeholder {
+            color: var(--ks-text-link);
+        }
     }
 
     &.moved {

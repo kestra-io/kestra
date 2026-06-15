@@ -54,12 +54,13 @@
     @use 'element-plus/theme-chalk/src/pagination';
 
     .kel-pagination {
-        --kel-pagination-bg-color: var(--ks-bg-base);
+        --kel-pagination-bg-color: var(--ks-btn-secondary-bg-default);
         --kel-pagination-text-color: var(--ks-text-primary);
         --kel-pagination-button-color: var(--ks-text-link);
         --kel-pagination-hover-color: var(--ks-text-link);
+        --kel-pagination-item-gap: 0;
+        --kel-pagination-font-size-small: var(--ks-font-size-xs);
 
-        background-color: var(--ks-bg-base);
         gap: 8px;
 
         li, button, .btn-prev, .btn-next {
@@ -73,8 +74,13 @@
         .kel-pagination__sizes {
             .kel-select {
                 width: auto;
-                min-width: 110px;
+                min-width: 130px;
             }
+        }
+
+        &__total {
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-2xs);
         }
 
         .kel-pager li {

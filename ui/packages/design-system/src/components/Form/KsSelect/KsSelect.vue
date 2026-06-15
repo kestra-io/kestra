@@ -1,5 +1,5 @@
 <template>
-    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" @change="emit('change', $event)">
+    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import {type Component} from "vue"
     import {ElSelect} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -49,6 +49,7 @@
         popperClass?: string
         showArrow?: boolean
         suffixIcon?: Component | string
+        fit?: boolean
     }>(), {
         placeholder: undefined,
         size: undefined,
@@ -74,7 +75,7 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["fit"])
 </script>
 
 <style lang="scss">
@@ -89,9 +90,28 @@
             width: fit-content !important;
         }
 
+        &.kel-select--fit {
+            width: fit-content;
+
+            .kel-select__wrapper {
+                width: fit-content;
+            }
+
+            .kel-select__placeholder {
+                position: static;
+                transform: none;
+                top: auto;
+            }
+
+            .kel-select__input-wrapper {
+                position: absolute;
+            }
+        }
+
+
         &:not(.kel-select--small),
         &:not(.kel-select--large) {
-            font-size: var(--ks-font-size-base);
+            font-size: var(--ks-font-size-xs);
         }
 
         .kel-select__wrapper {
@@ -115,7 +135,10 @@
 
         .kel-select__wrapper {
             background-color: var(--ks-bg-input);
-            min-height: 32px;
+            min-height: 30px;
+            padding: 4px 8px 4px 10px;
+            font-size: var(--ks-font-size-xs);
+            box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
 
             &:hover {
                 background-color: var(--ks-bg-hover);
@@ -160,6 +183,7 @@
             border-radius: var(--ks-radius-xs);
             position: relative;
             font-size: var(--ks-font-size-xs);
+            height: auto;
 
             &.is-selected {
                 background-color: transparent;

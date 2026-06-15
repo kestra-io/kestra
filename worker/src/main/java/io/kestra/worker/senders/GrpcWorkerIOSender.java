@@ -3,6 +3,7 @@ package io.kestra.worker.senders;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -37,29 +38,18 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     private static final Logger LOG = LoggerFactory.getLogger(GrpcWorkerIOSender.class);
     private static final int MAX_BATCH_SIZE = 100; // TODO to test and fine-tune
     private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
-
-    /** Default response observer: ignores successful responses, logs errors. */
-    private static final StreamObserver<OpaqueData> DEFAULT_OBSERVER = new StreamObserver<>() {
-        @Override
-        public void onNext(OpaqueData value) {
-        }
-
-        @Override
-        public void onError(Throwable t) {
-            LOG.error("Error while sending request", t);
-        }
-
-        @Override
-        public void onCompleted() {
-        }
-    };
+    /** Throttle applied after a retryable send failure, so a network partition cannot spin the loop. */
+    private static final Duration RESEND_BACKOFF = Duration.ofSeconds(1);
 
     private final WorkerQueueRegistry workerQueueRegistry;
     private final Class<T> eventType;
     private final SendStrategy sendStrategy;
     private final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod;
+    private final boolean resendOnFailure;
     private WorkerQueue<T> queue;
     private WorkerContext workerContext;
+    /** {@code nanoTime} until which the loop throttles after a retryable send failure. */
+    private volatile long resendBackoffUntilNanos;
     @Nullable
     private final Function<T, T> fallbackMapperOnResourceExhausted;
 
@@ -84,19 +74,26 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      * @param fallbackMapperOnResourceExhausted optional mapper applied to each item when the server rejects the
      *        message with {@code RESOURCE_EXHAUSTED}; the mapped item is
      *        re-sent once. Pass {@code null} to disable fallback.
+     * @param resendOnFailure when {@code true}, a batch that fails to send with a retryable transport error
+     *        (e.g. the controller is unreachable during a network partition) is re-queued so the loop
+     *        redrives it once the channel recovers, instead of being dropped. Enable for results that must
+     *        not be lost; leave {@code false} for best-effort, high-volume streams (logs, metrics) where
+     *        re-queuing would risk back-pressuring the worker.
      */
     GrpcWorkerIOSender(final WorkerQueueRegistry workerQueueRegistry,
         final String name,
         final Class<T> eventType,
         final SendStrategy sendStrategy,
         final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
-        @Nullable final Function<T, T> fallbackMapperOnResourceExhausted) {
+        @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
+        final boolean resendOnFailure) {
         super(name);
         this.eventType = eventType;
         this.workerQueueRegistry = workerQueueRegistry;
         this.sendStrategy = Objects.requireNonNull(sendStrategy, "sendStrategy must not be null");
         this.grpcSendMethod = Objects.requireNonNull(grpcSendMethod, "grpcSendMethod must not be null");
         this.fallbackMapperOnResourceExhausted = fallbackMapperOnResourceExhausted;
+        this.resendOnFailure = resendOnFailure;
     }
 
     /**
@@ -106,6 +103,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     public synchronized void init(WorkerContext workerContext) {
         this.queue = workerQueueRegistry.getOrCreate(workerContext, eventType);
         this.workerContext = workerContext;
+        this.resendBackoffUntilNanos = System.nanoTime();
     }
 
     /**
@@ -113,7 +111,21 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      */
     @Override
     protected void doOnLoop() throws Exception {
+        throttleAfterSendFailure();
         send(queue.poll(MAX_BATCH_SIZE, POLL_TIMEOUT));
+    }
+
+    /**
+     * Sleeps off any remaining {@link #RESEND_BACKOFF} window opened by a retryable send failure.
+     * While the controller is unreachable, this keeps a re-queued batch from spinning the loop
+     * (poll → fail → re-queue → poll …) into a hot loop. A successful send leaves the window in the
+     * past, so the steady state pays no cost.
+     */
+    private void throttleAfterSendFailure() throws InterruptedException {
+        long remainingNanos = resendBackoffUntilNanos - System.nanoTime();
+        if (remainingNanos > 0) {
+            TimeUnit.NANOSECONDS.sleep(remainingNanos);
+        }
     }
 
     /**
@@ -165,7 +177,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         OpaqueData request = buildRequest(batchMessage);
         StreamObserver<OpaqueData> baseObserver = fallbackMapperOnResourceExhausted != null
             ? new FallbackOnResourceExhaustedObserver(batchMessage)
-            : DEFAULT_OBSERVER;
+            : new ResendOnFailureObserver(batchMessage);
         StreamObserver<OpaqueData> observer = new RetryOnUnauthenticatedObserver(batchMessage, baseObserver);
         grpcSendMethod.accept(request, observer);
     }
@@ -175,6 +187,38 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
             .setMessage(MessageFormats.JSON.toByteString(batchMessage))
             .build();
+    }
+
+    /**
+     * Terminal handler for a send that could not be delivered. When {@link #resendOnFailure} is enabled
+     * and the error is a retryable transport failure (the controller is transiently unreachable, e.g. a
+     * network partition), the batch is re-queued so the loop redrives it once the channel recovers — the
+     * alternative is silently dropping a worker result, leaving a completed task stuck RUNNING. Re-queuing
+     * is intentionally bounded to the running loop: past the liveness timeout the worker self-disconnects
+     * and the executor resubmits its tasks, so we never re-queue during shutdown (which would also turn the
+     * drain in {@link #cleanup()} into an unbounded loop while partitioned).
+     */
+    private void onSendFailed(final BatchMessage<T> batchMessage, final Throwable t) {
+        if (resendOnFailure && isRunning() && isRetryable(t)) {
+            LOG.warn("Retryable error while sending {} — re-queuing {} item(s) for redelivery",
+                eventType.getSimpleName(), batchMessage.records().size(), t);
+            batchMessage.records().forEach(queue::put);
+            resendBackoffUntilNanos = System.nanoTime() + RESEND_BACKOFF.toNanos();
+        } else {
+            LOG.error("Error while sending request", t);
+        }
+    }
+
+    /**
+     * Whether a send failure is a transient transport error worth re-queuing. {@code UNAVAILABLE} covers a
+     * partition or a controller restart; {@code DEADLINE_EXCEEDED} a send that timed out in transit.
+     */
+    private static boolean isRetryable(final Throwable t) {
+        return t instanceof StatusRuntimeException sre
+            && switch (sre.getStatus().getCode()) {
+                case UNAVAILABLE, DEADLINE_EXCEEDED -> true;
+                default -> false;
+            };
     }
 
     /**
@@ -245,10 +289,14 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
                     .filter(Objects::nonNull)
                     .toList();
                 if (!fallbackItems.isEmpty()) {
-                    grpcSendMethod.accept(buildRequest(BatchMessage.of(fallbackItems)), DEFAULT_OBSERVER);
+                    // Route the fallback (failed-state) resend through the same resend handler as the primary
+                    // send: if it too fails with a retryable transport error, the failed-state result is
+                    // re-queued instead of dropped — otherwise the task would still be left stuck RUNNING.
+                    BatchMessage<T> fallbackBatch = BatchMessage.of(fallbackItems);
+                    grpcSendMethod.accept(buildRequest(fallbackBatch), new ResendOnFailureObserver(fallbackBatch));
                 }
             } else {
-                LOG.error("Error while sending request", t);
+                onSendFailed(originalBatch, t);
             }
         }
 
@@ -259,6 +307,33 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         private static boolean isResourceExhausted(final Throwable t) {
             return t instanceof StatusRuntimeException sre
                 && sre.getStatus().getCode() == Status.Code.RESOURCE_EXHAUSTED;
+        }
+    }
+
+    /**
+     * Default per-call observer: ignores successful responses and routes errors to
+     * {@link #onSendFailed(BatchMessage, Throwable)}, which re-queues retryable failures when
+     * {@link #resendOnFailure} is set and otherwise logs and drops.
+     */
+    private class ResendOnFailureObserver implements StreamObserver<OpaqueData> {
+
+        private final BatchMessage<T> batchMessage;
+
+        ResendOnFailureObserver(final BatchMessage<T> batchMessage) {
+            this.batchMessage = batchMessage;
+        }
+
+        @Override
+        public void onNext(OpaqueData value) {
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            onSendFailed(batchMessage, t);
+        }
+
+        @Override
+        public void onCompleted() {
         }
     }
 }

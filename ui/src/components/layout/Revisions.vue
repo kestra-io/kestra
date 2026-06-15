@@ -22,15 +22,15 @@
                                 :value="item.value"
                                 class="revision-option"
                             >
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
-                                    <TrashCanOutline
-                                        @mousedown.stop.prevent
-                                        @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
-                                    />
                                 </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
                             </KsOption>
                         </KsSelect>
                         <KsButtonGroup>
@@ -60,15 +60,15 @@
                                 :value="item.value"
                                 class="revision-option"
                             >
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
-                                    <TrashCanOutline
-                                        @mousedown.stop.prevent
-                                        @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
-                                    />
                                 </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
                             </KsOption>
                         </KsSelect>
                         <KsButtonGroup>
@@ -89,10 +89,11 @@
             </KsCol>
         </KsRow>
 
-        <Editor
+        <KsEditor
+            v-bind="editorBindings"
             class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
-            :diffSideBySide="sideBySide"
+            :options="{diffSideBySide: sideBySide}"
             :modelValue="revisionRightText"
             :original="revisionLeftText"
             readOnly
@@ -117,13 +118,16 @@
     import {useRoute, useRouter} from "vue-router"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
-    import Editor from "../../components/inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import moment from "moment"
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
 
     const flowStore = useFlowStore()
+
+    const editorBindings = useEditorBindings()
 
     export interface Revision {
         revision: number;
@@ -389,8 +393,15 @@
     }
 
     .revision-option {
-        padding-right: 0.5rem;
         min-width: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .revision-label {
+            display: flex;
+            gap: var(--ks-spacing-2);
+        }
     }
 
     .revision-number {

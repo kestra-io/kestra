@@ -15,7 +15,7 @@
                     {{ item.value }}
                 </KsText>
                 <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
-                    <KsButton :icon="TextSearchVariant" link />
+                    <KsButton :icon="TextSearchVariant" link :tooltip="$t('search')" />
                 </router-link>
             </div>
             <slot name="additional-usages" />
@@ -199,13 +199,17 @@
             align-items: center;
             justify-content: center;
             width: 24px;
-            height: 24px;
             flex-shrink: 0;
 
+            :deep(.material-design-icon) {
+                display: flex;
+                align-items: center;
+            }
+
             :deep(.material-design-icon__svg) {
+                display: block;
                 font-size: var(--ks-font-size-xl);
                 color: var(--ks-text-secondary);
-                vertical-align: middle;
             }
         }
 

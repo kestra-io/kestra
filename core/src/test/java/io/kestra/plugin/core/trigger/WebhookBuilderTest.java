@@ -1,27 +1,44 @@
 package io.kestra.plugin.core.trigger;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.WebhookService;
 
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest
 public class WebhookBuilderTest {
     @Inject
     WebhookService webhookService;
 
+    @MockBean(AsyncOperationWaiter.class)
+    AsyncOperationWaiter asyncOperationWaiter() {
+        AsyncOperationWaiter mock = mock(AsyncOperationWaiter.class);
+        when(mock.submit(any(), any(), any()))
+            .thenReturn(Mono.just(new AsyncOperationProcessedEvent(
+                "op-id", null, "item-id", AsyncOperationProcessedEvent.Outcome.SUCCEEDED, null, Instant.now()
+            )));
+        return mock;
+    }
+
     @Test
     void testWebhookBuilder() {
-        // Test that the Webhook class can be built with the new hierarchy
         Webhook webhook = Webhook.builder()
             .id("test-webhook")
             .type(Webhook.class.getName())
@@ -47,16 +64,8 @@ public class WebhookBuilderTest {
             .build();
 
         HttpRequest request = HttpRequest.of(URI.create("/api/v1/main/executions/webhook/io.kestra.tests/test-flow/testkey"));
-        String path = null;
 
-        var webhookContext = new WebhookContext(
-            request,
-            path,
-            flow,
-            webhook,
-            webhookService
-        );
-
+        var webhookContext = new WebhookContext(request, null, flow, webhook, webhookService);
         var evaluate = webhook.evaluate(webhookContext);
 
         assertThat(evaluate).isNotNull();

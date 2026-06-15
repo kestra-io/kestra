@@ -1,7 +1,9 @@
 <template>
     <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <div v-if="!panels.length" class="empty-panels">
-            <Empty type="panels" />
+            <KsTableEmpty :icon="ViewArrayOutline" :title="$t('empty.panels.title')">
+                {{ $t("empty.panels.content") }}
+            </KsTableEmpty>
         </div>
         <template v-else>
             <KsSplitterPanel
@@ -86,7 +88,7 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" />
+                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem
@@ -185,8 +187,6 @@
     import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
 
-    import Empty from "./layout/empty/Empty.vue"
-
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
     import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
@@ -195,6 +195,7 @@
     import DockRight from "vue-material-design-icons/DockRight.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import Keyboard from "vue-material-design-icons/Keyboard.vue"
+    import ViewArrayOutline from "vue-material-design-icons/ViewArrayOutline.vue"
 
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
@@ -688,7 +689,7 @@
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
         padding-top: var(--ks-spacing-2);

@@ -20,6 +20,7 @@ export const storageKeys = {
     DISPLAY_KV_COLUMNS: "displayKvColumns",
     DISPLAY_SECRETS_COLUMNS: "displaySecretsColumns",
     DISPLAY_TRIGGERS_COLUMNS: "displayTriggersColumns",
+    DISPLAY_MCP_TOOLS_COLUMNS: "displayMcpToolsColumns",
     DISPLAY_ASSETS_COLUMNS: "displayAssetsColumns",
     DISPLAY_ASSET_EXECUTIONS_COLUMNS: "displayAssetExecutionsColumns",
     SELECTED_TENANT: "selectedTenant",
@@ -75,5 +76,9 @@ export const aiGenerationTypes = {
     DASHBOARD: "dashboard",
 } as const
 export type AiGenerationType = typeof aiGenerationTypes[keyof typeof aiGenerationTypes];
+
+// Class set on the AI provider select dropdown popper (teleported to body) so
+// AiCopilotWrapper's click-outside handler can ignore clicks inside it.
+export const AI_PROVIDER_POPPER_CLASS = "ai-provider-select-popper"
 
 export const TUTORIAL_NAMESPACE = "tutorial"

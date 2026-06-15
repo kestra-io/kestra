@@ -111,9 +111,25 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         traverseAndInsert("", fileTree.value)
     }
 
+    function getSiblingsAtPath(parentPath: string): TreeNode[] {
+        if (!parentPath) return fileTree.value
+        const findChildren = (basePath = "", array: TreeNode[]): TreeNode[] | undefined => {
+            for (const item of array) {
+                const folderPath = `${basePath}${item.fileName}`
+                if (folderPath === parentPath && isDirectory(item)) return item.children
+                if (isDirectory(item)) {
+                    const result = findChildren(`${folderPath}/`, item.children)
+                    if (result) return result
+                }
+            }
+            return undefined
+        }
+        return findChildren("", fileTree.value) ?? []
+    }
+
     async function addFolder(folder: {
         parentPath?: string,
-        fileName: string, 
+        fileName: string,
         children?: TreeNode[]
     }, creation?: boolean) {
         if(!namespaceId.value) return
@@ -121,15 +137,15 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         const NEW = folderNode(fileName, folder?.children ?? [])
         const path = parentPath ? `${parentPath}/${fileName}` : fileName
         if (creation) {
-            try {
-                await namespacesStore.readDirectory({
-                    namespace: namespaceId.value, 
-                    path,
-                })
-                toast.error(t("namespace files.create.folder_already_exists"))
+            const siblings = getSiblingsAtPath(parentPath)
+            const conflict = siblings.find(item => item.fileName === fileName)
+            if (conflict) {
+                if (isDirectory(conflict)) {
+                    toast.error(t("namespace files.create.folder_already_exists"))
+                } else {
+                    toast.error(t("namespace files.create.folder_conflicts_with_file"))
+                }
                 return
-            } catch {
-                // Folder does not exist, we can create it
             }
             try {
                 await namespacesStore.createDirectory({namespace: namespaceId.value, path})
@@ -145,7 +161,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 toast.error(t("namespace files.create.folder_error"))
                 return
             }
-            
+
             return
         }
         if (!parentPath) {
@@ -202,15 +218,28 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         }
         const path = `${parentPath ? `${parentPath}/` : ""}${NAME}`
         if (creation) {
-            if ((await searchFilesList(path))?.includes(path)) {
-                toast.error(t("namespace files.create.file_already_exists"))
+            const siblings = getSiblingsAtPath(parentPath ?? "")
+            const conflict = siblings.find(item => item.fileName === NAME)
+            if (conflict) {
+                if (!isDirectory(conflict)) {
+                    toast.error(t("namespace files.create.file_already_exists"))
+                } else {
+                    toast.error(t("namespace files.create.file_conflicts_with_folder"))
+                }
                 return {}
             }
-            await namespacesStore.saveOrCreateFile({
-                namespace: namespaceId.value,
-                path,
-                content,
-            })
+            try {
+                await namespacesStore.saveOrCreateFile({
+                    namespace: namespaceId.value,
+                    path,
+                    content,
+                })
+                toast.success(`File "${NAME}" created successfully.`)
+            } catch (error) {
+                console.error(`Failed to create file: ${NAME}`, error)
+                toast.error(t("namespace files.create.file_error"))
+                return {}
+            }
         }
         if (!parentPath) {
             fileTree.value.push(NEW)

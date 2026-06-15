@@ -12,9 +12,10 @@
             <template #label>
                 <KsMarkdown :content="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                 :data-testid="`input-form-${input.id}`"
@@ -35,12 +36,12 @@
                 clearable
             >
                 <KsOption
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="item in (input.values ?? []).map(toOption)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                 >
-                    <KsMarkdown :content="item" />
+                    <KsMarkdown :content="item.label" />
                 </KsOption>
             </KsSelect>
             <KsRadioGroup
@@ -49,7 +50,7 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <KsRadio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
                 <KsInput
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
@@ -71,12 +72,12 @@
                 :allowCreate="input.allowCustomValue"
             >
                 <KsOption
-                    v-for="item in (input.values ?? input.options)"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                 >
-                    <KsMarkdown :content="item" />
+                    <KsMarkdown :content="item.label" />
                 </KsOption>
             </KsSelect>
             <KsInput
@@ -113,7 +114,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
+                @update:model-value="onChangeBool(input)"
                 class="w-100 boolean-inputs"
             />
             <KsDatePicker
@@ -181,7 +182,7 @@
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
-                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" :tooltip="$t('remove this item')" />
                             <div class="d-flex flex-column controls-input">
                                 <ChevronUp @click="moveArrayItem(input, 'up', index)" />
                                 <ChevronDown @click="moveArrayItem(input, 'down', index)" />
@@ -206,19 +207,20 @@
                     </div>
                 </div>
             </div>
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
@@ -245,15 +247,14 @@
 
 <script setup lang="ts">
     import moment from "moment-timezone"
-    import {KsMessage} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
-    import {Execution, useExecutionsStore} from "../../stores/executions"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
+    import {Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
-    import Editor from "../../components/inputs/Editor.vue"
-    import {KsMarkdown} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {normalize, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
@@ -263,64 +264,27 @@
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import {Flow} from "../../stores/flow"
+    import {InputMetaData} from "../../stores/executions"
 
-    interface InputError {
-        message: string;
-    }
-
-    interface InputMetaData {
-        id: string;
-        type: InputType
-        displayName?: string;
-        description?: string;
-        required?: boolean;
-        defaults?: unknown;
-        value?: unknown;
-        values?: string[];
-        options?: string[];
-        errors?: InputError[];
-        isDefault?: boolean;
-        isRadio?: boolean;
-        allowCustomValue?: boolean;
-        min?: number;
-        max?: number;
-        allowedFileExtensions?: string[];
-        accept?: string;
-        prefill?: unknown;
+    function toOption(item: ValueOptionLike): {label: string; value: string} {
+        return typeof item === "string" ? {label: item, value: item} : item
     }
 
     interface SelectedTrigger {
         inputs?: Record<string, unknown>;
     }
 
-    interface ValidationResponse {
-        checks?: unknown[];
-        inputs: Array<{
-            enabled: boolean;
-            input: InputMetaData;
-            errors?: InputError[];
-            value?: unknown;
-            isDefault?: boolean;
-        }>;
-    }
-
-    interface ValidationEventPayload {
-        formData: FormData | undefined;
-        inputsMetaData: InputMetaData[];
-        callback: (response: ValidationResponse) => void;
-    }
+    const modelValue = defineModel<Record<string, unknown>>()
 
     // Props
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;
-        modelValue?: Record<string, unknown>;
         initialInputs?: InputMetaData[];
         flow?: Flow;
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
     }>(), {
         executeClicked: false,
-        modelValue: () => ({}),
         initialInputs: () => [],
         flow: undefined,
         execution: undefined,
@@ -329,9 +293,8 @@
 
     // Emits
     const emit = defineEmits<{
-        "update:modelValue": [value: Record<string, unknown>];
         "update:modelValueNoDefault": [value: Record<string, unknown>];
-        "update:checks": [checks: unknown[]];
+        "update:checks": [checks: Check[]];
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
     }>()
@@ -340,10 +303,11 @@
     const executionsStore = useExecutionsStore()
     const {t} = useI18n()
     const instance = getCurrentInstance()
+    const editorBindings = useEditorBindings()
 
     // Reactive state
     // Using 'any' type for v-model compatibility with various Element Plus components
-    const inputsValues = reactive<Record<string, any>>({...props.modelValue})
+    const inputsValues = reactive<Record<string, any>>({...modelValue.value})
     const previousInputsValues = ref<Record<string, any>>({})
     const inputsMetaData = ref<InputMetaData[]>([])
     const multiSelectInputs = reactive<Record<string, any>>({})
@@ -421,6 +385,10 @@
         }
     }
 
+    function onChangeBool(input: InputMetaData): void {
+        onChange(input)
+    }
+
     function onChange(input: InputMetaData): void {
         // give 2 seconds for the user to finish their edit
         // and for the server to return with validated content
@@ -428,8 +396,8 @@
             inputsValidated.value.add(input.id)
         }, 2000)
         input.isDefault = false
-        emit("update:modelValue", {...inputsValues})
-        emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
+        modelValue.value = {...inputsValues}
+        emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
     }
 
     function onSubmit(): void {
@@ -498,12 +466,12 @@
         onChange(input)
     }
 
-    function inputsValuesWithNoDefault(): Record<string, unknown> {
+    const inputsValuesWithNoDefault = computed<Record<string, unknown>>(() => {
         return inputsMetaData.value.reduce((acc: Record<string, unknown>, input) => {
             acc[input.id] = input.isDefault ? undefined : inputsValues[input.id]
             return acc
         }, {})
-    }
+    })
 
     function numberHint(input: InputMetaData): string | false {
         const {min, max} = input
@@ -524,11 +492,9 @@
             return
         }
 
-        const inputsValuesNoDefault = inputsValuesWithNoDefault()
+        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
 
-        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesNoDefault)
-
-        const metadataCallback = (response: ValidationResponse): void => {
+        const metadataCallback = async (response: ValidationResponse) => {
             emit("update:checks", response.checks || [])
             inputsMetaData.value = response.inputs.reduce((acc: InputMetaData[], it) => {
                 if (it.enabled) {
@@ -541,6 +507,8 @@
                 }
                 return acc
             }, [])
+            await nextTick() // wait for the DOM to update validations before updating defaults
+            // NOTE: validations happen mostly using an object updated in the parent form.
             updateDefaults()
         }
 
@@ -558,9 +526,7 @@
             emit("validation", {
                 formData: formData,
                 inputsMetaData: inputsMetaData.value,
-                callback: (response: ValidationResponse) => {
-                    metadataCallback(response)
-                },
+                callback: metadataCallback,
             })
         }
     }
@@ -570,10 +536,10 @@
             return undefined
         }
 
-        if (input.type === "BOOLEAN") {
+        if (["BOOLEAN", "BOOL"].includes(input.type)) {
             return [{
                 validator: (_rule, val: unknown, callback: (error?: Error) => void) => {
-                    if (val === "undefined") {
+                    if (typeof val === "undefined") {
                         return callback(new Error(t("is required", {field: input.displayName || input.id})))
                     }
                     callback()
@@ -702,8 +668,8 @@
                     // only revalidate if values are stable for more than 500ms
                     // to avoid too many calls to the server
                     debouncedValidation()
-                    emit("update:modelValue", {...inputsValues})
-                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
+                    modelValue.value = {...inputsValues}
+                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val))
             },
@@ -712,7 +678,7 @@
 
         // on first load default values need to be sent to the parent
         // since they are part of the actual value
-        emit("update:modelValue", {...inputsValues})
+        modelValue.value = {...inputsValues}
     })
 
     // Lifecycle hooks

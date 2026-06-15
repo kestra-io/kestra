@@ -1,10 +1,10 @@
 <template>
-    <div class="taskrun-header">
+    <div v-if="!hideHeader" class="taskrun-header">
         <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
-                @click.stop="() => $emit('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+                @click.stop="() => emit('toggleShowAttempt', (attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
             >
                 <ChevronDown
                     v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -27,15 +27,15 @@
         >
             <KsTooltip>
                 <template #content>
-                    {{ $t("from") }} :
-                    {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}
+                    {{ t("from") }} :
+                    {{ dateFilter(selectedAttempt(currentTaskRun).state.startDate) }}
                     <br>
-                    {{ $t("to") }} :
-                    {{ $filters.date(selectedAttempt(currentTaskRun).state.endDate) }}
+                    {{ t("to") }} :
+                    {{ dateFilter(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
                     <Clock />
-                    <strong>{{ $t("duration") }}:</strong>
-                    {{ $filters.humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
+                    <strong>{{ t("duration") }}:</strong>
+                    {{ humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
                 <span>
                     <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
@@ -58,105 +58,32 @@
 
         <slot name="buttons" />
 
-        <KsDropdown trigger="click">
-            <KsButton type="default" class="task-run-buttons">
-                <DotsVertical title="" />
-            </KsButton>
-            <template #dropdown>
-                <KsDropdownMenu>
-                    <KsDropdownItem
-                        v-if="selectedAttempt(currentTaskRun).state.current === 'FAILED'"
-                        @click="fixErrorWithAi(currentTaskRun)"
-                    >
-                        <span class="d-inline-flex align-items-center">
-                            <AiIcon class="me-1" />
-                            <span>{{ $t('fix_with_ai') }}</span>
-                        </span>
-                    </KsDropdownItem>
-                    <SubFlowLink
-                        v-if="isSubflow(currentTaskRun)"
-                        component="el-dropdown-item"
-                        tabExecution="logs"
-                        :executionId="currentTaskRun.outputs.executionId"
-                    />
-
-                    <Metrics :taskRun="currentTaskRun" :execution="followedExecution" />
-
-                    <Outputs
-                        :outputs="currentTaskRun.outputs"
-                        :execution="followedExecution"
-                    />
-
-                    <Restart
-                        component="el-dropdown-item"
-                        :key="`restart-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${selectedAttempt(currentTaskRun).state.startDate}`"
-                        isReplay
-                        tooltipPosition="left"
-                        :execution="followedExecution"
-                        :taskRun="currentTaskRun"
-                        :attemptIndex="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                        @follow="$emit('follow', $event)"
-                    />
-
-                    <ChangeStatus
-                        component="el-dropdown-item"
-                        :key="`change-status-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${selectedAttempt(currentTaskRun).state.startDate}`"
-                        :execution="followedExecution"
-                        :taskRun="currentTaskRun"
-                        :attemptIndex="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                        @follow="$emit('follow', $event)"
-                    />
-                    <TaskEdit
-                        v-if="canReadFlow"
-                        :readOnly="true"
-                        component="el-dropdown-item"
-                        :taskId="currentTaskRun.taskId"
-                        section="tasks"
-                        :flowId="followedExecution.flowId"
-                        :namespace="followedExecution.namespace"
-                        :revision="followedExecution.flowRevision"
-                        :flowSource="flow?.source"
-                    />
-                    <KsDropdownItem
-                        :icon="Download"
-                        @click="downloadContent(currentTaskRun.id)"
-                    >
-                        {{ $t("download logs") }}
-                    </KsDropdownItem>
-                    <KsDropdownItem
-                        :icon="Copy"
-                        @click="copyContent(currentTaskRun.id)"
-                    >
-                        {{ $t("copy logs") }}
-                    </KsDropdownItem>
-                    <KsDropdownItem
-                        :icon="Delete"
-                        @click="deleteLogs(currentTaskRun.id)"
-                    >
-                        {{ $t("delete logs") }}
-                    </KsDropdownItem>
-                    <WorkerInfo
-                        component="el-dropdown-item"
-                        v-if="hasWorkerId(currentTaskRun) !== null"
-                        :taskRun="currentTaskRun"
-                        @follow="$emit('follow', $event)"
-                    />
-                </KsDropdownMenu>
-            </template>
-        </KsDropdown>
+        <TaskRunActions
+            :taskRun="currentTaskRun"
+            :execution="followedExecution"
+            :flow="flow"
+            :attemptIndex="selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0"
+            :forcedAttemptNumber="forcedAttemptNumber"
+            :attemptLogs="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
+            @follow="emit('follow', $event)"
+            @update-logs="emit('update-logs', $event)"
+        />
     </div>
-    <div class="attempt-header">
+    <div class="attempt-header" :class="{'attempt-header--flush': hideHeader}">
         <KsSelect
             class="d-none d-md-inline-block attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-            @change="$emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
+            @change="emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
+            <template #label="{value}">
+                {{ `${t('attempt')} ${(value ?? 0) + 1}/${attempts(currentTaskRun).length}` }}
+            </template>
             <KsOption
                 v-for="(_, index) in attempts(currentTaskRun)"
                 :key="`attempt-${index}-${currentTaskRun.id}`"
                 :value="index"
-                :label="`${$t('attempt')} ${index + 1}`"
+                :label="`${t('attempt')} ${index + 1}`"
             />
         </KsSelect>
 
@@ -172,252 +99,128 @@
     </div>
 </template>
 
-<script>
-    import Restart from "./overview/components/actions/Restart.vue"
-    import Metrics from "./Metrics.vue"
-    import {State} from "@kestra-io/design-system"
-    import {KsExecutionStatus} from "@kestra-io/design-system"
-    import ChangeStatus from "./ChangeStatus.vue"
-    import TaskEdit from "../flows/TaskEdit.vue"
-    import SubFlowLink from "../flows/SubFlowLink.vue"
-    import Outputs from "./Outputs.vue"
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {State, KsExecutionStatus, KsTaskIcon} from "@kestra-io/design-system"
+    import TaskRunActions from "./TaskRunActions.vue"
     import Clock from "vue-material-design-icons/Clock.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
-    import Copy from "vue-material-design-icons/ContentCopy.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
-    import Download from "vue-material-design-icons/Download.vue"
-    import WorkerInfo from "./WorkerInfo.vue"
-    import AiIcon from "../ai/AiIcon.vue"
     import * as FlowUtils from "../../utils/flowUtils"
     import _groupBy from "lodash/groupBy"
-    import {SECTIONS} from "@kestra-io/design-system"
-    import {KsTaskIcon} from "@kestra-io/design-system"
-    import Duration from "../layout/Duration.vue"
-    import * as Utils from "../../utils/utils"
-    import resource from "../../models/resource"
-    import action from "../../models/action"
+    import {Duration} from "@kestra-io/topology"
     import {usePluginsStore} from "../../stores/plugins"
-    import {useCoreStore} from "../../stores/core"
-    import {useExecutionsStore} from "../../stores/executions"
-    import {mapStores} from "pinia"
-    import {useAuthStore} from "override/stores/auth"
+    import {date as dateFilter, humanizeDuration} from "../../utils/filters"
 
-    export default {
-        components: {
-            KsTaskIcon,
-            KsExecutionStatus,
-            Outputs,
-            SubFlowLink,
-            TaskEdit,
-            ChangeStatus,
-            Metrics,
-            Restart,
-            Duration,
-            Clock,
-            ChevronRight,
-            ChevronDown,
-            DotsVertical,
-            WorkerInfo,
-            AiIcon,
-        },
-        props: {
-            currentTaskRun: {
-                type: Object,
-                required: true,
-            },
-            followedExecution: {
-                type: Object,
-                required: true,
-            },
-            flow: {
-                type: Object,
-                default: undefined,
-            },
-            forcedAttemptNumber: {
-                type: Number,
-                default: undefined,
-            },
-            taskRunId: {
-                type: String,
-                default: undefined,
-            },
-            selectedAttemptNumberByTaskRunId: {
-                type: Object,
-                default: () => ({}),
-            },
-            shownAttemptsUid: {
-                type: Array,
-                default: () => [],
-            },
-            logs: {
-                type: Array,
-                default: () => [],
-            },
-            filter: {
-                type: String,
-                default: "",
-            },
-        },
-        computed: {
-            ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore, useAuthStore),
-            SECTIONS() {
-                return SECTIONS
-            },
-            currentTaskRuns() {
-                return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? []
-            },
-            taskRunById() {
-                return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]))
-            },
-            logsWithIndexByAttemptUid() {
-                let indexedLogs = this?.logs
-                    .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
-                    .map((logLine, index) => ({...logLine, index}))
+    const {t} = useI18n()
+    const pluginsStore = usePluginsStore()
 
-                // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
-                indexedLogs = Array.from(new Set(indexedLogs))
+    interface Props {
+        currentTaskRun: any
+        followedExecution: any
+        flow?: any
+        forcedAttemptNumber?: number
+        taskRunId?: string
+        selectedAttemptNumberByTaskRunId?: Record<string, number>
+        shownAttemptsUid?: string[]
+        logs?: any[]
+        filter?: string
+        hideHeader?: boolean
+    }
 
-                return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
-            },
-            canReadFlow() {
-                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW, this.$route.params.namespace)
-            },
-            Copy() {
-                return Copy
-            },
-            Delete() {
-                return Delete
-            },
-            Download() {
-                return Download
-            },
-        },
-        methods: {
-            attempts(taskRun) {
-                if (this.followedExecution.state.current === State.RUNNING || this.forcedAttemptNumber === undefined) {
-                    return taskRun.attempts ?? [{state: taskRun.state}]
-                }
+    const props = withDefaults(defineProps<Props>(), {
+        flow: undefined,
+        forcedAttemptNumber: undefined,
+        taskRunId: undefined,
+        selectedAttemptNumberByTaskRunId: () => ({}),
+        shownAttemptsUid: () => [],
+        logs: () => [],
+        filter: "",
+        hideHeader: false,
+    })
 
-                return taskRun.attempts ? [taskRun.attempts[this.forcedAttemptNumber]] : []
-            },
-            isSubflow(taskRun) {
-                return taskRun.outputs?.executionId
-            },
-            downloadName(currentTaskRunId) {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
-            },
-            selectedAttempt(taskRun) {
-                return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0]
-            },
-            taskType(taskRun) {
-                if(!taskRun) return undefined
+    const emit = defineEmits<{
+        toggleShowAttempt: [uid: string]
+        swapDisplayedAttempt: [event: {taskRunId: string; attemptNumber: number}]
+        follow: [event: unknown]
+        "update-logs": [executionId: string]
+    }>()
 
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId)
-                const parentTaskRunId = taskRun.parentTaskRunId
-                if (task === undefined && parentTaskRunId) {
-                    return this.taskType(this.taskRunById[parentTaskRunId])
-                }
-                return task ? task.type : undefined
-            },
-            downloadContent(currentTaskRunId) {
-                const params = this.params
-                this.executionsStore.downloadLogs({
-                    executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId},
-                }).then((response) => {
-                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId))
-                })
-            },
-            copyContent(currentTaskRunId) {
-                const params = this.params
-                this.executionsStore.downloadLogs({
-                    executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId},
-                }).then((response) => {
-                    Utils.copy(response).then(() =>{
-                        this.coreStore.message = {
-                            variant: "success",
-                            title: this.$t("success"),
-                            message: this.$t("copied_logs_to_clipboard"),
-                        }
-                    })
-                })
-            },
-            deleteLogs(currentTaskRunId) {
-                const params = this.params
-                this.$toast().confirm(
-                    this.$t("delete_log"),
-                    () => {
-                        this.executionsStore.deleteLogs({
-                            executionId: this.followedExecution.id,
-                            params: {...params, taskRunId: currentTaskRunId},
-                        }).then((_) => {
-                            this.$emit("update-logs", this.followedExecution.id)
-                        })
-                    },
-                    () => {},
-                )
+    // computed
+    const currentTaskRuns = computed(() =>
+        props.followedExecution?.taskRunList?.filter((tr: any) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
+    )
 
-            },
-            hasWorkerId(currentTaskRun) {
-                return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null
-            },
-            attemptUid(taskRunId, attemptNumber) {
-                return `${taskRunId}-${attemptNumber}`
-            },
-            shouldDisplayChevron(taskRun) {
-                return this.shouldDisplayLogs(taskRun.id)
-            },
-            shouldDisplayLogs(taskRunId) {
-                return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]
-            },
-            fixErrorWithAi(taskRun) {
-                const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0
-                const attemptUid = this.attemptUid(taskRun.id, attemptNumber)
-                const logs = this.logsWithIndexByAttemptUid[attemptUid] ?? []
-                const errorLines = (() => {
-                    const errors = logs.filter(l => (l.level || "").toString().toUpperCase() === "ERROR" && (l.message ?? "").length > 0)
-                    if (errors.length > 0) return errors.map(l => l.message).join("\n")
-                    const last = [...logs].reverse().find(l => (l.message ?? "").length > 0)
-                    return last?.message ?? ""
-                })()
-                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`
-                try {
-                    window.sessionStorage.setItem("kestra-ai-prompt", prompt)
-                } catch (err) {
-                    console.warn("AI prompt not persisted to sessionStorage:", err)
-                }
+    const taskRunById = computed(() =>
+        Object.fromEntries(currentTaskRuns.value.map((taskRun: any) => [taskRun.id, taskRun])),
+    )
 
-                this.$router.push({
-                    name: "flows/update",
-                    params: {
-                        namespace: this.followedExecution.namespace,
-                        id: this.followedExecution.flowId,
-                        tab: "edit",
-                        tenant: this.$route.params?.tenant,
-                    },
-                    query: {ai: "open"},
-                })
-            },
-        },
-        emits: ["toggleShowAttempt", "swapDisplayedAttempt", "follow", "update-logs"],
+    const logsWithIndexByAttemptUid = computed(() => {
+        let indexedLogs = props.logs
+            .filter((logLine: any) =>
+                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(taskRunById.value[logLine.taskRunId]),
+            )
+            .map((logLine: any, index: number) => ({...logLine, index}))
+
+        // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
+        indexedLogs = Array.from(new Set(indexedLogs))
+
+        return _groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
+    })
+
+    // methods
+    function attempts(taskRun: any): any[] {
+        if (props.followedExecution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
+            return taskRun.attempts ?? [{state: taskRun.state}]
+        }
+        return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
+    }
+
+    function isSubflow(taskRun: any): boolean {
+        return taskRun?.outputs?.executionId
+    }
+
+    function selectedAttempt(taskRun: any): any {
+        return attempts(taskRun)[props.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0]
+    }
+
+    function taskType(taskRun: any): string | undefined {
+        if (!taskRun) return undefined
+        const task = FlowUtils.findTaskById(props.flow, taskRun.taskId)
+        const parentTaskRunId = taskRun.parentTaskRunId
+        if (task === undefined && parentTaskRunId) {
+            return taskType(taskRunById.value[parentTaskRunId])
+        }
+        return task ? (task as any).type : undefined
+    }
+
+    function attemptUid(taskRunId: string, attemptNumber: number): string {
+        return `${taskRunId}-${attemptNumber}`
+    }
+
+    function shouldDisplayChevron(taskRun: any): boolean {
+        return shouldDisplayLogs(taskRun.id)
+    }
+
+    function shouldDisplayLogs(taskRunId: string): boolean {
+        return !!(logsWithIndexByAttemptUid.value[attemptUid(taskRunId, props.selectedAttemptNumberByTaskRunId[taskRunId])])
     }
 </script>
-<style scoped lang="scss">
 
+<style scoped lang="scss">
     .task-duration {
         padding: .375rem 0;
     }
 
-    .taskrun-header, .attempt-header {
+    .taskrun-header,
+    .attempt-header {
         display: flex;
         gap: .5rem;
         padding: 0.5rem 1rem;
         border-bottom: 1px solid var(--ks-border-default);
 
-        > * {
+        >* {
             display: flex;
             align-items: center;
         }
@@ -436,6 +239,7 @@
 
     .taskrun-header {
         background-color: var(--ks-bg-surface);
+
         .task-icon {
             width: 36px;
             padding: 6px 6px 6px 0;
@@ -452,33 +256,24 @@
             span span {
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-sm);
-
-                html:not(.dark) & {
-                    color: #26282D;
-                }
-            }
-        }
-
-        .task-run-buttons {
-            padding: 0 .5rem;
-            border: 1px solid rgba(#FFFFFF, .05);
-            background-color: var(--ks-btn-secondary-bg-default) !important;
-            // FIXME: what does this mean?
-            &:not(:hover) {
-                background: rgba(#FFFFFF, .10);
             }
         }
     }
 
+    .attempt-header.attempt-header--flush {
+        border-bottom: none;
+        padding: 0;
+        padding-bottom: 1rem;
+    }
+
     .attempt-header {
         .kel-select {
-            width: 10rem;
-            height: 24px;
-            margin-top: 0.35rem;
+            width: 115px;
+            height: 32px;
 
             :deep(.kel-select__wrapper) {
-                height: 24px;
-                min-height: 24px;
+                height: 32px;
+                min-height: 32px;
             }
 
         }
@@ -488,9 +283,5 @@
             padding: .375rem .75rem;
             white-space: nowrap;
         }
-    }
-
-    :deep(.attempt-select > .kel-select__wrapper) {
-        height: 100%;
     }
 </style>

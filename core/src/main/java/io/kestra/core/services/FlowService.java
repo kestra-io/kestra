@@ -360,15 +360,16 @@ public class FlowService {
                     constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
 
-                constraintsBuilder.deprecationPaths(deprecationPaths(flow));
-                constraintsBuilder.warnings(warnings(flow, tenantId));
+                // Do not perform a strict parsing validation to ignore unknown
+                // properties that might be injecting through default values.
+                FlowWithSource flowWithDefaults = pluginDefaultService.injectAllDefaults(flow, false);
+                constraintsBuilder.deprecationPaths(deprecationPaths(flowWithDefaults));
+                constraintsBuilder.warnings(warnings(flowWithDefaults, tenantId));
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());
 
-                // Do not perform a strict parsing validation to ignore unknown
-                // properties that might be injecting through default values.
-                modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
+                modelValidator.validate(flowWithDefaults);
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);
@@ -473,7 +474,7 @@ public class FlowService {
             }
         });
 
-        // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
+        // add warning for runnable properties (timeout, workerSelector, taskCache) when used not in a runnable
         flow.allTasksWithChilds().forEach(task ->
         {
             if (!(task instanceof RunnableTask<?>)) {
@@ -483,8 +484,8 @@ public class FlowService {
                 if (task.getTaskCache() != null) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'taskCache' property as it's only relevant for runnable tasks.");
                 }
-                if (task.getWorkerGroup() != null) {
-                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerGroup' property as it's only relevant for runnable tasks.");
+                if (task.getWorkerSelector() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerSelector' property as it's only relevant for runnable tasks.");
                 }
             }
         });

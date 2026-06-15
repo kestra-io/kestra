@@ -11,6 +11,7 @@
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
+        @echarts-click="emit('echarts-click', $event)"
     />
 </template>
 
@@ -31,6 +32,7 @@
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
+        "echarts-click": [params: unknown]
     }>()
 
     const props = withDefaults(
@@ -43,6 +45,8 @@
             loading?: boolean
             /** Render as a donut ring when `true`. */
             donut?: boolean
+            /** Pie/donut radius, e.g. "60%" or ["50%", "75%"]. Overrides the donut/pie defaults. */
+            radius?: string | [string, string]
             /** Tooltip rendering mode: NATIVE uses ECharts built-in tooltip, EXTERNAL uses KsTooltip. */
             tooltipType?: TooltipType
             /** Features to disable (LEGEND, AXIS, AXIS_SPLITLINE, TOOLTIP). */
@@ -55,6 +59,7 @@
             options: () => ({}),
             loading: undefined,
             donut: false,
+            radius: undefined,
             disableFeatures: () => [],
             tooltipType: TooltipType.NATIVE,
             renderer: ChartRenderer.CANVAS,
@@ -72,12 +77,12 @@
         const legendHidden = (props.options.legend as {show?: boolean})?.show === false
             || props.disableFeatures.includes(ChartFeature.LEGEND)
         const base: Record<string, unknown> = {
-            tooltip: {trigger: "item", formatter: "{b}: {c} ({d}%)"},
+            tooltip: {trigger: "item", confine: true, formatter: "{b}: {c} ({d}%)"},
             legend: {orient: "vertical", right: "5%", top: "center"},
             series: [
                 {
                     type: "pie",
-                    radius: props.donut ? ["40%", "70%"] : "60%",
+                    radius: props.radius ?? (props.donut ? ["40%", "70%"] : "60%"),
                     center: legendHidden ? ["50%", "50%"] : ["40%", "50%"],
                     data: props.data ?? [],
                     emphasis: {scale: false},

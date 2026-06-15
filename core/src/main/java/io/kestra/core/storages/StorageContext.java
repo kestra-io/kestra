@@ -18,6 +18,7 @@ import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 /**
@@ -29,6 +30,12 @@ public class StorageContext {
     public static final String KESTRA_SCHEME = "kestra";
     public static final String KESTRA_PROTOCOL = KESTRA_SCHEME + "://";
     public static final String PREFIX_MESSAGES = "/_messages";
+
+    /** Per-flow subdir that holds execution storage. */
+    public static final String EXECUTIONS_DIR_NAME = "executions";
+
+    /** Prefix of namespace-level metadata directories ({@code _files}, {@code _kv}, …). */
+    public static final String RESERVED_NAMESPACE_DIR_PREFIX = "_";
 
     // /{namespace}/_files
     static final String PREFIX_FORMAT_NAMESPACE_FILE = "/%s/_files";
@@ -48,6 +55,29 @@ public class StorageContext {
     static final String PREFIX_FORMAT_CACHE_OBJECT = "/%s/%s/%s/cache/%s/cache.zip";
     // /{namespace}/{flow-id}/{cache-id}/cache/cache.zip
     static final String PREFIX_FORMAT_CACHE = "/%s/%s/%s/cache/cache.zip";
+
+    /**
+     * {@code kestra:///<namespace-as-path>/} — namespace root, flow dirs as direct children.
+     */
+    public static URI namespaceRootUri(@NotNull String namespace) {
+        return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/");
+    }
+
+    /**
+     * {@code kestra:///<namespace-as-path>/<flow-slug>/executions/} — a flow's executions subdir.
+     */
+    public static URI executionsRootUri(@NotNull String namespace, @NotNull String flowId) {
+        Objects.requireNonNull(flowId, "flowId");
+        return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
+    }
+
+    /**
+     * Static counterpart of {@link #getNamespaceAsPath()}.
+     */
+    public static String namespaceAsPath(@NotNull String namespace) {
+        Objects.requireNonNull(namespace, "namespace");
+        return namespace.replace(".", "/");
+    }
 
     /**
      * Factory method for constructing a new {@link StorageContext} scoped to a given {@link TaskRun}.

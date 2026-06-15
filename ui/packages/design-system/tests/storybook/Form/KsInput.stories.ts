@@ -73,6 +73,23 @@ export const Clearable: Story = {
     }),
 }
 
+/**
+ * Clearable inside a shrink-to-fit container. The wrapper sizes to its content, so a naive
+ * clearable input would grow when the clear icon appears on hover and shrink when it leaves.
+ * KsInput reserves the icon's footprint, so the width stays stable. Hover to verify it doesn't jump.
+ */
+export const ClearableNoReflow: Story = {
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref("Hover me – width stays fixed")} },
+        template: `
+            <div style="padding:24px;display:inline-flex;border:1px dashed var(--ks-border-default)">
+                <ks-input v-model="value" clearable placeholder="Type to fill..." />
+            </div>
+        `,
+    }),
+}
+
 /** With suffix slot */
 export const WithSuffix: Story = {
     render: () => ({

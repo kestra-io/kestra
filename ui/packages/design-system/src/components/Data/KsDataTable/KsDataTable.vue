@@ -3,12 +3,12 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" v-else>
+    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
             <slot name="navbar" />
         </nav>
 
-        <div v-ks-loading="isLoading">
+        <div style="flex: 1; display: flex; flex-direction: column;" v-ks-loading="isLoading">
             <div v-if="$slots.top" class="ks-data-table-top">
                 <slot name="top" />
             </div>
@@ -18,7 +18,7 @@
             </template>
 
             <template v-else>
-                <div ref="container" class="ks-data-table-content" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                     <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                         <KsBulkSelect
                             :selectAll="queryBulkAction"
@@ -37,11 +37,13 @@
                     <KsTable
                         ref="tableRef"
                         v-bind="$attrs"
-                        tableLayout="auto"
+                        :tableLayout="tableLayout"
                         fixed
                         :data
                         :rowKey
-                        :emptyText="data && data.length === 0 ? noDataText : ''"
+                        :expandRowKeys="composedExpandRowKeys"
+                        :rowClassName="composedRowClassName"
+                        :emptyText="noDataText"
                         @selection-change="selectionChanged"
                         @select="onSelect"
                         @sort-change="onSortChange"
@@ -49,36 +51,44 @@
                     >
                         <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
                         <slot />
+                        <template #empty>
+                            <KsTableEmpty :title="noDataText" />
+                        </template>
                     </KsTable>
                 </div>
             </template>
 
             <KsPagination
-                v-if="total && total > 0"
-                :currentPage="internalPage"
-                :pageSize="internalSize"
+                v-if="showPagination"
+                :currentPage="currentPageValue"
+                :pageSize="currentSizeValue"
                 :total
                 layout="sizes, prev, pager, next, total"
                 size="small"
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="mt-3"
+                class="my-3"
             />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import {ref, computed, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
+    import KsTableEmpty from "../KsTableEmpty.vue"
 
     defineOptions({inheritAttrs: false})
+
+    const DEFAULT_PAGE_SIZE = 25
+    const MAX_PAGE_SIZE = 1000
+    const MAX_PAGE = 1_000_000
 
     const props = withDefaults(defineProps<{
         data?: any[]
@@ -93,6 +103,11 @@
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
         selectionMapper?: (element: any) => any
+        forceExpandedRowKeys?: string[]
+        noPaginationGutter?: boolean
+        noGutter?: boolean
+        noFirstColumnGutter?: boolean
+        tableLayout?: "fixed" | "auto"
     }>(), {
         data: () => [],
         total: 0,
@@ -106,14 +121,29 @@
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
         selectionMapper: undefined,
+        forceExpandedRowKeys: () => [],
+        noPaginationGutter: false,
+        noGutter: false,
+        noFirstColumnGutter: false,
+        tableLayout: "auto",
     })
+
+    export interface SortItem {
+        column: any; 
+        prop: string | null; 
+        order: string | null
+    }
+    
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
-        "sort-change": [sort: {column: any; prop: string; order: string | null}]
+        "update:currentPage": [page: number]
+        "update:pageSize": [size: number]
+        "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
+        "loaded": []
     }>()
 
     defineSlots<{
@@ -127,16 +157,51 @@
     }>()
 
     const slots = useSlots()
+    const attrs = useAttrs()
     const hasNavBar = computed(() => !!slots["navbar"])
+    const hasSelectionColumn = computed(() => props.selectable && props.showSelection)
     const hasTableSlot = computed(() => !!slots["table"])
     const hasBulkActions = computed(() => !!slots["bulk-actions"])
     const hasEmpty = computed(() => !!slots["empty"])
 
+    const composedExpandRowKeys = computed<string[] | undefined>(() => {
+        const forced = props.forceExpandedRowKeys ?? []
+        const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
+        if (!forced.length && !userKeys.length) return undefined
+        return Array.from(new Set([...userKeys, ...forced]))
+    })
+
+    const composedRowClassName = computed(() => {
+        const forced = new Set(props.forceExpandedRowKeys ?? [])
+        const userClass = attrs.rowClassName as ((arg: any) => string) | string | undefined
+
+        if (!forced.size && !userClass) return undefined
+
+        return (arg: {row: any}) => {
+            const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
+            if (!forced.size) return base
+            const key = typeof props.rowKey === "function"
+                ? (props.rowKey as (row: any) => string)(arg.row)
+                : (arg.row as any)?.[props.rowKey as string]
+            return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
+        }
+    })
+
     const isLoading = ref(props.loading)
     const isReady = ref(false)
 
-    const internalPage = ref(props.currentPage)
-    const internalSize = ref(props.pageSize)
+    const normalizePage = (value: number | undefined): number => {
+        const page = Math.floor(Number(value))
+        if (!Number.isFinite(page) || page < 1) return 1
+        return Math.min(page, MAX_PAGE)
+    }
+    const normalizeSize = (value: number | undefined): number => {
+        const size = Math.floor(Number(value))
+        if (!Number.isFinite(size) || size < 1) return DEFAULT_PAGE_SIZE
+        return Math.min(size, MAX_PAGE_SIZE)
+    }
+    const currentPageValue = computed(() => normalizePage(props.currentPage))
+    const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
     const tableRef = ref<InstanceType<typeof KsTable>>()
@@ -243,8 +308,8 @@
         isLoading.value = true
         try {
             await props.loadData({
-                page: internalPage.value,
-                size: internalSize.value,
+                page: currentPageValue.value,
+                size: currentSizeValue.value,
                 sort: internalSort.value,
             })
         } finally {
@@ -253,16 +318,28 @@
                 isReady.value = true
                 emit("ready")
             }
+            await nextTick()
+            emit("loaded")
         }
     }
 
     const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
 
+    const showPagination = computed(() => {
+        if (!props.total || props.total <= 0) return false
+        const minSize = props.pageSizeOptions.length ? Math.min(...props.pageSizeOptions) : DEFAULT_PAGE_SIZE
+        return props.total > minSize
+    })
+
     const reload = () => callLoad()
 
     const resetAndReload = () => {
-        internalPage.value = 1
-        callLoad()
+        if (currentPageValue.value !== 1) {
+            emit("update:currentPage", 1)
+            emit("page-changed", {page: 1, size: currentSizeValue.value})
+        } else {
+            callLoad()
+        }
     }
 
     onMounted(() => {
@@ -297,23 +374,21 @@
     }, {immediate: true})
 
     watch(() => props.loading, (val) => { isLoading.value = val })
-    watch(() => props.currentPage, (val) => { internalPage.value = val ?? 1 })
-    watch(() => props.pageSize, (val) => { internalSize.value = val ?? 25 })
+
+    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {
-        internalPage.value = page
-        emit("page-changed", {page, size: internalSize.value})
-        callLoad()
+        emit("update:currentPage", page)
+        emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
-        internalPage.value = 1
-        internalSize.value = size
+        emit("update:currentPage", 1)
+        emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
-        callLoad()
     }
 
-    const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
+    const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
             internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
@@ -343,6 +418,9 @@
 <style lang="scss">
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
 
         > .ks-data-table-navbar,
         .ks-data-table-top {
@@ -359,6 +437,18 @@
             }
         }
 
+        &.no-pagination-gutter .kel-pagination {
+            padding-inline: 0;
+        }
+
+        &.no-gutter {
+            > .ks-data-table-navbar,
+            .ks-data-table-top,
+            .kel-pagination {
+                padding-inline: 0;
+            }
+        }
+
         .kel-checkbox__inner {
             width: 16px;
             height: 16px;
@@ -366,10 +456,22 @@
             background: transparent;
             border: 0.8px solid var(--ks-border-strong);
         }
+
+        .kel-scrollbar__view {
+            height: 100%;
+        }
     }
 
     .ks-data-table-content {
         position: relative;
+        height:100%;
+
+        &.no-selection-gutter {
+            .kel-table th.kel-table__cell:first-child > .cell,
+            .kel-table td.kel-table__cell:first-child > .cell {
+                padding-left: var(--ks-spacing-5);
+            }
+        }
 
         .bulk-select-header {
             z-index: 1;
@@ -393,5 +495,9 @@
             }
         }
 
+        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+            visibility: hidden;
+            pointer-events: none;
+        }
     }
 </style>

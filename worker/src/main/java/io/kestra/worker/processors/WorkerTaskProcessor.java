@@ -84,8 +84,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
-        this.workerGroup = workerGroup;
         this.workerId = workerId;
+        this.workerGroup = workerGroup;
         this.serverConfig = serverConfig;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.workerMetricQueue = workerMetricQueue;
@@ -393,7 +393,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         metricRunningCount.incrementAndGet();
 
         // run it
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
+        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
         io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
 
         metricRunningCount.decrementAndGet();

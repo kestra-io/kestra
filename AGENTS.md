@@ -56,7 +56,7 @@ public class MyService {
 // 5. Injected fields (@Inject)
 // 6. Constructors
 // 7. Public methods
-// 8. Protected methods  
+// 8. Protected methods
 // 9. Private methods
 // 10. Inner classes/records
 ```
@@ -137,6 +137,9 @@ public enum MyEnum {
 ## Worker Constraints
 - Never depend on repositories for code called by the workers - instead use MetaStore/StateStore facades
 
+## Executor Constraints
+- Run the `H2RunnerTest` whenever you update part of the executor
+
 ## Testing Guidelines
 
 ### Java Tests
@@ -148,19 +151,19 @@ public enum MyEnum {
 - Always use naming conventions for test methods (e.g., `shouldPerformActionWhenCondition`)
 - Use `@MicronautTest` for tests that require Micronaut beans
 - Use `@KestraTest` for tests that require running Kestra services (e.g., Executor, Scheduler)
-- 
+-
 ```java
 @KestraTest
 class ServiceTest {
     @Inject
     private ServiceClass service;
-    
+
     @Test
     void shouldPerformActionWhenCondition() {
         // Given (setup)
-        
+
         // When (action)
-        
+
         // Then (assertions)
         assertThat(result).isNotNull();
     }
@@ -249,6 +252,9 @@ The full UI design-system rules, component catalogue, token reference, and front
 
 # Run single test method
 ./gradlew :module-name:test --tests "ClassName.methodName"
+
+# After running tests: generate a markdown summary of failures only
+npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)
 ```
 
 ### Frontend (UI)
@@ -347,7 +353,7 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 **Queuing Layer:**
 - `queue` - Core API for queue implementations
 - `queue-jdbc` - JDBC-based queue implementation
- 
+
 **Data Layer:**
 - `jdbc-*` - Database implementations (H2, Postgres, MySQL)
 
@@ -367,3 +373,29 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
+
+## UI Translations
+
+Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
+
+### Checking for missing translations
+
+Run the check script from the translations directory:
+
+```bash
+cd ui/src/translations && node check.js
+```
+
+A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
+
+### Adding missing translations
+
+1. Identify gaps by running `check.js` (or by diffing the flattened `en.json` keys against each language file).
+2. Translate only the missing keys — do **not** re-translate keys that already have a value.
+3. Follow these translation rules (mirroring `generate_translations.py`):
+   - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+   - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
+   - **Preserve `{{placeholder}}` variables** exactly — do not translate the word inside the braces.
+   - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
+4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
+5. Re-run `node check.js` to confirm everything is clean before committing.

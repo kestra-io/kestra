@@ -1,14 +1,18 @@
 <template>
     <VueFlow
         :id="id"
-        :defaultMarkerColor="cssVariable('--ks-topology-edge-color')"
+        :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
         :nodesDraggable="false"
         :nodesConnectable="false"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
-        <Background :patternColor="cssVariable('--ks-topology-dot-color')" />
+        <Background :patternColor="cssVariable('--ks-topology-bg')" />
+
+        <Panel v-if="showDetailsToggle" position="top-right">
+            <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
+        </Panel>
 
         <template #node-cluster="clusterProps">
             <ClusterNode
@@ -91,22 +95,37 @@
             />
         </template>
 
-        <Controls v-if="controlsShown" :showInteractive="false" :showFitView="false">
-            <ControlButton @click.stop="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
-                <Information />
-            </ControlButton>
-            <ControlButton @click.stop="fitView()">
-                <svg viewBox="0 0 32 32" style="width:12px;height:12px"><path d="M3.692 4.63c0-.53.4-.938.939-.938h5.215V0H4.708C2.13 0 0 2.054 0 4.63v5.216h3.692V4.631zM27.354 0h-5.2v3.692h5.17c.53 0 .984.4.984.939v5.215H32V4.631A4.624 4.624 0 0 0 27.354 0zm.954 24.83c0 .532-.4.94-.939.94h-5.215v3.768h5.215c2.577 0 4.631-2.13 4.631-4.707v-5.139h-3.692v5.139zm-23.677.94a.919.919 0 0 1-.939-.94v-5.138H0v5.139c0 2.577 2.13 4.707 4.708 4.707h5.138V25.77H4.631z" fill="currentColor" /></svg>
-            </ControlButton>
-            <ControlButton @click.stop="uncollapseAll()" v-if="collapsed.size > 0">
-                <ArrowExpandAll />
-            </ControlButton>
-            <ControlButton @click.stop="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
-                <component :is="isHorizontal ? SplitCellsHorizontal : SplitCellsVertical" />
-            </ControlButton>
-            <ControlButton @click.stop="toggleDropdown">
-                <Download />
-            </ControlButton>
+        <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
+            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="top">
+                <ControlButton @click.stop="zoomIn()">
+                    <Plus />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="top">
+                <ControlButton @click.stop="zoomOut()">
+                    <Minus />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="top">
+                <ControlButton @click.stop="fitView()">
+                    <Fullscreen />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="top">
+                <ControlButton @click.stop="emit('toggle-orientation', $event)">
+                    <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('download')" placement="top">
+                <ControlButton @click.stop="toggleDropdown">
+                    <Download />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="top">
+                <ControlButton @click.stop="uncollapseAll()">
+                    <ArrowExpandAll />
+                </ControlButton>
+            </KsTooltip>
             <ul v-if="isDropdownOpen" class="exporting">
                 <li @click="exportAsImage('jpeg')" class="item">
                     Export as .JPEG
@@ -121,7 +140,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow} from "@vue-flow/core"
+    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import type {XYPosition} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -131,12 +150,14 @@
     import TaskNode from "./nodes/TaskNode.vue"
     import TriggerNode from "./nodes/TriggerNode.vue"
     import CollapsedClusterNode from "./nodes/CollapsedClusterNode.vue"
-    import SplitCellsVertical from "./assets/icons/SplitCellsVertical.vue"
-    import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Minus from "vue-material-design-icons/Minus.vue"
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import AlignHorizontalCenter from "vue-material-design-icons/AlignHorizontalCenter.vue"
+    import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import Information from "vue-material-design-icons/Information.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
@@ -167,7 +188,7 @@
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
-        animated?: boolean;
+        showDetailsToggle?: boolean;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -186,13 +207,15 @@
         getNodeDimensions: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
-        animated: true,
+        showDetailsToggle: true,
     })
+
+    const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
 
     const dragging = ref(false)
     const showExtraDetails = ref(false)
     const lastPosition = ref<XYPosition | null>()
-    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
     const edgeReplacer = ref({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -206,19 +229,12 @@
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
                 : {width: getNodeWidth(node), height: baseHeight}
 
-            if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                return {...dimensions, height: baseHeight}
+            if (props.execution && (VueFlowUtils.isTaskNode(node) || VueFlowUtils.isTriggerNode(node) || VueFlowUtils.isCustomNode(node))) {
+                dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
             }
 
-            if (showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                const taskType = node?.task?.type as string | undefined
-                const hasDetailsAction = Boolean(
-                    (taskType && props.customActions?.[taskType]) ||
-                        (taskType && props.showDetails?.[taskType]),
-                )
-                if (hasDetailsAction) {
-                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)}
-                }
+            if (VueFlowUtils.isTaskNode(node) && !showExtraDetails.value) {
+                return {...dimensions, height: baseHeight}
             }
 
             return dimensions
@@ -267,6 +283,10 @@
         generateGraph()
     })
 
+    watch(isRunning, () => {
+        generateGraph()
+    })
+
     const generateGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
@@ -279,7 +299,8 @@
             collapsed.value = new Set<string>()
             hiddenNodes.value = []
             edgeReplacer.value = {}
-            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false, false))
+            clusterToNode.value = []
+            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
             const elements = VueFlowUtils.generateGraph(
                 props.id,
@@ -296,7 +317,7 @@
                 props.isAllowedEdit,
                 props.enableSubflowInteraction,
                 effectiveGetNodeDimensions.value,
-                props.animated,
+                isRunning.value,
             )
 
             if (elements) {
@@ -442,12 +463,13 @@
         return null
     }
 
-    const collapseCluster = (clusterUid: string, regenerate: boolean, recursive = false) => {
+    const collapseCluster = (clusterUid: string, regenerate: boolean) => {
         const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
 
-        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive))
+        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes)
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,
@@ -458,7 +480,7 @@
 
         for (let child of cluster.nodes) {
             if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
-                collapseCluster(child, false, true)
+                collapseCluster(child, false)
             }
         }
 
@@ -481,7 +503,7 @@
         clusterToNode.value = []
         collapsed.value.delete(expandData.id)
 
-        collapsed.value.forEach(n => collapseCluster(n, false, false))
+        collapsed.value.forEach(n => collapseCluster(n, false))
 
         generateGraph()
     }
@@ -512,20 +534,6 @@
 </script>
 
 <style scoped lang="scss">
-    .material-design-icon.download-icon,
-    .material-design-icon.information-icon,
-    .material-design-icon.arrow-expand-all-icon {
-        max-width: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        svg {
-            width: 12px;
-            height: 12px;
-        }
-    }
-
     :deep(.unused-path) {
         opacity: 0.3;
     }

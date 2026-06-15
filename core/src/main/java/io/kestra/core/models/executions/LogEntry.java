@@ -74,6 +74,16 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .toList();
     }
 
+    public static List<Level> findLevelsByMax(Level maxLevel) {
+        if (maxLevel == null) {
+            return Arrays.asList(Level.values());
+        }
+
+        return Arrays.stream(Level.values())
+            .filter(level -> level.toInt() <= maxLevel.toInt())
+            .toList();
+    }
+
     public static LogEntry of(Execution execution) {
         return LogEntry.builder()
             .tenantId(execution.getTenantId())

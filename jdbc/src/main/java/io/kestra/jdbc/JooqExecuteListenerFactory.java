@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
 
@@ -52,17 +53,8 @@ public class JooqExecuteListenerFactory {
                     public void executeEnd(ExecuteContext ctx) {
                         Duration duration = Duration.ofMillis(System.currentTimeMillis() - startTime);
 
-                        List<String> tags = new ArrayList<>();
-                        tags.add("batch");
-                        tags.add(ctx.batchMode().name());
-
-                        // in batch query, the query will be expanded without parameters, and will lead to overflow of metrics
-                        if (ctx.batchMode() != ExecuteContext.BatchMode.MULTIPLE) {
-                            tags.add("sql");
-                            tags.add(ctx.sql());
-                        }
-
-                        metricRegistry.timer(MetricRegistry.METRIC_JDBC_QUERY_DURATION, MetricRegistry.METRIC_JDBC_QUERY_DURATION_DESCRIPTION, tags.toArray(new String[0]))
+                        String[] tags = tags(ctx);
+                        metricRegistry.timer(MetricRegistry.METRIC_JDBC_QUERY_DURATION, MetricRegistry.METRIC_JDBC_QUERY_DURATION_DESCRIPTION, tags)
                             .record(duration);
 
                         if (log.isTraceEnabled()) {
@@ -70,6 +62,17 @@ public class JooqExecuteListenerFactory {
                         } else if (log.isDebugEnabled()) {
                             log.debug("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows(), ctx.sql());
                         }
+                    }
+
+                    private String[] tags(ExecuteContext ctx) {
+                        var tags = new String[] {"batch", ctx.batchMode().name()};
+
+                        // in batch query, the query will be expanded without parameters, and will lead to overflow of metrics
+                        if (ctx.batchMode() != ExecuteContext.BatchMode.MULTIPLE) {
+                            return ArrayUtils.addAll(tags, "sql", ctx.sql());
+                        }
+
+                        return tags;
                     }
                 };
             }

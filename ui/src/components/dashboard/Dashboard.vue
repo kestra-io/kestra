@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" :class="{filterPadding: padding}">
+    <section id="filter" class="filterPadding">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
@@ -15,9 +15,22 @@
             :showSearchInput="false"
             :defaultDuration="dashboard.timeWindow?.default"
         />
+        <QuickFilters
+            :intervals="quickIntervals"
+            :timeRange="selectedTimeRange"
+            :intervalLabel="t('filter.timeRange_dashboard.label')"
+            :showLevel="false"
+            @update:timeRange="onQuickFilterTimeRange"
+        />
     </section>
 
-    <Sections ref="dashboardComponent" :dashboard :charts :showDefault="isDashboardBundledWithUI" :padding="padding" />
+    <Sections
+        ref="dashboardComponent"
+        :dashboard
+        :charts
+        :showDefault="isDashboardBundledWithUI"
+        :padding="true"
+    />
 </template>
 
 <script setup lang="ts">
@@ -30,6 +43,8 @@
     import Header from "./components/Header.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import Sections from "./sections/Sections.vue"
+    import QuickFilters from "../filter/QuickFilters.vue"
+    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
 
     import {
         useDashboardFilter,
@@ -64,6 +79,7 @@
     const coreStore = useCoreStore()
     const dashboardStore = useDashboardStore()
     const {t} = useI18n()
+    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     defineOptions({inheritAttrs: false})
 
@@ -82,8 +98,6 @@
             return "home"
         }
     })
-
-    const padding = computed(() => dashboardLocation.value === "home")
 
     const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []})
     const isDashboardBundledWithUI = ref<boolean>(false)

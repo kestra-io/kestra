@@ -1,54 +1,56 @@
 <template>
-    <div v-if="hasButtons && activeTab" class="contextDrawer" :style="{width: `${drawerWidth}px`}">
-        <KsSplitter
-            class="drawerSplitter"
-            :style="{width: `${maxDrawerWidth}px`}"
-        >
-            <KsSplitterPanel class="drawerSpacerPanel" :min="0" />
+    <Transition name="drawer">
+        <div v-if="hasButtons && activeTab" class="contextDrawer" :style="{'--drawer-width': `${drawerWidth}px`}">
+            <KsSplitter
+                class="drawerSplitter"
+                :style="{width: `${maxDrawerWidth}px`}"
+            >
+                <KsSplitterPanel class="drawerSpacerPanel" :min="0" />
 
-            <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
-                <div class="drawerContent">
-                    <div class="tabBar">
-                        <KsTabs
-                            class="context-tabs"
-                            :modelValue="activeTab"
-                            type="box"
-                            :beforeLeave="handleBeforeLeave"
-                        >
-                            <KsTabPane
-                                v-for="(button, key) of contextButtons"
-                                :key="key"
-                                :name="key as string"
+                <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
+                    <div class="drawerContent">
+                        <div class="tabBar">
+                            <KsTabs
+                                class="context-tabs"
+                                :modelValue="activeTab"
+                                type="box"
+                                :beforeLeave="handleBeforeLeave"
                             >
-                                <template #label>
-                                    <span class="tab-label" :class="{'tab-label--active': key === activeTab}">
-                                        <component :is="button.icon" class="tab-icon" />
-                                        {{ button.title }}
-                                        <OpenInNew v-if="button.url" class="open-in-new" />
-                                        <span v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                                    </span>
-                                </template>
-                            </KsTabPane>
-                        </KsTabs>
+                                <KsTabPane
+                                    v-for="(button, key) of contextButtons"
+                                    :key="key"
+                                    :name="key as string"
+                                >
+                                    <template #label>
+                                        <span class="tab-label" :class="{'tab-label--active': key === activeTab}">
+                                            <component :is="button.icon" class="tab-icon" />
+                                            {{ button.title }}
+                                            <OpenInNew v-if="button.url" class="open-in-new" />
+                                            <span v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
+                                        </span>
+                                    </template>
+                                </KsTabPane>
+                            </KsTabs>
 
-                        <KsIconButton class="close-btn" :ariaLabel="$t('close')" @click="setActiveTab('')">
-                            <Close />
-                        </KsIconButton>
-                    </div>
+                            <KsIconButton class="close-btn" :ariaLabel="$t('close')" @click="setActiveTab('')">
+                                <Close />
+                            </KsIconButton>
+                        </div>
 
-                    <div class="panelContent">
-                        <KeepAlive v-if="activeTab">
-                            <component
-                                :is="contextButtons[activeTab]?.component"
-                                v-if="contextButtons[activeTab]?.component"
-                                :key="activeTab"
-                            />
-                        </KeepAlive>
+                        <div class="panelContent">
+                            <KeepAlive v-if="activeTab">
+                                <component
+                                    :is="contextButtons[activeTab]?.component"
+                                    v-if="contextButtons[activeTab]?.component"
+                                    :key="activeTab"
+                                />
+                            </KeepAlive>
+                        </div>
                     </div>
-                </div>
-            </KsSplitterPanel>
-        </KsSplitter>
-    </div>
+                </KsSplitterPanel>
+            </KsSplitter>
+        </div>
+    </Transition>
 </template>
 
 <script setup lang="ts">
@@ -157,8 +159,27 @@
     .contextDrawer {
         position: relative;
         height: 100%;
+        width: var(--drawer-width);
         flex-shrink: 0;
         overflow: hidden;
+    }
+
+    .drawer-enter-active,
+    .drawer-leave-active {
+        transition: width 0.2s ease, opacity 0.2s ease;
+    }
+
+    .drawer-enter-from,
+    .drawer-leave-to {
+        width: 0 !important;
+        opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .drawer-enter-active,
+        .drawer-leave-active {
+            transition: none;
+        }
     }
 
     .drawerContent {
@@ -174,6 +195,7 @@
         flex-direction: row;
         align-items: stretch;
         background-color: var(--ks-bg-input);
+        border-left: 1px solid var(--ks-border-default);
 
         .context-tabs {
             flex: 1;

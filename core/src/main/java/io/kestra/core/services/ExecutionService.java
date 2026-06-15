@@ -5,11 +5,11 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.executor.command.Create;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.debug.Breakpoint;
@@ -156,21 +156,26 @@ public class ExecutionService {
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
-        AtomicReference<Boolean> firstDone = new AtomicReference<>(false);
+        if (execution.getTaskRunList() == null) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        // Pre-build an id→TaskRun map, so ancestor-chain walks are O(1) per step.
+        Map<String, TaskRun> byId = execution.getTaskRunList().stream()
+            .collect(Collectors.toMap(TaskRun::getId, t -> t));
+
+        // Remove all descendants (not just direct children) of the iterating LoopUntil so that nested
+        // LoopUntil tasks start the next iteration with a clean state and don't inherit stale outputs.
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
-            .map(taskRun ->
-            {
+            .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.resetAttempts().incrementIteration();
                 }
-
-                if (flowableTaskRunId.equals(taskRun.getParentTaskRunId())) {
-                    // Clean children
+                if (isDescendantOf(taskRun, flowableTaskRunId, byId)) {
                     return null;
                 }
-
                 return taskRun;
             })
             .filter(Objects::nonNull)
@@ -179,9 +184,65 @@ public class ExecutionService {
         return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
     }
 
+    private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {
+        String parentId = taskRun.getParentTaskRunId();
+        while (parentId != null) {
+            if (ancestorId.equals(parentId)) return true;
+            TaskRun parent = byId.get(parentId);
+            parentId = parent != null ? parent.getParentTaskRunId() : null;
+        }
+        return false;
+    }
+
     public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
 
         return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
+    }
+
+    public Execution create(Create createCommand, FlowInterface flow) {
+        // Pre-seed CORRELATION_ID so Execution.newExecution() doesn't assign the auto-generated ID to it.
+        // Without this, newExecution() sets correlationId = auto-id, and then toBuilder().id() overrides
+        // the execution ID while leaving correlationId pointing to the discarded auto-id.
+        List<Label> labels = new ArrayList<>(ListUtils.emptyOnNull(createCommand.labels()));
+        if (labels.stream().noneMatch(l -> Label.CORRELATION_ID.equals(l.key()))) {
+            labels.add(new Label(Label.CORRELATION_ID, createCommand.executionId()));
+        }
+
+        var newExecution = Execution.newExecution(
+                flow,
+                (x, y) -> createCommand.inputs(),
+                labels,
+                Optional.empty(),
+                createCommand.kind()
+            ).toBuilder().id(createCommand.executionId()).build()
+            .withScheduleDate(createCommand.scheduleDate())
+            .withBreakpoints(createCommand.breakpoints())
+            .withTrigger(createCommand.trigger());
+
+        if (createCommand.flowRevision() != null) {
+            newExecution = newExecution.withFlowRevision(createCommand.flowRevision());
+        }
+
+        if (createCommand.stateType() != null) {
+            newExecution = newExecution.withState(createCommand.stateType());
+        }
+
+        if (createCommand.traceParent() != null) {
+            newExecution.setTraceParent(createCommand.traceParent());
+        }
+
+        if (createCommand.fixtures() != null) {
+            newExecution = newExecution.toBuilder().fixtures(createCommand.fixtures()).build();
+        }
+
+        if (createCommand.variables() != null) {
+            newExecution = newExecution.withVariables(createCommand.variables());
+        }
+
+        /*if (emitEvent) {
+            eventPublisher.publishEvent(CrudEvent.create(newExecution));
+        }*/
+        return newExecution;
     }
 
     public Execution restart(final Execution execution, Flow flow, @Nullable Integer revision) throws Exception {
@@ -292,7 +353,10 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent) throws Exception {
-        final String newExecutionId = IdUtils.create();
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, IdUtils.create());
+    }
+
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent, String newExecutionId) throws Exception {
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
             GraphCluster graphCluster = GraphUtils.of(flow, execution);

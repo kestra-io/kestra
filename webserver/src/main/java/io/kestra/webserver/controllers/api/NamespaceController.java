@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.Strings;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
@@ -14,10 +15,12 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAutocomplete;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.AutocompleteUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -29,6 +32,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -47,6 +51,9 @@ public class NamespaceController<N extends Namespace> {
 
     @Inject
     private SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    private Searchable<Namespace> namespaceSearchable;
 
     protected Comparator<String> sorter(Pageable pageable) {
         return Optional.of(pageable.getSort().getOrderBy())
@@ -127,20 +134,22 @@ public class NamespaceController<N extends Namespace> {
     @Get(uri = "/search")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Namespaces" }, summary = "Search for namespaces")
+    @SuppressWarnings("unchecked")
     public PagedResults<N> searchNamespaces(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Return only existing namespace") @Nullable @QueryValue(value = "existing", defaultValue = "false") Boolean existingOnly) throws HttpStatusException {
-        return PagedResults.of(
-            getNamespaces(
-                PageableUtils.from(page, size, sort),
-                query,
-                Collections.emptyList(),
-                existingOnly
+        @Parameter(description = "Return only existing namespace") @QueryValue(value = "existing", defaultValue = "false") Boolean existingOnly,
+        @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat(QueryFilter.Resource.NAMESPACE) List<QueryFilter> filters) throws HttpStatusException {
+        List<Namespace> allNamespaces = Stream.concat(
+                flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream(),
+                Stream.of(systemFlowsConfiguration.namespace())
             )
-        );
+            .flatMap(n -> NamespaceInterface.asTree(n).stream())
+            .distinct()
+            .map(id -> (Namespace) Namespace.builder().id(id).build())
+            .toList();
+        return PagedResults.of((ArrayListTotal<N>) namespaceSearchable.filter(allNamespaces, page, size, sort, filters));
     }
 
     @ExecuteOn(TaskExecutors.IO)

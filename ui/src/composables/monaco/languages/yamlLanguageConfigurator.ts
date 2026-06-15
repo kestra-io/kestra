@@ -20,12 +20,17 @@ import {
 } from "./pebbleLanguageConfigurator"
 import {usePluginsStore} from "../../../stores/plugins"
 import {useBlueprintsStore} from "../../../stores/blueprints"
+import * as Utils from "../../../utils/utils"
+import {makeToast} from "../../../utils/toast"
+import {provideEditorArtifacts, ARTIFACT_COPY_COMMAND} from "../artifacts"
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
+import CompletionContext = languages.CompletionContext;
+import CancellationToken = monaco.CancellationToken;
 
 type TaskLike = Record<string, unknown>;
 
@@ -133,6 +138,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     provideCompletionItems: (
                         model: IModel,
                         position: IPosition,
+                        context: CompletionContext,
+                        token: CancellationToken,
                     ) => ProviderResult<CompletionList>;
                 };
             }[]
@@ -150,9 +157,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         yamlCompletion.provider.provideCompletionItems = async function (
             model: IModel,
             position: IPosition,
+            context: CompletionContext,
+            token: CancellationToken,
         ) {
-            const defaultCompletion = await initialCompletion(model, position)
-            if (!defaultCompletion) {
+            const defaultCompletion = await initialCompletion(model, position, context, token)
+            if (!defaultCompletion || token.isCancellationRequested) {
                 return defaultCompletion
             }
 
@@ -362,11 +371,13 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     }
 
     configureAutoCompletion(
-        _: ReturnType<typeof useI18n>["t"],
+        t: ReturnType<typeof useI18n>["t"],
         ___: monaco.editor.ICodeEditor | undefined,
     ) {
         const autoCompletionProviders: IDisposable[] = []
         const yamlAutoCompletion = this.yamlAutoCompletionObject
+
+        autoCompletionProviders.push(...this.registerEditorArtifacts(t))
 
         // Values autocompletion
         autoCompletionProviders.push(
@@ -598,5 +609,66 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         return autoCompletionProviders
+    }
+
+    private registerEditorArtifacts(t: ReturnType<typeof useI18n>["t"]): IDisposable[] {
+        const toast = makeToast(t)
+
+        const copyCommand = monaco.editor.registerCommand(
+            ARTIFACT_COPY_COMMAND,
+            async (_accessor, payload?: {text?: string; message?: string}) => {
+                if (!payload?.text) {
+                    return
+                }
+                try {
+                    await Utils.copy(payload.text)
+                    if (payload.message) {
+                        toast.success(payload.message)
+                    }
+                } catch (error) {
+                    console.error(error)
+                }
+            },
+        )
+
+        const codeLensProvider = monaco.languages.registerCodeLensProvider("yaml", {
+            provideCodeLenses(model) {
+                const noLenses = {lenses: [], dispose() {}}
+                if (!model.uri.path.includes("flow-")) {
+                    return noLenses
+                }
+
+                const source = model.getValue()
+                let artifacts
+                try {
+                    const {blocks, namespace, id} = YAML_UTILS.extractTypedBlocksWithMeta(source)
+                    artifacts = provideEditorArtifacts(blocks, {namespace, id, t})
+                } catch {
+                    return noLenses
+                }
+
+                const lenses = artifacts.map(({range, lens}, index) => {
+                    const line = model.getPositionAt(range[0]).lineNumber
+                    return {
+                        id: `kestra-artifact-${index}`,
+                        range: {
+                            startLineNumber: line,
+                            startColumn: 1,
+                            endLineNumber: line,
+                            endColumn: 1,
+                        },
+                        command: {
+                            id: lens.command.id,
+                            title: lens.title,
+                            arguments: lens.command.arguments,
+                        },
+                    }
+                })
+
+                return {lenses, dispose() {}}
+            },
+        })
+
+        return [copyCommand, codeLensProvider]
     }
 }

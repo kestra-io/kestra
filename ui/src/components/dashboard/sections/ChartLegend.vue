@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+    import type {EChartsType} from "echarts/core"
     import {KsTooltip} from "@kestra-io/design-system"
 
     interface ChartLegendItem {
@@ -56,7 +57,7 @@
         maxVisible?: number;
         durationLabel?: string;
         center?: boolean;
-        chart?: {getEchartsInstance: () => {dispatchAction: (action: object) => void} | null} | null;
+        chart?: {getEchartsInstance: () => EChartsType | null} | null;
     }>(), {
         maxVisible: 5,
         durationLabel: undefined,

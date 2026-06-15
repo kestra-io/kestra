@@ -1,14 +1,4 @@
 <template>
-    <KsTooltip :content="$t('filter.save filter tooltip')" placement="top">
-        <KsButton
-            type="default"
-            :disabled="disabled"
-            @click="showSaveDialog = true"
-            :icon="ContentSaveOutline"
-            class="no-bg-border"
-        />
-    </KsTooltip>
-
     <KsDialog
         v-model="showSaveDialog"
         :title="isEditMode ? $t('filter.edit filter') : $t('filter.save filter')"
@@ -93,7 +83,6 @@
         isDateRangeValue(filter.value) ? t("filter.is_between") : filter.comparatorLabel
 
     const props = defineProps<{
-        disabled: boolean;
         savedFilters: SavedFilter[];
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
@@ -108,6 +97,8 @@
     const filterName = ref("")
     const showSaveDialog = ref(false)
     const filterDescription = ref("")
+
+    defineExpose({open: () => { showSaveDialog.value = true }})
 
     const isEditMode = computed(() => !!props.editingFilter)
 
@@ -201,15 +192,6 @@
             font-weight: 700;
         }
     }
-}
-
-.no-bg-border {
-    margin: 0 !important;
-    padding: 0.5rem;
-    border-radius: var(--ks-radius-base);
-    font-size: var(--ks-font-size-base);
-    color: var(--ks-text-primary) !important;
-    box-shadow: 0 2px 4px var(--ks-shadow-surface);
 }
 
 .kel-button.is-disabled {

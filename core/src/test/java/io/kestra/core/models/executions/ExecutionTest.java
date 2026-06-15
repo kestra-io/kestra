@@ -10,6 +10,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 class ExecutionTest {
     private static final TaskRun.TaskRunBuilder TASK_RUN = TaskRun.builder()
@@ -149,6 +150,22 @@ class ExecutionTest {
             restart1.withState(State.Type.PAUSED).getState()
         );
         assertThat(restart2.getOriginalId(), is(execution.getId()));
+    }
+
+    @Test
+    void shouldReturnDefaultMetadataWhenNull() {
+        // Given an execution whose metadata is null (e.g. persisted by a very old version)
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .state(new State(State.Type.RUNNING, new State()))
+            .build()
+            .withMetadata(null);
+
+        // When / Then getMetadata() never returns null and defaults the attempt number to 1
+        assertThat(execution.getMetadata(), is(notNullValue()));
+        assertThat(execution.getMetadata().getAttemptNumber(), is(1));
+        // originalCreatedDate is derived from the execution state so retry/maxDuration stays safe
+        assertThat(execution.getMetadata().getOriginalCreatedDate(), is(notNullValue()));
     }
 
     @Test

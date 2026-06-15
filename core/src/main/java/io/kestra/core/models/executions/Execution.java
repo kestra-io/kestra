@@ -128,6 +128,23 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     /**
+     * Returns the execution metadata, never {@code null}.
+     * <p>
+     * Executions persisted by very old versions (before {@link ExecutionMetadata} existed) carry a
+     * {@code null} metadata. Returning a safe default here guarantees callers can always read the
+     * attempt number and original creation date without a {@link NullPointerException}.
+     */
+    public ExecutionMetadata getMetadata() {
+        if (this.metadata != null) {
+            return this.metadata;
+        }
+
+        return ExecutionMetadata.builder()
+            .originalCreatedDate(this.state != null ? this.state.getStartDate() : null)
+            .build();
+    }
+
+    /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
      * inputs.
      *

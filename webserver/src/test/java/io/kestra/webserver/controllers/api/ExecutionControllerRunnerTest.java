@@ -1621,7 +1621,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/sleep-long-after-execution-flowable.yml" })
-    void shouldRunFlowableAfterExecutionWhenExecutionIsKilled() {
+    void shouldRunFlowableAfterExecutionWhenExecutionIsKilled() throws QueueException {
         Execution runningExecution = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep-long-after-execution-flowable");
         assertThat(runningExecution.getState().isRunning()).isTrue();
 

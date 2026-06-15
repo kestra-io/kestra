@@ -151,25 +151,25 @@
     "change state current state": "当前状态是：",
     "change state done": "任务状态已更新",
     "change state hint": {
-      "FAILED": [
-        "该flow将被标记为FAILED。",
-        "不会执行其他task。",
-        "将执行错误tasks。"
-      ],
-      "RUNNING": [
-        "flow将重新启动，并将执行所有后续task。",
-        "所有被阻止的task将被执行。"
-      ],
-      "SUCCESS": [
-        "由于此任务成功，flow 将重新启动。",
-        "所有被阻止的任务将被执行。",
-        "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
-      ],
-      "WARNING": [
-        "流程将被标记为WARNING。",
-        "接下来的tasks将被执行。",
-        "错误的tasks将被执行。"
-      ]
+      "FAILED": {
+        "0": "该flow将被标记为FAILED。",
+        "1": "不会执行其他task。",
+        "2": "将执行错误tasks。"
+      },
+      "RUNNING": {
+        "0": "flow将重新启动，并将执行所有后续task。",
+        "1": "所有被阻止的task将被执行。"
+      },
+      "SUCCESS": {
+        "0": "由于此任务成功，flow 将重新启动。",
+        "1": "所有被阻止的任务将被执行。",
+        "2": "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
+      },
+      "WARNING": {
+        "0": "流程将被标记为WARNING。",
+        "1": "接下来的tasks将被执行。",
+        "2": "错误的tasks将被执行。"
+      }
     },
     "change state tooltip": "更改执行状态",
     "chart": "图表",

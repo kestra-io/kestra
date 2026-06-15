@@ -151,25 +151,25 @@
     "change state current state": "Aktualny status to:",
     "change state done": "Stan task został zaktualizowany",
     "change state hint": {
-      "FAILED": [
-        "Flow zostanie oznaczony jako FAILED.",
-        "Żadne inne task nie będą wykonane.",
-        "Task błędów będą wykonane."
-      ],
-      "RUNNING": [
-        "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
-        "Wszystkie zablokowane taski zostaną wykonane."
-      ],
-      "SUCCESS": [
-        "Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.",
-        "Wszystkie zablokowane taski zostaną wykonane.",
-        "Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia tasków zakończą się sukcesem."
-      ],
-      "WARNING": [
-        "Flow zostanie oznaczony jako WARNING.",
-        "Następne taski zostaną wykonane.",
-        "Taski błędów zostaną wykonane."
-      ]
+      "FAILED": {
+        "0": "Flow zostanie oznaczony jako FAILED.",
+        "1": "Żadne inne task nie będą wykonane.",
+        "2": "Task błędów będą wykonane."
+      },
+      "RUNNING": {
+        "0": "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
+        "1": "Wszystkie zablokowane taski zostaną wykonane."
+      },
+      "SUCCESS": {
+        "0": "Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.",
+        "1": "Wszystkie zablokowane taski zostaną wykonane.",
+        "2": "Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia tasków zakończą się sukcesem."
+      },
+      "WARNING": {
+        "0": "Flow zostanie oznaczony jako WARNING.",
+        "1": "Następne taski zostaną wykonane.",
+        "2": "Taski błędów zostaną wykonane."
+      }
     },
     "change state tooltip": "Zmień stan wykonania",
     "chart": "Wykres",

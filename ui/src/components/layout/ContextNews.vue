@@ -61,12 +61,12 @@
             font-size: var(--ks-font-size-md);
             font-weight: 600;
             margin: 0 0 0.25rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         p {
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
         }
     }
@@ -102,7 +102,7 @@
             margin: 0;
             font-size: var(--ks-font-size-md);
             font-weight: 600;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         img {
@@ -143,7 +143,7 @@
         position: absolute;
         top: 1rem;
         right: 1rem;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         opacity: 0;
         transition: opacity 0.15s ease;
     }

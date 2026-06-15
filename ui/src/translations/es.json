@@ -230,6 +230,7 @@
     "current": "actual",
     "current execution": "Ejecución actual",
     "custom value": "Valor personalizado",
+    "customize sidebar": "Personalizar barra lateral",
     "dark_version": "Versión oscura",
     "dashboards": {
       "chart_preview": "Haz clic en un código fuente del gráfico para ver su vista previa",
@@ -482,6 +483,7 @@
     "download logs": "Descargar logs",
     "download_logos": "Descargar Paquete de Logos",
     "draft_available": "El cambio en borrador está disponible en el editor",
+    "drop items here": "Suelta los elementos aquí",
     "duplicate-pair": "{label} \"{key}\" está duplicado, se ignora la primera clave.",
     "duration": "Duración",
     "dynamic": "Dinámico",
@@ -630,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Expresión",
+      "preview": "Vista previa",
       "render": "Renderizar Expresión",
       "title": "Depurar Expresión",
       "tooltip": "Renderiza cualquier expresión Pebble e inspecciona el contexto de la ejecución."
@@ -717,6 +721,10 @@
     "file unavailable": "Archivo no disponible",
     "file unavailable description": "Este archivo ya no está disponible; puede haber sido eliminado o haber expirado.",
     "fileTypeNotAllowed": "Tipo de archivo no permitido. Tipos aceptados: {types}",
+    "file_preview": {
+      "big_file_warning": "Este archivo tiene un tamaño de {size}. Puede tardar un tiempo en cargarse, bloqueando su navegador. ¿Desea cargarlo de todos modos?",
+      "load_anyway": "Cargar de todos modos"
+    },
     "files": "Archivos",
     "filter by log level": "Filtrar por nivel de log",
     "filters": {
@@ -1551,6 +1559,7 @@
     "replayed": "La ejecución se ha reproducido",
     "required field": "Campo requerido",
     "reset": "Reiniciar",
+    "reset to defaults": "Restablecer a los valores predeterminados",
     "restart": "Reiniciar",
     "restart change revision": "Puedes cambiar la revisión que se usará para la nueva ejecución.",
     "restart confirm": "¿Estás seguro de reiniciar la ejecución <code>{id}</code>?",
@@ -1699,6 +1708,15 @@
           "label": "Guardar preferencias",
           "unsaved_title": "Cambios no guardados",
           "unsaved_warning": "Tienes cambios no guardados. ¿Quieres guardarlos antes de salir?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Mostrar, ocultar y reordenar elementos en la barra lateral."
+          },
+          "fields": {
+            "items": "Elementos de Navegación"
+          },
+          "label": "Barra lateral"
         },
         "theme": {
           "color_modes": {
@@ -1943,15 +1961,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "Agregar",
     "triggers_add_card_add_to_flow": "Agregar al flow",
-    "triggers_add_category_app_description": "Comprobar periódicamente los recursos externos para detectar cambios.",
-    "triggers_add_category_app_title": "Disparadores de la App",
-    "triggers_add_category_core_description": "Triggers integrados esenciales para la mayoría de los workflows.",
-    "triggers_add_category_core_title": "Disparadores Principales",
     "triggers_add_category_empty": "No hay triggers en esta categoría.",
-    "triggers_add_category_realtime_description": "Reacciona instantáneamente a eventos de sistemas de mensajería.",
-    "triggers_add_category_realtime_title": "Disparadores en Tiempo Real",
     "triggers_add_ee_tooltip": "Este trigger requiere la Enterprise Edition.",
-    "triggers_add_empty_hint": "Intenta con un término de búsqueda diferente o navega por todas las categorías.",
     "triggers_add_empty_title": "No se encontraron triggers",
     "triggers_add_filter_all": "Todo",
     "triggers_add_filter_app": "Aplicación",
@@ -1969,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "ID de Trigger",
     "triggers_add_modal_trigger_id_placeholder": "Identificador único para este trigger",
     "triggers_add_search_placeholder": "Buscar triggers...",
-    "triggers_add_see_less": "Ver menos",
-    "triggers_add_see_more": "Ver más ({count} más)",
     "triggers_header_description": "Navega, añade y gestiona triggers para automatizar tus flows. Elige entre exponer tu flow como una herramienta de IA, programar, añadir un webhook trigger, sondear cambios en aplicaciones externas o escuchar eventos en tiempo real.",
     "triggers_state": {
       "options": {
@@ -2016,6 +2025,19 @@
     "valid": "Válido",
     "validate": "Validar",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "No hay variables disponibles para esta ejecución.",
+      "n_items": "[ {count} elementos ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 elemento ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Buscar Key o value...",
+      "select_prompt": "Selecciona una variable para inspeccionar su value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Entrada/Salida",
+      "tree": "Árbol"
+    },
     "variables": "Variables",
     "version": "Versión",
     "view metrics": "Ver métricas",
@@ -2025,6 +2047,7 @@
     "watch": "Ver",
     "watch_video": "Ver Video",
     "webhook": {
+      "copy_url": "Copiar URL del webhook",
       "curl_command": "Comando cURL de Webhook",
       "curl_note": "Utiliza este comando cURL para trigger el flow a través de webhook con carga útil JSON personalizada",
       "no_triggers": "Este flow no tiene triggers de webhook habilitados",

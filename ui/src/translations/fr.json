@@ -230,6 +230,7 @@
     "current": "actuel",
     "current execution": "Exécution en cours",
     "custom value": "Valeur personnalisée",
+    "customize sidebar": "Personnaliser la barre latérale",
     "dark_version": "Version sombre",
     "dashboards": {
       "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
@@ -482,6 +483,7 @@
     "download logs": "Télécharger les logs",
     "download_logos": "Télécharger le pack de logos",
     "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
+    "drop items here": "Déposez les éléments ici",
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "duration": "Durée",
     "dynamic": "Dynamique",
@@ -630,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Expression",
+      "preview": "Aperçu",
       "render": "Rendre l'expression",
       "title": "Expression de débogage",
       "tooltip": "Vous devez choisir une tâche pour évaluer une expression."
@@ -717,6 +721,10 @@
     "file unavailable": "Fichier indisponible",
     "file unavailable description": "Ce fichier n'est plus disponible — il a peut-être été supprimé ou expiré.",
     "fileTypeNotAllowed": "Type de fichier non autorisé. Types acceptés : {types}",
+    "file_preview": {
+      "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
+      "load_anyway": "Charger quand même"
+    },
     "files": "Fichiers",
     "filter by log level": "Filtrer par niveau de log",
     "filters": {
@@ -1551,6 +1559,7 @@
     "replayed": "L'exécution est rejouée",
     "required field": "Champ requis",
     "reset": "Recommencer",
+    "reset to defaults": "Réinitialiser aux valeurs par défaut",
     "restart": "Relancer",
     "restart change revision": "Vous pouvez changer la révision qui sera utilisé pour la nouvelle exécution relancée.",
     "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
@@ -1699,6 +1708,15 @@
           "label": "Enregistrer les préférences",
           "unsaved_title": "Modifications non enregistrées",
           "unsaved_warning": "Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "Afficher, masquer et réorganiser les éléments dans la barre latérale."
+          },
+          "fields": {
+            "items": "Éléments de Navigation"
+          },
+          "label": "Barre latérale"
         },
         "theme": {
           "color_modes": {
@@ -1943,15 +1961,8 @@
     "triggers": "Déclencheurs",
     "triggers_add_card_add": "Ajouter",
     "triggers_add_card_add_to_flow": "Ajouter au flow",
-    "triggers_add_category_app_description": "Vérifiez périodiquement les ressources externes pour détecter les changements.",
-    "triggers_add_category_app_title": "Déclencheurs d'application",
-    "triggers_add_category_core_description": "Déclencheurs intégrés essentiels pour la plupart des workflows.",
-    "triggers_add_category_core_title": "Déclencheurs Principaux",
     "triggers_add_category_empty": "Aucun trigger dans cette catégorie.",
-    "triggers_add_category_realtime_description": "Réagissez instantanément aux événements des systèmes de messagerie.",
-    "triggers_add_category_realtime_title": "Déclencheurs en temps réel",
     "triggers_add_ee_tooltip": "Ce trigger nécessite l'édition Enterprise.",
-    "triggers_add_empty_hint": "Essayez un autre terme de recherche ou parcourez toutes les catégories.",
     "triggers_add_empty_title": "Aucun trigger trouvé",
     "triggers_add_filter_all": "Tous",
     "triggers_add_filter_app": "Application",
@@ -1969,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "ID de trigger",
     "triggers_add_modal_trigger_id_placeholder": "Identifiant unique pour ce trigger",
     "triggers_add_search_placeholder": "Rechercher des triggers...",
-    "triggers_add_see_less": "Voir moins",
-    "triggers_add_see_more": "Voir plus ({count} de plus)",
     "triggers_header_description": "Parcourez, ajoutez et gérez des triggers pour automatiser vos flows. Choisissez parmi l'exposition de votre flow en tant qu'outil AI, la planification, l'ajout d'un trigger webhook, le sondage pour les changements dans les applications externes, ou les écouteurs d'événements en temps réel.",
     "triggers_state": {
       "options": {
@@ -2016,6 +2025,19 @@
     "valid": "Valide",
     "validate": "Valider",
     "value": "Valeur",
+    "variable_explorer": {
+      "empty": "Aucune variable disponible pour cette exécution.",
+      "n_items": "[ {count} éléments ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 élément ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Rechercher une Key ou une value...",
+      "select_prompt": "Sélectionnez une variable pour inspecter sa value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Entrée/Sortie",
+      "tree": "Arborescence"
+    },
     "variables": "Variables",
     "version": "Version",
     "view metrics": "Voir les métriques",
@@ -2025,6 +2047,7 @@
     "watch": "Regarder",
     "watch_video": "Regarder la vidéo",
     "webhook": {
+      "copy_url": "Copier l'URL du webhook",
       "curl_command": "Commande cURL Webhook",
       "curl_note": "Utilisez cette commande cURL pour déclencher le flow via webhook avec une charge utile JSON personnalisée",
       "no_triggers": "Ce flow n'a pas de triggers webhook activés",

@@ -311,7 +311,9 @@
     "eval": {
       "title": "Debug Expression",
       "render": "Render",
-      "tooltip": "Render any Pebble expression and inspect the Execution context."
+      "tooltip": "Render any Pebble expression and inspect the Execution context.",
+      "preview": "Preview",
+      "expression": "Expression"
     },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",
@@ -373,6 +375,23 @@
     "no_inputs": "No inputs available.",
     "input": "Input",
     "variables": "Variables",
+    "variable_explorer": {
+      "title": "Input/Output",
+      "search_placeholder": "Search Key or value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "Tree",
+      "raw_json": "Raw JSON",
+      "select_prompt": "Select a variable to inspect its value.",
+      "empty": "No variables available for this execution.",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 item ]",
+      "n_items": "[ {count} items ]"
+    },
+    "file_preview": {
+        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+        "load_anyway": "Load anyway"
+    },
     "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {
@@ -432,22 +451,13 @@
     "triggers_tabs_add": "Add",
     "triggers_tabs_manage": "Manage",
     "triggers_add_search_placeholder": "Search triggers...",
-    "triggers_add_filter_all": "All",
     "triggers_add_filter_core": "Core",
     "triggers_add_filter_realtime": "Realtime",
+    "triggers_add_filter_all": "All",
     "triggers_add_filter_app": "App",
-    "triggers_add_see_more": "See more ({count} more)",
-    "triggers_add_see_less": "See less",
     "triggers_add_empty_title": "No triggers found",
-    "triggers_add_empty_hint": "Try a different search term or browse all categories.",
     "triggers_add_ee_tooltip": "This trigger requires Enterprise Edition.",
     "triggers_add_category_empty": "No triggers in this category.",
-    "triggers_add_category_core_title": "Core Triggers",
-    "triggers_add_category_core_description": "Built-in triggers essential for most workflows.",
-    "triggers_add_category_realtime_title": "Realtime Triggers",
-    "triggers_add_category_realtime_description": "React instantly to events from messaging systems.",
-    "triggers_add_category_app_title": "App Triggers",
-    "triggers_add_category_app_description": "Periodically check external resources for changes.",
     "triggers_add_card_add_to_flow": "Add to flow",
     "triggers_add_card_add": "Add",
     "triggers_add_modal_title": "{name}",
@@ -1055,7 +1065,16 @@
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
         },
-        "reset_section_to_defaults": "Restore this section's default values"
+        "reset_section_to_defaults": "Restore this section's default values",
+        "sidebar": {
+          "label": "Sidebar",
+          "fields": {
+            "items": "Navigation Items"
+          },
+          "descriptions": {
+            "items": "Show, hide, and reorder items in the sidebar."
+          }
+        }
       }
     },
     "apps": "Apps",
@@ -1373,7 +1392,8 @@
       "curl_command": "Webhook cURL command",
       "payload": "Webhook Payload (JSON)",
       "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
-      "no_triggers": "This flow has no enabled webhook triggers"
+      "no_triggers": "This flow has no enabled webhook triggers",
+      "copy_url": "Copy webhook URL"
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -1431,6 +1451,9 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
+    "customize sidebar": "Customize sidebar",
+    "reset to defaults": "Reset to defaults",
+    "drop items here": "Drop items here",
     "files": "Namespace Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",

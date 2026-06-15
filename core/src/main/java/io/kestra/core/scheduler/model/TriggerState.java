@@ -268,6 +268,7 @@ public final class TriggerState implements TriggerId {
         return update(clock)
             .disabled(disabled)
             .executionId(null)
+            .workerId(null)
             .build();
     }
 

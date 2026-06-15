@@ -47,11 +47,7 @@
                 "</svg>"
         }
 
-        let color = cssVar("--ks-text-primary") || cssVar("--ks-content-inverse")
-
-        if (props.theme) {
-            color = (props.theme === "dark" ? cssVar("--ks-content-inverse") : cssVar("--ks-text-primary")) || color
-        }
+        let color = cssVar("--ks-text-primary")
 
         if (props.variable) {
             color = cssVar(props.variable) || color

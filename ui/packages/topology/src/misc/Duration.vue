@@ -11,7 +11,7 @@
             </span>
         </template>
         <template #default>
-            <span v-html="duration" />
+            <span class="ks-duration-value" v-html="duration" />
         </template>
     </KsTooltip>
 </template>
@@ -101,13 +101,18 @@
     }
 
     function computeDuration() {
-        duration.value =
-            filteredHistories.value.length === 0
-                ? "&nbsp;"
-                : Utils.humanDuration(delta() / 1000, {
-                    maxDecimalPoints: 2,
-                    units: ["h", "m", "s"],
-                })
+        if (filteredHistories.value.length === 0) {
+            duration.value = "&nbsp;"
+            return
+        }
+
+        const human = Utils.humanDuration(delta() / 1000, {
+            maxDecimalPoints: 2,
+            units: ["h", "m", "s"],
+        })
+
+        const isBareSeconds = human.endsWith("s") && !human.endsWith("ms") && !human.includes(".")
+        duration.value = isBareSeconds ? `${human.slice(0, -1)}.00s` : human
     }
 
     function squareClass(state: string) {
@@ -124,4 +129,10 @@
         cancel()
     })
 </script>
+
+<style scoped>
+    .ks-duration-value {
+        font-variant-numeric: tabular-nums;
+    }
+</style>
 

@@ -8,7 +8,7 @@
         </template>
     </TopNavBar>
 
-    <el-row class="p-5">
+    <el-row class="p-4">
         <div v-if="loading" class="mcp-list__loading">
             <el-icon class="is-loading" :size="32">
                 <Loading />
@@ -103,8 +103,8 @@
 
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
     const authStore = useAuthStore()
-    const canCreate = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE))
-    const canView = computed(() => isOSS.value || authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.VIEW))
+    const canCreate = computed(() => authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.CREATE))
+    const canView = computed(() => isOSS.value || authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.VIEW))
     const displayServers = computed<DisplayServer[]>(() =>
         instanceMode.value ? (props.instanceServers ?? []) : tenantServers.value,
     )

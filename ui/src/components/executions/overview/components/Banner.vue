@@ -524,6 +524,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         font-weight: 400;
+        font-variant-numeric: tabular-nums;
 
         .material-design-icon {
             color: var(--ks-text-muted);

@@ -230,6 +230,7 @@
     "current": "वर्तमान",
     "current execution": "वर्तमान निष्पादन",
     "custom value": "कस्टम value",
+    "customize sidebar": "साइडबार को अनुकूलित करें",
     "dark_version": "डार्क संस्करण",
     "dashboards": {
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
@@ -482,6 +483,7 @@
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
     "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
+    "drop items here": "यहाँ आइटम्स ड्रॉप करें",
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "duration": "अवधि",
     "dynamic": "डायनामिक",
@@ -630,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "अभिव्यक्ति",
+      "preview": "पूर्वावलोकन",
       "render": "एक्सप्रेशन रेंडर करें",
       "title": "डिबग अभिव्यक्ति",
       "tooltip": "किसी भी Pebble अभिव्यक्ति को प्रस्तुत करें और निष्पादन संदर्भ का निरीक्षण करें।"
@@ -717,6 +721,10 @@
     "file unavailable": "फ़ाइल उपलब्ध नहीं है",
     "file unavailable description": "यह फ़ाइल अब उपलब्ध नहीं है — इसे हटाया जा सकता है या इसकी समय सीमा समाप्त हो गई है।",
     "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
+    "file_preview": {
+      "big_file_warning": "यह फ़ाइल {size} है। इसे लोड करने में कुछ समय लग सकता है जिससे आपका ब्राउज़र ब्लॉक हो सकता है। क्या आप इसे फिर भी लोड करना चाहते हैं?",
+      "load_anyway": "फिर भी लोड करें"
+    },
     "files": "फ़ाइलें",
     "filter by log level": "Log स्तर द्वारा फ़िल्टर करें",
     "filters": {
@@ -1551,6 +1559,7 @@
     "replayed": "निष्पादन को पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",
+    "reset to defaults": "डिफ़ॉल्ट पर रीसेट करें",
     "restart": "पुनः प्रारंभ करें",
     "restart change revision": "आप उस पुनरीक्षण को बदल सकते हैं जिसका उपयोग नए निष्पादन के लिए किया जाएगा।",
     "restart confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः प्रारंभ करना चाहते हैं?",
@@ -1699,6 +1708,15 @@
           "label": "प्राथमिकताएँ सहेजें",
           "unsaved_title": "असहेजित परिवर्तन",
           "unsaved_warning": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप उन्हें छोड़ने से पहले सहेजना चाहते हैं?"
+        },
+        "sidebar": {
+          "descriptions": {
+            "items": "साइडबार में आइटम दिखाएं, छुपाएं, और पुनः क्रमबद्ध करें।"
+          },
+          "fields": {
+            "items": "नेविगेशन आइटम्स"
+          },
+          "label": "साइडबार"
         },
         "theme": {
           "color_modes": {
@@ -1943,15 +1961,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "जोड़ें",
     "triggers_add_card_add_to_flow": "flow में जोड़ें",
-    "triggers_add_category_app_description": "बाहरी संसाधनों में परिवर्तनों के लिए समय-समय पर जाँच करें।",
-    "triggers_add_category_app_title": "ऐप Triggers",
-    "triggers_add_category_core_description": "अधिकांश workflows के लिए आवश्यक Built-in triggers।",
-    "triggers_add_category_core_title": "कोर Triggers",
     "triggers_add_category_empty": "इस श्रेणी में कोई triggers नहीं हैं।",
-    "triggers_add_category_realtime_description": "मैसेजिंग सिस्टम से घटनाओं पर तुरंत प्रतिक्रिया दें।",
-    "triggers_add_category_realtime_title": "रीयलटाइम Triggers",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
-    "triggers_add_empty_hint": "कोई अन्य खोज शब्द आज़माएं या सभी श्रेणियों को ब्राउज़ करें।",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_filter_all": "सभी",
     "triggers_add_filter_app": "ऐप",
@@ -1969,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "ट्रिगर ID",
     "triggers_add_modal_trigger_id_placeholder": "इस trigger के लिए अद्वितीय पहचानकर्ता",
     "triggers_add_search_placeholder": "ट्रिगर्स खोजें...",
-    "triggers_add_see_less": "कम देखें",
-    "triggers_add_see_more": "और देखें ({count} और)",
     "triggers_header_description": "अपने flows को स्वचालित करने के लिए triggers को ब्राउज़ करें, जोड़ें और प्रबंधित करें। अपने flow को एक AI टूल के रूप में एक्सपोज़ करने, शेड्यूलिंग, एक webhook trigger जोड़ने, बाहरी ऐप्स में परिवर्तनों के लिए polling करने, या रीयलटाइम इवेंट listeners में से चुनें।",
     "triggers_state": {
       "options": {
@@ -2016,6 +2025,19 @@
     "valid": "मान्य",
     "validate": "मान्य करें",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "इस निष्पादन के लिए कोई वेरिएबल उपलब्ध नहीं है।",
+      "n_items": "[ {count} आइटम ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 आइटम ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key या value खोजें...",
+      "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
+      "tasks_outputs": "Tasks outputs",
+      "title": "इनपुट/आउटपुट",
+      "tree": "ट्री"
+    },
     "variables": "वेरिएबल्स",
     "version": "संस्करण",
     "view metrics": "मेट्रिक्स देखें",
@@ -2025,6 +2047,7 @@
     "watch": "देखें",
     "watch_video": "वीडियो देखें",
     "webhook": {
+      "copy_url": "वेबहुक URL कॉपी करें",
       "curl_command": "Webhook cURL कमांड",
       "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
       "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",

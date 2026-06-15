@@ -1,4 +1,6 @@
 import BookmarkCheckOutline from "vue-material-design-icons/BookmarkCheckOutline.vue"
+import BookmarkOffOutline from "vue-material-design-icons/BookmarkOffOutline.vue"
+import BookmarkOutline from "vue-material-design-icons/BookmarkOutline.vue"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import Close from "vue-material-design-icons/Close.vue"
 import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
@@ -21,6 +23,8 @@ import Ungroup from "vue-material-design-icons/Ungroup.vue"
 
 export {
     BookmarkCheckOutline,
+    BookmarkOffOutline,
+    BookmarkOutline,
     ChevronDown,
     Close,
     CloseCircleOutline,

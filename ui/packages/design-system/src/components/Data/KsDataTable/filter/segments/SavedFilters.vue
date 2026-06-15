@@ -1,18 +1,6 @@
 <template>
     <div class="saved-filters-panel">
-        <div class="panel-header">
-            <h6>
-                {{ $t("filter.saved filters") }}
-            </h6>
-            <KsButton
-                link
-                :icon="Close"
-                @click="$emit('close')"
-                size="small"
-            />
-        </div>
-
-        <div class="saved-filters-list">
+        <div v-if="savedFilters.length" class="saved-filters-list">
             <div
                 v-for="savedFilter in savedFilters"
                 :key="savedFilter.id"
@@ -20,7 +8,12 @@
                 @click="$emit('load', savedFilter)"
             >
                 <div class="saved-filter-info">
-                    <span class="saved-filter-name">{{ savedFilter.name }}</span>
+                    <div class="saved-filter-title">
+                        <KsIcon class="bookmark-icon">
+                            <BookmarkOutline />
+                        </KsIcon>
+                        <span class="saved-filter-name">{{ savedFilter.name }}</span>
+                    </div>
                     <small v-if="savedFilter.description" class="saved-filter-description">
                         {{ savedFilter.description }}
                     </small>
@@ -46,12 +39,14 @@
                     </KsTooltip>
                 </div>
             </div>
-            <KsAlert v-if="savedFilters.length === 0" type="info" :closable="false">
-                {{ $t("filter.empty") }}
-                <template #icon>
-                    <InformationOutline />
-                </template>
-            </KsAlert>
+        </div>
+
+        <div v-else class="saved-filters-empty">
+            <KsIcon class="empty-icon">
+                <BookmarkOffOutline />
+            </KsIcon>
+            <span class="empty-title">{{ $t("filter.empty title") }}</span>
+            <small class="empty-subtitle">{{ $t("filter.empty subtitle") }}</small>
         </div>
     </div>
 </template>
@@ -60,7 +55,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessageBox} from "../../../../Feedback/KsMessageBox"
     import type {SavedFilter} from "../utils/filterTypes"
-    import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons"
+    import {BookmarkOffOutline, BookmarkOutline, Delete, PencilOutline} from "../utils/icons"
 
     const {t} = useI18n({useScope: "global"})
 
@@ -69,7 +64,6 @@
     }>()
 
     const emit = defineEmits<{
-        close: [];
         load: [savedFilter: SavedFilter];
         edit: [savedFilter: SavedFilter];
         delete: [savedFilter: SavedFilter];
@@ -88,38 +82,9 @@
 
 <style lang="scss" scoped>
 .saved-filters-panel {
-    height: fit-content;
     max-height: 327px;
     display: flex;
     flex-direction: column;
-    border-radius: 0.5rem;
-
-    .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding: 0.75rem 0.75rem 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--ks-border-default);
-        flex-shrink: 0;
-        position: sticky;
-        top: 0;
-
-        h6 {
-            font-size: var(--ks-font-size-sm);
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        :deep(.kel-button) {
-            color: var(--ks-text-dim);
-            font-size: var(--ks-font-size-base);
-            cursor: pointer;
-
-            &:hover {
-                color: var(--ks-text-link);
-            }
-        }
-    }
 
     .saved-filters-list {
         flex: 1;
@@ -133,42 +98,62 @@
 
         .saved-filter-item {
             display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            padding: 0.375rem 1rem;
+            align-items: flex-start;
+            gap: var(--ks-spacing-2);
+            margin: var(--ks-spacing-1) var(--ks-spacing-2);
+            padding: var(--ks-spacing-2) var(--ks-spacing-3);
             cursor: pointer;
-            transition: all 0.2s ease;
-            border-bottom: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-base);
+            transition: background-color 0.2s ease;
 
-            &:last-child {
-                border-bottom: none;
+            &:hover {
+                background-color: var(--ks-bg-hover);
             }
 
-            .saved-filter-name {
-                display: block;
-                font-size: var(--ks-font-size-sm);
-                font-weight: 400;
-                margin-bottom: -0.375rem;
+            .bookmark-icon {
+                flex-shrink: 0;
+                color: var(--ks-icon-active);
+                font-size: var(--ks-font-size-base);
             }
 
-            .saved-filter-description {
-                font-size: 0.625rem;
-                color: var(--ks-text-dim);
+            .saved-filter-info {
+                flex: 1;
+                min-width: 0;
+
+                .saved-filter-title {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--ks-spacing-2);
+                }
+
+                .saved-filter-name {
+                    font-size: var(--ks-font-size-sm);
+                    font-weight: 600;
+                    color: var(--ks-text-primary);
+                }
+
+                .saved-filter-description {
+                    display: block;
+                    font-size: var(--ks-font-size-xs);
+                    color: var(--ks-text-dim);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
             }
 
             .action-buttons {
                 display: flex;
-                gap: 0.5rem;
+                align-self: center;
+                gap: var(--ks-spacing-2);
+                flex-shrink: 0;
+                opacity: 0;
+                transition: opacity 0.2s ease;
 
                 :deep(.kel-button) {
                     color: var(--ks-text-dim);
                     margin: 0;
                     padding: 0;
-
-                    .play-icon {
-                        color: var(--ks-status-success);
-                        font-size: var(--ks-font-size-base);
-                    }
                 }
 
                 :deep(.edit-button:hover) {
@@ -179,18 +164,39 @@
                     color: var(--ks-text-error);
                 }
             }
-        }
 
-        :deep(.kel-alert) {
-            text-align: center;
-            color: var(--ks-text-dim);
-            padding: 0.875rem;
+            &:hover .action-buttons,
+            &:focus-within .action-buttons {
+                opacity: 1;
+            }
         }
     }
 
-    :deep(.kel-alert__icon) {
-        color: var(--ks-text-info);
-        font-size: var(--ks-font-size-xl);
+    .saved-filters-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-6) var(--ks-spacing-4);
+
+        .empty-icon {
+            margin-bottom: var(--ks-spacing-1);
+            color: var(--ks-text-dim);
+            font-size: 2rem;
+        }
+
+        .empty-title {
+            font-size: var(--ks-font-size-sm);
+            font-weight: 600;
+            color: var(--ks-text-primary);
+        }
+
+        .empty-subtitle {
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-dim);
+        }
     }
 }
 </style>

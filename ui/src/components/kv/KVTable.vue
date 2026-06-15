@@ -103,6 +103,19 @@
             </template>
         </KsTableColumn>
 
+        <KsTableColumn v-if="!paneView" columnKey="view" className="row-action">
+            <template #default="scope">
+                <KsIconButton
+                    v-if="!canUpdate(scope.row) && canRead(scope.row)"
+                    :tooltip="$t('show')"
+                    placement="left"
+                    @click="viewKvModal(scope.row)"
+                >
+                    <Eye />
+                </KsIconButton>
+            </template>
+        </KsTableColumn>
+
         <KsTableColumn v-if="!paneView" columnKey="update" className="row-action">
             <template #default="scope">
                 <KsIconButton
@@ -231,6 +244,30 @@
     </KsDrawer>
 
     <KsDrawer
+        v-if="viewKvDrawerVisible"
+        v-model="viewKvDrawerVisible"
+        :title="$t('show')"
+    >
+        <KsForm class="ks-horizontal">
+            <KsFormItem v-if="viewKv.namespace" :label="$t('namespace')">
+                <KsInput :modelValue="viewKv.namespace" disabled />
+            </KsFormItem>
+            <KsFormItem :label="$t('key')">
+                <KsInput :modelValue="viewKv.key" disabled />
+            </KsFormItem>
+            <KsFormItem :label="$t('kv.type')">
+                <KsInput :modelValue="viewKv.type" disabled />
+            </KsFormItem>
+            <KsFormItem :label="$t('value')">
+                <KsInput type="textarea" :rows="5" :modelValue="viewKv.value" readonly />
+            </KsFormItem>
+            <KsFormItem v-if="viewKv.description" :label="$t('description')">
+                <KsInput :modelValue="viewKv.description" disabled />
+            </KsFormItem>
+        </KsForm>
+    </KsDrawer>
+
+    <KsDrawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
@@ -250,11 +287,13 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
+    import Eye from "vue-material-design-icons/Eye.vue"
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
+    import {formatKvValueForDisplay} from "./kvValueDisplay"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -495,6 +534,10 @@
         return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, kvItem.namespace)
     }
 
+    function canRead(kvItem: {namespace: string}) {
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.VIEW, kvItem.namespace)
+    }
+
     function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
         try {
             const parsed = JSON.parse(value)
@@ -548,6 +591,22 @@
         kv.value.update = true
         kv.value.description = entry.description
         addKvDrawerVisible.value = true
+    }
+
+    const viewKvDrawerVisible = ref(false)
+    const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
+
+    async function viewKvModal(entry: any) {
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
+        viewKv.value = {
+            namespace: entry.namespace,
+            key: entry.key,
+            type,
+            value: formatKvValueForDisplay(type, value, userTimezone),
+            description: entry.description,
+        }
+        viewKvDrawerVisible.value = true
     }
 
     function removeKv(namespace: string, key: string) {

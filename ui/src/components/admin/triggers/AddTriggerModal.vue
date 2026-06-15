@@ -272,8 +272,9 @@
 
         .kel-tabs__nav {
             width: fit-content;
-            background: var(--ks-tabs-bg, #08090A);
+            background: var(--ks-bg-input);
             border-radius: var(--ks-radius-lg);
+            border: 1px solid var(--ks-border-default);
         }
     }
 

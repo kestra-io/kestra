@@ -114,7 +114,7 @@ public class Kestra implements Callable<Integer> {
         return exitCode;
     }
 
-    static CommandLine getCommandLine(Class<?> cls, String[] args) {
+    private static CommandLine getCommandLine(Class<?> cls, String[] args) {
         CommandLine cmd = new CommandLine(cls, CommandLine.defaultFactory());
         continueOnParsingErrors(cmd);
 

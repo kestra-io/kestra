@@ -2,6 +2,7 @@ package io.kestra.cli;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -10,10 +11,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.models.ServerType;
+import picocli.CommandLine;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import picocli.CommandLine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,16 +65,20 @@ class KestraTest {
             Files.writeString(configFile, "kestra:\n  test:\n    marker: config-loaded\n");
 
             // --config BEFORE "plugins" — this is the position that previously failed.
-            // plugins list extends AbstractCommand (no required positional args), so the
-            // parse chain completes cleanly and recoverConfigOption() can inject the config.
             String[] args = { "--config", configFile.toString(), "plugins", "list" };
 
-            CommandLine leafCmd = Kestra.getCommandLine(Kestra.class, args);
-            Object userObject = leafCmd.getCommandSpec().userObject();
+            // Access the private getCommandLine() via reflection — keeps it private in
+            // production code while still letting us verify recoverConfigOption() works.
+            // We deliberately avoid creating an ApplicationContext here because doing so
+            // has global side effects in the test JVM (datasource / gRPC initialization)
+            // that break subsequent tests.
+            Method getCommandLine = Kestra.class.getDeclaredMethod("getCommandLine", Class.class, String[].class);
+            getCommandLine.setAccessible(true);
+            CommandLine leafCmd = (CommandLine) getCommandLine.invoke(null, Kestra.class, args);
 
+            Object userObject = leafCmd.getCommandSpec().userObject();
             assertThat(userObject).isInstanceOf(AbstractCommand.class);
             AbstractCommand abstractCmd = (AbstractCommand) userObject;
-            // Verify the config path was injected and propertiesFromConfig() reads the right file
             assertThat(abstractCmd.propertiesFromConfig())
                 .containsEntry("kestra.test.marker", "config-loaded");
         } finally {

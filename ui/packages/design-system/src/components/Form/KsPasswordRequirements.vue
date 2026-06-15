@@ -1,11 +1,11 @@
 <template>
     <ul class="ks-password-requirements">
         <li
-            v-for="rule in rules"
+            v-for="rule in computedRules"
             :key="rule.key"
             class="ks-password-requirements__item"
         >
-            <KsCheckItem :met="rule.met">{{ t(`password_requirements.${rule.key}`) }}</KsCheckItem>
+            <KsCheckItem :met="rule.met">{{ rule.label ?? t(`password_requirements.${rule.key}`) }}</KsCheckItem>
         </li>
     </ul>
 </template>
@@ -15,15 +15,22 @@
     import {useI18n} from "vue-i18n"
     import KsCheckItem from "../Data/KsCheckItem.vue"
 
-    const RULES = [
-        {key: "length", test: (p: string) => p.length >= 8},
-        {key: "uppercase", test: (p: string) => /[A-Z]/.test(p)},
-        {key: "lowercase", test: (p: string) => /[a-z]/.test(p)},
-        {key: "number", test: (p: string) => /[0-9]/.test(p)},
-    ] as const
+    export type PasswordRule = {
+        key: string
+        test: (password: string) => boolean
+        label?: string
+    }
+
+    const DEFAULT_RULES: PasswordRule[] = [
+        {key: "length", test: (p) => p.length >= 8},
+        {key: "uppercase", test: (p) => /[A-Z]/.test(p)},
+        {key: "lowercase", test: (p) => /[a-z]/.test(p)},
+        {key: "number", test: (p) => /[0-9]/.test(p)},
+    ]
 
     const props = withDefaults(defineProps<{
         password?: string
+        rules?: PasswordRule[]
     }>(), {
         password: "",
     })
@@ -34,9 +41,11 @@
 
     const {t} = useI18n({useScope: "global"})
 
-    const rules = computed(() => RULES.map((rule) => ({key: rule.key, met: rule.test(props.password)})))
+    const computedRules = computed(() =>
+        (props.rules ?? DEFAULT_RULES).map((rule) => ({...rule, met: rule.test(props.password)})),
+    )
 
-    const valid = computed(() => rules.value.every((rule) => rule.met))
+    const valid = computed(() => computedRules.value.every((rule) => rule.met))
 
     watch(valid, (value) => emit("update:valid", value), {immediate: true})
 </script>

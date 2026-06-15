@@ -39,7 +39,7 @@
             class="flows-table"
             :rowKey="(row: any) => `${row.namespace}-${row.id}`"
         >
-            <template #navbar>
+            <template #top>
                 <KSFilter
                     :configuration="flowFilter"
                     :properties="{

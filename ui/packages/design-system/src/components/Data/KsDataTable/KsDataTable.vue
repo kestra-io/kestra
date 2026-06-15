@@ -18,7 +18,7 @@
             </template>
 
             <template v-else>
-                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                     <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                         <KsBulkSelect
                             :selectAll="queryBulkAction"
@@ -37,7 +37,7 @@
                     <KsTable
                         ref="tableRef"
                         v-bind="$attrs"
-                        tableLayout="auto"
+                        :tableLayout="tableLayout"
                         fixed
                         :data
                         :rowKey
@@ -52,12 +52,7 @@
                         <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
                         <slot />
                         <template #empty>
-                            <div class="empty-state">
-                                <FilterRemoveOutlineIcon class="empty-icon" />
-                                <strong>{{noDataText}}</strong>
-                                <p>Looks like there's nothing here… yet!</p>
-                                <p>Adjust your filters, or give it another go!</p>
-                            </div>
+                            <KsTableEmpty :title="noDataText" />
                         </template>
                     </KsTable>
                 </div>
@@ -87,7 +82,7 @@
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
-    import FilterRemoveOutlineIcon from "vue-material-design-icons/FilterRemoveOutline.vue"
+    import KsTableEmpty from "../KsTableEmpty.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -111,6 +106,8 @@
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
         noGutter?: boolean
+        noFirstColumnGutter?: boolean
+        tableLayout?: "fixed" | "auto"
     }>(), {
         data: () => [],
         total: 0,
@@ -127,6 +124,8 @@
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
         noGutter: false,
+        noFirstColumnGutter: false,
+        tableLayout: "auto",
     })
 
     export interface SortItem {
@@ -499,38 +498,6 @@
         .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
-        }
-    }
-</style>
-
-<style lang="scss" scoped>
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        strong{
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-sm);
-            line-height: 2rem;
-            font-weight: 600;
-        }
-        p {
-            line-height: 1rem;
-            margin: 0;
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        .empty-icon{
-            height: 24px;
-            width: 24px;
-            margin: 8px;
-            :deep(.material-design-icon__svg) {
-                width: 100%;
-                height: 100%;
-            }
         }
     }
 </style>

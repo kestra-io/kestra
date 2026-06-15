@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.models.WorkerContext;
 
@@ -34,9 +35,18 @@ public class WorkerQueueRegistry {
     }
 
     /**
+     * Output queues (task results, trigger results, logs, metrics) are sized this many times the job buffer,
+     * giving result producers headroom to absorb a transient controller slowdown before they back-pressure.
+     * Decoupled from the job buffer so tuning it never shifts the controller's reservation figure.
+     */
+    private static final int OUTPUT_QUEUE_CAPACITY_FACTOR = 4;
+
+    /**
      * Computes the in-memory job buffer size for a worker with the given thread count.
      * The worker's total maximum in-flight capacity is
-     * {@code workerThreads + bufferSize(workerThreads)}.
+     * {@code workerThreads + bufferSize(workerThreads)}, which the controller uses for reservation math.
+     * Shared with {@code AbstractWorker}, which advertises the same figure before the queue exists, so the
+     * two must derive it identically.
      */
     public static int bufferSize(int workerThreads) {
         return workerThreads;
@@ -53,11 +63,17 @@ public class WorkerQueueRegistry {
      * @return the retrieved or newly created {@code WorkerQueue} associated with the given context and type
      */
     @SuppressWarnings("unchecked")
-    public synchronized <T> WorkerQueue<T> getOrCreate(final WorkerContext context, final Class<T> type) {
+    public <T> WorkerQueue<T> getOrCreate(final WorkerContext context, final Class<T> type) {
         QueueKey key = new QueueKey(context.workerId(), type);
         return (WorkerQueue<T>) queues.computeIfAbsent(key, unused ->
         {
-            int queueCapacity = bufferSize(context.workerThreads());
+            // The WorkerJob queue keeps the bufferSize() figure AbstractWorker advertises to the controller;
+            // output queues get OUTPUT_QUEUE_CAPACITY_FACTOR x that, decoupled so tuning them never shifts
+            // the controller's reservation.
+            int baseBuffer = bufferSize(context.workerThreads());
+            int queueCapacity = WorkerJob.class.equals(type)
+                ? baseBuffer
+                : baseBuffer * OUTPUT_QUEUE_CAPACITY_FACTOR;
             String queueName = type.getSimpleName().toLowerCase();
             return new MonitoredWorkerQueue<T>(
                 metricRegistry,

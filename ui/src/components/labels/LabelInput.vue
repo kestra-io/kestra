@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted} from "vue"
+    import {ref, onMounted, watch} from "vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Minus from "vue-material-design-icons/Minus.vue"
 
@@ -68,11 +68,19 @@
         emit("update:labels", locals.value)
     }
 
+    const syncFromProps = (labels: Label[]) => {
+        if (labels.length === 0) {
+            locals.value = [{key: null, value: null}]
+        } else {
+            locals.value = labels
+        }
+    }
+
     onMounted(() => {
         if (props.labels.length === 0) {
             addItem()
         } else {
-            locals.value = props.labels
+            syncFromProps(props.labels)
             if (locals.value.length === 0) {
                 addItem()
             }
@@ -85,4 +93,14 @@
                     .has(label.key)),
         )
     })
+
+    watch(
+        () => props.labels,
+        (labels) => {
+            if (labels === locals.value) {
+                return
+            }
+            syncFromProps(labels)
+        },
+    )
 </script>

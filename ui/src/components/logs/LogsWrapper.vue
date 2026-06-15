@@ -24,13 +24,10 @@
                         @filter="onFilterRouteSync"
                     />
                     <QuickFilters
-                        :levels="VALUES.LEVELS"
+                        :showLevel="false"
                         :intervals="quickIntervals"
-                        :level="effectiveLogLevel?.value"
                         :timeRange="selectedTimeRange"
                         :intervalLabel="t('filter.timeRange_log.label')"
-                        :levelLabel="t('filter.level_log_executions.label')"
-                        @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
                         @update:time-range="onQuickFilterTimeRange"
                     />
                 </template>
@@ -41,15 +38,36 @@
 
                 <template #table>
                     <div v-ks-loading="isLoading">
+                        <div class="logs-toolbar">
+                            <div class="logs-toolbar__left">
+                                <LogLevelNavigator
+                                    v-for="level in presentLevels"
+                                    :key="level"
+                                    filterMode
+                                    :level="level"
+                                    :totalCount="serverLevelCounts[level]"
+                                    @select="selectLevel(level)"
+                                />
+                            </div>
+                            <div class="logs-toolbar__actions">
+                                <LogDisplaySettings />
+                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
+                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                            </div>
+                        </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
                             <LogLine
                                 v-for="(log, i) in logsStore.logs"
                                 :key="`${log.taskRunId}-${i}`"
                                 level="TRACE"
                                 filter=""
+                                :highlight="searchTerm"
                                 :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                 :log="log"
                                 :class="{'log-0': i === 0}"
+                                clickableLevel
+                                @filter="onValueFilter"
+                                @filter-level="selectLevel"
                             />
                         </div>
 
@@ -60,6 +78,26 @@
                 </template>
             </KsDataTable>
         </div>
+
+        <KsDialog v-model="downloadOpen" :title="t('download logs')" width="480px" destroyOnClose>
+            <p class="download-hint">{{ t('download_logs_description') }}</p>
+            <QuickFilters
+                :levels="VALUES.LEVELS"
+                :intervals="quickIntervals"
+                :level="downloadLevel"
+                :timeRange="downloadTimeRange"
+                :levelLabel="t('filter.level_log_executions.label')"
+                :intervalLabel="t('filter.timeRange_log.label')"
+                @update:level="(value: string) => (downloadLevel = value)"
+                @update:time-range="(value: string) => (downloadTimeRange = value)"
+            />
+            <template #footer>
+                <KsButton @click="downloadOpen = false">{{ t('cancel') }}</KsButton>
+                <KsButton type="primary" :loading="downloading" @click="downloadLogs">
+                    {{ t('download') }}
+                </KsButton>
+            </template>
+        </KsDialog>
     </section>
 </template>
 
@@ -101,6 +139,13 @@
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
+    import * as Utils from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
+    import Download from "vue-material-design-icons/Download.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import LogDisplaySettings from "./LogDisplaySettings.vue"
+    import LogLevelNavigator from "./LogLevelNavigator.vue"
+    import {buildValueFilterQuery} from "./logValueFilter"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -124,6 +169,7 @@
     const route = useRoute()
     const router = useRouter()
     const {t} = useI18n()
+    const toast = useToast()
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
@@ -158,7 +204,6 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,
@@ -182,6 +227,11 @@
             )
         },
     })
+    const searchTerm = computed(() => {
+        const key = Object.keys(route.query).find((k) => k.startsWith("filters[q]"))
+        return key ? String(route.query[key] ?? "") : ""
+    })
+
     const selectedTimeRange = computed(() => {
         if (route.query.timeRange) {
             return route.query.timeRange as string
@@ -270,6 +320,92 @@
             })
     }
 
+    const downloadOpen = ref(false)
+    const downloadLevel = ref<string | undefined>(undefined)
+    const downloadTimeRange = ref<string | undefined>(undefined)
+    const downloading = ref(false)
+
+    const openDownload = () => {
+        downloadLevel.value = effectiveLogLevel.value?.value
+        downloadTimeRange.value = selectedTimeRange.value ?? undefined
+        downloadOpen.value = true
+    }
+
+    const downloadLogs = () => {
+        const {
+            page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
+            level: _l, startDate: _sd, endDate: _ed, ...routeFilters
+        } = route.query
+        const params: Record<string, any> = props.filters ? {...props.filters} : {...routeFilters}
+
+        if (isFlowEdit.value) {
+            params["filters[namespace][EQUALS]"] = routeNamespace.value
+            params["filters[flowId][EQUALS]"] = flowId.value
+        } else if (isNamespaceEdit.value) {
+            params["filters[namespace][EQUALS]"] = routeNamespace.value
+        }
+
+        Object.keys(params)
+            .filter((k) => k.startsWith("filters[level]"))
+            .forEach((k) => delete params[k])
+        if (downloadLevel.value) {
+            params["filters[level][GREATER_THAN_OR_EQUAL_TO]"] = downloadLevel.value
+        }
+
+        if (downloadTimeRange.value) {
+            params.startDate = moment()
+                .subtract(moment.duration(downloadTimeRange.value).as("milliseconds"))
+                .toISOString(true)
+            params.endDate = moment().toISOString(true)
+        } else {
+            if (startDate.value) params.startDate = startDate.value
+            if (endDate.value) params.endDate = endDate.value
+        }
+        params.sort = "timestamp:desc"
+
+        downloading.value = true
+        logsStore.downloadLogs(params)
+            .then(() => (downloadOpen.value = false))
+            .finally(() => (downloading.value = false))
+    }
+
+    const LEVEL_ORDER = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
+    const serverLevelCounts = ref<Record<string, number>>({})
+    const presentLevels = computed(() => LEVEL_ORDER.filter((level) => (serverLevelCounts.value[level] ?? 0) > 0))
+
+    let lastCountedKey = ""
+    const refreshLevelCounts = () => {
+        if (!loadInit.value || lastCountedKey === filterQueryKey.value) return
+        const key = filterQueryKey.value
+        lastCountedKey = key
+        logsStore.levelCounts(loadQuery({})).then((counts) => {
+            if (key === filterQueryKey.value) serverLevelCounts.value = counts
+        })
+    }
+
+    const selectLevel = (level: string) => {
+        const query: Record<string, any> = {...route.query}
+        Object.keys(query)
+            .filter((key) => key.startsWith("filters[level]"))
+            .forEach((key) => delete query[key])
+        query["filters[level][GREATER_THAN_OR_EQUAL_TO]"] = level
+        query[pageKey] = "1"
+        router.push({query})
+    }
+
+    const onValueFilter = ({field, value, negate}: {field: string; value: string; negate: boolean}) => {
+        const query = buildValueFilterQuery(route.query, field, value, negate, pageKey)
+        if (query) router.push({query})
+    }
+
+    const copyAllLogs = () => {
+        const text = (logsStore.logs ?? [])
+            .map((l: any) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
+            .join("\n")
+        Utils.copy(text)
+        toast.success(t("logs_copied"))
+    }
+
     const onFilterRouteSync = (filters: AppliedFilter[]) => {
         if (props.filters || !hasLevelFilterUI.value) {
             return
@@ -291,6 +427,7 @@
     }
 
     const onLoaded = () => {
+        refreshLevelCounts()
         if (!pinToBottom.value) return
         pinToBottom.value = false
         const main = document.querySelector("main")
@@ -332,8 +469,47 @@
 </script>
 <style scoped lang="scss">
 
+    .download-hint {
+        margin: 0 0 var(--ks-spacing-3);
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+    }
+
     .shadow {
         box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+    }
+
+    .logs-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        margin: 0 var(--ks-spacing-5) var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) 0;
+        background: var(--ks-bg-base);
+
+        &__left {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+        }
+
+        &__actions {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            margin-left: auto;
+        }
+
+        &__btn {
+            margin: 0;
+            padding: var(--ks-spacing-2);
+            border-radius: var(--ks-radius-base);
+        }
     }
 
     .log-panel {

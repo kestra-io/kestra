@@ -12,6 +12,7 @@ import KsPie from "./components/Charts/KsPie.vue"
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
+import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
@@ -92,6 +93,7 @@ import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTabsToggle from "./components/Navigation/KsTabs/KsTabsToggle.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
+import KsTableEmpty from "./components/Data/KsTableEmpty.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
@@ -101,6 +103,7 @@ import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
+import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
 import KsPageHeader from "./components/Data/KsPageHeader.vue"
@@ -207,6 +210,7 @@ const components: Record<string, Component> = {
     KsAutocomplete,
     KsAvatar,
     KsBadge,
+    KsNewBadge,
     KsBreadcrumb,
     KsButton,
     KsButtonGroup,
@@ -282,6 +286,7 @@ const components: Record<string, Component> = {
     KsTabsToggle,
     KsTable,
     KsTableColumn,
+    KsTableEmpty,
     KsTag,
     KsTaskIcon,
     KsText,
@@ -291,6 +296,7 @@ const components: Record<string, Component> = {
     KsTooltip,
     KsTopNavBar,
     KsTree,
+    KsJsonTree,
     KsUpload,
     KsSubMenu,
     KsPageHeader,
@@ -312,6 +318,7 @@ export {
     KsAutocomplete,
     KsAvatar,
     KsBadge,
+    KsNewBadge,
     KsBreadcrumb,
     KsButton,
     KsButtonGroup,
@@ -387,6 +394,7 @@ export {
     KsTabsToggle,
     KsTable,
     KsTableColumn,
+    KsTableEmpty,
     KsTag,
     KsTaskIcon,
     KsText,
@@ -396,6 +404,7 @@ export {
     KsTooltip,
     KsTopNavBar,
     KsTree,
+    KsJsonTree,
     KsUpload,
     KsSubMenu,
     KsPageHeader,
@@ -438,6 +447,7 @@ declare module "vue" {
         KsAutocomplete: typeof KsAutocomplete
         KsAvatar: typeof KsAvatar
         KsBadge: typeof KsBadge
+        KsNewBadge: typeof KsNewBadge
         KsBreadcrumb: typeof KsBreadcrumb
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
@@ -511,6 +521,7 @@ declare module "vue" {
         KsTabsToggle: typeof KsTabsToggle
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
+        KsTableEmpty: typeof KsTableEmpty
         KsTag: typeof KsTag
         KsTaskIcon: typeof KsTaskIcon
         KsText: typeof KsText
@@ -520,6 +531,7 @@ declare module "vue" {
         KsTooltip: typeof KsTooltip
         KsTopNavBar: typeof KsTopNavBar
         KsTree: typeof KsTree
+        KsJsonTree: typeof KsJsonTree
         KsUpload: typeof KsUpload
     }
 }

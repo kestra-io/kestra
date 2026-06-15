@@ -11,8 +11,10 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.empty" #empty>
-            <slot name="empty" />
+        <template #empty>
+            <slot name="empty">
+                <KsTableEmpty :title="emptyText" />
+            </slot>
         </template>
     </ElTable>
 </template>
@@ -22,6 +24,7 @@
     import {ElTable} from "element-plus"
     import type {TableInstance} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import KsTableEmpty from "../KsTableEmpty.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -95,7 +98,6 @@
         --kel-table-tr-bg-color: var(--ks-bg-overlay);
         --kel-table-current-row-bg-color: var(--ks-bg-overlay);
 
-        outline: 1px solid var(--ks-border-default);
         border-radius: 0;
         background-color: var(--ks-bg-overlay);
         border: none;
@@ -116,6 +118,7 @@
             padding: 0 8px;
             word-break: break-word;
             font-weight: 400;
+            font-size: var(--ks-font-size-xs);
         }
 
         .kel-table__inner-wrapper::before {
@@ -144,7 +147,7 @@
                 white-space: nowrap;
                 font-weight: 600;
                 color: var(--ks-text-secondary);
-                font-size: var(--ks-font-size-sm);
+                font-size: var(--ks-font-size-xs);
             }
         }
 

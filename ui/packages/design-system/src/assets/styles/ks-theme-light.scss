@@ -62,6 +62,29 @@
     #{--ks-btn-secondary-border-hover}: $base-gray-neutral-300;
     #{--ks-btn-secondary-border-inactive}: $base-gray-neutral-50;
 
+    /* chart */
+    #{--ks-chart-breakpoint}: #9061f9;
+    #{--ks-chart-cancelled}: #6f6f7b;
+    #{--ks-chart-created}: $base-blue-500;
+    #{--ks-chart-debug}: #9061f9;
+    #{--ks-chart-duration}: #5e5efb;
+    #{--ks-chart-error}: #cc1d1f;
+    #{--ks-chart-failed}: #cc1d1f;
+    #{--ks-chart-info}: #0b3aa8;
+    #{--ks-chart-killed}: #8a0a0c;
+    #{--ks-chart-killing}: #c79100;
+    #{--ks-chart-paused}: #ec8b3a;
+    #{--ks-chart-queued}: #62627a;
+    #{--ks-chart-restarted}: #0a8fd4;
+    #{--ks-chart-retried}: #0b3aa8;
+    #{--ks-chart-retrying}: #b34400;
+    #{--ks-chart-running}: #631bff;
+    #{--ks-chart-skipped}: #9695a0;
+    #{--ks-chart-success}: #12a072;
+    #{--ks-chart-trace}: #6f6f7b;
+    #{--ks-chart-warn}: $base-orange-600;
+    #{--ks-chart-warning}: $base-orange-600;
+
     /* dependencies */
     #{--ks-dependencies-edge-default}: $base-gray-neutral-300;
     #{--ks-dependencies-edge-faded}: $base-gray-neutral-200;
@@ -134,7 +157,7 @@
 
     /* toggle */
     #{--ks-toggle-active}: $base-primary-400;
-    #{--ks-toggle-default}: $base-gray-neutral-100;
+    #{--ks-toggle-default}: $base-gray-neutral-200;
     #{--ks-toggle-hover}: $base-gray-neutral-200;
     #{--ks-toggle-inactive}: $base-gray-neutral-50;
     #{--ks-toggle-playground}: $base-blue-500;

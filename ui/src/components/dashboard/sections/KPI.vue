@@ -19,7 +19,7 @@
         <span v-if="description" class="description">{{ description }}</span>
     </section>
 
-    <KsEmpty v-else :description="EMPTY_TEXT" />
+    <KsTableEmpty v-else />
 </template>
 
 <script setup lang="ts">
@@ -47,7 +47,7 @@
     const route = useRoute()
     const theme = useTheme()
 
-    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props.dashboardId, props)
+    const {percentageShown, data, generate} = useChartGenerator(props.dashboardId, props)
 
     const description = computed(() => props.chart.chartOptions?.description)
 

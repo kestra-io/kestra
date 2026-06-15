@@ -23,7 +23,7 @@ const executionsChart = (where?: unknown) => ({
 
 const mountFilter = (chart: Record<string, unknown>) =>
     mount(TableQuickFilter, {
-        props: {chart},
+        props: {chart: chart as never},
         global: {plugins: [i18n], stubs: {Motion: true}},
     })
 

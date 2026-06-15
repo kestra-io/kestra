@@ -199,10 +199,8 @@ class TriggerControllerTest {
 
     @Test
     void shouldReturnConflictWhenUnlockingTriggerAlreadyUnlocked() {
-        // GIVEN: set a far-future nextEvaluationDate so the scheduler never considers this trigger
-        // eligible for evaluation and does not delete it as an orphan (trigger has no associated flow).
+        // GIVEN
         TriggerState trigger = newRandomTriggerState()
-            .updateForNextEvaluationDate(Clock.systemDefaultZone(), Instant.now().plus(Duration.ofDays(36500L)))
             .locked(Clock.systemDefaultZone(), false);
         jdbcTriggerRepository.save(trigger);
 
@@ -572,11 +570,14 @@ class TriggerControllerTest {
 
     private TriggerState newRandomTriggerState() {
         String random = IdUtils.create();
+        // Set a far-future nextEvaluationDate so the scheduler never considers this trigger
+        // eligible for evaluation and does not delete it as an orphan (trigger has no associated flow).
         return TriggerState.builder()
             .tenantId(TENANT_ID)
             .namespace(random)
             .flowId(random)
             .triggerId(random)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
             .vnode(VNodes.computeVNodeFromFlow(FlowId.of(TENANT_ID, random, random, null), schedulerConfiguration.vnodes()))
             .build();
     }

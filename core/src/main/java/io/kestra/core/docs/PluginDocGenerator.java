@@ -10,30 +10,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
- * Generates doc/schema for the plugin(s) on the classpath and writes them as files, intended to be
- * run at plugin build time (e.g. by a Gradle task) with the plugin's own classpath so the docs can
- * be bundled in the jar and served without regenerating at runtime.
- * <p>
- * It runs on the build classpath (plugin + core + its dependencies on one classloader), so any
- * plugin's referenced classes resolve, including Enterprise plugins when core-ee is present. The
- * classpath also carries core and dependency plugins, so only this plugin's classes are kept,
- * identified from the {@code META-INF/services} file the annotation processor generates.
- * <p>
- * The generator is built directly rather than through a Micronaut context: it must run on a partial
- * build classpath where a full context may not start, and its only dependency is the
- * {@link JsonSchemaGenerator}, which only needs a {@link PluginRegistry}.
+ * Generates plugin doc/schema from the classpath and writes them as files. Meant to run at plugin
+ * build time with the plugin's own classpath (plugin + core + core-ee) so docs ship in the jar.
  */
 public final class PluginDocGenerator {
     private PluginDocGenerator() {
     }
 
-    /**
-     * @param args [0] compiled classes dir (e.g. build/classes/java/main), [1] output dir
-     */
+    // args[0] = compiled classes dir, args[1] = output dir
     public static void main(String[] args) throws Exception {
         Path classesDir = Path.of(args[0]);
         Path outDir = Path.of(args[1]);
@@ -44,6 +31,7 @@ public final class PluginDocGenerator {
         }
         Files.createDirectories(outDir);
 
+        // Built directly, not via Micronaut: a context may not start on a partial build classpath.
         PluginRegistry registry = DefaultPluginRegistry.getOrCreate();
         DocumentationGenerator generator = new DocumentationGenerator();
         generator.jsonSchemaGenerator = new JsonSchemaGenerator(registry);
@@ -52,6 +40,7 @@ public final class PluginDocGenerator {
 
         for (Document doc : generator.generate(scanned)) {
             String fqcn = fqcnOf(doc.getPath());
+            // the scan also sees core + dependency plugins; keep only this plugin's classes
             if (fqcn == null || !pluginClasses.contains(fqcn)) {
                 continue;
             }

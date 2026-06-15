@@ -261,8 +261,6 @@
     import {mapStores} from "pinia";
     import {groupBy} from "lodash";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import useNamespaces from "../../composables/useNamespaces";
-    import {NamespaceIterator} from "../../composables/useNamespaces";
     import SelectTableActions from "../../mixins/selectTableActions";
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -340,7 +338,10 @@
                     update: undefined
                 },
                 kvs: undefined,
-                namespaceIterator: undefined,
+                // Namespaces the user has a KV binding on (discovered without NAMESPACE permission),
+                // paged through by the infinite-scroll loader via namespaceCursor.
+                boundNamespaces: undefined as string[] | undefined,
+                namespaceCursor: 0,
                 viewKvDrawerVisible: false,
                 viewKv: {} as {namespace?: string; key?: string; type?: string; value?: string; description?: string},
                 rules: {
@@ -411,15 +412,18 @@
                 }
             },
             async fetchKvs() {
+                const NAMESPACE_BATCH_SIZE = 20;
                 let kvFetch;
                 if (this.namespace === undefined) {
-                    if (this.namespaceIterator === undefined) {
-                        // Authorize namespace discovery through the KVSTORE permission so a user with
-                        // only KV access (no NAMESPACE permission) can still find their namespaces.
-                        this.namespaceIterator = useNamespaces(this.$store, 20, {resource: permission.KVSTORE});
+                    if (this.boundNamespaces === undefined) {
+                        // Discover the namespaces the user has a KV binding on through the KVSTORE
+                        // permission, so a user with only KV access (no NAMESPACE permission) can
+                        // still find their namespaces.
+                        this.boundNamespaces = await this.namespacesStore.namespacesWithBinding({resource: permission.KVSTORE});
                     }
 
-                    const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);
+                    const namespaces = (this.boundNamespaces as string[]).slice(this.namespaceCursor, this.namespaceCursor + NAMESPACE_BATCH_SIZE);
+                    this.namespaceCursor += namespaces.length;
                     if (namespaces.length !== 0) {
                         const kvsPromises = Promise.all(namespaces.filter(n => this.authStore.user?.isAllowed(permission.KVSTORE, action.READ, n)).map(async n => {
                             const kvs = await this.namespacesStore.kvsList({id: n});
@@ -503,7 +507,8 @@
                     });
             },
             async reloadKvs() {
-                this.namespaceIterator = undefined;
+                this.boundNamespaces = undefined;
+                this.namespaceCursor = 0;
 
                 const previousLength = this.secrets?.length ?? 0;
                 await this.$refs.selectTable.resetInfiniteScroll();

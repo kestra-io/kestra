@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted} from "vue"
+    import {computed, onMounted, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
@@ -67,7 +67,17 @@
         [modelValue.value].flat().filter(Boolean)
     )
 
+    // In resource mode we discover namespaces through the resource-scoped ids endpoint (no
+    // NAMESPACE permission required) and filter client-side; otherwise we use namespace autocomplete.
+    const boundNamespaces = ref<string[]>([]);
+    const query = ref("");
+
     const options = computed(() => {
+        if (props.resource) {
+            return boundNamespaces.value
+                .filter(value => !query.value || value.toLowerCase().includes(query.value.toLowerCase()))
+                .map(value => ({id: value, label: value}));
+        }
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
             .map((value: any) => {
                 return {id: value, label: value}
@@ -75,14 +85,20 @@
     })
 
     const onSearch = (search: string) => {
+        if (props.resource) {
+            query.value = search;
+            return;
+        }
         namespacesStore.loadAutocomplete({
             q: search,
             ids: modelValue.value as string[] ?? [],
-            ...(props.resource ? {resource: props.resource} : {}),
         })
     }
 
-    onMounted(() => {
+    onMounted(async () => {
+        if (props.resource) {
+            boundNamespaces.value = await namespacesStore.namespacesWithBinding({resource: props.resource});
+        }
         if (modelValue.value === undefined || modelValue.value.length === 0) {
             const defaultNamespaceVal = defaultNamespace();
             if (Array.isArray(modelValue.value)) {

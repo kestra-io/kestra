@@ -133,8 +133,7 @@ public class NamespaceController<N extends Namespace> {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Return only existing namespace") @Nullable @QueryValue(value = "existing", defaultValue = "false") boolean existingOnly,
-        @Parameter(description = "Authorize discovery through this resource permission instead of NAMESPACE (e.g. KVSTORE); only honored in Enterprise Edition") @Nullable @QueryValue(value = "resource") String resource) throws HttpStatusException {
+        @Parameter(description = "Return only existing namespace") @Nullable @QueryValue(value = "existing", defaultValue = "false") boolean existingOnly) throws HttpStatusException {
         return PagedResults.of(
             getNamespaces(
                 PageableUtils.from(page, size, sort),

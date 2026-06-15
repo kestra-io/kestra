@@ -64,6 +64,8 @@
         },
     ] as const
 
+    const ALL_STATES = QUICK_FILTER_TABS.flatMap((tab) => tab.states)
+
     type TabKey = (typeof QUICK_FILTER_TABS)[number]["key"]
 
     const props = defineProps<{chart: Chart}>()
@@ -80,11 +82,20 @@
         return Object.values(columns).some((col: Record<string, any>) => col.field === "STATE")
     })
 
+    const chartConstrainsState = computed(() =>
+        ((props.chart.data?.where as {field?: string}[] | undefined) ?? [])
+            .some((condition) => String(condition?.field).toUpperCase() === "STATE"),
+    )
+
     const activeTab = ref<TabKey>("all")
 
     const stateFilter = (key: TabKey): FilterObject | null => {
         const tab = QUICK_FILTER_TABS.find((t) => t.key === key)
-        if (!tab?.states.length) return null
+        if (!tab?.states.length) {
+            return chartConstrainsState.value
+                ? {field: "state", operation: "IN", value: [...ALL_STATES]}
+                : null
+        }
         return {field: "state", operation: "IN", value: [...tab.states]}
     }
 

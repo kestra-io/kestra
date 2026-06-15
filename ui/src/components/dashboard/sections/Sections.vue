@@ -152,7 +152,7 @@ section#charts {
     .dashboard-block {
         & > div {
             height: 100%;
-            padding: 1.5rem;
+            padding: 1.25rem;
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-base);
@@ -166,6 +166,17 @@ section#charts {
 
         &:hover #charts_buttons {
             opacity: 1;
+        }
+
+        #charts_heading {
+            span {
+                color: var(--ks-text-primary);
+                font-size: var(--ks-font-size-md);
+            }
+            small {
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-xs);
+            }
         }
     }
 

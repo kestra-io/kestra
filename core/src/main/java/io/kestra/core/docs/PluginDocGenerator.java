@@ -5,7 +5,9 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,34 +15,48 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Generates plugin doc/schema from the classpath and writes them as files. Meant to run at plugin
- * build time with the plugin's own classpath (plugin + core + core-ee) so docs ship in the jar.
+ * Generates a plugin's doc/schema files so they can be bundled in the plugin jar and served without
+ * regenerating at runtime. Intended to be called from a plugin's build (e.g. a Gradle task) with the
+ * plugin's own classpath (plugin + core + core-ee), so every referenced class resolves, including
+ * Enterprise plugins when core-ee is present.
  */
+@Slf4j
 public final class PluginDocGenerator {
     private PluginDocGenerator() {
     }
 
-    // args[0] = compiled classes dir, args[1] = output dir
-    public static void main(String[] args) throws Exception {
-        Path classesDir = Path.of(args[0]);
-        Path outDir = Path.of(args[1]);
-
+    /**
+     * Writes a {@code .md} and {@code .json} into {@code outDir} for each plugin class listed in the
+     * {@code META-INF/services} file under {@code classesDir} (the file the annotation processor
+     * generates), scanning the current classloader for their definitions.
+     */
+    public static void generate(Path classesDir, Path outDir) throws IOException {
         Set<String> pluginClasses = readPluginClasses(classesDir);
         if (pluginClasses.isEmpty()) {
+            log.warn("No plugin classes found under {}, nothing to generate", classesDir);
             return;
         }
         Files.createDirectories(outDir);
 
-        // Built directly, not via Micronaut: a context may not start on a partial build classpath.
+        // Built directly rather than through a Micronaut context: it must run on a partial build
+        // classpath where a full context may not start, and it only needs the JsonSchemaGenerator.
         PluginRegistry registry = DefaultPluginRegistry.getOrCreate();
         DocumentationGenerator generator = new DocumentationGenerator();
         generator.jsonSchemaGenerator = new JsonSchemaGenerator(registry);
 
         RegisteredPlugin scanned = new PluginScanner(PluginDocGenerator.class.getClassLoader()).scan();
 
-        for (Document doc : generator.generate(scanned)) {
+        Iterable<Document> documents;
+        try {
+            documents = generator.generate(scanned);
+        } catch (Exception e) {
+            throw new IOException("Failed to generate plugin documentation", e);
+        }
+
+        int written = 0;
+        for (Document doc : documents) {
             String fqcn = fqcnOf(doc.getPath());
-            // the scan also sees core + dependency plugins; keep only this plugin's classes
+            // the scan also sees core and dependency plugins; keep only this plugin's classes
             if (fqcn == null || !pluginClasses.contains(fqcn)) {
                 continue;
             }
@@ -48,10 +64,12 @@ public final class PluginDocGenerator {
             if (doc.getSchema() != null) {
                 Files.write(outDir.resolve(fqcn + ".json"), JacksonMapper.ofJson().writeValueAsBytes(doc.getSchema()));
             }
+            written++;
         }
+        log.info("Generated docs for {} plugin class(es) into {}", written, outDir);
     }
 
-    private static Set<String> readPluginClasses(Path classesDir) throws Exception {
+    private static Set<String> readPluginClasses(Path classesDir) throws IOException {
         Set<String> classes = new HashSet<>();
         Path serviceFile = classesDir.resolve("META-INF/services/io.kestra.core.models.Plugin");
         if (Files.exists(serviceFile)) {
@@ -65,7 +83,7 @@ public final class PluginDocGenerator {
         return classes;
     }
 
-    /** Document paths look like {@code <plugin>/tasks/io.kestra.plugin.x.Foo.md}; pull the FQCN out. */
+    /** Document paths look like {@code <subgroup>/io.kestra.plugin.x.Foo}; pull the FQCN out. */
     private static String fqcnOf(String path) {
         if (path == null) {
             return null;

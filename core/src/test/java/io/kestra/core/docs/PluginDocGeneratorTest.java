@@ -20,7 +20,7 @@ class PluginDocGeneratorTest {
 
         Path out = tmp.resolve("out");
 
-        PluginDocGenerator.main(new String[]{classes.toString(), out.toString()});
+        PluginDocGenerator.generate(classes, out);
 
         Path markdown = out.resolve("io.kestra.plugin.core.log.Log.md");
         Path schema = out.resolve("io.kestra.plugin.core.log.Log.json");

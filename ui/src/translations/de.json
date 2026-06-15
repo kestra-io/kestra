@@ -151,25 +151,25 @@
     "change state current state": "Aktueller Zustand ist:",
     "change state done": "Der Task-Zustand wurde aktualisiert",
     "change state hint": {
-      "FAILED": [
-        "Der Flow wird als FAILED markiert.",
-        "Keine andere Task wird ausgeführt.",
-        "Die Fehler-Tasks werden ausgeführt."
-      ],
-      "RUNNING": [
-        "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
-        "Alle blockierten Tasks werden ausgeführt."
-      ],
-      "SUCCESS": [
-        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
-        "Alle blockierten Tasks werden ausgeführt.",
-        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
-      ],
-      "WARNING": [
-        "Der Flow wird als WARNING markiert.",
-        "Die nächsten Tasks werden ausgeführt.",
-        "Die Fehler-Tasks werden ausgeführt."
-      ]
+      "FAILED": {
+        "0": "Der Flow wird als FAILED markiert.",
+        "1": "Keine andere Task wird ausgeführt.",
+        "2": "Die Fehler-Tasks werden ausgeführt."
+      },
+      "RUNNING": {
+        "0": "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "1": "Alle blockierten Tasks werden ausgeführt."
+      },
+      "SUCCESS": {
+        "0": "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "1": "Alle blockierten Tasks werden ausgeführt.",
+        "2": "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      },
+      "WARNING": {
+        "0": "Der Flow wird als WARNING markiert.",
+        "1": "Die nächsten Tasks werden ausgeführt.",
+        "2": "Die Fehler-Tasks werden ausgeführt."
+      }
     },
     "change state tooltip": "Ändern Sie den Ausführungszustand",
     "chart": "Diagramm",

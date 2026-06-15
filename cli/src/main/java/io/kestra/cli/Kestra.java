@@ -3,6 +3,7 @@ package io.kestra.cli;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
@@ -113,14 +114,43 @@ public class Kestra implements Callable<Integer> {
         return exitCode;
     }
 
-    private static CommandLine getCommandLine(Class<?> cls, String[] args) {
+    static CommandLine getCommandLine(Class<?> cls, String[] args) {
         CommandLine cmd = new CommandLine(cls, CommandLine.defaultFactory());
         continueOnParsingErrors(cmd);
 
         CommandLine.ParseResult parseResult = cmd.parseArgs(args);
         List<CommandLine> parsedCommands = parseResult.asCommandLineList();
+        CommandLine leafCmd = parsedCommands.getLast();
 
-        return parsedCommands.getLast();
+        // continueOnParsingErrors silently drops unrecognized options at the root level,
+        // including --config/-c when it appears before the subcommand name. Recover it here.
+        recoverConfigOption(args, leafCmd);
+
+        return leafCmd;
+    }
+
+    /**
+     * If {@code --config/-c} was placed before the subcommand name it is silently swallowed by
+     * {@code continueOnParsingErrors}. This method scans the raw args for a config path and
+     * injects it into the leaf command so that {@code propertiesFromConfig()} picks it up.
+     */
+    private static void recoverConfigOption(String[] args, CommandLine leafCmd) {
+        Object userObject = leafCmd.getCommandSpec().userObject();
+        if (!(userObject instanceof AbstractCommand abstractCmd)) {
+            return;
+        }
+        // If --config was already parsed on the leaf command (placed after the subcommand), nothing to do.
+        CommandLine.ParseResult leafResult = leafCmd.getParseResult();
+        if (leafResult != null && leafResult.matchedOptions().stream()
+                .anyMatch(opt -> opt.longestName().equals("--config"))) {
+            return;
+        }
+        for (int i = 0; i < args.length - 1; i++) {
+            if ("--config".equals(args[i]) || "-c".equals(args[i])) {
+                abstractCmd.setConfig(Paths.get(args[i + 1]));
+                break;
+            }
+        }
     }
 
     public static ApplicationContext applicationContext(Class<?> mainClass,
@@ -147,10 +177,13 @@ public class Kestra implements Callable<Integer> {
         Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
 
         if (AbstractCommand.class.isAssignableFrom(cls)) {
-            // if class have propertiesFromConfig, add configuration files
-            builder.properties(getPropertiesFromMethod(cls, "propertiesFromConfig", commandLine.getCommandSpec().userObject()));
-
             Map<String, Object> properties = new HashMap<>();
+
+            // if class have propertiesFromConfig, add configuration files
+            Map<String, Object> configProperties = getPropertiesFromMethod(cls, "propertiesFromConfig", commandLine.getCommandSpec().userObject());
+            if (configProperties != null) {
+                properties.putAll(configProperties);
+            }
 
             // if class have propertiesOverrides, add force properties for this class
             Map<String, Object> propertiesOverrides = getPropertiesFromMethod(cls, "propertiesOverrides", null);

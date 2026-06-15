@@ -2,6 +2,8 @@ package io.kestra.cli;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,6 +13,7 @@ import io.kestra.core.models.ServerType;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import picocli.CommandLine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +50,35 @@ class KestraTest {
         assertThat(Kestra.runCli(args)).isZero();
 
         assertThat(out.toString()).contains("Usage: kestra server " + serverType);
+    }
+
+    @Test
+    void configBeforeSubcommandIsLoaded() throws Exception {
+        // Regression test for: --config placed before the subcommand name was silently
+        // dropped by continueOnParsingErrors (introduced in v1.2.0), causing the config
+        // file to be ignored and startup to fail with NoSuchBeanException on EE builds.
+        // Fix: Kestra.recoverConfigOption() scans raw args and injects the config path into
+        // the leaf command instance after continueOnParsingErrors swallows the option.
+        Path configFile = Files.createTempFile("kestra-test-", ".yml");
+        try {
+            Files.writeString(configFile, "kestra:\n  test:\n    marker: config-loaded\n");
+
+            // --config BEFORE "plugins" — this is the position that previously failed.
+            // plugins list extends AbstractCommand (no required positional args), so the
+            // parse chain completes cleanly and recoverConfigOption() can inject the config.
+            String[] args = { "--config", configFile.toString(), "plugins", "list" };
+
+            CommandLine leafCmd = Kestra.getCommandLine(Kestra.class, args);
+            Object userObject = leafCmd.getCommandSpec().userObject();
+
+            assertThat(userObject).isInstanceOf(AbstractCommand.class);
+            AbstractCommand abstractCmd = (AbstractCommand) userObject;
+            // Verify the config path was injected and propertiesFromConfig() reads the right file
+            assertThat(abstractCmd.propertiesFromConfig())
+                .containsEntry("kestra.test.marker", "config-loaded");
+        } finally {
+            Files.deleteIfExists(configFile);
+        }
     }
 
     @Test

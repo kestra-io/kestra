@@ -20,7 +20,8 @@ import OpenAI from "openai"
 
 const client = new OpenAI()
 
-type NestedDict = {[key: string]: string | NestedDict};
+type NestedValue = string | NestedValue[] | NestedDict;
+type NestedDict = {[key: string]: NestedValue};
 type FlatDict = {[key: string]: string};
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
@@ -83,10 +84,39 @@ function unflattenDict(d: FlatDict, sep = "|"): NestedDict {
         }
         current[keys[keys.length - 1]] = v
     }
-    return result
+    // Arrays were flattened with numeric string keys ("0", "1", ...); rebuild them
+    // so the original list structure is preserved instead of becoming an object.
+    return arrayifyNumericKeys(result) as NestedDict
 }
 
-function flattenDict(d: NestedDict, parentKey = "", sep = "|"): FlatDict {
+// Recursively convert objects whose keys are exactly the consecutive indices
+// 0..n-1 back into arrays. This reverses how flattenDict() walks arrays via their
+// numeric keys, which would otherwise round-trip an array into a numeric-keyed object.
+function arrayifyNumericKeys(value: NestedValue): NestedValue {
+    if (value === null || typeof value !== "object") {
+        return value
+    }
+    if (Array.isArray(value)) {
+        return value.map(arrayifyNumericKeys)
+    }
+    const keys = Object.keys(value)
+    const processed: NestedDict = {}
+    for (const key of keys) {
+        processed[key] = arrayifyNumericKeys(value[key])
+    }
+    const isArray = keys.length > 0
+        && keys.every((k) => /^\d+$/.test(k))
+        && keys.map(Number).sort((a, b) => a - b).every((n, i) => n === i)
+    if (isArray) {
+        return keys
+            .map(Number)
+            .sort((a, b) => a - b)
+            .map((n) => processed[String(n)])
+    }
+    return processed
+}
+
+function flattenDict(d: NestedValue, parentKey = "", sep = "|"): FlatDict {
     const items: FlatDict = {}
     for (const [k, v] of Object.entries(d)) {
         const newKey = parentKey ? `${parentKey}${sep}${k}` : k
@@ -167,9 +197,13 @@ function removeEnPrefix(dictionary: FlatDict, prefix = "en|"): FlatDict {
 }
 
 // Recursively sort object keys to mirror Python's json.dump(sort_keys=True).
-function sortKeysRecursively(value: string | NestedDict): string | NestedDict {
+// Arrays keep their element order (only their nested objects get sorted).
+function sortKeysRecursively(value: NestedValue): NestedValue {
     if (value === null || typeof value !== "object") {
         return value
+    }
+    if (Array.isArray(value)) {
+        return value.map(sortKeysRecursively)
     }
     const sorted: NestedDict = {}
     for (const key of Object.keys(value).sort()) {
@@ -262,13 +296,22 @@ function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
 
 // Serialise a value back to TypeScript source, matching the existing 4-space
 // indentation, trailing commas, and unquoted-identifier-keys style.
-function serializeLocaleValue(value: string | NestedDict, indent: number): string {
+function serializeLocaleValue(value: NestedValue, indent: number): string {
     if (value === null || typeof value !== "object") {
         return JSON.stringify(value)
     }
 
     const pad = "    ".repeat(indent)
     const padInner = "    ".repeat(indent + 1)
+
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return "[]"
+        }
+        const items = value.map((v) => `${padInner}${serializeLocaleValue(v, indent + 1)},`)
+        return `[\n${items.join("\n")}\n${pad}]`
+    }
+
     const entries = Object.entries(value)
     if (entries.length === 0) {
         return "{}"

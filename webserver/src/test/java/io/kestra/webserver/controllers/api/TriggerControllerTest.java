@@ -199,9 +199,11 @@ class TriggerControllerTest {
 
     @Test
     void shouldReturnConflictWhenUnlockingTriggerAlreadyUnlocked() {
-        // GIVEN: use newRandomTriggerState (no evaluatedAt) so the scheduler does not pick it up as eligible
-        // and delete it as an orphan before we query it.
-        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
+        // GIVEN: set a far-future nextEvaluationDate so the scheduler never considers this trigger
+        // eligible for evaluation and does not delete it as an orphan (trigger has no associated flow).
+        TriggerState trigger = newRandomTriggerState()
+            .updateForNextEvaluationDate(Clock.systemDefaultZone(), Instant.now().plus(Duration.ofDays(36500L)))
+            .locked(Clock.systemDefaultZone(), false);
         jdbcTriggerRepository.save(trigger);
 
         // WHEN

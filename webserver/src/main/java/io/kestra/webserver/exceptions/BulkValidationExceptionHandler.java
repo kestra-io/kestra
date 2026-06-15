@@ -1,6 +1,5 @@
 package io.kestra.webserver.exceptions;
 
-import io.kestra.webserver.responses.BulkErrorResponse;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;

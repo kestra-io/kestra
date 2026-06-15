@@ -204,8 +204,6 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @change="(value: string | number | boolean) => setDisabled(scope.row, Boolean(value))"
-                            inlinePrompt
-                            class="switch-text"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -875,19 +873,8 @@
             }
         }
 
-        :deep(.kel-switch) {
-            .is-text {
-                padding: 0 3px;
-                color: inherit;
-            }
-
-            &.is-checked .is-text {
-                color: var(--ks-content-inverse);
-            }
-        }
-
         :deep(.kel-table) a {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -902,7 +889,7 @@
     }
 
     .header-tooltip-icon {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: help;
         display: inline-flex;
         align-items: center;
@@ -921,6 +908,6 @@
         max-width: 25rem;
         white-space: normal;
         word-break: break-word;
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 </style>

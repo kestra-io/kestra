@@ -311,7 +311,9 @@
     "eval": {
       "title": "Debug Expression",
       "render": "Render",
-      "tooltip": "Render any Pebble expression and inspect the Execution context."
+      "tooltip": "Render any Pebble expression and inspect the Execution context.",
+      "preview": "Preview",
+      "expression": "Expression"
     },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",
@@ -373,6 +375,23 @@
     "no_inputs": "No inputs available.",
     "input": "Input",
     "variables": "Variables",
+    "variable_explorer": {
+      "title": "Input/Output",
+      "search_placeholder": "Search Key or value...",
+      "tasks_outputs": "Tasks outputs",
+      "tree": "Tree",
+      "raw_json": "Raw JSON",
+      "select_prompt": "Select a variable to inspect its value.",
+      "empty": "No variables available for this execution.",
+      "one_key": "\\{ 1 key \\}",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 item ]",
+      "n_items": "[ {count} items ]"
+    },
+    "file_preview": {
+        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+        "load_anyway": "Load anyway"
+    },
     "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {

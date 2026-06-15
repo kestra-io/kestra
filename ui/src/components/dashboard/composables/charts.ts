@@ -118,6 +118,150 @@ export function extractState(value: any) {
     return value
 }
 
+// Maps a dashboard `where` FilterType to the list comparator key used in the URL.
+// Types with no list equivalent (OR, REGEX, IS_NULL/IS_NOT_NULL, IS_TRUE/IS_FALSE) are omitted (skipped).
+const WHERE_TYPE_TO_COMPARATOR: Record<string, string> = {
+    EQUAL_TO: "EQUALS",
+    NOT_EQUAL_TO: "NOT_EQUALS",
+    IN: "IN",
+    NOT_IN: "NOT_IN",
+    CONTAINS: "CONTAINS",
+    STARTS_WITH: "STARTS_WITH",
+    ENDS_WITH: "ENDS_WITH",
+    PREFIX: "PREFIX",
+    GREATER_THAN: "GREATER_THAN",
+    GREATER_THAN_OR_EQUAL_TO: "GREATER_THAN_OR_EQUAL_TO",
+    LESS_THAN: "LESS_THAN",
+    LESS_THAN_OR_EQUAL_TO: "LESS_THAN_OR_EQUAL_TO",
+}
+
+interface WhereCondition {
+    field?: string;
+    labelKey?: string;
+    type?: string;
+    value?: unknown;
+}
+
+interface DrillDownDescriptor {
+    /** Router name of the list view to drill into. */
+    route: string;
+    /** Dashboard field enum name -> list filter key. Fields absent here have no list filter and are skipped. */
+    fieldKey: Record<string, string>;
+    /** Filter keys the list models as multi-select, so equality maps to IN/NOT_IN. */
+    multiSelect: string[];
+    /** Whether the list supports a `timeRange` filter (flows, for instance, do not — passing it 400s). */
+    timeFiltered: boolean;
+}
+
+// Per data-source drill-down config, keyed by the short name of `chart.data.type`
+// (io.kestra.plugin.core.dashboard.data.<Name>). Sources without a list to drill into (e.g. Metrics) are omitted,
+// so a click on such a chart simply does not navigate rather than landing on the wrong page.
+const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
+    Executions: {
+        route: "executions/list",
+        fieldKey: {NAMESPACE: "namespace", FLOW_ID: "flowId", STATE: "state", LABELS: "labels", SCOPE: "scope", TRIGGER_EXECUTION_ID: "triggerExecutionId"},
+        multiSelect: ["namespace", "flowId", "state", "scope"],
+        timeFiltered: true,
+    },
+    Logs: {
+        route: "logs/list",
+        fieldKey: {NAMESPACE: "namespace", FLOW_ID: "flowId", TRIGGER_ID: "triggerId", TASK_ID: "taskId", TASK_RUN_ID: "taskRunId", ATTEMPT_NUMBER: "attemptNumber"},
+        multiSelect: ["namespace"],
+        timeFiltered: true,
+    },
+    Flows: {
+        // Flows.Fields only exposes ID / NAMESPACE / REVISION; NAMESPACE is the one with a flows-list filter.
+        // Flows have no time dimension — the flows list rejects a timeRange filter — so timeFiltered is false.
+        route: "flows/list",
+        fieldKey: {NAMESPACE: "namespace"},
+        multiSelect: ["namespace"],
+        timeFiltered: false,
+    },
+    Triggers: {
+        route: "admin/triggers",
+        fieldKey: {NAMESPACE: "namespace", FLOW_ID: "flowId", TRIGGER_ID: "triggerId", WORKER_ID: "workerId"},
+        multiSelect: ["namespace"],
+        timeFiltered: true,
+    },
+}
+
+function drillDownFor(dataType?: string): DrillDownDescriptor | undefined {
+    const sourceName = dataType?.split(".").pop()
+    return sourceName ? DRILL_DOWNS[sourceName] : undefined
+}
+
+// Resolves the list comparator for a (filterKey, dashboard FilterType), honoring multi-select fields
+// (equality -> IN/NOT_IN). Returns null when the operator can't be represented for that field.
+function comparatorFor(descriptor: DrillDownDescriptor, filterKey: string, type?: string): string | null {
+    if (descriptor.multiSelect.includes(filterKey)) {
+        // Multi-select fields use IN/NOT_IN for (in)equality; other operators (CONTAINS, STARTS_WITH, …)
+        // still pass through to the generic mapping below.
+        if (type === "EQUAL_TO" || type === "IN") return "IN"
+        if (type === "NOT_EQUAL_TO" || type === "NOT_IN") return "NOT_IN"
+    }
+    return WHERE_TYPE_TO_COMPARATOR[type ?? ""] ?? null
+}
+
+function encodeFilter(filterKey: string, comparator: string, labelKey: string | undefined, value: string): Record<string, string> {
+    if (filterKey === "labels") {
+        return labelKey ? {[`filters[labels][${comparator}][${labelKey}]`]: value} : {}
+    }
+    return {[`filters[${filterKey}][${comparator}]`]: value}
+}
+
+function asString(value: unknown): string {
+    return Array.isArray(value) ? value.join(",") : String(value)
+}
+
+
+export function dimensionFilter(
+    descriptor: DrillDownDescriptor,
+    column: {field?: string; labelKey?: string} | undefined,
+    value: string,
+): Record<string, string> {
+    const filterKey = descriptor.fieldKey[column?.field ?? ""]
+    if (!filterKey) return {}
+    const comparator = comparatorFor(descriptor, filterKey, "EQUAL_TO")
+    if (!comparator) return {}
+    const resolved = filterKey === "state" ? extractState(value) : value
+    return encodeFilter(filterKey, comparator, column?.labelKey, resolved)
+}
+
+
+// Translates a chart's `where` conditions into list `filters[...]` query params
+export function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Record<string, string> {
+    const out: Record<string, string> = {}
+    if (!Array.isArray(where)) return out
+
+    for (const condition of where as WhereCondition[]) {
+        if (condition?.value === undefined || condition.value === null) continue
+        const filterKey = descriptor.fieldKey[condition.field ?? ""]
+        if (!filterKey) continue
+        const comparator = comparatorFor(descriptor, filterKey, condition.type)
+        if (!comparator) continue
+        Object.assign(out, encodeFilter(filterKey, comparator, condition.labelKey, asString(condition.value)))
+    }
+
+    return out
+}
+
+export function chartSegmentDrillDown(
+    chart: {data?: Record<string, any>} | undefined,
+    column: {field?: string; labelKey?: string} | undefined,
+    value: string,
+): {name: string; query: Record<string, string>; timeFiltered: boolean} | null {
+    const descriptor = drillDownFor(chart?.data?.type)
+    if (!descriptor) return null
+    return {
+        name: descriptor.route,
+        timeFiltered: descriptor.timeFiltered,
+        query: {
+            ...whereToFilters(descriptor, chart?.data?.where),
+            ...dimensionFilter(descriptor, column, value),
+        },
+    }
+}
+
 export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
     const query: Record<string, any> = {}
 

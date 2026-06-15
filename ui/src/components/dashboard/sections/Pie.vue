@@ -4,13 +4,13 @@
     >
         <KsPie
             v-if="generated !== undefined"
-            ref="ksPieRef"
             :data="pieData"
             :loading="false"
             :donut="chartOptions?.graphStyle !== 'PIE'"
             :options="pieOptions"
             :disableFeatures="[ChartFeature.LEGEND]"
             :tooltipType="TooltipType.EXTERNAL"
+            @echarts-click="onSegmentClick"
         />
         <div
             v-if="generated !== undefined"
@@ -23,10 +23,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, PropType, ref, watch} from "vue"
+    import {computed, PropType, watch} from "vue"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {extractState, getConsistentHEXColor} from "../composables/charts"
+    import {getConsistentHEXColor, chartSegmentDrillDown} from "../composables/charts"
     import {FilterObject} from "../../../utils/filters"
     import {KsPie, durationUtils} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
@@ -47,8 +47,6 @@
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     })
-
-    const ksPieRef = ref<InstanceType<typeof KsPie> | null>(null)
 
     const {chartOptions} = props.chart
     const columns = props.chart.data?.columns ?? {}
@@ -112,25 +110,29 @@
         return opts
     })
 
-    watch(ksPieRef, (newRef) => {
-        if (!newRef) return
-        const instance = newRef.getEchartsInstance()
-        if (!instance) return
-        instance.on("click", (params: any) => {
-            if (!params.name) return
-            router.push({
-                name: "executions/list",
-                params: {tenant: route.params.tenant},
-                query: {
-                    state: extractState(params.name),
-                    scope: "USER",
-                    size: 100,
-                    page: 1,
-                    "filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
-                },
-            })
-        })
+    const dimensionColumn = computed(() => {
+        const dimensionKey = aggregator.field?.key
+        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; labelKey?: string} | undefined
     })
+
+    function onSegmentClick(params: any) {
+        if (!params?.name) return
+        const drillDown = chartSegmentDrillDown(props.chart, dimensionColumn.value, params.name)
+        if (!drillDown) return
+        router.push({
+            name: drillDown.name,
+            params: {tenant: route.params.tenant},
+            query: {
+                ...drillDown.query,
+                scope: "USER",
+                size: 100,
+                page: 1,
+                ...(drillDown.timeFiltered
+                    ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+                    : {}),
+            },
+        })
+    }
 
     function refresh() {
         return generate()

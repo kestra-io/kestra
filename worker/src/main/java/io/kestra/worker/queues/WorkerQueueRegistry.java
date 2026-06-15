@@ -63,7 +63,7 @@ public class WorkerQueueRegistry {
      * @return the retrieved or newly created {@code WorkerQueue} associated with the given context and type
      */
     @SuppressWarnings("unchecked")
-    public synchronized <T> WorkerQueue<T> getOrCreate(final WorkerContext context, final Class<T> type) {
+    public <T> WorkerQueue<T> getOrCreate(final WorkerContext context, final Class<T> type) {
         QueueKey key = new QueueKey(context.workerId(), type);
         return (WorkerQueue<T>) queues.computeIfAbsent(key, unused ->
         {

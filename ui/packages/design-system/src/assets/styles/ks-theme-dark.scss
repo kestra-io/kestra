@@ -62,6 +62,29 @@ html.dark {
     #{--ks-btn-secondary-border-hover}: $base-gray-cool-400;
     #{--ks-btn-secondary-border-inactive}: $base-gray-cool-700;
 
+    /* chart */
+    #{--ks-chart-breakpoint}: #c4a5ff;
+    #{--ks-chart-cancelled}: #b4b4c4;
+    #{--ks-chart-created}: $base-blue-300;
+    #{--ks-chart-debug}: #c4a5ff;
+    #{--ks-chart-duration}: #4545fa;
+    #{--ks-chart-error}: $base-red-300;
+    #{--ks-chart-failed}: $base-red-300;
+    #{--ks-chart-info}: #3f6fe0;
+    #{--ks-chart-killed}: #d44a4c;
+    #{--ks-chart-killing}: $base-yellow-300;
+    #{--ks-chart-paused}: #ffb27d;
+    #{--ks-chart-queued}: #4c4c5c;
+    #{--ks-chart-restarted}: #4fc3f7;
+    #{--ks-chart-retried}: #3f6fe0;
+    #{--ks-chart-retrying}: #f7693c;
+    #{--ks-chart-running}: $base-primary-300;
+    #{--ks-chart-skipped}: #8585a0;
+    #{--ks-chart-success}: #27a676;
+    #{--ks-chart-trace}: #b4b4c4;
+    #{--ks-chart-warn}: $base-orange-300;
+    #{--ks-chart-warning}: $base-orange-300;
+
     /* dependencies */
     #{--ks-dependencies-edge-default}: $base-gray-cool-200;
     #{--ks-dependencies-edge-faded}: $base-gray-cool-400;
@@ -134,7 +157,7 @@ html.dark {
 
     /* toggle */
     #{--ks-toggle-active}: $base-primary-400;
-    #{--ks-toggle-default}: $base-gray-cool-700;
+    #{--ks-toggle-default}: $base-gray-cool-400;
     #{--ks-toggle-hover}: $base-gray-cool-400;
     #{--ks-toggle-inactive}: $base-gray-cool-800;
     #{--ks-toggle-playground}: $base-blue-500;

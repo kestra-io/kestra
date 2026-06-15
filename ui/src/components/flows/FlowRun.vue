@@ -66,7 +66,7 @@
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <KsButton
                                 :icon="buttonIcon"
-                                :disabled="!flowCanBeExecuted || hasBlockingChecks()"
+                                :disabled="!flowCanBeExecuted || hasBlockingChecks"
                                 class="flow-run-trigger-button"
                                 type="primary"
                                 nativeType="submit"
@@ -97,7 +97,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
-    import type {Label, Execution} from "../../stores/executions"
+    import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
@@ -111,12 +111,6 @@
     import WebhookCurl from "./WebhookCurl.vue"
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
-
-    interface Check {
-        message: string
-        style: string
-        behavior: string
-    }
 
     
     type AlertType = "success" | "warning" | "info" | "error"
@@ -214,9 +208,9 @@
         )
     })
 
-    function hasBlockingChecks() {
+    const hasBlockingChecks = computed(() => {
         return checks.value.filter(check => check.behavior === "BLOCK_EXECUTION").length > 0
-    }
+    })
 
     function getExecutionLabels(): Label[] {
         if (!execution.value?.labels) {
@@ -236,8 +230,8 @@
         return getExecutionLabels().length > 0
     }
 
-    function onChecksUpdate(values: unknown[]) {
-        checks.value = values as Check[]
+    function onChecksUpdate(values: Check[]) {
+        checks.value = values
     }
 
     function fillInputsFromExecution() {

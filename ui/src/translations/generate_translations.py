@@ -157,7 +157,6 @@ def main(language_code, target_language, input_file="ui/src/translations/en.json
     # Sort keys to keep output stable
     with open(f"ui/src/translations/{language_code}.json", "w") as f:
         json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2, sort_keys=True)
-        f.write("\n")
 
 if __name__ == "__main__":
     # Default to 'false' if no argument is provided

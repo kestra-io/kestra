@@ -331,6 +331,40 @@ export const WithColoredStatusFilter: Story = {
 }
 
 /**
+ * At viewports ≤768px the bar collapses to a search field plus a filter button.
+ * The button opens a bottom-anchored sheet (Figma `[mob]Filter`) with the
+ * `All Filters` / `My Filters saved` segmented control, a per-field accordion
+ * (each row expands to its value editor), and a `Clear all` / `Save` /
+ * `Apply filters` footer. Seeded with one applied filter so the count badge shows.
+ */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "375px", height: "812px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][CONTAINS]": "io.kestra",
+            })
+            return {ready, configuration: SIMPLE_CONFIGURATION}
+        },
+        template: `
+            <div style="padding: 16px">
+                <KsFilter v-if="ready" :configuration="configuration" />
+            </div>
+        `,
+    }),
+}
+
+/**
  * Filter with chart and data-refresh table options — the FilterSettings panel
  * (opened from the right-side gear button) exposes a chart visibility toggle
  * and a periodic-refresh switch.

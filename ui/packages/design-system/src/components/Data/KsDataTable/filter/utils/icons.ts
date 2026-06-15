@@ -20,6 +20,7 @@ import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
 import Plus from "vue-material-design-icons/Plus.vue"
 import Refresh from "vue-material-design-icons/Refresh.vue"
 import Restore from "vue-material-design-icons/Restore.vue"
+import Tune from "vue-material-design-icons/Tune.vue"
 import Ungroup from "vue-material-design-icons/Ungroup.vue"
 
 export {
@@ -45,5 +46,6 @@ export {
     Plus,
     Refresh,
     Restore,
+    Tune,
     Ungroup,
 }

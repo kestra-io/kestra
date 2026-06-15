@@ -18,7 +18,7 @@
             </template>
 
             <template v-else>
-                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                     <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                         <KsBulkSelect
                             :selectAll="queryBulkAction"
@@ -37,7 +37,7 @@
                     <KsTable
                         ref="tableRef"
                         v-bind="$attrs"
-                        tableLayout="auto"
+                        :tableLayout="tableLayout"
                         fixed
                         :data
                         :rowKey
@@ -106,6 +106,8 @@
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
         noGutter?: boolean
+        noFirstColumnGutter?: boolean
+        tableLayout?: "fixed" | "auto"
     }>(), {
         data: () => [],
         total: 0,
@@ -122,6 +124,8 @@
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
         noGutter: false,
+        noFirstColumnGutter: false,
+        tableLayout: "auto",
     })
 
     export interface SortItem {

@@ -294,7 +294,7 @@
         flowDefaultTab: localStorage.getItem("flowDefaultTab") || "overview",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
-        logsFontSize: parseInt(localStorage.getItem("logsFontSize") ?? "") || 12,
+        logsFontSize: parseInt(localStorage.getItem("logsFontSize") ?? "") || 14,
         editorFontFamily: localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace",
         editorFontSize: parseInt(localStorage.getItem("editorFontSize") ?? "") || 12,
         autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",

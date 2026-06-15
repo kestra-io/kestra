@@ -574,8 +574,8 @@
         "title": "Ainda não há flows de ferramenta registrados neste servidor."
       },
       "panels": {
-        "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Namespace Files, Blueprints, Context) para recursos relacionados.",
-        "title": "Atualmente, nenhum painel está aberto."
+        "content": "Você fechou todos os painéis.  \nEscolha uma aba acima para continuar.",
+        "title": "Nenhum painel aberto"
       },
       "pluginDefaults": {
         "content": "Os Padrões de Plugin permitem que você governe centralmente a configuração do seu plugin e a compartilhe com todos os flows no seu namespace.",

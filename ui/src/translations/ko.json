@@ -574,8 +574,8 @@
         "title": "이 서버에는 아직 등록된 tool flow가 없습니다."
       },
       "panels": {
-        "content": "Flow 코드 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Context)을 선택하세요.",
-        "title": "현재 열려 있는 패널이 없습니다."
+        "content": "모든 패널을 닫았습니다.  \n계속하려면 위의 탭을 선택하세요.",
+        "title": "패널이 열려 있지 않음"
       },
       "pluginDefaults": {
         "content": "플러그인 기본값을 사용하면 플러그인 구성을 중앙에서 관리하고 namespace의 모든 flow와 공유할 수 있습니다.",

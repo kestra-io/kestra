@@ -574,8 +574,8 @@
         "title": "Aucun flow d'outil n'est encore enregistré sur ce serveur."
       },
       "panels": {
-        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Namespace Files, Blueprints, Context) pour des fonctionnalités associées.",
-        "title": "Aucun panneau n'est actuellement ouvert."
+        "content": "Vous avez fermé tous les panneaux.  \nChoisissez un onglet ci-dessus pour continuer.",
+        "title": "Aucun panneau ouvert"
       },
       "pluginDefaults": {
         "content": "Les paramètres par défaut des plugins vous permettent de gérer centralement la configuration de votre plugin et de la partager avec tous les flows dans votre namespace.",

@@ -9,7 +9,7 @@
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true
                 }"
             >
-                <div class="d-flex flex-column">
+                <div class="d-flex flex-column" :class="{'is-kpi': isKPIChart(chart.type)}">
                     <div class="d-flex justify-content-between">
                         <div id="charts_heading">
                             <p v-if="!isKPIChart(chart.type)">
@@ -157,6 +157,16 @@ section#charts {
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-base);
             box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
+
+            &.is-kpi {
+                position: relative;
+
+                #charts_buttons {
+                    position: absolute;
+                    top: 1.25rem;
+                    right: 1.25rem;
+                }
+            }
         }
 
         #charts_buttons {

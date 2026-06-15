@@ -2,6 +2,8 @@ package io.kestra.cli;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,6 +49,29 @@ class AppTest {
         assertThat(App.runCli(args)).isZero();
 
         assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
+    }
+
+    @Test
+    void configBeforeSubcommandIsLoaded() throws Exception {
+        // Regression test for: --config placed before the subcommand name was silently
+        // dropped by continueOnParsingErrors (introduced in v1.2.0), causing the config
+        // file to be ignored and startup to fail with NoSuchBeanException on EE builds.
+        // Fix: App.recoverConfigOption() scans raw args and injects the config path into
+        // the leaf command instance after continueOnParsingErrors swallows the option.
+        Path configFile = Files.createTempFile("kestra-test-", ".yml");
+        try {
+            Files.writeString(configFile, "kestra:\n  test:\n    marker: config-loaded\n");
+
+            // --config BEFORE "flow" — this is the position that previously failed
+            String[] args = { "--config", configFile.toString(), "flow", "namespace", "update" };
+
+            try (ApplicationContext ctx = App.applicationContext(App.class, new String[] { Environment.CLI }, args)) {
+                assertThat(ctx.getProperty("kestra.test.marker", String.class))
+                    .hasValue("config-loaded");
+            }
+        } finally {
+            Files.deleteIfExists(configFile);
+        }
     }
 
     @Test

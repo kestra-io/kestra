@@ -1,0 +1,103 @@
+name: Sync slot-contracts to artifact-sdk
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "ui/packages/slot-contracts/src/**"
+
+jobs:
+  sync:
+    name: Sync contracts to kestra-io/artifact-sdk
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout kestra
+        uses: actions/checkout@v6
+
+      - name: Checkout artifact-sdk
+        uses: actions/checkout@v6
+        with:
+          repository: kestra-io/artifact-sdk
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          path: artifact-sdk
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+
+      - name: Create or reset chore/contracts branch
+        working-directory: artifact-sdk
+        run: |
+          git fetch origin
+          if git ls-remote --heads origin chore/contracts | grep -q chore/contracts; then
+            git checkout chore/contracts
+            git reset --hard origin/main
+          else
+            git checkout -b chore/contracts origin/main
+          fi
+
+      - name: Sync contract files
+        run: |
+          DEST="artifact-sdk/packages/artifact-sdk/src/contracts"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp -r ui/packages/slot-contracts/dist/. "$DEST/"
+
+      - name: Add changeset
+        working-directory: artifact-sdk
+        run: |
+          mkdir -p .changeset
+          CHANGESET_FILE=".changeset/sync-slot-contracts.md"
+          TODAY=$(date -u +%Y-%m-%d)
+          if [ -f "$CHANGESET_FILE" ]; then
+            # Update the date line in-place (line starting with "Last synced:")
+            if grep -q "^Last synced:" "$CHANGESET_FILE"; then
+              sed -i "s/^Last synced:.*/Last synced: $TODAY/" "$CHANGESET_FILE"
+            else
+              echo "Last synced: $TODAY" >> "$CHANGESET_FILE"
+            fi
+          else
+            cat > "$CHANGESET_FILE" <<EOF
+          ---
+          "@kestra-io/artifact-sdk": patch
+          ---
+
+          Sync slot contracts from kestra-io/kestra
+
+          Last synced: $TODAY
+          EOF
+          fi
+
+      - name: Commit and push
+        working-directory: artifact-sdk
+        run: |
+          git add packages/artifact-sdk/src/contracts .changeset
+          if git diff --cached --quiet; then
+            echo "No changes to sync. Exiting."
+            exit 0
+          fi
+          git commit -m "chore: sync slot contracts from kestra-io/kestra $(date +%s)"
+          git push --force-with-lease origin chore/contracts
+
+      - name: Create or update PR
+        working-directory: artifact-sdk
+        env:
+          GH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+        run: |
+          PR_EXISTS=$(gh pr list --repo kestra-io/artifact-sdk --head chore/contracts --base main --json number --jq '.[0].number')
+          if [ -n "$PR_EXISTS" ]; then
+            echo "PR #$PR_EXISTS already exists, skipping creation."
+          else
+            gh pr create \
+              --repo kestra-io/artifact-sdk \
+              --head chore/contracts \
+              --base main \
+              --title "chore: sync slot contracts from kestra-io/kestra" \
+              --body "This PR was automatically created by the [sync-slot-contracts](https://github.com/kestra-io/kestra/blob/main/.github/workflows/sync-slot-contracts.yml) workflow in [kestra-io/kestra](https://github.com/kestra-io/kestra).
+
+          It syncs the latest \`slot-contracts/src\` files into \`packages/artifact-sdk/src/contracts\`."
+          fi

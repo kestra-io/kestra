@@ -44,7 +44,7 @@
     import resource from "../../models/resource"
     import action from "../../models/action"
     import * as Utils from "../../utils/utils"
-    import {aiGenerationTypes} from "../../utils/constants"
+    import {aiGenerationTypes, AI_PROVIDER_POPPER_CLASS} from "../../utils/constants"
     import type {AiGenerationType} from "../../utils/constants"
 
     const props = withDefaults(defineProps<{
@@ -76,7 +76,7 @@
     onClickOutside(
         computed(() => copilotEl.value?.$el),
         () => { if (aiCopilotOpened.value) closeAiCopilot() },
-        {ignore: [computed(() => triggerBtn.value?.$el), ".ai-provider-pill-popper"]},
+        {ignore: [computed(() => triggerBtn.value?.$el), `.${AI_PROVIDER_POPPER_CLASS}`]},
     )
 
     const aiCopilotAllowed = computed(() => {
@@ -142,8 +142,8 @@
         width: calc(100% - 5rem);
         left: 3rem;
         max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
+        background-color: var(--ks-bg-surface);
+        box-shadow: 0 2px 4px 0 var(--ks-shadow-element);
     }
 
     .no-code-ai-trigger {

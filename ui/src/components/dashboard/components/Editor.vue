@@ -52,14 +52,15 @@
     <div class="main-editor" v-else>
         <KsSplitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
             <KsSplitterPanel :size="editorWidth" min="25%" max="75%">
-                <Editor
+                <KsEditor
+                    v-bind="editorBindings"
                     @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                     v-model="source"
                     schemaType="dashboard"
                     lang="yaml"
                     @update:model-value="source = $event"
                     @cursor="updatePluginDocumentation"
-                    :creating="true"
+                    :options="{creating: true}"
                     :readOnly="false"
                     :navbar="false"
                 />
@@ -94,14 +95,15 @@
             </KsSplitterPanel>
         </KsSplitter>
         <div v-else class="editor-only">
-            <Editor
+            <KsEditor
+                v-bind="editorBindings"
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                 v-model="source"
                 schemaType="dashboard"
                 lang="yaml"
                 @update:model-value="source = $event"
                 @cursor="updatePluginDocumentation"
-                :creating="true"
+                :options="{creating: true}"
                 :readOnly="false"
                 :navbar="false"
             />
@@ -110,7 +112,8 @@
 </template>
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
-    import Editor from "../../inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import Sections from "../sections/Sections.vue"
     import ValidationErrors from "../../flows/ValidationError.vue"
@@ -122,7 +125,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import intro from "../../../assets/docs/dashboard_home.md?raw"
     import yaml from "yaml"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {usePluginsStore} from "../../../stores/plugins"
     import {useDashboardStore} from "../../../stores/dashboard"
 
@@ -138,6 +141,8 @@
 
     const pluginsStore = usePluginsStore()
     const dashboardStore = useDashboardStore()
+
+    const editorBindings = useEditorBindings()
 
     const source = ref(props.initialSource)
     const errors = ref<any>(undefined)
@@ -266,7 +271,7 @@
 
     .main-editor {
         padding: .5rem 0px;
-        background: var(--ks-background-body);
+        background: var(--ks-bg-base);
         display: flex;
         height: calc(100% - 49px);
         min-height: 0;
@@ -300,9 +305,9 @@
 
                 & > div {
                     height: 100%;
-                    background: var(--ks-background-card);
-                    border: 1px solid var(--ks-border-primary);
-                    border-radius: 0.25rem;
+                    background: var(--ks-bg-surface);
+                    border: 1px solid var(--ks-border-default);
+                    border-radius: var(--ks-radius-base);
                 }
             }
         }
@@ -326,7 +331,7 @@
 
         &.enhance-readability {
             padding: calc(1rem * 1.5);
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
     }
 
@@ -356,7 +361,7 @@
     .view-buttons {
         .kel-button {
             &.kel-button--primary {
-                color: var(--ks-content-link);
+                color: var(--ks-text-link);
                 opacity: 1;
             }
 

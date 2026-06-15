@@ -10,6 +10,7 @@
                 :source="flowStore.flow?.source"
                 :execution="execution"
                 :expandedSubflows="expandedSubflows"
+                :horizontalDefault="horizontalDefault"
                 isReadOnly
                 @follow="$emit('follow', $event)"
                 viewType="topology"
@@ -22,181 +23,191 @@
         </div>
     </KsCard>
 </template>
-<script>
+<script setup lang="ts">
+    import {ref, computed, watch, onMounted, onUnmounted} from "vue"
+    import {useI18n} from "vue-i18n"
     import throttle from "lodash/throttle"
-    import {mapStores} from "pinia"
-    import {stringUtils} from "@kestra-io/design-system"
-    import {State} from "@kestra-io/design-system"
+    import {stringUtils, State} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
-    export default {
-        emits: ["follow"],
-        components: {
-            LowCodeEditor,
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useFlowStore),
-            execution() {
-                return this.executionsStore.execution
-            },
-            flowGraph() {
-                return this.executionsStore.flowGraph
-            },
-        },
-        data() {
-            return {
-                loading: true,
-                previousExecutionId: undefined,
-                expandedSubflows: [],
-                previousExpandedSubflows: [],
-                sseBySubflow: {},
-                throttledExecutionUpdate: throttle(function (subflow, executionEvent) {
-                    const previousExecution = this.executionsStore.subflowsExecutions[subflow]
-                    this.executionsStore.addSubflowExecution({
-                        subflow,
-                        execution: JSON.parse(executionEvent.data),
-                    })
 
-                    // add subflow execution id to graph
-                    if(previousExecution === undefined) {
-                        this.loadGraph(true)
-                    }
-                }, 500),
+    withDefaults(defineProps<{
+        horizontalDefault?: boolean
+    }>(), {
+        horizontalDefault: undefined,
+    })
+
+    const emit = defineEmits<{
+        follow: [event: unknown]
+    }>()
+
+    const {t} = useI18n()
+    const executionsStore = useExecutionsStore()
+    const flowStore = useFlowStore()
+
+    // FIXME: any - execution and flowGraph are untyped domain objects from the store
+    const execution = computed(() => executionsStore.execution as any) // FIXME: any
+    const flowGraph = computed(() => executionsStore.flowGraph)
+
+    const loading = ref(true)
+    const previousExecutionId = ref<string | undefined>(undefined)
+    const expandedSubflows = ref<string[]>([])
+    const previousExpandedSubflows = ref<string[]>([])
+    // FIXME: any - SSE objects don't have a consistent type in this codebase
+    const sseBySubflow = ref<Record<string, any>>({}) // FIXME: any
+
+    const throttledExecutionUpdate = throttle(function(subflow: string, executionEvent: MessageEvent) {
+        const previousExecution = executionsStore.subflowsExecutions[subflow]
+        executionsStore.addSubflowExecution({
+            subflow,
+            execution: JSON.parse(executionEvent.data),
+        })
+
+        // add subflow execution id to graph
+        if (previousExecution === undefined) {
+            loadGraph(true)
+        }
+    }, 500)
+
+    watch(execution, () => {
+        loadData()
+    })
+
+    onMounted(() => {
+        loadData()
+    })
+
+    onUnmounted(() => {
+        Object.keys(sseBySubflow.value).forEach(closeSSE)
+    })
+
+    function closeSSE(subflow: string) {
+        sseBySubflow.value[subflow].close()
+        delete sseBySubflow.value[subflow]
+        executionsStore.removeSubflowExecution(subflow)
+    }
+
+    function loadData() {
+        loadGraph()
+    }
+
+    function loadGraph(force?: boolean) {
+        loading.value = true
+
+        if (execution.value && (force || (flowGraph.value === undefined || previousExecutionId.value !== execution.value.id))) {
+            previousExecutionId.value = execution.value.id
+            executionsStore.loadAugmentedGraph({
+                id: execution.value.id,
+                params: {
+                    subflows: expandedSubflows.value,
+                },
+            }).catch(() => {
+                expandedSubflows.value = previousExpandedSubflows.value
+
+                handleSubflowsSSE()
+            }).finally(() => {
+                loading.value = false
+            })
+        } else {
+            loading.value = false
+        }
+    }
+
+    function onExpandSubflow(newExpandedSubflows: string[]) {
+        previousExpandedSubflows.value = expandedSubflows.value
+        expandedSubflows.value = newExpandedSubflows
+
+        handleSubflowsSSE()
+    }
+
+    function handleSubflowsSSE() {
+        Object.keys(sseBySubflow.value).filter(subflow => !expandedSubflows.value.includes(subflow))
+            .forEach(closeSSE)
+
+        // resolve parent subflows' execution first
+        const subflowsWithoutSSE = expandedSubflows.value.filter(subflow => !(subflow in sseBySubflow.value))
+            .sort((a, b) => (a.match(/\./g)?.length || 0) - (b.match(/\./g)?.length || 0))
+
+        subflowsWithoutSSE.forEach(subflow => {
+            addSSE(subflow, true)
+        })
+    }
+
+    function delaySSE(generateGraphBeforeDelay: boolean, subflow: string) {
+        if (generateGraphBeforeDelay) {
+            loadGraph(true)
+        }
+        setTimeout(() => addSSE(subflow), 500)
+    }
+
+    function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
+        let parentExecution = execution.value
+
+        const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
+            .sort((s1, s2) => s2.length - s1.length)
+
+        if (parentSubflows.length > 0) {
+            parentExecution = executionsStore.subflowsExecutions[parentSubflows[0]]
+        }
+
+        if (!parentExecution) {
+            delaySSE(!!generateGraphOnWaiting, subflow)
+            return
+        }
+
+        const taskIdMatchingTaskrun = parentExecution.taskRunList
+            .filter((taskRun: {taskId: string}) => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
+        const executionId = taskIdMatchingTaskrun?.outputs?.executionId
+
+        if (!executionId) {
+            if (taskIdMatchingTaskrun?.state?.current === State.SUCCESS) {
+                // Generating more than 1 subflow execution, we're not showing anything
+                loadGraph(true)
+                return
             }
-        },
-        watch: {
-            execution() {
-                this.loadData()
-            },
-        },
-        mounted() {
-            this.loadData()
-        },
-        unmounted() {
-            Object.keys(this.sseBySubflow).forEach(this.closeSSE)
-        },
-        methods: {
-            closeSSE(subflow) {
-                this.sseBySubflow[subflow].close()
-                delete this.sseBySubflow[subflow]
-                this.executionsStore.removeSubflowExecution(subflow)
-            },
-            loadData() {
-                this.loadGraph()
-            },
-            loadGraph(force) {
-                this.loading = true
 
-                if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
-                    this.previousExecutionId = this.execution.id
-                    this.executionsStore.loadAugmentedGraph({
-                        id: this.execution.id,
-                        params: {
-                            subflows: this.expandedSubflows,
-                        },
-                    }).catch(() => {
-                        this.expandedSubflows = this.previousExpandedSubflows
+            delaySSE(!!generateGraphOnWaiting, subflow)
+            return
+        }
 
-                        this.handleSubflowsSSE()
-                    }).finally(() => {
-                        this.loading = false
-                    })
-                } else {
-                    this.loading = false
-                }
-            },
-            onExpandSubflow(expandedSubflows) {
-                this.previousExpandedSubflows = this.expandedSubflows
-                this.expandedSubflows = expandedSubflows
-
-                this.handleSubflowsSSE()
-            },
-            handleSubflowsSSE() {
-                Object.keys(this.sseBySubflow).filter(subflow => !this.expandedSubflows.includes(subflow))
-                    .forEach(this.closeSSE)
-
-                // resolve parent subflows' execution first
-                const subflowsWithoutSSE = this.expandedSubflows.filter(subflow => !(subflow in this.sseBySubflow))
-                    .sort((a, b) => (a.match(/\./g)?.length || 0) - (b.match(/\./g)?.length || 0))
-
-
-                subflowsWithoutSSE.forEach(subflow => {
-                    this.addSSE(subflow, true)
-                })
-            },
-            delaySSE(generateGraphBeforeDelay, subflow) {
-                if(generateGraphBeforeDelay) {
-                    this.loadGraph(true)
-                }
-                setTimeout(() => this.addSSE(subflow), 500)
-            },
-            addSSE(subflow, generateGraphOnWaiting) {
-                let parentExecution = this.execution
-
-                const parentSubflows = this.expandedSubflows.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
-                    .sort((s1, s2) => s2.length - s1.length)
-
-                if(parentSubflows.length > 0) {
-                    parentExecution = this.executionsStore.subflowsExecutions[parentSubflows[0]]
-                }
-
-                if(!parentExecution) {
-                    this.delaySSE(generateGraphOnWaiting, subflow)
-                    return
-                }
-
-                const taskIdMatchingTaskrun = parentExecution.taskRunList
-                    .filter(taskRun => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
-                const executionId = taskIdMatchingTaskrun?.outputs?.executionId
-
-                if(!executionId) {
-                    if(taskIdMatchingTaskrun?.state?.current === State.SUCCESS) {
-                        // Generating more than 1 subflow execution, we're not showing anything
-                        this.loadGraph(true)
-                        return
+        executionsStore.followExecution({id: executionId}, t)
+            .then((sse: {onmessage: ((event: MessageEvent) => void) | null; close: () => void}) => {
+                sseBySubflow.value[subflow] = sse
+                sse.onmessage = (executionEvent: MessageEvent) => {
+                    const isEnd = executionEvent && executionEvent.lastEventId === "end"
+                    if (isEnd) {
+                        closeSubExecutionSSE(subflow)
                     }
-
-                    this.delaySSE(generateGraphOnWaiting, subflow)
-                    return
+                    // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                    if (executionEvent.lastEventId !== "start") {
+                        throttledExecutionUpdate(subflow, executionEvent)
+                    }
+                    if (isEnd) {
+                        throttledExecutionUpdate.flush()
+                    }
                 }
+            })
+    }
 
-                this.executionsStore.followExecution({id: executionId}, this.$t)
-                    .then(sse => {
-                        this.sseBySubflow[subflow] = sse
-                        sse.onmessage = (executionEvent) => {
-                            const isEnd = executionEvent && executionEvent.lastEventId === "end"
-                            if (isEnd) {
-                                this.closeSubExecutionSSE(subflow)
-                            }
-                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                            if (executionEvent.lastEventId !== "start") {
-                                this.throttledExecutionUpdate(subflow, executionEvent)
-                            }
-                            if (isEnd) {
-                                this.throttledExecutionUpdate.flush()
-                            }
-                        }
-                    })
-            },
-            closeSubExecutionSSE(subflow) {
-                const sse = this.sseBySubflow[subflow]
-                if (sse) {
-                    sse.close()
-                    delete this.sseBySubflow[subflow]
-                }
-            },
-        },
+    function closeSubExecutionSSE(subflow: string) {
+        const sse = sseBySubflow.value[subflow]
+        if (sse) {
+            sse.close()
+            delete sseBySubflow.value[subflow]
+        }
     }
 </script>
 <style scoped lang="scss">
     .kel-card {
-        height: calc(100vh - 174px);
+        height: var(--topology-height, calc(100vh - 174px));
         position: relative;
+        background-color: var(--ks-bg-base);
 
         :deep(.kel-card__body) {
             height: 100%;
             display: flex;
+            padding: 0;
         }
     }
 

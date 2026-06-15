@@ -2,7 +2,7 @@ import {computed, ComputedRef, onMounted} from "vue"
 import {useI18n} from "vue-i18n"
 import {useFlowStore} from "../../../stores/flow"
 import {usePluginsStore} from "../../../stores/plugins"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
 
 // fields displayed on top of the form

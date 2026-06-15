@@ -1,50 +1,50 @@
 <template>
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <section class="container">
-        <div>
-            <KsDataTable
-                ref="dataTable"
-                :loadData="loadData"
-                @ready="ready = true"
-                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-                striped
-                hover
-                :total="flowStore.total"
-            >
-                <template #navbar>
-                    <KsFormItem>
-                        <SearchField />
-                    </KsFormItem>
-                    <KsFormItem>
-                        <NamespaceSelect
-                            v-if="$route.name !== 'flows/update'"
-                            data-type="flow"
-                            v-model="namespace"
-                            @update:model-value="onNamespaceChange"
-                        />
-                    </KsFormItem>
+        <KsDataTable
+            ref="dataTable"
+            :loadData="loadData"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
+            @ready="ready = true"
+            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            striped
+            hover
+            :total="flowStore.total"
+        >
+            <template #navbar>
+                <KsFormItem>
+                    <SearchField />
+                </KsFormItem>
+                <KsFormItem>
+                    <NamespaceSelect
+                        v-if="$route.name !== 'flows/update'"
+                        data-type="flow"
+                        v-model="namespace"
+                        @update:model-value="onNamespaceChange"
+                    />
+                </KsFormItem>
+            </template>
+
+            <template #table>
+                <template v-for="(item, _i) in flowStore.search" :key="`card-${_i}`">
+                    <KsCard class="mb-2" shadow="never">
+                        <template #header>
+                            <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
+                                {{ item.model.namespace }}.{{ item.model.id }}
+                            </router-link>
+                        </template>
+                        <template v-for="(fragment, _j) in item.fragments" :key="`pre-${_i}-${_j}`">
+                            <small>
+                                <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
+                            </small>
+                        </template>
+                    </KsCard>
                 </template>
 
-                <template #table>
-                    <template v-for="(item, _i) in flowStore.search" :key="`card-${_i}`">
-                        <KsCard class="mb-2" shadow="never">
-                            <template #header>
-                                <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
-                                    {{ item.model.namespace }}.{{ item.model.id }}
-                                </router-link>
-                            </template>
-                            <template v-for="(fragment, _j) in item.fragments" :key="`pre-${_i}-${_j}`">
-                                <small>
-                                    <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
-                                </small>
-                            </template>
-                        </KsCard>
-                    </template>
-
-                    <KsEmpty v-if="flowStore.search === undefined || flowStore.search.length === 0" />
-                </template>
-            </KsDataTable>
-        </div>
+                <KsEmpty v-if="flowStore.search === undefined || flowStore.search.length === 0" />
+            </template>
+        </KsDataTable>
     </section>
 </template>
 
@@ -110,13 +110,16 @@
         })
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     function sanitize(content: string) {
         return _escape(content)

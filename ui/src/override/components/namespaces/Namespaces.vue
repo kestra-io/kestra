@@ -18,7 +18,6 @@
                 columns: {shown: false},
                 refresh: {shown: false}
             }"
-            :searchInputFullWidth="true"
             :buttons="{
                 savedFilters: {shown: false},
                 tableOptions: {shown: false}
@@ -78,7 +77,7 @@
 
     import {useRoute} from "vue-router"
     import useRouteContext from "../../../composables/useRouteContext"
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces"
+    import useNamespaces from "../../../composables/useNamespaces"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
 
@@ -92,6 +91,7 @@
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import {useAuthStore} from "override/stores/auth"
+    import {Namespace} from "@kestra-io/kestra-sdk"
 
     const namespacesFilter = useNamespacesFilter()
 
@@ -118,16 +118,16 @@
 
     const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
-        namespaces.value = await useNamespaces(
-            1000,
-            route.query?.["filters[q][EQUALS]"] === undefined ? undefined : {q: route.query["filters[q][EQUALS]"]},
-        ).all()
+        const filterParams = Object.fromEntries(
+            Object.entries(route.query).filter(([key]) => key.startsWith("filters[")),
+        )
+        namespaces.value = await useNamespaces(1000, filterParams).all()
     }
 
     watch(
-        () => route.query["filters[q][EQUALS]"],
+        () => route.query,
         () => loadData(),
-        {immediate: true},
+        {immediate: true, deep: true},
     )
 
     const miscStore = useMiscStore()
@@ -200,22 +200,22 @@
 .namespaces {
     margin: 0.25rem 0;
     border-radius: var(--kel-border-radius-round);
-    border: 1px solid var(--ks-border-primary);
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    border: 1px solid var(--ks-border-default);
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
 
     &.system {
-        border-color: var(--ks-border-active);
+        border-color: var(--ks-border-focus);
 
         & span.system {
             line-height: 1.5rem;
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 
     .rounded-full {
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-background-card)
+        background-color: var(--ks-bg-surface)
     }
 
     :deep(.kel-tree-node__content) {
@@ -225,11 +225,11 @@
         border-radius: var(--kel-border-radius-round);
 
         &:hover {
-            background: var(--ks-background-body);
+            background: var(--ks-bg-base);
         }
 
         .icon {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -239,11 +239,11 @@
         align-items: center;
         justify-content: space-between;
         padding: 0 0.5rem;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
 
         &:hover {
             background: transparent;
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 }

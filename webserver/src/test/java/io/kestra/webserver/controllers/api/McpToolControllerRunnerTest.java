@@ -91,7 +91,7 @@ class McpToolControllerRunnerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void givenKnownTool_whenToolCallWithValidInput_thenSuccessResultReturnedViaSse() throws InterruptedException {
+    void shouldReturnSuccessResultViaSseWhenToolCallWithValidInput() throws InterruptedException {
         // Given
         String serverId = saveServer(false, null);
         CountDownLatch completionLatch = new CountDownLatch(1);
@@ -125,7 +125,7 @@ class McpToolControllerRunnerTest {
     }
 
     @Test
-    void givenKnownTool_whenToolCallWithMissingRequiredInput_thenErrorResultReturnedViaSse() {
+    void shouldReturnErrorResultViaSseWhenToolCallWithMissingRequiredInput() {
         // Given
         String serverName = saveServer(false, null);
         String toolName = saveFlowWithToolAndConditionalFail(serverName);
@@ -150,7 +150,7 @@ class McpToolControllerRunnerTest {
     }
 
     @Test
-    void givenKnownTool_whenToolCallExecutionTimesOut_thenTimeoutErrorReturnedViaSse() {
+    void shouldReturnTimeoutErrorViaSseWhenToolCallExecutionTimesOut() {
         // Given
         String serverId = saveServer(false, null);
         CountDownLatch neverReleasedLatch = new CountDownLatch(1);  // intentionally never counted down
@@ -177,7 +177,7 @@ class McpToolControllerRunnerTest {
     }
 
     @Test
-    void givenMcpToolCall_whenExecutionCreated_thenMcpServerAndSessionLabelsAreSet() throws InterruptedException {
+    void shouldSetMcpServerAndSessionLabelsWhenExecutionCreated() throws InterruptedException {
         // Given
         String serverId = saveServer(false, null);
         String flowId = IdUtils.create();
@@ -235,7 +235,7 @@ class McpToolControllerRunnerTest {
     private String saveServer(boolean disabled, String instructions) {
         String serverName = "server-" + IdUtils.create();
         McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverName, null,
-            instructions, null, null, disabled, false, false, null, null);
+            instructions, null, null, null, null, disabled, false, false, null, null);
         return mcpServerRepository.save(null, mcpServer).id();
     }
 

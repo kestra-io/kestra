@@ -17,16 +17,19 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.executor.KillSwitchActionService;
+import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
@@ -37,7 +40,6 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 @Slf4j
@@ -56,7 +58,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private ExecutorService executorService;
     @Inject
-    private WorkerGroupService workerGroupService;
+    private WorkerQueueService workerGroupService;
 
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
@@ -70,6 +72,11 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
+
     private final Tracer tracer;
 
     @Inject
@@ -79,6 +86,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionEvent message) {
+        EvaluationType evaluationType = killSwitchService.evaluate(message);
+        if (evaluationType != EvaluationType.PASS) {
+            var execution = executionStateStore.findById(message.executionId());
+            if (execution != null && evaluationType.isKillSwitched(execution)) {
+                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+                return Optional.empty();
+            }
+        }
+
         return executionStateStore.lock(
             message.executionId(), execution -> tracer.inCurrentContext(
                 execution,
@@ -171,7 +187,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 {
                                     WorkerTask workerTask = executorTask.workerTask();
                                     try {
-                                        if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
+                                        if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
                                             workerTaskResults.add(
                                                 new WorkerTaskResult(
                                                     workerTask.getTaskRun().withState(State.Type.SKIPPED)
@@ -180,15 +196,19 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             );
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
-                                                String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> executorTask.runContext().render(workerGroup.getKey())))
+                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask);
+                                                // Internal dispatch convention: null = default queue. SystemTask routing
+                                                // is enforced upstream in WorkerQueueService.
+                                                String workerQueueId = routing
+                                                    .map(WorkerQueueRouting::workerQueueId)
+                                                    .map(WorkerQueues::toDispatchKey)
                                                     .orElse(null);
                                                 if (workerTask.getTask() instanceof WorkingDirectory) {
                                                     // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
+                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                    workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerGroupKey));
+                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
@@ -216,7 +236,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     } catch (Exception e) {
                                         workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
                                         executorTask.runContext().logger()
-                                            .error("Failed to evaluate the when condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
+                                            .error("Failed to evaluate the runIf condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
                                     }
                                 }));
 
@@ -303,4 +323,5 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         logger.emitLogs(failedExecution.logs());
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
+
 }

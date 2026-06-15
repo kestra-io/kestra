@@ -28,10 +28,12 @@
         title?: string;
         icon?: boolean;
         size?: "large" | "default" | "small";
+        glow?: boolean;
     }>(), {
-        icon: false,
+        icon: true,
         size: "default",
         title: undefined,
+        glow: false,
     })
 
     defineSlots<{
@@ -43,13 +45,14 @@
     })
 
     const displayText = computed(() => {
-        return props.title ?? props.status
+        return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
     })
 
     const classes = computed(() => [
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
         props.size !== "default" && `ks-execution-status--${props.size}`,
+        props.glow && "ks-execution-status--glow",
     ].filter(Boolean))
 </script>
 
@@ -72,13 +75,13 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     user-select: none;
     vertical-align: middle;
     appearance: none;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
+    border: none;
+    border-radius: var(--ks-radius-sm);
+    background: var(--ks-bg-badge);
     font-family: inherit;
     height: 2rem;
     padding: 0.5rem 0.9375rem;
     font-size: var(--ks-font-size-sm);
-    min-width: 7rem;
     gap: 0.375rem;
 
     .ks-execution-status__icon {
@@ -90,7 +93,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     .ks-execution-status__text {
         display: inline-flex;
         align-items: center;
-        text-transform: uppercase;
     }
 
     &::-moz-focus-inner {
@@ -106,7 +108,7 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
     &.ks-execution-status--small {
         height: 1.5rem;
-        padding: 0.3125rem 0.6875rem;
+        padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
     }
@@ -114,9 +116,12 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
 @each $status in $statusList {
     .ks-execution-status--#{$status} {
-        color: var(--ks-content-#{$status});
-        border-color: var(--ks-border-#{$status});
-        background-color: var(--ks-background-#{$status});
+        color: var(--ks-status-#{$status});
+        background-color: var(--ks-status-background-#{$status});
+
+        &.ks-execution-status--glow {
+            box-shadow: 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+        }
     }
 }
 </style>

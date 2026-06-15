@@ -87,24 +87,9 @@ class GrpcChannelManagerTest {
     }
 
     @Test
-    void shouldCreateChannelWithDnsSrvConfiguration() {
+    void shouldCreateChannelWithDnsConfiguration() {
         // Given
-        WorkerControllersConfiguration config = createDnsSrvConfig("kestra-controller.default.svc.cluster.local");
-        GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-
-        // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
-        channelManager.init();
-
-        // Then
-        Channel channel = channelManager.getDefaultChannel();
-        assertThat(channel).isNotNull();
-    }
-
-    @Test
-    void shouldCreateChannelWithDnsARecordConfiguration() {
-        // Given
-        WorkerControllersConfiguration config = createDnsARecordConfig("controllers.example.com", 9096);
+        WorkerControllersConfiguration config = createDnsConfig("controllers.example.com", 9096);
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
@@ -156,7 +141,7 @@ class GrpcChannelManagerTest {
         WorkerControllersConfiguration config = new WorkerControllersConfiguration(
             DiscoveryType.DNS,
             null,
-            new DnsConfig("", 9096, DnsConfig.DnsRecordType.SRV, Duration.ofSeconds(30)),
+            new DnsConfig("", 9096, Duration.ofSeconds(30)),
             null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
@@ -480,23 +465,11 @@ class GrpcChannelManagerTest {
         );
     }
 
-    private static WorkerControllersConfiguration createDnsSrvConfig(String hostname) {
+    private static WorkerControllersConfiguration createDnsConfig(String hostname, int defaultPort) {
         return new WorkerControllersConfiguration(
             DiscoveryType.DNS,
             null,
-            new DnsConfig(hostname, 9096, DnsConfig.DnsRecordType.SRV, Duration.ofSeconds(30)),
-            null,
-            new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
-            new HealthCheck(true),
-            new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
-        );
-    }
-
-    private static WorkerControllersConfiguration createDnsARecordConfig(String hostname, int defaultPort) {
-        return new WorkerControllersConfiguration(
-            DiscoveryType.DNS,
-            null,
-            new DnsConfig(hostname, defaultPort, DnsConfig.DnsRecordType.A, Duration.ofSeconds(30)),
+            new DnsConfig(hostname, defaultPort, Duration.ofSeconds(30)),
             null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),

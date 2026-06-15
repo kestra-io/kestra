@@ -126,7 +126,7 @@ public class WorkingDirectoryTest {
     }
 
     // FIXME can be moved back to regular @Test once https://github.com/kestra-io/kestra/issues/13134 is handled
-    @FlakyTest
+    @FlakyTest(description = "Blocked by #13134: working directory output file handling")
     @LoadFlows(value = { "flows/valids/working-directory-outputs.yml" }, tenantId = "output")
     void outputFiles() throws Exception {
         suite.outputFiles("output", runnerUtils);
@@ -139,9 +139,9 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory-invalid-when.yaml"})
-    void invalidWhen() throws Exception {
-        suite.invalidWhen(runnerUtils);
+    @LoadFlows({ "flows/valids/working-directory-invalid-runif.yaml" })
+    void invalidRunIf() throws Exception {
+        suite.invalidRunIf(runnerUtils);
     }
 
     @Singleton
@@ -382,9 +382,9 @@ public class WorkingDirectoryTest {
             assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("decrypted").getFirst()).get("value")).isEqualTo("Hello World");
         }
 
-        public void invalidWhen(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+        public void invalidRunIf(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(
-                MAIN_TENANT, "io.kestra.tests", "working-directory-invalid-when", null,
+                MAIN_TENANT, "io.kestra.tests", "working-directory-invalid-runif", null,
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 

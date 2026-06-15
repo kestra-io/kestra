@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
 import io.kestra.core.models.triggers.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.metrics.MetricRegistry;
@@ -130,6 +131,9 @@ class TriggerSchedulerTest {
         assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
         assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
         assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+
+        // The locking execution id is persisted on the trigger state (allowConcurrent defaults to false).
+        assertThat(state.getExecutionId()).isEqualTo(execution.getId());
     }
 
     @Test
@@ -209,6 +213,31 @@ class TriggerSchedulerTest {
         assertThat(state.isLocked()).isTrue();
         assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
         assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().toInstant());
+    }
+
+    @Test
+    void shouldNotLockTriggerWhenWorkerJobIsNotDispatched() throws Exception {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .build()
+        );
+        TriggerWorkerJobPublisher publisher = Mockito.mock(TriggerWorkerJobPublisher.class);
+        Mockito.when(publisher.send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(false);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow), publisher);
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN — the trigger must stay unlocked so it is retried at its next evaluation date
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("realtime")).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+        assertThat(state.getLastTriggeredDate()).isNull();
     }
 
     @Test
@@ -693,6 +722,10 @@ class TriggerSchedulerTest {
     }
 
     private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows) {
+        return newTriggerScheduler(flows, triggerWorkerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows, TriggerWorkerJobPublisher workerJobPublisher) {
         InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, flows);
         return new TriggerScheduler(
             triggerStateStore,
@@ -703,7 +736,7 @@ class TriggerSchedulerTest {
             pluginDefaultService,
             schedulableEvaluator,
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
-            triggerWorkerJobPublisher,
+            workerJobPublisher,
             triggerExecutionPublisher,
             new SchedulerConfiguration(1, Duration.ZERO, 100)
         );

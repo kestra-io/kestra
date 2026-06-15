@@ -3,6 +3,7 @@ import {v4 as uuid} from "uuid"
 import {State} from "@kestra-io/design-system"
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../../../src/components/dependencies/utils/types"
 import type {Types, Node, Edge, Element} from "../../../src/components/dependencies/utils/types"
+import {getRandomID} from "../../../src/utils/id"
 
 type DependencyOptions = {
     roots?: number;
@@ -12,7 +13,6 @@ type DependencyOptions = {
     subtype?: Types;
 };
 
-import {getRandomID} from "../../../scripts/id"
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"]
 

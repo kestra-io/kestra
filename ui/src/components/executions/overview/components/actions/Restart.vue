@@ -1,6 +1,14 @@
 <template>
+    <NavBarAction
+        v-if="asItem && (isReplay || enabled)"
+        :icon="icon"
+        :disabled="!enabled"
+        @click="isOpen = !isOpen"
+    >
+        {{ $t(replayOrRestart) }}
+    </NavBarAction>
     <KsTooltip
-        v-if="isReplay || enabled"
+        v-else-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -18,7 +26,7 @@
         >
             {{ $t(replayOrRestart) }}
         </component>
-        <span v-else-if="component === 'el-dropdown-item'">
+        <span v-else>
             <component
                 v-bind="$attrs"
                 :is="component"
@@ -173,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, inject} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
@@ -187,8 +195,12 @@
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {KsId} from "@kestra-io/design-system"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
+    import {asItemKey} from "../../../../layout/navBarActionsContext"
 
     defineOptions({inheritAttrs: false})
+
+    const asItem = inject(asItemKey, false)
 
     const props = defineProps({
         component: {type: String, default: "el-button"},
@@ -436,7 +448,7 @@
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-btn-primary-bg-default);
             }
         }
     }
@@ -451,8 +463,8 @@
     &.is-checked {
         :deep(.kel-radio__input) {
             .kel-radio__inner {
-                border-color: var(--ks-button-background-primary);
-                background-color: var(--ks-button-background-primary);
+                border-color: var(--ks-btn-primary-bg-default);
+                background-color: var(--ks-btn-primary-bg-default);
 
                 &::after {
                     background-color: var(--ks-white);

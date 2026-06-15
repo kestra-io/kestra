@@ -155,8 +155,8 @@ export const Multiple: Story = {
 }
 
 /** Small size – as used in Pagination */
-export const SmallSize: Story = {
-    render: (args) => ({
+export const Sizes: Story = {
+    render: () => ({
         components: {KsSelect, ElOption},
         setup() {
             const value = ref("25")
@@ -166,17 +166,26 @@ export const SmallSize: Story = {
                 {value: "50", label: "50 / page"},
                 {value: "100", label: "100 / page"},
             ]
-            return {args, value, options}
+            return {value, options}
         },
         template: `
-            <div style="padding:24px;min-height:200px">
-                <ks-select v-model="value" v-bind="args" style="width:130px">
+            <div style="padding:12px;">
+                <ks-select v-model="value" size="small" style="width:130px">
+                    <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
+                </ks-select>
+            </div>
+            <div style="padding:12px;">
+                <ks-select v-model="value" style="width:130px">
+                    <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
+                </ks-select>
+            </div>
+            <div style="padding:12px;">
+                <ks-select v-model="value" size="large" style="width:130px">
                     <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
                 </ks-select>
             </div>
         `,
     }),
-    args: {size: "small"},
 }
 
 /** Disabled state */
@@ -359,6 +368,37 @@ export const CustomTagSlot: Story = {
         `,
     }),
     args: {multiple: true, filterable: true, clearable: true, placeholder: "Select namespaces"},
+}
+
+export const RichOptionContent: Story = {
+    render: (args) => ({
+        components: {KsSelect, ElOption},
+        setup() {
+            const value = ref<string | null>(null)
+            const versions = [
+                {value: "0.22.0", date: "May 21, 2026", minKestra: "0.22.0"},
+                {value: "0.21.3", date: "April 14, 2026", minKestra: "0.21.0"},
+                {value: "0.21.0", date: "March 02, 2026", minKestra: "0.21.0"},
+                {value: "0.20.5", date: "January 18, 2026", minKestra: "0.20.0"},
+            ]
+            return {args, value, versions}
+        },
+        template: `
+            <div style="padding:24px;min-height:340px;display:flex;flex-direction:column;gap:12px">
+                <ks-select v-model="value" v-bind="args" style="width:260px">
+                    <ks-option v-for="v in versions" :key="v.value" :value="v.value" :label="v.value">
+                        <div style="display:flex;flex-direction:column;gap:2px;padding:4px 0;line-height:1.25rem">
+                            <span style="font-weight:600">{{ v.value }}</span>
+                            <span style="font-size:12px;opacity:0.6">{{ v.date }}</span>
+                            <span style="font-size:12px;opacity:0.6">Min. compatible Kestra vers.: {{ v.minKestra }}</span>
+                        </div>
+                    </ks-option>
+                </ks-select>
+                <span style="font-size:13px;opacity:0.6">Selected: {{ value || '(none)' }}</span>
+            </div>
+        `,
+    }),
+    args: {size: "small", placeholder: "Previous versions"},
 }
 
 /** Label slot – as used in Plugin.vue for version display */

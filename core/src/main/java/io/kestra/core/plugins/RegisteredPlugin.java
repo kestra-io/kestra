@@ -73,6 +73,7 @@ public class RegisteredPlugin {
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
     Map<String, List<PluginUiModule>> pluginUiManifest;
+    String pluginUiSourceHash;
 
     public boolean isValid() {
         return !tasks.isEmpty() ||

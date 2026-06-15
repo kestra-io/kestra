@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -13,10 +14,14 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.worker.systemworker.SystemWorker;
 import org.awaitility.Awaitility;
 
+import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import io.kestra.core.utils.Await;
 
@@ -24,9 +29,15 @@ import io.kestra.core.utils.Await;
     name = "executor",
     description = "Start the Kestra executor"
 )
+@Slf4j
 public class ExecutorCommand extends AbstractServerCommand {
+    private ExecutorService poolExecutor;
+
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
+
+    @Inject
+    private ExecutorsUtils executorsUtils;
 
     @Inject
     private Provider<IgnoreExecutionService> ignoreExecutionService;
@@ -39,6 +50,9 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Inject
     private Provider<Executor> executorService;
+
+    @Inject
+    private BeanProvider<SystemWorker> systemWorker;
 
     @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -88,6 +102,13 @@ public class ExecutorCommand extends AbstractServerCommand {
         }
 
         executorService.get().run();
+
+        // start the embedded SystemWorker (always present in EXECUTOR mode)
+        poolExecutor = executorsUtils.cachedThreadPool("embedded-services");
+        log.info("Starting the embedded SystemWorker.");
+        poolExecutor.execute(systemWorker.get()::start);
+
+        shutdownHook(true, () -> poolExecutor.shutdown());
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
 

@@ -1,16 +1,1 @@
-@use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
-
-// vue-sidebar
-@use "vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
-    $primary-color: global-var.$primary,
-    $base-bg: global-var.$white,
-    $item-color: global-var.$black,
-    $item-active-bg: global-var.$primary,
-    $item-active-color: global-var.$white,
-    $item-font-size: global-var.$font-size-base,
-    $item-hover-color: global-var.$white,
-    $item-hover-bg: global-var.$secondary,
-    $icon-color: currentColor,
-);
-
 @use "nprogress/nprogress.css";

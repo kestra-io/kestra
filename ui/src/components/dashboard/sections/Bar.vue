@@ -104,17 +104,19 @@
         return {
             grid: isCompact
                 ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: "3%", right: "4%", bottom: "3%", top: chartOptions?.legend?.enabled ? "60px" : "5%", containLabel: true},
+                : {left: "3%", right: "4%", bottom: "8%", top: chartOptions?.legend?.enabled ? "60px" : "5%", containLabel: true},
             xAxis: {
                 type: "category",
                 data: categories.value,
                 show: showAxes,
                 name: showAxes ? (chartOptions?.column ? (data?.columns?.[chartOptions.column]?.displayName ?? chartOptions.column) : "") : undefined,
+                nameTextStyle: {align: "right"},
             },
             yAxis: {
                 type: "value",
                 show: showAxes,
                 name: showAxes ? (aggregator[0][1].displayName ?? aggregator[0][0]) : undefined,
+                nameTextStyle: {align: "left"},
                 axisLabel: isDurationAgg()
                     ? {formatter: (v: number) => durationUtils.humanDuration(v)}
                     : {},

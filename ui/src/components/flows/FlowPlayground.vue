@@ -11,7 +11,7 @@
                     :execution="executionsStore.execution"
                 />
                 <KsDropdown trigger="click" placement="bottom-end">
-                    <KsButton :icon="DotsVertical" link class="tab-icon" />
+                    <KsButton :icon="DotsVertical" link class="tab-icon" :aria-label="$t('playground actions')" />
                     <template #dropdown>
                         <KsDropdownMenu class="m-2">
                             <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
@@ -80,7 +80,6 @@
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Gantt from "../executions/Gantt.vue"
-    // @ts-expect-error no types on logs
     import Logs from "../executions/Logs.vue"
     import ExecutionOutput from "../executions/outputs/Wrapper.vue"
     import ExecutionMetric from "../executions/ExecutionMetric.vue"
@@ -140,7 +139,7 @@
 <style scoped lang="scss">
 
     .tab-icon{
-        color: var(--ks-content-inactive);
+        color: var(--ks-text-inactive);
         margin-right: 4px;
     }
 
@@ -154,7 +153,7 @@
         flex-direction: column;
         position: relative;
         color: var(--ks-color-text-secondary);
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         overflow-y: auto;
     }
 
@@ -162,10 +161,10 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         padding: 8px;
         position: sticky;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         top: 0;
         z-index: 100;
         gap: 1rem;
@@ -197,7 +196,7 @@
         gap: 8px;
         align-items: center;
         .tab-icon{
-            color: var(--ks-content-inactive);
+            color: var(--ks-text-inactive);
         }
     }
 
@@ -205,14 +204,14 @@
         position: absolute;
         top: 56px;
         right: 12px;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border: none;
         padding: 8px;
         border-radius: 50%;
         display: flex;
         z-index: 99;
         &:hover {
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
 
@@ -230,13 +229,13 @@
             margin: .8rem 1rem;
             font-weight: normal;
             margin-bottom: 0.5rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         &.history-visible {
             width: 300px;
             overflow-y: auto;
-            border-color: var(--ks-border-primary);
+            border-color: var(--ks-border-default);
         }
     }
 
@@ -253,20 +252,20 @@
     .pillTabs {
         display: flex;
         padding: 4px;
-        background-color:var(--ks-background-card) ;
+        background-color:var(--ks-bg-surface) ;
         margin: 1rem;
         border-radius: 6px;
         gap: 2px;
         button{
             padding: 0.2rem .5rem;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             background-color: transparent;
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: var(--ks-button-content-primary);
-                background-color: var(--ks-playground-bg-color);
+                color: var(--ks-btn-primary-text);
+                background-color: var(--ks-btn-primary-bg-default);
             }
         }
     }
@@ -274,7 +273,7 @@
     .tab-content{
         overflow: auto;
         padding: 1rem;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     .empty-state{
@@ -284,7 +283,7 @@
         justify-content: center;
         p {
             text-align: center;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             img {
                 width: 200px;
                 margin-bottom: 1rem;

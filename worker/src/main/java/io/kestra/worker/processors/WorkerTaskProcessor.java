@@ -84,8 +84,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
-        this.workerGroup = workerGroup;
         this.workerId = workerId;
+        this.workerGroup = workerGroup;
         this.serverConfig = serverConfig;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.workerMetricQueue = workerMetricQueue;
@@ -135,7 +135,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 // all tasks will be handled immediately by the worker
                 WorkerTaskResult workerTaskResult = null;
                 try {
-                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getWhen()))) {
+                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
                         workerTaskResult = new WorkerTaskResult(
                             currentWorkerTask.getTaskRun()
                                 .withState(SKIPPED)
@@ -150,7 +150,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     }
                 } catch (IllegalVariableEvaluationException e) {
                     RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
-                    contextLogger.logger().error("Failed evaluating when: {}", e.getMessage(), e);
+                    contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
                 }
 
@@ -393,7 +393,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         metricRunningCount.incrementAndGet();
 
         // run it
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
+        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
         io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
 
         metricRunningCount.decrementAndGet();

@@ -1,6 +1,5 @@
 package io.kestra.mcp;
 
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.mcp.models.McpServer;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,19 +28,19 @@ public class McpServerHandlerTransport {
     private final Map<HandlerKey, McpAsyncServer> servers = new ConcurrentHashMap<>();
     private final McpErrorResponseMapper mcpErrorResponseMapper;
     private final McpToolService mcpToolService;
-    private final McpServerRepositoryInterface mcpServerRepository;
+    private final McpServerCache mcpServerCache;
     private final McpSessionService mcpSessionService;
 
     @Inject
     public McpServerHandlerTransport(
         McpErrorResponseMapper mcpErrorResponseMapper,
         McpToolService mcpToolService,
-        McpServerRepositoryInterface mcpServerRepository,
+        McpServerCache mcpServerCache,
         McpSessionService mcpSessionService
     ) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
         this.mcpToolService = mcpToolService;
-        this.mcpServerRepository = mcpServerRepository;
+        this.mcpServerCache = mcpServerCache;
         this.mcpSessionService = mcpSessionService;
     }
 
@@ -59,15 +58,19 @@ public class McpServerHandlerTransport {
         });
     }
 
-    public Mono<Void> refreshTools(String tenantId, String serverId, boolean flowDeletedOrDisabled) {
+    public Mono<Void> refreshTools(String tenantId, String serverId) {
         HandlerKey key = new HandlerKey(tenantId, serverId);
         McpAsyncServer server = servers.get(key);
         if (server == null) {
             return Mono.empty();
         }
 
+        McpServer.ServerType serverType = mcpServerCache.get(tenantId, serverId)
+            .map(McpServer::serverType)
+            .orElse(McpServer.ServerType.PRIVATE);
+
         List<McpServerFeatures.AsyncToolSpecification> newSpecs =
-            mcpToolService.listToolSpecsForServer(tenantId, serverId);
+            mcpToolService.listToolSpecsForServer(tenantId, serverId, serverType);
         Set<String> newToolNames = newSpecs.stream()
             .map(spec -> spec.tool().name())
             .collect(Collectors.toSet());
@@ -119,17 +122,19 @@ public class McpServerHandlerTransport {
                     .build()
             );
 
-        mcpServerRepository.get(handlerKey.tenantId(), handlerKey.serverId())
-            .ifPresent(mcpServer -> {
-                mcpServerSpec.serverInfo(mcpServer.id(), "1.0.0");
-                if (mcpServer.instructions() != null) {
-                    mcpServerSpec.instructions(mcpServer.instructions());
-                }
-            });
+        Optional<McpServer> serverOpt = mcpServerCache.get(handlerKey.tenantId(), handlerKey.serverId());
+        serverOpt.ifPresent(mcpServer -> {
+            mcpServerSpec.serverInfo(mcpServer.id(), "1.0.0");
+            if (mcpServer.instructions() != null) {
+                mcpServerSpec.instructions(mcpServer.instructions());
+            }
+        });
 
+        McpServer.ServerType serverType = serverOpt.map(McpServer::serverType).orElse(McpServer.ServerType.PRIVATE);
         return mcpServerSpec.tools(this.mcpToolService.listToolSpecsForServer(
             handlerKey.tenantId(),
-            handlerKey.serverId()
+            handlerKey.serverId(),
+            serverType
         )).build();
     }
 

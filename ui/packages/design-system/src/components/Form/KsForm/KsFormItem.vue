@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem} from "element-plus"
+    import {ElFormItem, type FormItemRule} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -21,7 +21,7 @@
     const props = withDefaults(defineProps<{
         label?: string
         prop?: string | string[]
-        rules?: any | any[]
+        rules?: FormItemRule[]
         required?: boolean
         labelWidth?: string | number
         error?: string
@@ -58,7 +58,7 @@
 
         .kel-input-group__append, .kel-input-group__prepend {
             background-color: transparent;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 </style>

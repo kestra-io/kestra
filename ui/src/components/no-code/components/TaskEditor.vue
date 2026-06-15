@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import TaskObject from "./tasks/TaskObject.vue"
     import PluginSelect from "../../plugins/PluginSelect.vue"
     import {NoCodeElement, Schemas} from "../utils/types"
@@ -439,10 +439,10 @@
         gap: 0.25rem;
         font-weight: 600;
         .asterisk {
-            color: var(--ks-content-alert);
+            color: var(--ks-status-error);
         }
         code {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 

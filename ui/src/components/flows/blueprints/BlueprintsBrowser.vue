@@ -8,7 +8,11 @@
                 class="blueprints"
                 :loadData="loadData"
                 :total="total"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 divider
+                noPaginationGutter
+                :noGutter="!embed && !system"
                 @ready="ready = true"
                 @page-changed="onPageChanged"
             >
@@ -37,23 +41,29 @@
                     </nav>
                 </template>
                 <template #top>
-                    <KsRow class="mb-3" justify="center">
-                        <KSFilter
-                            :configuration="blueprintFilter"
-                            :buttons="{
-                                savedFilters: {shown: false},
-                                tableOptions: {shown: false}
-                            }"
-                            :searchInputFullWidth="true"
-                            @search="handleSearch"
-                        />
-                    </KsRow>
+                    <BlueprintsFilterBar
+                        v-model="selectedTags"
+                        :embed
+                        :system
+                        :tags
+                        @search="handleSearch"
+                    />
                 </template>
                 <template #table>
                     <KsAlert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
                     </KsAlert>
-                    <div class="card-grid">
+                    <div v-if="embed && !system" class="blueprint-list">
+                        <BlueprintListRow
+                            v-for="blueprint in blueprints"
+                            :key="blueprint.id"
+                            :blueprint
+                            :tags
+                            @click="goToDetail(blueprint.id)"
+                            @copy="copy(blueprint.id)"
+                        />
+                    </div>
+                    <div v-else class="card-grid" :class="{system}">
                         <KsCard
                             class="blueprint-card"
                             v-for="blueprint in blueprints"
@@ -61,7 +71,7 @@
                             @click="goToDetail(blueprint.id)"
                         >
                             <div class="card-content-wrapper">
-                                <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
+                                <div v-if="!system && blueprint.tags?.length" class="tags-section">
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
                                 <div v-if="blueprint.template" class="tags-section">
@@ -78,15 +88,6 @@
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
-                                        <KsTooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000">
-                                            <KsButton
-                                                type="primary"
-                                                size="default"
-                                                :icon="icon.ContentCopy"
-                                                @click.prevent.stop="copy(blueprint.id)"
-                                                class="p-2"
-                                            />
-                                        </KsTooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
                                             <KsButton v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
@@ -108,23 +109,21 @@
     import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {KsTaskIcon} from "@kestra-io/design-system"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Errors from "../../../components/errors/Errors.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import BlueprintListRow from "./BlueprintListRow.vue"
+    import BlueprintsFilterBar from "./BlueprintsFilterBar.vue"
     import {editorViewTypes} from "../../../utils/constants"
     import * as Utils from "../../../utils/utils"
     import {usePluginsStore} from "../../../stores/plugins"
     import {useBlueprintsStore} from "../../../stores/blueprints"
+    import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
     import {useApiStore} from "../../../stores/api"
     import {useCoreStore} from "../../../stores/core"
     import {useDocStore} from "../../../stores/doc"
     import {canCreate} from "override/composables/blueprintsPermissions"
-    import {useBlueprintFilter} from "../../filter/configurations"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     const {loadInit} = useRestoreUrl()
-
-    const blueprintFilter = useBlueprintFilter()
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
@@ -157,24 +156,20 @@
 
     const searchText = ref(route.query["filters[q][EQUALS]"] ?? "")
     const selectedTags = ref<string[]>(initSelectedTags())
-    const tags = ref<Record<string, any> | undefined>(undefined)
+    const tags = ref<Record<string, BlueprintTag> | undefined>(undefined)
     const total = ref(0)
-    const blueprints = ref<{
-        includedTasks: string[];
-        id: string;
-        tags: string[];
-        title?: string;
-        template?: Record<string, any>;
-    }[] | undefined>(undefined)
+    const blueprints = ref<FlowBlueprint[] | undefined>(undefined)
     const error = ref(false)
-    const icon = {ContentCopy}
 
     const handleSearch = (query: string) => {
         searchText.value = query
     }
 
-    const onPageChanged = ({page}: {page: number; size: number}) => {
-        router.push({query: {...route.query, page}})
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
 
     const pluginsStore = usePluginsStore()
@@ -185,8 +180,8 @@
 
     const userCanCreate = computed(() => canCreate(props.blueprintKind))
 
-    const processedTags = (blueprintTags: string[]) => {
-        return blueprintTags.map(tag => ({
+    const processedTags = (blueprintTags?: string[]) => {
+        return (blueprintTags ?? []).map(tag => ({
             original: tag,
             display: tags.value?.[tag]?.name ?? tag,
         }))
@@ -384,14 +379,14 @@
             width: 100%;
             gap: .5rem;
             flex-wrap: wrap;
-            --kel-button-bg-color: var(--ks-background-card);
+            --kel-button-bg-color: var(--ks-bg-surface);
 
             & > * {
                 max-width: 50%;
 
                 :deep(span) {
                     border-radius: 0.25rem !important;
-                    border: 1px solid var(--ks-border-primary);
+                    border: 1px solid var(--ks-border-default);
                     width: 100%;
                     font-size: var(--ks-font-size-xs);
                     box-shadow: none;
@@ -400,37 +395,41 @@
                 }
 
                 &:hover :deep(span) {
-                    color: var(--ks-content-link-hover);
-                    background-color: var(--ks-button-background-secondary-hover);
+                    color: var(--ks-text-link);
+                    background-color: var(--ks-btn-secondary-bg-hover);
                 }
             }
         }
-    }
-
-    .search-bar-row {
-        max-width: 800px;
-        margin: 0 auto 1.5rem auto;
     }
 
     .card-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(297px, 1fr));
         gap: 1rem;
+
+        &.system {
+            padding-inline: var(--ks-data-table-gutter);
+        }
+    }
+
+    .blueprint-list {
+        display: flex;
+        flex-direction: column;
     }
 
     .blueprint-card {
         cursor: pointer;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 0.25rem;
-        background-color: var(--ks-background-card);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        background-color: var(--ks-bg-surface);
         transition: all 0.2s ease;
         display: flex;
-        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
         min-height: 200px;
 
         &:hover {
             transform: scale(1.02);
-            box-shadow: 0 0.5rem 1rem 0 var(--ks-card-shadow);
+            box-shadow: 0 0.5rem 1rem 0 var(--ks-shadow-element);
         }
 
         :deep(.icon) {
@@ -457,12 +456,12 @@
         gap: 0.25rem;
 
         .tag-item {
-            border: 1px solid var(--ks-border-primary);
-            color: var(--ks-content-primary);
-            border-radius: 0.25rem;
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-text-primary);
+            border-radius: var(--ks-radius-base);
             padding: 0.25rem 0.5rem;
             font-size: var(--ks-font-size-xs);
-            background: var(--ks-tag-background-active);
+            background: var(--ks-bg-tag-active);
         }
     }
 
@@ -473,7 +472,7 @@
         .title {
             font-size: var(--ks-font-size-base);
             font-weight: 600;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             line-height: 22px;
             overflow-wrap: break-word;
         }

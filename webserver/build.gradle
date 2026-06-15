@@ -1,6 +1,9 @@
 if (rootProject.name == "kestra") {
+    // mustRunAfter (not dependsOn) keeps assembleFrontend out of the check/test task graph,
+    // while still guaranteeing processResources sees the built UI files whenever shadowJar
+    // pulls assembleFrontend into the graph (e.g. executableJar, make build-docker).
     tasks.named('processResources') {
-        dependsOn(':ui:assembleFrontend')
+        mustRunAfter(':ui:assembleFrontend')
     }
 }
 
@@ -28,10 +31,13 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
+    implementation "io.micronaut.security:micronaut-security-csrf"
+
     implementation("com.posthog.java:posthog:1.2.0")
 
     // ai
     implementation("dev.langchain4j:langchain4j")
+    implementation("dev.langchain4j:langchain4j-mcp")
     implementation("dev.langchain4j:langchain4j-google-ai-gemini")
     implementation("dev.langchain4j:langchain4j-http-client-jdk")
     implementation('org.bouncycastle:bcpkix-jdk18on')

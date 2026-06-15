@@ -26,6 +26,13 @@
             </div>
         </template>
     </KSFilter>
+    <QuickFilters
+        :intervals="quickIntervals"
+        :timeRange="selectedTimeRange"
+        :intervalLabel="t('filter.timeRange_metric.label')"
+        :showLevel="false"
+        @update:timeRange="onQuickFilterTimeRange"
+    />
 
     <div v-bind="$attrs">
         <KsRow v-if="displayedMetrics.length > 0" :gutter="16">
@@ -75,6 +82,8 @@
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useFlowMetricFilter} from "../filter/configurations"
+    import QuickFilters from "../filter/QuickFilters.vue"
+    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
 
     defineOptions({
         name: "FlowMetrics",
@@ -87,6 +96,7 @@
 
     const flowMetricFilter = useFlowMetricFilter()
     const flowStore = useFlowStore()
+    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const isLoading = ref(false)
     const metricsData = ref<Record<string, any>>({})
@@ -143,8 +153,7 @@
         }
 
         if (selectedTextSearch.value) {
-            const search = selectedTextSearch.value
-            return metrics.filter((m) => m.indexOf(search) !== -1)
+            return metrics.filter((m) => m.indexOf(selectedTextSearch.value!) !== -1)
         }
 
         return metrics
@@ -174,7 +183,7 @@
             {
                 name: `${t(aggregationLabel)} ${t("of")} ${metric}`,
                 data: aggregations.map((e) => e.value ?? 0),
-                itemStyle: {color: cssVar("--ks-content-success")},
+                itemStyle: {color: cssVar("--ks-status-success")},
             },
         ]
     }
@@ -289,10 +298,10 @@
     }
 
     .metric-title {
-        font-size: var(--ks-font-size-sm);
+        font-size: var(--kel-font-size-small);
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 
     .chart {

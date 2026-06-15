@@ -17,14 +17,14 @@
         @close="closeSaveDialog"
     >
         <div class="save-form">
-            <KsAlert v-if="hasDuplicate" type="error" showIcon :closable="false">
+            <KsAlert v-if="hasDuplicate" type="error" :closable="false">
                 {{ $t("filter.save duplicate") }}
                 <template #icon>
                     <CloseCircleOutline />
                 </template>
             </KsAlert>
             <div>
-                <label>{{ $t("filter.name") }}</label>
+                <label>{{ $t("filter.name.label") }}</label>
                 <KsInput
                     v-model="filterName"
                     :placeholder="$t('filter.enter name')"
@@ -52,7 +52,7 @@
                             class="item"
                         >
                             <span class="key">{{ filter.keyLabel }}</span>
-                            <span class="comparator">{{ filter.comparatorLabel }}</span>
+                            <span class="comparator">{{ comparatorLabelFor(filter) }}</span>
                             <span class="value">{{ filter.valueLabel }}</span>
                         </div>
                     </div>
@@ -80,8 +80,17 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
+    import {useI18n} from "vue-i18n"
     import type {AppliedFilter, SavedFilter} from "../utils/filterTypes"
+    import {isDateRangeValue} from "../utils/filterChipFactory"
     import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
+
+    const {t} = useI18n({useScope: "global"})
+
+    // Range filters render a localized "between" label; everything else uses the
+    // comparator label baked into the model.
+    const comparatorLabelFor = (filter: AppliedFilter): string =>
+        isDateRangeValue(filter.value) ? t("filter.is_between") : filter.comparatorLabel
 
     const props = defineProps<{
         disabled: boolean;
@@ -153,15 +162,15 @@
             margin-bottom: 0.25rem;
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 
     .filter-summary {
         padding: 0.5rem 0.75rem;
         background-color: var(--ks-surface-secondary);
-        border-radius: 0.25rem;
-        border: 1px solid var(--ks-border-primary);
+        border-radius: var(--ks-radius-base);
+        border: 1px solid var(--ks-border-default);
         min-height: 2rem;
     }
 
@@ -178,17 +187,17 @@
         font-size: var(--ks-font-size-xs);
 
         .key {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-weight: 400;
         }
 
         .comparator {
-            color: var(--ks-chart-success);
+            color: var(--ks-status-success);
             font-weight: 400;
         }
 
         .value {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-weight: 700;
         }
     }
@@ -197,14 +206,14 @@
 .no-bg-border {
     margin: 0 !important;
     padding: 0.5rem;
-    border-radius: 0.25rem;
+    border-radius: var(--ks-radius-base);
     font-size: var(--ks-font-size-base);
-    color: var(--ks-content-primary) !important;
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
+    color: var(--ks-text-primary) !important;
+    box-shadow: 0 2px 4px var(--ks-shadow-surface);
 }
 
 .kel-button.is-disabled {
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
     cursor: not-allowed !important;
 }
 
@@ -214,7 +223,7 @@
 
 :deep(.kel-input__inner::placeholder),
 :deep(.kel-textarea__inner::placeholder) {
-    color: var(--ks-content-tertiary);
+    color: var(--ks-text-dim);
     font-size: var(--ks-font-size-sm);
 }
 

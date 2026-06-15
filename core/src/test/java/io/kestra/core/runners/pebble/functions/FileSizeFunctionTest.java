@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -184,7 +185,8 @@ public class FileSizeFunctionTest {
         );
 
         var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileSize('unsupported://path-to/file.txt') }}", variables));
-        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Cannot process the URI unsupported://path-to/file.txt: scheme not supported.");
     }
 
     @Test
@@ -282,7 +284,7 @@ public class FileSizeFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("%sfile".formatted(IdUtils.create()), ".txt");
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "%sfile".formatted(IdUtils.create()), ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

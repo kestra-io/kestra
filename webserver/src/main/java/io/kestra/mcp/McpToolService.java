@@ -5,13 +5,17 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Label;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionStreamingService;
 import io.kestra.core.utils.ListUtils;
@@ -35,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Singleton
 public class McpToolService {
-    private final DispatchQueueInterface<Execution> executionQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final FlowRepositoryInterface flowRepositoryInterface;
     private final FlowToolSchemaMapper flowToolSchemaMapper;
     private final ExecutionStreamingService streamingService;
@@ -49,13 +53,13 @@ public class McpToolService {
         .build();
 
     public McpToolService(
-        DispatchQueueInterface<Execution> executionQueue,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         FlowRepositoryInterface flowRepositoryInterface,
         FlowToolSchemaMapper flowToolSchemaMapper,
         ExecutionStreamingService streamingService, ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
         McpConfig mcpConfig
         ) {
-        this.executionQueue = executionQueue;
+        this.executionCommandQueue = executionCommandQueue;
         this.flowRepositoryInterface = flowRepositoryInterface;
         this.flowToolSchemaMapper = flowToolSchemaMapper;
         this.streamingService = streamingService;
@@ -68,9 +72,12 @@ public class McpToolService {
     }
 
 
-    public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId) {
-        return fetchFlowWithMcpToolTrigger(tenantId, serverId).stream().flatMap(flow -> flow.getTriggers().stream()
+    public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId, McpServer.ServerType serverType) {
+        return fetchFlowWithMcpToolTrigger(tenantId, serverId, serverType).stream().flatMap(flow -> flow.getTriggers().stream()
                 .filter(isMcpTriggerTypeAndEnabledPredicate())
+                .filter(trigger -> serverId.equals(
+                    Objects.requireNonNullElse(((McpToolTrigger) trigger).getMcpServer(), McpToolTrigger.DEFAULT_SERVER_ID)
+                ))
                 .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
             ).toList();
     }
@@ -131,7 +138,11 @@ public class McpToolService {
         )));
 
         try {
-            executionQueue.emit(execution);
+            executionCommandQueue.emit(Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+                .withKind(execution.getKind())
+                .withTrigger(execution.getTrigger())
+                .withLabels(execution.getLabels())
+                .withInputs(execution.getInputs()));
             eventPublisher.publishEvent(new CrudEvent<>(execution, null, CrudEventType.CREATE));
 
 
@@ -151,8 +162,12 @@ public class McpToolService {
         }
     }
 
-    private List<Flow> fetchFlowWithMcpToolTrigger(String tenantId, String serverId) {
-        return flowRepositoryInterface.find(Pageable.unpaged(), tenantId, McpToolTrigger.class).stream()
+    private List<Flow> fetchFlowWithMcpToolTrigger(String tenantId, String serverId, McpServer.ServerType serverType) {
+        var flows = McpServer.ServerType.PUBLIC.equals(serverType)
+            ? flowRepositoryInterface.findWithNoAcl(Pageable.unpaged(), tenantId, McpToolTrigger.class)
+            : flowRepositoryInterface.find(Pageable.unpaged(), tenantId, McpToolTrigger.class);
+
+        return flows.stream()
             .filter(flow -> !flow.isDisabled() &&
                 flow.getTriggers().stream().anyMatch(trigger ->
                     trigger.getClass().equals(McpToolTrigger.class) && serverId.equals(

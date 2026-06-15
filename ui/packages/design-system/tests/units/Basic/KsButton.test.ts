@@ -105,4 +105,33 @@ describe("KsButton", () => {
         })
         expect(wrapper.find(".kel-button.is-text").exists()).toBe(true)
     })
+
+    test("tooltip prop renders the button and derives aria-label from it", () => {
+        const wrapper = mount(KsButton, {
+            props: {tooltip: "Delete"},
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        const button = wrapper.find(".kel-button")
+        expect(button.exists()).toBe(true)
+        expect(button.attributes("aria-label")).toBe("Delete")
+    })
+
+    test("without tooltip no aria-label is derived", () => {
+        const wrapper = mount(KsButton, {
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").attributes("aria-label")).toBeUndefined()
+    })
+
+    test("explicit aria-label overrides the tooltip-derived one", () => {
+        const wrapper = mount(KsButton, {
+            props: {tooltip: "Delete"},
+            attrs: {"aria-label": "Custom label"},
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").attributes("aria-label")).toBe("Custom label")
+    })
 })

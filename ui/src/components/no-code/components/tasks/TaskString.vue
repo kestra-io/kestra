@@ -15,7 +15,7 @@
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
-            @update:model-value="(v) => onInput(v instanceof Date ? v.toISOString() : '')"
+            @update:model-value="(v: Date | string | null) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
         <KsInputNumber
             v-if="!pebble && showDurationDays"
@@ -45,17 +45,16 @@
             disabled
             class="w-100 disabled-field"
         />
-        <Editor
+        <KsEditor
             v-else-if="pebble || !schema?.format"
+            v-bind="editorBindings"
             :modelValue="editorValue"
             :navbar="false"
-            :fullHeight="false"
-            :shouldFocus="false"
+            :options="{fullHeight: false, largeSuggestions: false}"
             schemaType="flow"
             :lang="`${editorLanguage}-pebble`"
-            input
+            inline
             @update:model-value="onInput"
-            :largeSuggestions="false"
             style="z-index: 1;"
         />
     </div>
@@ -64,11 +63,14 @@
     import {ref, computed, onMounted} from "vue"
     import $moment from "moment"
     import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue"
-    import Editor from "../../../../components/inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../../composables/useEditorBindings"
     import InputText from "../inputs/InputText.vue"
     import {Schema} from "./getTaskComponent"
 
     defineOptions({inheritAttrs: false})
+
+    const editorBindings = useEditorBindings()
 
     const props = defineProps<{
         disabled?: boolean;
@@ -190,7 +192,7 @@
 <style scoped lang="scss">
 :deep(.kel-input__inner) {
     &::placeholder {
-        color: var(--ks-content-inactive) !important;
+        color: var(--ks-text-inactive) !important;
     }
 }
 :deep(.placeholder) {
@@ -201,8 +203,8 @@
     display: flex;
     align-items: stretch;
     justify-content: stretch;
-    border-radius: 0.25rem;
-    border: 1px solid var(--ks-border-primary);
+    border-radius: var(--ks-radius-base);
+    border: 1px solid var(--ks-border-default);
     width: 100%;
 
     :deep(.disabled-field) {
@@ -225,7 +227,7 @@
     }
 
     .ks-pebble:deep(span:hover){
-        color: var(--ks-content-link-hover) ;
+        color: var(--ks-text-link) ;
     }
 
     .ks-pebble * {
@@ -235,7 +237,7 @@
 }
 
 .duration-unit{
-    color: var(--ks-content-inactive);
+    color: var(--ks-text-inactive);
     font-size: var(--ks-font-size-sm);
     line-height: 1.25rem;
     background-color: transparent;

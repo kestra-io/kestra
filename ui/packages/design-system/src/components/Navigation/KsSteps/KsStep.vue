@@ -59,9 +59,9 @@
                 0 31px 9px 0 #7614B803;
             }
             .kel-step__icon {
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
                 border-radius: 50%;
-                background-color: var(--ks-background-input);
+                background-color: var(--ks-bg-input);
             }
 
             &.is-success .kel-step__icon {
@@ -76,6 +76,13 @@
             .kel-step__line {
                 width: 1px;
             }
+        }
+
+        // Horizontal orientation: the connector spans the gap between steps,
+        // so it needs a height (not a width — width: 1px collapses it).
+        .kel-step.is-horizontal .kel-step__head .kel-step__line {
+            width: auto;
+            height: 2px;
         }
     }
 </style>

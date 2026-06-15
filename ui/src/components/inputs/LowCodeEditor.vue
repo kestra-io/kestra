@@ -2,13 +2,15 @@
     <div ref="vueFlow" class="vueflow">
         <slot name="top-bar" />
         <Topology
+            v-if="manifestReady"
+            :key="`topology-${!!executionsStore.execution?.id}`"
             :id="vueflowId"
             :isHorizontal="isHorizontal"
             :isReadOnly="isReadOnly"
             :isAllowedEdit="isAllowedEdit"
             :source="source"
             :toggleOrientationButton="toggleOrientationButton"
-            :flowGraph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
+            :flowGraph="effectiveFlowGraph"
             :flowId="flowId"
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
@@ -17,7 +19,9 @@
             :subflowsExecutions="executionsStore.subflowsExecutions"
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
-            :animated="animated"
+            :getNodeDimensions="getNodeDimensions"
+            :customActions="customActions"
+            :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -25,13 +29,27 @@
             @show-logs="showLogs"
             @show-description="showDescription"
             @show-condition="showCondition"
+            @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
-        />
+        >
+            <template #taskDetails="taskProps">
+                <slot name="taskDetails" v-bind="taskProps">
+                    <TopologyDetailsRemote
+                        :taskType="taskProps.data.node?.task?.type"
+                        :task="taskProps.data.node?.task"
+                        :execution="execution"
+                        :namespace="props.namespace"
+                        :flowId="props.flowId"
+                        :metrics="taskMetrics(taskProps.data.node?.task?.id)"
+                    />
+                </slot>
+            </template>
+        </Topology>
 
         <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
@@ -75,13 +93,35 @@
                 />
             </div>
             <div v-if="isShowConditionOpen">
-                <Editor
+                <KsEditor
+                    v-bind="editorBindings"
                     :readOnly="true"
-                    :input="true"
-                    :fullHeight="false"
+                    :inline="true"
+                    :options="{fullHeight: false}"
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
+                    class="mt-3"
+                />
+            </div>
+            <div v-if="isShowCustomActionOpen && customActionMeta">
+                <KsEditor
+                    :readOnly="true"
+                    :inline="true"
+                    :options="{fullHeight: false}"
+                    :navbar="false"
+                    :modelValue="selectedTask[customActionMeta.taskProp]"
+                    :lang="customActionMeta.lang"
+                    class="mt-3"
+                />
+                <TaskDrawerRemote
+                    :taskType="selectedTask.type"
+                    :task="selectedTask"
+                    :execution="execution"
+                    :namespace="props.namespace"
+                    :flowId="props.flowId"
+                    :metrics="taskMetrics(selectedTask?.id)"
+                    displayMode="full"
                     class="mt-3"
                 />
             </div>
@@ -90,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, ref, inject, watch} from "vue"
+    import {nextTick, onMounted, ref, inject, watch, computed} from "vue"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
@@ -99,22 +139,24 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
-    import Editor from "./Editor.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {SECTIONS, KsMarkdown, KsEditor} from "@kestra-io/design-system"
+    import {Execution} from "@kestra-io/kestra-sdk"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useCoreStore} from "../../stores/core"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
-    import {usePlaygroundStore} from "../../stores/playground"
+    import {usePlaygroundStore} from "../../stores/playground"    
+    import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
-
+    import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
+    
     const router = useRouter()
 
     const vueflowId = ref(Math.random().toString())
@@ -124,6 +166,81 @@
 
     const executionsStore = useExecutionsStore()
     const playgroundStore = usePlaygroundStore()
+    const flowStore = useFlowStore()
+
+    const execution = computed(() => executionsStore.execution as any as Execution)
+
+    const effectiveFlowGraph = computed(() =>
+        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+    )
+
+    const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
+
+
+    const customActions = computed(() => {
+        const result: Record<string, { label: string; taskProp: string; lang: string }> = {}
+        for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
+            const ca = (info as any)?.customAction
+            if (ca?.label && ca?.taskProp && ca?.lang) {
+                result[type] = ca
+            }
+        }
+        return result
+    })
+
+    const hasExtraDetails = computed(() => {
+        const types = taskAdditionalInfoRemote.value
+        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
+    })
+
+    const taskMetrics = (taskId: string | undefined) =>
+        executionsStore.metrics.filter((m) => m.taskId === taskId)
+
+    function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
+        const taskType = node?.task?.type
+        const addInfo = taskAdditionalInfoRemote.value[taskType]
+        const hasExecution = !!executionsStore.execution?.id
+        const height = hasExecution
+            ? (addInfo?.heightWithExecution ?? addInfo?.height ?? getNodeHeight(node))
+            : (addInfo?.height ?? getNodeHeight(node))
+        return {
+            width: getNodeWidth(node),
+            height,
+        }
+    };
+
+    const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
+        const taskTypes = new Set<string>()
+        tasks.forEach((task: any) => {
+            if (!task?.type) {
+                return
+            }
+            taskTypes.add(`${task.type}:${task.version ?? "null"}`)
+        })
+
+        const taskTypesReParsed: {cls: string, version: string | undefined}[] = []
+
+        for (const tt of taskTypes) {
+            const [cls, version] = tt.split(":")
+            taskTypesReParsed.push({cls, version: version === "null" ? undefined : version})
+        }
+
+        await Promise.all([
+            resolveRemoteComponent(taskTypesReParsed),
+            resolveDrawerComponent(taskTypesReParsed),
+        ])
+    }
+
+    watch(
+        () => flowStore.flowParsed?.tasks,
+        async (tasks) => {
+            await resolveTaskTopologyDetails(tasks ?? [])
+        },
+        {immediate: true},
+    )
+
+    const editorBindings = useEditorBindings()
 
     const props = withDefaults(
         defineProps<{
@@ -137,7 +254,6 @@
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
             expandedSubflows?: string[];
-            animated?: boolean;
         }>(),
         {
             flowId: undefined,
@@ -149,8 +265,19 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
-            animated: true,
         })
+
+    watch(
+        () => props.flowGraph,
+        async (flowGraph) => {
+            if (flowStore.flowParsed?.tasks?.length) return
+            const tasks = (flowGraph?.nodes ?? [])
+                .filter((n: any) => n.task?.type)
+                .map((n: any) => ({type: n.task.type, version: n.task.version}))
+            await resolveTaskTopologyDetails(tasks)
+        },
+        {immediate: true},
+    )
 
     const emit = defineEmits([
         "follow",
@@ -168,6 +295,13 @@
 
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+
+    watch(() => props.horizontalDefault, (value) => {
+        if (value !== undefined && value !== isHorizontal.value) {
+            isHorizontal.value = value
+            fitViewOrientation()
+        }
+    })
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const taskEditData = ref()
@@ -310,7 +444,7 @@
                     params: {
                         namespace: data.link.namespace,
                         flowId: data.link.id,
-                        tab: "topology",
+                        tab: "overview",
                         id: data.link.executionId,
                     },
                 }).href,
@@ -357,6 +491,23 @@
         isDrawerOpen.value = true
     }
 
+    const customActionMeta = ref<{ label: string; taskProp: string; lang: string }>()
+    const isShowCustomActionOpen = ref(false)
+
+    const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
+        const parsed = flowStore.flowParsed
+        const allTasks = [
+            ...(parsed?.tasks ?? []),
+            ...(parsed?.errors ?? []),
+            ...(parsed?.finally ?? []),
+        ]
+        const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
+        selectedTask.value = fullTask
+        customActionMeta.value = event.customAction
+        isShowCustomActionOpen.value = true
+        isDrawerOpen.value = true
+    }
+
     const onSwappedTask = (event: any) => {
         emit("swapped-task", event.swappedTasks)
         emit("on-edit", event.newSource, true)
@@ -380,5 +531,24 @@
     height: 100%;
     width: 100%;
     position: relative;
+
+    // Anchor the state icon (playground-button) to the node header area, not
+    // the full VueFlow node element, so it doesn't overlap plugin UI details.
+    :deep(.main-content) {
+        position: relative;
+    }
+
+    // Hover: the topology handler adds an inline `outline` to linked nodes,
+    // but outline renders outside the existing state border creating two rings.
+    // Override: suppress the outline and shift the border-color instead so the
+    // hover highlight cleanly replaces the success/failure color.
+    :deep(.vue-flow__node.rounded-3) {
+        outline: none !important;
+
+        .node-wrapper {
+            border-color: var(--bs-gray-900) !important;
+        }
+    }
 }
+
 </style>

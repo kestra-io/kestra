@@ -11,7 +11,7 @@ const meta: Meta<typeof KsSteps> = {
         direction: {control: "select", options: ["horizontal", "vertical"]},
     },
     parameters: {
-        docs: {description: {component: "KsSteps is the Kestra design-system abstraction over `ElSteps` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
+        docs: {description: {component: "KsSteps is the Kestra design-system abstraction over `ElSteps` from Element Plus."}},
     },
 }
 export default meta
@@ -27,9 +27,9 @@ export const Default: Story = {
         template: `
             <div style="padding:24px">
                 <ks-steps :active="active" v-bind="args">
-                    <ks-step title="Step 1" description="Configure namespace" />
-                    <ks-step title="Step 2" description="Set up authentication" />
-                    <ks-step title="Step 3" description="Deploy flows" />
+                    <ks-step title="Step 1" description="First step" />
+                    <ks-step title="Step 2" description="Second step" />
+                    <ks-step title="Step 3" description="Third step" />
                 </ks-steps>
                 <div style="margin-top:16px;display:flex;gap:8px">
                     <button @click="active = Math.max(0, active - 1)">Previous</button>
@@ -47,10 +47,10 @@ export const WithStatus: Story = {
         template: `
             <div style="padding:24px">
                 <ks-steps :active="2" finish-status="success">
-                    <ks-step title="Namespace" />
-                    <ks-step title="Secrets" />
-                    <ks-step title="Deploy" />
-                    <ks-step title="Verify" />
+                    <ks-step title="Step 1" />
+                    <ks-step title="Step 2" />
+                    <ks-step title="Step 3" />
+                    <ks-step title="Step 4" />
                 </ks-steps>
             </div>
         `,
@@ -81,13 +81,35 @@ export const Simple: Story = {
         template: `
             <div style="padding:24px">
                 <ks-steps :active="active" simple>
-                    <ks-step title="Configure" />
-                    <ks-step title="Review" />
-                    <ks-step title="Deploy" />
+                    <ks-step title="Step 1" />
+                    <ks-step title="Step 2" />
+                    <ks-step title="Step 3" />
                 </ks-steps>
                 <div style="margin-top:12px;display:flex;gap:8px">
                     <button @click="active = Math.max(0, active - 1)">Prev</button>
                     <button @click="active = Math.min(3, active + 1)">Next</button>
+                </div>
+            </div>
+        `,
+    }),
+}
+
+/** Horizontal with align-center — connector line spans the gap between step heads */
+export const HorizontalWithConnector: Story = {
+    render: () => ({
+        components: {KsSteps, KsStep},
+        setup() { return {active: ref(1)} },
+        template: `
+            <div style="padding:24px">
+                <ks-steps :active="active" align-center finish-status="success">
+                    <ks-step title="Step 1" />
+                    <ks-step title="Step 2" />
+                    <ks-step title="Step 3" />
+                    <ks-step title="Step 4" />
+                </ks-steps>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                    <button @click="active = Math.max(0, active - 1)">Prev</button>
+                    <button @click="active = Math.min(4, active + 1)">Next</button>
                 </div>
             </div>
         `,
@@ -101,9 +123,9 @@ export const Vertical: Story = {
         template: `
             <div style="padding:24px">
                 <ks-steps :active="active" direction="vertical">
-                    <ks-step title="Create namespace" />
-                    <ks-step title="Configure secrets" />
-                    <ks-step title="Add flows" />
+                    <ks-step title="Step 1" />
+                    <ks-step title="Step 2" />
+                    <ks-step title="Step 3" />
                 </ks-steps>
             </div>
         `,

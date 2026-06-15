@@ -6,13 +6,13 @@ import {KsTag, KsRouterTab} from "../../../src"
 
 // Simple content components for stories
 const OverviewPanel = defineComponent({
-    template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Overview content</div>",
+    template: "<div style=\"padding:16px;background:var(--ks-bg-surface);border-radius:4px\">Overview content</div>",
 })
 const LogsPanel = defineComponent({
-    template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Logs content</div>",
+    template: "<div style=\"padding:16px;background:var(--ks-bg-surface);border-radius:4px\">Logs content</div>",
 })
 const MetricsPanel = defineComponent({
-    template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Metrics content</div>",
+    template: "<div style=\"padding:16px;background:var(--ks-bg-surface);border-radius:4px\">Metrics content</div>",
 })
 
 const baseTabs: RouterTab[] = [
@@ -58,7 +58,7 @@ export const Default: Story = {
                     :embed-active-tab="activeTab"
                     @changed="tab => activeTab = tab.name ?? 'overview'"
                 />
-                <div style="padding:16px;margin-top:16px;background:var(--ks-background-card);border-radius:4px">
+                <div style="padding:16px;margin-top:16px;background:var(--ks-bg-surface);border-radius:4px">
                     Active: {{ activeTab }}
                 </div>
             </div>
@@ -201,7 +201,7 @@ export const WithContentSlot: Story = {
                     class="container mt-4"
                 >
                     <template #content="{activeTab: tab}">
-                        <div style="padding:16px;background:var(--ks-background-card);border-radius:4px">
+                        <div style="padding:16px;background:var(--ks-bg-surface);border-radius:4px">
                             {{ contentMap[tab.name ?? ''] }}
                         </div>
                     </template>

@@ -134,10 +134,15 @@ public final class JacksonMapper {
         }
     }
 
-    private static final ObjectMapper ION_MAPPER = createIonObjectMapper();
+    private static final ObjectMapper ION_MAPPER = createIonObjectMapper(false);
+    private static final ObjectMapper ION_BINARY_MAPPER = createIonObjectMapper(true);
 
     public static ObjectMapper ofIon() {
         return ION_MAPPER;
+    }
+
+    public static ObjectMapper ofIonBinary() {
+        return ION_BINARY_MAPPER;
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {
@@ -156,8 +161,12 @@ public final class JacksonMapper {
             .setTimeZone(TimeZone.getDefault());
     }
 
-    private static ObjectMapper createIonObjectMapper() {
-        return configure(new IonObjectMapper(new IonFactory(createIonSystem())))
+    private static ObjectMapper createIonObjectMapper(boolean binary) {
+        IonFactory ionFactory = new IonFactory(createIonSystem());
+        if (binary) {
+            ionFactory.setCreateBinaryWriters(true);
+        }
+        return configure(new IonObjectMapper(ionFactory))
             .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .registerModule(new IonModule());

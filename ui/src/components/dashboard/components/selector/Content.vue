@@ -22,10 +22,9 @@
 
     <hr class="my-2">
 
-    <el-input
+    <KsSearch
         v-model="search"
         :placeholder="$t('search')"
-        :prefixIcon="Magnify"
         clearable
         class="my-1 mb-3 search"
     />
@@ -50,7 +49,6 @@
     import {ref, computed} from "vue"
     import Item from "./Item.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     type Dashboard = {id: string; title: string; isDefault: boolean};
 
@@ -89,7 +87,7 @@
 :deep(li.el-dropdown-menu__item) {
     &:hover,
     &:focus {
-        background: var(--ks-select-hover);
+        background: var(--ks-bg-hover);
     }
 }
 </style>

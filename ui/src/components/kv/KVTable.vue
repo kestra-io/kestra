@@ -4,9 +4,11 @@
         :loadData="loadData"
         :data="kvs"
         :total="total"
+        :currentPage="urlPage"
+        :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-        @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+        @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
         :showSelection="!paneView"
@@ -132,6 +134,7 @@
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
+        :beforeClose="beforeKvClose"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
@@ -191,9 +194,10 @@
                     allowCustom
                     @update:model-value="kv.value = $event.timeRange"
                 />
-                <Editor
-                    :fullHeight="false"
-                    :input="true"
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false}"
+                    :inline="true"
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
                     lang="json"
@@ -247,11 +251,10 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import {KsId, KsIconButton} from "@kestra-io/design-system"
-    import Editor from "../inputs/Editor.vue"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
-
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -294,6 +297,8 @@
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
     const kvStore = useKvStore()
+
+    const editorBindings = useEditorBindings()
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
@@ -344,14 +349,17 @@
         return _merge(base, filters)
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     interface KvItem {
         namespace?: string;
@@ -372,6 +380,10 @@
         update: undefined,
         description: undefined,
     })
+
+    const kvBaseline = ref("")
+    const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
+    const beforeKvClose = (done: () => void) => guardKvClose(() => done())
 
     const {t} = useI18n()
 
@@ -438,7 +450,7 @@
 
 
     const kvModalTitle = computed(() => {
-        return kv.value.key ? "kv.update" : "kv.add"
+        return kv.value.key ? t("kv.update", {key: kv.value.key}) : t("kv.add")
     })
 
     const addKvDrawerVisible = computed({
@@ -632,7 +644,11 @@
     }
 
     watch(addKvDrawerVisible, (newValue) => {
-        if (!newValue) {
+        if (newValue) {
+            nextTick(() => {
+                kvBaseline.value = JSON.stringify(kv.value)
+            })
+        } else {
             resetKv()
         }
     })

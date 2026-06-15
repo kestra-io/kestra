@@ -3,7 +3,6 @@
         v-if="duplicatedKeys?.length"
         :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
         type="error"
-        showIcon
         :closable="false"
         class="mb-2"
     />
@@ -39,7 +38,7 @@
         </Wrapper>
     </template>
     <template v-else>
-        <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
+        <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
             <KsCol :span="6">
                 <InputText
                     :ref="el => { if (el) keyInputRefs[index] = el }"
@@ -48,6 +47,7 @@
                     margin="m-0"
                     placeholder="Key"
                     :haveError="duplicatedKeys.includes(item[0])"
+                    :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"
                 />
             </KsCol>
             <KsCol :span="16">
@@ -152,7 +152,8 @@
     const emit = defineEmits(["update:modelValue"])
 
     function getKey(key: string) {
-        return props.root ? `${props.root}.${key}` : key
+        if (!props.root) return key
+        return key ? `${props.root}.${key}` : props.root
     }
 
     function isRequired(key: string) {
@@ -184,7 +185,7 @@
         currentValue.value.push(["", undefined])
         const newIndex = currentValue.value.length - 1
         emitUpdate()
-        
+
         // Focus the key input field after the new row is rendered
         nextTick(() => {
             setTimeout(() => {
@@ -213,23 +214,23 @@
 }
 
 .remove-entry{
-    color: var(--ks-content-secondary);
-    background-color: var(--ks-button-background-secondary);
+    color: var(--ks-text-secondary);
+    background-color: var(--ks-btn-secondary-bg-default);
     border: none;
     display: flex;
     align-items: center;
-    gap: .5rem; 
+    gap: .5rem;
     opacity: 0.7;
     padding: 0;
     height: .75rem;
     &:hover {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         opacity: 1;
     }
 }
 
 .item-wrapper {
     margin: .25rem 0;
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
 }
 </style>

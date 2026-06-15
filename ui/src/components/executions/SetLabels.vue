@@ -1,70 +1,65 @@
 <template>
-    <KsButton
+    <KsPopover
+        v-model:visible="isOpen"
         :disabled="!enabled"
-        :icon="Plus"
-        @click="isOpen = !isOpen"
+        trigger="click"
+        placement="bottom-start"
+        :width="400"
+        :showArrow="false"
+        :popperStyle="{padding: '0', overflow: 'hidden', borderRadius: '0.875rem', background: 'var(--ks-bg-elevated)', boxShadow: '0px 8px 24px 0px var(--ks-shadow-elevated)'}"
     >
-        {{ $t("set_extra_labels") }}
-    </KsButton>
-
-    <KsDialog
-        v-if="isOpen"
-        v-model="isOpen"
-        destroyOnClose
-        :appendToBody="true"
-    >
-        <template #header>
-            <h5>{{ $t("Set labels") }}</h5>
+        <template #reference>
+            <button class="set-labels-tag" :class="{'is-active': isOpen}" :disabled="!enabled">
+                <Plus />
+                {{ $t("set_extra_labels") }}
+            </button>
         </template>
 
-        <template #footer>
-            <KsButton @click="onCancel">
-                {{ $t("cancel") }}
-            </KsButton>
-            <KsButton type="primary" :loading="isSaving" @click="setLabels()">
-                {{ $t("ok") }}
-            </KsButton>
-        </template>
+        <div class="set-labels">
+            <div class="set-labels__header">
+                <span class="set-labels__title">{{ $t("Set labels") }}</span>
+                <KsIconButton :tooltip="$t('close')" placement="top" @click="isOpen = false">
+                    <Close />
+                </KsIconButton>
+            </div>
 
-        <p v-html="$t('Set labels to execution', {id: execution.id})" />
-
-        <KsForm labelPosition="top">
-            <KsFormItem :label="$t('execution labels')">
+            <div class="set-labels__body">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"
                 />
-            </KsFormItem>
-        </KsForm>
-    </KsDialog>
+            </div>
+
+            <div class="set-labels__footer">
+                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: execution.id})" />
+                <div class="set-labels__actions">
+                    <KsButton @click="onCancel">
+                        {{ $t("cancel") }}
+                    </KsButton>
+                    <KsButton type="primary" :loading="isSaving" @click="setLabels()">
+                        {{ $t("ok") }}
+                    </KsButton>
+                </div>
+            </div>
+        </div>
+    </KsPopover>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-
-    import LabelInput from "../../components/labels/LabelInput.vue"
-
-    import {State} from "@kestra-io/design-system"
-    import {filterValidLabels} from "./utils"
-
-    import {useMiscStore} from "override/stores/misc"
-    import {useExecutionsStore} from "../../stores/executions"
-    import {useAuthStore} from "override/stores/auth"
-
-    const miscStore = useMiscStore()
-    const executionsStore = useExecutionsStore()
-    const authStore = useAuthStore()
-
     import {useI18n} from "vue-i18n"
-    const {t} = useI18n({useScope: "global"})
-
-    import {useToast} from "../../utils/toast"
-    const toast = useToast()
-
-    import resource from "../../models/resource"
-    import action from "../../models/action"
-
+    import Close from "vue-material-design-icons/Close.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
+    import {State} from "@kestra-io/design-system"
+
+    import LabelInput from "../labels/LabelInput.vue"
+    import {filterValidLabels} from "./utils"
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import {useExecutionsStore} from "../../stores/executions"
+    import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
 
     interface Label {
         key: string;
@@ -84,25 +79,22 @@
 
     const props = defineProps<Props>()
 
+    const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
+    const miscStore = useMiscStore()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
+
     const isOpen = ref(false)
     const executionLabels = ref<Label[]>([])
     const isSaving = ref(false)
 
-    const enabled = computed(() => {
-        if (
-            !authStore.user?.isAllowed(
-                resource.EXECUTION,
-                action.UPDATE,
-                props.execution.namespace,
-            )
-        ) {
-            return false
-        }
-        return !State.isRunning(props.execution.state.current)
-    })
+    const enabled = computed(() =>
+        !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace) &&
+        !State.isRunning(props.execution.state.current),
+    )
 
     const onCancel = () => {
-        // discard temp and close dialog without mutating parent
         isOpen.value = false
         executionLabels.value = []
     }
@@ -122,35 +114,110 @@
                 executionId: props.execution.id,
             })
 
-            if (response && response.data) {
+            if (response?.data) {
                 executionsStore.execution = response.data
             }
 
             toast.success(t("Set labels done"))
 
-            // close and clear only after success
             isOpen.value = false
             executionLabels.value = []
         } catch (err) {
-            console.error(err) // keep dialog open so user can fix / retry
+            console.error(err)
         } finally {
             isSaving.value = false
         }
     }
 
-    // initialize the temp clone only when opening the dialog
     watch(isOpen, (open) => {
-        if (open) {
-            const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
-            const source = props.execution.labels || []
-
-            // deep clone so child edits never mutate the original
-            executionLabels.value = JSON.parse(JSON.stringify(source || []))
-                .filter((label: Label) => !toIgnore.some((prefix: string) => label.key?.startsWith(prefix)))
-
-        } else {
-            // when dialog closed, clear temp state (safe-guard)
+        if (!open) {
             executionLabels.value = []
+            return
         }
+
+        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes ?? []
+        const source = props.execution.labels ?? []
+
+        executionLabels.value = JSON.parse(JSON.stringify(source))
+            .filter((label: Label) => !toIgnore.some((prefix: string) => label.key?.startsWith(prefix)))
     })
 </script>
+
+<style scoped lang="scss">
+    .set-labels-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        background: var(--ks-bg-tag);
+        padding: 0.125rem 0.375rem;
+        border-radius: var(--ks-radius-sm);
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-sm);
+        border: 1px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        font-family: inherit;
+
+        &:hover:not(:disabled) {
+            background: var(--ks-bg-hover);
+        }
+
+        &.is-active {
+            background: var(--ks-btn-secondary-bg-active);
+            border-color: var(--ks-btn-secondary-border-active);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    .set-labels {
+        display: flex;
+        flex-direction: column;
+
+        &__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--ks-spacing-5) var(--ks-spacing-4);
+        }
+
+        &__title {
+            font-weight: 600;
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-lg);
+        }
+
+        &__body {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-3);
+            padding: var(--ks-spacing-4);
+        }
+
+        &__description {
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-sm);
+            margin: 0;
+            min-width: 0;
+        }
+
+        &__footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-4);
+            padding: var(--ks-spacing-3) var(--ks-spacing-4);
+            border-top: 1px solid var(--ks-border-default);
+            background: var(--ks-bg-base);
+        }
+
+        &__actions {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+    }
+</style>

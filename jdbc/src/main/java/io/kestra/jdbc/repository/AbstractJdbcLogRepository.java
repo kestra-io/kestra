@@ -78,6 +78,20 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         return findPage(pageable, tenantId, condition);
     }
 
+    /**
+     * The log table column for {@code TASK_RUN_ID} is {@code taskrun_id} (one word), not
+     * {@code task_run_id} as the default snake-case derivation would produce. Override the
+     * default mapping for that one mismatch; the rest of the column names line up with
+     * {@link QueryFilter.Field#name()} lower-cased.
+     */
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TASK_RUN_ID) {
+            return DSL.quotedName("taskrun_id");
+        }
+        return super.getColumnName(field);
+    }
+
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
         var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
@@ -257,7 +271,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
             condition = condition.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
         }
         if (namespace != null) {
-            condition = condition.and(field("namespace").eq(namespace));
+            // Without a flowId, the namespace is a prefix: it matches the namespace itself and all
+            // its descendants, consistent with the documented behavior and PurgeExecutions. With a
+            // flowId, it targets that flow's exact namespace.
+            if (flowId != null) {
+                condition = condition.and(field("namespace").eq(namespace));
+            } else {
+                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+            }
         }
         if (flowId != null) {
             condition = condition.and(field("flow_id").eq(flowId));

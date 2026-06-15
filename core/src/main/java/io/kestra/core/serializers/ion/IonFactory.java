@@ -2,13 +2,12 @@ package io.kestra.core.serializers.ion;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Serial;
 
-import com.amazon.ion.IonReader;
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonWriter;
-import com.amazon.ion.system.IonSystemBuilder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.io.IOContext;
 
@@ -22,8 +21,17 @@ public class IonFactory extends com.fasterxml.jackson.dataformat.ion.IonFactory 
 
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
-        IonReader ionReader = IonSystemBuilder.standard().build().newReader(r);
-        return new IonParser(ionReader, ctxt);
+        return new IonParser(_system.newReader(r), ctxt);
+    }
+
+    @Override
+    protected JsonParser _createParser(InputStream in, IOContext ctxt) throws IOException {
+        return new IonParser(_system.newReader(in), ctxt);
+    }
+
+    @Override
+    protected JsonParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException {
+        return new IonParser(_system.newReader(data, offset, len), ctxt);
     }
 
     protected com.fasterxml.jackson.dataformat.ion.IonGenerator _createGenerator(IonWriter ion, boolean ionWriterIsManaged, IOContext ctxt, Closeable dst) {

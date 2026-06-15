@@ -1,9 +1,14 @@
 <template>
-    <div class="chip" :class="{toggled: isToggled}" @click="editPopover?.toggleDialog()">
+    <div
+        class="chip"
+        :class="{toggled: isToggled}"
+        @click="editPopover?.toggleDialog()"
+        @auxclick="onAuxClick"
+        @mousedown="onMouseDown"
+    >
         <span class="content">
             <span class="key">{{ filter.keyLabel }}</span>
-            <span v-if="!hasValue(filter.value)" class="in">in</span>
-            <span v-if="!hasValue(filter.value)" class="val">any</span>
+            <span v-if="!hasValue(filter.value)" class="in">{{ t("filter.in any") }}</span>
             <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"
@@ -41,6 +46,7 @@
         type FilterKeyConfig,
         Comparators,
     } from "../utils/filterTypes"
+    import {isDateRangeValue} from "../utils/filterChipFactory"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -75,6 +81,17 @@
     }>()
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
+
+    const onAuxClick = (event: MouseEvent) => {
+        if (event.button !== 1) return
+        event.preventDefault()
+        event.stopPropagation()
+        emit("remove", props.filter.id)
+    }
+
+    const onMouseDown = (event: MouseEvent) => {
+        if (event.button === 1) event.preventDefault()
+    }
 
     const shouldShowComparatorInPopper = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2,
@@ -118,10 +135,13 @@
         }
     }
 
-    const getComparatorLabel = () =>
-        props.filterKey
-            ? props.filter.comparatorLabel
-            : "in"
+    const getComparatorLabel = () => {
+        if (!props.filterKey) return "in"
+        // Range filters ({startDate, endDate}) have no real comparator — render a
+        // localized "between" label instead of the model's baked comparatorLabel.
+        if (isDateRangeValue(props.filter.value)) return t("filter.is_between")
+        return props.filter.comparatorLabel
+    }
 
     const renderValueResult = computed(() =>
         h("span", {class: "value"}, formatValue(props.filter.value)),
@@ -143,8 +163,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: var(--ks-button-background-secondary);
-    border: 1px solid var(--ks-border-primary);
+    background-color: var(--ks-btn-secondary-bg-default);
+    border: 1px solid var(--ks-border-default);
     padding: 3px 12px;
     border-radius: 4px;
     cursor: pointer;
@@ -154,7 +174,7 @@
     user-select: none;
 
     &:hover {
-        background-color: var(--ks-button-background-secondary-hover);
+        background-color: var(--ks-btn-secondary-bg-hover);
     }
 
     &.toggled {
@@ -171,10 +191,9 @@
         .key,
         .comparator,
         .value,
-        .in,
-        .val {
+        .in {
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             white-space: nowrap;
             display: flex;
             align-items: center;
@@ -186,16 +205,15 @@
             min-width: 0;
             flex-shrink: 1;
         }
-        .in,
-        .val {
-            color: var(--ks-content-secondary);
+        .in {
+            color: var(--ks-text-secondary);
         }
         .comparator {
-            color: var(--ks-chart-success);
+            color: var(--ks-status-success);
             text-transform: lowercase;
 
             &.negative {
-                color: var(--ks-chart-failed);
+                color: var(--ks-status-error);
             }
         }
     }
@@ -205,10 +223,10 @@
         cursor: pointer;
         padding: 0;
         margin: 0;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
         &:hover {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
         :deep(svg) {
             font-size: var(--ks-font-size-base);
@@ -216,8 +234,8 @@
     }
 
     :deep(.kel-tag) {
-        background-color: var(--ks-tag-background);
-        color: var(--ks-content-secondary);
+        background-color: var(--ks-bg-tag);
+        color: var(--ks-text-secondary);
         font-size: 10px;
         margin-left: 0.25rem;
     }

@@ -5,7 +5,7 @@ export default () => {
     const axis = {
         nameLocation: "end",
         nameTextStyle: {
-            color: cssVar("--ks-gray-300"),
+            color: cssVar("--ks-gray-cool-300"),
         },
         axisLine: {
             show: true,
@@ -22,7 +22,7 @@ export default () => {
         },
         axisLabel: {
             show: true,
-            color: cssVar("--ks-content-primary"),
+            color: cssVar("--ks-text-primary"),
         },
         splitLine: {
             show: false,
@@ -34,7 +34,7 @@ export default () => {
         splitArea: {
             show: false,
             areaStyle: {
-                color: [cssVar("--ks-gray-500", 0.00), cssVar("--ks-gray-inverted-900", 0.5)],
+                color: [cssVar("--ks-gray-cool-500", 0.00), cssVar("--ks-gray-inverted-900", 0.5)],
                 shadowBlur: 0,
             },
         },
@@ -46,30 +46,30 @@ export default () => {
             cssVar("--ks-blue-300"),
             cssVar("--ks-green-300"),
             cssVar("--ks-orange-300"),
-            cssVar("--ks-purple-300"),
+            cssVar("--ks-primary-300"),
             cssVar("--ks-red-300"),
             cssVar("--ks-yellow-300"),
-            cssVar("--ks-gray-300"),
+            cssVar("--ks-gray-cool-300"),
             cssVar("--ks-blue-800"),
             cssVar("--ks-green-800"),
             cssVar("--ks-orange-800"),
-            cssVar("--ks-purple-800"),
+            cssVar("--ks-primary-800"),
             cssVar("--ks-red-800"),
             cssVar("--ks-yellow-800"),
-            cssVar("--ks-gray-800"),
+            cssVar("--ks-gray-cool-800"),
         ],
         backgroundColor: "transparent",
         textStyle: {
-            fontFamily: "'Public Sans', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontSize: 12,
-            color: cssVar("--ks-content-primary"),
+            color: cssVar("--ks-text-primary"),
         },
         title: {
             textStyle: {
-                color: cssVar("--ks-content-primary"),
+                color: cssVar("--ks-text-primary"),
             },
             subtextStyle: {
-                color: cssVar("--ks-gray-400"),
+                color: cssVar("--ks-gray-cool-400"),
             },
         },
         line: {
@@ -100,8 +100,8 @@ export default () => {
                 position: "bottom",
                 fontSize: 10,
                 textBorderWidth: 1,
-                color: cssVar("--ks-content-primary"),
-                textBorderColor: cssVar("--ks-background-body"),
+                color: cssVar("--ks-text-primary"),
+                textBorderColor: cssVar("--ks-bg-body"),
             },
             lineStyle: {
                 color: cssVar("--kel-text-color-placeholder"),
@@ -157,13 +157,13 @@ export default () => {
             extraCssText: "box-shadow: var(--kel-box-shadow);",
             axisPointer: {
                 shadowStyle: {
-                    color: cssVar("--ks-purple-900", 0.1),
+                    color: cssVar("--ks-primary-900", 0.1),
                 },
             },
         },
         legend: {
             textStyle: {
-                color: cssVar("--ks-gray-300"),
+                color: cssVar("--ks-gray-cool-300"),
             },
             left: "center",
             right: "auto",

@@ -33,7 +33,7 @@
     import type {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes"
     import FilterEditPopper from "./FilterEditPopper.vue"
 
-    defineProps<{
+    const props = defineProps<{
         filter: AppliedFilter;
         filterKey?: FilterKeyConfig | null;
         shouldShowComparatorInPopper?: boolean;
@@ -63,13 +63,17 @@
             position: "absolute",
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
-            width: `${popupWidth}px`,
+            "min-width": `${popupWidth}px`,
         }
     }
 
     const toggleDialog = () => {
-        isDialogVisible.value = !isDialogVisible.value
-        if (isDialogVisible.value) nextTick(updatePosition)
+        if (isDialogVisible.value) {
+            closeDialog()
+        } else {
+            isDialogVisible.value = true
+            nextTick(updatePosition)
+        }
     }
 
     const closeDialog = () => {
@@ -78,12 +82,12 @@
 
     const handleUpdate = (updatedFilter: AppliedFilter) => {
         emits("update", updatedFilter)
-        closeDialog()
+        isDialogVisible.value = false
     }
 
     const handleRemove = (filterId: string) => {
         emits("remove", filterId)
-        closeDialog()
+        isDialogVisible.value = false
     }
 
     onMounted(() => {
@@ -116,12 +120,13 @@
     z-index: 1000;
 
     .edit-popup {
-        background: var(--ks-dropdown-background);
-        border: 1px solid var(--ks-border-primary);
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-default);
         border-radius: 8px;
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
         padding: 0;
         min-height: var(--ks-font-size-lg);
+        max-width: 480px;
         position: relative;
     }
 }

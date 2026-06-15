@@ -61,7 +61,7 @@
                     @change="importFiles"
                 >
                 <KsDropdown>
-                    <KsButton>
+                    <KsButton :aria-label="$t('import')">
                         <PlusBox />
                     </KsButton>
                     <template #dropdown>
@@ -216,6 +216,7 @@
             "
             width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            @opened="focusCreationInput"
         >
             <div class="pb-1">
                 <span>
@@ -269,6 +270,7 @@
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
             @keydown.enter.prevent="renameItem()"
+            @opened="focusRenamingInput"
         >
             <div class="pb-1">
                 <span>
@@ -357,14 +359,14 @@
 
 <script lang="ts">
     import {InjectionKey} from "vue"
-    import {EditorTabProps} from "./EditorWrapper.vue"
+    import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
     export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, nextTick, inject, watch} from "vue"
+    import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
     import * as Utils from "../../utils/utils"
@@ -725,7 +727,8 @@
             if (node?.data?.leaf === false) {
                 folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedNode = tree.value.getCurrentNode()
+                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
+                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
                 if (selectedNode?.leaf === false) {
                     node = selectedNode.id
                     folder = filesStore.getPath(selectedNode.id)
@@ -735,7 +738,6 @@
             dialog.value.visible = true
             dialog.value.type = type
             dialog.value.folder = folder
-            focusCreationInput()
         } else {
             dialog.value.visible = false
             dialog.value = {...DIALOG_DEFAULTS}
@@ -751,7 +753,6 @@
                 old: name,
                 node,
             }
-            focusRenamingInput()
         } else {
             renameDialog.value = {...RENAME_DEFAULTS}
         }
@@ -786,15 +787,11 @@
     const renaming_name = ref<any>()
 
     function focusCreationInput() {
-        nextTick(() => {
-            creation_name.value?.focus()
-        })
+        creation_name.value?.$el?.querySelector("input")?.focus()
     }
 
     function focusRenamingInput() {
-        nextTick(() => {
-            renaming_name.value?.focus()
-        })
+        renaming_name.value?.$el?.querySelector("input")?.focus()
     }
 
     async function importFiles(event: Event) {
@@ -935,8 +932,8 @@
 <style scoped lang="scss">
 
 .sidebar {
-    background: var(--ks-background-panel);
-    border-right: 1px solid var(--ks-border-primary);
+    background: var(--ks-bg-surface);
+    border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
@@ -956,7 +953,7 @@
         position: relative;
         top: 100px;
         text-align: center;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
 
         & img {
             margin-bottom: 2rem;
@@ -966,7 +963,7 @@
             font-size: var(--ks-font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         & p {
@@ -995,23 +992,23 @@
         font-size: var(--ks-font-size-sm);
 
         &:hover {
-            color: var(--ks-content-link-hover);
+            color: var(--ks-text-link);
         }
     }
 
     ul.tabs-context {
         position: fixed;
         z-index: 9999;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
 
         & li {
             height: 30px;
             padding: 16px;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
 
             &:hover {
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
             }
         }
     }
@@ -1019,7 +1016,7 @@
     :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
-        background: var(--ks-background-panel);
+        background: var(--ks-bg-surface);
 
         .kel-tree__empty-block {
             height: auto;
@@ -1042,7 +1039,7 @@
 
             &:hover{
                 background: none;
-                border: 1px solid var(--ks-border-active);
+                border: 1px solid var(--ks-border-focus);
             }
         }
 
@@ -1050,24 +1047,24 @@
             .kel-tree-node__children {
                 margin-left: 11px !important;
                 padding-left: 0 !important;
-                border-left: 1px solid var(--ks-border-primary);
+                border-left: 1px solid var(--ks-border-default);
             }
         }
 
         .kel-tree-node.is-current > .kel-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active);
-            background: var(--ks-button-background-primary);
+            border: 1px solid var(--ks-border-focus);
+            background: var(--ks-btn-primary-bg-default);
 
             .filename {
-                color: var(--ks-button-content-primary);
+                color: var(--ks-btn-primary-text);
             }
         }
         .kel-tree-node.selected-tree-node > .kel-tree-node__content {
-            background-color: var(--ks-button-background-primary);
+            background-color: var(--ks-btn-primary-bg-default);
             min-width: fit-content;
             .filename {
-                color: var(--ks-button-content-primary);
+                color: var(--ks-btn-primary-text);
             }
         }
     }

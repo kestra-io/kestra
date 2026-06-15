@@ -39,9 +39,6 @@
         flex-direction: column;
         align-items: center;
         font-size: 5px;
-
-        &.GraphClusterRoot { color: var(--ks-border-created); }
-        &.GraphClusterFinally { color: var(--ks-border-warning); }
-        &.GraphClusterEnd { color: var(--ks-border-active); }
+        color: var(--ks-topology-dash);
     }
 </style>

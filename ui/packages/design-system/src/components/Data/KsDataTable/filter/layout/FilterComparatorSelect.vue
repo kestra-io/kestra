@@ -41,7 +41,7 @@
     const props = defineProps<{
         shouldShowComparator: boolean;
         selectedComparator: Comparators;
-        filterKey: {comparators: Comparators[]};
+        filterKey: {comparators: Comparators[]; comparatorLabels?: Partial<Record<Comparators, string>>};
     }>()
 
     const emits = defineEmits<{
@@ -53,7 +53,8 @@
         set: (value: Comparators) => emits("update:selectedComparator", value),
     })
 
-    const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator]
+    const getLabel = (comparator: Comparators) =>
+        props.filterKey.comparatorLabels?.[comparator] ?? COMPARATOR_LABELS[comparator]
     const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator])
 </script>
 
@@ -67,7 +68,7 @@
         font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin: 0.25rem 0;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     .select {
@@ -84,7 +85,7 @@
     }
 
     .comp-desc {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xs);
         line-height: 1.3;
     }

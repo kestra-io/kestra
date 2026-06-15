@@ -127,6 +127,8 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
 
+    List<FlowWithSource> findRevisionsWithoutAcl(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
+
     Integer lastRevision(String tenantId, String namespace, String id);
 
     List<Flow> findAll(String tenantId);
@@ -169,6 +171,18 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
     ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
+
+    /**
+     * Finds flows by trigger class without applying user-facing ACL restrictions.
+     * Intended exclusively for internal authorization checks (e.g. MCP server access control) where
+     * all flows referencing a given server must be visible regardless of the caller's permissions.
+     *
+     * @throws UnsupportedOperationException if the repository implementation does not support this operation
+     */
+    ArrayListTotal<Flow> findWithNoAcl(
         Pageable pageable,
         @Nullable String tenantId,
         @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);

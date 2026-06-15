@@ -10,78 +10,64 @@
   height: 100%;
   z-index: 1000;
   opacity: 1.0;
-  background: #f8f8fc;
+  background: #f7f7f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 html.dark #loader-wrapper {
-  background-color: #21242E;
+  background-color: #14181f;
 }
 
-#loader {
-  display: block;
-  position: relative;
-  left: 50%;
-  top: 50%;
-  width: 150px;
-  height: 150px;
-  margin: -75px 0 0 -75px;
-  border-radius: 50%;
-  border: 3px solid transparent;
-  border-top-color: #E9C1FF;
-  -webkit-animation: spin 2s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
-  animation: spin 2s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
+html.dark-2 #loader-wrapper {
+  background-color: #111115;
 }
 
-#loader:before {
-  content: "";
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
-  border-radius: 50%;
-  border: 3px solid transparent;
-  border-top-color: #CD88FF;
-  -webkit-animation: spin 3s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
-  animation: spin 3s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
+#loader svg {
+  overflow: visible;
 }
 
-#loader:after {
-  content: "";
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  right: 15px;
-  bottom: 15px;
-  border-radius: 50%;
-  border: 3px solid transparent;
-  border-top-color: #A950FF;
-  -webkit-animation: spin 1.5s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
-  animation: spin 1.5s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
+#loader svg path {
+  opacity: 0.12;
+  transform-box: fill-box;
+  transform-origin: center;
+  -webkit-animation: pulse-seq 1.6s ease-in-out infinite;
+  animation: pulse-seq 1.6s ease-in-out infinite;
 }
 
-@-webkit-keyframes spin {
-  0% {
-    -webkit-transform: rotate(0deg); /* Chrome, Opera 15+, Safari 3.1+ */
-    -ms-transform: rotate(0deg); /* IE 9 */
-    transform: rotate(0deg); /* Firefox 16+, IE 10+, Opera */
-  }
-  100% {
-    -webkit-transform: rotate(360deg); /* Chrome, Opera 15+, Safari 3.1+ */
-    -ms-transform: rotate(360deg); /* IE 9 */
-    transform: rotate(360deg); /* Firefox 16+, IE 10+, Opera */
-  }
+#loader svg path:nth-child(1) { animation-delay: 0s; }
+#loader svg path:nth-child(2) { animation-delay: 0.18s; }
+#loader svg path:nth-child(3) { animation-delay: 0.36s; }
+#loader svg path:nth-child(4) { animation-delay: 0.54s; }
+#loader svg path:nth-child(5) { animation-delay: 0.72s; }
+#loader svg path:nth-child(6) { animation-delay: 0.90s; }
+#loader svg path:nth-child(7) {
+  animation-delay: 1.08s;
+  -webkit-animation-name: pulse-seq-pink;
+  animation-name: pulse-seq-pink;
 }
 
-@keyframes spin {
-  0% {
-    -webkit-transform: rotate(0deg); /* Chrome, Opera 15+, Safari 3.1+ */
-    -ms-transform: rotate(0deg); /* IE 9 */
-    transform: rotate(0deg); /* Firefox 16+, IE 10+, Opera */
-  }
-  100% {
-    -webkit-transform: rotate(360deg); /* Chrome, Opera 15+, Safari 3.1+ */
-    -ms-transform: rotate(360deg); /* IE 9 */
-    transform: rotate(360deg); /* Firefox 16+, IE 10+, Opera */
-  }
+@-webkit-keyframes pulse-seq {
+  0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); }
+  65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
+}
+
+@keyframes pulse-seq {
+  0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); filter: drop-shadow(0 0 2px rgba(169, 80, 255, 0.55)); }
+  65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
+}
+
+@-webkit-keyframes pulse-seq-pink {
+  0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); }
+  65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
+}
+
+@keyframes pulse-seq-pink {
+  0%, 100% { opacity: 0.12; -webkit-transform: scale(0.82); transform: scale(0.82); }
+  40% { opacity: 1; -webkit-transform: scale(1.18); transform: scale(1.18); -webkit-filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); filter: drop-shadow(0 0 2px rgba(246, 46, 118, 0.55)); }
+  65% { opacity: 0.5; -webkit-transform: scale(1); transform: scale(1); }
 }

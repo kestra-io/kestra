@@ -1,6 +1,9 @@
 <template>
     <div class="select-panel">
-        <TimeRangeSwitch v-if="filterKey?.key === 'timeRange'" v-model="local.timeRangeMode" />
+        <TimeRangeSwitch
+            v-if="filterKey?.key === 'timeRange' || filterKey?.valueType === 'time-range'"
+            v-model="local.timeRangeMode"
+        />
 
         <div v-if="local.timeRangeMode === 'predefined'" class="section">
             <KsSelect
@@ -74,7 +77,7 @@
         label?: string;
         modelValue: string;
         placeholder?: string;
-        filterKey?: {key: string; dateFilterOptions?: DateFilterOption[]};
+        filterKey?: {key: string; valueType?: string; dateFilterOptions?: DateFilterOption[]};
         endDateValue?: Date | null;
         startDateValue?: Date | null;
         timeRangeMode?: "predefined" | "custom";
@@ -131,7 +134,7 @@
 
             .form-label {
                 display: block;
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
                 font-weight: 500;
                 margin-bottom: 0.25rem;
@@ -145,7 +148,7 @@
 
         .form-label {
             display: block;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-xs);
             font-weight: 500;
             margin-bottom: 0.5rem;
@@ -161,7 +164,7 @@
             background: var(--ks-background-body);
             border: 1px solid var(--ks-border-primary);
             border-radius: var(--ks-border-radius-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             cursor: pointer;
             font-size: var(--ks-font-size-xs);
             font-weight: 500;
@@ -183,12 +186,12 @@
 
 :deep(.kel-date-editor) {
     .kel-input__inner::placeholder {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
     }
 
     .kel-input__prefix .kel-input__icon {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
     }
 }

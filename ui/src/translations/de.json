@@ -27,14 +27,18 @@
     "activate_basic_auth": "Aktiviere Basis-Authentifizierung",
     "active": "Aktiv",
     "active-slots": "Aktive Slots",
+    "actual state": "Aktueller Zustand",
     "add": "Hinzufügen",
     "add at position": "{position} <code>{task}</code> hinzufügen",
     "add error handler": "Fehler-Handler hinzufügen",
     "add flow": "Flow hinzufügen",
+    "add label": "Label hinzufügen",
     "add task": "Einen Task hinzufügen",
     "add-trigger-in-editor": "Fügen Sie zuerst einen Trigger zu Ihrem Flow hinzu",
     "add_new_item": "Neues Element hinzufügen",
     "additionalPlugins": "Zusätzliche Plugins",
+    "admin": "Admin",
+    "admin_preferences": "Preferences",
     "administration": "Administration",
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
@@ -55,6 +59,7 @@
           "test": "Erzeuge Test-YAML für Sie..."
         },
         "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen. Beispielaufforderung: Erstellen Sie einen flow, der jeden Montag um 9 Uhr ausgeführt wird.",
+        "select_provider": "Anbieter auswählen",
         "title": "KI-Agent"
       }
     },
@@ -63,6 +68,7 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
+    "are you sure change state": "Sind Sie sicher, dass Sie den Zustand ändern möchten?",
     "assets": {
       "title": "Vermögenswerte"
     },
@@ -77,9 +83,11 @@
     "backfill executions": "Backfill-Ausführungen",
     "backfill paused": "Backfill PAUSED",
     "backfill running": "Backfill läuft",
+    "bar": "Bar",
     "before": "vor",
     "behavior": "Verhalten",
     "blueprints": {
+      "all": "Alle",
       "apps": "App-Blueprints",
       "community": "Gemeinschaft",
       "create": "Erstellen Sie ein Blueprint",
@@ -99,6 +107,7 @@
     },
     "bookmark": "Lesezeichen",
     "bulk action async warning": "Dies kann einige Augenblicke dauern.",
+    "bulk actions": "Massenaktionen",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
     "bulk delete backfills": "{count} Backfill löschen",
@@ -164,6 +173,7 @@
     "change state tooltip": "Ändern Sie den Ausführungszustand",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",
+    "chart type": "Diagrammtyp",
     "charts": "Diagramme",
     "choice": "Wahl",
     "choose file": "Wählen Sie eine Datei oder ziehen Sie sie hierher...",
@@ -172,6 +182,7 @@
     "codeDisabled": "In Flow deaktiviert",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
+    "commit_id": "Commit-ID",
     "common": {
       "back": "Zurück"
     },
@@ -201,8 +212,10 @@
     "copied": "Kopiert",
     "copied_logs_to_clipboard": "Logs in die Zwischenablage kopiert.",
     "copy": "Kopieren",
+    "copy all logs": "Alle Logs kopieren",
     "copy logs": "Logs kopieren",
     "copy url": "URL kopieren",
+    "copy_and_close": "Kopieren und schließen",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
@@ -217,6 +230,7 @@
     "current": "aktuell",
     "current execution": "Aktuelle Ausführung",
     "custom value": "Benutzerdefinierter Wert",
+    "customize sidebar": "Seitenleiste anpassen",
     "dark_version": "Dunkler Modus",
     "dashboards": {
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
@@ -241,6 +255,14 @@
         "singular": "Dashboard"
       },
       "preview": "Vorschau-Dashboard",
+      "quick_filters": {
+        "all": "Alle",
+        "failed": "Fehlgeschlagen",
+        "paused": "Pausiert",
+        "running": "Läuft",
+        "success": "Erfolg",
+        "warning": "Warnung"
+      },
       "switch": "Dashboard wechseln"
     },
     "data": "Daten",
@@ -275,9 +297,25 @@
       "last7days": "Letzte 7 Tage",
       "leave empty for infinite": "Leer lassen für unendliche Dauer oder eine ISO 8601-Dauer eingeben (Beispiel: 'P1DT1H1M1S')",
       "never": "Nie",
+      "next12hours": "Nächste 12 Stunden",
+      "next15minutes": "Nächste 15 Minuten",
+      "next1hour": "Nächste 1 Stunde",
+      "next24hours": "Nächste 24 Stunden",
+      "next30days": "Nächste 30 Tage",
+      "next365days": "Nächste 365 Tage",
+      "next48hours": "Nächste 48 Stunden",
+      "next5minutes": "Nächste 5 Minuten",
+      "next7days": "Nächste 7 Tage",
       "previousMonth": "Vorheriger Monat",
       "previousWeek": "Vorherige Woche",
       "previousYear": "Vorheriges Jahr",
+      "short": {
+        "12h": "12h",
+        "15m": "15 Min.",
+        "1d": "1T",
+        "1h": "1 Std.",
+        "7d": "7T"
+      },
       "thisMonth": "Dieser Monat",
       "thisMonthSoFar": "Dieser Monat bisher",
       "thisWeek": "Diese Woche",
@@ -333,6 +371,7 @@
         "message": "In der Kestra Enterprise Edition können Sie benutzerdefinierte Blueprints erstellen, die nur für Ihre Organisation verfügbar sind. Sie können diese als Best-Practice-Vorlagen verwenden, um häufig genutzte Workflows in Ihrem Team zu teilen, zu zentralisieren und zu dokumentieren.",
         "title": "Benutzerdefinierte Blueprints hinzufügen"
       },
+      "contact_sales": "Vertrieb kontaktieren",
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Demo anfordern",
       "instance": {
@@ -390,7 +429,8 @@
         "label": "Tests",
         "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
         "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
-      }
+      },
+      "watch_the_video": "Sieh dir das Video an"
     },
     "dependencies": "Abhängigkeiten",
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
@@ -425,6 +465,8 @@
     "disabled": "Deaktiviert",
     "disabled flow desc": "Dieser Flow ist deaktiviert, bitte aktivieren Sie ihn, um ihn auszuführen.",
     "disabled flow title": "Dieser Flow ist deaktiviert",
+    "discard changes confirmation": "Sie haben ungespeicherte Änderungen. Sind Sie sicher, dass Sie diese verwerfen möchten?",
+    "discard execution confirmation": "Sie haben ungespeicherte Eingaben. Sind Sie sicher, dass Sie diese Ausführung verwerfen möchten?",
     "display direct sub tasks count": "Direkte Subtask-Anzahl anzeigen",
     "display flow {id} executions": "Ausführungen des Flows {id} anzeigen",
     "display metric for specific task": "Metrik für einen spezifischen Task anzeigen",
@@ -441,6 +483,7 @@
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
+    "drop items here": "Elemente hier ablegen",
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "duration": "Dauer",
     "dynamic": "Dynamisch",
@@ -476,6 +519,10 @@
         "content": "Ankündigungen ermöglichen es Ihnen, Ihre Benutzer über Änderungen zu informieren oder sie über geplante Wartungsarbeiten zu benachrichtigen. Wählen Sie einfach den Ankündigungstyp, den Zeitraum, in dem sie angezeigt werden soll, und schreiben Sie die Ankündigungsnachricht.",
         "title": "Sie haben noch keine Ankündigungen!"
       },
+      "apiTokens": {
+        "content": "API-Tokens werden verwendet, wenn Sie programmatischen Zugriff auf die Kestra-API gewähren möchten.",
+        "title": "Verwalten Sie Ihre API-Tokens"
+      },
       "apps": {
         "content": "Beginnen Sie mit dem Erstellen von Apps, um mit Kestra von der Außenwelt zu interagieren.",
         "title": "Sie haben noch keine Apps!"
@@ -491,6 +538,10 @@
       "concurrency_limit": {
         "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
+      },
+      "concurrency_limits": {
+        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "title": "Es sind keine Nebenläufigkeitsgrenzen festgelegt."
       },
       "dependencies": {
         "ASSET": {
@@ -510,9 +561,17 @@
           "title": "Derzeit gibt es keine Abhängigkeiten."
         }
       },
+      "groups": {
+        "content": "Gruppen ermöglichen es Ihnen, Benutzer zusammenzufassen, sodass Sie Berechtigungen und Rollenbindungen gemeinsam über Ihren Mandanten verwalten können.",
+        "title": "Sie haben noch keine Gruppen!"
+      },
       "kill_switches": {
         "content": "Die Kill Switch-Funktion bietet einen UI-basierten Mechanismus, um problematische Ausführungen zu stoppen. Sie ersetzt die nur CLI-basierten Befehle <code>--skip-executions</code> und <code>--skip-flows</code> durch eine umfassende Verwaltungsoberfläche.",
         "title": "Sie haben noch keine Kill Switches!"
+      },
+      "mcpToolFlows": {
+        "content": "Expose einen flow als MCP-Tool, indem Sie einen <code>McpToolTrigger</code> hinzufügen. Lesen Sie mehr über den <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in unserer Dokumentation.",
+        "title": "Auf diesem Server sind noch keine Tool flows registriert."
       },
       "panels": {
         "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Namespace-Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
@@ -537,6 +596,10 @@
       "versionPlugin": {
         "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
         "title": "Sie haben noch kein versioniertes Plugin!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Registrierungstoken ermöglichen es Remote-Workern, sich sicher zu authentifizieren und bei Ihrer Kestra-Instanz zu registrieren. Erstellen Sie ein Token und verwenden Sie es, um neue Worker mit diesem Cluster zu verbinden.",
+        "title": "Sie haben noch keine Registrierungstoken!"
       }
     },
     "empty search": "Suchergebnisse sind leer",
@@ -546,6 +609,7 @@
     "encoding": "Kodierung",
     "end date": "Enddatum",
     "end datetime": "Enddatum und -zeit",
+    "environment": "Umgebung",
     "environment color setting": "Umgebungsfarbe",
     "environment name setting": "Umgebungsname",
     "error": "Fehler",
@@ -568,6 +632,8 @@
       }
     },
     "eval": {
+      "expression": "Ausdruck",
+      "preview": "Vorschau",
       "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
@@ -580,6 +646,7 @@
     "execute the flow": "Den Flow <code>{id}</code> ausführen",
     "execution": "Ausführung",
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
+    "execution id": "Ausführungs-ID",
     "execution labels": "Ausführungs-Labels",
     "execution not found": "Ausführung <code>{executionId}</code> wurde nicht gefunden.",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Zustand FAILED",
@@ -646,10 +713,18 @@
     "failed to render pdf": "PDF-Vorschau konnte nicht gerendert werden",
     "false": "Falsch",
     "feeds": {
+      "heading": "Alles rund um Kestra.",
+      "subheading": "Die neuesten Updates, Anleitungen und Geschichten",
       "title": "Was gibt's Neues bei Kestra"
     },
     "file preview truncated": "Angezeigter Inhalt wurde abgeschnitten",
+    "file unavailable": "Datei nicht verfügbar",
+    "file unavailable description": "Diese Datei ist nicht mehr verfügbar – sie wurde möglicherweise gelöscht oder ist abgelaufen.",
     "fileTypeNotAllowed": "Dateityp nicht erlaubt. Akzeptierte Typen: {types}",
+    "file_preview": {
+      "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
+      "load_anyway": "Trotzdem laden"
+    },
     "files": "Dateien",
     "filter by log level": "Nach Log-Ebene filtern",
     "filters": {
@@ -735,6 +810,27 @@
     "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "App(s)",
+        "tooltip": "Apps anzeigen, die diesen flow verwenden"
+      },
+      "dependencies": {
+        "suffix": "Abhängigkeiten",
+        "tooltip": "Flow-Abhängigkeiten anzeigen"
+      },
+      "errors": {
+        "label": "{count} Fehler"
+      },
+      "revisions": {
+        "suffix": "Revision(en)",
+        "tooltip": "Flow-Revisionen anzeigen"
+      },
+      "tests": {
+        "suffix": "Test(s)",
+        "tooltip": "Flow-Tests anzeigen"
+      }
+    },
     "flow_export": "Flow exportieren",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
     "flow_outputs": "Flow Outputs",
@@ -811,7 +907,9 @@
     "labels": "Labels",
     "last 48 hours": "letzte 48 Stunden",
     "last X days count": "{count} in den letzten {days} Tagen",
+    "last error was": "Letzter Fehler war",
     "last evaluation date": "Letztes Bewertungsdatum",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Letztes Ausführungsdatum",
     "last execution state": "Letzter Zustand",
     "last execution status": "Letzter Ausführungsstatus",
@@ -824,6 +922,7 @@
     "leave page": "Seite verlassen",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
     "light_version": "Helle Version",
+    "line": "Linie",
     "line-by-line": "Zeile für Zeile",
     "loaded x dependencies": "{count} Abhängigkeiten geladen",
     "log expand setting": "Log-Standardanzeige",
@@ -835,6 +934,7 @@
       "raw": "Temporale Ansicht",
       "raw_details": "Vollständige Task Logs und Flow Logs in einem rohen, nach Zeitstempel geordneten Format anzeigen"
     },
+    "main_configuration": "Hauptkonfiguration",
     "management port": "Management-Port",
     "mark as": "Als <code>{status}</code> markieren",
     "max": "Max",
@@ -844,44 +944,81 @@
       "basic_auth": "Basis-Authentifizierung",
       "bearer_token": "Authentifizierung mit Bearer-Token",
       "connect": "Verbinden",
-      "connect_modal": {
+      "connect_tab": {
+        "auth_api_token_hint": "Setzen Sie <code>KESTRA_TOKEN</code> als Umgebungsvariable, bevor Sie den Client starten.",
+        "auth_basic_hint": "Setzen Sie <code>KESTRA_BASIC_AUTH</code> als Umgebungsvariable, die einen base64-kodierten <code>username:password</code>-String enthält, bevor Sie den Client starten.",
+        "auth_oauth_browser_hint": "Ihr Browser öffnet beim ersten Verbindungsaufbau die Anmeldeseite des Identitätsanbieters.",
+        "auth_oauth_client_id_hint": "Ersetzen Sie <code>&lt;client-id&gt;</code> durch die OAuth-Client-ID und registrieren Sie <code>http://localhost:7777</code> als gültige Weiterleitungs-URI auf diesem Client.",
         "claude_code": "Claude-Code",
         "claude_code_hint": "Führen Sie den folgenden Befehl in Ihrem Terminal aus:",
         "claude_desktop": "Claude Desktop",
         "claude_desktop_hint": "Fügen Sie Folgendes zu Ihrer claude_desktop_config.json-Datei hinzu:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
         "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "client_picker_label": "Wählen Sie Ihren KI-Client",
         "codex": "Codex (OpenAI)",
         "codex_hint": "Fügen Sie Folgendes zu Ihrer codex.json MCP-Konfiguration hinzu:",
         "cursor": "Cursor",
         "cursor_hint": "Fügen Sie Folgendes zu ~/.cursor/mcp.json hinzu:",
-        "done": "Fertig",
-        "server_url": "Server-URL",
-        "title": "Verbinden mit {name}"
+        "server_url": "Server-URL"
       },
       "copy_url": "URL kopieren",
       "create": "Server erstellen",
       "delete_confirm": "Möchten Sie diesen MCP-Server wirklich löschen?",
+      "id_invalid": "Die ID muss mit einem Kleinbuchstaben oder einer Ziffer beginnen und darf nur Kleinbuchstaben, Ziffern, Bindestriche oder Unterstriche enthalten.",
+      "id_placeholder": "z.B. mein-mcp-server",
       "instructions": "Anweisungen",
+      "main_tenant": "Haupt",
+      "no_oauth_providers": "Keine OIDC-Anbieter in dieser Instanz konfiguriert",
       "no_servers": "Keine MCP-Server gefunden. Erstellen Sie Ihren ersten Server, um MCP Tool Trigger für externe KI-Agenten bereitzustellen.",
+      "oauth": "OAuth",
+      "oauth_hint": "Bearer JWT von Ihrem OIDC-Anbieter",
+      "oauth_provider": "OAuth-Anbieter",
+      "oauth_provider_placeholder": "Wählen Sie einen konfigurierten OIDC-Anbieter",
+      "oauth_provider_required": "OAuth-Anbieter ist erforderlich, wenn der Authentifizierungstyp OAuth ist",
       "page_description": "Stellen Sie Ihre Kestra flows als Werkzeuge für MCP-kompatible KI-Agenten bereit",
       "private": "Privat",
       "public": "Öffentlich",
       "save": "Änderungen speichern",
+      "scopes_supported": "Unterstützte Scopes",
+      "scopes_supported_hint": "Scopes, die im Protected Resource Metadata-Dokument dieses Servers angekündigt werden. Spezifikationskonforme MCP-Clients beschränken ihre Autorisierungsanfragen auf diese Liste. Leer lassen, um das Feld auszulassen und den Clients die vom IdP angekündigten Scopes zu verwenden.",
+      "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP-Server",
       "server_type": "Servertyp",
       "servers": "MCP-Server",
+      "tab_connect": "Verbinden",
+      "tab_edit": "Bearbeiten",
+      "tab_tool_flows": "Tool-Flows",
+      "tab_tool_flows_placeholder": "Das Management von Tool flows kommt bald.",
+      "tools": {
+        "annotations": "Anmerkungen",
+        "create_tool_flow": "Erstelle einen Tool flow",
+        "description": "Beschreibung",
+        "destructive": "Destruktiv",
+        "flow": "flow",
+        "idempotent": "Idempotent",
+        "no_tools": "Keine Tool-Flows entsprechen Ihrer Suche.",
+        "open_world": "Open world",
+        "read_only": "Schreibgeschützt",
+        "return_direct": "Direktrückgabe",
+        "state": "Zustand",
+        "title": "Titel",
+        "tool_name": "Tool-Name",
+        "trigger_id": "Trigger-ID",
+        "view_flow": "flow öffnen"
+      },
       "url_copied": "URL kopiert!",
       "username_password": "Benutzername & Passwort"
     },
     "metric": "Metrik",
-    "metric choice": "Bitte wählen Sie eine Metrik und eine Aggregation",
+    "metric choice": "Keine Metriken für diesen flow verfügbar",
     "metrics": "Metriken",
     "min": "Min",
     "missingSource": "Fehlende Quelle",
     "modify inputs": "Eingaben ändern",
     "modify_inputs": "Eingaben ändern",
     "monogram": "Monogramm",
+    "more actions": "Weitere Aktionen",
     "more_actions": "Weitere Aktionen",
     "multi_panel_editor": {
       "close_all_panels": "Alle Panels schließen",
@@ -897,9 +1034,11 @@
       "create": {
         "file": "Datei erstellen",
         "file_already_exists": "Eine Datei mit diesem Namen existiert bereits",
+        "file_conflicts_with_folder": "Ein Ordner mit diesem Namen existiert bereits",
         "file_error": "Fehler beim Erstellen der Datei aufgetreten",
         "folder": "Ordner erstellen",
         "folder_already_exists": "Ein Ordner mit diesem Namen existiert bereits",
+        "folder_conflicts_with_file": "Eine Datei mit diesem Namen existiert bereits",
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten",
         "label": "Erstellen"
       },
@@ -1002,6 +1141,7 @@
       "title": "Beginnen Sie mit der Automatisierung mit"
     },
     "no_code": {
+      "add_field": "Hinzufügen {field}",
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "clearSelection": "Auswahl aufheben",
@@ -1032,7 +1172,8 @@
           "taskDefaults": "Standardwerte für Tasks",
           "updated": "Aktualisiert",
           "variables": "Variablen",
-          "workerGroup": "Worker-Gruppe"
+          "workerGroup": "Worker-Gruppe",
+          "workerSelector": "Worker-Selektor"
         },
         "main": {
           "description": "Beschreibung",
@@ -1261,6 +1402,7 @@
       "next": "Nächste Seite",
       "previous": "Vorherige Seite"
     },
+    "panel actions": "Panelaktionen",
     "parent execution": "Elternausführung",
     "password": "Passwort",
     "password empty constraint": "Falscher Benutzername oder Passwort",
@@ -1287,6 +1429,7 @@
       "toggle": "Spielplatz",
       "tooltip_persistence": "Wenn Sie den Playground ausschalten und wieder einschalten, bleiben die Informationen erhalten, solange Sie auf der Seite bleiben."
     },
+    "playground actions": "Aktionen im Playground",
     "plugin defaults exported": "Plugin-Standardeinstellungen exportiert",
     "plugin defaults imported": "Plugin-Standardeinstellungen importiert",
     "plugin defaults not imported": "Einige Plugin-Standardeinstellungen konnten nicht importiert werden",
@@ -1311,10 +1454,51 @@
       "yaml_configuration": "YAML-Konfiguration"
     },
     "pluginPage": {
-      "alt": "Plugins-Symbol",
+      "elementType": {
+        "apps": "Anwendung",
+        "charts": "Diagramm",
+        "conditions": "Bedingung",
+        "logExporters": "Log-Exporter",
+        "secrets": "Geheimnis",
+        "taskRunners": "Task-Runner",
+        "tasks": "Aufgabe",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Blueprints ({count})",
+        "plugins": "Plugins ({count})",
+        "tasks": "Aufgaben ({count})"
+      },
+      "header": {
+        "back": "Zurück zu Plugins",
+        "certified": "Zertifiziert",
+        "enterpriseEdition": "Enterprise Edition"
+      },
+      "loadError": "Konnte Plugins nicht laden. Bitte versuchen Sie es erneut.",
+      "noResults": "Keine Plugins entsprechen Ihrer Suche.",
+      "notFound": "Dieses Plugin konnte nicht gefunden werden.",
+      "overview": {
+        "createdBy": "Erstellt von",
+        "latest": "Neueste",
+        "linksResources": "Links & Ressourcen",
+        "managedBy": "Verwaltet von",
+        "minKestraVersion": "Min. kompatible Kestra-Version: {version}",
+        "minKestraVersionShort": "Min. Kestra-Version {version}",
+        "pluginType": "Plugintyp",
+        "previousVersions": "Vorherige Versionen",
+        "releaseNotes": "Versionshinweise",
+        "title": "Übersicht",
+        "versions": "Versionen"
+      },
       "search": "Suche in {count}+ Plugins",
-      "title1": "Plugins sind Bausteine für Ihre Workflows.",
-      "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
+      "searchTasks": "Suche {count} Tasks",
+      "sort": {
+        "mostUsed": "Am häufigsten verwendet",
+        "nameAsc": "Name A-Z",
+        "nameDesc": "Name Z-A",
+        "newest": "Neueste"
+      },
+      "sortBy": "Sortieren nach"
     },
     "plugin_default_already_exists": "Standard-Plugin für <code>{type}</code> existiert bereits.",
     "plugins": {
@@ -1357,6 +1541,8 @@
     "relative": "Relativ",
     "relative end date": "Relatives Enddatum",
     "relative start date": "Relatives Startdatum",
+    "remove label": "Label entfernen",
+    "remove this item": "Diesen Eintrag entfernen",
     "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?",
     "replay": "Wiederholen",
     "replay confirm": "Sind Sie sicher, dass Sie diese Ausführung <code>{id}</code> wiederholen und eine neue erstellen möchten?",
@@ -1370,9 +1556,10 @@
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
     "replay using": "Wiederholen mit",
     "replay with inputs": "Wiedergabe mit Inputs",
-    "replayed": "Ausführung ist wiederholt",
+    "replayed": "Die Ausführung wird wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",
+    "reset to defaults": "Zurücksetzen auf Standardwerte",
     "restart": "Neustart",
     "restart change revision": "Sie können die Revision ändern, die für die neue Ausführung verwendet wird.",
     "restart confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> neu starten möchten?",
@@ -1383,7 +1570,7 @@
       "button": "Trigger neu starten",
       "tooltip": "Den Trigger neu starten"
     },
-    "restarted": "Ausführung ist neu gestartet",
+    "restarted": "Die Ausführung wird neu gestartet",
     "restore": "Wiederherstellen",
     "restore confirm": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "restore revision": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
@@ -1398,7 +1585,9 @@
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",
+    "run timeline": "Ablaufzeitachse",
     "runners": "Läufer",
+    "running": "RUNNING",
     "running duration": "Laufzeitdauer",
     "save": "Speichern",
     "save draft": {
@@ -1448,10 +1637,13 @@
     },
     "see dependencies": "Abhängigkeiten anzeigen",
     "see full revision": "Vollständige Revision anzeigen",
+    "see timeline": "Zeitachse anzeigen",
     "see_all_states": "Alle Zustände anzeigen",
     "seeing old revision": "Sie sehen eine alte Revision: {revision}",
     "select": "Wählen Sie Ihren {{section}} aus",
+    "select a state": "Wählen Sie einen Zustand",
     "select datetime": "Datum auswählen",
+    "select view": "Ansicht auswählen",
     "selected": "Ausgewählt",
     "selection": {
       "all": "Alle auswählen ({count})",
@@ -1464,6 +1656,17 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "Sekunden zwischen automatischen Datenaktualisierungen auf Listen-Seiten.",
+            "default_namespace": "Wird verwendet, wenn neue flows ohne namespace erstellt werden.",
+            "editor_type": "Editor wird angezeigt, wenn ein flow zum ersten Mal geöffnet wird.",
+            "execute_default_tab": "Registerkarte ausgewählt beim Navigieren zu einer Ausführung.",
+            "execute_flow": "Wo Ausführungsergebnisse nach dem Auslösen eines Runs geöffnet werden.",
+            "flow_default_tab": "Registerkarte ausgewählt beim Navigieren zu einem flow.",
+            "log_display": "Wie Logs bei der Öffnung einer Ausführung dargestellt werden.",
+            "log_level": "Minimale Log-Ebene, die in den Ausführungs-Logs angezeigt wird.",
+            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus."
+          },
           "fields": {
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
             "default_namespace": "Standard-Namespace",
@@ -1487,6 +1690,11 @@
           "label": "Exportieren"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "Format zur Anzeige von Datumsangaben im gesamten Dashboard.",
+            "language": "Oberflächensprache für Menüs und Labels.",
+            "time_zone": "Wird zur Anzeige von Ausführungsdaten und geplanten Triggers verwendet."
+          },
           "fields": {
             "date_format": "Datumsformat",
             "time_zone": "Zeitzone"
@@ -1501,13 +1709,39 @@
           "unsaved_title": "Nicht gespeicherte Änderungen",
           "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
         },
+        "sidebar": {
+          "descriptions": {
+            "items": "Elemente in der Seitenleiste anzeigen, ausblenden und neu anordnen."
+          },
+          "fields": {
+            "items": "Navigationspunkte"
+          },
+          "label": "Seitenleiste"
+        },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dunkel 1.0",
+            "dark_2": "Dunkel 2.0",
+            "light": "Hell",
+            "sync": "Mit System synchronisieren"
+          },
+          "descriptions": {
+            "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
+            "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
+            "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
+            "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",
+            "editor_hover_description": "Eigenschaftsbeschreibungen beim Hover im Editor anzeigen.",
+            "environment_color": "Auffälligkeitsfarbe, die für die aktuelle Umgebung in der Navigation verwendet wird.",
+            "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
+            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",
               "label": "Diagramm-Farbschema"
             },
+            "color_mode": "Farbmodus",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
@@ -1521,7 +1755,8 @@
           "label": "Modus-Einstellungen"
         }
       },
-      "label": "Einstellungen"
+      "label": "Einstellungen",
+      "updated": "{name} aktualisiert"
     },
     "setup": {
       "config": {
@@ -1544,6 +1779,8 @@
         "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl."
       },
       "login": "Anmelden",
+      "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",
+      "login_title": "Anmelden",
       "logout": "Abmelden",
       "steps": {
         "complete": "Kestra UI starten",
@@ -1599,7 +1836,9 @@
     "show": "Anzeigen",
     "show chart": "Diagramm anzeigen",
     "show description": "Beschreibung anzeigen",
+    "show details": "Details anzeigen",
     "show documentation": "Dokumentation anzeigen",
+    "show more details": "Mehr Details anzeigen",
     "show task condition": "Bedingung des Tasks anzeigen",
     "show task documentation": "Task-Dokumentation anzeigen",
     "show task documentation in editor": "Task-Dokumentation im Editor anzeigen",
@@ -1609,6 +1848,7 @@
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "showMore": "Mehr anzeigen",
     "side-by-side": "nebeneinander",
+    "skipped": "Übersprungen",
     "slack support": "Fragen Sie via Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -1680,6 +1920,7 @@
     "to": "Bis",
     "to toggle": "umschalten",
     "toggle fullscreen": "Vollbild umschalten",
+    "toggle menu": "Menü umschalten",
     "toggle output": "Outputs umschalten",
     "toggle output display": "Outputanzeige umschalten",
     "toggle periodic refresh each x seconds": "Periodische Aktualisierung alle {interval} Sekunden umschalten",
@@ -1720,15 +1961,8 @@
     "triggers": "Trigger",
     "triggers_add_card_add": "Hinzufügen",
     "triggers_add_card_add_to_flow": "Zum flow hinzufügen",
-    "triggers_add_category_app_description": "Externe Ressourcen regelmäßig auf Änderungen überprüfen.",
-    "triggers_add_category_app_title": "App-Trigger",
-    "triggers_add_category_core_description": "Eingebaute Trigger, die für die meisten Workflows unerlässlich sind.",
-    "triggers_add_category_core_title": "Kern-Trigger",
     "triggers_add_category_empty": "Keine Trigger in dieser Kategorie.",
-    "triggers_add_category_realtime_description": "Reagieren Sie sofort auf Ereignisse aus Messaging-Systemen.",
-    "triggers_add_category_realtime_title": "Echtzeit-Trigger",
     "triggers_add_ee_tooltip": "Dieser Trigger erfordert die Enterprise Edition.",
-    "triggers_add_empty_hint": "Versuchen Sie einen anderen Suchbegriff oder durchsuchen Sie alle Kategorien.",
     "triggers_add_empty_title": "Keine Trigger gefunden",
     "triggers_add_filter_all": "Alle",
     "triggers_add_filter_app": "App",
@@ -1746,8 +1980,6 @@
     "triggers_add_modal_trigger_id": "Trigger-ID",
     "triggers_add_modal_trigger_id_placeholder": "Eindeutiger Bezeichner für diesen Trigger",
     "triggers_add_search_placeholder": "Suche Trigger...",
-    "triggers_add_see_less": "Weniger anzeigen",
-    "triggers_add_see_more": "Mehr anzeigen ({count} mehr)",
     "triggers_header_description": "Durchsuchen, hinzufügen und verwalten Sie Trigger, um Ihre flows zu automatisieren. Wählen Sie aus, ob Sie Ihren flow als AI-Tool bereitstellen, planen, einen Webhook-Trigger hinzufügen, Änderungen in externen Apps abfragen oder Echtzeit-Ereignislistener verwenden möchten.",
     "triggers_state": {
       "options": {
@@ -1790,16 +2022,32 @@
     "usage": "Verwendung",
     "use": "Verwenden",
     "use_dark_background": "Verwenden Sie diese Version, wenn Sie auf einem dunklen Hintergrund arbeiten, um sicherzustellen, dass unser Name lesbar bleibt.",
+    "valid": "Gültig",
     "validate": "Validieren",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "Keine Variablen für diese Ausführung verfügbar.",
+      "n_items": "[ {count} Elemente ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 Element ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key oder value suchen...",
+      "select_prompt": "Wählen Sie eine Variable aus, um ihren value anzuzeigen.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Eingabe/Ausgabe",
+      "tree": "Baum"
+    },
     "variables": "Variablen",
     "version": "Version",
+    "view metrics": "Metriken anzeigen",
     "warning": "Warnung",
     "warning detected": "Warnungen erkannt",
     "warning flow with triggers": "Dieser Flow enthält Trigger und eine manuelle Ausführung wird fehlschlagen, wenn dieser Flow von Trigger-Ausdrücken abhängt.",
     "watch": "Beobachten",
     "watch_video": "Video ansehen",
     "webhook": {
+      "copy_url": "Webhook-URL kopieren",
       "curl_command": "Webhook-cURL-Befehl",
       "curl_note": "Verwenden Sie diesen cURL-Befehl, um den flow über Webhook mit benutzerdefiniertem JSON-Payload zu triggern.",
       "no_triggers": "Dieser flow hat keine aktivierten Webhook-Triggers.",
@@ -1942,6 +2190,7 @@
     "worker information": "Worker-Informationen",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt"
+    "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
+    "yes": "Ja"
   }
 }

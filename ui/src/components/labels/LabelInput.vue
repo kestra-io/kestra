@@ -9,7 +9,7 @@
                 class="form-control me-2"
                 :placeholder="$t('key')"
                 :modelValue="(label.key as string | undefined)"
-                :disabled="localExisting.includes(label.key || '')"
+                :disabled="existingRows.has(label)"
                 @update:model-value="update(index, $event, 'key')"
             />
             <KsInput
@@ -21,15 +21,15 @@
         </div>
         <div class="flex-shrink-1">
             <KsButtonGroup class="d-flex">
-                <KsButton :icon="Plus" @click="addItem" />
-                <KsButton :icon="Minus" @click="removeItem(index)" />
+                <KsButton :icon="Plus" @click="addItem" :tooltip="$t('add label')" />
+                <KsButton :icon="Minus" @click="removeItem(index)" :tooltip="$t('remove label')" />
             </KsButtonGroup>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted} from "vue"
+    import {ref, onMounted, watch} from "vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Minus from "vue-material-design-icons/Minus.vue"
 
@@ -48,7 +48,7 @@
     }>()
 
     const locals = ref<Label[]>([])
-    const localExisting = ref<string[]>([])
+    const existingRows = ref<Set<Label>>(new Set())
 
     const addItem = () => {
         locals.value.push({key: null, value: null})
@@ -68,16 +68,39 @@
         emit("update:labels", locals.value)
     }
 
+    const syncFromProps = (labels: Label[]) => {
+        if (labels.length === 0) {
+            locals.value = [{key: null, value: null}]
+        } else {
+            locals.value = labels
+        }
+    }
+
     onMounted(() => {
         if (props.labels.length === 0) {
             addItem()
         } else {
-            locals.value = props.labels
+            syncFromProps(props.labels)
             if (locals.value.length === 0) {
                 addItem()
             }
         }
 
-        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || []
+        const existingKeys = new Set((props.existingLabels ?? []).map((label) => label.key ?? ""))
+        existingRows.value = new Set(
+            locals.value
+                .filter((label) => label.key != null && existingKeys
+                    .has(label.key)),
+        )
     })
+
+    watch(
+        () => props.labels,
+        (labels) => {
+            if (labels === locals.value) {
+                return
+            }
+            syncFromProps(labels)
+        },
+    )
 </script>

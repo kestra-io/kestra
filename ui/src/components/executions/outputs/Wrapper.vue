@@ -78,11 +78,11 @@
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
-                                    <Editor
+                                    <KsEditor
+                                        v-bind="editorBindings"
                                         ref="debugEditor"
-                                        :fullHeight="false"
-                                        :customHeight="20"
-                                        :input="true"
+                                        :options="{fullHeight: false, customHeight: 20}"
+                                        :inline="true"
                                         :navbar="false"
                                         :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
@@ -102,13 +102,12 @@
                                         {{ $t("eval.title") }}
                                     </KsButton>
 
-                                    <Editor
+                                    <KsEditor
+                                        v-bind="editorBindings"
                                         v-if="debugExpression"
                                         :readOnly="true"
-                                        :input="true"
-                                        :showScroll="true"
-                                        :fullHeight="false"
-                                        :customHeight="20"
+                                        :inline="true"
+                                        :options="{showScroll: true, fullHeight: false, customHeight: 20}"
                                         :navbar="false"
                                         :modelValue="debugExpression"
                                         :lang="isJSON ? 'json' : ''"
@@ -164,10 +163,10 @@
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
 
-    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system"
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton, KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
-    import Editor from "../../inputs/Editor.vue"
     import VarValue from "../VarValue.vue"
     import SubFlowLink from "../../flows/SubFlowLink.vue"
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue"
@@ -177,6 +176,8 @@
     import * as Utils from "../../../utils/utils"
 
     const {t} = useI18n({useScope: "global"})
+
+    const editorBindings = useEditorBindings()
 
     const editorValue = ref<string>("")
     const debugCollapse = ref<string>("")
@@ -206,7 +207,7 @@
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined)
+            : ((cascader.value?.cascader?.getCheckedNodes(false)?.[0] as any)?.label as string | undefined)
         const taskRunList = [...execution.value?.taskRunList ?? []]
         return taskRunList.find((e) => e.taskId === filter)
     })
@@ -264,7 +265,7 @@
 
         if (!taskRun) return
 
-        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/actions/eval/${taskRun.id}`
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId ?? execution.value?.id}/actions/eval/${taskRun.id}`
         axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {
@@ -307,13 +308,8 @@
 
     const execution = computed(() => executionsStore.execution)
 
-    function isValidURL(url: string) {
-        try {
-            URL.canParse(url)
-            return true
-        } catch {
-            return false
-        }
+    function isValidURL(url: unknown): boolean {
+        return typeof url === "string" && URL.canParse(url)
     }
 
     const processedValue = (data: TransformedTask) => {
@@ -356,7 +352,7 @@
 
         if (!node?.length) return {label: undefined, value: undefined}
 
-        const {label, value} = node[0]
+        const {label, value} = node[0] as any
 
         return {label, value: value as string}
     }
@@ -423,8 +419,8 @@
                 if(status === 200 && data) {
                     tasksWithOutputs.value = []
                     for(const task of data){
-                        if(task.taskId){
-                            tasksWithOutputs.value?.push(task.taskId)
+                        if(task.taskRunId){
+                            tasksWithOutputs.value?.push(task.taskRunId)
                         }
                     }
                 }
@@ -435,17 +431,19 @@
     )
 
     const outputs = computed<TransformedTask[] | undefined>(() => {
-        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
-            return {
-                label: task.taskId,
-                value: task.taskId,
-                ...task,
-                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
-                icon: true,
-                leaf: !tasksWithOutputs.value?.includes(task.taskId), // Only mark tasks with outputs as non-leaf to trigger lazy loading
-                path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
-            }
-        })
+        const tasks = executionsStore?.execution?.taskRunList
+            ?.filter((task) => tasksWithOutputs.value?.includes(task.id))
+            ?.map((task) => {
+                return {
+                    label: task.taskId,
+                    value: task.taskId,
+                    ...task,
+                    iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
+                    icon: true,
+                    leaf: false,
+                    path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
+                }
+            })
 
         if(!tasks?.length) {
             return undefined
@@ -474,14 +472,14 @@
             getTaskRunOutputs(task.id, task.path).then((children) => {
                 let child: TransformedTask | undefined = children.filter(item => item.leaf === false)[0]
 
-                do {
+                while (child) {
                     selectedLocal.push(child.value)
-                    if(child?.path) {
+                    if(child.path) {
                         expandedValueLocal = child.path
                     }
 
-                    child = child.children?.filter(item => !item.heading)[0]
-                } while(child?.path)
+                    child = child.path ? child.children?.filter(item => !item.heading)[0] : undefined
+                }
 
                 selected.value = selectedLocal
                 if(expandedValueLocal){
@@ -552,10 +550,10 @@
 
 :deep(.kel-splitter-bar) {
     width: 3px !important;
-    background-color: var(--ks-border-primary);
+    background-color: var(--ks-border-default);
 
     &:hover {
-        background-color: var(--ks-border-active);
+        background-color: var(--ks-border-focus);
     }
 }
 
@@ -598,11 +596,11 @@
 }
 
 .debug {
-    background: var(--ks-background-body);
+    background: var(--ks-bg-base);
 }
 
 .bordered {
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 
 .bordered > :deep(.kel-collapse-item) {
@@ -620,7 +618,7 @@
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
 .outputs .right-panel{
-    background: var(--ks-background-card);
+    background: var(--ks-bg-surface);
     position: relative;
     z-index: 1;
     width: 100%;
@@ -636,7 +634,7 @@
     max-width: 300px;
 
     &:last-child {
-        border-right: 1px solid var(--ks-border-primary);
+        border-right: 1px solid var(--ks-border-default);
     }
 
     .kel-cascader-menu__wrap {
@@ -647,19 +645,19 @@
         height: 36px;
         line-height: 36px;
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
 
         &[aria-haspopup="false"] {
             padding-right: 0.5rem !important;
         }
 
         &:hover {
-            background-color: var(--ks-border-primary);
+            background-color: var(--ks-border-default);
         }
 
         &.in-active-path,
         &.is-active {
-            background-color: var(--ks-border-primary);
+            background-color: var(--ks-border-default);
             font-weight: normal;
         }
 
@@ -683,7 +681,7 @@
                     max-width: 80px;
                     overflow-x: clip;
                     text-overflow: ellipsis;
-                    color: var(--ks-content-primary);
+                    color: var(--ks-text-primary);
                 }
             }
         }
@@ -695,7 +693,7 @@
         }
 
         code span.regular {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 }
@@ -748,7 +746,7 @@
     :deep(.kel-splitter) {
         .outputs-top {
             margin: 10px;
-            border: 2px solid var(--ks-border-primary);
+            border: 2px solid var(--ks-border-default);
             box-sizing: border-box;
             overflow: auto;
             flex: 1 1 0 !important;

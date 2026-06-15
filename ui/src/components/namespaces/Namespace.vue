@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace />
+    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace vertical />
 </template>
 
 <script setup lang="ts">

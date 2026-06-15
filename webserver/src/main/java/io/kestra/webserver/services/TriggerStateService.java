@@ -13,8 +13,6 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -29,7 +27,8 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.configuration.AsyncOperationsConfiguration;
+import io.kestra.core.services.AsyncOperationWaiter;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
 import io.micronaut.http.HttpStatus;
@@ -140,6 +139,9 @@ public class TriggerStateService {
         getTriggerState(triggerId);
         executionKilledQueue.emit(
             ExecutionKilledTrigger.builder()
+                // Trigger kills are not processed by the Executor: emit them directly in the
+                // EXECUTED state, the only state forwarded to the workers.
+                .state(ExecutionKilled.State.EXECUTED)
                 .tenantId(triggerId.getTenantId())
                 .namespace(triggerId.getNamespace())
                 .flowId(triggerId.getFlowId())
@@ -293,7 +295,7 @@ public class TriggerStateService {
      * Enables or disables a trigger and waits for the scheduler to acknowledge.
      *
      * @throws NotFoundException if the flow or trigger does not exist.
-     * @throws ConflictException if the trigger is a realtime trigger or the change failed.
+     * @throws ConflictException if the change failed.
      */
     public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled) throws NotFoundException, ConflictException {
         validateToggleable(trigger);
@@ -306,7 +308,7 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables the given triggers. Realtime and missing triggers are silently skipped.
+     * Enables or disables the given triggers. Missing triggers are silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled) {
         List<TriggerId> toggleable = triggers.stream()
@@ -315,7 +317,7 @@ public class TriggerStateService {
                 try {
                     validateToggleable(id);
                     return true;
-                } catch (NotFoundException | ConflictException e) {
+                } catch (NotFoundException e) {
                     return false;
                 }
             })
@@ -338,7 +340,7 @@ public class TriggerStateService {
                     validateToggleable(id);
                     triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId));
                     return 1;
-                } catch (NotFoundException | ConflictException ignored) {
+                } catch (NotFoundException ignored) {
                     return 0;
                 }
             })
@@ -358,18 +360,14 @@ public class TriggerStateService {
             .orElseThrow(() -> new NoSuchElementException("Trigger disappeared after " + action + ": " + triggerId));
     }
 
-    private void validateToggleable(TriggerId triggerId) throws NotFoundException, ConflictException {
+    private void validateToggleable(TriggerId triggerId) throws NotFoundException {
         Flow flow = flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
             .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(triggerId)));
 
-        AbstractTrigger abstractTrigger = flow.getTriggers().stream()
+        flow.getTriggers().stream()
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
-
-        if (abstractTrigger instanceof RealtimeTriggerInterface) {
-            throw new ConflictException("Realtime triggers can not be updated through the API, please edit the trigger from the flow.");
-        }
     }
 
     private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {

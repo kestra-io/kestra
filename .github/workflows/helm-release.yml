@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
         with:
           version: v3.12.3
 
@@ -51,7 +51,7 @@ jobs:
           tar -xzf /tmp/hd.tar.gz -C /usr/local/bin helm-docs
 
       - name: Verify helm-docs are up to date
-        uses: losisin/helm-docs-github-action@v1
+        run: helm-docs
 
       - name: Fail on uncommitted README diffs
         run: git diff --exit-code -- 'charts/**/README.md'
@@ -91,7 +91,7 @@ jobs:
           mv /tmp/chart-starter.yaml charts/kestra-starter/Chart.yaml
 
       - name: Regenerate helm-docs after version bump
-        uses: losisin/helm-docs-github-action@v1
+        run: helm-docs
 
       - name: Lint kestra chart
         run: |

@@ -15,6 +15,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}/concurrency-limit")
 public class ConcurrencyLimitController {
@@ -35,8 +36,8 @@ public class ConcurrencyLimitController {
     @ExecuteOn(TaskExecutors.IO)
     @Put("/{namespace}/{flowId}")
     @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
-    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body ConcurrencyLimit concurrencyLimit) {
-        var existing = concurrencyLimitRepository.findById(concurrencyLimit.getTenantId(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
+    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body @Valid ConcurrencyLimit concurrencyLimit) {
+        var existing = concurrencyLimitRepository.findById(tenantService.resolveTenant(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
         if (existing.isEmpty()) {
             return HttpResponse.notFound();
         }

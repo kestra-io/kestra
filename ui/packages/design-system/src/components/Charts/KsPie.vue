@@ -11,6 +11,7 @@
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
+        @echarts-click="emit('echarts-click', $event)"
     />
 </template>
 
@@ -31,6 +32,7 @@
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
+        "echarts-click": [params: unknown]
     }>()
 
     const props = withDefaults(
@@ -72,7 +74,7 @@
         const legendHidden = (props.options.legend as {show?: boolean})?.show === false
             || props.disableFeatures.includes(ChartFeature.LEGEND)
         const base: Record<string, unknown> = {
-            tooltip: {trigger: "item", formatter: "{b}: {c} ({d}%)"},
+            tooltip: {trigger: "item", confine: true, formatter: "{b}: {c} ({d}%)"},
             legend: {orient: "vertical", right: "5%", top: "center"},
             series: [
                 {

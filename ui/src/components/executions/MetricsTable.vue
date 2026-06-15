@@ -1,6 +1,8 @@
 <template>
     <KsDataTable
         ref="dataTable"
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
         :loadData="loadData"
         :data="metrics"
         :total="metricsTotal"
@@ -66,7 +68,7 @@
                               query: {'filters[q][EQUALS]': scope.row.name}
                         }"
                     >
-                        <KsIconButton>
+                        <KsIconButton :tooltip="$t('view metrics')">
                             <ChartAreaspline />
                         </KsIconButton>
                     </router-link>
@@ -124,6 +126,8 @@
 
     const metrics = ref<any[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
+    const currentPage = ref(1)
+    const pageSize = ref(25)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -169,9 +173,9 @@
         align-items: center;
         padding: 3px 6px;
         border-radius: 4px;
-        border: 1px solid var(--ks-badge-border);
-        background-color: var(--ks-badge-background);
-        color: var(--ks-badge-content);
+        border: 1px solid var(--ks-border-info);
+        background-color: var(--ks-bg-badge);
+        color: var(--ks-text-info);
         font-size: var(--ks-font-size-xs);
     }
 </style>

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.serializers.JacksonMapper;
@@ -62,7 +63,7 @@ public class KVController {
                 @ExampleObject(name = "Sort by description in descending order", value = "description:desc"),
             }
         ) @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat List<QueryFilter> filters) throws IOException {
+        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters) throws IOException {
         return PagedResults.of(kvStoreService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
     }
 

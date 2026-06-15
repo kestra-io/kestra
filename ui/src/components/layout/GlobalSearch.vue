@@ -4,32 +4,24 @@
             <div v-if="isOpen" class="search-overlay" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
-                        <KsInput
+                        <KsSearch
                             ref="searchInput"
                             v-model="query"
                             :placeholder="$t('jump to...')"
+                            clearable
                             @keydown.esc="closeSearch"
                             @keydown="onInputKeydown"
                         >
-                            <template #prefix>
+                            <template v-if="scopePrefix" #prefix>
                                 <Magnify />
-                                <span v-if="scopePrefix" class="scope-prefix">{{ scopePrefix }}</span>
+                                <span class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
-                            <template #suffix>
-                                <KsButton
-                                    v-if="query"
-                                    class="close-button"
-                                    text
-                                    circle
-                                    @click.stop="clearSearch"
-                                >
-                                    <Close />
-                                </KsButton>
-                                <span v-else class="d-none d-sm-block">
+                            <template v-if="!query" #suffix>
+                                <span class="d-none d-sm-block">
                                     <kbd>ESC</kbd> to close
                                 </span>
                             </template>
-                        </KsInput>
+                        </KsSearch>
 
                         <div class="results" role="listbox">
                             <KsScrollbar v-if="results.length > 0" class="results-scroll">
@@ -85,7 +77,6 @@
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import Close from "vue-material-design-icons/Close.vue"
 
     const router = useRouter()
     const {menu} = useLeftMenu()
@@ -214,14 +205,6 @@
         query.value = ""
         activeIndex.value = 0
         scopeStack.value = []
-    }
-
-    const clearSearch = () => {
-        query.value = ""
-        activeIndex.value = 0
-        nextTick(() => {
-            searchInput.value?.focus?.()
-        })
     }
 
     const itemKey = (item: SearchItem, index: number): string => {
@@ -361,8 +344,8 @@
         max-width: 90vw;
 
         .search-container {
-            background: var(--ks-background-card);
-            border: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-surface);
+            border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
             box-shadow:
                 0 8px 24px rgba(0,0,0,0.35);
@@ -377,23 +360,23 @@
                 padding: 8px 16px;
                 border: 0;
                 box-shadow: none;
-                background: var(--ks-background-card);
+                background: var(--ks-bg-surface);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
 
                 input {
-                    color: var(--ks-content-primary);
+                    color: var(--ks-text-primary);
                     background: transparent;
                 }
 
                 input::placeholder {
-                    color: var(--ks-content-tertiary);
+                    color: var(--ks-text-dim);
                 }
 
                 .close-button {
-                    color: var(--ks-content-primary);
+                    color: var(--ks-text-primary);
                     &:hover {
-                        color: var(--ks-content-link);
-                        background-color: var(--ks-border-primary);
+                        color: var(--ks-text-link);
+                        background-color: var(--ks-border-default);
                     }
                 }
             }
@@ -401,14 +384,14 @@
             .scope-prefix {
                 margin-left: 0.5rem;
                 margin-right: 0.25rem;
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 white-space: nowrap;
             }
         }
 
         .results {
-            background: var(--ks-background-card);
-            border-top: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-surface);
+            border-top: 1px solid var(--ks-border-default);
         }
 
         .results-scroll {
@@ -428,7 +411,7 @@
             font-size: var(--ks-font-size-sm);
             padding: 6px 10px;
             border-radius: 6px;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-decoration: none;
             align-items: center;
             transition: none;
@@ -446,12 +429,12 @@
         }
 
         .result-parent {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             white-space: nowrap;
         }
 
         .result-separator {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         .result-leaf {
@@ -459,13 +442,13 @@
         }
 
         .result-item.active .result-link {
-            background-color: var(--ks-button-background-secondary-hover);
-            color: var(--ks-content-primary);
+            background-color: var(--ks-btn-secondary-bg-hover);
+            color: var(--ks-text-primary);
         }
 
         .result-hint {
             margin-left: auto;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
@@ -473,7 +456,7 @@
 
         .empty {
             padding: 12px 16px;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
         }
     }

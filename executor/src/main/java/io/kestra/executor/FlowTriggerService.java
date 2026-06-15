@@ -133,7 +133,7 @@ public class FlowTriggerService {
             return null;
         }
 
-        RunContext runContext = runContextFactory.of(flowWithMultipleCondition.getFlow(), execution);
+        RunContext runContext = runContextFactory.of(null, execution);
 
         // evaluate multiple conditions and accumulate with previously stored results
         Map<String, Boolean> results = flowWithMultipleCondition.getMultipleCondition()
@@ -195,7 +195,7 @@ public class FlowTriggerService {
             return Collections.emptyList();
         }
 
-        RunContext runContext = runContextFactory.of(flow, execution);
+        RunContext runContext = runContextFactory.of(null, execution);
         return flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // filter on the execution state the flow listen to
             .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))

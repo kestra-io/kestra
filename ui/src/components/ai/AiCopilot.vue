@@ -88,6 +88,7 @@
                         <KsSelect
                             v-if="providers.length > 1"
                             class="ai-provider-select"
+                            :popperClass="AI_PROVIDER_POPPER_CLASS"
                             :modelValue="selectedProvider"
                             @update:model-value="onProviderChange"
                             :placeholder="$t('ai.flow.select_provider')"
@@ -206,6 +207,7 @@
                 <KsSelect
                     v-if="providers.length > 1"
                     class="w-50 mx-3"
+                    :popperClass="AI_PROVIDER_POPPER_CLASS"
                     :modelValue="selectedProvider"
                     @update:model-value="onProviderChange"
                     :placeholder="$t('ai.flow.select_provider')"
@@ -271,13 +273,15 @@
     import Check from "vue-material-design-icons/Check.vue"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
     import Microphone from "vue-material-design-icons/Microphone.vue"
-    import kestraIcon from "../../assets/icon.svg"
+    import kestraIcon from "../../assets/ks-icon.svg"
     import AiIcon from "./AiIcon.vue"
     import {useAiStore} from "../../stores/ai"
     import {useApiStore} from "../../stores/api"
     import type {InputInstance} from "@kestra-io/design-system"
     import {useMiscStore} from "override/stores/misc"
-    import {aiGenerationTypes, AiGenerationType} from "../../utils/constants"
+    import {aiGenerationTypes, AiGenerationType, AI_PROVIDER_POPPER_CLASS} from "../../utils/constants"
+    import {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
+    import * as AiApi from "@kestra-io/kestra-sdk/ai"
 
     const aiStore = useAiStore()
     const apiStore = useApiStore()
@@ -389,12 +393,12 @@
         return matchedExample?.flow
     })
 
-    const providers = ref<{id: string, displayName: string}[]>([])
+    const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string | undefined>(undefined)
 
     async function fetchProviders() {
         try {
-            const list = await aiStore.fetchProviders()
+            const list = await AiApi.providers()
             providers.value = list ?? []
             if (providers.value.length > 0) {
                 selectedProvider.value = providers.value[0].id
@@ -513,7 +517,6 @@
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
                     namespace: props.namespace,
-                    type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
                 })
             } else {
@@ -659,8 +662,8 @@
 }
 
 .ai-copilot-card {
-    background: var(--ks-background-panel);
-    border: 1px solid var(--ks-border-secondary);
+    background: var(--ks-bg-surface);
+    border: 1px solid var(--ks-border-subtle);
 
     :deep(.kel-card__header) {
         padding: 10px 16px;
@@ -687,8 +690,7 @@
 
 .ai-body-onboarding {
     align-items: center;
-    gap: 32px;
-    padding: 40px 24px 10px;
+    padding: 64px 24px 10px;
 }
 
 .ai-onboarding-hero {
@@ -700,27 +702,32 @@
 }
 
 .ai-onboarding-icon {
-    width: 69px;
-    height: 69px;
+    width: 104px;
+    height: 104px;
+    padding: 12px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--ks-bg-surface) 25%, transparent);
+    box-shadow: 0 4px 16px var(--ks-shadow-surface);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     display: grid;
     place-items: center;
 }
 
 .ai-onboarding-logo {
-    width: 69px;
-    height: 69px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    border-radius: var(--ks-font-size-lg);
 }
 
 .ai-onboarding-title {
     margin: 0;
     max-width: 760px;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
     font-size: var(--ks-font-size-2xl);
     line-height: 1.08;
-    font-weight: 600;
-    margin-bottom: 3rem;
+    font-weight: var(--ks-font-weight-medium);
+    margin-bottom: 2rem;
 }
 
 .ai-onboarding-info {
@@ -731,8 +738,8 @@
     border: 1px solid var(--ks-border-info);
     border-bottom: 0;
     border-radius: 12px 12px 0 0;
-    background: var(--ks-background-info);
-    color: var(--ks-content-info);
+    background: var(--ks-bg-info);
+    color: var(--ks-status-info);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
@@ -747,7 +754,7 @@
 }
 
 .ai-onboarding-info-icon {
-    color: var(--ks-content-info);
+    color: var(--ks-status-info);
     font-size: var(--ks-font-size-base);
     flex-shrink: 0;
     align-self: center;
@@ -762,13 +769,11 @@
 
 .ai-onboarding-composer {
     width: 100%;
-    height: 152px;
-    border: 1px solid transparent;
+    height: 129px;
+    border: 1px solid var(--ks-border-strong);
     border-radius: var(--ks-font-size-lg);
-    background: var(--ks-background-input);
-    box-shadow:
-        0 8px 20px rgba(15, 23, 42, 0.035),
-        0 22px 44px rgba(15, 23, 42, 0.05);
+    background: var(--ks-bg-input);
+    box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -815,7 +820,7 @@
         min-width: 1.5px;
         max-width: 2.5px;
         min-height: 2px;
-        background: var(--ks-content-secondary);
+        background: var(--ks-text-secondary);
         border-radius: 1px;
     }
 }
@@ -847,13 +852,13 @@
 
 .ai-custom-textarea {
     :deep(.kel-textarea__inner) {
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
         font-size: var(--ks-font-size-sm);
         line-height: 1.6;
         resize: none;
 
         &::placeholder {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-style: italic;
         }
     }
@@ -862,7 +867,7 @@
 .ai-custom-textarea-onboarding {
     flex: 1;
     --kel-disabled-bg-color: transparent;
-    --kel-disabled-text-color: var(--ks-content-primary);
+    --kel-disabled-text-color: var(--ks-text-primary);
     --kel-fill-color-light: transparent;
     --kel-fill-color-blank: transparent;
     --kel-input-border-color: transparent;
@@ -897,7 +902,6 @@
     :deep(.kel-textarea__inner) {
         min-height: 100% !important;
         height: 100% !important;
-        padding: 16px 14px 8px;
         border: none !important;
         border-radius: 0;
         background: transparent !important;
@@ -908,13 +912,15 @@
 
         &::placeholder {
             font-style: normal;
-            font-size: var(--ks-font-size-base);
+            color: var(--ks-text-secondary);
+            font-weight: var(--ks-font-weight-regular);
+            font-size: var(--ks-font-size-md);
         }
 
         &:disabled {
             background: transparent !important;
-            color: var(--ks-content-primary) !important;
-            -webkit-text-fill-color: var(--ks-content-primary) !important;
+            color: var(--ks-text-primary) !important;
+            -webkit-text-fill-color: var(--ks-text-primary) !important;
             opacity: 1;
             cursor: default;
         }
@@ -931,8 +937,8 @@
     :deep(.kel-textarea.is-disabled .kel-textarea__inner) {
         background: transparent !important;
         background-color: transparent !important;
-        color: var(--ks-content-primary) !important;
-        -webkit-text-fill-color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
+        -webkit-text-fill-color: var(--ks-text-primary) !important;
         opacity: 1;
         box-shadow: none !important;
         border: none !important;
@@ -971,47 +977,47 @@
 .no-bg-btn {
     background: transparent !important;
     border: none !important;
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
     padding: 4px !important;
     font-size: var(--ks-font-size-lg);
 
     &:hover {
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 }
 
 .ai-close-button {
     background: transparent !important;
     border: none !important;
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
     padding: 0;
 
     &:hover {
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 }
 
 .send-btn {
-    background: var(--ks-button-background-primary) !important;
+    background: var(--ks-btn-primary-bg-default) !important;
     border: none !important;
     width: 32px !important;
     height: 32px !important;
     border-radius: 6px !important;
-    color: var(--ks-button-content-primary) !important;
+    color: var(--ks-btn-primary-text) !important;
     padding: 0 !important;
 
     &:disabled {
-        background: var(--ks-background-card) !important;
-        color: var(--ks-content-inactive) !important;
+        background: var(--ks-bg-surface) !important;
+        color: var(--ks-text-inactive) !important;
     }
 }
 
 .send-btn-onboarding {
-    width: 42px !important;
-    height: 42px !important;
+    width: 22px !important;
+    height: 22px !important;
     border-radius: 999px !important;
     color: var(--ks-white) !important;
-    margin-left: calc(1rem / 2) !important;
+    margin-left: calc(1rem / 6) !important;
 
     &:hover,
     &:focus-visible {
@@ -1019,13 +1025,13 @@
     }
 
     &:disabled {
-        color: var(--ks-content-inactive) !important;
+        color: var(--ks-text-inactive) !important;
     }
 }
 
 .shortcut-hint {
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-content-tertiary);
+    color: var(--ks-text-dim);
 }
 
 .footer-left {
@@ -1043,14 +1049,8 @@
     }
 
     .ai-onboarding-icon {
-        width: 69px;
-        height: 69px;
-    }
-
-    .ai-onboarding-logo {
-        width: 69px;
-        height: 69px;
-        border-radius: 22px;
+        width: 104px;
+        height: 104px;
     }
 
     .ai-onboarding-composer {

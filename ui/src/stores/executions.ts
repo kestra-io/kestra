@@ -8,6 +8,57 @@ import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as ExecutionUtils from "../utils/executionUtils"
+import {InputType} from "../utils/inputs"
+
+export interface Check {
+    message: string
+    style: string
+    behavior: string
+}
+
+export interface InputError {
+    message: string;
+}
+
+export interface ValidationResponse {
+    checks?: Check[];
+    inputs: Array<{
+        enabled: boolean;
+        input: InputMetaData;
+        errors?: InputError[];
+        value?: unknown;
+        isDefault?: boolean;
+    }>;
+}
+
+export interface ValidationEventPayload {
+    formData: FormData | undefined;
+    inputsMetaData: InputMetaData[];
+    callback: (response: ValidationResponse) => void;
+}
+
+export type ValueOptionLike = string | {label: string; value: string};
+
+export interface InputMetaData {
+    id: string;
+    type: InputType
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+    defaults?: unknown;
+    value?: unknown;
+    values?: ValueOptionLike[];
+    options?: ValueOptionLike[];
+    errors?: InputError[];
+    isDefault?: boolean;
+    isRadio?: boolean;
+    allowCustomValue?: boolean;
+    min?: number;
+    max?: number;
+    allowedFileExtensions?: string[];
+    accept?: string;
+    prefill?: unknown;
+}
 
 interface LogsState {
     total: number;
@@ -300,8 +351,23 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    const findDistinctFieldValues = async (options: {
+        field: string;
+        filters?: Record<string, string>;
+        size?: number;
+    }): Promise<string[]> => {
+        const response = await axios.get(`${apiUrl()}/executions/distinct-field-values`, {
+            params: {
+                field: options.field,
+                ...(options.filters ?? {}),
+                size: options.size ?? 100,
+            },
+        })
+        return response.data as string[]
+    }
+
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data",
@@ -747,7 +813,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const exportExecutionsAsCSV = async (params: any) => {
         const response = await axios.get(
             `${apiUrl()}/executions/export/by-query/csv`,
-            {params, responseType: "blob"},
+            {params, responseType: "text", headers: {Accept: "text/csv"}},
         )
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")
@@ -798,6 +864,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryPauseExecution,
         loadExecution,
         findExecutions,
+        findDistinctFieldValues,
         validateExecution,
         triggerExecution,
         deleteExecution,

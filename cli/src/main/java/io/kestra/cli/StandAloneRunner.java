@@ -16,7 +16,9 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.executor.DefaultExecutor;
+import io.kestra.worker.systemworker.SystemWorker;
 
+import io.micronaut.context.BeanProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -55,6 +57,9 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     private Provider<Indexer> indexerProvider;
 
     @Inject
+    private BeanProvider<SystemWorker> systemWorkerProvider;
+
+    @Inject
     private ServerConfig serverConfig;
 
     private final List<Service> servers = new ArrayList<>();
@@ -78,7 +83,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
 
         if (workerEnabled) {
             Worker worker = workerProvider.get();
-            poolExecutor.execute(() -> worker.start(workerThread, null));
+            poolExecutor.execute(() -> worker.start(workerThread));
             servers.add(worker);
         }
 
@@ -93,6 +98,11 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
             poolExecutor.execute(indexer);
             servers.add(indexer);
         }
+
+        // start the embedded SystemWorker (always present in STANDALONE mode)
+        SystemWorker systemWorker = systemWorkerProvider.get();
+        poolExecutor.execute(systemWorker::start);
+        servers.add(systemWorker);
 
         try {
             Await.await().atMost(getRunningTimeout()).until(

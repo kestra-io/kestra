@@ -8,15 +8,16 @@
         allowAuthentication="false"
         allowServerSelection="false"
         allowTry="false"
-        regularFont="Public Sans"
-        monoFont="Source Code Pro"
+        regularFont="Inter"
+        monoFont="JetBrains Mono"
     />
 </template>
 
 <script setup lang="ts">
     import {ref} from "vue"
     import {useDocStore} from "../../stores/doc"
-    
+    import {getTheme} from "../../utils/utils"
+
     const docStore = useDocStore()
     const ready = ref(false)
     // @ts-expect-error rapidoc is not typed
@@ -25,7 +26,7 @@
     })
 
 
-    const theme = ref(localStorage.getItem("theme") === "dark" ? "dark" : "light")
+    const theme = ref(getTheme())
 </script>
 
 <style scoped lang="scss">

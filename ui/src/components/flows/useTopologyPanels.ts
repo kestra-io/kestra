@@ -1,5 +1,5 @@
 import {ref, Ref, provide, watch} from "vue"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
 import {TopologyClickParams} from "../no-code/utils/types"

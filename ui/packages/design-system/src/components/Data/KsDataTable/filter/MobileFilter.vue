@@ -102,7 +102,7 @@
 
                     <SavedFilters
                         v-else
-                        class="sheet-saved"
+                        hideHeader
                         :savedFilters="filter.savedFilters?.value ?? []"
                         @load="onLoadSaved"
                         @edit="filter.editSavedFilter"
@@ -332,7 +332,7 @@
         justify-content: center;
         border-radius: 999px;
         background-color: var(--ks-btn-primary-bg-default);
-        color: var(--ks-text-primary);
+        color: var(--ks-btn-primary-text);
         font-size: 10px;
         font-weight: 600;
         line-height: 1;
@@ -469,12 +469,6 @@
 
     :deep(.edit-popper) {
         background: none;
-    }
-}
-
-.sheet-saved {
-    :deep(.panel-header) {
-        display: none;
     }
 }
 

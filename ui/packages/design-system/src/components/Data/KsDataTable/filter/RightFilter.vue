@@ -54,6 +54,7 @@
                 </div>
 
                 <SavedFilters
+                    hideHeader
                     :savedFilters="filter.savedFilters.value"
                     @load="handleLoad"
                     @edit="filter.editSavedFilter"

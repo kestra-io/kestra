@@ -1755,8 +1755,8 @@
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       },
       "panels": {
-        "title": "No panels are currently open.",
-        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Namespace Files, Blueprints, Context) for related features."
+        "title": "No panel open",
+        "content": "You've closed all panels.\nPick a tab above to continue."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",

@@ -7,7 +7,7 @@ on:
         description: 'Kestra version to release (e.g. 1.3.22, without v prefix)'
         required: true
         type: string
-      dry_run:
+      dry-run:
         description: 'Dry run — package charts but do not upload to GCS'
         required: true
         type: boolean
@@ -22,5 +22,5 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@main
     with:
       version: ${{ inputs.version }}
-      dry_run: ${{ inputs.dry_run }}
+      dry-run: ${{ inputs.dry-run }}
 

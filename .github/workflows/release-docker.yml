@@ -45,4 +45,4 @@ jobs:
       id-token: write
     uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@main
     with:
-      dry_run: ${{ inputs.dry-run }}
+      dry-run: ${{ inputs.dry-run }}

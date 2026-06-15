@@ -2,6 +2,7 @@ package io.kestra.cli;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -10,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.models.ServerType;
+import picocli.CommandLine;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -62,13 +64,25 @@ class AppTest {
         try {
             Files.writeString(configFile, "kestra:\n  test:\n    marker: config-loaded\n");
 
-            // --config BEFORE "flow" — this is the position that previously failed
-            String[] args = { "--config", configFile.toString(), "flow", "namespace", "update" };
+            // --config BEFORE "plugins" — this is the position that previously failed.
+            // plugins list has no required positional args so picocli can parse to the leaf
+            // command even when --config is silently dropped by continueOnParsingErrors.
+            String[] args = { "--config", configFile.toString(), "plugins", "list" };
 
-            try (ApplicationContext ctx = App.applicationContext(App.class, new String[] { Environment.CLI }, args)) {
-                assertThat(ctx.getProperty("kestra.test.marker", String.class))
-                    .hasValue("config-loaded");
-            }
+            // Access the private getCommandLine() via reflection — keeps it private in
+            // production code while still letting us verify recoverConfigOption() works.
+            // We deliberately avoid creating an ApplicationContext here because doing so
+            // has global side effects in the test JVM (datasource / gRPC initialization)
+            // that break subsequent tests.
+            Method getCommandLine = App.class.getDeclaredMethod("getCommandLine", Class.class, String[].class);
+            getCommandLine.setAccessible(true);
+            CommandLine leafCmd = (CommandLine) getCommandLine.invoke(null, App.class, args);
+
+            Object userObject = leafCmd.getCommandSpec().userObject();
+            assertThat(userObject).isInstanceOf(AbstractCommand.class);
+            AbstractCommand abstractCmd = (AbstractCommand) userObject;
+            assertThat(abstractCmd.propertiesFromConfig())
+                .containsEntry("kestra.test.marker", "config-loaded");
         } finally {
             Files.deleteIfExists(configFile);
         }

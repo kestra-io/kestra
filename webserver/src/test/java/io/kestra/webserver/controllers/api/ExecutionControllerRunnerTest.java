@@ -1739,6 +1739,29 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/sleep-long-after-execution-flowable.yml" })
+    void shouldRunFlowableAfterExecutionWhenExecutionIsKilled() {
+        Execution runningExecution = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep-long-after-execution-flowable");
+        assertThat(runningExecution.getState().isRunning()).isTrue();
+
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/main/executions/" + runningExecution.getId() + "/actions/kill")
+        );
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(runningExecution.getId(), exec ->
+            exec.getState().getCurrent() == State.Type.KILLED &&
+                exec.findTaskRunsByTaskId("after-if").stream().anyMatch(taskRun -> taskRun.getState().isTerminated()) &&
+                exec.findTaskRunsByTaskId("after-if-log").stream().anyMatch(taskRun -> taskRun.getState().isTerminated()) &&
+                exec.findTaskRunsByTaskId("after-end").stream().anyMatch(taskRun -> taskRun.getState().isTerminated())
+        );
+        assertThat(execution.findTaskRunsByTaskId("sleep-long").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(execution.findTaskRunsByTaskId("after-if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after-if-log").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after-end").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "searchexecutions")
     void searchExecutions() {
         String tenantId = "searchexecutions";

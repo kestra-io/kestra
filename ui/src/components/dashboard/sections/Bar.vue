@@ -3,6 +3,7 @@
         v-if="generated?.results?.length"
         class="chart"
         :class="{short: props.short}"
+        :style="props.short ? undefined : {height: `${chartHeight}px`}"
     >
         <ChartLegend
             v-if="showLegend"
@@ -117,6 +118,10 @@
 
     const showLegend = computed(() => !props.short && !!chartOptions?.legend?.enabled)
 
+    const chartHeight = computed(() =>
+        Math.max(231, categories.value.length * 18 + (showLegend.value ? 68 : 36)),
+    )
+
     const legendItems = computed(() =>
         parsedData.value.datasets.map((ds) => ({
             label: ds.label,
@@ -149,7 +154,12 @@
                 show: showAxes,
                 axisLine: {show: false},
                 axisTick: {show: false},
-                axisLabel: {...axisLabelStyle, margin: 24},
+                axisLabel: {
+                    ...axisLabelStyle,
+                    margin: 24,
+                    width: 200,
+                    overflow: "truncate",
+                },
             },
             tooltip: props.short
                 ? {show: false}

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {chartSegmentDrillDown} from "../../../src/components/dashboard/composables/charts"
+import {chartSegmentDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"

@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "ブックマーク",
     "bulk action async warning": "少々お待ちください。",
     "bulk actions": "一括操作",
@@ -217,6 +218,7 @@
     "copy url": "URLをコピー",
     "copy_and_close": "コピーして閉じる",
     "copy_to_clipboard": "クリップボードにコピー",
+    "copy_value": "Copy value",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_flow": "フローを作成",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "ビデオを見る"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "依存関係",
     "dependencies delete flow": "このflowには依存関係があります。削除すると、依存関係が実行されなくなります。<br /><br /> 影響を受けるflowのリストはこちらです:",
     "dependencies loaded": "依存関係が読み込まれました",
@@ -472,6 +478,7 @@
     "display metric for specific task": "特定のTaskのメトリクスを表示",
     "display output for specific task": "特定のTaskの出力を表示",
     "display topology for flow": "Flowのトポロジーを表示",
+    "display_settings": "Display settings",
     "docs": "ドキュメント",
     "documentation": {
       "documentation": "ドキュメント",
@@ -482,6 +489,7 @@
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "エディターでドラフト変更が利用可能です",
     "drop items here": "ここにアイテムをドロップしてください",
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
@@ -574,8 +582,8 @@
         "title": "このサーバーにはまだツールflowが登録されていません。"
       },
       "panels": {
-        "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
-        "title": "現在、パネルは開いていません。"
+        "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。",
+        "title": "パネルが開いていません"
       },
       "pluginDefaults": {
         "content": "プラグインデフォルトを使用すると、プラグインの設定を一元管理し、namespace内のすべてのflowと共有できます。",
@@ -700,6 +708,7 @@
     "expand all": "すべて展開",
     "expand dependencies": "依存関係を展開",
     "expand error": "失敗したtaskのみ展開",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "有効期限",
     "expiration date": "有効期限",
     "export": "エクスポート",
@@ -727,6 +736,9 @@
     },
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "間",
@@ -842,6 +854,7 @@
     "flows imported": "フローがインポートされました",
     "focus task": "任意の要素をクリックしてそのドキュメントを表示します。",
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
+    "font size": "Font size",
     "for flow": "フロー用",
     "force run": "強制実行",
     "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
@@ -928,6 +941,7 @@
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示",
@@ -1375,6 +1389,7 @@
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
     "open sidebar": "サイドバーを開く",
+    "open_page": "Open page",
     "optional": "オプション",
     "original execution": "元の実行",
     "originalCreatedDate": "元の作成日",
@@ -1509,6 +1524,7 @@
     },
     "port": "ポート",
     "prefill inputs": "自動入力",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "前回の実行",
     "preview": {
       "auto-view": "自動ビュー",
@@ -1725,6 +1741,9 @@
             "light": "ライト",
             "sync": "システムと同期"
           },
+          "confirmations": {
+            "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
+          },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
@@ -1839,6 +1858,7 @@
     "show details": "詳細を表示",
     "show documentation": "ドキュメントを表示",
     "show more details": "詳細を表示",
+    "show raw": "Show raw",
     "show task condition": "タスク条件を表示",
     "show task documentation": "taskのドキュメントを表示",
     "show task documentation in editor": "エディタでtaskのドキュメントを表示",
@@ -1848,6 +1868,7 @@
     "showLess": "表示を減らす",
     "showMore": "もっと表示",
     "side-by-side": "並列表示",
+    "similar lines": "similar lines",
     "skipped": "スキップされました",
     "slack support": "Slackで質問する",
     "something_went_wrong": {

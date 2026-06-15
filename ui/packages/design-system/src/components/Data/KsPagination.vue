@@ -54,10 +54,12 @@
     @use 'element-plus/theme-chalk/src/pagination';
 
     .kel-pagination {
-        --kel-pagination-bg-color: var(--ks-bg-base);
+        --kel-pagination-bg-color: var(--ks-btn-secondary-bg-default);
         --kel-pagination-text-color: var(--ks-text-primary);
         --kel-pagination-button-color: var(--ks-text-link);
         --kel-pagination-hover-color: var(--ks-text-link);
+        --kel-pagination-item-gap: 0;
+        --kel-pagination-font-size-small: var(--ks-font-size-xs);
 
         gap: 8px;
 
@@ -74,6 +76,11 @@
                 width: auto;
                 min-width: 130px;
             }
+        }
+
+        &__total {
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-2xs);
         }
 
         .kel-pager li {

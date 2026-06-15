@@ -25,23 +25,19 @@ jobs:
           with:
             fetch-depth: 0
 
-        - name: Set up Python
-          uses: actions/setup-python@v6
-          with:
-            python-version: "3.x"
-
-        - name: Install Python dependencies
-          run: pip install gitpython openai
-
-        - name: Generate translations
-          run: python ui/src/translations/generate_translations.py ${{ github.event.inputs.retranslate_modified_keys }}
-          env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
         - name: Set up Node
           uses: actions/setup-node@v6
           with:
-            node-version: "20.x"
+            node-version: "22.x"
+
+        - name: Install Node dependencies
+          run: npm ci
+          working-directory: ui
+
+        - name: Generate translations
+          run: node --experimental-strip-types ui/scripts/generate_translations.ts ${{ github.event.inputs.retranslate_modified_keys }}
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
         - name: Set up Git
           run: |

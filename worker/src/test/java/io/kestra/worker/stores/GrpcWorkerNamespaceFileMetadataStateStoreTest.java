@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc.NamespaceFileMetadataServiceBlockingStub;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.context.annotation.Property;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.utils.TestsUtils;
@@ -17,6 +18,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@Property(name = "test.context.id", value = "grpc-ns-file")
 class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
 
     @Inject

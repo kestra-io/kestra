@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "Favoritos",
     "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk actions": "Ações em massa",
@@ -217,6 +218,7 @@
     "copy url": "Copiar URL",
     "copy_and_close": "Copiar e fechar",
     "copy_to_clipboard": "Copiar para a área de transferência",
+    "copy_value": "Copy value",
     "create": "Criar",
     "create first task": "Crie sua primeira task",
     "create_flow": "Criar Flow",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "Assista ao vídeo"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "Dependências",
     "dependencies delete flow": "Este flow tem dependências. Deletá-lo impedirá que suas dependências sejam executadas.<br /><br /> Aqui está a lista de flows afetados:",
     "dependencies loaded": "Dependências carregadas",
@@ -472,6 +478,7 @@
     "display metric for specific task": "Exibir métrica para uma task específica",
     "display output for specific task": "Exibir output para uma task específica",
     "display topology for flow": "Exibir topologia do flow",
+    "display_settings": "Display settings",
     "docs": "Documentos",
     "documentation": {
       "documentation": "Documentação",
@@ -482,6 +489,7 @@
     "download": "Baixar",
     "download logs": "Baixar logs",
     "download_logos": "Baixar Pacote de Logos",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "Alteração de rascunho disponível no editor",
     "drop items here": "Solte os itens aqui",
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
@@ -574,8 +582,8 @@
         "title": "Ainda não há flows de ferramenta registrados neste servidor."
       },
       "panels": {
-        "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Namespace Files, Blueprints, Context) para recursos relacionados.",
-        "title": "Atualmente, nenhum painel está aberto."
+        "content": "Você fechou todos os painéis.  \nEscolha uma aba acima para continuar.",
+        "title": "Nenhum painel aberto"
       },
       "pluginDefaults": {
         "content": "Padrões de Plugin permitem que você governe centralmente a configuração do seu plugin e a compartilhe com todos os flows no seu namespace.",
@@ -700,6 +708,7 @@
     "expand all": "Expandir tudo",
     "expand dependencies": "Expandir dependências",
     "expand error": "Expandir apenas tasks falhadas",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "Expiração",
     "expiration date": "Data de expiração",
     "export": "Exportar",
@@ -727,6 +736,9 @@
     },
     "files": "Arquivos",
     "filter by log level": "Filtrar por nível de log",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "entre",
@@ -842,6 +854,7 @@
     "flows imported": "Fluxos importados",
     "focus task": "Clique em qualquer elemento para ver sua documentação.",
     "fold_all_multi_lines": "Recolher Todas as Linhas Múltiplas",
+    "font size": "Font size",
     "for flow": "para flow",
     "force run": "Executar forçadamente",
     "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefa duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
@@ -928,6 +941,7 @@
     "log expand setting": "Exibição padrão do Log",
     "logExporters": "Exportadores de Log",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "Visualização padrão",
       "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task",
@@ -1375,6 +1389,7 @@
     "open in new tab": "Em uma nova aba",
     "open in same tab": "Na mesma aba",
     "open sidebar": "abrir barra lateral",
+    "open_page": "Open page",
     "optional": "Opcional",
     "original execution": "Execução original",
     "originalCreatedDate": "Data de criação original",
@@ -1509,6 +1524,7 @@
     },
     "port": "Port",
     "prefill inputs": "Preencher automaticamente",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "Execução anterior",
     "preview": {
       "auto-view": "Visualização automática",
@@ -1725,6 +1741,9 @@
             "light": "Claro",
             "sync": "Sincronizar com o sistema"
           },
+          "confirmations": {
+            "color_mode": "Sua interface agora usa o tema `{mode}`."
+          },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
@@ -1839,6 +1858,7 @@
     "show details": "Mostrar detalhes",
     "show documentation": "Mostrar documentação",
     "show more details": "Mostrar mais detalhes",
+    "show raw": "Show raw",
     "show task condition": "Exibir condição da task",
     "show task documentation": "Mostrar documentação da task",
     "show task documentation in editor": "Mostrar documentação da task no editor",
@@ -1848,6 +1868,7 @@
     "showLess": "Mostrar menos",
     "showMore": "Mostrar mais",
     "side-by-side": "lado a lado",
+    "similar lines": "similar lines",
     "skipped": "Pulado",
     "slack support": "Faça qualquer pergunta via Slack",
     "something_went_wrong": {

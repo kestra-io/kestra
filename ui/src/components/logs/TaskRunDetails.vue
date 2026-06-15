@@ -44,7 +44,7 @@
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="
-                            logsWithIndexByAttemptUid[
+                            displayItemsByAttemptUid[
                                 attemptUid(
                                     asTaskRun(currentTaskRun).id,
                                     selectedAttemptNumberByTaskRunId[
@@ -72,131 +72,161 @@
                         "
                         @resize="scrollToBottomFailedTask"
                     >
-                        <template #default="{item, index, active}">
+                        <template #default="{item, active}">
                             <DynamicScrollerItem
                                 :item="item"
                                 :active="active"
-                                :sizeDependencies="[item.message, item.image]"
-                                :data-index="index"
+                                :sizeDependencies="[item.message, item.image, item.isGroup, item.isGroup && isGroupExpanded(currentTaskRunIndex, item)]"
+                                :data-index="item.index"
                             >
-                                <Teleport v-if="item.logFile" to="#buttons">
-                                    <KsButtonGroup class="line">
-                                        <KsButton
-                                            type="primary"
-                                            tag="a"
-                                            :href="fileUrl(item.logFile)"
-                                            target="_blank"
-                                            size="small"
-                                            :icon="Download"
-                                            rel="noopener noreferrer"
-                                        >
-                                            {{ t("download") }}
-                                        </KsButton>
-                                        <FilePreview
-                                            :value="item.logFile"
-                                            :executionId="followedExecution.id"
-                                        />
-                                        <KsButton
-                                            disabled
-                                            size="small"
-                                            type="primary"
-                                            v-if="
-                                                logFileSizeByPath[item.logFile]
-                                            "
-                                        >
-                                            ({{
-                                                logFileSizeByPath[item.logFile]
-                                            }})
-                                        </KsButton>
-                                    </KsButtonGroup>
-                                </Teleport>
-                                <LogLine
-                                    class="line"
-                                    :cursor="
-                                        logCursor ===
-                                            `${currentTaskRunIndex}/${index}`
-                                    "
-                                    :class="{
-                                        ['log-bg-' +
-                                            levelToHighlight?.toLowerCase()]:
-                                                levelToHighlight === item.level,
-                                        'opacity-40':
-                                            levelToHighlight &&
-                                            levelToHighlight !== item.level,
-                                    }"
-                                    :key="index"
-                                    :level="level as any"
-                                    :log="item"
-                                    :excludeMetas="excludeMetas as any"
-                                    v-else-if="
-                                        filter === '' ||
-                                            item.message
-                                                ?.toLowerCase()
-                                                .includes(filter.toLowerCase())
-                                    "
-                                />
-                                <TaskRunDetails
-                                    v-if="
-                                        !taskRunId &&
-                                            isSubflow(currentTaskRun) &&
-                                            shouldDisplaySubflow(
-                                                index,
-                                                currentTaskRun,
-                                            ) &&
-                                            asTaskRun(currentTaskRun).outputs?.executionId
-                                    "
-                                    :ref="
-                                        (el) =>
-                                            subflowTaskRunDetailsRef(
-                                                el,
+                                <template v-if="item.isGroup">
+                                    <LogLine
+                                        v-for="member in (isGroupExpanded(currentTaskRunIndex, item) ? item.members : item.members.slice(0, 1))"
+                                        :key="member.index"
+                                        class="line"
+                                        :cursor="logCursor === `${currentTaskRunIndex}/${member.index}`"
+                                        :class="{
+                                            ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === member.level,
+                                            'opacity-40': levelToHighlight && levelToHighlight !== member.level,
+                                        }"
+                                        :level="level as any"
+                                        :log="member"
+                                        :excludeMetas="excludeMetas as any"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="log-group-more"
+                                        :style="{borderLeftColor: `var(--ks-log-border-${item.level.toLowerCase()})`, fontSize: `${logsFontSize}px`}"
+                                        :aria-expanded="isGroupExpanded(currentTaskRunIndex, item)"
+                                        @click="toggleGroup(currentTaskRunIndex, item)"
+                                    >
+                                        <KsIcon class="log-group-chevron" :class="{collapsed: !isGroupExpanded(currentTaskRunIndex, item)}" size="s">
+                                            <ChevronDown />
+                                        </KsIcon>
+                                        <span class="log-group-count">×{{ item.members.length }}</span>
+                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? t("collapse") : t("similar lines") }}</span>
+                                    </button>
+                                </template>
+                                <template v-else>
+                                    <Teleport v-if="item.logFile" to="#buttons">
+                                        <KsButtonGroup class="line">
+                                            <KsButton
+                                                type="primary"
+                                                tag="a"
+                                                :href="fileUrl(item.logFile)"
+                                                target="_blank"
+                                                size="small"
+                                                :icon="Download"
+                                                rel="noopener noreferrer"
+                                            >
+                                                {{ t("download") }}
+                                            </KsButton>
+                                            <FilePreview
+                                                :value="item.logFile"
+                                                :executionId="followedExecution.id"
+                                            />
+                                            <KsButton
+                                                disabled
+                                                size="small"
+                                                type="primary"
+                                                v-if="
+                                                    logFileSizeByPath[item.logFile]
+                                                "
+                                            >
+                                                ({{
+                                                    logFileSizeByPath[item.logFile]
+                                                }})
+                                            </KsButton>
+                                        </KsButtonGroup>
+                                    </Teleport>
+                                    <LogLine
+                                        class="line"
+                                        :cursor="
+                                            logCursor ===
+                                                `${currentTaskRunIndex}/${item.index}`
+                                        "
+                                        :class="{
+                                            ['log-bg-' +
+                                                levelToHighlight?.toLowerCase()]:
+                                                    levelToHighlight === item.level,
+                                            'opacity-40':
+                                                levelToHighlight &&
+                                                levelToHighlight !== item.level,
+                                        }"
+                                        :key="item.index"
+                                        :level="level as any"
+                                        :log="item"
+                                        :excludeMetas="excludeMetas as any"
+                                        v-else-if="
+                                            filter === '' ||
+                                                item.message
+                                                    ?.toLowerCase()
+                                                    .includes(filter.toLowerCase())
+                                        "
+                                    />
+                                    <TaskRunDetails
+                                        v-if="
+                                            !taskRunId &&
+                                                isSubflow(currentTaskRun) &&
+                                                shouldDisplaySubflow(
+                                                    item.index,
+                                                    currentTaskRun,
+                                                ) &&
+                                                asTaskRun(currentTaskRun).outputs?.executionId
+                                        "
+                                        :ref="
+                                            (el) =>
+                                                subflowTaskRunDetailsRef(
+                                                    el,
+                                                    currentTaskRunIndex +
+                                                        '/' +
+                                                        item.index,
+                                                )
+                                        "
+                                        :logCursor="
+                                            logCursor
+                                                ?.split('/')
+                                                ?.slice(2)
+                                                .join('/')
+                                        "
+                                        @log-cursor="
+                                            emitLogCursor(
                                                 currentTaskRunIndex +
                                                     '/' +
-                                                    index,
+                                                    item.index +
+                                                    '/' +
+                                                    $event,
                                             )
-                                    "
-                                    :logCursor="
-                                        logCursor
-                                            ?.split('/')
-                                            ?.slice(2)
-                                            .join('/')
-                                    "
-                                    @log-cursor="
-                                        emitLogCursor(
-                                            currentTaskRunIndex +
-                                                '/' +
-                                                index +
-                                                '/' +
+                                        "
+                                        @log-indices-by-level="
+                                            childLogIndicesByLevel(
+                                                currentTaskRunIndex,
+                                                item.index,
                                                 $event,
-                                        )
-                                    "
-                                    @log-indices-by-level="
-                                        childLogIndicesByLevel(
-                                            currentTaskRunIndex,
-                                            index,
-                                            $event,
-                                        )
-                                    "
-                                    :levelToHighlight="levelToHighlight"
-                                    :level="level as any"
-                                    :excludeMetas="[
-                                        'namespace',
-                                        'flowId',
-                                        'taskId',
-                                        'executionId',
-                                    ]"
-                                    :filter="filter"
-                                    :allowAutoExpandSubflows="false"
-                                    :targetExecutionId="
-                                        asTaskRun(currentTaskRun).outputs.executionId
-                                    "
-                                    :class="
-                                        $el.classList.contains('even')
-                                            ? ''
-                                            : 'even'
-                                    "
-                                    :showProgressBar="showProgressBar"
-                                    :showLogs="showLogs"
-                                />
+                                            )
+                                        "
+                                        :levelToHighlight="levelToHighlight"
+                                        :level="level as any"
+                                        :excludeMetas="[
+                                            'namespace',
+                                            'flowId',
+                                            'taskId',
+                                            'executionId',
+                                        ]"
+                                        :filter="filter"
+                                        :allowAutoExpandSubflows="false"
+                                        :targetExecutionId="
+                                            asTaskRun(currentTaskRun).outputs.executionId
+                                        "
+                                        :class="
+                                            $el.classList.contains('even')
+                                                ? ''
+                                                : 'even'
+                                        "
+                                        :showProgressBar="showProgressBar"
+                                        :showLogs="showLogs"
+                                    />
+                                </template>
                             </DynamicScrollerItem>
                         </template>
                     </DynamicScroller>
@@ -234,9 +264,11 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef} from "vue"
+    import {logsFontSize} from "../../composables/useLogDisplay"
     import {useI18n} from "vue-i18n"
     import {RouterLink} from "vue-router"
     import Download from "vue-material-design-icons/Download.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
     import {State, levelToRequestParams, KsProgress, type LevelFilterValue} from "@kestra-io/design-system"
@@ -388,6 +420,80 @@
         )
     })
 
+    const expandedGroups = ref<Set<string>>(new Set())
+
+    watch(() => props.filter, () => {
+        expandedGroups.value = new Set()
+    })
+
+    function isCollapsibleLine(item: any): boolean { // FIXME: any
+        return !!item.message
+            && item.logFile === undefined
+            && item.level !== "ERROR"
+            && item.level !== "WARN"
+            && !isSubflow(taskRunById.value[item.taskRunId])
+    }
+
+    function buildDisplayItems(items: any[]): any[] { // FIXME: any
+        const result: any[] = []
+        let run: any[] = []
+        let runKey: string | null = null
+        const flushRun = () => {
+            if (run.length >= LogUtils.COLLAPSE_THRESHOLD) {
+                result.push({isGroup: true, index: run[0].index, level: run[0].level, members: run})
+            } else {
+                result.push(...run)
+            }
+            run = []
+            runKey = null
+        }
+        for (const item of items) {
+            if (!isCollapsibleLine(item)) {
+                flushRun()
+                result.push(item)
+                continue
+            }
+            const key = LogUtils.normalizeLogTemplate(item.message)
+            if (run.length && runKey !== key) {
+                flushRun()
+            }
+            if (!run.length) {
+                runKey = key
+            }
+            run.push(item)
+        }
+        flushRun()
+        return result
+    }
+
+    const displayItemsByAttemptUid = computed(() => {
+        const source = logsWithIndexByAttemptUid.value
+        const result: Record<string, any[]> = {}
+        for (const uid in source) {
+            result[uid] = buildDisplayItems(source[uid])
+        }
+        return result
+    })
+
+    function groupKey(taskRunIndex: number, item: any): string { // FIXME: any
+        return `${taskRunIndex}:${item.index}`
+    }
+
+    function isGroupExpanded(taskRunIndex: number, item: any): boolean { // FIXME: any
+        return expandedGroups.value.has(groupKey(taskRunIndex, item))
+    }
+
+    function toggleGroup(taskRunIndex: number, item: any) { // FIXME: any
+        const key = groupKey(taskRunIndex, item)
+        const next = new Set(expandedGroups.value)
+        if (next.has(key)) {
+            next.delete(key)
+        } else {
+            next.add(key)
+        }
+        expandedGroups.value = next
+    }
+
     const autoExpandTaskRunStates = computed(() => {
         switch (
             localStorage.getItem("logDisplay") ||
@@ -406,7 +512,7 @@
 
     const currentTaskRunsLogIndicesByLevel = computed(() =>
         currentTaskRuns.value.reduce(
-            (currentTaskRunsLogIndicesByLevel: Record<string, string[]>, taskRun: any, taskRunIndex: number) => { // FIXME: any
+            (indicesByLevel: Record<string, string[]>, taskRun: any, taskRunIndex: number) => { // FIXME: any
                 if (shouldDisplayLogs(taskRun)) {
                     const currentTaskRunLogs =
                         logsWithIndexByAttemptUid.value[
@@ -415,14 +521,13 @@
                                 selectedAttemptNumberByTaskRunId.value[taskRun.id],
                             )
                         ]
-                    currentTaskRunLogs?.forEach((log: any, logIndex: number) => { // FIXME: any
-                        currentTaskRunsLogIndicesByLevel[log.level] = [
-                            ...(currentTaskRunsLogIndicesByLevel?.[log.level] ?? []),
-                            taskRunIndex + "/" + logIndex,
-                        ]
+                    currentTaskRunLogs?.forEach((log: any) => { // FIXME: any
+                        ;(indicesByLevel[log.level] ??= []).push(
+                            taskRunIndex + "/" + log.index,
+                        )
                     })
                 }
-                return currentTaskRunsLogIndicesByLevel
+                return indicesByLevel
             },
             {},
         ),
@@ -436,12 +541,10 @@
             (allLogIndices: Record<string, string[]>, [logUid, childrenLogIndicesByLevel]: [string, Record<string, string[]>]) => {
                 Object.entries(childrenLogIndicesByLevel).forEach(
                     ([lvl, logIndices]) => {
-                        allLogIndices[lvl] = [
-                            ...(allLogIndices?.[lvl] ?? []),
-                            ...logIndices.map(
-                                (logIndex) => logUid + "/" + logIndex,
-                            ),
-                        ]
+                        const bucket = (allLogIndices[lvl] ??= [])
+                        for (const logIndex of logIndices) {
+                            bucket.push(logUid + "/" + logIndex)
+                        }
                     },
                 )
                 return allLogIndices
@@ -945,13 +1048,41 @@
 
     function scrollToLog(logId: string) {
         const split = logId.split("/")
-        ;(taskRunScroller.value as any)?.scrollToItem(split[0]) // FIXME: any
-        logsScrollerRefs.value?.[split[0]]?.scrollToItem(split[1])
-        if (split.length > 2) {
-            subflowTaskRunDetailsRefs.value?.[
-                split[0] + "/" + split[1]
-            ]?.scrollToLog(split.slice(2).join("/"))
+        const taskRunIndex = Number(split[0])
+        const globalIndex = Number(split[1])
+        ;(taskRunScroller.value as any)?.scrollToItem(taskRunIndex) // FIXME: any
+
+        const taskRun = currentTaskRuns.value[taskRunIndex]
+        const uid = taskRun
+            ? attemptUid(asTaskRun(taskRun).id, selectedAttemptNumberByTaskRunId.value[asTaskRun(taskRun).id])
+            : undefined
+        const items: any[] = (uid && displayItemsByAttemptUid.value[uid]) || [] // FIXME: any
+
+        let position = -1
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            if (item.isGroup) {
+                if (item.members.some((member: any) => member.index === globalIndex)) { // FIXME: any
+                    position = i
+                    if (!isGroupExpanded(taskRunIndex, item)) {
+                        toggleGroup(taskRunIndex, item)
+                    }
+                    break
+                }
+            } else if (item.index === globalIndex) {
+                position = i
+                break
+            }
         }
+
+        nextTick(() => {
+            ;(logsScrollerRefs.value?.[taskRunIndex] as any)?.scrollToItem(position >= 0 ? position : 0) // FIXME: any
+            if (split.length > 2) {
+                subflowTaskRunDetailsRefs.value?.[
+                    taskRunIndex + "/" + globalIndex
+                ]?.scrollToLog(split.slice(2).join("/"))
+            }
+        })
     }
 
     function deduplicateLogs(logs: any[]): any[] { // FIXME: any
@@ -980,6 +1111,54 @@
 </script>
 
 <style scoped lang="scss">
+
+.log-group-more {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+    padding: var(--ks-spacing-1) var(--ks-spacing-3) var(--ks-spacing-1) 4.5rem;
+    background: none;
+    border: none;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    color: var(--ks-text-dim);
+    font-family: var(--ks-font-family-sans);
+    text-align: left;
+
+    &:hover {
+        color: var(--ks-text-secondary);
+        background: var(--ks-bg-hover);
+    }
+
+    :deep(.material-design-icon) {
+        display: inline-flex;
+        align-items: center;
+        line-height: 0;
+    }
+}
+
+.log-group-chevron {
+    flex: none;
+    transition: transform 0.15s ease;
+
+    &.collapsed {
+        transform: rotate(-90deg);
+    }
+}
+
+.log-group-count {
+    flex: none;
+    background: var(--ks-bg-tag);
+    color: var(--ks-text-primary);
+    font-weight: 600;
+    border-radius: var(--ks-radius-sm);
+    padding: 1px var(--ks-spacing-2);
+}
+
+.log-group-label {
+    color: var(--ks-text-dim);
+}
 
 .log-wrapper {
   :deep(
@@ -1035,10 +1214,6 @@
       padding: 0 0.5rem 0.5rem;
       border-bottom: 1px solid var(--ks-border-default);
     }
-
-    .line {
-      padding: 0.5rem;
-    }
   }
 
   .output {
@@ -1065,8 +1240,8 @@
       max-height: calc(100vh - 250px);
     }
 
-    .line {
-      padding: 1rem;
+    :deep(.line) {
+      padding: var(--ks-spacing-1) var(--ks-spacing-3);
 
       &.cursor {
         background-color: var(--ks-border-default);

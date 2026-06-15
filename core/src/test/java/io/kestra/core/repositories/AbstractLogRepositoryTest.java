@@ -357,6 +357,26 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void deleteByQueryWithNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry parent = logEntry(tenant, Level.INFO, "exec-parent").namespace("io.kestra.purge").build();
+        LogEntry child = logEntry(tenant, Level.INFO, "exec-child").namespace("io.kestra.purge.child").build();
+        LogEntry sibling = logEntry(tenant, Level.INFO, "exec-sibling").namespace("io.kestra.purgeother").build();
+        logRepository.save(parent);
+        logRepository.save(child);
+        logRepository.save(sibling);
+
+        // Without a flowId, the namespace is a prefix: the namespace itself and its descendants are
+        // purged, while sibling namespaces sharing a textual prefix (io.kestra.purgeother) are kept.
+        int deleted = logRepository.deleteByQuery(tenant, "io.kestra.purge", null, null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, null);
+
+        assertThat(deleted).isEqualTo(2);
+        assertThat(logRepository.findByExecutionId(tenant, parent.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, child.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, sibling.getExecutionId(), null)).hasSize(1);
+    }
+
+    @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());

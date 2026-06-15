@@ -574,8 +574,8 @@
         "title": "Auf diesem Server sind noch keine Tool flows registriert."
       },
       "panels": {
-        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Namespace-Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
-        "title": "Derzeit sind keine Panels geöffnet."
+        "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren.",
+        "title": "Kein Panel geöffnet"
       },
       "pluginDefaults": {
         "content": "Plugin-Standardeinstellungen ermöglichen es Ihnen, Ihre Plugin-Konfiguration zentral zu verwalten und mit allen flows in Ihrem namespace zu teilen.",

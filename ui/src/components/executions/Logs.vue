@@ -17,48 +17,36 @@
             :levelLabel="t('filter.level_log_executions.label')"
             @update:level="(value) => setLevelRouteValue({value, direction: 'min'})"
         />
-        <Collapse>
-            <KsFormItem v-for="logLevel in currentLevelOrLower" :key="logLevel">
-                <LogLevelNavigator
-                    v-if="countByLogLevel[logLevel] > 0"
-                    :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
-                    :level="logLevel"
-                    :totalCount="countByLogLevel[logLevel]"
-                    @previous="previousLogForLevel(logLevel)"
-                    @next="nextLogForLevel(logLevel)"
-                    @close="logCursor = undefined"
-                    class="w-100"
-                />
-            </KsFormItem>
-            <KsFormItem>
-                <KsButton @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+        <div class="logs-toolbar">
+            <div class="logs-toolbar__left">
+                <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
+                    <LogLevelNavigator
+                        v-if="countByLogLevel[logLevel] > 0"
+                        :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
+                        :level="logLevel"
+                        :totalCount="countByLogLevel[logLevel]"
+                        @previous="previousLogForLevel(logLevel)"
+                        @next="nextLogForLevel(logLevel)"
+                        @close="logCursor = undefined"
+                    />
+                </template>
+                <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
                 </KsButton>
-            </KsFormItem>
-            <KsFormItem>
-                <KsTooltip
-                    :content="!raw_view ? t('logs_view.raw_details') : t('logs_view.compact_details')"
-                >
-                    <KsButton @click="toggleViewType" :icon="logViewTypeButtonIcon">
+                <KsTooltip :content="!raw_view ? t('logs_view.raw_details') : t('logs_view.compact_details')">
+                    <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? t('logs_view.raw') : t('logs_view.compact') }}
                     </KsButton>
                 </KsTooltip>
-            </KsFormItem>
-            <KsFormItem>
-                <KsButtonGroup class="ks-b-group">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
-                    <KsIconButton :tooltip="t('download logs')" @click="downloadContent()">
-                        <Download />
-                    </KsIconButton>
-                    <KsIconButton :tooltip="t('copy logs')" @click="copyAllLogs()">
-                        <ContentCopy />
-                    </KsIconButton>
-                    <KsIconButton :tooltip="t('refresh')" @click="loadLogs()">
-                        <Refresh />
-                    </KsIconButton>
-                </KsButtonGroup>
-            </KsFormItem>
-        </Collapse>
+            </div>
+            <div class="logs-toolbar__actions">
+                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
+                <LogDisplaySettings />
+                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
+                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
+                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Refresh" :aria-label="t('refresh')" :tooltip="t('refresh')" @click="loadLogs()" />
+            </div>
+        </div>
 
         <TaskRunDetails
             v-if="!raw_view"
@@ -117,24 +105,24 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, useTemplateRef} from "vue"
+    import {computed, nextTick, ref, watch, useTemplateRef} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
-    import {KsIconButton} from "@kestra-io/design-system"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import Collapse from "../layout/Collapse.vue"
 
     import * as Utils from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
     import LogLine from "../logs/LogLine.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import * as LogUtils from "../../utils/logs"
@@ -175,6 +163,7 @@
     }
 
     const {t} = useI18n()
+    const toast = useToast()
 
     const emit = defineEmits<{
         follow: [event: unknown]
@@ -247,9 +236,19 @@
     })
 
     watch(logCursor, (newValue) => {
-        if (newValue !== undefined && raw_view.value) {
-            scrollToLog(newValue)
+        if (newValue === undefined) {
+            return
         }
+        if (raw_view.value) {
+            scrollToLog(newValue)
+        } else {
+            (logs.value as any)?.scrollToLog?.(newValue)
+        }
+        nextTick(() => requestAnimationFrame(() => {
+            const selected = [...document.querySelectorAll<HTMLElement>(".log-wrapper .line.selected")]
+                .find((line) => line.getBoundingClientRect().top > -10000)
+            selected?.scrollIntoView({block: "center", behavior: "smooth"})
+        }))
     })
 
     // computed
@@ -272,14 +271,6 @@
             index,
             uid: `${logLine.taskRunId ?? ""}-${logLine.attemptNumber ?? 0}-${logLine.timestamp}-${index}`,
         }))
-    })
-
-    const downloadName = computed(() => {
-        // FIXME: any - moment is a global filter
-        const now = new Date()
-        const pad = (n: number) => String(n).padStart(2, "0")
-        const formatted = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-        return `kestra-execution-${formatted}-${executionId.value}.log`
     })
 
     const logDisplayButtonText = computed(() =>
@@ -347,11 +338,9 @@
     }
 
     function downloadContent() {
-        executionsStore.downloadLogs({
+        executionsStore.downloadLogsFile({
             executionId: executionId.value!,
             params: levelToRequestParams(effectiveLevelValue.value),
-        }).then((response: unknown) => {
-            Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadName.value)
         })
     }
 
@@ -361,6 +350,7 @@
             params: levelToRequestParams(effectiveLevelValue.value),
         }).then((response: unknown) => {
             Utils.copy(response as string)
+            toast.success(t("logs_copied"))
         })
     }
 
@@ -447,21 +437,41 @@
     }
   }
 
-  .ks-b-group {
-    min-width: auto!important;
-    max-width: max-content !important;
-  }
+  .logs-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: var(--ks-spacing-2) 0;
+    margin-bottom: var(--ks-spacing-2);
+    background: var(--ks-bg-base);
 
-  :deep(.kel-form) {
-    padding: 1rem 1rem 0.5rem 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--ks-border-default);
-    border-radius: 0.5rem;
-    background-color: var(--ks-bg-surface);
-    box-shadow: 2px 3px 3px 0px var(--ks-shadow-element);
-  }
+    &__left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--ks-spacing-2);
+    }
 
-  :deep(.kel-form-item) {
-    margin-bottom: 0.5rem !important;
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--ks-spacing-2);
+      margin-left: auto;
+    }
+
+    &__btn {
+      margin: 0;
+      padding: var(--ks-spacing-2);
+      border-radius: var(--ks-radius-base);
+    }
+
+    &__text-btn {
+      margin: 0;
+      font-size: var(--ks-font-size-xs);
+    }
   }
 </style>

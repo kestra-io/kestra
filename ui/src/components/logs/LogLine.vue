@@ -1,56 +1,67 @@
 <template>
     <div
-        class="py-2 line font-monospace"
-        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined}"
         v-if="filtered"
-        :style="logLineStyle"
+        class="line"
+        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor}]"
+        :style="rowStyle"
     >
         <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
             <MenuRight />
         </KsIcon>
-        <div class="log-content d-inline-block">
-            <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
-            <div
-                class="header"
-                :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-            >
-                <span :style="levelStyle" class="log-level">{{ levelLabel }}</span>
-                <span class="header-badge">
-                    {{ Filters.date(log.timestamp, "iso") }}
-                </span>
-                <span v-for="(meta, x) in metaWithValue" :key="x">
-                    <span class="header-badge property">
-                        <span>{{ meta.key }}</span>
-                        <template v-if="meta.router">
-                            <router-link :to="meta.router">{{ meta.value }}</router-link>
-                        </template>
-                        <template v-else>
-                            {{ meta.value }}
-                        </template>
-                    </span>
+        <span
+            class="log-level"
+            :class="{'log-level--clickable': clickableLevel}"
+            :style="{color: `var(--ks-log-${levelLower})`}"
+            :role="clickableLevel ? 'button' : undefined"
+            :tabindex="clickableLevel ? 0 : undefined"
+            :title="clickableLevel ? t('filter_for') : undefined"
+            @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
+            @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
+            @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
+        >{{ levelLabel }}</span>
+        <div class="log-content">
+            <div class="log-header">
+                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "HH:mm:ss.SSS") }}</time>
+                <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
+                <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
+                    <span class="log-meta-key">{{ meta.key }}</span>
+                    <LogValueActions
+                        :field="meta.key"
+                        :value="String(meta.value)"
+                        :filterable="isFilterable(meta.key)"
+                        :to="meta.router"
+                        @filter="emit('filter', $event)"
+                    >{{ meta.value }}</LogValueActions>
                 </span>
             </div>
-            <pre
-                ref="lineContent"
-                :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-                v-html="renderedHtml"
+            <KsJsonTree
+                v-if="structured !== undefined"
+                class="log-json"
+                :value="structured"
+                :defaultExpanded="logsExpandByDefault"
             />
+            <pre v-else ref="lineContent" class="log-message" :style="messageStyle" v-html="renderedHtml" />
         </div>
-        <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
+        <CopyToClipboard class="log-copy" :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch} from "vue"
+    import {computed, nextTick, ref, watch, type CSSProperties} from "vue"
     import Convert from "ansi-to-html"
-    import {useStorage} from "@vueuse/core"
     import xss from "xss"
     import MenuRight from "vue-material-design-icons/MenuRight.vue"
     import linkify, {processLinkTags} from "./linkify"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import {LevelKey} from "../../utils/logs"
+    import LogValueActions from "./LogValueActions.vue"
+    import {isFilterableLogField} from "./logValueFilter"
+    import {LevelKey, parseStructured} from "../../utils/logs"
+    import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault, DENSITY_PADDING} from "../../composables/useLogDisplay"
     import {Log} from "../../stores/logs"
     import {useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
     import * as Filters from "../../utils/filters"
+
+    const {t} = useI18n()
 
     // Props
     const props = defineProps<{
@@ -59,19 +70,38 @@
         filter?: string,
         level?: LevelKey,
         excludeMetas?: (keyof Log)[],
-        title?: boolean
+        title?: boolean,
+        raw?: boolean,
+        clickableLevel?: boolean,
+        highlight?: string
     }>()
 
+    const emit = defineEmits<{
+        filter: [{field: string, value: string, negate: boolean}],
+        "filter-level": [level: string]
+    }>()
+
+    const isFilterable = isFilterableLogField
+
     // State
-    const logsFontSize = useStorage<number>("logsFontSize", 12)
     const convert = new Convert()
     const lineContent = ref<HTMLElement>()
     const router = useRouter()
 
     // Computed
-    const logLineStyle = computed(() => ({
-        fontSize: `${logsFontSize.value}px`,
-    }))
+    const levelLower = computed(() => (props.log?.level ?? "info").toLowerCase())
+
+    const rowStyle = computed(() => {
+        const tinted = levelLower.value === "error" || levelLower.value === "warn"
+        const pad = DENSITY_PADDING[logsDensity.value]
+        return {
+            fontSize: `${logsFontSize.value}px`,
+            paddingTop: pad,
+            paddingBottom: pad,
+            borderLeftColor: `var(--ks-log-border-${levelLower.value})`,
+            ...(tinted ? {background: `color-mix(in srgb, var(--ks-log-${levelLower.value}) 6%, transparent)`} : {}),
+        }
+    })
 
     const metaWithValue = computed(() => {
         const result: any[] = []
@@ -120,13 +150,6 @@
         return level.charAt(0).toUpperCase() + level.slice(1).toLowerCase()
     })
 
-    const levelStyle = computed(() => {
-        const lowerCaseLevel = props.log?.level?.toLowerCase()
-        return {
-            "color": `var(--ks-log-${lowerCaseLevel})`,
-            "background-color": `color-mix(in srgb, var(--ks-log-${lowerCaseLevel}) 10%, var(--ks-bg-badge))`,
-        }
-    })
 
     const filtered = computed(() =>
         props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? "")),
@@ -151,8 +174,24 @@
             "$1<a href='$2' target='_blank'>$2</a>$3",
         )
 
+        const term = (props.highlight ?? props.filter)?.trim()
+        if (term) {
+            const matcher = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")
+            html = html.replace(/<[^>]*>|&[^;\s]+;|[^<&]+/g, (token) =>
+                token[0] === "<" || token[0] === "&"
+                    ? token
+                    : token.replace(matcher, "<mark class=\"log-highlight\">$&</mark>"),
+            )
+        }
+
         return html
     })
+
+    const structured = computed(() => (props.raw || !logsPrettyJson.value ? undefined : parseStructured(props.log.message)))
+
+    const messageStyle = computed<CSSProperties>(() => (logsBodyClamp.value > 0 && logsDensity.value !== "compact"
+        ? {display: "-webkit-box", "-webkit-line-clamp": String(logsBodyClamp.value), "-webkit-box-orient": "vertical", overflow: "hidden"}
+        : {}))
 
     watch(renderedHtml, () => {
         nextTick(() => {
@@ -163,132 +202,154 @@
 <style scoped lang="scss">
 div.line {
     position: relative;
-    cursor: text;
-    white-space: pre-line;
-    word-break: break-all;
     display: flex;
-    align-items: center;
-    padding: 0.15rem 0.5rem;
-    min-height: 2rem;
+    align-items: flex-start;
+    gap: var(--ks-spacing-3);
+    padding: var(--ks-spacing-2) var(--ks-spacing-3);
+    min-height: 1.9rem;
+    border-left: 2px solid transparent;
+    border-top: 1px solid var(--ks-border-subtle);
+    transition: background 0.1s ease-in-out;
 
+    &:hover {
+        background: var(--ks-bg-hover);
+    }
 
-    border-left-width: 2px !important;
-    border-left-style: solid;
-    border-left-color: transparent;
+    &.selected {
+        background: var(--ks-bg-tag-hover);
+    }
 
-    border-top: 1px solid var(--ks-border-default);
-
-    // hack for class containing 0
     &[class*="-0"] {
         border-top: 0;
     }
 
     .icon_container {
         position: absolute;
-        left: -0.60rem;
-        top: 50%;
-        transform: translateY(-50%);
+        left: -0.6rem;
+        top: 0.5rem;
         z-index: 1;
     }
 
     .log-level {
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        white-space: nowrap;
-        vertical-align: middle;
-        user-select: none;
+        flex: none;
+        width: 3.5rem;
+        padding-top: 1px;
         font-family: var(--ks-font-family-sans);
-        font-weight: 500;
-        border-radius: 0.375rem;
-        padding: 0.125rem var(--ks-spacing-2);
-        font-size: var(--ks-font-size-sm);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1.6;
+        user-select: none;
+
+        &--clickable {
+            cursor: pointer;
+            border-radius: var(--ks-radius-xs);
+
+            &:hover {
+                background: var(--ks-bg-hover);
+            }
+        }
+    }
+
+    .log-time {
+        flex: none;
+        font-family: var(--ks-font-family-mono);
+        color: var(--ks-text-dim);
+        white-space: nowrap;
+        user-select: none;
+        font-variant-numeric: tabular-nums;
     }
 
     .log-content {
-        display: inline-block;
-        vertical-align: middle;
-        overflow-wrap: anywhere;
-        word-break: break-word;
+        flex: 1 1 auto;
         min-width: 0;
+        line-height: 1.6;
+    }
 
-        .header {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
+    &.density-compact {
+        .log-content {
+            line-height: 1.4;
         }
 
-        .header > * + * {
-            margin-left: 1rem;
-        }
-
-        pre {
-            background: transparent;
-            margin: 0;
-            padding: 0;
-            font-size: inherit;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            word-break: break-word;
+        .log-message {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 
-    .kel-tag {
-        height: auto;
+    &.density-expanded .log-content {
+        line-height: 1.95;
     }
 
-    .header-badge {
-        font-size: 95%;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        width: auto;
-        min-width: 40px;
+    .log-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--ks-spacing-1) var(--ks-spacing-2);
+        min-height: 1.4rem;
+    }
+
+    .log-source {
+        font-family: var(--ks-font-family-sans);
+        font-weight: 600;
         color: var(--ks-text-secondary);
+    }
 
-        span:first-child {
-            margin-right: 6px;
-            font-family: var(--kbs-body-font-family);
-            user-select: none;
+    .log-meta {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.1875rem;
+        padding: 0.0625rem var(--ks-spacing-1);
+        border-radius: var(--ks-radius-xs);
+        background: var(--ks-bg-tag);
+        font-family: var(--ks-font-family-sans);
+
+        .log-meta-key {
+            color: var(--ks-text-dim);
 
             &::after {
                 content: ":";
             }
         }
 
-        & a {
-            border-radius: var(--kel-border-radius-base);
-        }
     }
 
-     .property {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-
-        .kel-tag {
-            font-family: var(--kbs-body-font-family);
-            user-select: none;
-        }
+    .log-message {
+        display: block;
+        margin: 0.125rem 0 0;
+        padding: 0;
+        background: transparent;
+        font-family: var(--ks-font-family-mono);
+        font-size: inherit;
+        color: var(--ks-text-primary);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
-    .message {
-        line-height: 1.8;
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    p, :deep(.log-content p) {
+    :deep(.log-message p) {
         display: inline;
         margin-bottom: 0;
+    }
+
+    :deep(.log-highlight) {
+        background: var(--ks-bg-tag-active);
+        color: var(--ks-text-primary);
+        border-radius: var(--ks-radius-xs);
+        padding: 0 2px;
+    }
+
+    .log-json {
+        display: block;
+        margin-top: 2px;
     }
 
     :deep(.clipboard) {
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.15s ease-in-out;
-        top: 0.5rem;
+        top: 0.4rem;
         right: 0.5rem;
     }
 

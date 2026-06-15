@@ -1,54 +1,76 @@
 <template>
     <div
         v-if="generated?.total > 0"
-        :class="[props.short ? 'short-chart' : props.execution ? 'execution-chart' : 'chart', (!props.short && !props.execution && chartOptions?.legend?.enabled) ? 'with-legend' : '']"
+        class="chart"
+        :class="{short: props.short, execution: props.execution}"
     >
+        <ChartLegend
+            v-if="showLegend"
+            :items="legendStatuses"
+            :durationLabel="yBShown ? durationLabel : undefined"
+            :chart="ksEchartRef"
+            @toggle="onLegendToggle"
+        />
+
         <KsEchart
             ref="ksEchartRef"
+            class="canvas"
             :options="echartsOption"
             :loading="false"
-            :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
             :tooltipType="TooltipType.EXTERNAL"
+            @echarts-click="onChartClick"
         />
     </div>
-    <KsEmpty v-else-if="!props.short || (props.execution && generated?.total === 0)" />
+    <KsTableEmpty
+        v-else-if="!props.short || (props.execution && generated?.total === 0)"
+        :class="{empty: !props.short && !props.execution}"
+    />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, PropType} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
+
     import moment from "moment"
-    import * as echarts from "echarts/core"
-    import {use} from "echarts/core"
+    import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
-    import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {extractState, getConsistentHEXColor} from "../composables/charts"
-    import * as KestraUtils from "../../../utils/utils"
-    import {useTheme} from "../../../utils/utils"
-    import {FilterObject} from "../../../utils/filters"
-    import {KsEchart, cssVar, durationUtils} from "@kestra-io/design-system"
-    import {TooltipType, ChartFeature} from "@kestra-io/design-system"
-    import {useMiscStore} from "override/stores/misc"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
+    import {KsEchart, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+
+    import {Chart, useChartGenerator} from "../composables/useDashboards"
+    import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {useChartDrillDown} from "../composables/chartDrillDown"
+    import ChartLegend from "./ChartLegend.vue"
+    import {getDateFormat, useTheme} from "../../../utils/utils"
+    import {FilterObject} from "../../../utils/filters"
 
     use([BarChart, LineChart])
 
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
+    defineOptions({inheritAttrs: false})
+
+    const props = withDefaults(defineProps<{
+        dashboardId?: string;
+        chart: Chart;
+        filters?: FilterObject[];
+        showDefault?: boolean;
+        short?: boolean;
+        execution?: boolean;
+        flow?: string;
+        namespace?: string;
+    }>(), {
+        dashboardId: undefined,
+        filters: () => [],
+        showDefault: false,
+        short: false,
+        execution: false,
+        flow: undefined,
+        namespace: undefined,
+    })
 
     const route = useRoute()
-    const router = useRouter()
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
 
-    defineOptions({inheritAttrs: false})
-    const props = defineProps({
-        dashboardId: {type: String, required: false, default: undefined},
-        chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
-        showDefault: {type: Boolean, default: false},
-        short: {type: Boolean, default: false},
-        execution: {type: Boolean, default: false},
-        flow: {type: String, default: undefined},
-        namespace: {type: String, default: undefined},
-    })
+    const {drillDown} = useChartDrillDown(props.chart)
 
     const {data, chartOptions} = props.chart
 
@@ -66,6 +88,8 @@
 
     const theme = useTheme()
 
+    const {onLegendToggle, legendSelected} = useLegendToggle()
+
     function isDuration(field: string | undefined): boolean {
         return field === "DURATION"
     }
@@ -73,14 +97,25 @@
     const parseValue = (value: unknown): unknown => {
         const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
         const query = {
-            ...Object.fromEntries(props.filters.map(({field, value: filterValue, operation}) => [`filters[${field}][${operation}]`, filterValue])),
+            ...Object.fromEntries(
+                props.filters.map(({field, value: filterValue, operation}) =>
+                    [`filters[${field}][${operation}]`, filterValue]),
+            ),
             ...route.query,
         }
-        return date.isValid() ? date.format(KestraUtils.getDateFormat(
+        return date.isValid() ? date.format(getDateFormat(
             (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
             (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
             query["filters[timeRange][EQUALS]"] as string | undefined,
         )) : value
+    }
+
+    const shortAxisLabel = (value: string): string => {
+        if (typeof value !== "string") return value
+        const [datePart, ...timeParts] = value.split(":")
+        if (timeParts.length) return timeParts.join(":")
+        const segments = datePart.split("-")
+        return segments.length === 3 ? segments.slice(1).join("-") : datePart
     }
 
     const parsedData = computed(() => {
@@ -189,18 +224,17 @@
                         type: "line",
                         data: duration,
                         label: label,
-                        borderColor: cssVar("--ks-gray-cool-100"),
+                        borderColor: cssVar("--ks-chart-duration"),
                         smooth: true,
                         areaStyle: {
-                            opacity: 0.2,
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            color: new graphic.LinearGradient(0, 0, 0, 1, [
                                 {
                                     offset: 0,
-                                    color: cssVar("--ks-gray-cool-100"),
+                                    color: cssVar("--ks-chart-duration", 0.3),
                                 },
                                 {
                                     offset: 1,
-                                    color: cssVar("--ks-gray-cool-900"),
+                                    color: cssVar("--ks-chart-duration", 0),
                                 },
                             ]),
                         },
@@ -226,7 +260,7 @@
                 stack: "total",
                 yAxisIndex: 0,
                 itemStyle: {color: ds.backgroundColor},
-                barMaxWidth: props.short ? 8 : props.execution ? 24 : 48,
+                barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
                 ...(props.short ? {barCategoryGap: "0%"} : {}),
             }))
 
@@ -244,13 +278,27 @@
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
             }))
 
+        const axisLabelStyle = {
+            color: cssVar("--ks-text-secondary"),
+            fontSize: 10,
+        }
+
         const yAxisConfig = (position: "left" | "right", fieldIndex: number) => ({
             type: "value",
             show: showAxes,
             position,
-            axisLabel: isDuration(aggregator.value[fieldIndex]?.[1]?.field)
-                ? {formatter: (v: number) => durationUtils.humanDuration(v)}
-                : {},
+            splitNumber: 5,
+            splitLine: {
+                show: showAxes && position === "left",
+                lineStyle: {type: "dashed", color: cssVar("--ks-border-subtle"), width: 1},
+            },
+            axisLabel: {
+                ...axisLabelStyle,
+                ...(position === "left" ? {align: "left"} : {}),
+                ...(isDuration(aggregator.value[fieldIndex]?.[1]?.field)
+                    ? {formatter: (v: number) => durationUtils.humanDuration(v)}
+                    : {}),
+            },
         })
 
         const yAxis = yBShown.value
@@ -260,56 +308,58 @@
         return {
             grid: isCompact
                 ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: "3%", right: "4%", bottom: "3%", top: chartOptions?.legend?.enabled ? "60px" : "5%", containLabel: true},
+                : {left: 0, right: 0, bottom: "3%", top: "5%", containLabel: true},
             xAxis: {
                 type: "category",
                 data: xAxisData,
                 show: !isCompact,
+                axisLine: {lineStyle: {color: cssVar("--ks-border-default")}},
+                axisLabel: {...axisLabelStyle, formatter: shortAxisLabel},
             },
             yAxis,
-            legend: (!isCompact && chartOptions?.legend?.enabled) ? {
-                "top": "10px",
-                "right": "10px",
-            } : {show: false},
+            legend: {
+                show: false,
+                selected: legendSelected([...barSeries, ...lineSeries].map((s) => s.name)),
+            },
+            tooltip: {axisPointer: {type: "none"}},
             series: [...barSeries, ...lineSeries],
         }
     })
 
     const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
 
+    const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
+
+    const legendStatuses = computed(() =>
+        (parsedData.value.datasets as any[])
+            .filter((ds) => ds.type !== "line")
+            .map((ds) => ({
+                label: ds.label as string,
+                color: ds.backgroundColor as string,
+                count: (ds.data as number[]).reduce((sum, n) => sum + (n || 0), 0),
+            })),
+    )
+
+    const durationLabel = computed(() =>
+        (parsedData.value.datasets as any[]).find((ds) => ds.type === "line")?.label ?? "Duration",
+    )
+
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
-    // Register click handler when the chart mounts (after data loads and v-if becomes true)
-    watch(ksEchartRef, (newRef) => {
-        if (!newRef) return
-        const instance = newRef.getEchartsInstance()
-        if (!instance) return
-        instance.on("click", (params: any) => {
-            if (data?.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) return
-
-            const state = params.seriesName
-            const query: Record<string, any> = {}
-            if (state) {
-                query.state = extractState(state)
-                query.scope = "USER"
-                query.size = 100
-                query.page = 1
-            }
-            if (route.query.namespace) query.namespace = route.query.namespace
-            if (route.query.q) query.q = route.query.q
-
-            router.push({
-                name: "executions/list",
-                params: {tenant: route.params.tenant},
-                query: {
-                    ...query,
-                    ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
-                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {}),
-                    "filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
-                },
-            })
-        })
+    const dimensionColumn = computed(() => {
+        const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
+        return (key ? data?.columns?.[key] : undefined) as {field?: string; labelKey?: string} | undefined
     })
+
+    function onChartClick(params: any) {
+        if (params.seriesType !== "bar" || props.execution) return
+
+        drillDown([
+            {column: dimensionColumn.value, value: params.seriesName},
+            ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
+            ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
+        ])
+    }
 
     function refresh(customFilters?: FilterObject[]) {
         return generate(undefined, customFilters)
@@ -319,25 +369,33 @@
         refresh,
     })
 
-    watch(() => route.params.filters, () => {
-        refresh()
-    }, {deep: true})
+    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">
     .chart {
-        height: 231px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 200px;
 
-        &.with-legend {
-            height: 200px;
+        &.short {
+            height: 40px;
+            min-height: 0;
+        }
+
+        &.execution {
+            height: 120px;
+            min-height: 0;
+        }
+
+        .canvas {
+            flex: 1;
+            min-height: 0;
         }
     }
 
-    .short-chart {
-        height: 40px;
-    }
-
-    .execution-chart {
-        height: 120px;
+    .empty {
+        min-height: 200px;
     }
 </style>

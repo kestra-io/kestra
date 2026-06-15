@@ -36,7 +36,8 @@
         "scripts/**", 
         "**/scripts/**", 
         "src/translations/check.js", 
-        "**/tests/**"],
+        "**/tests/**"
+      ],
       "rules": {
         "no-console": "off"
       }

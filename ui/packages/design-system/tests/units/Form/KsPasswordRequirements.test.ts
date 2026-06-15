@@ -1,9 +1,11 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsPasswordRequirements from "../../../src/components/Form/KsPasswordRequirements.vue"
 
-const globalConfig = {plugins: [KestraDesignSystem]}
+const i18n = createI18n({legacy: false, locale: "en", messages: {}})
+const globalConfig = {plugins: [i18n, KestraDesignSystem]}
 
 describe("KsPasswordRequirements", () => {
     test("renders the four policy rules", () => {

@@ -26,6 +26,7 @@ import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
 import KsCheckboxGroup from "./components/Form/KsCheckbox/KsCheckboxGroup.vue"
 import KsCheckTag from "./components/Data/KsTag/KsCheckTag.vue"
+import KsCheckItem from "./components/Data/KsCheckItem.vue"
 import KsCodeStatus from "./components/Data/KsCodeStatus.vue"
 import KsCol from "./components/Basic/KsRow/KsCol.vue"
 import KsCollapse from "./components/Data/KsCollapse/KsCollapse.vue"
@@ -60,6 +61,7 @@ import KsIconButton from "./components/Basic/KsIconButton/KsIconButton.vue"
 import KsInput from "./components/Form/KsInput.vue"
 import KsSearch from "./components/Form/KsSearch.vue"
 import KsPassword from "./components/Form/KsPassword.vue"
+import KsPasswordRequirements from "./components/Form/KsPasswordRequirements.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
 import KsMarkdown from "./components/Data/KsMarkdown/KsMarkdown.vue"
@@ -222,6 +224,7 @@ const components: Record<string, Component> = {
     KsCheckboxButton,
     KsCheckboxGroup,
     KsCheckTag,
+    KsCheckItem,
     KsCodeStatus,
     KsCol,
     KsCollapse,
@@ -252,6 +255,7 @@ const components: Record<string, Component> = {
     KsInput,
     KsInputNumber,
     KsPassword,
+    KsPasswordRequirements,
     KsLink,
     KsMarkdown,
     KsMenu,
@@ -329,6 +333,7 @@ export {
     KsCheckboxButton,
     KsCheckboxGroup,
     KsCheckTag,
+    KsCheckItem,
     KsCodeStatus,
     KsCol,
     KsCollapse,
@@ -359,6 +364,7 @@ export {
     KsInput,
     KsInputNumber,
     KsPassword,
+    KsPasswordRequirements,
     KsLink,
     KsMarkdown,
     KsMenu,
@@ -457,6 +463,7 @@ declare module "vue" {
         KsCheckboxButton: typeof KsCheckboxButton
         KsCheckboxGroup: typeof KsCheckboxGroup
         KsCheckTag: typeof KsCheckTag
+        KsCheckItem: typeof KsCheckItem
         KsCodeStatus: typeof KsCodeStatus
         KsCol: typeof KsCol
         KsCollapse: typeof KsCollapse
@@ -486,6 +493,7 @@ declare module "vue" {
         KsInput: typeof KsInput
         KsInputNumber: typeof KsInputNumber
         KsPassword: typeof KsPassword
+        KsPasswordRequirements: typeof KsPasswordRequirements
         KsLink: typeof KsLink
         KsMarkdown: typeof KsMarkdown
         KsMenu: typeof KsMenu

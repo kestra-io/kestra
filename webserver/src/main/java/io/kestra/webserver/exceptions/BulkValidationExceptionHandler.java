@@ -9,14 +9,15 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import jakarta.inject.Singleton;
 
+@SuppressWarnings("rawtypes")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
 @Requires(classes = {BulkValidationException.class, ExceptionHandler.class})
 public class BulkValidationExceptionHandler
-    implements ExceptionHandler<BulkValidationException, HttpResponse<BulkErrorResponse>> {
+    implements ExceptionHandler<BulkValidationException, HttpResponse> {
 
     @Override
-    public HttpResponse<BulkErrorResponse> handle(HttpRequest<?> request, BulkValidationException exception) {
+    public HttpResponse handle(HttpRequest request, BulkValidationException exception) {
         return HttpResponse.badRequest(exception.getBulkErrorResponse());
     }
 }

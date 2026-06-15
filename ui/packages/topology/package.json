@@ -43,7 +43,7 @@
     "dependencies": {
         "dagre": "^0.8.5",
         "html-to-image": "^1.11.13",
-        "js-yaml": "^4",
+        "js-yaml": "^4.2.0",
         "vue-material-design-icons": "^5.3.1",
         "yaml": "^2"
     },
@@ -69,13 +69,13 @@
         "@types/lodash": "^4",
         "@types/node": "^25.9.1",
         "@vitejs/plugin-vue": "^6.0.7",
-        "sass-embedded": "^1.99.0",
+        "sass-embedded": "^1.100.0",
         "tsdown": "^0.22.1",
         "typescript": "^6.0.3",
         "vite": "^8.0.14",
         "vitest": "^4.1.0",
         "vue": "^3.5.0",
         "vue-i18n": "^11.4.4",
-        "vue-tsc": "^3.2.8"
+        "vue-tsc": "^3.3.5"
     }
 }

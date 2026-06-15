@@ -1,5 +1,5 @@
 import {defineArtifactSlot} from "./define-artifact-slot"
-import {propsSchema} from "./topology-task-drawer"
+import {propsSchema} from "./topology-details"
 import {z} from "zod"
 
 export default defineArtifactSlot(() => ({

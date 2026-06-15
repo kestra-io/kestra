@@ -225,7 +225,7 @@
                         data: duration,
                         label: label,
                         borderColor: cssVar("--ks-chart-duration"),
-                        smooth: true,
+                        smooth: false,
                         areaStyle: {
                             color: new graphic.LinearGradient(0, 0, 0, 1, [
                                 {
@@ -271,7 +271,7 @@
                 name: ds.label,
                 data: ds.data,
                 yAxisIndex: yBShown.value ? 1 : 0,
-                smooth: true,
+                smooth: false,
                 showSymbol: false,
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},

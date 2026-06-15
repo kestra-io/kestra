@@ -574,8 +574,8 @@
         "title": "此服务器上尚未注册任何工具flow。"
       },
       "panels": {
-        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、上下文）以获取相关功能。",
-        "title": "当前没有打开的面板。"
+        "content": "您已关闭所有面板。  \n请选择上面的选项卡以继续。",
+        "title": "没有面板打开"
       },
       "pluginDefaults": {
         "content": "插件默认设置允许您集中管理插件配置，并与namespace中的所有flow共享。",

@@ -574,8 +574,8 @@
         "title": "Nessun flow di tool è ancora registrato su questo server."
       },
       "panels": {
-        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Namespace Files, Blueprints, Context) per funzionalità correlate.",
-        "title": "Nessun pannello è attualmente aperto."
+        "content": "Hai chiuso tutti i pannelli.  \nSeleziona una scheda sopra per continuare.",
+        "title": "Nessun pannello aperto"
       },
       "pluginDefaults": {
         "content": "I valori predefiniti del plugin ti permettono di gestire centralmente la configurazione del tuo plugin e condividerla con tutti i flow nel tuo namespace.",

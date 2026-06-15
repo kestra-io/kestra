@@ -67,6 +67,8 @@
     } from "../injectionKeys"
 
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
+    import LocationExit from "vue-material-design-icons/LocationExit.vue"
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -124,7 +126,9 @@
         };
         outputs?: {
             executionId?: string;
-        };
+        } & Record<string, unknown>;
+        attempts?: unknown[];
+        value?: string;
     }
 
     interface ExpandData {
@@ -142,6 +146,7 @@
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
+        replayEnabled?: boolean;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
     }>(), {
@@ -150,6 +155,7 @@
         enableSubflowInteraction: true,
         icons: undefined,
         iconComponent: undefined,
+        replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
     })
@@ -163,6 +169,8 @@
         (event: typeof EVENTS.EXPAND, data: any): void;
         (event: typeof EVENTS.OPEN_LINK, data: any): void;
         (event: typeof EVENTS.SHOW_LOGS, data: any): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: any): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: any): void;
         (event: typeof EVENTS.MOUSE_OVER, data: any): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
         (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
@@ -336,6 +344,14 @@
                 onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
             })
         }
+        if (taskExecution.value) {
+            list.push({
+                key: "outputs",
+                label: t("show task outputs"),
+                icon: LocationExit,
+                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+            })
+        }
         if (dataWithLink.value.link) {
             list.push({
                 key: "open",
@@ -384,6 +400,15 @@
                 danger: true,
                 divided: true,
                 onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
+            })
+        }
+        if (props.replayEnabled && taskExecution.value && taskRuns.value.length > 0) {
+            list.push({
+                key: "replay",
+                label: t("replay"),
+                icon: PlayBoxMultiple,
+                divided: true,
+                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
             })
         }
 

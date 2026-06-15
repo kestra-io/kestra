@@ -100,7 +100,7 @@
 }
 
 .bf-meta {
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
     font-size: var(--ks-font-size-sm);
     min-width: 14rem;
     white-space: nowrap;
@@ -117,6 +117,6 @@
 }
 
 .bf-stop :deep(.material-design-icon) {
-    color: var(--ks-content-error);
+    color: var(--ks-text-error);
 }
 </style>

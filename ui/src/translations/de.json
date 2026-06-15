@@ -1741,6 +1741,9 @@
             "light": "Hell",
             "sync": "Mit System synchronisieren"
           },
+          "confirmations": {
+            "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
+          },
           "descriptions": {
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",

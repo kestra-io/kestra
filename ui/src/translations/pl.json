@@ -1741,6 +1741,9 @@
             "light": "Jasny",
             "sync": "Synchronizuj z systemem"
           },
+          "confirmations": {
+            "color_mode": "Twój interfejs używa teraz motywu `{mode}`."
+          },
           "descriptions": {
             "color_mode": "Wybierz preferowany motyw interfejsu.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML podczas otwierania flow.",

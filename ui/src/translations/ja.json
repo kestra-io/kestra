@@ -1741,6 +1741,9 @@
             "light": "ライト",
             "sync": "システムと同期"
           },
+          "confirmations": {
+            "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
+          },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",

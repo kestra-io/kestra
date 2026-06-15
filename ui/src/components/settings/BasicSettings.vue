@@ -429,11 +429,11 @@
         notifySaved(meta?.[0], meta?.[1])
     }
 
-    function notifySaved(labelKey?: string, descriptionKey?: string) {
+    function notifySaved(labelKey?: string, descriptionKey?: string, bodyOverride?: string) {
         const title = labelKey
             ? t("settings.updated", {name: t(labelKey)})
             : t("saved")
-        const body = descriptionKey ? t(descriptionKey) : t("settings.label")
+        const body = bodyOverride ?? (descriptionKey ? t(descriptionKey) : t("settings.label"))
         toast.success(body, title)
     }
 
@@ -506,7 +506,8 @@
     function onTheme(value: string) {
         settings.theme = value as SelectedTheme
         Utils.switchTheme(miscStore, value)
-        notifySaved(`${THEME}.fields.color_mode`, `${THEME}.descriptions.color_mode`)
+        const mode = themeOptions.value.find((option) => option.value === value)?.label ?? value
+        notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
     }
 
     function onLogsFontSize(value: number) {

@@ -1741,6 +1741,9 @@
             "light": "Claro",
             "sync": "Sincronizar con el sistema"
           },
+          "confirmations": {
+            "color_mode": "Tu interfaz ahora usa el tema `{mode}`."
+          },
           "descriptions": {
             "color_mode": "Elige tu tema de interfaz preferido.",
             "editor_folding_stratgy": "Colapsar bloques largos de YAML por defecto al abrir un flow.",

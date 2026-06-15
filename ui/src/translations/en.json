@@ -1028,6 +1028,9 @@
             "light": "Light",
             "sync": "Sync with system"
           },
+          "confirmations": {
+            "color_mode": "Your interface is now using the `{mode}` theme."
+          },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
             "logs_font_size": "Font size used in log viewers and terminals.",

@@ -1741,6 +1741,9 @@
             "light": "浅色模式",
             "sync": "与系统同步"
           },
+          "confirmations": {
+            "color_mode": "您的界面现在使用 `{mode}` 主题。"
+          },
           "descriptions": {
             "color_mode": "选择您偏好的界面主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",

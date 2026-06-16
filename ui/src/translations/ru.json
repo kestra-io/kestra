@@ -736,6 +736,7 @@
     },
     "files": "Файлы",
     "filter by log level": "Фильтр по уровню log",
+    "filter by status": "Фильтровать выполнения по статусу {status}",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "Темный 2.0",
             "light": "Светлый",
             "sync": "Синхронизировать с системой"
+          },
+          "confirmations": {
+            "color_mode": "Ваш интерфейс теперь использует тему `{mode}`."
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",

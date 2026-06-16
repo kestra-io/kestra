@@ -251,18 +251,34 @@
         const isCompact = props.short || props.execution
         const showAxes = !isCompact && !verticalLayout.value
 
-        const barSeries = (pd.datasets as any[])
-            .filter((ds) => ds.type !== "line")
-            .map((ds) => ({
-                type: "bar",
-                name: ds.label,
-                data: ds.data,
-                stack: "total",
-                yAxisIndex: 0,
-                itemStyle: {color: ds.backgroundColor},
-                barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
-                ...(props.short ? {barCategoryGap: "0%"} : {}),
-            }))
+        const barDatasets = (pd.datasets as any[]).filter((ds) => ds.type !== "line")
+        const radius = props.short ? 0.5 : 2
+
+        /**
+         * ECharts has no native gap for stacked segments — faked with a transparent border.
+         * Lowest non-zero segment per x gets a flat bottom to sit on the axis; rest are pills.
+         */
+        const barSeries = barDatasets.map((ds, index) => ({
+            type: "bar",
+            name: ds.label,
+            stack: "total",
+            yAxisIndex: 0,
+            data: (ds.data as number[]).map((value, x) => ({
+                value,
+                itemStyle: {
+                    borderRadius: index === barDatasets.findIndex((d) => (d.data[x] ?? 0) > 0)
+                        ? [radius, radius, 0, 0]
+                        : radius,
+                },
+            })),
+            itemStyle: {
+                color: ds.backgroundColor,
+                borderColor: "transparent",
+                borderWidth: props.short ? 0 : 2,
+            },
+            barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
+            ...(props.short ? {barCategoryGap: "0%"} : {}),
+        }))
 
         const lineSeries = (pd.datasets as any[])
             .filter((ds) => ds.type === "line")

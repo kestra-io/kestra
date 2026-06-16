@@ -736,6 +736,7 @@
     },
     "files": "Pliki",
     "filter by log level": "Filtruj według poziomu log",
+    "filter by status": "Filtruj wykonania według statusu {status}",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "Dark 2.0",
             "light": "Jasny",
             "sync": "Synchronizuj z systemem"
+          },
+          "confirmations": {
+            "color_mode": "Twój interfejs używa teraz motywu `{mode}`."
           },
           "descriptions": {
             "color_mode": "Wybierz preferowany motyw interfejsu.",

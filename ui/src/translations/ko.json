@@ -736,6 +736,7 @@
     },
     "files": "파일",
     "filter by log level": "Log 레벨로 필터링",
+    "filter by status": "{status} 상태로 실행 필터링",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "다크 2.0",
             "light": "라이트",
             "sync": "시스템과 동기화"
+          },
+          "confirmations": {
+            "color_mode": "인터페이스가 이제 `{mode}` 테마를 사용합니다."
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",

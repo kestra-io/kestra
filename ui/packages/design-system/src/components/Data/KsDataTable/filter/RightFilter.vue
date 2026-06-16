@@ -54,6 +54,7 @@
                 </div>
 
                 <SavedFilters
+                    hideHeader
                     :savedFilters="filter.savedFilters.value"
                     @load="handleLoad"
                     @edit="filter.editSavedFilter"
@@ -73,34 +74,59 @@
             @close-edit="filter.closeEditFilter"
         />
 
-        <KsTooltip
-            :content="viewModeTooltip"
-            placement="top"
+        <KsPopover
+            v-if="filter.tableOptions.value?.columns?.shown !== false"
+            v-model:visible="isColumnsVisible"
+            placement="bottom-end"
+            trigger="click"
+            :width="300"
+            :popperClass="'p-0'"
+            :showArrow="false"
+            :disabled="filter.readOnly.value"
+            @hide="isColumnsVisible = false"
         >
-            <KsButton
-                type="default"
-                size="default"
-                class="view-mode-btn"
-                :icon="filter.viewMode.value === 'chip' ? CodeBraces : FormatListBulleted"
-                :disabled="filter.readOnly.value || isChipViewLocked"
-                @click="filter.setViewMode(filter.viewMode.value === 'chip' ? 'raw' : 'chip')"
-                :aria-label="viewModeTooltip"
+            <template #reference>
+                <KsButton
+                    type="default"
+                    size="default"
+                    class="icon-btn"
+                    :icon="Table"
+                    :aria-label="$t('filter.customize columns')"
+                    :title="$t('filter.customize columns')"
+                    :disabled="filter.readOnly.value"
+                />
+            </template>
+            <CustomColumns
+                :columns="filter.properties.value?.columns ?? []"
+                :visibleColumns="filter.properties.value?.displayColumns ?? []"
+                :storageKey="filter.properties.value?.storageKey ?? ''"
+                @update-columns="filter.updateProperties"
+                @close="isColumnsVisible = false"
             />
-        </KsTooltip>
+        </KsPopover>
 
-        <KsTooltip
+        <KsPopover
             v-if="filter.buttons.value?.tableOptions?.shown !== false"
-            :content="$t('filter.show data options tooltip')"
-            placement="top"
+            v-model:visible="isSettingsVisible"
+            placement="bottom-end"
+            trigger="click"
+            :width="260"
+            :popperClass="'p-0'"
+            :showArrow="false"
+            @hide="isSettingsVisible = false"
         >
-            <KsButton
-                type="default"
-                size="default"
-                @click="filter.toggleOptions"
-                class="options-btn"
-                :icon="VerticalSliders"
-            />
-        </KsTooltip>
+            <template #reference>
+                <KsButton
+                    type="default"
+                    size="default"
+                    class="icon-btn"
+                    :icon="CogOutline"
+                    :aria-label="$t('filter.options')"
+                    :title="$t('filter.options')"
+                />
+            </template>
+            <FilterSettings @close="isSettingsVisible = false" />
+        </KsPopover>
 
         <slot name="extra" />
     </div>
@@ -108,37 +134,24 @@
 
 <script setup lang="ts">
     import {computed, ref, inject} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {BookmarkOutline, ChevronDown, CodeBraces, ContentSaveOutline, FormatListBulleted, Refresh} from "./utils/icons"
+    import {BookmarkOutline, ChevronDown, CogOutline, ContentSaveOutline, Refresh} from "./utils/icons"
+    import Table from "vue-material-design-icons/Table.vue"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
     import SaveFilters from "./segments/SaveFilters.vue"
     import SavedFilters from "./segments/SavedFilters.vue"
-    import VerticalSliders from "./assets/VerticalSliders.vue"
-
-    const {t} = useI18n({useScope: "global"})
+    import CustomColumns from "./segments/CustomColumns.vue"
+    import FilterSettings from "./segments/FilterSettings.vue"
 
     const isSavedFiltersVisible = ref(false)
     const saveFiltersRef = ref<InstanceType<typeof SaveFilters> | null>(null)
+    const isColumnsVisible = ref(false)
+    const isSettingsVisible = ref(false)
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const saveDisabled = computed(() =>
         (!filter.hasAppliedFilters.value && !filter.searchQuery.value) || filter.readOnly.value,
     )
-
-    /**
-     * Lock the toggle on the chip view when the URL has filters too deeply nested for the
-     * chip UI — letting the user switch back would either silently drop the unrenderable
-     * keys or render a partial, misleading view.
-     */
-    const isChipViewLocked = computed(() =>
-        filter.viewMode.value === "raw" && filter.hasUnrenderableFilters.value,
-    )
-
-    const viewModeTooltip = computed(() => {
-        if (isChipViewLocked.value) return t("filter.chip_view_locked")
-        return filter.viewMode.value === "chip" ? t("filter.raw_view") : t("filter.chip_view")
-    })
 
     const handleSave = (name: string, description: string) => {
         filter.saveFilter(
@@ -199,20 +212,16 @@
         }
     }
 
-    .options-btn {
+    .icon-btn {
         box-shadow: var(--ks-box-shadow);
         margin: 0;
         padding: 0.5rem;
         border-radius: var(--ks-radius-base);
         font-size: var(--ks-font-size-base);
-        color: var(--ks-text-primary) !important;
-    }
 
-    .view-mode-btn {
-        box-shadow: var(--ks-box-shadow);
-        margin: 0;
-        padding: 0.375rem 0.5rem;
-        color: var(--ks-text-primary) !important;
+        :deep(svg) {
+            color: var(--ks-text-dim) !important;
+        }
     }
 
     .refresh-button {

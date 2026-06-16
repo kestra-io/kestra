@@ -736,6 +736,7 @@
     },
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
+    "filter by status": "{status}ステータスで実行をフィルタリング",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "ダーク 2.0",
             "light": "ライト",
             "sync": "システムと同期"
+          },
+          "confirmations": {
+            "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",

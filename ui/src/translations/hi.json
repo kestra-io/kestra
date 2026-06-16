@@ -736,6 +736,7 @@
     },
     "files": "फ़ाइलें",
     "filter by log level": "Log स्तर द्वारा फ़िल्टर करें",
+    "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "डार्क 2.0",
             "light": "लाइट",
             "sync": "सिस्टम के साथ सिंक करें"
+          },
+          "confirmations": {
+            "color_mode": "आपका इंटरफेस अब `{mode}` थीम का उपयोग कर रहा है।"
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",

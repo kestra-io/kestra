@@ -491,6 +491,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         if (log.isDebugEnabled()) {
                             log.debug("Can't poll on receive", e);
                         }
+                    } catch (Exception e) {
+                        // Any other error (e.g. a lock-wait-timeout escaping the transaction retryer) must NOT
+                        // kill the polling thread: if it dies, the consumer is silently lost and messages pile up
+                        // forever with consumers = NULL (no consumer, no clean). Log it, back off, and keep polling.
+                        log.error("Unexpected error while polling the '{}' queue, retrying after backoff", queueType(), e);
+                        sleep = configuration.maxPollInterval;
                     }
                 }
 

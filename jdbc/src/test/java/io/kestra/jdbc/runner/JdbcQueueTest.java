@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -125,6 +126,34 @@ abstract public class JdbcQueueTest {
         receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
+    }
+
+    @Test
+    void shouldKeepConsumingAfterConsumerThrows() throws InterruptedException, QueueException {
+        // Given: a consumer that throws on the first message (simulating a transient failure during
+        // consumption, e.g. a lock-wait-timeout) and succeeds afterwards.
+        AtomicBoolean firstCall = new AtomicBoolean(true);
+        CountDownLatch firstReceived = new CountDownLatch(1);
+        CountDownLatch secondReceived = new CountDownLatch(1);
+
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
+            if (firstCall.getAndSet(false)) {
+                firstReceived.countDown();
+                throw new RuntimeException("transient consumption failure");
+            }
+
+            secondReceived.countDown();
+        }));
+
+        // When: the first message is consumed and the consumer throws.
+        flowQueue.emit(builder("io.kestra.f1"));
+        assertTrue(firstReceived.await(5, TimeUnit.SECONDS));
+
+        // Then: the polling thread must still be alive to deliver a subsequent message.
+        flowQueue.emit(builder("io.kestra.f2"));
+        assertTrue(secondReceived.await(5, TimeUnit.SECONDS), "Polling thread died after the consumer threw");
+
+        receive.blockLast();
     }
 
     private static FlowWithSource builder(String namespace) {

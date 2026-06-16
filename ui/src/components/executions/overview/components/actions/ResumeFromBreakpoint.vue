@@ -18,7 +18,7 @@
                     multiple
                     filterable
                     :placeholder="$t('breakpoints')"
-                    class="w-100"
+                    class="breakpoints-select"
                 >
                     <KsOption
                         v-for="taskId in taskIds"
@@ -105,7 +105,7 @@
 </script>
 
 <style scoped>
-.w-100 {
+.breakpoints-select {
     width: 100%;
 }
 </style>

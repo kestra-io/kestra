@@ -40,7 +40,7 @@
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
                     <TopologyDetailsRemote
-                        :taskType="taskProps.data.node?.task?.type"
+                        :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
                         :execution="execution"
                         :namespace="props.namespace"
@@ -205,7 +205,10 @@
 
     const hasExtraDetails = computed(() => {
         const types = taskAdditionalInfoRemote.value
-        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
+        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) =>
+            (n.task?.type && types[n.task.type]) ||
+            (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
+        )
     })
 
     const taskMetrics = (taskId: string | undefined) =>
@@ -221,7 +224,8 @@
 
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type
-        const addInfo = taskAdditionalInfoRemote.value[taskType]
+        const runnerType = node?.task?.taskRunner?.type
+        const addInfo = taskAdditionalInfoRemote.value[taskType] ?? taskAdditionalInfoRemote.value[runnerType]
         const hasExecution = !!executionsStore.execution?.id
         const height = hasExecution
             ? (addInfo?.heightWithExecution ?? addInfo?.height ?? getNodeHeight(node))
@@ -261,7 +265,10 @@
             resolveRemoteComponent(taskTypesReParsed),
             resolveDrawerComponent(taskTypesReParsed),
             resolveTaskModalComponent(taskTypesReParsed),
-            ...(runnerTypesReParsed.length ? [resolveTaskModalComponent(runnerTypesReParsed)] : []),
+            ...(runnerTypesReParsed.length ? [
+                resolveTaskModalComponent(runnerTypesReParsed),
+                resolveRemoteComponent(runnerTypesReParsed),
+            ] : []),
         ])
     }
 

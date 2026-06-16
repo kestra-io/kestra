@@ -989,6 +989,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           },
@@ -1000,6 +1001,7 @@
             "execute_flow": "Where execution results open after triggering a run.",
             "execute_default_tab": "Tab selected when navigating to an execution.",
             "flow_default_tab": "Tab selected when navigating to a flow.",
+            "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground."
           }

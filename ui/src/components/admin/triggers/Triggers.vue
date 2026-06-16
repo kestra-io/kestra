@@ -28,9 +28,11 @@
     import {useTriggerStore} from "../../../stores/trigger"
 
     const VALID_TABS = ["add", "manage"] as const
-    const DEFAULT_TAB: ValidTab = "add"
 
     type ValidTab = typeof VALID_TABS[number];
+
+    const storedDefaultTab = localStorage.getItem("triggersDefaultTab") as ValidTab
+    const DEFAULT_TAB: ValidTab = VALID_TABS.includes(storedDefaultTab) ? storedDefaultTab : "add"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()

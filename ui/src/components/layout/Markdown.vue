@@ -1,12 +1,16 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
-        <span class="markdown" v-html="markdownRenderer" />
+        <span class="markdown" v-html="markdownRenderer" ref="root" />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
+    import {ref, computed, watch, nextTick} from "vue";
+    import {useRouter} from "vue-router";
     import * as Markdown from "../../utils/markdown";
+    import linkifyRouterMd from "../logs/linkify";
+
+    const router = useRouter();
 
     const props = withDefaults(defineProps<{
         source?: string;
@@ -21,6 +25,7 @@
     });
 
     const markdownRenderer = ref()
+    const root = ref<HTMLElement>()
 
     const sourceWithReplacedAlerts = computed(() => {
         return props.source.replace(
@@ -38,6 +43,9 @@
 
     watch(() => props.source, async () => {
         markdownRenderer.value = await renderMarkdown();
+        nextTick(() => {
+            linkifyRouterMd(root.value, router);
+        })
     }, {immediate: true})
 
     const fontSizeCss = computed(() => {

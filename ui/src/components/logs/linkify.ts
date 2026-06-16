@@ -36,6 +36,10 @@ export default function linkify(element?: HTMLElement, router?: Router) {
     const namespace = link.getAttribute("namespace");
     const flowId = link.getAttribute("flowId");
 
+    if(!execution || !namespace || !flowId) {
+      return;
+    }
+
     const executionRoute = {name: "executions/update", params: {id: execution, namespace: namespace, flowId: flowId}}
     const executionUrl = router.resolve(executionRoute)
     const flowRoute = {name: "flows/update", params: {namespace: namespace, id: flowId}}

@@ -8,7 +8,6 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
-import io.kestra.cli.ReadinessBanner;
 import io.kestra.cli.StandAloneRunner;
 import io.kestra.cli.services.FileChangedEventListener;
 import io.kestra.cli.services.TenantIdSelectorService;
@@ -138,8 +137,6 @@ public class StandAloneCommand extends AbstractServerCommand {
                 standAloneRunner.setIndexerEnabled(false);
             }
 
-            // run() blocks until every service (executor, worker, scheduler, indexer, controller)
-            // confirms RUNNING state, so the server is fully ready once it returns.
             standAloneRunner.run();
 
             if (fileWatcher != null) {
@@ -147,7 +144,7 @@ public class StandAloneCommand extends AbstractServerCommand {
             }
 
             embeddedServer.ifPresent(server ->
-                ReadinessBanner.printWhenQuiet("✅ Kestra is ready! Open the UI at: " + server.getURL()));
+                System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
 
             Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }

@@ -133,9 +133,9 @@
                     </div>
 
                     <div v-else-if="activeStep === 2" class="success-step">
-                        <div class="success-logo">
-                            <img :src="ksIcon" alt="" class="success-logo__glyph">
-                            <span class="success-logo__check">
+                        <div class="ks-logo-badge">
+                            <img :src="ksIcon" alt="" class="ks-logo-badge__glyph">
+                            <span class="ks-logo-badge__check">
                                 <CheckBold />
                             </span>
                         </div>

@@ -54,7 +54,7 @@
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
-            :title="taskModalCtx.task?.id ?? 'Task details'"
+            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
             :destroyOnClose="true"
             width="600px"
         >
@@ -189,7 +189,7 @@
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, hasResolvedComponent: hasModalComponent} = useFederatedModule("topology-task-modal")
+    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
@@ -542,13 +542,11 @@
             ...(parsed?.finally ?? []),
         ]
         const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
-        const runnerType = fullTask?.taskRunner?.type as string | undefined
-        const modalType = (runnerType && hasModalComponent(runnerType)) ? runnerType
-            : hasModalComponent(fullTask?.type) ? fullTask?.type
-                : null
-        if (modalType) {
+        if (!event.customAction.taskProp) {
+            const runnerType = fullTask?.taskRunner?.type as string | undefined
             taskModalCtx.value = {
-                taskType: modalType,
+                taskType: runnerType ?? fullTask?.type,
+                title: event.customAction.label,
                 task: fullTask,
                 execution: execution.value,
                 namespace: props.namespace,

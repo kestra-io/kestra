@@ -45,6 +45,7 @@ public interface ILogs extends IData<ILogs.Fields> {
                 {
                     Level level = f.value() instanceof Level l ? l : Level.valueOf((String) f.value());
                     List<Level> levels = switch (f.operation()) {
+                        case EQUALS -> List.of(level);
                         case GREATER_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMin(level);
                         case LESS_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMax(level);
                         default -> throw new IllegalArgumentException("Unsupported operation for LEVEL: " + f.operation());

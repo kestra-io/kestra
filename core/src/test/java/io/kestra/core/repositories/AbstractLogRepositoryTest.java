@@ -176,7 +176,6 @@ public abstract class AbstractLogRepositoryTest {
             QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
-            QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.NOT_EQUALS).build()
         );
     }
@@ -521,6 +520,14 @@ public abstract class AbstractLogRepositoryTest {
             .expectedLogs(List.of(infoLog, warnLog, errorLog))
             .queryFilter(QueryFilter.builder()
                 .field(Field.LEVEL).value(Level.INFO).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                .build())
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(List.of(infoLog))
+            .queryFilter(QueryFilter.builder()
+                .field(Field.LEVEL).value(Level.INFO).operation(Op.EQUALS)
                 .build())
             .build(),
 

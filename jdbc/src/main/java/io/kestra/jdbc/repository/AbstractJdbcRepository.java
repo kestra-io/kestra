@@ -604,6 +604,7 @@ public abstract class AbstractJdbcRepository {
         Level level = value instanceof Level ? (Level) value : Level.valueOf((String) value);
 
         return switch (operation) {
+            case EQUALS -> levelsCondition(List.of(level));
             case GREATER_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMin(level));
             case LESS_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMax(level));
             default -> throw new InvalidQueryFiltersException(

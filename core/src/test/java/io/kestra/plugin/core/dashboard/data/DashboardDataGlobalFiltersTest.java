@@ -113,10 +113,27 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
-    void shouldRejectUnsupportedLevelOperationForLogs() {
+    void shouldAcceptExactLevelValueForLogs() {
         QueryFilter levelFilter = QueryFilter.builder()
             .field(QueryFilter.Field.LEVEL)
             .operation(QueryFilter.Op.EQUALS)
+            .value(Level.INFO)
+            .build();
+
+        ILogs iLogs = new ILogs() {
+        };
+
+        var where = iLogs.whereWithGlobalFilters(List.of(levelFilter), null, null, null);
+
+        In<?> inFilter = (In<?>) where.get(0);
+        assertThat(inFilter.getValues()).containsExactly("INFO");
+    }
+
+    @Test
+    void shouldRejectUnsupportedLevelOperationForLogs() {
+        QueryFilter levelFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.LEVEL)
+            .operation(QueryFilter.Op.NOT_EQUALS)
             .value(Level.INFO)
             .build();
 

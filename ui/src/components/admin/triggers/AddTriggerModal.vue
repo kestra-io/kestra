@@ -1,7 +1,7 @@
 <template>
     <KsDialog
         v-model="visible"
-        width="500px"
+        width="40%"
         destroyOnClose
         appendToBody
     >
@@ -159,6 +159,8 @@
         flowId: "",
         triggerId: generateId(),
     })
+
+    const dialogWidth = computed(() => activeTab.value === "documentation" ? "40%" : "500px")
 
     const displayName = computed(() => triggerDisplayName(props.trigger))
     const canSubmit = computed(() =>

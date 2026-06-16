@@ -96,8 +96,11 @@
     const shouldShowComparatorInPopper = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2,
     )
+    const isExactMatchChip = computed(
+        () => !!props.filterKey?.exactEquals && props.filter.comparator === Comparators.EQUALS,
+    )
     const shouldShowComparatorLabel = computed(
-        () => (props.filterKey?.comparators?.length ?? 0) >= 2,
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2 && !isExactMatchChip.value,
     )
 
     const formatValue = (value: FilterValueType) => {

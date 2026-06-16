@@ -356,13 +356,25 @@
     }
 
     const selectLevel = (level: string) => {
-        const query: Record<string, any> = {...route.query}
-        Object.keys(query)
-            .filter((key) => key.startsWith("filters[level]"))
-            .forEach((key) => delete query[key])
-        query["filters[level][GREATER_THAN_OR_EQUAL_TO]"] = level
-        query[pageKey] = "1"
-        router.push({query})
+        // Quick level buttons select an EXACT level (filters[level][EQUALS] → level = X). Rebuild the
+        // query preserving key order so the level chip keeps its position instead of jumping to the
+        // end of the filter bar.
+        const next: Record<string, any> = {}
+        let levelWritten = false
+        const writeLevel = () => {
+            next["filters[level][EQUALS]"] = level
+            levelWritten = true
+        }
+        for (const [key, value] of Object.entries(route.query)) {
+            if (key.startsWith("filters[level]")) {
+                if (!levelWritten) writeLevel()
+                continue
+            }
+            next[key] = value
+        }
+        if (!levelWritten) writeLevel()
+        next[pageKey] = "1"
+        router.push({query: next})
     }
 
     const onValueFilter = ({field, value, negate}: {field: string; value: string; negate: boolean}) => {

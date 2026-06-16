@@ -82,6 +82,12 @@ export interface FilterKeyConfig {
     comparatorLabels?: Partial<Record<Comparators, string>>;
     /** When `true`, renders colored status tags in multi-select value display. */
     colored?: boolean;
+    /**
+     * Render an {@link Comparators.EQUALS} chip on this field as a bare value, without the comparator
+     * label (e.g. the log level filter shows just "DEBUG" instead of "DEBUG equals"). EQUALS stays a
+     * normal selectable comparator in the dropdown; this only affects the chip's display.
+     */
+    exactEquals?: boolean;
 }
 
 export interface FilterValue {

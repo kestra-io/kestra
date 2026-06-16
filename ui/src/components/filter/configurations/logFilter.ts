@@ -54,11 +54,13 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO],
+                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.EQUALS],
                     comparatorLabels: {
                         [Comparators.GREATER_THAN_OR_EQUAL_TO]: "At or Above",
                         [Comparators.LESS_THAN_OR_EQUAL_TO]: "At or Below",
+                        [Comparators.EQUALS]: "Equals",
                     },
+                    exactEquals: true,
                     valueType: "select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs")

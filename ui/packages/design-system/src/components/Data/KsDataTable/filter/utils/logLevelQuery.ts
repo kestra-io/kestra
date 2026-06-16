@@ -19,7 +19,7 @@ const SUPPORTED_LEVEL_FILTER_KEYS = new Set([
     LEVEL_EQUALS_FILTER_KEY,
 ])
 
-export type LevelFilterDirection = "min" | "max";
+export type LevelFilterDirection = "min" | "max" | "exact";
 
 export interface LevelFilterValue {
     value: string;
@@ -44,6 +44,12 @@ const nonEmpty = (value: string | undefined) =>
     value && value.length > 0 ? value : undefined
 
 export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw): LevelFilterValue | undefined => {
+    // EQUALS means "exactly this level" (the quick level buttons); GTE/LTE are the threshold filters.
+    const equals = nonEmpty(firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]))
+    if (equals) {
+        return {value: equals, direction: "exact"}
+    }
+
     const lte = nonEmpty(firstStringValue(query[LEVEL_LTE_FILTER_KEY]))
     if (lte) {
         return {value: lte, direction: "max"}
@@ -54,12 +60,7 @@ export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw): L
         return {value: gte, direction: "min"}
     }
 
-    // Legacy: EQUALS (pre-rename) and bare `level` query param both meant "at or above"
-    const legacyEquals = nonEmpty(firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]))
-    if (legacyEquals) {
-        return {value: legacyEquals, direction: "min"}
-    }
-
+    // Legacy: the bare `level` query param meant "at or above".
     const legacyLevel = nonEmpty(firstStringValue(query[LEGACY_LEVEL_FILTER_KEY]))
     if (legacyLevel) {
         return {value: legacyLevel, direction: "min"}
@@ -82,7 +83,9 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]): LevelFilterVal
     }
 
     const direction: LevelFilterDirection =
-        levelFilter.comparator === Comparators.LESS_THAN_OR_EQUAL_TO ? "max" : "min"
+        levelFilter.comparator === Comparators.LESS_THAN_OR_EQUAL_TO ? "max"
+            : levelFilter.comparator === Comparators.EQUALS ? "exact"
+                : "min"
 
     const rawValue = Array.isArray(levelFilter.value)
         ? levelFilter.value[0]
@@ -113,7 +116,9 @@ export const normalizeRouteLevelFilter = (
         // Backward-compat: plain string callers default to min (≥) semantic
         const resolved: LevelFilterValue =
             typeof level === "string" ? {value: level, direction: "min"} : level
-        const key = resolved.direction === "max" ? LEVEL_LTE_FILTER_KEY : LEVEL_GTE_FILTER_KEY
+        const key = resolved.direction === "exact" ? LEVEL_EQUALS_FILTER_KEY
+            : resolved.direction === "max" ? LEVEL_LTE_FILTER_KEY
+                : LEVEL_GTE_FILTER_KEY
         normalized[key] = resolved.value
     }
 
@@ -126,6 +131,8 @@ export const levelToRequestParams = (
     if (!level) {
         return {}
     }
-    const key = level.direction === "max" ? LEVEL_LTE_FILTER_KEY : LEVEL_GTE_FILTER_KEY
+    const key = level.direction === "exact" ? LEVEL_EQUALS_FILTER_KEY
+        : level.direction === "max" ? LEVEL_LTE_FILTER_KEY
+            : LEVEL_GTE_FILTER_KEY
     return {[key]: level.value}
 }

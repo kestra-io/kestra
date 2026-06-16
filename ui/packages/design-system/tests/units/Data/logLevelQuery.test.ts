@@ -35,10 +35,19 @@ describe("logLevelQuery", () => {
             ).toEqual({value: "INFO", direction: "max"})
         })
 
-        test("reads the legacy EQUALS filter as a min direction", () => {
+        test("reads the EQUALS filter as an exact direction", () => {
             expect(
-                readRouteLevelFilter({"filters[level][EQUALS]": "WARN"}),
-            ).toEqual({value: "WARN", direction: "min"})
+                readRouteLevelFilter({"filters[level][EQUALS]": "DEBUG"}),
+            ).toEqual({value: "DEBUG", direction: "exact"})
+        })
+
+        test("prefers EQUALS (exact) over a threshold bound", () => {
+            expect(
+                readRouteLevelFilter({
+                    "filters[level][EQUALS]": "DEBUG",
+                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO",
+                }),
+            ).toEqual({value: "DEBUG", direction: "exact"})
         })
 
         test("falls back to the legacy level key as a min direction", () => {
@@ -72,7 +81,7 @@ describe("logLevelQuery", () => {
             ).toBe(false)
         })
 
-        test("accepts the legacy EQUALS comparator", () => {
+        test("accepts the EQUALS comparator (exact level)", () => {
             expect(
                 hasUnsupportedRouteLevelComparator({"filters[level][EQUALS]": "INFO"}),
             ).toBe(false)
@@ -98,6 +107,14 @@ describe("logLevelQuery", () => {
                     applied([{key: "level", value: "INFO", comparator: Comparators.LESS_THAN_OR_EQUAL_TO}]),
                 ),
             ).toEqual({value: "INFO", direction: "max"})
+        })
+
+        test("reads an EQUALS comparator as an exact direction", () => {
+            expect(
+                readAppliedLevelFilter(
+                    applied([{key: "level", value: "DEBUG", comparator: Comparators.EQUALS}]),
+                ),
+            ).toEqual({value: "DEBUG", direction: "exact"})
         })
 
         test("reads the first value of an array", () => {
@@ -127,6 +144,12 @@ describe("logLevelQuery", () => {
         test("sets a LESS_THAN_OR_EQUAL_TO filter for a max-direction level", () => {
             expect(normalizeRouteLevelFilter({}, {value: "INFO", direction: "max"})).toEqual({
                 "filters[level][LESS_THAN_OR_EQUAL_TO]": "INFO",
+            })
+        })
+
+        test("sets the EQUALS key for an exact-direction level", () => {
+            expect(normalizeRouteLevelFilter({}, {value: "DEBUG", direction: "exact"})).toEqual({
+                "filters[level][EQUALS]": "DEBUG",
             })
         })
 
@@ -181,6 +204,12 @@ describe("logLevelQuery", () => {
         test("maps a max direction to LESS_THAN_OR_EQUAL_TO", () => {
             expect(levelToRequestParams({value: "INFO", direction: "max"})).toEqual({
                 "filters[level][LESS_THAN_OR_EQUAL_TO]": "INFO",
+            })
+        })
+
+        test("maps an exact direction to the EQUALS key", () => {
+            expect(levelToRequestParams({value: "DEBUG", direction: "exact"})).toEqual({
+                "filters[level][EQUALS]": "DEBUG",
             })
         })
 

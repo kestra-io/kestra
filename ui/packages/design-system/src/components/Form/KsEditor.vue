@@ -286,6 +286,7 @@
         (e: "confirm", value?: string): void
         (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
         (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
+        (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
     }>()
 
     const icon = {
@@ -1015,6 +1016,7 @@
 
         // Editor-did-mount: setup keybindings + decorations
         editorDidMount(editorResolved.value)
+        emit("editorMounted", editorResolved.value)
 
         resizeObserver.value = new ResizeObserver(() => {
             if (localEditor.value) localEditor.value.layout()

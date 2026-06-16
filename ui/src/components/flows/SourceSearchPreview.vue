@@ -15,18 +15,20 @@
 
         <KsEditor
             v-else-if="source"
+            :key="editorKey"
             class="source-search-preview__editor"
             ref="editorRef"
             :modelValue="source"
             lang="yaml"
             :readOnly="true"
             :navbar="false"
+            @editorMounted="applyHighlight"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, nextTick} from "vue"
+    import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {KsEditor} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
@@ -45,27 +47,24 @@
     const source = ref<string | null>(null)
     const editorRef = ref<KsEditorExposes | null>(null)
 
-    let activeDecoration: ReturnType<typeof createDecoration> | null = null
+    const editorKey = computed(() => props.selected ? `${props.selected.namespace}/${props.selected.id}` : "")
 
-    function createDecoration(editor: any, range: any) {
-        return editor.createDecorationsCollection([
-            {range, options: {isWholeLine: true, className: "source-search-preview__match-line"}},
-        ])
-    }
+    let activeDecoration: {clear: () => void} | null = null
 
-    function highlightMatch(matchIndex: number) {
-        if (!props.query) return
-        const editor = editorRef.value?.getEditor?.()
-        if (!editor) return
-        const model = (editor as any).getModel?.()
+    function applyHighlight() {
+        if (!props.selected || !props.query) return
+        const editor = editorRef.value?.getEditor?.() as any
+        const model = editor?.getModel?.()
         if (!model) return
         const matches = model.findMatches(props.query, false, false, false, null, false)
         if (!matches?.length) return
-        const m = matches[Math.min(matchIndex, matches.length - 1)]
-        ;(editor as any).setSelection(m.range)
+        const m = matches[Math.min(props.selected.matchIndex, matches.length - 1)]
+        editor.setSelection(m.range)
         activeDecoration?.clear()
-        activeDecoration = createDecoration(editor, m.range)
-        ;(editor as any).revealRangeInCenter?.(m.range)
+        activeDecoration = editor.createDecorationsCollection([
+            {range: m.range, options: {isWholeLine: true, className: "source-search-preview__match-line"}},
+        ])
+        editor.revealRangeInCenter?.(m.range)
     }
 
     watch(
@@ -79,16 +78,12 @@
             if (!sel) {
                 source.value = null
                 error.value = false
-                activeDecoration?.clear()
                 activeDecoration = null
                 return
             }
 
-            const sameFlow = old && old.namespace === sel.namespace && old.id === sel.id
-
-            if (sameFlow) {
-                await nextTick()
-                if (!cancelled) highlightMatch(sel.matchIndex)
+            if (old && old.namespace === sel.namespace && old.id === sel.id) {
+                applyHighlight()
                 return
             }
 
@@ -99,13 +94,9 @@
             try {
                 const flow = await flowStore.loadFlow({namespace: sel.namespace, id: sel.id, store: false})
                 if (cancelled) return
+                activeDecoration = null
                 source.value = flow?.source ?? null
                 isLoading.value = false
-
-                if (props.query) {
-                    await nextTick()
-                    if (!cancelled) highlightMatch(sel.matchIndex)
-                }
             } catch {
                 if (cancelled) return
                 error.value = true
@@ -117,11 +108,8 @@
 
     watch(
         () => props.query,
-        async (newQuery) => {
-            if (newQuery && source.value && editorRef.value && props.selected) {
-                await nextTick()
-                highlightMatch(props.selected.matchIndex)
-            }
+        () => {
+            if (props.query && source.value && props.selected) applyHighlight()
         },
     )
 </script>
@@ -150,10 +138,8 @@
         min-height: 0;
     }
 }
-</style>
 
-<style lang="scss">
-.source-search-preview__match-line {
+:global(.source-search-preview__match-line) {
     background: var(--ks-bg-active);
 }
 </style>

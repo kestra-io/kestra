@@ -1,4 +1,5 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
+import {onMounted} from "vue"
 import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia, setActivePinia} from "pinia"
@@ -51,17 +52,19 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
         ...actual,
         KsEditor: {
             name: "KsEditor",
-            template: "<div class=\"ks-editor-mock\" data-test=\"ks-editor\"><slot /></div>",
+            template: "<div class=\"ks-editor-mock\" data-test=\"ks-editor\"></div>",
             props: ["modelValue", "lang", "readOnly", "navbar"],
-            expose: ["focus", "destroy", "highlightLinesRange", "clearLinesRangeHighlights", "getEditor"],
-            setup() {
-                return {
+            emits: ["editorMounted"],
+            setup(_props: unknown, {emit, expose}: {emit: (e: string, ...args: unknown[]) => void; expose: (api: Record<string, unknown>) => void}) {
+                expose({
                     focus: vi.fn(),
                     destroy: vi.fn(),
                     highlightLinesRange: vi.fn(),
                     clearLinesRangeHighlights: vi.fn(),
                     getEditor: mockGetEditor,
-                }
+                })
+                onMounted(() => emit("editorMounted", mockGetEditor()))
+                return {}
             },
         },
     }

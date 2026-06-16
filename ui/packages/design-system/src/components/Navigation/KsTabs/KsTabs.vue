@@ -89,6 +89,10 @@
                 display: none;
             }
 
+            .kel-tabs__nav-wrap::after {
+                display: none;
+            }
+
             .kel-tabs__header {
                 margin-bottom: 0;
             }
@@ -101,12 +105,12 @@
             .kel-tabs__item {
                 min-width: 45px;
                 max-width: fit-content;
-                height: 1.75rem;
+                height: 28px;
                 padding: var(--ks-spacing-2) var(--ks-spacing-3) !important;
                 font-size: var(--ks-font-size-xs);
                 color: var(--ks-text-secondary);
                 border: 0.5px solid transparent;
-                border-radius: var(--ks-radius-sm);
+                border-radius: 6px;
                 transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
                 &.is-active {
@@ -138,17 +142,11 @@
 
             .kel-tabs__item {
                 padding: 4px 8px !important;
-                border-radius: 6px;
-                height: 28px;
             }
 
             .kel-tabs__nav-wrap {
                 background: var(--ks-bg-surface);
                 border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
-
-                &::after {
-                    display: none;
-                }
             }
 
             .kel-tabs__nav-prev {
@@ -182,19 +180,20 @@
             .kel-tabs__nav-wrap {
                 background: transparent;
                 border-bottom: none;
-
-                &::after {
-                    display: none;
-                }
             }
 
             .kel-tabs__nav {
                 width: fit-content;
-                background: var(--ks-bg-input);
+                padding: 4px;
+                background: var(--ks-bg-tabs-default);
                 border-radius: var(--ks-radius-lg);
                 border: var(--ks-border-width-thin) solid var(--ks-border-default);
             }
+
+            .kel-tabs__item.is-active {
+                background: var(--ks-btn-secondary-bg-default);
+                border-color: var(--ks-btn-secondary-border-active);
+            }
         }
     }
-
 </style>

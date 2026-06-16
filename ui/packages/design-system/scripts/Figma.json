@@ -435,6 +435,12 @@
             "rootAlias": "gray-neutral/white"
           },
           {
+            "name": "ks/bg-tabs-default",
+            "value": "#f7f7f8",
+            "var": "gray-neutral/50",
+            "rootAlias": "gray-neutral/50"
+          },
+          {
             "name": "ks/bg-tag",
             "value": "#e9e9ee",
             "var": "gray-neutral/100",
@@ -1999,6 +2005,12 @@
             "rootAlias": "gray-cool/800"
           },
           {
+            "name": "ks/bg-tabs-default",
+            "value": "#2c303f",
+            "var": "gray-cool/600",
+            "rootAlias": "gray-cool/600"
+          },
+          {
             "name": "ks/bg-tag",
             "value": "#ffffff1a",
             "var": "",
@@ -3561,6 +3573,12 @@
             "value": "#1a1c22",
             "var": "gray-neutral/900",
             "rootAlias": "gray-neutral/900"
+          },
+          {
+            "name": "ks/bg-tabs-default",
+            "value": "#2e2e3c",
+            "var": "gray-neutral/700",
+            "rootAlias": "gray-neutral/700"
           },
           {
             "name": "ks/bg-tag",

@@ -11,6 +11,7 @@ vi.mock("../../../../src/components/dashboard/composables/useDashboards", () => 
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {}, query: {}}),
+    useRouter: () => ({push: vi.fn()}),
 }))
 
 import Table from "../../../../src/components/dashboard/sections/Table.vue"

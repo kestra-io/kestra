@@ -72,9 +72,11 @@
     const flowStore = useFlowStore()
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
-    const selected = ref<{namespace: string; id: string} | null>(null)
+    const selected = ref<{namespace: string; id: string; matchIndex: number} | null>(null)
 
-    const selectedKey = computed(() => selected.value ? `${selected.value.namespace}.${selected.value.id}` : null)
+    const selectedKey = computed(() =>
+        selected.value ? `${selected.value.namespace}.${selected.value.id}#${selected.value.matchIndex}` : null,
+    )
 
     const routeInfo = computed(() => ({
         title: (route.meta?.title as string) ?? t("source search"),
@@ -135,7 +137,7 @@
         selected.value = null
     })
 
-    function onSelect(item: {namespace: string; id: string}) {
+    function onSelect(item: {namespace: string; id: string; matchIndex: number}) {
         selected.value = item
     }
 </script>

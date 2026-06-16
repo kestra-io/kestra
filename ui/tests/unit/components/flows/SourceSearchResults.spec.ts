@@ -70,7 +70,7 @@ describe("SourceSearchResults", () => {
         expect(headers.length).toBe(2)
     })
 
-    test("emits select with namespace and id when a group header is clicked", async () => {
+    test("emits select with namespace, id and matchIndex 0 when a group header is clicked", async () => {
         const results = [
             makeResult("company.data", "my-flow", ["fragment [mark]hit[/mark]"]),
         ]
@@ -86,12 +86,16 @@ describe("SourceSearchResults", () => {
 
         const emitted = wrapper.emitted("select")
         expect(emitted).toBeTruthy()
-        expect(emitted![0][0]).toEqual({namespace: "company.data", id: "my-flow"})
+        expect(emitted![0][0]).toEqual({namespace: "company.data", id: "my-flow", matchIndex: 0})
     })
 
-    test("emits select when a fragment is clicked", async () => {
+    test("emits select with correct matchIndex when a specific fragment is clicked", async () => {
         const results = [
-            makeResult("ns", "flow-id", ["line [mark]term[/mark]"]),
+            makeResult("ns", "flow-id", [
+                "line [mark]term[/mark]",
+                "second [mark]term[/mark]",
+                "third [mark]term[/mark]",
+            ]),
         ]
 
         const wrapper = mount(SourceSearchResults, {
@@ -100,11 +104,33 @@ describe("SourceSearchResults", () => {
         })
         await flushPromises()
 
-        const fragment = wrapper.find("[data-test='source-search-fragment']")
-        await fragment.trigger("click")
+        const fragments = wrapper.findAll("[data-test='source-search-match']")
+        expect(fragments.length).toBe(3)
 
-        expect(wrapper.emitted("select")).toBeTruthy()
-        expect(wrapper.emitted("select")![0][0]).toEqual({namespace: "ns", id: "flow-id"})
+        await fragments[1].trigger("click")
+        const emitted = wrapper.emitted("select")
+        expect(emitted).toBeTruthy()
+        expect(emitted![0][0]).toEqual({namespace: "ns", id: "flow-id", matchIndex: 1})
+
+        await fragments[2].trigger("click")
+        expect(wrapper.emitted("select")![1][0]).toEqual({namespace: "ns", id: "flow-id", matchIndex: 2})
+    })
+
+    test("applies selected class only to the matching fragment row", async () => {
+        const results = [
+            makeResult("ns", "flow-id", ["frag-0", "frag-1", "frag-2"]),
+        ]
+
+        const wrapper = mount(SourceSearchResults, {
+            props: {results, selectedKey: "ns.flow-id#1"},
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        const fragments = wrapper.findAll("[data-test='source-search-match']")
+        expect(fragments[0].classes()).not.toContain("result-fragment--selected")
+        expect(fragments[1].classes()).toContain("result-fragment--selected")
+        expect(fragments[2].classes()).not.toContain("result-fragment--selected")
     })
 
     test("sanitizes fragment html and renders mark tags", async () => {
@@ -118,7 +144,7 @@ describe("SourceSearchResults", () => {
         })
         await flushPromises()
 
-        const fragment = wrapper.find("[data-test='source-search-fragment'] pre")
+        const fragment = wrapper.find("[data-test='source-search-match'] pre")
         expect(fragment.html()).toContain("<mark>keyword</mark>")
     })
 
@@ -133,20 +159,20 @@ describe("SourceSearchResults", () => {
         })
         await flushPromises()
 
-        const fragment = wrapper.find("[data-test='source-search-fragment'] pre")
+        const fragment = wrapper.find("[data-test='source-search-match'] pre")
         expect(fragment.html()).not.toContain("<script>")
         expect(fragment.html()).toContain("&lt;script&gt;")
         expect(fragment.html()).toContain("<mark>safe</mark>")
     })
 
-    test("applies selected state class to the matching group header", async () => {
+    test("applies selected state to the group header when any match in that flow is selected", async () => {
         const results = [
             makeResult("ns", "flow-a", ["frag"]),
             makeResult("ns", "flow-b", ["frag"]),
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: "ns.flow-a"},
+            props: {results, selectedKey: "ns.flow-a#0"},
             global: globalConfig,
         })
         await flushPromises()

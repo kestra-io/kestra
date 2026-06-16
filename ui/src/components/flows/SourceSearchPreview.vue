@@ -33,7 +33,7 @@
     import type {KsEditorExposes} from "@kestra-io/design-system"
 
     const props = defineProps<{
-        selected: {namespace: string; id: string} | null
+        selected: {namespace: string; id: string; matchIndex: number} | null
         query: string
     }>()
 
@@ -45,15 +45,50 @@
     const source = ref<string | null>(null)
     const editorRef = ref<KsEditorExposes | null>(null)
 
+    let activeDecoration: ReturnType<typeof createDecoration> | null = null
+
+    function createDecoration(editor: any, range: any) {
+        return editor.createDecorationsCollection([
+            {range, options: {isWholeLine: true, className: "source-search-preview__match-line"}},
+        ])
+    }
+
+    function highlightMatch(matchIndex: number) {
+        if (!props.query) return
+        const editor = editorRef.value?.getEditor?.()
+        if (!editor) return
+        const model = (editor as any).getModel?.()
+        if (!model) return
+        const matches = model.findMatches(props.query, false, false, false, null, false)
+        if (!matches?.length) return
+        const m = matches[Math.min(matchIndex, matches.length - 1)]
+        ;(editor as any).setSelection(m.range)
+        activeDecoration?.clear()
+        activeDecoration = createDecoration(editor, m.range)
+        ;(editor as any).revealRangeInCenter?.(m.range)
+    }
+
     watch(
         () => props.selected,
-        async (sel, _old, onCleanup) => {
+        async (sel, old, onCleanup) => {
             let cancelled = false
-            onCleanup(() => { cancelled = true })
+            onCleanup(() => {
+                cancelled = true
+            })
 
             if (!sel) {
                 source.value = null
                 error.value = false
+                activeDecoration?.clear()
+                activeDecoration = null
+                return
+            }
+
+            const sameFlow = old && old.namespace === sel.namespace && old.id === sel.id
+
+            if (sameFlow) {
+                await nextTick()
+                if (!cancelled) highlightMatch(sel.matchIndex)
                 return
             }
 
@@ -65,16 +100,16 @@
                 const flow = await flowStore.loadFlow({namespace: sel.namespace, id: sel.id, store: false})
                 if (cancelled) return
                 source.value = flow?.source ?? null
+                isLoading.value = false
 
-                if (props.query && editorRef.value) {
+                if (props.query) {
                     await nextTick()
-                    revealFirstMatch(props.query)
+                    if (!cancelled) highlightMatch(sel.matchIndex)
                 }
             } catch {
                 if (cancelled) return
                 error.value = true
-            } finally {
-                if (!cancelled) isLoading.value = false
+                isLoading.value = false
             }
         },
         {immediate: true},
@@ -83,24 +118,12 @@
     watch(
         () => props.query,
         async (newQuery) => {
-            if (newQuery && source.value && editorRef.value) {
+            if (newQuery && source.value && editorRef.value && props.selected) {
                 await nextTick()
-                revealFirstMatch(newQuery)
+                highlightMatch(props.selected.matchIndex)
             }
         },
     )
-
-    function revealFirstMatch(query: string) {
-        const editor = editorRef.value?.getEditor?.()
-        if (!editor) return
-        const model = (editor as any).getModel?.()
-        if (!model) return
-        const matches = model.findMatches(query, false, false, false, null, false)
-        if (matches?.length) {
-            const line = matches[0].range.startLineNumber
-            ;(editor as any).revealLineInCenter?.(line)
-        }
-    }
 </script>
 
 <style scoped lang="scss">
@@ -126,5 +149,11 @@
         flex: 1;
         min-height: 0;
     }
+}
+</style>
+
+<style lang="scss">
+.source-search-preview__match-line {
+    background: var(--ks-bg-active);
 }
 </style>

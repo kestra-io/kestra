@@ -106,7 +106,20 @@ export const WithSelectedGroup: StoryObj<typeof SourceSearchResults> = {
             return () => (
                 <SourceSearchResults
                     results={multipleResults}
-                    selectedKey="company.data.daily-etl"
+                    selectedKey="company.data.daily-etl#0"
+                />
+            )
+        },
+    }),
+}
+
+export const WithSelectedFragment: StoryObj<typeof SourceSearchResults> = {
+    render: () => ({
+        setup() {
+            return () => (
+                <SourceSearchResults
+                    results={multipleResults}
+                    selectedKey="company.data.daily-etl#1"
                 />
             )
         },
@@ -141,7 +154,7 @@ export const DarkMode: StoryObj<typeof SourceSearchResults> = {
             return () => (
                 <SourceSearchResults
                     results={multipleResults}
-                    selectedKey="company.analytics.weekly-report"
+                    selectedKey="company.analytics.weekly-report#0"
                 />
             )
         },

@@ -62,7 +62,7 @@ export const Loading: StoryObj<typeof SourceSearchPreview> = {
         setup() {
             return () => (
                 <SourceSearchPreview
-                    selected={{namespace: "company.data", id: "daily-etl"}}
+                    selected={{namespace: "company.data", id: "daily-etl", matchIndex: 0}}
                     query=""
                 />
             )
@@ -85,7 +85,7 @@ export const ErrorState: StoryObj<typeof SourceSearchPreview> = {
         setup() {
             return () => (
                 <SourceSearchPreview
-                    selected={{namespace: "company.data", id: "missing-flow"}}
+                    selected={{namespace: "company.data", id: "missing-flow", matchIndex: 0}}
                     query=""
                 />
             )
@@ -113,7 +113,35 @@ export const WithSource: StoryObj<typeof SourceSearchPreview> = {
         setup() {
             return () => (
                 <SourceSearchPreview
-                    selected={{namespace: "company.data", id: "daily-etl"}}
+                    selected={{namespace: "company.data", id: "daily-etl", matchIndex: 0}}
+                    query="extract"
+                />
+            )
+        },
+    }),
+}
+
+export const WithSourceSecondMatch: StoryObj<typeof SourceSearchPreview> = {
+    decorators: [
+        (story) => ({
+            setup() {
+                const flowStore = useFlowStore()
+                ;(flowStore as any).loadFlow = () =>
+                    Promise.resolve({
+                        id: "daily-etl",
+                        namespace: "company.data",
+                        source: "id: daily-etl\nnamespace: company.data\ntasks:\n  - id: extract\n    type: io.kestra.plugin.core.log.Log\n    message: Extracting data for extract job\n",
+                    })
+            },
+            components: {story},
+            template: `<story />`,
+        }),
+    ],
+    render: () => ({
+        setup() {
+            return () => (
+                <SourceSearchPreview
+                    selected={{namespace: "company.data", id: "daily-etl", matchIndex: 1}}
                     query="extract"
                 />
             )

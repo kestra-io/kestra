@@ -4,7 +4,40 @@ import {createI18n} from "vue-i18n"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 
-const mockLoadFlow = vi.fn()
+const {
+    mockLoadFlow,
+    mockSetSelection,
+    mockRevealRangeInCenter,
+    mockFindMatches,
+    mockGetModel,
+    mockClearDecoration,
+    mockCreateDecorationsCollection,
+    mockGetEditor,
+} = vi.hoisted(() => {
+    const mockFindMatches = vi.fn()
+    const mockGetModel = vi.fn(() => ({findMatches: mockFindMatches}))
+    const mockSetSelection = vi.fn()
+    const mockRevealRangeInCenter = vi.fn()
+    const mockClearDecoration = vi.fn()
+    const mockCreateDecorationsCollection = vi.fn(() => ({clear: mockClearDecoration}))
+    const mockGetEditor = vi.fn(() => ({
+        getModel: mockGetModel,
+        setSelection: mockSetSelection,
+        revealRangeInCenter: mockRevealRangeInCenter,
+        createDecorationsCollection: mockCreateDecorationsCollection,
+    }))
+    const mockLoadFlow = vi.fn()
+    return {
+        mockLoadFlow,
+        mockSetSelection,
+        mockRevealRangeInCenter,
+        mockFindMatches,
+        mockGetModel,
+        mockClearDecoration,
+        mockCreateDecorationsCollection,
+        mockGetEditor,
+    }
+})
 
 vi.mock("../../../../src/stores/flow", () => ({
     useFlowStore: () => ({
@@ -27,7 +60,7 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
                     destroy: vi.fn(),
                     highlightLinesRange: vi.fn(),
                     clearLinesRangeHighlights: vi.fn(),
-                    getEditor: vi.fn(),
+                    getEditor: mockGetEditor,
                 }
             },
         },
@@ -63,9 +96,17 @@ function createGlobal() {
     }
 }
 
+const makeRange = (line: number) => ({startLineNumber: line, endLineNumber: line, startColumn: 1, endColumn: 10})
+
 describe("SourceSearchPreview", () => {
     beforeEach(() => {
         mockLoadFlow.mockReset()
+        mockSetSelection.mockReset()
+        mockRevealRangeInCenter.mockReset()
+        mockFindMatches.mockReset()
+        mockClearDecoration.mockReset()
+        mockCreateDecorationsCollection.mockClear()
+        mockGetModel.mockReturnValue({findMatches: mockFindMatches})
     })
 
     test("shows empty state when no flow is selected", async () => {
@@ -85,7 +126,7 @@ describe("SourceSearchPreview", () => {
         mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
 
         mount(SourceSearchPreview, {
-            props: {selected: {namespace: "ns", id: "my-flow"}, query: "my-flow"},
+            props: {selected: {namespace: "ns", id: "my-flow", matchIndex: 0}, query: "my-flow"},
             global: createGlobal(),
         })
         await flushPromises()
@@ -98,7 +139,7 @@ describe("SourceSearchPreview", () => {
         mockLoadFlow.mockResolvedValue({source})
 
         const wrapper = mount(SourceSearchPreview, {
-            props: {selected: {namespace: "ns", id: "my-flow"}, query: ""},
+            props: {selected: {namespace: "ns", id: "my-flow", matchIndex: 0}, query: ""},
             global: createGlobal(),
         })
         await flushPromises()
@@ -111,7 +152,7 @@ describe("SourceSearchPreview", () => {
         mockLoadFlow.mockRejectedValue(new Error("404 Not Found"))
 
         const wrapper = mount(SourceSearchPreview, {
-            props: {selected: {namespace: "ns", id: "missing-flow"}, query: ""},
+            props: {selected: {namespace: "ns", id: "missing-flow", matchIndex: 0}, query: ""},
             global: createGlobal(),
         })
         await flushPromises()
@@ -124,7 +165,7 @@ describe("SourceSearchPreview", () => {
         mockLoadFlow.mockResolvedValue({source: "id: flow\nnamespace: ns"})
 
         const wrapper = mount(SourceSearchPreview, {
-            props: {selected: {namespace: "ns", id: "flow"}, query: ""},
+            props: {selected: {namespace: "ns", id: "flow", matchIndex: 0}, query: ""},
             global: createGlobal(),
         })
         await flushPromises()
@@ -137,29 +178,87 @@ describe("SourceSearchPreview", () => {
         expect(wrapper.html()).toContain("Click a flow in the results list to see its source.")
     })
 
-    test("refetches source when selected flow changes", async () => {
+    test("refetches source when selected flow changes to a different flow", async () => {
         mockLoadFlow
             .mockResolvedValueOnce({source: "id: flow-a\nnamespace: ns"})
             .mockResolvedValueOnce({source: "id: flow-b\nnamespace: ns"})
 
         const wrapper = mount(SourceSearchPreview, {
-            props: {selected: {namespace: "ns", id: "flow-a"}, query: ""},
+            props: {selected: {namespace: "ns", id: "flow-a", matchIndex: 0}, query: ""},
             global: createGlobal(),
         })
         await flushPromises()
         expect(mockLoadFlow).toHaveBeenCalledTimes(1)
 
-        await wrapper.setProps({selected: {namespace: "ns", id: "flow-b"}})
+        await wrapper.setProps({selected: {namespace: "ns", id: "flow-b", matchIndex: 0}})
         await flushPromises()
         expect(mockLoadFlow).toHaveBeenCalledTimes(2)
         expect(mockLoadFlow).toHaveBeenLastCalledWith({namespace: "ns", id: "flow-b", store: false})
+    })
+
+    test("highlights the matchIndex-th occurrence when flow loads with a query", async () => {
+        const source = "id: my-flow\nextract: something\nextract: again"
+        mockLoadFlow.mockResolvedValue({source})
+        mockFindMatches.mockReturnValue([
+            {range: makeRange(2)},
+            {range: makeRange(3)},
+        ])
+
+        mount(SourceSearchPreview, {
+            props: {selected: {namespace: "ns", id: "my-flow", matchIndex: 1}, query: "extract"},
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        expect(mockSetSelection).toHaveBeenCalledWith(makeRange(3))
+        expect(mockRevealRangeInCenter).toHaveBeenCalledWith(makeRange(3))
+        expect(mockCreateDecorationsCollection).toHaveBeenCalledWith([
+            expect.objectContaining({range: makeRange(3)}),
+        ])
+    })
+
+    test("clamps matchIndex to the last available match when index exceeds matches length", async () => {
+        const source = "id: flow\nextract: only-one"
+        mockLoadFlow.mockResolvedValue({source})
+        mockFindMatches.mockReturnValue([{range: makeRange(2)}])
+
+        mount(SourceSearchPreview, {
+            props: {selected: {namespace: "ns", id: "flow", matchIndex: 5}, query: "extract"},
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        expect(mockSetSelection).toHaveBeenCalledWith(makeRange(2))
+    })
+
+    test("re-highlights without a second loadFlow call when matchIndex changes on the same flow", async () => {
+        const source = "id: flow\nextract: a\nextract: b"
+        mockLoadFlow.mockResolvedValue({source})
+        mockFindMatches.mockReturnValue([
+            {range: makeRange(2)},
+            {range: makeRange(3)},
+        ])
+
+        const wrapper = mount(SourceSearchPreview, {
+            props: {selected: {namespace: "ns", id: "flow", matchIndex: 0}, query: "extract"},
+            global: createGlobal(),
+        })
+        await flushPromises()
+        expect(mockLoadFlow).toHaveBeenCalledTimes(1)
+        expect(mockSetSelection).toHaveBeenLastCalledWith(makeRange(2))
+
+        await wrapper.setProps({selected: {namespace: "ns", id: "flow", matchIndex: 1}})
+        await flushPromises()
+
+        expect(mockLoadFlow).toHaveBeenCalledTimes(1)
+        expect(mockSetSelection).toHaveBeenLastCalledWith(makeRange(3))
     })
 
     test("handles namespace with dots correctly by using the structured prop", async () => {
         mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: company.data"})
 
         mount(SourceSearchPreview, {
-            props: {selected: {namespace: "company.data", id: "my-flow"}, query: ""},
+            props: {selected: {namespace: "company.data", id: "my-flow", matchIndex: 0}, query: ""},
             global: createGlobal(),
         })
         await flushPromises()

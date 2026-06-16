@@ -15,9 +15,9 @@
                 <template #title>
                     <span
                         class="result-group-header"
-                        :class="{'result-group-header--selected': selectedKey === `${item.model.namespace}.${item.model.id}`}"
+                        :class="{'result-group-header--selected': selectedKey?.startsWith(`${item.model.namespace}.${item.model.id}#`)}"
                         data-test="source-search-group-header"
-                        @click.stop="emit('select', {namespace: item.model.namespace, id: item.model.id})"
+                        @click.stop="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
                     >
                         <span class="result-group-namespace">{{ item.model.namespace }}.</span>
                         <span class="result-group-id">{{ item.model.id }}</span>
@@ -30,8 +30,9 @@
                         v-for="(fragment, idx) in item.fragments"
                         :key="idx"
                         class="result-fragment"
-                        data-test="source-search-fragment"
-                        @click="emit('select', {namespace: item.model.namespace, id: item.model.id})"
+                        :class="{'result-fragment--selected': selectedKey === `${item.model.namespace}.${item.model.id}#${idx}`}"
+                        data-test="source-search-match"
+                        @click="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: idx})"
                     >
                         <pre v-html="sanitize(fragment)" class="fragment-pre" />
                     </div>
@@ -61,7 +62,7 @@
     }>()
 
     const emit = defineEmits<{
-        (e: "select", value: {namespace: string; id: string}): void
+        (e: "select", value: {namespace: string; id: string; matchIndex: number}): void
     }>()
 
     const {t} = useI18n()
@@ -143,6 +144,11 @@
 
     &:hover {
         background-color: var(--ks-bg-hover);
+    }
+
+    &--selected {
+        background-color: var(--ks-bg-active);
+        color: var(--ks-text-primary);
     }
 }
 

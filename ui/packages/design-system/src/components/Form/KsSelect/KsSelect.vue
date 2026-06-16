@@ -106,6 +106,21 @@
             .kel-select__input-wrapper {
                 position: absolute;
             }
+
+            &:focus-within:has(input:not([readonly])) {
+                .kel-select__placeholder {
+                    position: absolute;
+                }
+
+                .kel-select__input-wrapper {
+                    position: relative;
+                }
+
+                .kel-select__input {
+                    width: fit-content;
+                    min-width: 120px;
+                }
+            }
         }
 
 
@@ -173,10 +188,14 @@
 
         .kel-select-dropdown__list {
             padding: var(--ks-spacing-1);
-            
+
             .kel-select-dropdown__item + .kel-select-dropdown__item {
                 margin-top: var(--ks-spacing-1);
             }
+        }
+
+        .kel-select-dropdown__empty {
+            padding: var(--ks-spacing-3) var(--ks-spacing-4);
         }
 
         .kel-select-dropdown__item {

@@ -540,8 +540,7 @@
         persist("editorPlayground", settings.editorPlayground)
     }
 
-    function onEnvName(value: string | number) {
-        settings.envName = String(value)
+    function onEnvName() {
         layoutStore.setEnvName(settings.envName)
         notifySaved(`${THEME}.fields.environment_name`)
     }

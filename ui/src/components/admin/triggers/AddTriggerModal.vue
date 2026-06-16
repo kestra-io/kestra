@@ -160,8 +160,6 @@
         triggerId: generateId(),
     })
 
-    const dialogWidth = computed(() => activeTab.value === "documentation" ? "40%" : "500px")
-
     const displayName = computed(() => triggerDisplayName(props.trigger))
     const canSubmit = computed(() =>
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),

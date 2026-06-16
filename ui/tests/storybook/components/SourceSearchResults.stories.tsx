@@ -8,7 +8,7 @@ const i18n = createI18n({
     locale: "en",
     messages: {
         en: {
-            search: {
+            source_search: {
                 match_count: "{count} match | {count} matches",
                 open_flow: "Open flow",
             },
@@ -68,7 +68,6 @@ export const Empty: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={undefined}
                     selectedKey={null}
-                    query=""
                 />
             )
         },
@@ -82,7 +81,6 @@ export const SingleGroup: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={singleResult}
                     selectedKey={null}
-                    query="extract"
                 />
             )
         },
@@ -96,7 +94,6 @@ export const ManyGroups: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={multipleResults}
                     selectedKey={null}
-                    query="extract"
                 />
             )
         },
@@ -110,7 +107,6 @@ export const WithSelectedGroup: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={multipleResults}
                     selectedKey="company.data.daily-etl"
-                    query="extract"
                 />
             )
         },
@@ -133,7 +129,6 @@ export const LongFragments: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={longResults}
                     selectedKey={null}
-                    query="search term"
                 />
             )
         },
@@ -147,7 +142,6 @@ export const DarkMode: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={multipleResults}
                     selectedKey="company.analytics.weekly-report"
-                    query="extract"
                 />
             )
         },

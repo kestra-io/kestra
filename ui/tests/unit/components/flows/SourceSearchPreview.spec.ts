@@ -46,11 +46,10 @@ const i18n = createI18n({
     locale: "en",
     messages: {
         en: {
-            search: {
+            source_search: {
                 match_count: "{count} match | {count} matches",
                 open_flow: "Open flow",
-                preview_empty_title: "Select a result to preview",
-                preview_empty_description: "Click on a flow in the results list to preview its source here",
+                preview_empty: "Select a result to preview — click on a flow in the results list to preview its source here",
                 preview_error: "Failed to load flow source",
             },
         },
@@ -79,6 +78,7 @@ describe("SourceSearchPreview", () => {
         expect(wrapper.find("[data-test='source-search-preview']").exists()).toBe(true)
         expect(mockLoadFlow).not.toHaveBeenCalled()
         expect(wrapper.html()).toContain("Select a result to preview")
+        expect(wrapper.html()).toContain("click on a flow in the results list")
     })
 
     test("fetches source via store using the selected namespace and id", async () => {
@@ -134,6 +134,7 @@ describe("SourceSearchPreview", () => {
         await flushPromises()
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(false)
         expect(wrapper.html()).toContain("Select a result to preview")
+        expect(wrapper.html()).toContain("click on a flow in the results list")
     })
 
     test("refetches source when selected flow changes", async () => {

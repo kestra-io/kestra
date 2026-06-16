@@ -1,7 +1,7 @@
 <template>
     <div class="source-search-preview" data-test="source-search-preview">
         <div v-if="!props.selected" class="source-search-preview__empty">
-            <KsEmpty :title="t('search.preview_empty_title')" :description="t('search.preview_empty_description')" />
+            <KsEmpty :description="t('source_search.preview_empty')" />
         </div>
 
         <div v-else-if="isLoading" class="source-search-preview__loading" v-ks-loading="true" />
@@ -9,7 +9,7 @@
         <KsAlert
             v-else-if="error"
             type="error"
-            :title="t('search.preview_error')"
+            :title="t('source_search.preview_error')"
             class="source-search-preview__error"
         />
 
@@ -47,7 +47,10 @@
 
     watch(
         () => props.selected,
-        async (sel) => {
+        async (sel, _old, onCleanup) => {
+            let cancelled = false
+            onCleanup(() => { cancelled = true })
+
             if (!sel) {
                 source.value = null
                 error.value = false
@@ -60,6 +63,7 @@
 
             try {
                 const flow = await flowStore.loadFlow({namespace: sel.namespace, id: sel.id, store: false})
+                if (cancelled) return
                 source.value = flow?.source ?? null
 
                 if (props.query && editorRef.value) {
@@ -67,9 +71,10 @@
                     revealFirstMatch(props.query)
                 }
             } catch {
+                if (cancelled) return
                 error.value = true
             } finally {
-                isLoading.value = false
+                if (!cancelled) isLoading.value = false
             }
         },
         {immediate: true},

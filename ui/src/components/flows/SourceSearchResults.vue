@@ -21,7 +21,7 @@
                     >
                         <span class="result-group-namespace">{{ item.model.namespace }}.</span>
                         <span class="result-group-id">{{ item.model.id }}</span>
-                        <span class="result-group-count">{{ t("search.match_count", {count: item.fragments.length}) }}</span>
+                        <span class="result-group-count">{{ t("source_search.match_count", {count: item.fragments.length}) }}</span>
                     </span>
                 </template>
 
@@ -41,7 +41,7 @@
                             :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}"
                             data-test="source-search-open-link"
                         >
-                            {{ t("search.open_flow") }}
+                            {{ t("source_search.open_flow") }}
                         </router-link>
                     </div>
                 </div>
@@ -58,7 +58,6 @@
     const props = defineProps<{
         results: Array<{model: {namespace: string; id: string}; fragments: string[]}> | undefined
         selectedKey: string | null
-        query: string
     }>()
 
     const emit = defineEmits<{
@@ -155,7 +154,7 @@
     color: var(--ks-text-secondary);
 
     :deep(mark) {
-        background-color: var(--ks-bg-warning);
+        background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
         padding: 0 var(--ks-spacing-1);

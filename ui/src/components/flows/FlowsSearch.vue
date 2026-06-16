@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <section class="container">
+    <section class="full-container">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -32,7 +32,6 @@
                         <SourceSearchResults
                             :results="flowStore.search"
                             :selectedKey="selectedKey"
-                            :query="searchQuery"
                             @select="onSelect"
                             data-test="source-search-results-pane"
                         />
@@ -141,16 +140,9 @@
 </script>
 
 <style scoped lang="scss">
-.container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
 .search-splitter {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    min-height: 400px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 </style>

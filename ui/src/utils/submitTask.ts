@@ -1,5 +1,5 @@
 import _cloneDeep from "lodash/cloneDeep"
-import {useExecutionsStore} from "../stores/executions"
+import {useExecutionsStore, type Execution} from "../stores/executions"
 import {useOnboardingV2Store} from "../stores/onboardingV2"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
@@ -53,13 +53,13 @@ export const executeTask = (
     }, 
     flow: Flow, 
     values: Record<string, any>,
-    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
-) => {
+    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
+): Promise<Execution> => {
     const formData = inputsToFormData(submitor, flow.inputs, values)
     const executionsStore = useExecutionsStore()
     const onboardingV2Store = useOnboardingV2Store()
 
-    executionsStore
+    return executionsStore
         .triggerExecution({
             ...options,
             kind: "NORMAL",
@@ -99,8 +99,9 @@ export const executeTask = (
             return response.data
         })
         .then((execution) => {
-            if(!options.nextStep){
+            if (!options.nextStep) {
                 submitor.$toast().success(submitor.$t("triggered done", {name: execution.id}))
             }
+            return execution
         })
 }

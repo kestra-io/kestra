@@ -103,8 +103,8 @@
 
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
     const authStore = useAuthStore()
-    const canCreate = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE))
-    const canView = computed(() => isOSS.value || authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.VIEW))
+    const canCreate = computed(() => authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.CREATE))
+    const canView = computed(() => isOSS.value || authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.VIEW))
     const displayServers = computed<DisplayServer[]>(() =>
         instanceMode.value ? (props.instanceServers ?? []) : tenantServers.value,
     )

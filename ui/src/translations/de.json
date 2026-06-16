@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "Lesezeichen",
     "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk actions": "Massenaktionen",
@@ -217,6 +218,7 @@
     "copy url": "URL kopieren",
     "copy_and_close": "Kopieren und schließen",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
+    "copy_value": "Copy value",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
     "create_flow": "Flow erstellen",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "Sieh dir das Video an"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "Abhängigkeiten",
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
     "dependencies loaded": "Abhängigkeiten geladen",
@@ -472,6 +478,7 @@
     "display metric for specific task": "Metrik für einen spezifischen Task anzeigen",
     "display output for specific task": "Output für einen spezifischen Task anzeigen",
     "display topology for flow": "Topologie für Flow anzeigen",
+    "display_settings": "Display settings",
     "docs": "Dokumentation",
     "documentation": {
       "documentation": "Dokumentation",
@@ -482,6 +489,7 @@
     "download": "Herunterladen",
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
     "drop items here": "Elemente hier ablegen",
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
@@ -574,8 +582,8 @@
         "title": "Auf diesem Server sind noch keine Tool flows registriert."
       },
       "panels": {
-        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Namespace-Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
-        "title": "Derzeit sind keine Panels geöffnet."
+        "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren.",
+        "title": "Kein Panel geöffnet"
       },
       "pluginDefaults": {
         "content": "Plugin-Standardeinstellungen ermöglichen es Ihnen, Ihre Plugin-Konfiguration zentral zu verwalten und mit allen flows in Ihrem namespace zu teilen.",
@@ -632,6 +640,8 @@
       }
     },
     "eval": {
+      "expression": "Ausdruck",
+      "preview": "Vorschau",
       "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
@@ -698,6 +708,7 @@
     "expand all": "Alle ausklappen",
     "expand dependencies": "Abhängigkeiten ausklappen",
     "expand error": "Nur fehlgeschlagene Tasks ausklappen",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "Ablauf",
     "expiration date": "Ablaufdatum",
     "export": "Exportieren",
@@ -719,8 +730,16 @@
     "file unavailable": "Datei nicht verfügbar",
     "file unavailable description": "Diese Datei ist nicht mehr verfügbar – sie wurde möglicherweise gelöscht oder ist abgelaufen.",
     "fileTypeNotAllowed": "Dateityp nicht erlaubt. Akzeptierte Typen: {types}",
+    "file_preview": {
+      "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
+      "load_anyway": "Trotzdem laden"
+    },
     "files": "Dateien",
     "filter by log level": "Nach Log-Ebene filtern",
+    "filter by status": "Filtere Ausführungen nach {status} Status",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "zwischen",
@@ -836,6 +855,7 @@
     "flows imported": "Flows importiert",
     "focus task": "Klicken Sie auf ein Element, um dessen Dokumentation zu sehen.",
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",
+    "font size": "Font size",
     "for flow": "für Flow",
     "force run": "Erzwungene Ausführung",
     "force run confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> erzwingen möchten?<br/><br/>WARNING: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
@@ -922,6 +942,7 @@
     "log expand setting": "Log-Standardanzeige",
     "logExporters": "Log-Exporteure",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "Standardansicht",
       "compact_details": "Task Logs in einer kompakten Ansicht, gruppiert nach jedem Task, anzeigen",
@@ -1369,6 +1390,7 @@
     "open in new tab": "In einem neuen Tab",
     "open in same tab": "Im selben Tab",
     "open sidebar": "Seitenleiste öffnen",
+    "open_page": "Open page",
     "optional": "Optional",
     "original execution": "Originalausführung",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
@@ -1503,6 +1525,7 @@
     },
     "port": "Port",
     "prefill inputs": "Vorausfüllen",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "Vorherige Ausführung",
     "preview": {
       "auto-view": "Automatische Ansicht",
@@ -1719,6 +1742,9 @@
             "light": "Hell",
             "sync": "Mit System synchronisieren"
           },
+          "confirmations": {
+            "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
+          },
           "descriptions": {
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
@@ -1833,6 +1859,7 @@
     "show details": "Details anzeigen",
     "show documentation": "Dokumentation anzeigen",
     "show more details": "Mehr Details anzeigen",
+    "show raw": "Show raw",
     "show task condition": "Bedingung des Tasks anzeigen",
     "show task documentation": "Task-Dokumentation anzeigen",
     "show task documentation in editor": "Task-Dokumentation im Editor anzeigen",
@@ -1842,6 +1869,7 @@
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "showMore": "Mehr anzeigen",
     "side-by-side": "nebeneinander",
+    "similar lines": "similar lines",
     "skipped": "Übersprungen",
     "slack support": "Fragen Sie via Slack",
     "something_went_wrong": {
@@ -2019,6 +2047,19 @@
     "valid": "Gültig",
     "validate": "Validieren",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "Keine Variablen für diese Ausführung verfügbar.",
+      "n_items": "[ {count} Elemente ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 Element ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key oder value suchen...",
+      "select_prompt": "Wählen Sie eine Variable aus, um ihren value anzuzeigen.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Eingabe/Ausgabe",
+      "tree": "Baum"
+    },
     "variables": "Variablen",
     "version": "Version",
     "view metrics": "Metriken anzeigen",

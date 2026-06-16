@@ -105,6 +105,7 @@
       },
       "title": "蓝图"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "书签",
     "bulk action async warning": "这可能需要一些时间。",
     "bulk actions": "批量操作",
@@ -217,6 +218,7 @@
     "copy url": "复制 URL",
     "copy_and_close": "复制并关闭",
     "copy_to_clipboard": "复制到剪贴板",
+    "copy_value": "Copy value",
     "create": "创建",
     "create first task": "创建你的第一个任务",
     "create_flow": "创建Flow",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "观看视频"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "依赖关系",
     "dependencies delete flow": "此流程有依赖关系。删除它将阻止其依赖关系的执行。<br /><br /> 受影响的流程列表如下：",
     "dependencies loaded": "依赖项已加载",
@@ -472,6 +478,7 @@
     "display metric for specific task": "显示特定任务的指标",
     "display output for specific task": "显示特定任务的输出",
     "display topology for flow": "显示流程的拓扑",
+    "display_settings": "Display settings",
     "docs": "文档",
     "documentation": {
       "documentation": "文档",
@@ -482,6 +489,7 @@
     "download": "下载",
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "编辑器中有可用的草稿更改",
     "drop items here": "将项目拖放到此处",
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
@@ -574,8 +582,8 @@
         "title": "此服务器上尚未注册任何工具flow。"
       },
       "panels": {
-        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、上下文）以获取相关功能。",
-        "title": "当前没有打开的面板。"
+        "content": "您已关闭所有面板。  \n请选择上面的选项卡以继续。",
+        "title": "没有面板打开"
       },
       "pluginDefaults": {
         "content": "插件默认设置允许您集中管理插件配置，并与namespace中的所有flow共享。",
@@ -632,6 +640,8 @@
       }
     },
     "eval": {
+      "expression": "表达式",
+      "preview": "预览",
       "render": "渲染表达式",
       "title": "调试表达式",
       "tooltip": "渲染任何Pebble表达式并检查执行上下文。"
@@ -698,6 +708,7 @@
     "expand all": "展开所有",
     "expand dependencies": "展开依赖关系",
     "expand error": "仅展开失败的任务",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "过期",
     "expiration date": "过期日期",
     "export": "导出",
@@ -719,8 +730,16 @@
     "file unavailable": "文件不可用",
     "file unavailable description": "该文件不再可用——可能已被清除或过期。",
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
+    "file_preview": {
+      "big_file_warning": "此文件大小为{size}。加载可能需要一些时间，并可能阻塞您的浏览器。您是否仍然要加载它？",
+      "load_anyway": "仍然加载"
+    },
     "files": "文件",
     "filter by log level": "按日志级别过滤",
+    "filter by status": "按{status}状态筛选执行",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "之间",
@@ -836,6 +855,7 @@
     "flows imported": "Flow已导入",
     "focus task": "点击任何元素以查看其文档。",
     "fold_all_multi_lines": "折叠所有多行",
+    "font size": "Font size",
     "for flow": "用于 flow",
     "force run": "强制运行",
     "force run confirm": "您确定要强制运行执行 <code>{id}</code> 吗？<br/><br/>WARNING: 强制运行执行不保证成功，并且可能会创建重复的任务执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED 任务将被移动到 RUNNING 状态。</li><li>RUNNING 任务将被重新提交。</li><li>QUEUED 任务将被取消排队。</li><li>PAUSED 任务将被恢复。</li></ul>",
@@ -922,6 +942,7 @@
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
     "logs": "日志",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "默认视图",
       "compact_details": "按任务分组显示任务日志",
@@ -1369,6 +1390,7 @@
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
     "open sidebar": "打开侧边栏",
+    "open_page": "Open page",
     "optional": "可选",
     "original execution": "原始执行",
     "originalCreatedDate": "原始创建日期",
@@ -1503,6 +1525,7 @@
     },
     "port": "端口",
     "prefill inputs": "预填",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "先前执行",
     "preview": {
       "auto-view": "自动视图",
@@ -1719,6 +1742,9 @@
             "light": "浅色模式",
             "sync": "与系统同步"
           },
+          "confirmations": {
+            "color_mode": "您的界面现在使用 `{mode}` 主题。"
+          },
           "descriptions": {
             "color_mode": "选择您偏好的界面主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
@@ -1833,6 +1859,7 @@
     "show details": "显示详情",
     "show documentation": "显示文档",
     "show more details": "显示更多详情",
+    "show raw": "Show raw",
     "show task condition": "显示任务条件",
     "show task documentation": "显示任务文档",
     "show task documentation in editor": "在编辑器中显示任务文档",
@@ -1842,6 +1869,7 @@
     "showLess": "显示较少",
     "showMore": "显示更多",
     "side-by-side": "并排",
+    "similar lines": "similar lines",
     "skipped": "跳过",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
@@ -2019,6 +2047,19 @@
     "valid": "有效",
     "validate": "验证",
     "value": "值",
+    "variable_explorer": {
+      "empty": "此执行没有可用的变量。",
+      "n_items": "[ {count} 项 ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 项 ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "搜索 Key 或 value...",
+      "select_prompt": "选择一个变量以查看其 value。",
+      "tasks_outputs": "Tasks outputs",
+      "title": "输入/输出",
+      "tree": "树"
+    },
     "variables": "变量",
     "version": "版本",
     "view metrics": "查看指标",

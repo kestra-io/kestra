@@ -377,10 +377,13 @@ public class TriggerScheduler {
         updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state ->
         {
             try {
-                this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
-                state = state
-                    .lastTriggeredDate(clock)
-                    .locked(clock, mustBeLocked);
+                if (this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext())) {
+                    state = state
+                        .lastTriggeredDate(clock)
+                        .locked(clock, mustBeLocked);
+                }
+                // When the job was not dispatched, save without taking the lock so the
+                // trigger is retried at its next evaluation date.
                 triggerStateStore.save(state);
             } catch (Exception e) {
                 Logs.logTrigger(

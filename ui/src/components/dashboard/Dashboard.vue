@@ -15,13 +15,6 @@
             :showSearchInput="false"
             :defaultDuration="dashboard.timeWindow?.default"
         />
-        <QuickFilters
-            :intervals="quickIntervals"
-            :timeRange="selectedTimeRange"
-            :intervalLabel="t('filter.timeRange_dashboard.label')"
-            :showLevel="false"
-            @update:timeRange="onQuickFilterTimeRange"
-        />
     </section>
 
     <Sections
@@ -43,8 +36,6 @@
     import Header from "./components/Header.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import Sections from "./sections/Sections.vue"
-    import QuickFilters from "../filter/QuickFilters.vue"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
 
     import {
         useDashboardFilter,
@@ -79,7 +70,6 @@
     const coreStore = useCoreStore()
     const dashboardStore = useDashboardStore()
     const {t} = useI18n()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     defineOptions({inheritAttrs: false})
 

@@ -23,10 +23,18 @@ const intervalSegment = (wrapper: ReturnType<typeof mountFilters>) =>
 const levelPills = (wrapper: ReturnType<typeof mountFilters>) =>
     wrapper.findAll("[data-test^=\"quick-filters-level-\"]")
 
+const statePills = (wrapper: ReturnType<typeof mountFilters>) =>
+    wrapper.findAll("[data-test^=\"quick-filters-state-\"]")
+
 describe("QuickFilters", () => {
     const LEVELS = [
         {label: "INFO", value: "INFO"},
         {label: "ERROR", value: "ERROR"},
+    ]
+
+    const STATES = [
+        {label: "RUNNING", value: "RUNNING"},
+        {label: "FAILED", value: "FAILED"},
     ]
 
     it("renders one level pill per provided level", () => {
@@ -106,5 +114,38 @@ describe("QuickFilters", () => {
 
         expect(levelPills(wrapper)).toHaveLength(0)
         expect(intervalSegment(wrapper)).toBeTruthy()
+    })
+
+    it("hides the state pills by default", () => {
+        const wrapper = mountFilters({states: STATES})
+
+        expect(statePills(wrapper)).toHaveLength(0)
+    })
+
+    it("renders one state pill per provided state when showState is true", () => {
+        const wrapper = mountFilters({states: STATES, showState: true})
+
+        const pills = statePills(wrapper)
+        expect(pills).toHaveLength(2)
+        expect(pills.map((pill) => pill.text())).toEqual(["RUNNING", "FAILED"])
+    })
+
+    it("marks the active state pills from the selected state array", () => {
+        const wrapper = mountFilters({states: STATES, showState: true, state: ["FAILED"]})
+
+        expect(
+            wrapper.find("[data-test=\"quick-filters-state-FAILED\"]").attributes("aria-pressed"),
+        ).toBe("true")
+        expect(
+            wrapper.find("[data-test=\"quick-filters-state-RUNNING\"]").attributes("aria-pressed"),
+        ).toBe("false")
+    })
+
+    it("emits update:state when a state pill is clicked", async () => {
+        const wrapper = mountFilters({states: STATES, showState: true})
+
+        await wrapper.find("[data-test=\"quick-filters-state-RUNNING\"]").trigger("click")
+
+        expect(wrapper.emitted("update:state")).toEqual([["RUNNING"]])
     })
 })

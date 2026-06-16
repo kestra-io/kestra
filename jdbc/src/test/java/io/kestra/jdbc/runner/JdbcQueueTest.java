@@ -1,11 +1,16 @@
 package io.kestra.jdbc.runner;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -125,6 +130,40 @@ abstract public class JdbcQueueTest {
         receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
+    }
+
+    @Test
+    void shouldShutdownWhenConsumerFails() throws InterruptedException, QueueException {
+        // Given: an unrecoverable failure while consuming. The poll thread must fail fast and shut the
+        // server down (so it restarts and the message is redelivered), not silently die nor loop forever.
+        // Spy the context so shutdown() is recorded instead of actually closing the test application context.
+        KestraContext original = KestraContext.getContext();
+        AtomicBoolean shutdownCalled = new AtomicBoolean(false);
+        KestraContext spy = Mockito.spy(original);
+        Mockito.doAnswer(invocation -> {
+            shutdownCalled.set(true);
+            return null;
+        }).when(spy).shutdown();
+        KestraContext.setContext(spy);
+
+        try {
+            CountDownLatch received = new CountDownLatch(1);
+            TestsUtils.receive(flowQueue, throwConsumer(either -> {
+                received.countDown();
+                throw new RuntimeException("unrecoverable consumption failure");
+            }));
+
+            // When: a message is consumed and the consumer throws.
+            flowQueue.emit(builder("io.kestra.f1"));
+            assertTrue(received.await(5, TimeUnit.SECONDS));
+
+            // Then: a server shutdown is initiated (fail fast).
+            Awaitility.await()
+                .atMost(Duration.ofSeconds(5))
+                .untilTrue(shutdownCalled);
+        } finally {
+            KestraContext.setContext(original);
+        }
     }
 
     private static FlowWithSource builder(String namespace) {

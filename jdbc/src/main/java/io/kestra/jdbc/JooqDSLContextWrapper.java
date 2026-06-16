@@ -47,7 +47,10 @@ public class JooqDSLContextWrapper {
             // standard deadlock
             cause.getSQLState().equals("40001") ||
             // postgres deadlock
-                cause.getSQLState().equals("40P01");
+                cause.getSQLState().equals("40P01") ||
+            // MySQL lock wait timeout (ER_LOCK_WAIT_TIMEOUT), so a transient lock contention is retried
+            // instead of bubbling up and crashing the producing thread (e.g. a worker emitting a result).
+                cause.getErrorCode() == 1205;
         };
     }
 

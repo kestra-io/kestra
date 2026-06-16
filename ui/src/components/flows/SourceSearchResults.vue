@@ -16,8 +16,12 @@
                     <span
                         class="result-group-header"
                         :class="{'result-group-header--selected': selectedKey?.startsWith(`${item.model.namespace}.${item.model.id}#`)}"
+                        role="button"
+                        tabindex="0"
                         data-test="source-search-group-header"
                         @click.stop="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
+                        @keydown.enter.stop="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
+                        @keydown.space.stop.prevent="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
                     >
                         <span class="result-group-namespace">{{ item.model.namespace }}.</span>
                         <span class="result-group-id">{{ item.model.id }}</span>
@@ -31,8 +35,12 @@
                         :key="idx"
                         class="result-fragment"
                         :class="{'result-fragment--selected': selectedKey === `${item.model.namespace}.${item.model.id}#${idx}`}"
+                        role="button"
+                        tabindex="0"
                         data-test="source-search-match"
                         @click="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: idx})"
+                        @keydown.enter="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: idx})"
+                        @keydown.space.prevent="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: idx})"
                     >
                         <pre v-html="sanitize(fragment)" class="fragment-pre" />
                     </div>
@@ -110,6 +118,11 @@
     width: 100%;
     cursor: pointer;
 
+    &:focus-visible {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: 2px;
+    }
+
     &--selected {
         color: var(--ks-text-link);
     }
@@ -141,6 +154,11 @@
     padding: var(--ks-spacing-1) var(--ks-spacing-2);
     border-radius: var(--ks-radius-sm);
     margin-bottom: var(--ks-spacing-1);
+
+    &:focus-visible {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: -2px;
+    }
 
     &:hover {
         background-color: var(--ks-bg-hover);

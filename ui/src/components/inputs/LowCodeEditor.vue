@@ -56,6 +56,7 @@
             v-model="isTaskModalOpen"
             :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
             :destroyOnClose="true"
+            :appendToBody="true"
             width="600px"
         >
             <TopologyTaskModalRemote

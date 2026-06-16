@@ -114,13 +114,20 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                     })
 
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []
-                    const module = await loadRemote<{default: any}>(`${remoteName}/${taskRoot}/${slotName}`)
-
-                    if(!module){
-                        console.error(`Remote module ${remoteName} did not load correctly`)
+                    const remoteId = `${remoteName}/${taskRoot}/${slotName}`
+                    let module: {default: any} | null = null
+                    try {
+                        module = await loadRemote<{default: any}>(remoteId)
+                    } catch(err) {
+                        console.error(`[FederatedModule] Failed to load remote "${remoteId}":`, err)
                         continue
                     }
-                    
+
+                    if(!module){
+                        console.error(`[FederatedModule] Remote module "${remoteId}" did not load (null response)`)
+                        continue
+                    }
+
                     RemoteComponents[taskTypeKey] = markRaw(wrapWithErrorBoundary(module.default))
                 }
             }
@@ -132,8 +139,11 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         inheritAttrs: false,
         setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
             const {taskType, ...restProps} = props
-            const Comp = RemoteComponents[taskType]
-            return () => Comp ? h(Comp, {...restProps, ...attrs}) : null
+            // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
+            return () => {
+                const Comp = RemoteComponents[taskType]
+                return Comp ? h(Comp, {...restProps, ...attrs}) : null
+            }
         },
     })
 

@@ -6,6 +6,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import io.kestra.plugin.core.trigger.Schedule;
+
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -111,5 +113,25 @@ class MetricRegistryTest {
             "label_execution-label-foo",
             "__none__"
         );
+    }
+
+   @Test
+   void triggerTagsWithNullLabelsAndMetricsLabelsConfigured() {
+        when(mockConfig.getLabels()).thenReturn(
+           List.of("owner_team")
+        );
+
+        var trigger = io.kestra.plugin.core.trigger.Schedule.builder()
+          .id("test-trigger")
+          .type("io.kestra.plugin.core.trigger.Schedule")
+          .cron("0 * * * *")
+          .build();
+
+        // trigger.getLabels() is null — this should NOT throw NullPointerException
+        var tags = metricRegistry.tags(trigger);
+
+        assertThat(tags).containsExactly(
+           "trigger_type", "io.kestra.plugin.core.trigger.Schedule"
+       );
     }
 }

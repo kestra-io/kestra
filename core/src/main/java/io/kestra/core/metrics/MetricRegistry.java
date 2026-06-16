@@ -588,11 +588,10 @@ public class MetricRegistry {
      * @param labels The labels to evaluate against configured keys
      * @return tags based on matching label keys
      */
-    private String[] getLabelTags(List<Label> labels) {
+    
+private String[] getLabelTags(@NonNull List<Label> labels) {
     final List<String> configuredKeys = metricConfig.getLabels();
     if (configuredKeys == null)
-        return null;
-    if (labels == null)
         return null;
 
         int size = configuredKeys.size() * 2;

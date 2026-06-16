@@ -1682,7 +1682,8 @@
             "flow_default_tab": "Karta wybrana podczas nawigacji do flow.",
             "log_display": "Jak logi są prezentowane podczas otwierania wykonania.",
             "log_level": "Minimalny poziom logów wyświetlany w logach wykonania.",
-            "playground": "Uruchom taski indywidualnie w edytorze playground."
+            "playground": "Uruchom taski indywidualnie w edytorze playground.",
+            "triggers_default_tab": "Karta wybrana podczas nawigacji do strony triggerów."
           },
           "fields": {
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
@@ -1695,7 +1696,8 @@
             "log_display": "Domyślne Wyświetlanie Log",
             "log_level": "Domyślna Poziom Logs",
             "multi_panel_editor": "Edytor Wielopanelowy",
-            "playground": "Plac zabaw"
+            "playground": "Plac zabaw",
+            "triggers_default_tab": "Domyślna karta Triggers"
           },
           "label": "Główna konfiguracja"
         },

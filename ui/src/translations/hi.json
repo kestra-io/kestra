@@ -1682,7 +1682,8 @@
             "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
             "log_display": "जब एक execution खोला जाता है तो logs कैसे प्रस्तुत किए जाते हैं।",
             "log_level": "न्यूनतम log स्तर जो execution logs में दिखाया गया है।",
-            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।"
+            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।"
           },
           "fields": {
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
@@ -1695,7 +1696,8 @@
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर",
             "multi_panel_editor": "मल्टी पैनल एडिटर",
-            "playground": "प्लेग्राउंड"
+            "playground": "प्लेग्राउंड",
+            "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },

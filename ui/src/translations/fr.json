@@ -1682,7 +1682,8 @@
             "flow_default_tab": "Onglet sélectionné lors de la navigation vers un flow.",
             "log_display": "Comment les logs sont présentés lors de l'ouverture d'une exécution.",
             "log_level": "Niveau de log minimum affiché dans les logs d'exécution.",
-            "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur."
+            "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
+            "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers."
           },
           "fields": {
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
@@ -1695,7 +1696,8 @@
             "log_display": "Affichage des journaux par défaut",
             "log_level": "Niveau d'affichage des journaux par défaut",
             "multi_panel_editor": "Éditeur Multi-Panneaux",
-            "playground": "Aire de jeu"
+            "playground": "Aire de jeu",
+            "triggers_default_tab": "Onglet par défaut des Triggers"
           },
           "label": "Configuration Principale"
         },

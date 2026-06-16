@@ -1682,7 +1682,8 @@
             "flow_default_tab": "导航到flow时选择的选项卡。",
             "log_display": "打开执行时日志的呈现方式。",
             "log_level": "执行日志中显示的最低日志级别。",
-            "playground": "在编辑器游乐场中单独运行任务。"
+            "playground": "在编辑器游乐场中单独运行任务。",
+            "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。"
           },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
@@ -1695,7 +1696,8 @@
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
             "multi_panel_editor": "多面板编辑器",
-            "playground": "游乐场"
+            "playground": "游乐场",
+            "triggers_default_tab": "默认 Trigger 标签页"
           },
           "label": "主要配置"
         },

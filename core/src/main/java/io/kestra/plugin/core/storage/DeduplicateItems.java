@@ -1,13 +1,13 @@
 package io.kestra.plugin.core.storage;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +21,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.core.util.functional.ThrowingFunction;
@@ -104,17 +105,19 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
 
         final PebbleFieldExtractor keyExtractor = getKeyExtractor(runContext);
 
-        final Map<String, Long> index = new HashMap<>(); // can be replaced by small-footprint Map implementation
+        // Read all records into memory (needed for two-pass dedup)
+        var allRecords = new ArrayList<>();
+        try (var input = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)) {
+            FileSerde.read(input, allRecords::add);
+        }
 
-        // 1st iteration: build a map of key->offset
-        try (final BufferedReader reader = newBufferedReader(runContext, from)) {
-            long offset = 0L;
-            String item;
-            while ((item = reader.readLine()) != null) {
-                String key = keyExtractor.apply(item);
-                index.put(key, offset);
-                offset++;
-            }
+        final Map<String, Long> index = new HashMap<>();
+
+        // 1st pass: build a map of key->index (keeps last occurrence)
+        for (int i = 0; i < allRecords.size(); i++) {
+            String textIon = PebbleFieldExtractor.MAPPER.writeValueAsString(allRecords.get(i));
+            String key = keyExtractor.apply(textIon);
+            index.put(key, (long) i);
         }
 
         // metrics
@@ -123,23 +126,18 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
         long numKeys = index.size();
 
         final Path path = runContext.workingDir().createTempFile(".ion");
-        // 2nd iteration: write deduplicate
-        try (
-            final BufferedWriter writer = Files.newBufferedWriter(path);
-            final BufferedReader reader = newBufferedReader(runContext, from)
-        ) {
-            long offset = 0L;
-            String item;
-            while ((item = reader.readLine()) != null) {
-                String key = keyExtractor.apply(item);
-                Long lastOffset = index.get(key);
-                if (lastOffset != null && lastOffset == offset) {
-                    writer.write(item);
-                    writer.newLine();
+        // 2nd pass: write deduplicated records
+        try (final OutputStream output = new BufferedOutputStream(new FileOutputStream(path.toFile()), FileSerde.BUFFER_SIZE)) {
+            for (int i = 0; i < allRecords.size(); i++) {
+                Object record = allRecords.get(i);
+                String textIon = PebbleFieldExtractor.MAPPER.writeValueAsString(record);
+                String key = keyExtractor.apply(textIon);
+                Long lastIndex = index.get(key);
+                if (lastIndex != null && lastIndex == i) {
+                    FileSerde.write(output, record);
                 } else {
                     droppedItemsTotal++;
                 }
-                offset++;
                 processedItemsTotal++;
             }
         }
@@ -156,11 +154,6 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
 
     private PebbleFieldExtractor getKeyExtractor(RunContext runContext) {
         return new PebbleFieldExtractor(runContext, expr);
-    }
-
-    private BufferedReader newBufferedReader(final RunContext runContext, final URI objectURI) throws IOException {
-        InputStream is = runContext.storage().getFile(objectURI);
-        return new BufferedReader(new InputStreamReader(is));
     }
 
     @Builder

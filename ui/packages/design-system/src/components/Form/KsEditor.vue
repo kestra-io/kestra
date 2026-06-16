@@ -1420,7 +1420,7 @@
                 background-color: var(--ks-bg-input);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
                 transition: var(--kel-transition-box-shadow);
-                box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
+                box-shadow: 0 0 0 1px var(--ks-border-default) inset;
 
                 &.custom-dark-vs-theme {
                     background-color: var(--ks-bg-input);

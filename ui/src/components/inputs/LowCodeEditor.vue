@@ -59,10 +59,7 @@
             :appendToBody="true"
             width="600px"
         >
-            <TopologyTaskModalRemote
-                :taskType="taskModalCtx.taskType"
-                v-bind="taskModalCtx"
-            />
+            <TopologyTaskModalRemote v-bind="(taskModalCtx as any)" />
         </KsDialog>
 
         <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">

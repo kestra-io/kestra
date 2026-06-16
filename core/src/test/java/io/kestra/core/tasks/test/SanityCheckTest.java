@@ -69,6 +69,7 @@ class SanityCheckTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent purge assertion")
     @Test
     @ExecuteFlow("sanity-checks/purge_current_execution_files.yaml")
     void qaPurgeExecutionFiles(Execution execution) {

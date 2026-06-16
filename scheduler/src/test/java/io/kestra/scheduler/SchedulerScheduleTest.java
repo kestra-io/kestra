@@ -177,6 +177,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     }
 
     // Test to ensure behavior between 0.14 > 0.15
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent scheduler timing / JDBC connection")
     @Test
     void retroSchedule() throws Exception {
         // mock flow listeners
@@ -435,6 +436,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent scheduler timing")
     @Test
     void stopAfterSchedule() throws Exception {
         // mock flow listeners

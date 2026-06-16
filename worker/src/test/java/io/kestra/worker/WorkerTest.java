@@ -19,6 +19,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -141,6 +142,7 @@ class WorkerTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent 'Await failed to terminate within PT1M'")
     @Test
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);

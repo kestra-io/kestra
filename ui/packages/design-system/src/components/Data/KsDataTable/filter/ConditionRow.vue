@@ -310,6 +310,10 @@
         else if (isMulti.value) commitMulti()
     })
 
+    onBeforeUnmount(() => {
+        if (isMulti.value) commitMulti()
+    })
+
     onMounted(() => {
         if (!isMulti.value) ensureOptions()
     })

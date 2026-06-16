@@ -16,29 +16,33 @@
                     </div>
 
                     <div class="adv-body">
-                        <div
-                            v-for="(row, rowIndex) in rows"
+                        <Motion
+                            v-for="row in displayRows"
                             :key="row.filter.id"
+                            as="div"
+                            layout
+                            :animate="{
+                                opacity: draggedId === row.filter.id ? 0.35 : 1,
+                                scale: draggedId === row.filter.id ? 0.98 : 1,
+                            }"
+                            :transition="ITEM_TRANSITION"
                             class="adv-row"
                             :class="{
                                 'new-group': row.isFirstOfGroup && row.groupIndex > 0,
-                                'drag-over': dragOverId === row.filter.id,
-                                'dragging': draggedId === row.filter.id,
                             }"
-                            @dragover.prevent="onDragOver(row)"
-                            @dragleave="onDragLeave(row)"
-                            @drop="onDrop(row)"
+                            @dragover.prevent="over(row.filter.id, $event)"
+                            @drop.prevent="drop()"
                         >
                             <span
                                 class="adv-grip"
                                 :draggable="!ctx.readOnly.value"
                                 :title="$t('filter.drag to reorder')"
-                                @dragstart="onDragStart(row)"
-                                @dragend="onDragEnd"
-                            ><Drag /></span>
+                                @dragstart="onDragStart(row, $event)"
+                                @dragend="reset()"
+                            ><DotsGrid :size="18" /></span>
 
                             <button
-                                v-if="rowIndex === 0"
+                                v-if="row.lead"
                                 class="adv-conj lead"
                                 type="button"
                                 disabled
@@ -59,7 +63,7 @@
                                 @update="ctx.updateFilter"
                                 @remove="ctx.removeFilter"
                             />
-                        </div>
+                        </Motion>
                     </div>
 
                     <div class="adv-footer">
@@ -83,19 +87,26 @@
 
 <script setup lang="ts">
     import {computed, inject, nextTick, onBeforeUnmount, ref, watch} from "vue"
+    import {Motion} from "motion-v"
+    import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
 
     import ConditionRow from "./ConditionRow.vue"
+    import {useDragAndDrop} from "./composables/useDragAndDrop"
+    import {computePlacement} from "./utils/reorderPlacement"
     import {findLeafById} from "./composables/useFilterGroups"
     import {createAppliedFilter, pickStarterField} from "./utils/filterChipFactory"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
     import {isWrapperGroup, type AppliedFilter, type FilterGroup} from "./utils/filterTypes"
-    import {Close, Drag, Plus} from "./utils/icons"
+    import {Close, Plus} from "./utils/icons"
+
+    const ITEM_TRANSITION = {type: "spring", stiffness: 400, damping: 30, mass: 0.6}
 
     interface Row {
         filter: AppliedFilter;
         groupId: string;
         groupIndex: number;
         isFirstOfGroup: boolean;
+        lead: boolean;
     }
 
     const ctx = inject(FILTER_CONTEXT_INJECTION_KEY)!
@@ -106,8 +117,6 @@
 
     const open = defineModel<boolean>()
     const positionStyle = ref<Record<string, string>>({})
-    const draggedId = ref<string | null>(null)
-    const dragOverId = ref<string | null>(null)
 
     const computePosition = () => {
         const anchor = document.querySelector(props.anchor)
@@ -158,15 +167,28 @@
         return entries.filter((entry) => isGroupable(entry.filter))
     }
 
-    const rows = computed<Row[]>(() =>
-        ctx.groups.value.flatMap((group, groupIndex) =>
+    const rows = computed<Row[]>(() => {
+        const flat = ctx.groups.value.flatMap((group, groupIndex) =>
             leafEntries(group).map((entry, index) => ({
                 ...entry,
                 groupIndex,
                 isFirstOfGroup: index === 0,
             })),
-        ),
-    )
+        )
+        return flat.map((row, index) => ({...row, lead: index === 0}))
+    })
+
+    const {draggedId, previewIds, start, over, drop, reset} = useDragAndDrop((orderedIds, dragged) => {
+        const groupOf = new Map(rows.value.map(row => [row.filter.id, row.groupId]))
+        const placement = computePlacement(orderedIds, dragged, id => groupOf.get(id))
+        if (placement) ctx.placeFilter(dragged, placement.targetLeafId, placement.targetIndex)
+    })
+
+    const displayRows = computed<Row[]>(() => {
+        if (!previewIds.value) return rows.value
+        const byId = new Map(rows.value.map(row => [row.filter.id, row]))
+        return previewIds.value.map(id => byId.get(id)).filter((row): row is Row => Boolean(row))
+    })
 
     const toggleTopLogical = () =>
         ctx.setTopLogical(ctx.topLogical.value === "OR" ? "AND" : "OR")
@@ -198,28 +220,17 @@
         nextTick(() => addStarterCondition(lastGroupId.value))
     }
 
-    const onDragStart = (row: Row) => {
-        if (ctx.readOnly.value) return
-        draggedId.value = row.filter.id
-    }
-
-    const onDragEnd = () => {
-        draggedId.value = null
-        dragOverId.value = null
-    }
-
-    const onDragOver = (row: Row) => {
-        if (draggedId.value && draggedId.value !== row.filter.id) dragOverId.value = row.filter.id
-    }
-
-    const onDragLeave = (row: Row) => {
-        if (dragOverId.value === row.filter.id) dragOverId.value = null
-    }
-
-    const onDrop = (row: Row) => {
-        const dragged = draggedId.value
-        if (dragged && dragged !== row.filter.id) ctx.moveFilter(dragged, row.groupId)
-        onDragEnd()
+    const onDragStart = (row: Row, event: DragEvent) => {
+        if (ctx.readOnly.value) {
+            event.preventDefault()
+            return
+        }
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move"
+            const rowEl = (event.currentTarget as HTMLElement | null)?.closest<HTMLElement>(".adv-row")
+            if (rowEl) event.dataTransfer.setDragImage(rowEl, 16, rowEl.offsetHeight / 2)
+        }
+        start(row.filter.id, rows.value.map(r => r.filter.id))
     }
 </script>
 
@@ -302,7 +313,7 @@
     padding: var(--ks-spacing-2);
     border-radius: var(--ks-radius-base);
     border: 1px solid transparent;
-    transition: border-color 120ms ease, background-color 120ms ease;
+    transition: background-color 120ms ease;
 
     &:hover {
         background-color: var(--ks-bg-hover);
@@ -310,15 +321,6 @@
 
     &.new-group {
         border-top: 1px solid var(--ks-border-default);
-    }
-
-    &.drag-over {
-        border-color: var(--ks-border-focus);
-        background-color: var(--ks-bg-hover-elevated);
-    }
-
-    &.dragging {
-        opacity: 0.5;
     }
 }
 
@@ -328,16 +330,11 @@
     align-items: center;
     justify-content: center;
     width: 1.25rem;
-    color: var(--ks-icon-inactive);
+    color: var(--ks-text-dim);
     cursor: grab;
 
     &:active {
         cursor: grabbing;
-    }
-
-    :deep(svg) {
-        width: 14px;
-        height: 14px;
     }
 }
 

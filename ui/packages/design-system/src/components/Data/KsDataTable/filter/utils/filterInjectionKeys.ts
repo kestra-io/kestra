@@ -34,6 +34,7 @@ export interface FilterContext {
     addFilter: (filter: AppliedFilter, groupId?: string) => void;
     updateFilter: (filter: AppliedFilter) => void;
     moveFilter: (filterId: string, targetGroupId: string) => void;
+    placeFilter: (filterId: string, targetLeafId: string, targetIndex: number) => void;
     wrapGroups: (sourceGroupId: string, targetGroupId: string) => void;
     unwrapGroup: (wrapperId: string) => void;
     setTopLogical: (op: LogicalOperator) => void;

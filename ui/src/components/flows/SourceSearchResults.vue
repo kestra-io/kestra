@@ -1,0 +1,174 @@
+<template>
+    <div class="source-search-results" data-test="source-search-results">
+        <KsEmpty v-if="!results || results.length === 0" />
+        <KsCollapse
+            v-else
+            v-model="expanded"
+            class="results-collapse"
+        >
+            <KsCollapseItem
+                v-for="item in results"
+                :key="`${item.model.namespace}.${item.model.id}`"
+                :name="`${item.model.namespace}.${item.model.id}`"
+                class="result-group"
+            >
+                <template #title>
+                    <span
+                        class="result-group-header"
+                        :class="{'result-group-header--selected': selectedKey === `${item.model.namespace}.${item.model.id}`}"
+                        data-test="source-search-group-header"
+                        @click.stop="emit('select', {namespace: item.model.namespace, id: item.model.id})"
+                    >
+                        <span class="result-group-namespace">{{ item.model.namespace }}.</span>
+                        <span class="result-group-id">{{ item.model.id }}</span>
+                        <span class="result-group-count">{{ t("search.match_count", {count: item.fragments.length}) }}</span>
+                    </span>
+                </template>
+
+                <div class="result-fragments">
+                    <div
+                        v-for="(fragment, idx) in item.fragments"
+                        :key="idx"
+                        class="result-fragment"
+                        data-test="source-search-fragment"
+                        @click="emit('select', {namespace: item.model.namespace, id: item.model.id})"
+                    >
+                        <pre v-html="sanitize(fragment)" class="fragment-pre" />
+                    </div>
+
+                    <div class="result-open-link">
+                        <router-link
+                            :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}"
+                            data-test="source-search-open-link"
+                        >
+                            {{ t("search.open_flow") }}
+                        </router-link>
+                    </div>
+                </div>
+            </KsCollapseItem>
+        </KsCollapse>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import {ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import _escape from "lodash/escape"
+
+    const props = defineProps<{
+        results: Array<{model: {namespace: string; id: string}; fragments: string[]}> | undefined
+        selectedKey: string | null
+        query: string
+    }>()
+
+    const emit = defineEmits<{
+        (e: "select", value: {namespace: string; id: string}): void
+    }>()
+
+    const {t} = useI18n()
+
+    const expanded = ref<string[]>([])
+
+    watch(
+        () => props.results,
+        (newResults) => {
+            if (newResults) {
+                expanded.value = newResults.map((item) => `${item.model.namespace}.${item.model.id}`)
+            } else {
+                expanded.value = []
+            }
+        },
+        {immediate: true},
+    )
+
+    function sanitize(content: string) {
+        return _escape(content)
+            .replaceAll("[mark]", "<mark>")
+            .replaceAll("[/mark]", "</mark>")
+    }
+</script>
+
+<style scoped lang="scss">
+.source-search-results {
+    height: 100%;
+    overflow-y: auto;
+    padding: var(--ks-spacing-2);
+}
+
+.results-collapse {
+    border: none;
+}
+
+.result-group {
+    margin-bottom: var(--ks-spacing-1);
+}
+
+.result-group-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+    cursor: pointer;
+
+    &--selected {
+        color: var(--ks-text-link);
+    }
+}
+
+.result-group-namespace {
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-sm);
+}
+
+.result-group-id {
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-sm);
+    font-weight: 600;
+}
+
+.result-group-count {
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
+    margin-left: auto;
+}
+
+.result-fragments {
+    padding: var(--ks-spacing-1) var(--ks-spacing-3);
+}
+
+.result-fragment {
+    cursor: pointer;
+    padding: var(--ks-spacing-1) var(--ks-spacing-2);
+    border-radius: var(--ks-radius-sm);
+    margin-bottom: var(--ks-spacing-1);
+
+    &:hover {
+        background-color: var(--ks-bg-hover);
+    }
+}
+
+.fragment-pre {
+    margin: 0;
+    font-size: var(--ks-font-size-xs);
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--ks-text-secondary);
+
+    :deep(mark) {
+        background-color: var(--ks-bg-warning);
+        color: var(--ks-text-primary);
+        border-radius: var(--ks-radius-xs);
+        padding: 0 var(--ks-spacing-1);
+    }
+}
+
+.result-open-link {
+    padding: var(--ks-spacing-1) var(--ks-spacing-2);
+    font-size: var(--ks-font-size-xs);
+
+    a {
+        color: var(--ks-text-link);
+    }
+}
+</style>
+

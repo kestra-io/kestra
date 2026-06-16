@@ -27,22 +27,24 @@
             </template>
 
             <template #table>
-                <template v-for="(item, _i) in flowStore.search" :key="`card-${_i}`">
-                    <KsCard class="mb-2" shadow="never">
-                        <template #header>
-                            <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
-                                {{ item.model.namespace }}.{{ item.model.id }}
-                            </router-link>
-                        </template>
-                        <template v-for="(fragment, _j) in item.fragments" :key="`pre-${_i}-${_j}`">
-                            <small>
-                                <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
-                            </small>
-                        </template>
-                    </KsCard>
-                </template>
-
-                <KsEmpty v-if="flowStore.search === undefined || flowStore.search.length === 0" />
+                <KsSplitter class="search-splitter">
+                    <KsSplitterPanel min="20%" size="35%" key="results">
+                        <SourceSearchResults
+                            :results="flowStore.search"
+                            :selectedKey="selectedKey"
+                            :query="searchQuery"
+                            @select="onSelect"
+                            data-test="source-search-results-pane"
+                        />
+                    </KsSplitterPanel>
+                    <KsSplitterPanel min="20%" key="preview">
+                        <SourceSearchPreview
+                            :selected="selected"
+                            :query="searchQuery"
+                            data-test="source-search-preview-pane"
+                        />
+                    </KsSplitterPanel>
+                </KsSplitter>
             </template>
         </KsDataTable>
     </section>
@@ -52,10 +54,11 @@
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import _escape from "lodash/escape"
     import TopNavBar from "../layout/TopNavBar.vue"
     import SearchField from "../layout/SearchField.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
+    import SourceSearchResults from "./SourceSearchResults.vue"
+    import SourceSearchPreview from "./SourceSearchPreview.vue"
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
@@ -69,6 +72,9 @@
     const flowStore = useFlowStore()
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
+    const selected = ref<{namespace: string; id: string} | null>(null)
+
+    const selectedKey = computed(() => selected.value ? `${selected.value.namespace}.${selected.value.id}` : null)
 
     const routeInfo = computed(() => ({
         title: (route.meta?.title as string) ?? t("source search"),
@@ -86,6 +92,8 @@
         get: () => route.query?.namespace as [],
         set: (val) => onNamespaceChange(val),
     })
+
+    const searchQuery = computed(() => (route.query.q as string) ?? "")
 
     function onNamespaceChange(val: any) {
         const query = {...route.query}
@@ -117,13 +125,32 @@
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
         return JSON.stringify(filters)
     })
+
     watch(filterQueryKey, () => {
+        selected.value = null
         dataTable.value?.resetAndReload()
     })
 
-    function sanitize(content: string) {
-        return _escape(content)
-            .replaceAll("[mark]", "<mark>")
-            .replaceAll("[/mark]", "</mark>")
+    watch(urlPage, () => {
+        selected.value = null
+    })
+
+    function onSelect(item: {namespace: string; id: string}) {
+        selected.value = item
     }
 </script>
+
+<style scoped lang="scss">
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.search-splitter {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+}
+</style>

@@ -2213,6 +2213,13 @@
       "errors": {
         "label": "{count} Error(s)"
       }
+    },
+    "search": {
+      "match_count": "{count} match | {count} matches",
+      "open_flow": "Open flow",
+      "preview_empty_title": "Select a result to preview",
+      "preview_empty_description": "Click on a flow in the results list to preview its source here",
+      "preview_error": "Failed to load flow source"
     }
   }
 }

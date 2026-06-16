@@ -30,68 +30,27 @@
 
     import type {Chart} from "../types.ts"
     import {FilterObject} from "../../../utils/filters"
-
-    const QUICK_FILTER_TABS = [
-        {
-            key: "all",
-            token: "--ks-text-link",
-            states: [] as string[],
-        },
-        {
-            key: "running",
-            token: "--ks-status-running",
-            states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING"],
-        },
-        {
-            key: "paused",
-            token: "--ks-status-paused",
-            states: ["PAUSED", "BREAKPOINT"],
-        },
-        {
-            key: "success",
-            token: "--ks-status-success",
-            states: ["SUCCESS"],
-        },
-        {
-            key: "warning",
-            token: "--ks-status-warning",
-            states: ["WARNING"],
-        },
-        {
-            key: "failed",
-            token: "--ks-status-error",
-            states: ["FAILED", "KILLED", "CANCELLED", "SKIPPED", "RETRIED"],
-        },
-    ] as const
-
-    type TabKey = (typeof QUICK_FILTER_TABS)[number]["key"]
+    import {
+        QUICK_FILTER_TABS,
+        QuickFilterTabKey,
+        hasQuickFilters as chartHasQuickFilters,
+        stateFilterForTab,
+    } from "./quickFilters"
 
     const props = defineProps<{chart: Chart}>()
 
-    const emit = defineEmits<{change: [filter: FilterObject | null, tab: TabKey]}>()
+    const emit = defineEmits<{change: [filter: FilterObject | null, tab: QuickFilterTabKey]}>()
 
     const {t} = useI18n({useScope: "global"})
 
-    const EXECUTIONS_DATA_TYPE = "io.kestra.plugin.core.dashboard.data.Executions"
+    const hasQuickFilters = computed(() => chartHasQuickFilters(props.chart))
 
-    const hasQuickFilters = computed(() => {
-        if (props.chart.data?.type !== EXECUTIONS_DATA_TYPE) return false
-        const columns = props.chart.data?.columns ?? {}
-        return Object.values(columns).some((col: Record<string, any>) => col.field === "STATE")
-    })
+    const activeTab = ref<QuickFilterTabKey>("all")
 
-    const activeTab = ref<TabKey>("all")
-
-    const stateFilter = (key: TabKey): FilterObject | null => {
-        const tab = QUICK_FILTER_TABS.find((t) => t.key === key)
-        if (!tab?.states.length) return null
-        return {field: "state", operation: "IN", value: [...tab.states]}
-    }
-
-    const selectTab = (key: TabKey) => {
+    const selectTab = (key: QuickFilterTabKey) => {
         if (activeTab.value === key) return
         activeTab.value = key
-        emit("change", stateFilter(key), key)
+        emit("change", stateFilterForTab(props.chart, key), key)
     }
 </script>
 

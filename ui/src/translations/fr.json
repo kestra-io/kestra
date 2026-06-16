@@ -736,6 +736,7 @@
     },
     "files": "Fichiers",
     "filter by log level": "Filtrer par niveau de log",
+    "filter by status": "Filtrer les exécutions par statut {status}",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "Sombre 2.0",
             "light": "Lumière",
             "sync": "Synchroniser avec le système"
+          },
+          "confirmations": {
+            "color_mode": "Votre interface utilise maintenant le thème `{mode}`."
           },
           "descriptions": {
             "color_mode": "Choisissez votre thème d'interface préféré.",

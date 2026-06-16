@@ -93,6 +93,7 @@ main {
     section.container:has(:is(.ks-data-table-wrapper, .full-width-table)),
     section.main-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
         padding-inline: 0;
+        margin-top: var(--ks-spacing-4);
         margin-bottom: 0;
         &:has(.empty-state) {
             flex: 1;

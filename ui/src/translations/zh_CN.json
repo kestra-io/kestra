@@ -736,6 +736,7 @@
     },
     "files": "文件",
     "filter by log level": "按日志级别过滤",
+    "filter by status": "按{status}状态筛选执行",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -1740,6 +1741,9 @@
             "dark_2": "深色模式 2.0",
             "light": "浅色模式",
             "sync": "与系统同步"
+          },
+          "confirmations": {
+            "color_mode": "您的界面现在使用 `{mode}` 主题。"
           },
           "descriptions": {
             "color_mode": "选择您偏好的界面主题。",

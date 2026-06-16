@@ -18,14 +18,6 @@
         :defaultScope="false"
         :defaultTimeRange="false"
     />
-    <QuickFilters
-        v-if="triggersWithType.length"
-        :intervals="quickIntervals"
-        :timeRange="selectedTimeRange"
-        :intervalLabel="t('filter.timeRange_trigger.label')"
-        :showLevel="false"
-        @update:timeRange="onQuickFilterTimeRange"
-    />
 
     <KsDataTable
         v-if="triggersWithType.length"
@@ -332,13 +324,10 @@
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useTriggerFilter} from "../filter/configurations"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
-    import QuickFilters from "../filter/QuickFilters.vue"
 
     const triggerFilter = useTriggerFilter()
 
     const {t} = useI18n()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
     const route = useRoute()
     const router = useRouter()
 

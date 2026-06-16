@@ -24,11 +24,12 @@
                         @filter="onFilterRouteSync"
                     />
                     <QuickFilters
-                        :showLevel="false"
-                        :intervals="quickIntervals"
-                        :timeRange="selectedTimeRange"
-                        :intervalLabel="t('filter.timeRange_log.label')"
-                        @update:time-range="onQuickFilterTimeRange"
+                        v-if="!hasComplexFilters"
+                        :levels="VALUES.LEVELS"
+                        :level="effectiveLogLevel?.value"
+                        :levelLabel="t('filter.level_log_executions.label')"
+                        :showInterval="false"
+                        @update:level="selectLevel"
                     />
                 </template>
 
@@ -109,6 +110,7 @@
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
+    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
@@ -129,7 +131,6 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
-        normalizeRouteTimeRangeFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
@@ -173,6 +174,7 @@
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
+    const {hasComplexFilters} = useComplexFilters()
     const quickIntervals = computed(() => [
         {label: t("datepicker.short.15m"), value: "PT15M"},
         {label: t("datepicker.short.1h"), value: "PT1H"},
@@ -275,10 +277,6 @@
     const charts = computed(() => [
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
-
-    const onQuickFilterTimeRange = (value: string) => {
-        router.replace({query: normalizeRouteTimeRangeFilter(route.query, value)})
-    }
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query

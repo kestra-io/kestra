@@ -628,6 +628,7 @@ public abstract class AbstractRunnerTest {
         afterExecutionTestCase.shouldCallTasksAfterListener(execution);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent execution-state race ('currently at the ...')")
     @Test
     @LoadFlows(value = { "flows/valids/waitfor-nested.yaml" }, tenantId = "waitfornested")
     void waitforNestedThreeLevels() throws Exception {

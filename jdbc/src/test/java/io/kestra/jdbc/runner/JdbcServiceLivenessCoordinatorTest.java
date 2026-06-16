@@ -254,6 +254,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         newWorker.close();
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent liveness re-emit timing")
     @Test
     void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
         String workerGroup = IdUtils.create();

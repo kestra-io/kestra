@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
@@ -145,6 +146,7 @@ class WorkerTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent 'Await failed to terminate within PT1M'")
     @Test
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);

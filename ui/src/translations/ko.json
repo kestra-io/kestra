@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "북마크",
     "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
     "bulk actions": "일괄 작업",
@@ -217,6 +218,7 @@
     "copy url": "URL 복사",
     "copy_and_close": "복사하고 닫기",
     "copy_to_clipboard": "클립보드에 복사",
+    "copy_value": "Copy value",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
     "create_flow": "Flow 생성",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "비디오 보기"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "종속성",
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
     "dependencies loaded": "종속성이 로드되었습니다",
@@ -472,6 +478,7 @@
     "display metric for specific task": "특정 task의 메트릭 표시",
     "display output for specific task": "특정 task의 출력 표시",
     "display topology for flow": "Flow의 토폴로지 표시",
+    "display_settings": "Display settings",
     "docs": "문서",
     "documentation": {
       "documentation": "문서",
@@ -482,6 +489,7 @@
     "download": "다운로드",
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
     "drop items here": "여기에 항목을 드롭하세요",
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
@@ -574,8 +582,8 @@
         "title": "이 서버에는 아직 등록된 tool flow가 없습니다."
       },
       "panels": {
-        "content": "Flow 코드 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Context)을 선택하세요.",
-        "title": "현재 열려 있는 패널이 없습니다."
+        "content": "모든 패널을 닫았습니다.  \n계속하려면 위의 탭을 선택하세요.",
+        "title": "패널이 열려 있지 않음"
       },
       "pluginDefaults": {
         "content": "플러그인 기본값을 사용하면 플러그인 구성을 중앙에서 관리하고 namespace의 모든 flow와 공유할 수 있습니다.",
@@ -700,6 +708,7 @@
     "expand all": "모두 확장",
     "expand dependencies": "종속성 확장",
     "expand error": "실패한 task만 확장",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "만료",
     "expiration date": "만료 날짜",
     "export": "내보내기",
@@ -727,6 +736,10 @@
     },
     "files": "파일",
     "filter by log level": "Log 레벨로 필터링",
+    "filter by status": "{status} 상태로 실행 필터링",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "사이에",
@@ -842,6 +855,7 @@
     "flows imported": "Flow가 가져왔습니다.",
     "focus task": "문서를 보려면 요소를 클릭하세요.",
     "fold_all_multi_lines": "모든 다중 라인 접기",
+    "font size": "Font size",
     "for flow": "flow용",
     "force run": "강제 실행",
     "force run confirm": "실행 <code>{id}</code>을(를) 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동합니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
@@ -928,6 +942,7 @@
     "log expand setting": "기본 Log 표시",
     "logExporters": "로그 Exporters",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "기본 보기",
       "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시",
@@ -1375,6 +1390,7 @@
     "open in new tab": "새 탭에서",
     "open in same tab": "동일한 탭에서",
     "open sidebar": "사이드바 열기",
+    "open_page": "Open page",
     "optional": "선택 사항",
     "original execution": "원래 실행",
     "originalCreatedDate": "원래 생성 날짜",
@@ -1509,6 +1525,7 @@
     },
     "port": "포트",
     "prefill inputs": "미리 채우기",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "이전 실행",
     "preview": {
       "auto-view": "자동 보기",
@@ -1725,6 +1742,9 @@
             "light": "라이트",
             "sync": "시스템과 동기화"
           },
+          "confirmations": {
+            "color_mode": "인터페이스가 이제 `{mode}` 테마를 사용합니다."
+          },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
@@ -1839,6 +1859,7 @@
     "show details": "세부 정보 표시",
     "show documentation": "문서 보기",
     "show more details": "자세한 정보 보기",
+    "show raw": "Show raw",
     "show task condition": "작업 상태 표시",
     "show task documentation": "task 문서 보기",
     "show task documentation in editor": "편집기에서 task 문서 보기",
@@ -1848,6 +1869,7 @@
     "showLess": "덜 보기",
     "showMore": "더 보기",
     "side-by-side": "나란히",
+    "similar lines": "similar lines",
     "skipped": "건너뜀",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {

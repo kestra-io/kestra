@@ -54,7 +54,6 @@
 <style lang="scss" scoped>
 .customize-columns-panel {
     height: fit-content;
-    max-height: 327px;
     display: flex;
     flex-direction: column;
     border-radius: 0.5rem;
@@ -122,21 +121,5 @@
     font-size: var(--ks-font-size-sm);
     font-weight: 400;
     line-height: 1.375rem;
-}
-
-:deep(.kel-button.selected) {
-    color: var(--ks-status-success);
-
-    &:hover {
-        color: var(--ks-text-success);
-    }
-}
-
-:deep(.kel-button.unselected) {
-    color: var(--ks-text-dim);
-
-    &:hover {
-        color: var(--ks-text-secondary);
-    }
 }
 </style>

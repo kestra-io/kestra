@@ -152,10 +152,10 @@ WithRouterLinkInMarkdown.args = argsDefaults("INFO", "Created new execution [[li
 // check that the proper links were created from the message
 WithRouterLinkInMarkdown.play = async ({canvasElement}) => {
     const can = within(canvasElement);
-    await waitFor(() => expect(can.getAllByRole("link")).toHaveLength(5));
+    await waitFor(() => expect(can.getAllByRole("link")).toHaveLength(2));
     const links = can.getAllByRole("link");
-    expect(links[3]).toHaveTextContent("4Q9z27FJ26FRIhdv037HtF");
-    expect(links[4]).toHaveTextContent("company.team.child");
+    expect(links[0]).toHaveTextContent("4Q9z27FJ26FRIhdv037HtF");
+    expect(links[1]).toHaveTextContent("company.team.child");
 }
 
 export const WithExcludedMetas = Template.bind({});

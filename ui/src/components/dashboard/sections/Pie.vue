@@ -1,52 +1,65 @@
 <template>
-    <div
-        class="d-flex flex-row align-items-center justify-content-center chart chart-container"
-    >
-        <KsPie
-            v-if="generated !== undefined"
-            :data="pieData"
-            :loading="false"
-            :donut="chartOptions?.graphStyle !== 'PIE'"
-            :options="pieOptions"
-            :disableFeatures="[ChartFeature.LEGEND]"
-            :tooltipType="TooltipType.EXTERNAL"
-            @echarts-click="onSegmentClick"
-        />
-        <div
-            v-if="generated !== undefined"
-            class="pie-center-label"
-        >
-            {{ totalValue }}
+    <div class="pie">
+        <div v-if="generated?.results?.length" class="chart">
+            <KsPie
+                ref="ksPieRef"
+                :data="pieData"
+                :loading="false"
+                :donut="chartOptions?.graphStyle !== 'PIE'"
+                :radius="['52%', '80%']"
+                :options="pieOptions"
+                :disableFeatures="[ChartFeature.LEGEND]"
+                :tooltipType="TooltipType.EXTERNAL"
+                @echarts-click="onSegmentClick"
+            />
+            <div class="pie-center-label">
+                <div class="pie-center-label__total">{{ totalValue }}</div>
+                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ t("success") }}</div>
+            </div>
         </div>
-        <KsEmpty v-else />
+        <KsTableEmpty v-else class="empty" />
+
+        <ChartLegend
+            v-if="legendItems.length"
+            :items="legendItems"
+            :maxVisible="6"
+            center
+            :chart="ksPieRef"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, PropType, watch} from "vue"
-
-    import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor, chartSegmentDrillDown} from "../composables/charts"
-    import {FilterObject} from "../../../utils/filters"
-    import {KsPie, durationUtils} from "@kestra-io/design-system"
-    import type {KsChartSeriesItem} from "@kestra-io/design-system"
-    import {TooltipType, ChartFeature} from "@kestra-io/design-system"
-    import {useMiscStore} from "override/stores/misc"
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
 
     import moment from "moment"
+    import {KsPie, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
-    import {useRoute, useRouter} from "vue-router"
-
-    const route = useRoute()
-    const router = useRouter()
+    import {Chart, useChartGenerator} from "../composables/useDashboards"
+    import {getConsistentHEXColor} from "../composables/charts"
+    import {useChartDrillDown} from "../composables/chartDrillDown"
+    import ChartLegend from "./ChartLegend.vue"
+    import {FilterObject} from "../../../utils/filters"
 
     defineOptions({inheritAttrs: false})
-    const props = defineProps({
-        dashboardId: {type: String, required: false, default: undefined},
-        chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
-        showDefault: {type: Boolean, default: false},
+
+    const props = withDefaults(defineProps<{
+        dashboardId?: string;
+        chart: Chart;
+        filters?: FilterObject[];
+        showDefault?: boolean;
+    }>(), {
+        dashboardId: undefined,
+        filters: () => [],
+        showDefault: false,
     })
+
+    const route = useRoute()
+    const {t} = useI18n()
+
+    const {drillDown} = useChartDrillDown(props.chart)
 
     const {chartOptions} = props.chart
     const columns = props.chart.data?.columns ?? {}
@@ -55,32 +68,28 @@
     const aggregator = Object.entries(columns).reduce<{
         value?: {label: string; key: string};
         field?: {label: string; key: string};
-    }>(
-        (result, [key, column]) => {
-            const col = column as Record<string, any>
-            const type = "agg" in col ? "value" : "field"
-            result[type] = {label: col.displayName ?? col.agg, key}
-            return result
-        },
-        {},
-    )
+    }>((result, [key, column]) => {
+        const col = column as Record<string, any>
+        result["agg" in col ? "value" : "field"] = {label: col.displayName ?? col.agg, key}
+        return result
+    }, {})
+
+    const ksPieRef = ref<InstanceType<typeof KsPie> | null>(null)
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
 
     function parseValue(value: unknown): string {
         const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
         return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
     }
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
-
     const pieData = computed<KsChartSeriesItem[]>(() => {
         const rawData = generated.value?.results as Record<string, any>[] | undefined
         if (!rawData) return []
 
         const results: Record<string, number> = Object.create(null)
-        rawData.forEach((value) => {
-            const field = parseValue(value[aggregator.field?.key ?? ""])
-            const aggregated = value[aggregator.value?.key ?? ""] as number
-            results[field] = (results[field] || 0) + aggregated
+        rawData.forEach((row) => {
+            const field = parseValue(row[aggregator.field?.key ?? ""])
+            results[field] = (results[field] || 0) + (row[aggregator.value?.key ?? ""] as number)
         })
 
         return Object.entries(results).map(([name, value]) => ({
@@ -90,25 +99,36 @@
         }))
     })
 
-    const totalValue = computed(() => {
-        const total = pieData.value.reduce((acc, item) => acc + Number(item.value), 0)
-        return isDuration ? durationUtils.humanDuration(total) : String(total)
+    const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
+
+    const totalValue = computed(() =>
+        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(),
+    )
+
+    const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))
+
+    const successRatio = computed(() => {
+        if (!total.value) return "0"
+        const success = Number(pieData.value.find((item) => item.name === "SUCCESS")?.value ?? 0)
+        return ((success / total.value) * 100).toFixed(1)
     })
 
+    const legendItems = computed(() =>
+        pieData.value.map((item) => ({
+            label: String(item.name),
+            color: (item.itemStyle as {color?: string} | undefined)?.color ?? "",
+            count: Number(item.value),
+        })),
+    )
 
-    const pieOptions = computed(() => {
-        const opts: Record<string, unknown> = {
-            roseType: "radius",
-            tooltip: {
-                formatter: (params: any) =>
-                    isDuration
-                        ? `${params.name}: ${durationUtils.humanDuration(params.value)} (${params.percent}%)`
-                        : `${params.name}: ${params.value} (${params.percent}%)`,
-            },
-        }
-
-        return opts
-    })
+    const pieOptions = computed(() => ({
+        tooltip: {
+            formatter: (params: any) =>
+                isDuration
+                    ? `${params.name}: ${durationUtils.humanDuration(params.value)} (${params.percent}%)`
+                    : `${params.name}: ${params.value} (${params.percent}%)`,
+        },
+    }))
 
     const dimensionColumn = computed(() => {
         const dimensionKey = aggregator.field?.key
@@ -117,43 +137,36 @@
 
     function onSegmentClick(params: any) {
         if (!params?.name) return
-        const drillDown = chartSegmentDrillDown(props.chart, dimensionColumn.value, params.name)
-        if (!drillDown) return
-        router.push({
-            name: drillDown.name,
-            params: {tenant: route.params.tenant},
-            query: {
-                ...drillDown.query,
-                scope: "USER",
-                size: 100,
-                page: 1,
-                ...(drillDown.timeFiltered
-                    ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
-                    : {}),
-            },
-        })
+        drillDown([{column: dimensionColumn.value, value: params.name}])
     }
 
     function refresh() {
         return generate()
     }
 
-    defineExpose({
-        refresh,
-    })
+    defineExpose({refresh})
 
-    watch(() => route.params.filters, () => {
-        refresh()
-    }, {deep: true})
+    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">
-    .chart {
-        height: 231px;
+    .pie {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
-    .chart-container {
+    .empty {
+        min-height: 200px;
+    }
+
+    .chart {
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 231px;
+        margin-top: -2rem;
     }
 
     .pie-center-label {
@@ -161,10 +174,23 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 22px;
-        color: var(--ks-text-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         pointer-events: none;
         z-index: 1;
         white-space: nowrap;
+        text-align: center;
+
+        &__total {
+            font-size: 22px;
+            color: var(--ks-text-primary);
+            font-weight: 700;
+        }
+
+        &__success {
+            font-size: var(--ks-font-size-2xs);
+            color: var(--ks-text-success);
+        }
     }
 </style>

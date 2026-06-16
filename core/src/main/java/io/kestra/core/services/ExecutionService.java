@@ -214,7 +214,10 @@ public class ExecutionService {
                 labels,
                 Optional.empty(),
                 createCommand.kind()
-            ).toBuilder().id(createCommand.executionId()).build()
+            ).toBuilder()
+            .id(createCommand.executionId())
+            .originalId(createCommand.executionId())
+            .build()
             .withScheduleDate(createCommand.scheduleDate())
             .withBreakpoints(createCommand.breakpoints())
             .withTrigger(createCommand.trigger());

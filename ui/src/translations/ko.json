@@ -736,6 +736,7 @@
     },
     "files": "파일",
     "filter by log level": "Log 레벨로 필터링",
+    "filter by status": "{status} 상태로 실행 필터링",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",

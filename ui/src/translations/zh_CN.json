@@ -736,6 +736,7 @@
     },
     "files": "文件",
     "filter by log level": "按日志级别过滤",
+    "filter by status": "按{status}状态筛选执行",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",

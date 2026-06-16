@@ -736,6 +736,7 @@
     },
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
+    "filter by status": "{status}ステータスで実行をフィルタリング",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",

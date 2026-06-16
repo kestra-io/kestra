@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.Iterables;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -492,11 +493,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                             log.debug("Can't poll on receive", e);
                         }
                     } catch (Exception e) {
-                        // Any other error (e.g. a lock-wait-timeout escaping the transaction retryer) must NOT
-                        // kill the polling thread: if it dies, the consumer is silently lost and messages pile up
-                        // forever with consumers = NULL (no consumer, no clean). Log it, back off, and keep polling.
-                        log.error("Unexpected error while polling the '{}' queue, retrying after backoff", queueType(), e);
-                        sleep = configuration.maxPollInterval;
+                        // Fail fast: an unrecoverable error must not silently kill just this poll thread and leave the
+                        // process running blind (no consumer, no clean), nor loop forever without progress. Stop the loop
+                        // and shut the server down so it restarts and the un-acked message is redelivered.
+                        log.error("Fatal error while polling the '{}' queue. Initiating shutdown.", queueType(), e);
+                        running.set(false);
+                        KestraContext.getContext().shutdown();
                     }
                 }
 

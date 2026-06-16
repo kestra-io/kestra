@@ -215,21 +215,26 @@ class MiscControllerTest {
             ).as("can create a Flow with webhook when authenticated")
                 .doesNotThrowAnyException();
 
-            // Use exchange() instead of retrieve() so the client does not throw on non-2xx responses.
             // The test verifies the auth property: webhooks must be reachable without credentials even
             // when basic-auth is globally enabled.  A 401/403 would mean the webhook is incorrectly
             // protected; any other status (200, 409, 500 …) is acceptable here.
-            var webhookResponse = client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/{namespace}/{flowId}/{key}"
-                        .replace("{namespace}", namespace)
-                        .replace("{flowId}", flowId)
-                        .replace("{key}", key),
-                    flowWithWebhook
-                ), String.class
-            );
-            assertThat(webhookResponse.getStatus().getCode())
-                .as("webhook must be reachable without credentials (got %s)", webhookResponse.getStatus())
+            // Capture the HTTP status whether the call succeeds or throws HttpClientResponseException.
+            int webhookStatus;
+            try {
+                webhookStatus = client.toBlocking().exchange(
+                    POST(
+                        "/api/v1/main/executions/webhook/{namespace}/{flowId}/{key}"
+                            .replace("{namespace}", namespace)
+                            .replace("{flowId}", flowId)
+                            .replace("{key}", key),
+                        flowWithWebhook
+                    ), String.class
+                ).getStatus().getCode();
+            } catch (HttpClientResponseException e) {
+                webhookStatus = e.getStatus().getCode();
+            }
+            assertThat(webhookStatus)
+                .as("webhook must be reachable without credentials")
                 .isNotEqualTo(HttpStatus.UNAUTHORIZED.getCode())
                 .isNotEqualTo(HttpStatus.FORBIDDEN.getCode());
         } finally {

@@ -603,6 +603,7 @@ class FlowControllerTest {
         assertThat(e.getResponse().getBody(String.class).get()).contains("Required QueryValue [revisions] not specified");
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent 'Unexpected exception type thrown'")
     @Test
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();

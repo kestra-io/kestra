@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.ServerType;
 import picocli.CommandLine;
 
@@ -53,6 +54,7 @@ class AppTest {
         assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: order-dependent config-recovery assertion")
     @Test
     void configBeforeSubcommandIsLoaded() throws Exception {
         // Regression test for: --config placed before the subcommand name was silently

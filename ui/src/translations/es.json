@@ -1682,7 +1682,8 @@
             "flow_default_tab": "Pestaña seleccionada al navegar a un flow.",
             "log_display": "Cómo se presentan los logs al abrir una ejecución.",
             "log_level": "Nivel mínimo de log mostrado en los logs de ejecución.",
-            "playground": "Ejecutar tasks individualmente en el editor de pruebas."
+            "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
+            "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers."
           },
           "fields": {
             "auto_refresh_interval": "Intervalo de Auto Refresh",
@@ -1695,7 +1696,8 @@
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado",
             "multi_panel_editor": "Editor de Panel Múltiple",
-            "playground": "Área de pruebas"
+            "playground": "Área de pruebas",
+            "triggers_default_tab": "Pestaña de Triggers Predeterminados"
           },
           "label": "Configuración Principal"
         },

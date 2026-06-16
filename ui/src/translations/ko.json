@@ -1682,7 +1682,8 @@
             "flow_default_tab": "flow로 이동할 때 선택된 탭.",
             "log_display": "실행을 열 때 로그가 표시되는 방식.",
             "log_level": "실행 로그에 표시되는 최소 log level.",
-            "playground": "편집기 플레이그라운드에서 개별적으로 task 실행."
+            "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
+            "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭."
           },
           "fields": {
             "auto_refresh_interval": "자동 새로고침 간격",
@@ -1695,7 +1696,8 @@
             "log_display": "기본 Log 표시",
             "log_level": "기본 Log 레벨",
             "multi_panel_editor": "멀티 패널 편집기",
-            "playground": "플레이그라운드"
+            "playground": "플레이그라운드",
+            "triggers_default_tab": "기본 Trigger 탭"
           },
           "label": "기본 구성"
         },

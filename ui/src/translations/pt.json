@@ -1682,7 +1682,8 @@
             "flow_default_tab": "Aba selecionada ao navegar para um flow.",
             "log_display": "Como os logs são apresentados ao abrir uma execução.",
             "log_level": "Nível mínimo de log mostrado nos logs de execução.",
-            "playground": "Execute tasks individualmente no editor playground."
+            "playground": "Execute tasks individualmente no editor playground.",
+            "triggers_default_tab": "Aba selecionada ao navegar para a página de triggers."
           },
           "fields": {
             "auto_refresh_interval": "Intervalo de Atualização Automática",
@@ -1695,7 +1696,8 @@
             "log_display": "Exibição de Log Padrão",
             "log_level": "Nível de Log Padrão",
             "multi_panel_editor": "Editor de Painel Múltiplo",
-            "playground": "Playground"
+            "playground": "Playground",
+            "triggers_default_tab": "Aba de Triggers Padrão"
           },
           "label": "Configuração Principal"
         },

@@ -1682,7 +1682,8 @@
             "flow_default_tab": "フローに移動するときに選択されたタブ。",
             "log_display": "実行を開いたときにログが表示される方法。",
             "log_level": "実行ログに表示される最小のLogレベル。",
-            "playground": "エディタープレイグラウンドでタスクを個別に実行します。"
+            "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
+            "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。"
           },
           "fields": {
             "auto_refresh_interval": "自動更新間隔",
@@ -1695,7 +1696,8 @@
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル",
             "multi_panel_editor": "マルチパネルエディタ",
-            "playground": "プレイグラウンド"
+            "playground": "プレイグラウンド",
+            "triggers_default_tab": "デフォルトトリガーのタブ"
           },
           "label": "メイン設定"
         },

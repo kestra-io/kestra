@@ -1682,7 +1682,8 @@
             "flow_default_tab": "Registerkarte ausgewählt beim Navigieren zu einem flow.",
             "log_display": "Wie Logs bei der Öffnung einer Ausführung dargestellt werden.",
             "log_level": "Minimale Log-Ebene, die in den Ausführungs-Logs angezeigt wird.",
-            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus."
+            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus.",
+            "triggers_default_tab": "Registerkarte ausgewählt beim Navigieren zur Trigger-Seite."
           },
           "fields": {
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
@@ -1695,7 +1696,8 @@
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene",
             "multi_panel_editor": "Multi-Panel-Editor",
-            "playground": "Spielplatz"
+            "playground": "Spielplatz",
+            "triggers_default_tab": "Standard-Trigger-Registerkarte"
           },
           "label": "Hauptkonfiguration"
         },

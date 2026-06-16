@@ -1682,7 +1682,8 @@
             "flow_default_tab": "Scheda selezionata durante la navigazione a un flow.",
             "log_display": "Come vengono presentati i log quando si apre un'esecuzione.",
             "log_level": "Livello minimo di log mostrato nei log di esecuzione.",
-            "playground": "Esegui i task singolarmente nel playground dell'editor."
+            "playground": "Esegui i task singolarmente nel playground dell'editor.",
+            "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger."
           },
           "fields": {
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
@@ -1695,7 +1696,8 @@
             "log_display": "Visualizzazione Log predefinita",
             "log_level": "Livello di Log predefinito",
             "multi_panel_editor": "Editor Multi Pannello",
-            "playground": "Playground"
+            "playground": "Playground",
+            "triggers_default_tab": "Scheda Trigger Predefiniti"
           },
           "label": "Configurazione principale"
         },

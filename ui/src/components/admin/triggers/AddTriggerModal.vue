@@ -1,7 +1,7 @@
 <template>
     <KsDialog
         v-model="visible"
-        width="500px"
+        width="40%"
         destroyOnClose
         appendToBody
     >

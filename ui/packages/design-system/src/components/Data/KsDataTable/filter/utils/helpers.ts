@@ -142,7 +142,7 @@ const writeFilter = (
                 query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = value.startDate.toISOString()
                 query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = value.endDate.toISOString()
             } else {
-                query[`${prefix}[${key}][${comparatorKey}]`] = value?.toString() ?? ""
+                query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
             }
             const dateFilter = (filter as any).meta?.dateFilter
             if (dateFilter) {
@@ -191,6 +191,29 @@ export const isValidFilter = (filter: Filter): boolean => {
     }
 }
 
+export const validStructureSignature = (groups: FilterGroup[]): string => {
+    const leafFilters = (leaf: LeafFilterGroup): string[] =>
+        leaf.filters
+            .filter(isValidFilter)
+            .map((f) => `${f.key} ${f.comparator} ${JSON.stringify(f.value)}`)
+            .sort()
+
+    const units = groups
+        .map((unit) => {
+            if (isWrapperGroup(unit)) {
+                const children = unit.children.map(leafFilters).filter((c) => c.length > 0)
+                if (children.length === 0) return null
+                if (children.length === 1) return {filters: children[0]}
+                return {logical: unit.logical, children}
+            }
+            const filters = leafFilters(unit as LeafFilterGroup)
+            return filters.length ? {filters} : null
+        })
+        .filter(Boolean)
+
+    return JSON.stringify(units)
+}
+
 export const getUniqueFilters = <T extends { key: string; comparator?: any }>(filters: T[]): T[] =>
     filters.filter((filter, index, self) =>
         index === self.findLastIndex(f =>
@@ -230,7 +253,7 @@ export const serializeFiltersToString = (query: LocationQuery): string => {
             append(String(value))
         }
     })
-    return lines.join("\n")
+    return lines.join("&")
 }
 
 const safeDecode = (s: string): string => {

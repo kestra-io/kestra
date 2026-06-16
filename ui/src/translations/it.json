@@ -736,6 +736,7 @@
     },
     "files": "File",
     "filter by log level": "Filtra per livello di log",
+    "filter by status": "Filtra le esecuzioni per stato {status}",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",

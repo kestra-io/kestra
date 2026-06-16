@@ -52,6 +52,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_dashboard.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
                         return VALUES.RELATIVE_DATE
@@ -69,6 +70,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     showComparatorSelection: true,
+                    colored: true,
                 },
                 {
                     key: "scope",
@@ -129,6 +131,7 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     description: t("filter.timeRange_dashboard.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
                         return VALUES.RELATIVE_DATE
@@ -161,6 +164,7 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_dashboard.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
                         return VALUES.RELATIVE_DATE

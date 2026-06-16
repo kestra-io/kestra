@@ -89,6 +89,7 @@
         "monaco-yaml": "5.3.1",
         "motion-v": "^2.3.0",
         "nprogress": "^0.2.0",
+        "openai": "^6.42.0",
         "oxlint": "^1.67.0",
         "patch-package": "^8.0.1",
         "path-browserify": "^1.0.1",

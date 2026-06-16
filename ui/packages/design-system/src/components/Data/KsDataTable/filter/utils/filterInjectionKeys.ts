@@ -6,7 +6,6 @@ export interface FilterContext {
     editingFilter: Ref<SavedFilter | undefined>;
 
     readOnly: ComputedRef<boolean>;
-    showOptions: ComputedRef<boolean>;
     chartVisible: ComputedRef<boolean>;
     hasFilterKeys: ComputedRef<boolean>;
     showSearchInput: ComputedRef<boolean>;
@@ -29,13 +28,13 @@ export interface FilterContext {
     }>;
 
     refreshData: () => void;
-    toggleOptions: () => void;
     closeEditFilter: () => void;
     removeFilter: (id: string) => void;
     updateChart: (value: boolean) => void;
     addFilter: (filter: AppliedFilter, groupId?: string) => void;
     updateFilter: (filter: AppliedFilter) => void;
     moveFilter: (filterId: string, targetGroupId: string) => void;
+    placeFilter: (filterId: string, targetLeafId: string, targetIndex: number) => void;
     wrapGroups: (sourceGroupId: string, targetGroupId: string) => void;
     unwrapGroup: (wrapperId: string) => void;
     setTopLogical: (op: LogicalOperator) => void;
@@ -49,6 +48,7 @@ export interface FilterContext {
     updateProperties: (columns: string[]) => void;
     deleteSavedFilter: (filter: SavedFilter) => void;
     resetToDefaults: () => void;
+    clearFilters: () => void;
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;
     updateSavedFilter: (id: string, name: string, description: string) => void;

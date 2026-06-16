@@ -70,7 +70,6 @@
         })
 
         toast.success(t("replayed"))
-        emit("executionTrigger")
     }
 </script>
 

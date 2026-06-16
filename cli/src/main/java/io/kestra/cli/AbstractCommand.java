@@ -223,6 +223,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
         );
     }
 
+    void setConfig(Path config) {
+        this.config = config;
+    }
+
     @SuppressWarnings({ "unused" })
     public Map<String, Object> propertiesFromConfig() {
         if (this.config.toFile().exists()) {

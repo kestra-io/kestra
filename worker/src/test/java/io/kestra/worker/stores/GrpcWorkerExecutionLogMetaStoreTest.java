@@ -8,6 +8,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.context.annotation.Property;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
@@ -17,6 +18,7 @@ import jakarta.inject.Inject;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
+@Property(name = "test.context.id", value = "grpc-exec-log")
 class GrpcWorkerExecutionLogMetaStoreTest extends AbstractGrpcMetaStoreTest {
 
     @Inject

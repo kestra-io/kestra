@@ -16,6 +16,7 @@ const meta: Meta<typeof KsExecutionStatus> = {
         icon: {control: "boolean"},
         glow: {control: "boolean"},
         title: {control: "text"},
+        clickable: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsExecutionStatus displays an execution status badge with optional icon, color-coded by status."}},
@@ -89,4 +90,16 @@ export const CustomTitle: Story = {
         template: "<div style=\"padding:24px\"><ks-execution-status v-bind=\"args\" /></div>",
     }),
     args: {status: "RUNNING", title: "In Progress", icon: true},
+}
+
+export const Clickable: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon clickable />
+            </div>
+        `,
+    }),
 }

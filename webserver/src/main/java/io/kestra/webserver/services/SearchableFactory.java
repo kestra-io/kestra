@@ -133,6 +133,8 @@ public class SearchableFactory {
                 (event, v) -> event.level() != null && event.level().toInt() >= toLevel(v).toInt())
             .searchableQueryFilterExtractor(QueryFilter.Field.LEVEL, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO,
                 (event, v) -> event.level() != null && event.level().toInt() <= toLevel(v).toInt())
+            .searchableQueryFilterExtractor(QueryFilter.Field.LEVEL, QueryFilter.Op.EQUALS,
+                (event, v) -> event.level() != null && event.level().toInt() == toLevel(v).toInt())
 
             .searchableQueryFilterExtractor(QueryFilter.Field.EXECUTION_ID, FollowLogEvent::executionId,
                 QueryFilter.Op.EQUALS, QueryFilter.Op.NOT_EQUALS, QueryFilter.Op.CONTAINS,

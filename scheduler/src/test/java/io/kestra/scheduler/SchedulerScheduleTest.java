@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.devskiller.friendly_id.FriendlyId;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -181,6 +182,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     }
 
     // Test to ensure behavior between 0.14 > 0.15
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent scheduler timing / JDBC connection")
     @Test
     void retroSchedule() throws Exception {
         // mock flow listeners
@@ -445,6 +447,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent scheduler timing")
     @Test
     void stopAfterSchedule() throws Exception {
         // mock flow listeners

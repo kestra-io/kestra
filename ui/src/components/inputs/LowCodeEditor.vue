@@ -21,6 +21,7 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
+            :showDetails="runnerShowDetails"
             :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
@@ -30,6 +31,7 @@
             @show-description="showDescription"
             @show-condition="showCondition"
             @show-custom-action="showCustomAction"
+            @show-details="onShowDetails"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @swapped-task="onSwappedTask"
@@ -199,6 +201,15 @@
             if (ca?.label && ca?.taskProp && ca?.lang) {
                 result[type] = ca
             }
+        }
+        return result
+    })
+
+    const runnerShowDetails = computed(() => {
+        const result: Record<string, {label: string; taskProp: string; lang: string}> = {}
+        for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
+            const label = (info as any)?.showDetailsLabel
+            if (label) result[type] = {label, taskProp: "", lang: ""}
         }
         return result
     })
@@ -546,6 +557,19 @@
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true
         isDrawerOpen.value = true
+    }
+
+    const onShowDetails = (event: {task: any}) => {
+        const task = event.task
+        taskModalCtx.value = {
+            taskType: task?.taskRunner?.type ?? task?.type,
+            task,
+            execution: execution.value,
+            namespace: props.namespace,
+            flowId: props.flowId,
+            metrics: taskMetrics(task?.id),
+        }
+        isTaskModalOpen.value = true
     }
 
     const onSwappedTask = (event: any) => {

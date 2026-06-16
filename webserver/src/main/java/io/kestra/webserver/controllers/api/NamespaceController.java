@@ -148,7 +148,7 @@ public class NamespaceController<N extends Namespace> {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Namespaces" }, summary = "List ids of namespaces the user can access for a given resource")
     public List<String> namespaceForResource(
-        @Parameter(description = "The resource permission to scope discovery (e.g. KVSTORE); only honored in Enterprise Edition") @Nullable @QueryValue(value = "resource") String resource) throws HttpStatusException {
+        @Parameter(description = "The resource permission to scope discovery (e.g. KVSTORE); only honored in Enterprise Edition") @NotNull @QueryValue(value = "resource") String resource) throws HttpStatusException {
         // Open source has no RBAC, so every namespace is accessible — the resource hint is honored only in Enterprise Edition.
         return Stream.concat(
                 flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream(),

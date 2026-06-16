@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -187,10 +188,10 @@ public class FlowTriggerService {
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
             // filter out Test Executions
-                execution.getKind() != null ||
-                // ensure flow & triggers are enabled
-                flow.isDisabled() || flow instanceof FlowWithException ||
-                flow.getTriggers() == null || flow.getTriggers().isEmpty()
+            (execution.getKind() != null && execution.getKind() != ExecutionKind.NORMAL) ||
+            // ensure flow & triggers are enabled
+            flow.isDisabled() || flow instanceof FlowWithException ||
+            flow.getTriggers() == null || flow.getTriggers().isEmpty()
         ) {
             return Collections.emptyList();
         }

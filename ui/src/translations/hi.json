@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "बुकमार्क्स",
     "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk actions": "सामूहिक क्रियाएँ",
@@ -217,6 +218,7 @@
     "copy url": "URL कॉपी करें",
     "copy_and_close": "कॉपी करें और बंद करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copy_value": "Copy value",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
     "create_flow": "फ़्लो बनाएं",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "वीडियो देखें"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "निर्भरताएँ",
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
     "dependencies loaded": "निर्भरताएँ लोड की गईं",
@@ -472,6 +478,7 @@
     "display metric for specific task": "विशिष्ट task के लिए मेट्रिक प्रदर्शित करें",
     "display output for specific task": "विशिष्ट task के लिए आउटपुट प्रदर्शित करें",
     "display topology for flow": "Flow के लिए टोपोलॉजी प्रदर्शित करें",
+    "display_settings": "Display settings",
     "docs": "डॉक्स",
     "documentation": {
       "documentation": "दस्तावेज़ीकरण",
@@ -482,6 +489,7 @@
     "download": "डाउनलोड करें",
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
     "drop items here": "यहाँ आइटम्स ड्रॉप करें",
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
@@ -700,6 +708,7 @@
     "expand all": "सभी विस्तारित करें",
     "expand dependencies": "निर्भरताएँ विस्तारित करें",
     "expand error": "केवल असफल Tasks विस्तारित करें",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "समाप्ति",
     "expiration date": "समाप्ति तिथि",
     "export": "निर्यात करें",
@@ -727,6 +736,10 @@
     },
     "files": "फ़ाइलें",
     "filter by log level": "Log स्तर द्वारा फ़िल्टर करें",
+    "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "के बीच",
@@ -842,6 +855,7 @@
     "flows imported": "फ़्लोज़ आयात किए गए",
     "focus task": "किसी भी तत्व पर क्लिक करें ताकि उसका दस्तावेज़ देखा जा सके।",
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
+    "font size": "Font size",
     "for flow": "फ्लो के लिए",
     "force run": "फोर्स रन",
     "force run confirm": "क्या आप सुनिश्चित हैं कि आप निष्पादन <code>{id}</code> को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: निष्पादन को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task निष्पादन बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को पुनः शुरू किया जाएगा।</li></ul>",
@@ -928,6 +942,7 @@
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "पूर्व-निर्धारित दृश्य",
       "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं",
@@ -1375,6 +1390,7 @@
     "open in new tab": "एक नए टैब में",
     "open in same tab": "उसी टैब में",
     "open sidebar": "साइडबार खोलें",
+    "open_page": "Open page",
     "optional": "वैकल्पिक",
     "original execution": "मूल निष्पादन",
     "originalCreatedDate": "मूल निर्माण तिथि",
@@ -1509,6 +1525,7 @@
     },
     "port": "पोर्ट",
     "prefill inputs": "पूर्व-भरण",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "पिछला निष्पादन",
     "preview": {
       "auto-view": "स्वचालित दृश्य",
@@ -1725,6 +1742,9 @@
             "light": "लाइट",
             "sync": "सिस्टम के साथ सिंक करें"
           },
+          "confirmations": {
+            "color_mode": "आपका इंटरफेस अब `{mode}` थीम का उपयोग कर रहा है।"
+          },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
             "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
@@ -1839,6 +1859,7 @@
     "show details": "विवरण दिखाएं",
     "show documentation": "दस्तावेज़ दिखाएं",
     "show more details": "अधिक विवरण दिखाएं",
+    "show raw": "Show raw",
     "show task condition": "कार्य की स्थिति दिखाएं",
     "show task documentation": "Task दस्तावेज़ दिखाएं",
     "show task documentation in editor": "संपादक में Task दस्तावेज़ दिखाएं",
@@ -1848,6 +1869,7 @@
     "showLess": "कम दिखाएं",
     "showMore": "और दिखाएँ",
     "side-by-side": "साइड-बाय-साइड",
+    "similar lines": "similar lines",
     "skipped": "छोड़ा गया",
     "slack support": "किसी भी प्रश्न को Slack के माध्यम से पूछें",
     "something_went_wrong": {

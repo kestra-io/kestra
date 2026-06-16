@@ -15,6 +15,7 @@
             @filter="onFilterChange"
         />
         <QuickFilters
+            v-if="!hasComplexFilters"
             :levels="VALUES.LEVELS"
             :level="effectiveSelectedLogLevel?.value"
             :showInterval="false"
@@ -216,6 +217,7 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
+    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
@@ -325,6 +327,7 @@
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
     const {VALUES} = useValues("logs")
+    const {hasComplexFilters} = useComplexFilters()
 
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 

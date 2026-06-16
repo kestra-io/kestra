@@ -329,6 +329,7 @@
     "trigger refresh": "Trigger refresh",
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
+    "filter by status": "Filter executions by {status} status",
     "topology-graph": {
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -1027,6 +1028,9 @@
             "dark_1": "Dark 1.0",
             "light": "Light",
             "sync": "Sync with system"
+          },
+          "confirmations": {
+            "color_mode": "Your interface is now using the `{mode}` theme."
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",

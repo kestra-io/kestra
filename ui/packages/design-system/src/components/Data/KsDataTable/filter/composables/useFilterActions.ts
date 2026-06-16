@@ -105,6 +105,10 @@ export function useFilterActions({
         tree.moveFilter(filterId, targetGroupId)
         updateRoute(false)
     }
+    const placeFilter = (filterId: string, targetLeafId: string, targetIndex: number) => {
+        tree.placeFilter(filterId, targetLeafId, targetIndex)
+        updateRoute(false)
+    }
     const wrapGroups = (sourceGroupId: string, targetGroupId: string) => {
         tree.wrapGroups(sourceGroupId, targetGroupId)
         updateRoute(false)
@@ -141,6 +145,7 @@ export function useFilterActions({
         removeFilter,
         updateFilter,
         moveFilter,
+        placeFilter,
         wrapGroups,
         unwrapGroup,
         setTopLogical,

@@ -392,7 +392,7 @@ A clean run reports `No missing keys. No extra keys.` for every language. Any li
 
 1. Identify gaps by running `check.js` (or by diffing the flattened `en.json` keys against each language file).
 2. Translate only the missing keys — do **not** re-translate keys that already have a value.
-3. Follow these translation rules (mirroring `generate_translations.py`):
+3. Follow these translation rules (mirroring `generate_translations.ts`):
    - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
    - **Preserve `{{placeholder}}` variables** exactly — do not translate the word inside the braces.

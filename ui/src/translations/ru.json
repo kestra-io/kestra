@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "Закладки",
     "bulk action async warning": "Это может занять несколько минут.",
     "bulk actions": "Массовые действия",
@@ -217,6 +218,7 @@
     "copy url": "Скопировать URL",
     "copy_and_close": "Копировать и закрыть",
     "copy_to_clipboard": "Копировать в буфер обмена",
+    "copy_value": "Copy value",
     "create": "Создать",
     "create first task": "Создайте свою первую задачу",
     "create_flow": "Создать Flow",
@@ -432,6 +434,10 @@
       },
       "watch_the_video": "Смотреть видео"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "Зависимости",
     "dependencies delete flow": "Этот flow имеет зависимости. Удаление его предотвратит выполнение их зависимостей.<br /><br /> Вот список затронутых flows:",
     "dependencies loaded": "Зависимости загружены",
@@ -472,6 +478,7 @@
     "display metric for specific task": "Показать метрику для конкретной задачи",
     "display output for specific task": "Показать вывод для конкретной задачи",
     "display topology for flow": "Показать топологию для flow",
+    "display_settings": "Display settings",
     "docs": "Документы",
     "documentation": {
       "documentation": "Документация",
@@ -482,6 +489,7 @@
     "download": "Скачать",
     "download logs": "Скачать логи",
     "download_logos": "Скачать пакет логотипов",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "Черновик изменений доступен в редакторе",
     "drop items here": "Перетащите элементы сюда",
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
@@ -700,6 +708,7 @@
     "expand all": "Развернуть все",
     "expand dependencies": "Развернуть зависимости",
     "expand error": "Развернуть только неудачные tasks",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "Срок действия",
     "expiration date": "Дата истечения",
     "export": "Экспорт",
@@ -727,6 +736,10 @@
     },
     "files": "Файлы",
     "filter by log level": "Фильтр по уровню log",
+    "filter by status": "Фильтровать выполнения по статусу {status}",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "между",
@@ -842,6 +855,7 @@
     "flows imported": "Потоки импортированы",
     "focus task": "Нажмите на любой элемент, чтобы увидеть его документацию.",
     "fold_all_multi_lines": "Свернуть все многострочные строки",
+    "font size": "Font size",
     "for flow": "для flow",
     "force run": "Принудительный запуск",
     "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение <code>{id}</code>?<br/><br/>WARNING: принудительный запуск выполнения не гарантирован и может создать дублирующие выполнения task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED tasks будут переведены в состояние RUNNING.</li><li>RUNNING tasks будут повторно отправлены.</li><li>QUEUED tasks будут извлечены из очереди.</li><li>PAUSED tasks будут возобновлены.</li></ul>",
@@ -928,6 +942,7 @@
     "log expand setting": "Отображение logs по умолчанию",
     "logExporters": "Экспортеры Log",
     "logs": "Логи",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "Вид по умолчанию",
       "compact_details": "Показать task логи в компактном виде, сгруппированном по каждой задаче",
@@ -1375,6 +1390,7 @@
     "open in new tab": "В новой вкладке",
     "open in same tab": "В той же вкладке",
     "open sidebar": "открыть боковую панель",
+    "open_page": "Open page",
     "optional": "Опционально",
     "original execution": "Оригинальное выполнение",
     "originalCreatedDate": "Оригинальная дата создания",
@@ -1509,6 +1525,7 @@
     },
     "port": "Порт",
     "prefill inputs": "Предзаполнение",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "Предыдущее выполнение",
     "preview": {
       "auto-view": "Автоматический просмотр",
@@ -1725,6 +1742,9 @@
             "light": "Светлый",
             "sync": "Синхронизировать с системой"
           },
+          "confirmations": {
+            "color_mode": "Ваш интерфейс теперь использует тему `{mode}`."
+          },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
@@ -1839,6 +1859,7 @@
     "show details": "Показать детали",
     "show documentation": "Показать документацию",
     "show more details": "Показать больше деталей",
+    "show raw": "Show raw",
     "show task condition": "Показать условие task",
     "show task documentation": "Показать документацию задачи",
     "show task documentation in editor": "Показать документацию задачи в редакторе",
@@ -1848,6 +1869,7 @@
     "showLess": "Показать меньше",
     "showMore": "Показать больше",
     "side-by-side": "бок о бок",
+    "similar lines": "similar lines",
     "skipped": "Пропущено",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {

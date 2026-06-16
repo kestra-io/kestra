@@ -18,12 +18,9 @@ const i18n = createI18n({
     locale: "en",
     messages: {
         en: {
-            search: {
+            source_search: {
                 match_count: "{count} match | {count} matches",
                 open_flow: "Open flow",
-                preview_empty_title: "Select a result to preview",
-                preview_empty_description: "Click on a flow in the results list to preview its source here",
-                preview_error: "Failed to load flow source",
             },
         },
     },
@@ -41,7 +38,7 @@ const makeResult = (namespace: string, id: string, fragments: string[]) => ({
 describe("SourceSearchResults", () => {
     test("renders KsEmpty when results is undefined", async () => {
         const wrapper = mount(SourceSearchResults, {
-            props: {results: undefined, selectedKey: null, query: "test"},
+            props: {results: undefined, selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -51,7 +48,7 @@ describe("SourceSearchResults", () => {
 
     test("renders KsEmpty when results is empty array", async () => {
         const wrapper = mount(SourceSearchResults, {
-            props: {results: [], selectedKey: null, query: "test"},
+            props: {results: [], selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -65,7 +62,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: null, query: "match"},
+            props: {results, selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -79,7 +76,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: null, query: "hit"},
+            props: {results, selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -98,7 +95,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: null, query: "term"},
+            props: {results, selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -116,7 +113,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: null, query: "keyword"},
+            props: {results, selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -131,7 +128,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: null, query: "safe"},
+            props: {results, selectedKey: null},
             global: globalConfig,
         })
         await flushPromises()
@@ -149,7 +146,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: "ns.flow-a", query: "q"},
+            props: {results, selectedKey: "ns.flow-a"},
             global: globalConfig,
         })
         await flushPromises()
@@ -165,7 +162,7 @@ describe("SourceSearchResults", () => {
         ]
 
         const wrapper = mount(SourceSearchResults, {
-            props: {results, selectedKey: null, query: "frag"},
+            props: {results, selectedKey: null},
             global: globalConfig,
         })
 

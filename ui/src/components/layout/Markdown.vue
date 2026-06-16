@@ -26,8 +26,12 @@
 
 <script setup lang="ts">
     import {ref, watch, nextTick, onBeforeUnmount, onMounted, computed} from "vue";
+    import {useRouter} from "vue-router";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import * as Markdown from "../../utils/markdown";
+    import linkifyRouterMd from "../logs/linkify";
+
+    const router = useRouter();
 
     /**
      * Unified component props
@@ -144,6 +148,7 @@
         const root = markdownContainer.value;
         if (!root) return;
 
+        linkifyRouterMd(root, router);
         transformTables(root);
         setupCardToggles(root);
         setupCollapsibles(root);

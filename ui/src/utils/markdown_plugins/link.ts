@@ -19,7 +19,7 @@ export function linkTag(md: MarkdownIt) {
 
         const token = state.push("link_custom_open", "link", 1);
         token.markup = "[[link]]";
-        token.attrs = attrs;
+        token.attrs = attrs ? attrs.filter(([name, value]) => ["execution", "flowId", "namespace"].includes(name) && value) : [];
         state.push("link_custom_close", "link_custom", -1);
 
         state.pos = state.pos + match[0].length;

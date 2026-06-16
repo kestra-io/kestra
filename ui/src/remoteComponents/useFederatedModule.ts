@@ -115,19 +115,21 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
 
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []
                     const remoteId = `${remoteName}/${taskRoot}/${slotName}`
+                    console.warn(`[FederatedModule] loadRemote start: "${remoteId}"`)
                     let module: {default: any} | null = null
                     try {
                         module = await loadRemote<{default: any}>(remoteId)
                     } catch(err) {
-                        console.error(`[FederatedModule] Failed to load remote "${remoteId}":`, err)
+                        console.error(`[FederatedModule] loadRemote FAILED for "${remoteId}":`, err)
                         continue
                     }
 
                     if(!module){
-                        console.error(`[FederatedModule] Remote module "${remoteId}" did not load (null response)`)
+                        console.error(`[FederatedModule] loadRemote returned null for "${remoteId}"`)
                         continue
                     }
 
+                    console.warn(`[FederatedModule] loadRemote OK: "${remoteId}", default=`, module.default)
                     RemoteComponents[taskTypeKey] = markRaw(wrapWithErrorBoundary(module.default))
                 }
             }

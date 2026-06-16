@@ -406,8 +406,15 @@ public class DefaultRunContext extends RunContext {
                     logger().warn("Unable to delete the log file {}", logger.getLogFile().toPath());
                 }
                 return logFileURI;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                logger().warn("Failed to upload log file to storage", e);
+                if (Thread.currentThread().isInterrupted() || 
+                    e instanceof InterruptedException || 
+                    e.getCause() instanceof InterruptedException || 
+                    e.getClass().getName().contains("Interrupt") || 
+                    (e.getCause() != null && e.getCause().getClass().getName().contains("Interrupt"))) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
         return null;

@@ -2213,12 +2213,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
-    "yes": "네",
-    "source_search": {
-      "match_count": "{count} match | {count} matches",
-      "open_flow": "Open flow",
-      "preview_empty": "Select a result to preview — click on a flow in the results list to preview its source here",
-      "preview_error": "Failed to load flow source"
-    }
+    "yes": "네"
   }
 }

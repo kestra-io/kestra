@@ -2217,7 +2217,7 @@
     "source_search": {
       "match_count": "{count} match | {count} matches",
       "open_flow": "Open flow",
-      "preview_empty": "Select a result to preview — click on a flow in the results list to preview its source here",
+      "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source"
     }
   }

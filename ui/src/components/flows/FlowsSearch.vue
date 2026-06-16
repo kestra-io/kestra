@@ -11,6 +11,7 @@
             striped
             hover
             :total="flowStore.total"
+            fitHeight
         >
             <template #navbar>
                 <KsFormItem>

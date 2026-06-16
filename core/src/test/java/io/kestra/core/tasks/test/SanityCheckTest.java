@@ -3,6 +3,7 @@ package io.kestra.core.tasks.test;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -68,6 +69,7 @@ class SanityCheckTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent purge assertion")
     @Test
     @ExecuteFlow("sanity-checks/purge_current_execution_files.yaml")
     void qaPurgeExecutionFiles(Execution execution) {

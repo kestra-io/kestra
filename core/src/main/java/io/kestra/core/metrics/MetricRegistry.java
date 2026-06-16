@@ -8,6 +8,7 @@ import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.w3c.dom.css.Counter;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -496,7 +497,7 @@ public class MetricRegistry {
         var baseTags = new String[] {
             TAG_TRIGGER_TYPE, trigger.getType(),
         };
-        var labelTags = getLabelTags(trigger.getLabels());
+        var labelTags = getLabelTags(trigger.getLabels() != null ? trigger.getLabels() : List.of());
         return ArrayUtils.addAll(baseTags, labelTags);
     }
 
@@ -587,10 +588,12 @@ public class MetricRegistry {
      * @param labels The labels to evaluate against configured keys
      * @return tags based on matching label keys
      */
-    private String[] getLabelTags(@NonNull List<Label> labels) {
-        final List<String> configuredKeys = metricConfig.getLabels();
-        if (configuredKeys == null)
-            return null;
+    private String[] getLabelTags(List<Label> labels) {
+    final List<String> configuredKeys = metricConfig.getLabels();
+    if (configuredKeys == null)
+        return null;
+    if (labels == null)
+        return null;
 
         int size = configuredKeys.size() * 2;
         String[] tags = new String[size];

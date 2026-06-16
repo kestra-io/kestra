@@ -30,6 +30,14 @@ export function useBaseNamespacesStore() {
         return response.data;
     }
 
+    // Lists the ids of the namespaces the current user has a binding on for the given resource
+    // (e.g. KVSTORE), so resource-scoped users can discover their namespaces without requiring
+    // the NAMESPACE permission. Returns ids only — never namespace content.
+    async function namespacesWithBinding(this: any, options: {resource: string}): Promise<string[]> {
+        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/ids`, {params: options, ...VALIDATE});
+        return response.data;
+    }
+
     async function search(this: any, options: any) {
         const shouldCommit = options.commit !== false;
         delete options.commit;
@@ -242,6 +250,7 @@ export function useBaseNamespacesStore() {
     return {
         autocomplete,
         loadAutocomplete,
+        namespacesWithBinding,
         search,
         total,
         load,

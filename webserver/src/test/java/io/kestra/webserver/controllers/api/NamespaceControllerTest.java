@@ -112,6 +112,19 @@ public class NamespaceControllerTest {
     }
 
     @Test
+    void namespacesWithBinding() {
+        flow("my.ns");
+        flow("another.ns");
+
+        // Open source has no RBAC: the endpoint returns every namespace id; the resource hint is ignored.
+        List<String> ids = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/ids?resource=KVSTORE"),
+            Argument.listOf(String.class)
+        );
+        assertThat(ids).containsExactlyInAnyOrder("my", "my.ns", "another", "another.ns", "system");
+    }
+
+    @Test
     void namespaceTopology() {
         flowTopologyRepository.save(createSimpleFlowTopology("flow-a", "flow-b"));
         flowTopologyRepository.save(createSimpleFlowTopology("flow-a", "flow-c"));

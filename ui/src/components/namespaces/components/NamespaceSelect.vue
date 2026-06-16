@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted} from "vue"
+    import {computed, onMounted, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
@@ -45,14 +45,18 @@
 
     const {t} = useI18n();
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
-        taggable?: boolean
+        taggable?: boolean,
+        // When set, authorize namespace discovery through this resource permission (e.g. KVSTORE)
+        // instead of NAMESPACE, so users entitled to the resource can list their namespaces.
+        resource?: string
     }>(), {
         multiple: false,
-        clearable: true
+        clearable: true,
+        resource: undefined
     });
 
     const modelValue = defineModel<string | string[]>();
@@ -63,7 +67,17 @@
         [modelValue.value].flat().filter(Boolean)
     )
 
+    // In resource mode we discover namespaces through the resource-scoped ids endpoint (no
+    // NAMESPACE permission required) and filter client-side; otherwise we use namespace autocomplete.
+    const boundNamespaces = ref<string[]>([]);
+    const query = ref("");
+
     const options = computed(() => {
+        if (props.resource) {
+            return boundNamespaces.value
+                .filter(value => !query.value || value.toLowerCase().includes(query.value.toLowerCase()))
+                .map(value => ({id: value, label: value}));
+        }
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
             .map((value: any) => {
                 return {id: value, label: value}
@@ -71,13 +85,20 @@
     })
 
     const onSearch = (search: string) => {
+        if (props.resource) {
+            query.value = search;
+            return;
+        }
         namespacesStore.loadAutocomplete({
             q: search,
             ids: modelValue.value as string[] ?? [],
         })
     }
 
-    onMounted(() => {
+    onMounted(async () => {
+        if (props.resource) {
+            boundNamespaces.value = await namespacesStore.namespacesWithBinding({resource: props.resource});
+        }
         if (modelValue.value === undefined || modelValue.value.length === 0) {
             const defaultNamespaceVal = defaultNamespace();
             if (Array.isArray(modelValue.value)) {

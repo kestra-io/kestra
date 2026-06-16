@@ -208,6 +208,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        font-weight: var(--ks-font-weight-regular);
     }
 
     .inline-badge {

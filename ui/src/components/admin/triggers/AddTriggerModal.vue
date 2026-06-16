@@ -18,7 +18,7 @@
         </template>
 
         <div class="modal-body">
-            <KsTabs v-model="activeTab" type="box">
+            <KsTabs v-model="activeTab" type="segmented">
                 <KsTabPane name="form" :label="$t('triggers_add_modal_tab_form')">
                     <div class="form">
                         <KsForm labelPosition="left" labelWidth="122px" :model="formModel">
@@ -260,21 +260,9 @@
         }
     }
 
-    .modal-body :deep(.kel-tabs--box) {
+    .modal-body :deep(.kel-tabs--segmented) {
         .kel-tabs__header {
             margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-        }
-
-        .kel-tabs__nav-wrap {
-            background: transparent;
-            border-bottom: none;
-        }
-
-        .kel-tabs__nav {
-            width: fit-content;
-            background: var(--ks-bg-input);
-            border-radius: var(--ks-radius-lg);
-            border: 1px solid var(--ks-border-default);
         }
     }
 

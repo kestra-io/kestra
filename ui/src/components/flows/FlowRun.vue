@@ -10,7 +10,7 @@
             </KsAlert>
         </div>
         <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <KsTabs v-model="openTab" type="box">
+            <KsTabs v-model="openTab" type="segmented">
                 <KsTabPane name="inputs" :label="$t('inputs')" class="execution-pane">
                     <InputsForm
                         v-if="flow.inputs?.length"
@@ -382,13 +382,6 @@
         }
         100% {
             box-shadow: 0px 0px 50px 2px #8405FF;
-        }
-    }
-
-    :deep(.kel-tabs--box ) {
-        .kel-tabs__nav-wrap{
-            flex: initial;
-            border-radius: 8px;
         }
     }
 

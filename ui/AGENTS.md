@@ -48,7 +48,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
-- Use semantic tokens, not raw colors. `var(--ks-content-link)` communicates intent; `var(--ks-content-blue-500)` does not exist for a reason.
+- Use semantic tokens, not raw colors. `var(--ks-text-link)` communicates intent; `var(--ks-text-blue-500)` does not exist for a reason.
 - Co-locate component-specific tokens (e.g. `--ks-card-shadow`) in the component's SCSS, but always derive them from semantic tokens.
 
 ### When extending the design system
@@ -81,7 +81,7 @@ Reject (or ask to fix) anything that:
 - Use semantic HTML inside slots: real `<button>`, `<a>`, `<label>`, headings in document order. Don't fake interactivity with `<div @click>`.
 - `KsDialog`, `KsDrawer`, `KsPopover` already manage focus trap and `Escape`-to-close — don't reimplement these in feature code.
 - Keep tab order logical; rely on the DOM order rather than `tabindex` hacks.
-- Color contrast comes for free as long as you use `--ks-content-*` against `--ks-background-*` pairings. If you mix-and-match, verify with the browser inspector.
+- Color contrast comes for free as long as you use `--ks-text-*` against `--ks-background-*` pairings. If you mix-and-match, verify with the browser inspector.
 
 ### Internationalization
 
@@ -393,15 +393,17 @@ Tokens are CSS custom properties declared in [`ks-theme-light.scss`](packages/de
 
 Token families currently exposed:
 
-- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-bg-success`, `--ks-background-failed`, …)
-- `--ks-border-*` — primary / secondary borders, plus per-state borders
-- `--ks-content-*` — text colors (primary, inverse, link, link-hover, per-state)
-- `--ks-button-*` — button background and content variants (primary / secondary / success, idle / hover / active, …)
-- `--ks-badge-*`, `--ks-tag-*`, `--ks-card-*`, `--ks-dialog-*`, `--ks-dropdown-*`, `--ks-tooltip-*`, `--ks-select-*`, `--ks-scrollbar-*` — component-specific tokens
-- `--ks-status-*` — palette for charts; pair with `cssVar("--ks-status-success")` in JS
-- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-dots-*` — domain-specific surfaces
+- `--ks-bg-*` — backgrounds: surfaces (`base`, `surface`, `elevated`, `sidebar`, `input`, `overlay`, `scrim`), interaction states (`hover`, `hover-elevated`, `active`, `inactive`), component fills (`badge`, `tag`, `tag-hover`, `tag-active`, `tag-inactive`), plus per-state (`--ks-bg-success`, `--ks-bg-error`, `--ks-bg-warning`, `--ks-bg-info`)
+- `--ks-border-*` — `default` / `subtle` / `strong` borders, `focus`, plus per-state (`error`, `success`, `warning`, `info`)
+- `--ks-text-*` — text colors: `primary`, `secondary`, `dim`, `muted`, `inactive`, `link`, named (`blue`, `green`), plus per-state (`error`, `success`, `warning`, `info`)
+- `--ks-icon-*` — icon colors: `default`, `hover`, `active`, `inactive`, `muted`, plus per-state
+- `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
+- `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
+- `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
+- `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 
-When a needed token is missing, **add it** to both `ks-theme-light.scss`,`ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
+When a needed token is missing, **add it** to all three of `ks-theme-light.scss`, `ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
 
 **SCSS variables — only inside `ui/packages/design-system/`, never in feature code:**
 

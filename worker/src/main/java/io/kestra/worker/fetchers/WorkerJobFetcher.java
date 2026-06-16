@@ -318,7 +318,6 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         addPendingCompletions(requestBuilder);
 
         doSend(requestStream, requestBuilder.build());
-        lastSentPermits.set(initialPermits);
         // NOTE: the backoff is NOT reset here. Enqueuing the initial request does not prove the
         // transport is live, so the reset is deferred to confirmConnection(), invoked once the
         // channel reaches READY (see doOnLoop()).
@@ -449,7 +448,6 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
         try {
             doSend(observer, builder.build());
-            lastSentPermits.set(permits);
             log.trace("Sent permits={}, receivedJobs={}, completions={}", permits, receivedJobs, completions);
         } catch (Exception e) {
             log.error("Error sending permits: {}", e.getMessage());
@@ -484,16 +482,30 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     }
 
     /**
-     * Records a terminal-state signal for {@code jobId} to be flushed to the owning
-     * controller on the next outgoing {@link WorkerJobRequest}. The controller uses
-     * this to release the per-queue bucket slot reserved for the job, so reservations
-     * hold across the whole job lifetime instead of only until receipt.
+     * Records a terminal-state signal for {@code jobId} and flushes it to the owning
+     * controller immediately when the stream is connected. The controller uses this to
+     * release the per-queue bucket slot reserved for the job, so reservations hold across
+     * the whole job lifetime instead of only until receipt.
+     * <p>
+     * Flushing on completion — rather than waiting for the next {@link #PERMIT_CHECK_INTERVAL}
+     * loop tick — removes up to that interval of dead time before the controller can dispatch
+     * the next task gated by the same per-queue bucket. If the stream is not currently
+     * connected, or its initial connection-info request has not been sent yet (the controller
+     * rejects any other first message), the signal stays queued and is flushed by the next
+     * outgoing request (the initial request on reconnect, or the permit tick).
      */
     public void onJobCompleted(String jobId) {
         if (jobId == null || jobId.isEmpty()) {
             return;
         }
         pendingCompletions.offer(jobId);
+
+        // lastSentPermits is reset to -1 before a new stream's observer is published and only
+        // becomes >= 0 once its initial request was sent, so this gate cannot race a reconnect.
+        ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+        if (observer != null && lastSentPermits.get() >= 0) {
+            sendPermits(observer, calculatePermits());
+        }
     }
 
     /**
@@ -521,7 +533,6 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
         try {
             doSend(observer, builder.build());
-            lastSentPermits.set(permits);
             log.debug("Sent permit update: permits={}, completions={}", permits, completions);
         } catch (Exception e) {
             log.error("Error sending permit update: {}", e.getMessage());
@@ -544,9 +555,13 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         synchronized (streamLock) {
             try {
                 observer.onNext(request);
+                // Recorded under the lock so the last value sent on the wire and the last value
+                // recorded cannot diverge when multiple threads send concurrently.
+                lastSentPermits.set(request.getPermits());
             } catch (IllegalStateException e) {
                 log.warn("Stream cancelled, will reconnect: {}", e.getMessage());
-                requestObserverRef.set(null);
+                // CAS so a sender holding a stale observer cannot clobber a newer stream's observer.
+                requestObserverRef.compareAndSet(observer, null);
             }
         }
     }

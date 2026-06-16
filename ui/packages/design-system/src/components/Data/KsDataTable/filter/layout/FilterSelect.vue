@@ -148,7 +148,7 @@
 
         .form-label {
             display: block;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-xs);
             font-weight: 500;
             margin-bottom: 0.5rem;
@@ -164,7 +164,7 @@
             background: var(--ks-background-body);
             border: 1px solid var(--ks-border-primary);
             border-radius: var(--ks-border-radius-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             cursor: pointer;
             font-size: var(--ks-font-size-xs);
             font-weight: 500;

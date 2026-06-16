@@ -35,13 +35,6 @@
                     :defaultScope="false"
                     :defaultTimeRange="false"
                 />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange_trigger.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
-                />
             </template>
 
             <template #bulk-actions>
@@ -204,8 +197,6 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @change="(value: string | number | boolean) => setDisabled(scope.row, Boolean(value))"
-                            inlinePrompt
-                            class="switch-text"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -337,8 +328,6 @@
     import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
-    import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
-    import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
     import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
@@ -366,7 +355,6 @@
     const router = useRouter()
     const toast = useToast()
     const {t} = useI18n({useScope: "global"})
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
@@ -875,19 +863,8 @@
             }
         }
 
-        :deep(.kel-switch) {
-            .is-text {
-                padding: 0 3px;
-                color: inherit;
-            }
-
-            &.is-checked .is-text {
-                color: var(--ks-content-inverse);
-            }
-        }
-
         :deep(.kel-table) a {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -902,7 +879,7 @@
     }
 
     .header-tooltip-icon {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: help;
         display: inline-flex;
         align-items: center;
@@ -921,6 +898,6 @@
         max-width: 25rem;
         white-space: normal;
         word-break: break-word;
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 </style>

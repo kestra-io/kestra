@@ -1,6 +1,6 @@
 <template>
     <KsTable tableLayout="auto" fixed :data="variables">
-        <KsTableColumn prop="key" minWidth="500" :label="$t(keyLabelTranslationKey)">
+        <KsTableColumn prop="key" width="240" :label="$t(keyLabelTranslationKey)">
             <template #default="scope">
                 <code class="key-col">{{ scope.row.key }}</code>
             </template>

@@ -1686,6 +1686,7 @@
     "runners": "Runners",
     "select": "Select your {{section}}",
     "for flow": "for flow",
+    "forbidden system labels": "Only system.correlationId can be used as a system label",
     "confirm": "Confirm",
     "taskRunners": "Task Runners",
     "additionalPlugins": "Additional Plugins",

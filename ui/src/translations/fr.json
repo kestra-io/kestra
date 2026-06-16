@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Replier toutes les lignes multiples",
     "font size": "Font size",
     "for flow": "pour flow",
+    "forbidden system labels": "Seul system.correlationId peut être utilisé comme system label",
     "force run": "Forcer l'exécution",
     "force run confirm": "Êtes-vous sûr de vouloir forcer l'exécution <code>{id}</code>?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâche en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront retirées de la file d'attente.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
     "force run done": "L'exécution est forcée d'exécuter",

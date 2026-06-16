@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Свернуть все многострочные строки",
     "font size": "Font size",
     "for flow": "для flow",
+    "forbidden system labels": "Только system.correlationId можно использовать как system label",
     "force run": "Принудительный запуск",
     "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение <code>{id}</code>?<br/><br/>WARNING: принудительный запуск выполнения не гарантирован и может создать дублирующие выполнения task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED tasks будут переведены в состояние RUNNING.</li><li>RUNNING tasks будут повторно отправлены.</li><li>QUEUED tasks будут извлечены из очереди.</li><li>PAUSED tasks будут возобновлены.</li></ul>",
     "force run done": "Выполнение принудительного запуска",

@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Recolher Todas as Linhas Múltiplas",
     "font size": "Font size",
     "for flow": "para flow",
+    "forbidden system labels": "Apenas system.correlationId pode ser usado como label do sistema",
     "force run": "Forçar execução",
     "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefa duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
     "force run done": "A execução foi forçada a rodar",

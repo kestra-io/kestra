@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
     "font size": "Font size",
     "for flow": "フロー用",
+    "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "force run": "強制実行",
     "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
     "force run done": "実行は強制的にRUNNINGです。",

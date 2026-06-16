@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "折叠所有多行",
     "font size": "Font size",
     "for flow": "用于 flow",
+    "forbidden system labels": "只有 system.correlationId 可以用作系统 label",
     "force run": "强制运行",
     "force run confirm": "您确定要强制运行执行 <code>{id}</code> 吗？<br/><br/>WARNING: 强制运行执行不保证成功，并且可能会创建重复的任务执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED 任务将被移动到 RUNNING 状态。</li><li>RUNNING 任务将被重新提交。</li><li>QUEUED 任务将被取消排队。</li><li>PAUSED 任务将被恢复。</li></ul>",
     "force run done": "执行被强制运行",

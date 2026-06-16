@@ -35,6 +35,12 @@
                         <LabelInput
                             v-model:labels="executionLabels"
                         />
+                        <KsText v-if="haveBadLabels" type="danger" size="small">
+                            {{ $t('wrong labels') }}
+                        </KsText>
+                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
+                            {{ $t('forbidden system labels') }}
+                        </KsText>
                     </KsFormItem>
                     <KsFormItem
                         :label="$t('scheduleDate')"
@@ -76,12 +82,6 @@
                                 {{ $t(buttonText) }}
                             </KsButton>
                         </span>
-                        <KsText v-if="haveBadLabels" type="danger" size="small">
-                            {{ $t('wrong labels') }}
-                        </KsText>
-                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
-                            {{ $t('forbidden system labels') }}
-                        </KsText>
                     </KsFormItem>
                 </div>
             </div>

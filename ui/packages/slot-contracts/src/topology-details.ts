@@ -17,6 +17,5 @@ export default defineArtifactSlot(() => ({
     manifest: z.object({
         heightWithExecution: z.number().optional(),
         height: z.number().optional(),
-        showDetailsLabel: z.string().optional(),
     }),
 }))

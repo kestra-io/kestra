@@ -21,7 +21,6 @@
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :showDetails="runnerShowDetails"
             :showDetailsToggle="hasExtraDetails"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
@@ -31,7 +30,6 @@
             @show-description="showDescription"
             @show-condition="showCondition"
             @show-custom-action="showCustomAction"
-            @show-details="onShowDetails"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @swapped-task="onSwappedTask"
@@ -191,25 +189,16 @@
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
+    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, hasResolvedComponent: hasModalComponent} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
         const result: Record<string, { label: string; taskProp: string; lang: string }> = {}
         for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
             const ca = (info as any)?.customAction
-            if (ca?.label && ca?.taskProp && ca?.lang) {
+            if (ca?.label) {
                 result[type] = ca
             }
-        }
-        return result
-    })
-
-    const runnerShowDetails = computed(() => {
-        const result: Record<string, {label: string; taskProp: string; lang: string}> = {}
-        for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
-            const label = (info as any)?.showDetailsLabel
-            if (label) result[type] = {label, taskProp: "", lang: ""}
         }
         return result
     })
@@ -553,23 +542,26 @@
             ...(parsed?.finally ?? []),
         ]
         const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
+        const runnerType = fullTask?.taskRunner?.type as string | undefined
+        const modalType = (runnerType && hasModalComponent(runnerType)) ? runnerType
+            : hasModalComponent(fullTask?.type) ? fullTask?.type
+                : null
+        if (modalType) {
+            taskModalCtx.value = {
+                taskType: modalType,
+                task: fullTask,
+                execution: execution.value,
+                namespace: props.namespace,
+                flowId: props.flowId,
+                metrics: taskMetrics(fullTask?.id),
+            }
+            isTaskModalOpen.value = true
+            return
+        }
         selectedTask.value = fullTask
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true
         isDrawerOpen.value = true
-    }
-
-    const onShowDetails = (event: {task: any}) => {
-        const task = event.task
-        taskModalCtx.value = {
-            taskType: task?.taskRunner?.type ?? task?.type,
-            task,
-            execution: execution.value,
-            namespace: props.namespace,
-            flowId: props.flowId,
-            metrics: taskMetrics(task?.id),
-        }
-        isTaskModalOpen.value = true
     }
 
     const onSwappedTask = (event: any) => {

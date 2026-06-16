@@ -137,11 +137,16 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         },
     })
 
+    function hasResolvedComponent(taskType: string): boolean {
+        return !!RemoteComponents[taskType]
+    }
+
     return {
         RemoteComponent,
         taskAdditionalInfoRemote,
         manifestReady,
         resolveRemoteComponent,
+        hasResolvedComponent,
     }
 }
 

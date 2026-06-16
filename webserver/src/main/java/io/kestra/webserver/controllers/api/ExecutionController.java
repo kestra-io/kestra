@@ -76,7 +76,6 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
 import io.kestra.webserver.models.api.ApiLightExecution;
-import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -1036,7 +1035,7 @@ public class ExecutionController {
             }
         }
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk restart")
@@ -1304,7 +1303,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk change executions state")
@@ -1428,7 +1427,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk kill")
@@ -1580,7 +1579,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk resume")
@@ -1666,7 +1665,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk pause")
@@ -1757,7 +1756,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk replay")
@@ -2003,7 +2002,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk set labels")
@@ -2099,7 +2098,7 @@ public class ExecutionController {
             }
         }
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk unqueue")
@@ -2198,7 +2197,7 @@ public class ExecutionController {
             }
         }
         if (!invalids.isEmpty()) {
-            throw new BulkValidationException(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk force run")
@@ -2549,6 +2548,15 @@ public class ExecutionController {
                     );
             })
             .map(HttpResponse::ok);
+    }
+
+    /**
+     * Returns an HTTP 400 response typed as {@code MutableHttpResponse<T>} so callers with a
+     * specific return type do not need to declare a wildcard.  The cast is safe at runtime.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> MutableHttpResponse<T> bulkValidationError(BulkErrorResponse errorResponse) {
+        return (MutableHttpResponse<T>) HttpResponse.badRequest(errorResponse);
     }
 
     /**

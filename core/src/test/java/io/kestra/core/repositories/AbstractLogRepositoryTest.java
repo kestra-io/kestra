@@ -869,4 +869,47 @@ public abstract class AbstractLogRepositoryTest {
         List<LogEntry> expectedLogs,
         QueryFilter queryFilter) {
     }
+
+    @Test
+    void shouldFindByExecutionIdWithMinLevelFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+
+        logRepository.save(logEntry(tenant, Level.DEBUG, executionId).build());
+        logRepository.save(logEntry(tenant, Level.WARN, executionId).build());
+        logRepository.save(logEntry(tenant, Level.ERROR, executionId).build());
+
+        List<LogEntry> results = logRepository.findByExecutionId(tenant, executionId, Level.WARN);
+
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting(LogEntry::getLevel).containsExactlyInAnyOrder(Level.WARN, Level.ERROR);
+    }
+
+    @Test
+    void shouldFindWithNullTenantId() {
+        LogEntry saved = logRepository.save(logEntry(null, Level.INFO, "nullTenantExec").build());
+        try {
+            ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, null, null);
+
+            assertThat(results.stream().map(LogEntry::getExecutionId).toList())
+                .contains(saved.getExecutionId());
+        } finally {
+            logRepository.purge(Execution.builder().id(saved.getExecutionId()).build());
+        }
+    }
+
+    @Test
+    void shouldNotFindTenantLogsWhenQueryingNullTenant() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry saved = logRepository.save(logEntry(tenant, Level.INFO, "realTenantExec").build());
+
+        try {
+            ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, null, null);
+
+            assertThat(results.stream().map(LogEntry::getExecutionId).toList())
+                .doesNotContain(saved.getExecutionId());
+        } finally {
+            logRepository.purge(Execution.builder().id(saved.getExecutionId()).build());
+        }
+    }
 }

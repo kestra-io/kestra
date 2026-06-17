@@ -184,6 +184,8 @@
         margin: 0 !important;
         padding: 0;
         flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     section.no-overflow {

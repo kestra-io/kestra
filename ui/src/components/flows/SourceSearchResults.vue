@@ -159,7 +159,7 @@
 
 .result-fragment {
     cursor: pointer;
-    padding: var(--ks-spacing-1) var(--ks-spacing-2);
+    padding: var(--ks-spacing-1) 0;
     border-radius: var(--ks-radius-sm);
     margin-bottom: var(--ks-spacing-1);
 
@@ -195,7 +195,7 @@
 }
 
 .result-open-link {
-    padding: var(--ks-spacing-2) var(--ks-spacing-2) var(--ks-spacing-1);
+    padding: var(--ks-spacing-2) 0 var(--ks-spacing-1);
     font-size: var(--ks-font-size-xs);
 }
 

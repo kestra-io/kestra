@@ -16,12 +16,8 @@
                     <span
                         class="result-group-header"
                         :class="{'result-group-header--selected': selectedKey?.startsWith(`${item.model.namespace}.${item.model.id}#`)}"
-                        role="button"
-                        tabindex="0"
                         data-test="source-search-group-header"
                         @click.stop="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
-                        @keydown.enter.stop="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
-                        @keydown.space.stop.prevent="emit('select', {namespace: item.model.namespace, id: item.model.id, matchIndex: 0})"
                     >
                         <span class="result-group-namespace">{{ item.model.namespace }}.</span>
                         <span class="result-group-id">{{ item.model.id }}</span>
@@ -121,11 +117,6 @@
     width: 100%;
     padding-inline: var(--ks-spacing-3);
     cursor: pointer;
-
-    &:focus-visible {
-        outline: 2px solid var(--ks-border-focus);
-        outline-offset: 2px;
-    }
 
     &--selected {
         color: var(--ks-text-link);

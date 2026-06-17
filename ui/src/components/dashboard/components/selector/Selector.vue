@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, inject, watch} from "vue"
+    import {ref, computed, inject, watch} from "vue"
 
     import {useRoute, useRouter} from "vue-router"
     import Content from "./Content.vue"
@@ -104,7 +104,6 @@
         case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break
         default: await dashboardStore.saveDefaults({defaultHomeDashboard: id})
         }
-        dashboards.value = []
         await fetchDashboards()
     }
 
@@ -125,15 +124,8 @@
         dashboards.value = await dashboardStore.list({}, route)
     }
 
-    onBeforeMount(fetchDashboards)
-
-    const tenant = ref()
-    watch(() => route.params.tenant, (newTenant) => {
-        if (tenant.value !== newTenant) {
-            fetchDashboards()
-            tenant.value = newTenant
-        }
-    }, {immediate: true})
+    fetchDashboards()
+    watch(() => route.params.tenant, fetchDashboards)
 
 </script>
 

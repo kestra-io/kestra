@@ -8,7 +8,7 @@
         :mainIcon="store.hideMainIcon ? undefined : activeMenuIcon"
         :beta="store.beta"
         :isBookmarked="bookmarked"
-        :showBookmark
+        :hideBookmark
         :sidebarCollapsed="layoutStore.sideMenuCollapsed"
         :tabs="selectTabs"
         :activeTab="activeTabValue"
@@ -103,9 +103,9 @@
 
     const activeMenuIcon = computed(() => activeMenuItem.value?.icon?.element)
 
-    const showBookmark = computed(() => {
+    const hideBookmark = computed(() => {
         const href = activeMenuItem.value?.href
-        return !href || router.resolve(href).name !== route.name
+        return !!href && router.resolve(href).name === route.name
     })
 
     const currentFavURI = computed(() =>

@@ -10,7 +10,7 @@
         >
             <Dashboards
                 placement="bottom-start"
-                @dashboard="(value: any) => props.load?.(value)"
+                @dashboard="(value: string) => props.load?.(value)"
             >
                 <button type="button" class="dashboard-trigger">
                     <KsIcon size="sm" class="leading">

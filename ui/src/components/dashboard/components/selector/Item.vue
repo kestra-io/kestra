@@ -89,6 +89,10 @@
         display: none;
         align-items: center;
         gap: var(--ks-spacing-1);
+
+        .material-design-icon {
+            color: var(--ks-icon-muted);
+        }
     }
 }
 

@@ -1129,6 +1129,7 @@
     "light_version": "Легкая версия",
     "line-by-line": "построчно",
     "loaded x dependencies": "{count} зависимости загружены",
+    "loading": "Загрузка...",
     "log expand setting": "Отображение logs по умолчанию",
     "logExporters": "Экспортеры Log",
     "logs": "Логи",

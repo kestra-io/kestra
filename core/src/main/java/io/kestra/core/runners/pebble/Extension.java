@@ -62,6 +62,10 @@ public class Extension extends AbstractExtension {
     @Inject
     private HttpFunction httpFunction;
 
+    @Inject
+    @Nullable
+    private SubflowFunction subflowFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -172,6 +176,9 @@ public class Extension extends AbstractExtension {
         functions.put("nanoId", new NanoIDFunction());
         functions.put("tasksWithState", new TasksWithStateFunction());
         functions.put(HttpFunction.NAME, httpFunction);
+        if (subflowFunction != null) {
+            functions.put(SubflowFunction.NAME, subflowFunction);
+        }
         return functions;
     }
 

@@ -185,6 +185,26 @@ describe("FlowAutoCompletionProvider", () => {
         ]);
     })
 
+    it("subflow() is suggested only inside a flow-root input's values/expression", async () => {
+        const flow = `id: scoped-flow
+namespace: my.namespace
+inputs:
+  - id: region
+    type: SELECT
+    expression: "SUBFLOW_IN_INPUT"
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "SUBFLOW_IN_TASK"`;
+
+        const inInput = await provider.rootFieldAutoCompletion({source: flow, offset: flow.indexOf("SUBFLOW_IN_INPUT")});
+        expect(inInput.some(s => s.startsWith("subflow("))).toBe(true);
+
+        const inTask = await provider.rootFieldAutoCompletion({source: flow, offset: flow.indexOf("SUBFLOW_IN_TASK")});
+        expect(inTask.some(s => s.startsWith("subflow("))).toBe(false);
+        expect(inTask).toContain("uuid()");
+    })
+
     it("nested field autocompletions", async () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "inputs")).toEqual(["input1", "input2"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs")).toEqual(["task1", "task2", "subflow"]);

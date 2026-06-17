@@ -2,7 +2,7 @@ import {ComputedRef} from "vue";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement} from "@kestra-io/ui-libs";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
+import {QUOTE, YamlAutoCompletion, type RootCompletionContext} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
@@ -33,8 +33,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         this.completionSource = completionSource;
     }
 
-    rootFieldAutoCompletion(): Promise<string[]> {
-        return Promise.resolve([
+    rootFieldAutoCompletion(context?: RootCompletionContext): Promise<string[]> {
+        const suggestions = [
             "outputs",
             "inputs",
             "vars",
@@ -73,7 +73,42 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
             "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
-        ]);
+        ];
+
+        // subflow() blocks until the subflow terminates, so the backend only allows it at flow-input
+        // render time; only suggest it inside a flow-root input's `values`/`expression`.
+        if (this.isInputValuesContext(context)) {
+            suggestions.push("subflow(namespace=${1:flow.namespace}, id=" + QUOTE + "${2:my_subflow}" + QUOTE + ")");
+        }
+
+        return Promise.resolve(suggestions);
+    }
+
+    private isInputValuesContext(context?: RootCompletionContext): boolean {
+        if (context === undefined) {
+            return false;
+        }
+
+        try {
+            const localized = YAML_UTILS.localizeElementAtIndex(context.source, context.offset);
+            if (localized === undefined || (localized.key !== "values" && localized.key !== "expression")) {
+                return false;
+            }
+
+            const parents = localized.parents ?? [];
+            const root: any = parents[0];
+            const inputDefinition: any = parents[parents.length - 1];
+            const rootInputs = root?.inputs;
+            if (!Array.isArray(rootInputs)) {
+                return false;
+            }
+
+            // confirm the enclosing map is one of the flow-root input definitions (excludes task
+            // properties named `values` and trigger `inputs`, which are key/value, not definitions)
+            return rootInputs.some((input: {id?: string}) => input?.id != null && input.id === inputDefinition?.id);
+        } catch {
+            return false;
+        }
     }
 
     private tasks(source: string): any[] {

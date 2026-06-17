@@ -775,6 +775,7 @@
         "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code> executions(s)?",
         "dependencies loaded": "Dependencies loaded",
         "loaded x dependencies": "{count} dependencies loaded",
+        "loading": "Loading...",
         "security_advice": {
             "title": "Protect your instance",
             "content": "Enable basic authentication to protect your instance.",

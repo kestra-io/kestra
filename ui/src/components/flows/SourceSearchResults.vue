@@ -160,7 +160,6 @@
 .result-fragment {
     cursor: pointer;
     padding: var(--ks-spacing-1) 0;
-    border-radius: var(--ks-radius-sm);
     margin-bottom: var(--ks-spacing-1);
 
     &:focus-visible {
@@ -168,13 +167,12 @@
         outline-offset: -2px;
     }
 
-    &:hover {
-        background-color: var(--ks-bg-hover);
+    &:hover:not(.result-fragment--selected) .fragment-pre {
+        box-shadow: inset 0 0 0 1px var(--ks-border-default);
     }
 
-    &--selected {
-        background-color: var(--ks-bg-active);
-        color: var(--ks-text-primary);
+    &--selected .fragment-pre {
+        box-shadow: inset 0 0 0 1px var(--ks-border-focus);
     }
 }
 

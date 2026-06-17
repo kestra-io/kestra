@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -9,7 +10,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.utils.Await;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.propagation.ContextPropagators;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.debug.Breakpoint;
@@ -88,6 +96,21 @@ public class ExecutionService {
 
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+
+    @Inject
+    private BroadcastQueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
+    private AsyncOperationWaiter asyncOperationWaiter;
+
+    @Inject
+    private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
+    @Inject
+    private Optional<OpenTelemetry> openTelemetry;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
@@ -975,6 +998,98 @@ public class ExecutionService {
 
     public Execution kill(Execution execution, FlowInterface flow) {
         return this.kill(execution, flow, Optional.empty());
+    }
+
+    /**
+     * Start the given execution and block the calling thread until it reaches a terminal state, then
+     * return the terminal {@link Execution} (with computed flow-level outputs).
+     * <p>
+     * MUST only be called from a blocking-friendly thread (e.g. {@code TaskExecutors.IO}), never from a
+     * worker thread or a Netty event loop: a bounded worker pool blocking on a child execution can
+     * deadlock once slots are exhausted.
+     * <p>
+     * Polls the execution repository rather than the streaming service: a fast execution can terminate
+     * before any streaming subscriber is registered for its id. If the timeout elapses (or the calling
+     * thread is interrupted) the still-running orphan execution is asked to stop, to avoid a resource leak.
+     *
+     * @param execution the execution to start
+     * @param flow      the flow associated with the execution
+     * @param timeout   the maximum time to wait for the execution to terminate
+     * @return the terminal execution
+     */
+    public Execution runAndWait(Execution execution, Flow flow, Duration timeout) {
+        try {
+            // wait for the executor to confirm the Create command, then poll until a terminal state
+            emitCreateAndAwait(execution);
+
+            return Await.await()
+                .atMost(timeout)
+                .pollInterval(Duration.ofMillis(100))
+                .until(
+                    () -> executionRepository.findById(execution.getTenantId(), execution.getId()).orElse(null),
+                    terminal -> terminal != null && isFullyTerminated(flow, terminal)
+                );
+        } catch (RuntimeException e) {
+            // timeout, failed confirmation, or interruption: the child execution may still be running on
+            // the executor, request its kill so we don't leak a runaway execution.
+            requestKill(execution);
+            throw e;
+        }
+    }
+
+    /**
+     * Emit a {@link Create} command for the execution and block until the executor confirms it processed
+     * the command. Mirrors the start path used by webhook executions but kept here so blocking, repository
+     * -polling callers (e.g. the {@code subflow()} function) don't depend on the WebhookService.
+     */
+    private void emitCreateAndAwait(Execution execution) {
+        Optional<String> traceParent = openTelemetry
+            .map(OpenTelemetry::getPropagators)
+            .map(ContextPropagators::getTextMapPropagator)
+            .map(propagator -> {
+                Map<String, String> carrier = new HashMap<>();
+                propagator.inject(io.opentelemetry.context.Context.current(), carrier, Map::put);
+                return carrier.get("traceparent");
+            });
+
+        Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+            .withKind(execution.getKind())
+            .withTrigger(execution.getTrigger())
+            .withLabels(execution.getLabels())
+            .withInputs(execution.getInputs())
+            .withTraceParent(traceParent.orElse(null));
+
+        asyncOperationWaiter.submit(
+            execution.getId(),
+            operationId -> {
+                try {
+                    executionCommandQueue.emit(command.withOperationId(operationId));
+                    eventPublisher.publishEvent(CrudEvent.create(execution));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            asyncOperationsConfiguration.waitTimeout()
+        ).block(asyncOperationsConfiguration.waitTimeout());
+    }
+
+    private boolean isFullyTerminated(Flow flow, Execution execution) {
+        return isTerminated(flow, execution)
+            && ListUtils.emptyOnNull(execution.getTaskRunList()).stream().allMatch(taskRun -> taskRun.getState().isTerminated());
+    }
+
+    private void requestKill(Execution execution) {
+        try {
+            killQueue.emit(
+                ExecutionKilledExecution.builder()
+                    .executionId(execution.getId())
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .tenantId(execution.getTenantId())
+                    .build()
+            );
+        } catch (Exception e) {
+            log.warn("Unable to request kill of orphan execution '{}'", execution.getId(), e);
+        }
     }
 
     /**

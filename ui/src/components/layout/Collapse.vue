@@ -19,7 +19,7 @@
 </script>
 
 <style scoped lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+    @use '../../styles/responsive' as *;
 
     @include res(sm) {
         :deep(.kel-form--inline) {

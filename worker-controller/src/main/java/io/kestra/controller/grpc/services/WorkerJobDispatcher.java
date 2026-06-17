@@ -885,8 +885,16 @@ public class WorkerJobDispatcher {
             return;
         }
 
-        // 1. PERSIST before sending (critical for recovery)
-        persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        // 1. PERSIST before sending (critical for recovery). A transient failure (e.g. pool
+        // exhaustion) must not bubble up to the poller, which treats it as fatal and shuts down.
+        try {
+            persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        } catch (Exception e) {
+            log.warn("Failed to persist running state for job {} on worker {}; re-queuing for redelivery: {}",
+                jobId, context.getWorkerId(), e.getMessage());
+            handlePersistFailure(context, job, originalEvent, dispatchWorkerQueueId, bucket);
+            return;
+        }
 
         // 2. Track in-flight locally
         context.trackInFlight(jobId, job, bucket);
@@ -947,6 +955,25 @@ public class WorkerJobDispatcher {
         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, job.uid());
 
         // Re-queue the job
+        requeue(originalEvent);
+    }
+
+    /**
+     * Handles a failure to persist the running state before dispatch. The job is not yet tracked
+     * in-flight, so the reserved permit and bucket are released directly (as in
+     * {@link #rejectOversizedJob}), then the job is re-queued for redelivery.
+     */
+    private void handlePersistFailure(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
+        WorkerJobEvent originalEvent, String dispatchWorkerQueueId, String bucket) {
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
+            metricRegistry.workerGroupAndQueueTags(context.getWorkerGroupId(), dispatchWorkerQueueId)
+        ).increment();
+
+        context.addPermits(1);
+        context.releaseBucket(bucket);
+
         requeue(originalEvent);
     }
 

@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Zwiń wszystkie linie wielokrotne",
     "font size": "Font size",
     "for flow": "dla flow",
+    "forbidden system labels": "Tylko system.correlationId może być użyty jako system label",
     "force run": "Wymuś uruchomienie",
     "force run confirm": "Czy na pewno chcesz wymusić uruchomienie wykonania <code>{id}</code>?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Następujące przejścia zostaną wykonane:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
     "force run done": "Wymuszone uruchomienie Execution",
@@ -939,6 +940,7 @@
     "line": "Linia",
     "line-by-line": "linia po linii",
     "loaded x dependencies": "{count} zależności załadowane",
+    "loading": "Ładowanie...",
     "log expand setting": "Domyślne wyświetlanie Logs",
     "logExporters": "Eksporterzy Logów",
     "logs": "Logs",
@@ -1796,7 +1798,9 @@
         "firstName": "Imię",
         "lastName": "Nazwisko",
         "password": "Hasło",
-        "password_requirements": "Co najmniej 8 znaków, w tym 1 wielka litera i 1 cyfra."
+        "password_requirements": "Co najmniej 8 znaków, w tym 1 wielka litera i 1 cyfra.",
+        "username": "Użytkownik",
+        "username_hint": "Musi być prawidłowym adresem e-mail."
       },
       "login": "Zaloguj się",
       "login_subtitle": "Wprowadź swoje dane uwierzytelniające, aby uzyskać dostęp do instancji Kestra",

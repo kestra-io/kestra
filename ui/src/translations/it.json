@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Comprimi Tutte le Linee Multiple",
     "font size": "Font size",
     "for flow": "per flow",
+    "forbidden system labels": "Solo system.correlationId può essere usato come label di sistema",
     "force run": "Esegui forzatamente",
     "force run confirm": "Sei sicuro di voler forzare l'esecuzione <code>{id}</code>?<br/><br/>WARNING: forzare l'esecuzione non è garantito e potrebbe creare esecuzioni duplicate dei task.<br/><br/>Le seguenti transizioni saranno effettuate:<br/><ul><li>I task in stato CREATED saranno spostati allo stato RUNNING.</li><li>I task in stato RUNNING saranno ri-sottomessi.</li><li>I task in stato QUEUED saranno rimossi dalla coda.</li><li>I task in stato PAUSED saranno ripresi.</li></ul>",
     "force run done": "L'esecuzione è forzata a RUNNING",
@@ -939,6 +940,7 @@
     "line": "Linea",
     "line-by-line": "riga per riga",
     "loaded x dependencies": "{count} dipendenze caricate",
+    "loading": "Caricamento...",
     "log expand setting": "Visualizzazione predefinita del Log",
     "logExporters": "Esportatori di Log",
     "logs": "Logs",
@@ -1796,7 +1798,9 @@
         "firstName": "Nome",
         "lastName": "Cognome",
         "password": "Password",
-        "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero."
+        "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero.",
+        "username": "Nome utente",
+        "username_hint": "Deve essere un indirizzo email valido."
       },
       "login": "Accedi",
       "login_subtitle": "Inserisci le tue credenziali per accedere alla tua istanza di Kestra",

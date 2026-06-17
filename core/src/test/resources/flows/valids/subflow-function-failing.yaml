@@ -1,0 +1,6 @@
+id: subflow-function-failing
+namespace: io.kestra.tests
+
+tasks:
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail

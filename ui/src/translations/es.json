@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Plegar Todas las Líneas Múltiples",
     "font size": "Font size",
     "for flow": "para flow",
+    "forbidden system labels": "Solo system.correlationId puede usarse como label del sistema",
     "force run": "Forzar ejecución",
     "force run confirm": "¿Está seguro de forzar la ejecución <code>{id}</code>?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se descolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
     "force run done": "La ejecución es forzada a RUNNING",
@@ -939,6 +940,7 @@
     "line": "Línea",
     "line-by-line": "línea por línea",
     "loaded x dependencies": "{count} dependencias cargadas",
+    "loading": "Cargando...",
     "log expand setting": "Visualización predeterminada del Log",
     "logExporters": "Exportadores de Logs",
     "logs": "Logs",
@@ -1796,7 +1798,9 @@
         "firstName": "Nombre",
         "lastName": "Apellido",
         "password": "Contraseña",
-        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número."
+        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número.",
+        "username": "Nombre de usuario",
+        "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
       "login_subtitle": "Ingrese sus credenciales para acceder a su instancia de Kestra",

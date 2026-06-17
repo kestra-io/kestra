@@ -8,11 +8,11 @@
         </template>
     </TopNavBar>
 
-    <el-row class="p-4">
+    <KsRow class="p-4">
         <div v-if="loading" class="mcp-list__loading">
-            <el-icon class="is-loading" :size="32">
+            <KsIcon class="is-loading" :size="32">
                 <Loading />
-            </el-icon>
+            </KsIcon>
         </div>
 
         <KsEmpty v-else-if="displayServers.length === 0" class="mcp-list__empty">
@@ -20,7 +20,7 @@
         </KsEmpty>
 
         <template v-else>
-            <el-col
+            <KsCol
                 v-for="server in displayServers"
                 :key="server.tenantId ? `${server.tenantId}/${server.id}` : server.id"
                 class="mcp-list__item"
@@ -42,10 +42,10 @@
                     </span>
 
                     <div class="mcp-list__badges">
-                        <el-tooltip :content="server.serverType === 'PRIVATE' ? t('mcp.private') : t('mcp.public')">
+                        <KsTooltip :content="server.serverType === 'PRIVATE' ? t('mcp.private') : t('mcp.public')">
                             <Lock v-if="server.serverType === 'PRIVATE'" class="mcp-list__type-icon" />
                             <Web v-else class="mcp-list__type-icon" />
-                        </el-tooltip>
+                        </KsTooltip>
                         <span class="mcp-list__auth-badge">
                             {{ server.authType.replace("_", " ") }}
                         </span>
@@ -57,9 +57,9 @@
                         </span>
                     </div>
                 </component>
-            </el-col>
+            </KsCol>
         </template>
-    </el-row>
+    </KsRow>
 </template>
 
 <script lang="ts" setup>

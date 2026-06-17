@@ -145,6 +145,7 @@ $fill-color-base: #fafcff;
     #{--kel-color-warning-light-9}: palette.$base-orange-25;
     #{--kel-color-warning-dark-2}: palette.$base-orange-700;
 
+    #{--kel-color-danger}: var(--ks-text-error);
     #{--kel-color-danger-light-3}: palette.$base-red-300;
     #{--kel-color-danger-light-5}: palette.$base-red-200;
     #{--kel-color-danger-light-7}: palette.$base-red-100;

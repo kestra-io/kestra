@@ -1796,7 +1796,9 @@
         "firstName": "Nombre",
         "lastName": "Apellido",
         "password": "Contraseña",
-        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número."
+        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número.",
+        "username": "Nombre de usuario",
+        "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
       "login_subtitle": "Ingrese sus credenciales para acceder a su instancia de Kestra",

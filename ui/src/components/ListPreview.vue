@@ -29,7 +29,8 @@
         <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :pageSize="props.maxRows"
+            :sizes="[10, 20, 50, 100]"
+            v-model:pageSize="pageSize"
             v-model:currentPage="currentPage"
         />
     </div>
@@ -45,31 +46,27 @@
             type: Array as () => Record<string, any>[],
             required: true,
         },
-        maxRows: {
-            type: Number,
-            required: false,
-            default: 50,
-        },
     })
 
     const expandedCells = ref(new Set<string>())
     const currentPage = ref(1)
+    const pageSize = ref(50)
 
     const previewData = computed(() => {
-        const startIndex = (currentPage.value - 1) * props.maxRows
-        const endIndex = startIndex + props.maxRows
+        const startIndex = (currentPage.value - 1) * pageSize.value
+        const endIndex = startIndex + pageSize.value
         return props.value.slice(startIndex, endIndex)
     })
 
     const totalPages = computed(() => {
-        return Math.ceil(props.value.length / props.maxRows)
+        return Math.ceil(props.value.length / pageSize.value)
     })
 
     const indexMethod = (index: number) => {
-        return (currentPage.value - 1) * props.maxRows + index + 1
+        return (currentPage.value - 1) * pageSize.value + index + 1
     }
 
-    watch([currentPage, () => props.maxRows], () => {
+    watch([currentPage, () => pageSize.value], () => {
         expandedCells.value.clear()
     })
 

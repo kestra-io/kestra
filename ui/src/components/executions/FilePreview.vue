@@ -51,7 +51,7 @@
                 {{ $t('download') }}
             </KsButton>
         </div>
-        <RawPreview v-if="isTextFile" v-bind="preview" :maxRows="maxRows" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
+        <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
     </template>
 </template>
 

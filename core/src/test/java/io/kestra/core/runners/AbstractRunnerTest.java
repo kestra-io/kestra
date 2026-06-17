@@ -581,6 +581,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/after-execution-flowable.yaml")
+    public void shouldCallFlowableTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallFlowableTasksAfterExecution(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/after-execution-listener.yaml")
     public void shouldCallTasksAfterListener(Execution execution) {
         afterExecutionTestCase.shouldCallTasksAfterListener(execution);

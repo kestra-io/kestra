@@ -16,7 +16,7 @@
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
-                    <KsButton @click="emit('on-copy', null)">
+                    <KsButton @click="emit('on-copy', null)" size="small" class="ms-2">
                         {{ $t('copy url') }}
                     </KsButton>
                 </template>

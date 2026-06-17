@@ -12,7 +12,7 @@ javaPlatform {
 dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.18"
-    def protobufVersion = "4.33.2" // aligned with Google Cloud libraries-bom (grpc 1.81 + protobuf 4.33.2)
+    def protobufVersion = "4.35.1" // aligned with Google Cloud libraries-bom (grpc 1.81 + protobuf 4.33.2)
     def bouncycastleVersion = "1.84"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "1.5.6"

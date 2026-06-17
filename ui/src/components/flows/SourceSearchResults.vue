@@ -116,6 +116,7 @@
     align-items: center;
     gap: var(--ks-spacing-2);
     width: 100%;
+    padding-inline: var(--ks-spacing-3);
     cursor: pointer;
 
     &:focus-visible {

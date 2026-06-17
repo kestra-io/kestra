@@ -103,6 +103,7 @@ import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
 import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
+import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
@@ -294,6 +295,7 @@ const components: Record<string, Component> = {
     KsTableColumn,
     KsTableEmpty,
     KsTag,
+    KsLogoBadge,
     KsTaskIcon,
     KsText,
     KsTimeline,
@@ -404,6 +406,7 @@ export {
     KsTableColumn,
     KsTableEmpty,
     KsTag,
+    KsLogoBadge,
     KsTaskIcon,
     KsText,
     KsTimeline,
@@ -533,6 +536,7 @@ declare module "vue" {
         KsTableColumn: typeof KsTableColumn
         KsTableEmpty: typeof KsTableEmpty
         KsTag: typeof KsTag
+        KsLogoBadge: typeof KsLogoBadge
         KsTaskIcon: typeof KsTaskIcon
         KsText: typeof KsText
         KsTimeline: typeof KsTimeline

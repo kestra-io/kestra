@@ -36,3 +36,17 @@ export const AllMet: Story = {
         template: "<ks-password-requirements password=\"StrongPass1\" />",
     }),
 }
+
+export const CustomRules: Story = {
+    render: () => ({
+        components: {KsPasswordRequirements},
+        setup() {
+            const rules = [
+                {key: "min", label: "At least 12 characters", test: (p: string) => p.length >= 12},
+                {key: "special", label: "One special character (!@#$%^&*)", test: (p: string) => /[!@#$%^&*]/.test(p)},
+            ]
+            return {rules}
+        },
+        template: "<ks-password-requirements password=\"Abcdefghijk!\" :rules=\"rules\" />",
+    }),
+}

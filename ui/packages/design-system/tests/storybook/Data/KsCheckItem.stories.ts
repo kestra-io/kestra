@@ -28,3 +28,14 @@ export const Met: Story = {
         template: "<ks-check-item :met=\"true\">Passwords match</ks-check-item>",
     }),
 }
+
+export const LongLabel: Story = {
+    render: () => ({
+        components: {KsCheckItem},
+        template: `
+            <div style="max-width:220px">
+                <ks-check-item :met="false">One special character (!@#$%^&amp;*) and at least twelve characters long</ks-check-item>
+            </div>
+        `,
+    }),
+}

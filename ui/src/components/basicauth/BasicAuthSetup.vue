@@ -2,7 +2,7 @@
     <KsRow class="setup-container" :gutter="30" justify="center" align="middle">
         <KsCol :xs="24" :md="8" class="setup-sidebar">
             <div class="logo-container">
-                <Logo style="width: 14rem;" />
+                <Logo class="setup-logo" />
             </div>
             <KsSteps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
                 <KsStep :icon="activeStep > 0 ? CheckBold : AccountOutline" :title="$t('setup.steps.user')" />
@@ -40,7 +40,7 @@
                                     <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
                                         <template #suffix v-if="getFieldError('username')">
                                             <KsTooltip placement="top" :content="getFieldError('username')">
-                                                <InformationOutline class="validation-icon error" />
+                                                <KsIcon name="information-outline" class="validation-icon error" />
                                             </KsTooltip>
                                         </template>
                                     </KsInput>
@@ -133,12 +133,7 @@
                     </div>
 
                     <div v-else-if="activeStep === 2" class="success-step">
-                        <div class="ks-logo-badge">
-                            <img :src="ksIcon" alt="" class="ks-logo-badge__glyph">
-                            <span class="ks-logo-badge__check">
-                                <CheckBold />
-                            </span>
-                        </div>
+                        <KsLogoBadge />
                         <div class="success-content">
                             <h1 class="success-title">
                                 {{ $t('setup.success.title') }}
@@ -172,8 +167,6 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import ksIcon from "../../assets/ks-icon.svg"
     import * as BasicAuth from "../../utils/basicAuth"
 
     interface UserFormData {

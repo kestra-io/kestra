@@ -17,6 +17,7 @@
         </template>
         <template #default>
             <FilePreview 
+                v-if="executionId"
                 :path="value"
                 :executionId="executionId"
             />
@@ -27,6 +28,7 @@
 <script setup lang="ts">
     import {ref, computed} from "vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
+    import FilePreview from "./FilePreview.vue"
 
     const props = defineProps({
         value: {

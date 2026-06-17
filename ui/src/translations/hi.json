@@ -1,5 +1,6 @@
 {
   "hi": {
+    "loading": "लोड हो रहा है...",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",
@@ -1797,7 +1798,9 @@
         "firstName": "पहला नाम",
         "lastName": "अंतिम नाम",
         "password": "पासवर्ड",
-        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।"
+        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।",
+        "username": "उपयोगकर्ता नाम",
+        "username_hint": "मान्य ईमेल पता होना चाहिए।"
       },
       "login": "लॉगिन",
       "login_subtitle": "अपने Kestra instance तक पहुँचने के लिए अपने क्रेडेंशियल्स दर्ज करें।",

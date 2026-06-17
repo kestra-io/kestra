@@ -3,6 +3,8 @@ export interface Tab {
     button: {
         icon: any
         label: string
+        disabled?: boolean
+        disabledTooltip?: string
     },
     component: any
 }

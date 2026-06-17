@@ -62,7 +62,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private io.kestra.core.utils.VersionProvider versionProvider;
 
     @Inject
-    private Optional<EmbeddedServer> embeddedServer;
+    protected Optional<EmbeddedServer> embeddedServer;
 
     @Inject
     private BeanProvider<FlowAutoLoader> flowAutoLoaderService;
@@ -188,10 +188,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                     } catch (URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    log.info("Main server is running at {}, management server at {}", server.getURL(), managementEndpoint);
+                    log.info("Management server running at {}", managementEndpoint);
                     log.info("Health endpoint is available at {}", healthEndpoint);
-                } else {
-                    log.info("Server is running at {}", server.getURL());
                 }
 
                 if (isFlowAutoLoadEnabled()) {

@@ -23,6 +23,14 @@ describe("KsTabs", () => {
         expect(wrapper.find(".kel-tabs--card").exists()).toBe(true)
     })
 
+    test("segmented type applies correct class", () => {
+        const wrapper = mount(KsTabs, {
+            props: {modelValue: "tab1", type: "segmented"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-tabs--segmented").exists()).toBe(true)
+    })
+
     test("renders tab panes", () => {
         const wrapper = mount({
             components: {KsTabs, KsTabPane},

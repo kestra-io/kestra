@@ -1,5 +1,6 @@
 {
   "ko": {
+    "loading": "로딩 중...",
     "Add flow": "Flow 추가",
     "Default log level": "기본 log 레벨",
     "Default namespace": "기본 namespace",
@@ -1797,7 +1798,9 @@
         "firstName": "이름",
         "lastName": "성씨",
         "password": "비밀번호",
-        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
+        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함.",
+        "username": "사용자 이름",
+        "username_hint": "유효한 이메일 주소여야 합니다."
       },
       "login": "로그인",
       "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",

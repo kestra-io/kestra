@@ -1,5 +1,6 @@
 {
   "zh_CN": {
+    "loading": "加载中...",
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",
     "Default namespace": "默认命名空间",
@@ -1797,7 +1798,9 @@
         "firstName": "名字",
         "lastName": "姓氏",
         "password": "密码",
-        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
+        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。",
+        "username": "用户名",
+        "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
       "login_subtitle": "输入您的凭证以访问您的Kestra实例",

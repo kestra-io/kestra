@@ -462,6 +462,27 @@ class WorkerJobDispatcherTest {
         }
 
         @Test
+        void shouldRequeueWhenStateStorePersistFails() throws QueueException {
+            // Given - persisting the running state fails transiently (e.g. pool exhaustion)
+            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+            context.addPermits(5);
+            dispatcher.registerWorker(context);
+            doThrow(new RuntimeException("connection pool exhausted")).when(mockStateStore).save(any(), any());
+
+            MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
+            WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A);
+
+            // When - the failure must not propagate to the poller
+            subscriber.deliverJob(event);
+
+            // Then - the job is re-queued, not sent, and the reserved capacity is restored
+            verify(mockQueue).emit(eq(WORKER_GROUP_A), eq(event));
+            verify(context.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
+            assertThat(context.getInFlightCount()).isEqualTo(0);
+            assertThat(context.getAvailablePermits()).isEqualTo(5);
+        }
+
+        @Test
         void shouldDispatchToWorkerWithLowestInFlight() {
             // Given
             WorkerStreamContext<WorkerJobResponse> context1 = createWorkerContext("worker-1", WORKER_GROUP_A, 10);

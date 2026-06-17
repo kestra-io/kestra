@@ -1,5 +1,6 @@
 {
   "it": {
+    "loading": "Caricamento...",
     "Add flow": "Aggiungi flow",
     "Default log level": "Livello di log predefinito",
     "Default namespace": "Namespace predefinito",
@@ -1797,7 +1798,9 @@
         "firstName": "Nome",
         "lastName": "Cognome",
         "password": "Password",
-        "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero."
+        "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero.",
+        "username": "Nome utente",
+        "username_hint": "Deve essere un indirizzo email valido."
       },
       "login": "Accedi",
       "login_subtitle": "Inserisci le tue credenziali per accedere alla tua istanza di Kestra",

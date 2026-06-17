@@ -162,7 +162,7 @@ public class TriggerController {
     @Post(uri = "/{namespace}/{flowId}/{triggerId}/unlock")
     @Operation(tags = { "Triggers" }, summary = "Unlock a trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = ApiTriggerState.class)) })
-    @ApiResponse(responseCode = "409", description = "If the trigger is already unlocked")
+    @ApiResponse(responseCode = "409", description = "If the trigger is already unlocked or is a realtime trigger")
     public HttpResponse<ApiTriggerState> unlockTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,

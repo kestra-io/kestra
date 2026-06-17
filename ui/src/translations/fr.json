@@ -1,5 +1,6 @@
 {
   "fr": {
+    "loading": "Chargement...",
     "Add flow": "Ajouter un flow",
     "Default log level": "Niveau de log par défaut",
     "Default namespace": "Espace de nom par défaut",
@@ -1797,7 +1798,9 @@
         "firstName": "Prénom",
         "lastName": "Nom de famille",
         "password": "Mot de passe",
-        "password_requirements": "Au moins 8 caractères avec 1 lettre majuscule et 1 chiffre."
+        "password_requirements": "Au moins 8 caractères avec 1 lettre majuscule et 1 chiffre.",
+        "username": "Nom d'utilisateur",
+        "username_hint": "Doit être une adresse e-mail valide."
       },
       "login": "Connexion",
       "login_subtitle": "Entrez vos identifiants pour accéder à votre instance Kestra",

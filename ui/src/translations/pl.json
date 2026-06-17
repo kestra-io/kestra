@@ -1,5 +1,6 @@
 {
   "pl": {
+    "loading": "Ładowanie...",
     "Add flow": "Dodaj flow",
     "Default log level": "Domyślny poziom log",
     "Default namespace": "Domyślny namespace",
@@ -1797,7 +1798,9 @@
         "firstName": "Imię",
         "lastName": "Nazwisko",
         "password": "Hasło",
-        "password_requirements": "Co najmniej 8 znaków, w tym 1 wielka litera i 1 cyfra."
+        "password_requirements": "Co najmniej 8 znaków, w tym 1 wielka litera i 1 cyfra.",
+        "username": "Użytkownik",
+        "username_hint": "Musi być prawidłowym adresem e-mail."
       },
       "login": "Zaloguj się",
       "login_subtitle": "Wprowadź swoje dane uwierzytelniające, aby uzyskać dostęp do instancji Kestra",

@@ -1,5 +1,6 @@
 {
   "en": {
+    "loading": "Loading...",
     "more actions": "More actions",
     "toggle menu": "Toggle menu",
     "panel actions": "Panel actions",
@@ -1867,7 +1868,9 @@
         "firstName": "First Name",
         "lastName": "Last Name",
         "password": "Password",
-        "password_requirements": "At least 8 characters with 1 uppercase letter and 1 number."
+        "password_requirements": "At least 8 characters with 1 uppercase letter and 1 number.",
+        "username": "Username",
+        "username_hint": "Must be a valid email address."
       },
       "validation": {
         "email_required": "Email is required",

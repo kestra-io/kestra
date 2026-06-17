@@ -148,6 +148,7 @@ const mockFunctions = [
     {name: "randomInt", arguments: [{name: "lower", defaultValue: "0"}, {name: "upper", defaultValue: "10"}]},
     {name: "secret", arguments: [{name: "key", defaultValue: "'MY_SECRET'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "subkey", defaultValue: null}]},
     {name: "uuid", arguments: []},
+    {name: "subflow", arguments: [{name: "namespace", defaultValue: null}, {name: "id", defaultValue: null}]},
 ]
 
 const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore)
@@ -168,9 +169,35 @@ describe("FlowAutoCompletionProvider", () => {
         expect(result).toContain("kestra")
 
         // Function snippets are generated from functionsWithDefaults
-        for (const fn of mockFunctions) {
+        for (const fn of mockFunctions.filter(fn => fn.name !== "subflow")) {
             expect(result).toContain(functionToSnippet(fn))
         }
+
+        // subflow() is input-only: without a values/expression context it must not be suggested
+        expect(result).not.toContain("subflow()")
+    })
+
+    it("subflow() is suggested only inside a flow-root input's values/expression", async () => {
+        const flow = `id: scoped-flow
+namespace: my.namespace
+inputs:
+  - id: region
+    type: SELECT
+    expression: "SUBFLOW_IN_INPUT"
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "SUBFLOW_IN_TASK"`
+
+        // Inside the input's `expression` → suggested
+        const inInput = await provider.rootFieldAutoCompletion({source: flow, offset: flow.indexOf("SUBFLOW_IN_INPUT")})
+        expect(inInput).toContain("subflow()")
+
+        // Inside a task property → not suggested
+        const inTask = await provider.rootFieldAutoCompletion({source: flow, offset: flow.indexOf("SUBFLOW_IN_TASK")})
+        expect(inTask).not.toContain("subflow()")
+        // other functions are still suggested everywhere
+        expect(inTask).toContain("uuid()")
     })
 
     it("functionToSnippet generates correct named-argument snippets", () => {

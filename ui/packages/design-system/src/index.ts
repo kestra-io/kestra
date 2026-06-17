@@ -90,7 +90,6 @@ import KsSwitch from "./components/Form/KsSwitch.vue"
 import KsTabPane from "./components/Navigation/KsTabs/KsTabPane.vue"
 import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
 import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
-import KsTabsToggle from "./components/Navigation/KsTabs/KsTabsToggle.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
 import KsTableEmpty from "./components/Data/KsTableEmpty.vue"
@@ -285,7 +284,6 @@ const components: Record<string, Component> = {
     KsTabPane,
     KsTabs,
     KsRouterTab,
-    KsTabsToggle,
     KsTable,
     KsTableColumn,
     KsTableEmpty,
@@ -393,7 +391,6 @@ export {
     KsTabPane,
     KsTabs,
     KsRouterTab,
-    KsTabsToggle,
     KsTable,
     KsTableColumn,
     KsTableEmpty,
@@ -520,7 +517,6 @@ declare module "vue" {
         KsTabPane: typeof KsTabPane
         KsTabs: typeof KsTabs
         KsRouterTab: typeof KsRouterTab
-        KsTabsToggle: typeof KsTabsToggle
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
         KsTableEmpty: typeof KsTableEmpty

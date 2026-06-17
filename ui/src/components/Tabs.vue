@@ -48,6 +48,7 @@
     export interface Tab extends RouterTab {
         locked?: boolean;
         props?: any;
+        blueprintDetail?: boolean;
     }
 
     const props = withDefaults(defineProps<{
@@ -171,8 +172,7 @@
                     ...attrsWithoutClass.value,
                     ...toHandlers(tab["v-on"] ?? {}),
                     namespace: getNamespaceToForward(tab),
-                    embed: tab.props?.embed ?? true,
-                    onGoToDetail: (id: string) => (selectedBlueprintId.value = id),
+                    ...(tab.blueprintDetail ? {onGoToDetail: (id: string) => (selectedBlueprintId.value = id)} : {}),
                 })
             }
         },

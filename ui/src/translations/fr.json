@@ -1,5 +1,6 @@
 {
   "fr": {
+    "loading": "Chargement...",
     "Add flow": "Ajouter un flow",
     "Default log level": "Niveau de log par défaut",
     "Default namespace": "Espace de nom par défaut",

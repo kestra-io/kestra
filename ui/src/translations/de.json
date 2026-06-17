@@ -1,5 +1,6 @@
 {
   "de": {
+    "loading": "Wird geladen...",
     "Add flow": "Flow hinzufügen",
     "Default log level": "Standard-Log-Ebene",
     "Default namespace": "Standard-Namespace",

@@ -29,15 +29,14 @@
         <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :size="(pageSize as any)"
-            :page="currentPage"
-            @page-changed="onPageChanged"
+            :pageSize="props.maxRows"
+            v-model:currentPage="currentPage"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, watch} from "vue"
 
     const MAX_CELL_CHARS = 2000
 
@@ -46,35 +45,33 @@
             type: Array as () => Record<string, any>[],
             required: true,
         },
+        maxRows: {
+            type: Number,
+            required: false,
+            default: 50,
+        },
     })
 
     const expandedCells = ref(new Set<string>())
     const currentPage = ref(1)
-    const pageSize = ref(50)
 
     const previewData = computed(() => {
-        const startIndex = (currentPage.value - 1) * pageSize.value
-        const endIndex = startIndex + pageSize.value
+        const startIndex = (currentPage.value - 1) * props.maxRows
+        const endIndex = startIndex + props.maxRows
         return props.value.slice(startIndex, endIndex)
     })
 
     const totalPages = computed(() => {
-        return Math.ceil(props.value.length / pageSize.value)
+        return Math.ceil(props.value.length / props.maxRows)
     })
 
     const indexMethod = (index: number) => {
-        return (currentPage.value - 1) * pageSize.value + index + 1
+        return (currentPage.value - 1) * props.maxRows + index + 1
     }
 
-    const onPageChanged = (payload: { page?: number; size?: number }): void => {
-        if (payload.page !== undefined) {
-            currentPage.value = payload.page
-        }
-        if (payload.size !== undefined) {
-            pageSize.value = payload.size
-        }
+    watch([currentPage, () => props.maxRows], () => {
         expandedCells.value.clear()
-    }
+    })
 
     const generateTableColumns = computed(() => {
         const allKeys = new Set<string>()

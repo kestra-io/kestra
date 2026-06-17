@@ -2,7 +2,7 @@
     <FilePreviewForm
         v-if="isTextFile"
         v-model:encoding="encodingModel" 
-        v-model:maxPreview="maxPreview" 
+        v-model:maxRows="maxRows" 
         v-model:forceEditor="forceEditor" 
         :truncated="preview?.truncated" 
     />
@@ -51,7 +51,7 @@
                 {{ $t('download') }}
             </KsButton>
         </div>
-        <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
+        <RawPreview v-if="isTextFile" v-bind="preview" :maxRows="maxRows" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
     </template>
 </template>
 
@@ -80,7 +80,7 @@
         return `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURI(value)}`
     }
 
-    const maxPreview = ref<number>()
+    const maxRows = ref<number>()
     const encodingModel = ref<EncodingOption["value"]>()
     const forceEditor = ref<boolean>()
     const preview = ref<Preview>()
@@ -141,13 +141,13 @@
             .filePreview({
                 executionId: props.executionId,
                 path: props.path,
-                maxRows: maxPreview.value,
+                maxRows: maxRows.value,
                 encoding: encodingModel.value,
             })
     }
 
     watch(
-        [maxPreview, encodingModel],
+        [maxRows, encodingModel],
         async ([maxRows, encoding]) => {
             if(maxRows === undefined || encoding === undefined) return
             metadata.value = await getFileMeta()
@@ -178,7 +178,7 @@
     })
 
     onMounted(() => {
-        maxPreview.value = configPreviewInitialRows.value
+        maxRows.value = configPreviewInitialRows.value
         encodingModel.value = "UTF-8"
     })
 </script>

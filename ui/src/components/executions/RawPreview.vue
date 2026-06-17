@@ -1,5 +1,5 @@
 <template>
-    <ListPreview v-if="type === 'LIST'" :value="content" />
+    <ListPreview v-if="type === 'LIST'" :value="content" :maxRows="maxRows" />
     <img v-else-if="type === 'IMAGE'" :src="imageContent" alt="Image output preview">
     <PdfPreview v-else-if="type === 'PDF'" :source="content" />
     <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="content" />
@@ -48,6 +48,7 @@
         type?: "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
         content?: any;
         extension?: string;
+        maxRows?: number;
     }
 
     const props = defineProps<Preview>()

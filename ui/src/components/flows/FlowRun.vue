@@ -10,7 +10,7 @@
             </KsAlert>
         </div>
         <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <KsTabs v-model="openTab" type="box">
+            <KsTabs v-model="openTab" type="segmented">
                 <KsTabPane name="inputs" :label="$t('inputs')" class="execution-pane">
                     <InputsForm
                         v-if="flow.inputs?.length"
@@ -35,6 +35,12 @@
                         <LabelInput
                             v-model:labels="executionLabels"
                         />
+                        <KsText v-if="haveBadLabels" type="danger" size="small">
+                            {{ $t('wrong labels') }}
+                        </KsText>
+                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
+                            {{ $t('forbidden system labels') }}
+                        </KsText>
                     </KsFormItem>
                     <KsFormItem
                         :label="$t('scheduleDate')"
@@ -66,7 +72,8 @@
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <KsButton
                                 :icon="buttonIcon"
-                                :disabled="!flowCanBeExecuted || hasBlockingChecks()"
+                                :disabled="!flowCanBeExecuted || hasBlockingChecks"
+                                :data-test="buttonTestId"
                                 class="flow-run-trigger-button"
                                 type="primary"
                                 nativeType="submit"
@@ -75,9 +82,6 @@
                                 {{ $t(buttonText) }}
                             </KsButton>
                         </span>
-                        <KsText v-if="haveBadLabels" type="danger" size="small">
-                            {{ $t('wrong labels') }}
-                        </KsText>
                     </KsFormItem>
                 </div>
             </div>
@@ -96,9 +100,9 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
-    import {usePlaygroundStore} from "../../stores/playground"
-    import type {Label, Execution} from "../../stores/executions"
+    import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
@@ -112,13 +116,6 @@
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
 
-    interface Check {
-        message: string
-        style: string
-        behavior: string
-    }
-
-    
     type AlertType = "success" | "warning" | "info" | "error"
     
     function toAlertType(style: string): AlertType {
@@ -141,7 +138,7 @@
     const props = withDefaults(defineProps<{
         redirect?: boolean
         embed?: boolean
-        replaySubmit?: ((options: ReplaySubmitOptions) => void) | null
+        replaySubmit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
         selectedTrigger?: SelectedTrigger
         buttonText?: string
         buttonIcon?: Component
@@ -171,7 +168,6 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
-    usePlaygroundStore()
 
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
@@ -192,8 +188,12 @@
         executionLabels.value.some(label => (label.key && !label.value) || (!label.key && label.value)),
     )
 
+    const haveForbiddenSystemLabels = computed(() =>
+        hasForbiddenUserSystemLabels(executionLabels.value),
+    )
+
     const flowCanBeExecuted = computed(() =>
-        flow.value && !flow.value.disabled && !haveBadLabels.value,
+        flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value,
     )
 
     const isDirty = computed(() =>
@@ -214,9 +214,9 @@
         )
     })
 
-    function hasBlockingChecks() {
-        return checks.value.filter(check => check.behavior === "BLOCK_EXECUTION").length > 0
-    }
+    const hasBlockingChecks = computed(() =>
+        checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
+    )
 
     function getExecutionLabels(): Label[] {
         if (!execution.value?.labels) {
@@ -236,8 +236,8 @@
         return getExecutionLabels().length > 0
     }
 
-    function onChecksUpdate(values: unknown[]) {
-        checks.value = values as Check[]
+    function onChecksUpdate(values: Check[]) {
+        checks.value = values
     }
 
     function fillInputsFromExecution() {
@@ -281,7 +281,7 @@
             checks.value = []
             executeClicked.value = false
             coreStore.message = undefined
-            form.value.validate((valid: boolean) => {
+            form.value.validate(async (valid: boolean) => {
                 if (!valid) {
                     return
                 }
@@ -290,44 +290,43 @@
                     ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}
                     : inputsNoDefaults.value
 
-                const labelStrings = [...new Set(
-                    executionLabels.value
-                        .filter(label => label.key && label.value)
-                        .map(label => `${label.key}:${label.value}`),
-                ), "system.from:ui"]
+                const labelStrings = buildExecutionLabelStrings(executionLabels.value)
 
-                if (props.replaySubmit) {
-                    props.replaySubmit({
-                        formRef: form.value!,
-                        id: flow.value!.id,
-                        namespace: flow.value!.namespace,
-                        inputs: mergedInputs,
-                        labels: labelStrings,
-                        scheduleDate: scheduleDate.value,
-                    })
-                } else {
-                    const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
-                    if(flow.value){
-                        executeTask(submitor, flow.value, mergedInputs, {
-                            redirect: props.redirect,
-                            newTab: newTab.value,
+                try {
+                    if (props.replaySubmit) {
+                        await props.replaySubmit({
+                            formRef: form.value!,
                             id: flow.value!.id,
                             namespace: flow.value!.namespace,
+                            inputs: mergedInputs,
                             labels: labelStrings,
-                            scheduleDate: moment(scheduleDate.value)
-                                .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                .toISOString(true),
-                            nextStep: true,
-                            query: shouldShowOnboardingSuccessAnimation ? {
-                                autoExpandGantt: "true",
-                                onboardingSuccess: "true",
-                            } : undefined,
-                            kind: "NORMAL",
+                            scheduleDate: scheduleDate.value,
                         })
+                    } else {
+                        const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
+                        if (flow.value) {
+                            await executeTask(submitor, flow.value, mergedInputs, {
+                                redirect: props.redirect,
+                                newTab: newTab.value,
+                                id: flow.value.id,
+                                namespace: flow.value.namespace,
+                                labels: labelStrings,
+                                scheduleDate: moment(scheduleDate.value)
+                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+                                    .toISOString(true),
+                                nextStep: true,
+                                query: shouldShowOnboardingSuccessAnimation ? {
+                                    autoExpandGantt: "true",
+                                    onboardingSuccess: "true",
+                                } : undefined,
+                            })
+                        }
                     }
+                    executeClicked.value = true
+                    emit("executionTrigger")
+                } catch {
+                    // API errors are surfaced by the global axios error handler
                 }
-                executeClicked.value = true
-                emit("executionTrigger")
             })
         }
     }
@@ -383,13 +382,6 @@
         }
         100% {
             box-shadow: 0px 0px 50px 2px #8405FF;
-        }
-    }
-
-    :deep(.kel-tabs--box ) {
-        .kel-tabs__nav-wrap{
-            flex: initial;
-            border-radius: 8px;
         }
     }
 

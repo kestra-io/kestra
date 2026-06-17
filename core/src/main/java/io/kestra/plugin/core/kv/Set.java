@@ -2,6 +2,9 @@ package io.kestra.plugin.core.kv;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -114,7 +117,8 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                 renderedValue = switch (renderedKvType) {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
-                    case DATETIME, DATE -> Instant.parse(renderedValueStr);
+                    case DATETIME -> Instant.parse(renderedValueStr);
+                    case DATE -> parseDate(renderedValueStr);
                     // We parse duration to make sure it's valid but we store it as a raw duration string
                     case DURATION -> {
                         Duration.parse(renderedValueStr);
@@ -139,5 +143,20 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         );
 
         return null;
+    }
+
+    /**
+     * Parses a {@code DATE}-typed KV value into a {@link LocalDate}.
+     * <p>
+     * A date-only value (e.g. {@code 2023-05-02}) is the expected form. A full ISO-8601
+     * instant (e.g. {@code 2023-05-02T01:02:03Z}) is also accepted — previously {@code DATE}
+     * shared {@code DATETIME}'s {@code Instant.parse} branch — and is truncated to its UTC date.
+     */
+    private static LocalDate parseDate(String value) {
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            return LocalDate.ofInstant(Instant.parse(value), ZoneOffset.UTC);
+        }
     }
 }

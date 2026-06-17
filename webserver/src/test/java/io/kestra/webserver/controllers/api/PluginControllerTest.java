@@ -265,17 +265,37 @@ class PluginControllerTest {
     }
 
     @Test
-    void should_not_get_plugin_manifest_for_groups() {
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.POST(
-                    PATH + "/pluginUiManifest",
-                    List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
-                ),
-                PluginUiManifest.class
-            )
+    void shouldReturnEmptyManifestGivenUnresolvedClasses() {
+        // A group name (not a task class) does not resolve to any task; the endpoint must
+        // return an empty manifest with HTTP 200 rather than a hard 404.
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest",
+                List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
+            ),
+            PluginUiManifest.class
         );
-        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+
+        assertThat(manifest.manifest()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyManifestGivenPluginsNotInstalled() {
+        // Blueprints may reference plugins that aren't installed on this instance; the
+        // endpoint must degrade gracefully (empty manifest, HTTP 200) so the UI keeps
+        // rendering instead of navigating to the global "Page not found" page.
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest",
+                List.of(
+                    new TaskWithVersion("io.kestra.plugin.ai.rag.IngestDocument", null),
+                    new TaskWithVersion("io.kestra.plugin.slack.notifications.SlackIncomingWebhook", null)
+                )
+            ),
+            PluginUiManifest.class
+        );
+
+        assertThat(manifest.manifest()).isEmpty();
     }
 
     @Test

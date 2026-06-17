@@ -112,7 +112,7 @@
     margin: 0;
     font-size: 18px;
     line-height: 22px;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
     font-weight: var(--ks-font-weight-semibold);
 }
 
@@ -143,7 +143,7 @@
     text-decoration: none;
 
     &:hover {
-        color: var(--ks-content-link);
+        color: var(--ks-text-link);
     }
 }
 </style>

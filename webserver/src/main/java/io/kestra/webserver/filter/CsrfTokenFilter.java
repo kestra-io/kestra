@@ -21,6 +21,7 @@ import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.security.csrf.resolver.CsrfTokenResolver;
 import io.micronaut.security.csrf.validator.CsrfTokenValidator;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_COOKIE_NAME;
 
@@ -32,6 +33,7 @@ import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_COOKIE_NA
 @Requires(property = "micronaut.security.csrf.enabled", value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 @Requires(beans = CsrfTokenValidator.class)
 @ServerFilter(patternStyle = FilterPatternStyle.REGEX, value = "/api/.*")
+@Slf4j
 public class CsrfTokenFilter implements Ordered {
     private static final Set<HttpMethod> SAFE_METHODS = Set.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS, HttpMethod.TRACE);
 
@@ -63,7 +65,14 @@ public class CsrfTokenFilter implements Ordered {
         }
 
         String csrfToken = resolveCsrfToken(request);
-        if (StringUtils.isEmpty(csrfToken) || !csrfTokenValidator.validateCsrfToken(request, csrfToken)) {
+        if (StringUtils.isEmpty(csrfToken)) {
+            log.debug("CSRF rejected for {} {}: cookie-authenticated request with no CSRF token (missing X-CSRF-TOKEN header/field)",
+                request.getMethod(), request.getPath());
+            return HttpResponse.status(HttpStatus.FORBIDDEN);
+        }
+        if (!csrfTokenValidator.validateCsrfToken(request, csrfToken)) {
+            log.debug("CSRF rejected for {} {}: token present but failed validation (bad signature or mismatched token)",
+                request.getMethod(), request.getPath());
             return HttpResponse.status(HttpStatus.FORBIDDEN);
         }
 

@@ -1,7 +1,7 @@
 <template>
     <KsDialog
         v-model="visible"
-        width="500px"
+        width="40%"
         destroyOnClose
         appendToBody
     >
@@ -18,7 +18,7 @@
         </template>
 
         <div class="modal-body">
-            <KsTabs v-model="activeTab" type="box">
+            <KsTabs v-model="activeTab" type="segmented">
                 <KsTabPane name="form" :label="$t('triggers_add_modal_tab_form')">
                     <div class="form">
                         <KsForm labelPosition="left" labelWidth="122px" :model="formModel">
@@ -175,7 +175,7 @@
         }
         flowsLoading.value = true
         try {
-            const response = await flowStore.findFlows({namespace, size: 200, sort: "id:asc"})
+            const response = await flowStore.findFlows({"filters[namespace][EQUALS]": namespace, sort: "id:asc"})
             flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}))
         } finally {
             flowsLoading.value = false
@@ -260,28 +260,13 @@
         }
     }
 
-    .modal-body :deep(.kel-tabs--box) {
+    .modal-body :deep(.kel-tabs--segmented) {
         .kel-tabs__header {
             margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-        }
-
-        .kel-tabs__nav-wrap {
-            background: transparent;
-            border-bottom: none;
-        }
-
-        .kel-tabs__nav {
-            width: fit-content;
-            background: var(--ks-tabs-bg, #08090A);
-            border-radius: var(--ks-radius-lg);
         }
     }
 
     .form {
-        :deep(.kel-form) {
-            --kel-color-danger: var(--ks-text-error);
-        }
-
         :deep(.kel-form-item):first-of-type {
             margin-top: 0;
         }

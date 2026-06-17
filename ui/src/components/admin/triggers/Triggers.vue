@@ -31,8 +31,8 @@
 
     type ValidTab = typeof VALID_TABS[number];
 
-    const storedDefaultTab = localStorage.getItem("triggersDefaultTab") as ValidTab
-    const DEFAULT_TAB: ValidTab = VALID_TABS.includes(storedDefaultTab) ? storedDefaultTab : "add"
+    const storedDefaultTab = localStorage.getItem("triggersDefaultTab") ?? ""
+    const DEFAULT_TAB: ValidTab = VALID_TABS.includes(storedDefaultTab as ValidTab) ? storedDefaultTab as ValidTab : "add"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -49,8 +49,9 @@
     const isManageTab = computed(() => route.params.tab === "manage")
 
     watch(() => route.params.tab, (tab) => {
-        if (tab !== undefined && !VALID_TABS.includes(tab as ValidTab)) {
-            router.replace({name: "admin/triggers", params: {...route.params, tab: DEFAULT_TAB}})
+        const resolved = VALID_TABS.includes(tab as ValidTab) ? tab as ValidTab : DEFAULT_TAB
+        if (tab !== resolved) {
+            router.replace({name: "admin/triggers", params: {...route.params, tab: resolved}})
         }
     }, {immediate: true})
 

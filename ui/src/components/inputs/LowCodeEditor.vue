@@ -206,6 +206,9 @@
         return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) =>
             (n.task?.type && types[n.task.type]) ||
             (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
+        ) || (flowStore.flowParsed?.tasks ?? []).some((t: any) =>
+            (t?.type && types[t.type]) ||
+            (t?.taskRunner?.type && types[t.taskRunner.type]),
         )
     })
 

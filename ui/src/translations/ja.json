@@ -1796,7 +1796,9 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。",
+        "username": "ユーザー名",
+        "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
       "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",

@@ -1,6 +1,5 @@
 {
   "ja": {
-    "loading": "読み込み中...",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",
@@ -941,6 +940,7 @@
     "line": "ライン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
+    "loading": "読み込み中...",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",

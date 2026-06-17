@@ -1,6 +1,5 @@
 {
   "pl": {
-    "loading": "Ładowanie...",
     "Add flow": "Dodaj flow",
     "Default log level": "Domyślny poziom log",
     "Default namespace": "Domyślny namespace",
@@ -941,6 +940,7 @@
     "line": "Linia",
     "line-by-line": "linia po linii",
     "loaded x dependencies": "{count} zależności załadowane",
+    "loading": "Ładowanie...",
     "log expand setting": "Domyślne wyświetlanie Logs",
     "logExporters": "Eksporterzy Logów",
     "logs": "Logs",

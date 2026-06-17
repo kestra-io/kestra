@@ -1,6 +1,5 @@
 {
   "fr": {
-    "loading": "Chargement...",
     "Add flow": "Ajouter un flow",
     "Default log level": "Niveau de log par défaut",
     "Default namespace": "Espace de nom par défaut",
@@ -941,6 +940,7 @@
     "line": "Ligne",
     "line-by-line": "ligne par ligne",
     "loaded x dependencies": "{count} dépendances chargées",
+    "loading": "Chargement...",
     "log expand setting": "Affichage par défaut des journaux",
     "logExporters": "Exportateurs de Logs",
     "logs": "Fichiers journaux",

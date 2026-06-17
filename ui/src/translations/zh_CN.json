@@ -1,6 +1,5 @@
 {
   "zh_CN": {
-    "loading": "加载中...",
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",
     "Default namespace": "默认命名空间",
@@ -941,6 +940,7 @@
     "line": "行",
     "line-by-line": "逐行",
     "loaded x dependencies": "已加载 {count} 个依赖项",
+    "loading": "加载中...",
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
     "logs": "日志",

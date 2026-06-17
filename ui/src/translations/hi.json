@@ -1,6 +1,5 @@
 {
   "hi": {
-    "loading": "लोड हो रहा है...",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",
@@ -941,6 +940,7 @@
     "line": "रेखा",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
+    "loading": "लोड हो रहा है...",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
     "logs": "Logs",

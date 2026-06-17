@@ -1,6 +1,5 @@
 {
   "pt_BR": {
-    "loading": "Carregando...",
     "Add flow": "Adicionar flow",
     "Default log level": "Nível de log padrão",
     "Default namespace": "Namespace padrão",
@@ -941,6 +940,7 @@
     "line": "Linha",
     "line-by-line": "linha por linha",
     "loaded x dependencies": "{count} dependências carregadas",
+    "loading": "Carregando...",
     "log expand setting": "Exibição padrão do Log",
     "logExporters": "Exportadores de Log",
     "logs": "Logs",

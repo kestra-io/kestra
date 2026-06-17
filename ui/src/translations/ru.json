@@ -1,6 +1,5 @@
 {
   "ru": {
-    "loading": "Загрузка...",
     "Add flow": "Добавить flow",
     "Default log level": "Уровень log по умолчанию",
     "Default namespace": "Namespace по умолчанию",
@@ -941,6 +940,7 @@
     "line": "Линия",
     "line-by-line": "построчно",
     "loaded x dependencies": "{count} зависимости загружены",
+    "loading": "Загрузка...",
     "log expand setting": "Отображение logs по умолчанию",
     "logExporters": "Экспортеры Log",
     "logs": "Логи",

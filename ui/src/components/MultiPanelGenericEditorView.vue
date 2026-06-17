@@ -76,6 +76,10 @@
     }>()
 
     function setTabValue(tabValue: string){
+        if(props.editorElements.find(e => e.uid === tabValue)?.button.disabled){
+            return
+        }
+
         if(emit("set-tab-value", tabValue) === false) {
             return
         }

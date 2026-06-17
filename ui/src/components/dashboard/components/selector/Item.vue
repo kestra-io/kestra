@@ -24,3 +24,15 @@
         edit: (id: string) => void,
         remove?: (dashboard: {id: string, title: string}) => void}>()
 </script>
+
+<style scoped lang="scss">
+    .col {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .col-auto {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+</style>

@@ -18,6 +18,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.github.tomakehurst.wiremock.client.CountMatchingStrategy;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
+import java.util.Base64;
+
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
@@ -32,6 +34,7 @@ import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.http.HttpRequest;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -228,10 +231,164 @@ class BasicAuthServiceTest {
             .satisfies(configuration ->
             {
                 assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
-                assertThat(configuration.credentials().getPassword()).isNotBlank();
+                assertThat(configuration.credentials().getPassword()).startsWith("$2")
+                    .as("password must be stored as bcrypt");
                 assertThat(configuration.realm()).isEqualTo("NewRealmFromConf");
                 assertThat(configuration.openUrls()).isEqualTo(List.of("NewOpenurl-fromConf"));
             });
+    }
+
+    @Test
+    void shouldMigrateLegacySha512PasswordToBcrypt_atStartup() {
+        // Given: a stored SHA-512 credential (as it would exist before the security fix)
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        String salt = AuthUtils.generateSalt();
+        String sha512Hash = AuthUtils.encodePassword(salt, "Kestra123");
+        tmpSettingsRepo.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthService.SaltedBasicAuthCredentials(salt, "admin@kestra.io", sha512Hash))
+                .build()
+        );
+
+        // Service with no YAML config — migration must still run
+        var tmpBasicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        // When
+        tmpBasicAuthService.init();
+
+        // Then: stored hash is now bcrypt
+        var credentials = tmpBasicAuthService.configuration().credentials();
+        assertThat(credentials.getPassword())
+            .as("legacy SHA-512 hash must be migrated to bcrypt at startup")
+            .startsWith("$2y$");
+
+        // And: authentication still works with the original plaintext
+        assertThat(AuthUtils.matches(credentials.getSalt(), "Kestra123", credentials.getPassword()))
+            .as("bcrypt-wrapped hash must still verify against the original password")
+            .isTrue();
+    }
+
+    @Test
+    void shouldStorePasswordAsBcrypt() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+
+        // When
+        basicAuthService.init();
+
+        // Then
+        var credentials = basicAuthService.configuration().credentials();
+        assertThat(credentials.getPassword())
+            .as("stored password must be a bcrypt modular-crypt string")
+            .startsWith("$2y$");
+    }
+
+    @Test
+    void shouldNotReSaveCredentials_whenSamePasswordIsUsedOnRestart() {
+        // Given – first startup persists bcrypt credentials
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+        var firstCredentials = basicAuthService.configuration().credentials();
+
+        // When – simulate a second startup with the same YAML config
+        basicAuthService.init();
+        var secondCredentials = basicAuthService.configuration().credentials();
+
+        // Then – no re-save occurred: the stored hash is identical
+        assertThat(secondCredentials).isEqualTo(firstCredentials);
+    }
+
+    @Test
+    void shouldAuthenticate_withCorrectPassword() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When / Then – correct credentials accepted
+        HttpRequest<?> validRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(validRequest)).isTrue();
+    }
+
+    @Test
+    void shouldNotAuthenticate_withWrongPassword() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When / Then – wrong password rejected
+        HttpRequest<?> badRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "WrongPassword1");
+        assertThat(basicAuthService.isAuthenticated(badRequest)).isFalse();
+    }
+
+    @Test
+    void shouldInvalidateCache_whenPasswordChanges() {
+        // Given – initialised with password "Kestra123"
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        HttpRequest<?> oldPasswordRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+
+        // Cache a positive verification
+        assertThat(basicAuthService.isAuthenticated(oldPasswordRequest)).isTrue();
+
+        // When – password is changed
+        basicAuthService.save(new BasicAuthCredentials(null, "admin@kestra.io", "NewPassword1"));
+
+        // Then – old password no longer accepted (cache must have been invalidated)
+        assertThat(basicAuthService.isAuthenticated(oldPasswordRequest)).isFalse();
+
+        // And new password works
+        HttpRequest<?> newPasswordRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "NewPassword1");
+        assertThat(basicAuthService.isAuthenticated(newPasswordRequest)).isTrue();
+    }
+
+    @Test
+    void shouldRejectAuthentication_withUnmigratedSha512StoredPassword() {
+        // Given – simulate a pre-migration row where the password is stored as plain SHA-512
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        String salt = AuthUtils.generateSalt();
+        String sha512Hash = AuthUtils.encodePassword(salt, "Kestra123");
+        tmpSettingsRepo.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthService.SaltedBasicAuthCredentials(salt, "admin@kestra.io", sha512Hash))
+                .build()
+        );
+        // Service without calling init() — migration skipped, SHA-512 hash stays in repo
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        // When / Then – isAuthenticated must fail closed for an unmigrated SHA-512 hash
+        HttpRequest<?> request = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(request))
+            .as("pre-migration SHA-512 hash must not grant access (fail closed)")
+            .isFalse();
+    }
+
+    @Test
+    void shouldAuthenticate_usingBase64CookieToken() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When – token is a Base64-encoded "username:password" (cookie format)
+        String token = Base64.getEncoder().encodeToString("admin@kestra.io:Kestra123".getBytes());
+        HttpRequest<?> cookieRequest = HttpRequest.GET("/test")
+            .cookie(io.micronaut.http.cookie.Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, token));
+
+        // Then
+        assertThat(basicAuthService.isAuthenticated(cookieRequest)).isTrue();
     }
 
     @Test
@@ -328,18 +485,21 @@ class BasicAuthServiceTest {
 
     private void assertConfigurationMatchesApplicationYaml(BasicAuthService basicAuthService, SettingRepositoryInterface settingRepositoryInterface) {
         var actualConfiguration = basicAuthService.configuration().credentials();
-        var applicationYamlConfiguration = BasicAuthService.SaltedBasicAuthCredentials.salt(
+
+        // bcrypt is non-deterministic so we cannot compare hash values directly.
+        // Verify the stored hash is a bcrypt string and the YAML password still verifies against it.
+        assertThat(actualConfiguration.getUsername()).isEqualTo(basicAuthService.basicAuthConfiguration.getUsername());
+        assertThat(actualConfiguration.getPassword()).startsWith("$2");
+        assertThat(AuthUtils.matches(
             actualConfiguration.getSalt(),
-            basicAuthService.basicAuthConfiguration.getUsername(),
-            basicAuthService.basicAuthConfiguration.getPassword()
-        );
-        assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
+            basicAuthService.basicAuthConfiguration.getPassword(),
+            actualConfiguration.getPassword()
+        )).as("stored bcrypt hash must verify against the YAML password").isTrue();
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(
             BASIC_AUTH_SETTINGS_KEY
         );
         assertThat(maybeSetting.isPresent()).isTrue();
-        assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
 
     private void awaitOssAuthEventApiCall(String email) {

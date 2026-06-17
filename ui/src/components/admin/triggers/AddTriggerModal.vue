@@ -279,10 +279,6 @@
     }
 
     .form {
-        :deep(.kel-form) {
-            --kel-color-danger: var(--ks-text-error);
-        }
-
         :deep(.kel-form-item):first-of-type {
             margin-top: 0;
         }

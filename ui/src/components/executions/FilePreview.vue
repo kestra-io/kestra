@@ -96,11 +96,21 @@
     }
 
     const isTextFile = computed(() => {
-        return preview.value && isTextString(preview.value.content)
+        return isTextString(preview.value?.content)
     })
 
-    function isTextString(str: string, sampleSize = 8192) {
-        const sample = str.slice(0, sampleSize)
+    function isTextString(str: any, sampleSize = 8192) {
+        if(!str) return false
+        let normalizedStr = str
+        if (typeof str !== "string") {
+            try {
+                normalizedStr = JSON.stringify(str)
+            } catch(e) {
+                return false
+            }
+        }
+
+        const sample = normalizedStr.slice(0, sampleSize)
         if (sample.length === 0) return true
 
         let nonText = 0

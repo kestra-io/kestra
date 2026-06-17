@@ -48,9 +48,11 @@
                     <div class="result-open-link">
                         <router-link
                             :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}"
+                            class="open-flow-link"
                             data-test="source-search-open-link"
                         >
                             {{ t("source_search.open_flow") }}
+                            <KsIcon size="xs"><ArrowRight /></KsIcon>
                         </router-link>
                     </div>
                 </div>
@@ -63,6 +65,7 @@
     import {ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import _escape from "lodash/escape"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     const props = defineProps<{
         results: Array<{model: {namespace: string; id: string}; fragments: string[]}> | undefined
@@ -141,9 +144,13 @@
 }
 
 .result-group-count {
+    margin-left: auto;
+    padding: var(--ks-spacing-1) var(--ks-spacing-2);
+    background-color: var(--ks-bg-badge);
+    border-radius: var(--ks-radius-sm);
     color: var(--ks-text-secondary);
     font-size: var(--ks-font-size-xs);
-    margin-left: auto;
+    white-space: nowrap;
 }
 
 .result-fragments {
@@ -177,6 +184,7 @@
     white-space: pre-wrap;
     word-break: break-all;
     color: var(--ks-text-secondary);
+    border-radius: var(--ks-radius-base);
 
     :deep(mark) {
         background-color: var(--ks-status-background-warning);
@@ -187,12 +195,15 @@
 }
 
 .result-open-link {
-    padding: var(--ks-spacing-1) var(--ks-spacing-2);
+    padding: var(--ks-spacing-2) var(--ks-spacing-2) var(--ks-spacing-1);
     font-size: var(--ks-font-size-xs);
+}
 
-    a {
-        color: var(--ks-text-link);
-    }
+.open-flow-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    color: var(--ks-text-link);
 }
 </style>
 

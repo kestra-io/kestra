@@ -1,5 +1,5 @@
 <template>
-    <div class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
+    <div ref="containerRef" class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
         <KsPopover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
@@ -8,7 +8,7 @@
             :width="300"
             :popperClass="'p-0'"
             :showArrow="false"
-            :disabled="filter.readOnly?.value"
+            :disabled="filter.readOnly?.value || isComplex"
             @hide="isCustomizeFiltersVisible = false"
         >
             <template #reference>
@@ -17,6 +17,7 @@
                     size="default"
                     class="customize-button"
                     :disabled="filter.readOnly?.value"
+                    @click="onCustomizeClick"
                 >
                     <KsTooltip
                         placement="top"
@@ -33,8 +34,8 @@
                 :appliedFilters="filter.appliedFilters?.value"
                 @add-filter="handleAddFilter"
                 @remove-filter="filter.removeFilter"
+                @open-advanced="openAdvanced('.customize-button')"
                 @close="isCustomizeFiltersVisible = false"
-                @drag-end-field="onFieldDragEnd"
             />
         </KsPopover>
 
@@ -54,46 +55,74 @@
             />
         </div>
 
-        <template v-for="(unit, unitIndex) in filter.groups?.value" :key="unit.id">
-            <LogicalSeparator
-                v-if="unitIndex > 0"
-                :logical="filter.topLogical?.value"
-                :disabled="filter.readOnly?.value"
-                :hidden="filter.searchInputFullWidth?.value"
-                :linked="hoveredTopSeparator"
-                @change="filter.setTopLogical"
-                @mouseenter="hoveredTopSeparator = true"
-                @mouseleave="hoveredTopSeparator = false"
-            />
-            <FilterGroupRenderer
-                :unit="unit"
-                :totalUnits="filter.groups?.value.length ?? 0"
-                :dragOverGroupId="dragOverGroupId"
-                :draggingEntity="draggingEntity"
-                :setChipRef="setChipRef"
-                @drag-start-filter="onChipDragStart"
-                @drag-start-group="onGroupDragStart"
-                @drag-end="onDragEnd"
-                @drag-over="onDragOver"
-                @drag-leave="onDragLeave"
-                @drop="onDrop"
-            />
-        </template>
-
-        <KsTooltip
-            v-if="filter.hasFilterKeys?.value && !filter.readOnly?.value"
-            placement="top"
-            :content="$t('filter.add_condition_group_tooltip')"
+        <KsButton
+            v-if="isComplex"
+            size="default"
+            class="rules-pill"
+            :disabled="filter.readOnly?.value"
+            @click="openAdvanced('.rules-pill')"
         >
-            <KsButton
-                link
-                class="add-group-btn"
-                :class="{'filters-hidden': filter.searchInputFullWidth?.value}"
-                @click="filter.addGroup"
+            <span class="rules-pill-content">
+                <KsIcon class="rules-pill-icon"><FilterVariant /></KsIcon>
+                <span class="rules-pill-label">{{ ruleLabel }}</span>
+                <KsIcon class="rules-pill-chevron"><ChevronDown /></KsIcon>
+            </span>
+            <span class="rules-pill-dot" />
+        </KsButton>
+
+        <div
+            v-for="cf in conditionalFilters"
+            v-else
+            :key="cf.id"
+            class="filter-chip-wrap"
+        >
+            <FilterChip
+                :ref="(el: any) => setChipRef(cf.id, el)"
+                :filter="cf"
+                :filterKey="keyConfigFor(cf)"
+                :class="{'read-only': filter.readOnly?.value}"
+                class="filter-chip"
+                @remove="filter.removeFilter"
+                @update="filter.updateFilter"
+            />
+        </div>
+
+        <template v-if="globalFilters.length || (unappliedGlobalKeys.length && !filter.readOnly?.value)">
+            <div
+                ref="globalFiltersRef"
+                class="global-filters"
+                :class="{'is-wrapped': globalWrapOffset > 0}"
+                :style="globalWrapOffset > 0 ? {marginLeft: `-${globalWrapOffset}px`} : undefined"
             >
-                {{ $t("filter.add_condition_group") }}
-            </KsButton>
-        </KsTooltip>
+                <div
+                    v-for="gf in globalFilters"
+                    :key="gf.id"
+                    class="filter-chip-wrap"
+                >
+                    <FilterChip
+                        :ref="(el: any) => setChipRef(gf.id, el)"
+                        :filter="gf"
+                        :filterKey="keyConfigFor(gf)"
+                        :class="{'read-only': filter.readOnly?.value}"
+                        class="filter-chip"
+                        @remove="filter.removeFilter"
+                        @update="filter.updateFilter"
+                    />
+                </div>
+                <template v-if="!filter.readOnly?.value">
+                    <KsButton
+                        v-for="key in unappliedGlobalKeys"
+                        :key="`add-${key.key}`"
+                        :icon="Plus"
+                        size="default"
+                        class="add-global-btn"
+                        @click="addGlobalFilter(key)"
+                    >
+                        {{ key.label }}
+                    </KsButton>
+                </template>
+            </div>
+        </template>
 
         <KsTooltip
             v-if="filter.hasFilterKeys?.value"
@@ -110,138 +139,102 @@
                 {{ $t("filter.reset") }}
             </KsButton>
         </KsTooltip>
+
+        <AdvancedFilterBuilder v-model="isAdvancedOpen" :anchor="advancedAnchor" />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed, watch} from "vue"
+    import {ref, inject, nextTick, computed, watch, onMounted, onBeforeUnmount} from "vue"
+    import {useI18n} from "vue-i18n"
     import {useDebounceFn} from "@vueuse/core"
 
-    import {FilterOutline} from "./utils/icons"
+    import {ChevronDown, FilterOutline, FilterVariant, Plus} from "./utils/icons"
 
     import CustomizeFilters from "./segments/CustomizeFilters.vue"
-    import LogicalSeparator from "./segments/LogicalSeparator.vue"
-    import FilterGroupRenderer from "./FilterGroupRenderer.vue"
+    import AdvancedFilterBuilder from "./AdvancedFilterBuilder.vue"
+    import FilterChip from "./layout/FilterChip.vue"
 
-    import {COMPARATOR_LABELS, type AppliedFilter} from "./utils/filterTypes"
+    import {buildNewFilter} from "./utils/filterChipFactory"
+    import {type AppliedFilter, type FilterKeyConfig} from "./utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
+    const {t} = useI18n({useScope: "global"})
+
     const isCustomizeFiltersVisible = ref(false)
+    const isAdvancedOpen = ref(false)
+    const advancedAnchor = ref(".customize-button")
     const chipRefs = ref<Record<string, any>>({})
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
-    const hoveredTopSeparator = ref(false)
+    const containerRef = ref<HTMLElement | null>(null)
+    const globalFiltersRef = ref<HTMLElement | null>(null)
+    const globalWrapOffset = ref(0)
 
-    type DragKind = "filter" | "group" | "field"
-    interface DragEntity { kind: DragKind; id: string }
-
-    /** Entity currently being dragged — chip or group. */
-    const draggingEntity = ref<DragEntity | null>(null)
-    /** Group or wrapper the drag is hovering over. Used to highlight the active drop target. */
-    const dragOverGroupId = ref<string | null>(null)
-
-    const ENTITY_MIME = "application/x-kestra-filter-entity"
-
-    const parseEntity = (raw: string | undefined | null): DragEntity | null => {
-        if (!raw) return null
-        const sep = raw.indexOf(":")
-        if (sep < 0) return null
-        const kind = raw.slice(0, sep) as DragKind
-        if (kind !== "filter" && kind !== "group" && kind !== "field") return null
-        return {kind, id: raw.slice(sep + 1)}
-    }
-
-    const onChipDragStart = (event: DragEvent, filterId: string) => {
-        if (filter.readOnly?.value) return
-        event.stopPropagation() // don't trigger the parent dropzone's group-drag
-        draggingEntity.value = {kind: "filter", id: filterId}
-        if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = "move"
-            event.dataTransfer.setData(ENTITY_MIME, `filter:${filterId}`)
-            event.dataTransfer.setData("text/plain", filterId)
-        }
-    }
-
-    const onGroupDragStart = (event: DragEvent, groupId: string) => {
-        if (filter.readOnly?.value) return
-        event.stopPropagation()
-        draggingEntity.value = {kind: "group", id: groupId}
-        if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = "move"
-            event.dataTransfer.setData(ENTITY_MIME, `group:${groupId}`)
-            event.dataTransfer.setData("text/plain", groupId)
-        }
-    }
-
-    const onDragOver = (event: DragEvent, groupId: string) => {
-        if (filter.readOnly?.value) return
-        const entity = draggingEntity.value
-        const isCrossComponentField = entity == null
-            && event.dataTransfer?.types.includes(ENTITY_MIME)
-        if (entity == null && !isCrossComponentField) return
-        // Don't allow dropping a group on itself.
-        if (entity?.kind === "group" && entity.id === groupId) return
-        event.preventDefault()
-        if (event.dataTransfer) {
-            event.dataTransfer.dropEffect = isCrossComponentField ? "copy" : "move"
-        }
-        dragOverGroupId.value = groupId
-    }
-
-    const onDragLeave = (event: DragEvent, groupId: string) => {
-        // Only clear when leaving the dropzone itself, not moving between child elements.
-        const current = event.currentTarget as HTMLElement | null
-        const related = event.relatedTarget as Node | null
-        if (current && (!related || !current.contains(related)) && dragOverGroupId.value === groupId) {
-            dragOverGroupId.value = null
-        }
-    }
-
-    const onDrop = (event: DragEvent, targetGroupId: string) => {
-        if (filter.readOnly?.value) return
-        event.preventDefault()
-
-        const entity = parseEntity(event.dataTransfer?.getData(ENTITY_MIME)) ?? draggingEntity.value
-        if (entity?.kind === "group") {
-            filter.wrapGroups(entity.id, targetGroupId)
-        } else if (entity?.kind === "filter") {
-            filter.moveFilter(entity.id, targetGroupId)
-        } else if (entity?.kind === "field") {
-            addFieldChipToGroup(entity.id, targetGroupId)
-        }
-
-        draggingEntity.value = null
-        dragOverGroupId.value = null
-    }
-
-    const addFieldChipToGroup = (keyName: string, targetGroupId: string) => {
-        const key = filter.configuration.value.keys?.find((k) => k.key === keyName)
-        const comparator = key?.comparators?.[0]
-        if (!key || !comparator) return
-        const newFilter: AppliedFilter = {
-            id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            key: key.key,
-            keyLabel: key.label,
-            comparator,
-            comparatorLabel: COMPARATOR_LABELS[comparator],
-            value: [],
-            valueLabel: "",
-        }
-        filter.addFilter(newFilter, targetGroupId)
+    const openAdvanced = (anchor = ".customize-button") => {
+        advancedAnchor.value = anchor
         isCustomizeFiltersVisible.value = false
+        isAdvancedOpen.value = true
+    }
+
+    const keyConfigFor = (appliedFilter: AppliedFilter): FilterKeyConfig | null =>
+        filter.configuration?.value?.keys?.find((key) => key.key === appliedFilter.key) ?? null
+
+    const isGlobal = (appliedFilter: AppliedFilter): boolean =>
+        keyConfigFor(appliedFilter)?.groupable === false
+
+    const globalFilters = computed(() =>
+        (filter.appliedFilters?.value ?? []).filter(isGlobal),
+    )
+
+    const conditionalFilters = computed(() =>
+        (filter.appliedFilters?.value ?? []).filter((f) => !isGlobal(f)),
+    )
+
+    const unappliedGlobalKeys = computed(() =>
+        (filter.configuration?.value?.keys ?? [])
+            .filter((key: FilterKeyConfig) => key.groupable === false)
+            .filter((key: FilterKeyConfig) => !globalFilters.value.some((f: AppliedFilter) => f.key === key.key)),
+    )
+
+    const addGlobalFilter = (key: FilterKeyConfig) => {
+        const newFilter = buildNewFilter(key)
+        if (!newFilter) return
+        filter.addFilter(newFilter)
         nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
     }
 
-    const onFieldDragEnd = () => {
-        // Mirror onDragEnd so the highlight clears if the user drops outside any dropzone.
-        draggingEntity.value = null
-        dragOverGroupId.value = null
+    const setChipRef = (filterId: string, el: any) => el
+        ? chipRefs.value[filterId] = el
+        : delete chipRefs.value[filterId]
+
+    const hasValue = (value: AppliedFilter["value"]): boolean => {
+        if (Array.isArray(value)) return value.length > 0
+        if (value == null) return false
+        if (typeof value === "string") return value !== ""
+        return true
     }
 
-    const onDragEnd = () => {
-        draggingEntity.value = null
-        dragOverGroupId.value = null
+    const ruleCount = computed(() =>
+        conditionalFilters.value.filter((f) => hasValue(f.value)).length,
+    )
+
+    const isComplex = computed(() => {
+        const groups = filter.groups?.value ?? []
+        return ruleCount.value > 1
+            || groups.length > 1
+            || groups.some((group) => group.kind === "wrapper")
+    })
+
+    const onCustomizeClick = () => {
+        if (isComplex.value) openAdvanced(".customize-button")
     }
+
+    const ruleLabel = computed(() =>
+        ruleCount.value === 1
+            ? t("filter.rule_count", {count: ruleCount.value})
+            : t("filter.rules_count", {count: ruleCount.value}),
+    )
 
     const canReset = computed(() => {
         return (
@@ -251,20 +244,17 @@
         )
     })
 
-    const setChipRef = (filterId: string, el: any) => el
-        ? chipRefs.value[filterId] = el
-        : delete chipRefs.value[filterId]
-
     const handleAddFilter = (newFilter: AppliedFilter) => {
         filter.addFilter(newFilter)
-        setTimeout(() => {
-            isCustomizeFiltersVisible.value = false
-        }, 300)
-        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
+        isCustomizeFiltersVisible.value = false
+        nextTick(() => {
+            if (isComplex.value) openAdvanced(".customize-button")
+            else chipRefs.value[newFilter.id]?.editPopover?.toggleDialog()
+        })
     }
 
     const handleReset = () => {
-        filter.resetToDefaults()
+        filter.clearFilters()
     }
 
     const localSearchQuery = ref(filter.searchQuery?.value ?? "")
@@ -275,6 +265,34 @@
     const debouncedUpdateSearch = useDebounceFn((value: string) => {
         filter.searchQuery.value = value
     }, 700)
+
+    const measureGlobalWrap = () => {
+        const container = containerRef.value
+        const globalFiltersEl = globalFiltersRef.value
+        if (!container || !globalFiltersEl) {
+            globalWrapOffset.value = 0
+            return
+        }
+        const containerRect = container.getBoundingClientRect()
+        const isWrappedBelowFirstRow = globalFiltersEl.getBoundingClientRect().top - containerRect.top > 6
+        if (!isWrappedBelowFirstRow) {
+            globalWrapOffset.value = 0
+            return
+        }
+        const barLeft = container.parentElement?.getBoundingClientRect().left ?? containerRect.left
+        globalWrapOffset.value = Math.max(0, Math.round(containerRect.left - barLeft))
+    }
+
+    let wrapObserver: ResizeObserver | undefined
+    onMounted(() => {
+        if (containerRef.value && typeof ResizeObserver !== "undefined") {
+            wrapObserver = new ResizeObserver(() => measureGlobalWrap())
+            wrapObserver.observe(containerRef.value)
+        }
+        nextTick(measureGlobalWrap)
+    })
+    onBeforeUnmount(() => wrapObserver?.disconnect())
+    watch([globalFilters, conditionalFilters, isComplex], () => nextTick(measureGlobalWrap))
 </script>
 
 <style lang="scss" scoped>
@@ -285,8 +303,7 @@
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
-    gap: .5rem;
-    row-gap: 0.5rem;
+    gap: var(--ks-spacing-2);
     flex: 1;
     min-width: 7rem;
 
@@ -296,7 +313,95 @@
     }
 }
 
+.filter-chip-wrap {
+    flex-shrink: 0;
+}
+
+.filter-chip {
+    flex-shrink: 0;
+    box-shadow: var(--ks-box-shadow);
+
+    &.read-only {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+}
+
+.global-filters {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
+    padding-left: var(--ks-spacing-2);
+    border-left: 1px solid var(--ks-border-default);
+    min-height: 1.75rem;
+
+    &.is-wrapped {
+        padding-left: 0;
+        border-left: none;
+    }
+}
+
+.add-global-btn {
+    margin: 0 !important;
+    flex-shrink: 0;
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+    border: 1px dashed var(--ks-border-default);
+    background: transparent;
+
+    &:hover {
+        color: var(--ks-text-primary);
+        background: var(--ks-bg-hover);
+    }
+}
+
+.rules-pill {
+    position: relative;
+    margin: 0 !important;
+    background-color: var(--ks-btn-secondary-bg-default);
+    font-size: var(--ks-font-size-xs);
+    flex-shrink: 0;
+    box-shadow: var(--ks-box-shadow);
+
+    &:hover {
+        background-color: var(--ks-btn-secondary-bg-hover);
+    }
+
+    .rules-pill-content {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .rules-pill-label {
+        color: var(--ks-content-link, var(--ks-text-link));
+        font-weight: 600;
+    }
+
+    :deep(.rules-pill-icon svg) {
+        color: var(--ks-content-link, var(--ks-text-link)) !important;
+        font-size: var(--ks-font-size-md);
+    }
+
+    :deep(.rules-pill-chevron svg) {
+        color: var(--ks-text-dim) !important;
+        font-size: var(--ks-font-size-md);
+    }
+
+    .rules-pill-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: var(--ks-status-warning);
+    }
+}
+
 .customize-button {
+    margin: 0 !important;
     background-color: var(--ks-btn-secondary-bg-default);
     font-size: var(--ks-font-size-xs);
     flex-shrink: 0;
@@ -329,6 +434,15 @@
     min-width: 150px;
     max-width: 200px;
 
+    :deep(.kel-input__wrapper),
+    :deep(.kel-input__inner) {
+        border-radius: var(--ks-radius-base);
+    }
+
+    :deep(.kel-input__wrapper) {
+        height: 32px;
+    }
+
     &.search-grow {
         flex: 2 1 auto;
         max-width: none;
@@ -341,19 +455,4 @@
     }
 }
 
-.add-group-btn {
-    margin: 0 !important;
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
-    flex-shrink: 0;
-
-    &:hover {
-        color: var(--ks-text-primary);
-        text-decoration: underline;
-    }
-
-    &.filters-hidden {
-        display: none;
-    }
-}
 </style>

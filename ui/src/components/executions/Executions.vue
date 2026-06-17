@@ -53,6 +53,16 @@
             :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
+                <QuickFilters
+                    v-if="!hasComplexFilters"
+                    :states="quickStates"
+                    :state="selectedStates"
+                    :stateLabel="t('filter.state.label')"
+                    :showInterval="false"
+                    :showLevel="false"
+                    :showState="true"
+                    @update:state="onQuickFilterState"
+                />
                 <KSFilter
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
@@ -68,13 +78,6 @@
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
-                />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
                 />
             </template>
 
@@ -210,7 +213,13 @@
                         <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
-                        <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
+                        <KsExecutionStatus
+                            :status="scope.row?.state?.current"
+                            size="small"
+                            clickable
+                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            @click.stop="onStateClick(scope.row?.state?.current)"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'flowRevision'">
                         <code class="code-text">{{ scope.row?.flowRevision }}</code>
@@ -432,12 +441,13 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
+    import {useQuickStateFilter} from "../filter/composables/useQuickStateFilter"
+    import {useStateFilter} from "../filter/composables/useStateFilter"
     import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
+    const {quickStates, selectedStates, onQuickFilterState, hasComplexFilters} = useQuickStateFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -599,6 +609,20 @@
 
     const selectionMapper = (execution: any) => {
         return execution.id
+    }
+
+    const {filterByState, navigateToStateFilter} = useStateFilter()
+
+    const onStateClick = (state?: string) => {
+        if (!state) return
+        if (!props.embed) {
+            filterByState(state)
+            return
+        }
+        const scope: Record<string, string> = {}
+        if (props.namespace) scope["filters[namespace][PREFIX]"] = props.namespace
+        if (props.flowId) scope["filters[flowId][EQUALS]"] = props.flowId
+        navigateToStateFilter(state, scope)
     }
 
     const ready = ref(false)

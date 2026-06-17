@@ -63,6 +63,7 @@
     "mermaid": "^11.14.0",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.2",
+    "motion-v": "^2.3.0",
     "remark-directive": "^4.0.0",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",

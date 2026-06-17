@@ -35,13 +35,6 @@
                     :defaultScope="false"
                     :defaultTimeRange="false"
                 />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange_trigger.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
-                />
             </template>
 
             <template #bulk-actions>
@@ -335,8 +328,6 @@
     import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
-    import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
-    import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
     import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
@@ -364,7 +355,6 @@
     const router = useRouter()
     const toast = useToast()
     const {t} = useI18n({useScope: "global"})
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()

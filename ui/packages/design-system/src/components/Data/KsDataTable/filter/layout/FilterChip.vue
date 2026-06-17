@@ -166,7 +166,7 @@
     background-color: var(--ks-btn-secondary-bg-default);
     border: 1px solid var(--ks-border-default);
     padding: 3px 12px;
-    border-radius: 4px;
+    border-radius: var(--ks-radius-base);
     cursor: pointer;
     max-width: 300px;
     min-height: 32px;

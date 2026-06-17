@@ -736,6 +736,7 @@
     },
     "files": "Pliki",
     "filter by log level": "Filtruj według poziomu log",
+    "filter by status": "Filtruj wykonania według statusu {status}",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",

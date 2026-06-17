@@ -28,7 +28,7 @@
                         class="sidebar-customize__item"
                         draggable="true"
                         @dragstart="onDragStart(section, item, $event)"
-                        @dragover.prevent="onDragOver(section, item)"
+                        @dragover.prevent="onDragOver(section, item, $event)"
                         @drop.prevent="onDrop"
                         @dragend="resetDrag"
                     >
@@ -148,26 +148,31 @@
         }
     }
 
-    function computePreview(targetSection: MenuItem, targetItemId: string) {
+    function computePreview(targetSection: MenuItem, targetItemId: string, event: DragEvent) {
         const sourceSectionId = dragSectionId.value!
         const targetSectionId = menuSectionId(targetSection)
 
         const sourceIds = getSavedItemIds(sourceSectionId)
         const targetIds = sourceSectionId === targetSectionId ? sourceIds : getSavedItemIds(targetSectionId)
-        const toIndex = targetIds.indexOf(targetItemId)
-        if (toIndex === -1 || !dragItemId.value) return
+        if (targetIds.indexOf(targetItemId) === -1 || !dragItemId.value) return
+
+        const target = event.currentTarget as HTMLElement | null
+        const rect = target?.getBoundingClientRect()
+        const after = rect ? event.clientY > rect.top + rect.height / 2 : false
 
         if (sourceSectionId === targetSectionId) {
-            const fromIndex = sourceIds.indexOf(dragItemId.value)
-            if (fromIndex === -1 || fromIndex === toIndex) return
-            const reordered = [...sourceIds]
-            reordered.splice(fromIndex, 1)
-            reordered.splice(toIndex, 0, dragItemId.value)
+            const reordered = sourceIds.filter((id) => id !== dragItemId.value)
+            let insertAt = reordered.indexOf(targetItemId)
+            if (insertAt === -1) return
+            if (after) insertAt += 1
+            reordered.splice(insertAt, 0, dragItemId.value)
             previewOrder.value = {...previewOrder.value, [sourceSectionId]: reordered}
         } else {
             const newSourceIds = sourceIds.filter((id) => id !== dragItemId.value)
             const newTargetIds = [...targetIds]
-            newTargetIds.splice(toIndex, 0, dragItemId.value)
+            let insertAt = newTargetIds.indexOf(targetItemId)
+            if (after) insertAt += 1
+            newTargetIds.splice(insertAt, 0, dragItemId.value)
             previewOrder.value = {
                 ...previewOrder.value,
                 [sourceSectionId]: newSourceIds,
@@ -176,10 +181,10 @@
         }
     }
 
-    function onDragOver(section: MenuItem, item: MenuItem) {
+    function onDragOver(section: MenuItem, item: MenuItem, event: DragEvent) {
         dropTargetEmptySectionId.value = null
         if (!item.id || item.id === dragItemId.value) return
-        computePreview(section, item.id)
+        computePreview(section, item.id, event)
     }
 
     function onDragOverEmpty(section: MenuItem) {

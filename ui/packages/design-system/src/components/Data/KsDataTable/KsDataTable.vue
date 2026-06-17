@@ -4,7 +4,7 @@
     </template>
 
     <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
-        <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
+        <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
 
@@ -417,7 +417,7 @@
 
 <style lang="scss">
     .ks-data-table-wrapper {
-        --ks-data-table-gutter: 24px;
+        --ks-data-table-gutter: var(--ks-spacing-4);
         height: 100%;
         display: flex;
         flex-direction: column;

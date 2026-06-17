@@ -144,12 +144,12 @@
                 @update:model-value="onChange(input)"
                 type="time"
             />
-            <div class="el-input el-input-file" v-if="input.type === 'FILE'">
-                <div class="el-input__wrapper">
+            <div class="kel-input kel-input-file" v-if="input.type === 'FILE'">
+                <div class="kel-input__wrapper">
                     <input
                         :data-testid="`input-form-${input.id}`"
                         :id="input.id+'-file'"
-                        class="el-input__inner custom-file-input"
+                        class="kel-input__inner custom-file-input"
                         type="file"
                         :accept="getAcceptedFileTypes(input)"
                         @change="onFileChange(input, $event)"

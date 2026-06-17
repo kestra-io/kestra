@@ -156,7 +156,7 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue"
-    import {CascaderOption, CascaderProps}from "element-plus"
+    import type {CascaderOption, CascaderProps} from "@kestra-io/design-system"
     import {useExecutionsStore} from "../../../stores/executions"
     import {usePluginsStore} from "../../../stores/plugins"
 

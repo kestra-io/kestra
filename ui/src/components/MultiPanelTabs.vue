@@ -291,7 +291,7 @@
         }
     }
 
-    // let the panelSizes be dealt with by the el-splitter once set
+    // let the panelSizes be dealt with by the KsSplitter once set
     // by the prop
     const panelSizes = computed<number[]>((prevValue) => {
         if(prevValue?.length === panels.value.length){

@@ -32,6 +32,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
 
     // utils
+    implementation "org.bouncycastle:bcprov-jdk18on"
     implementation 'com.github.oshi:oshi-core'
     implementation 'io.pebbletemplates:pebble'
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder'

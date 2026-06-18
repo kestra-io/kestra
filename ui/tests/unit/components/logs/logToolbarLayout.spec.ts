@@ -62,28 +62,14 @@ describe("LogsWrapper toolbar layout", () => {
         vi.restoreAllMocks()
     })
 
-    test("quick-filters level legend is absent from the rendered output", async () => {
+    test("quick-filters level legend is absent and the logs toolbar still renders", async () => {
         // Given
         const wrapper = mount(LogsWrapper, {global: globalConfig})
         await flushPromises()
 
         // Then
         expect(wrapper.find("[data-test='quick-filters-level']").exists()).toBe(false)
-    })
-
-    test("toolbar renders LogLevelNavigator chips when level counts are non-zero", async () => {
-        // Given
-        const wrapper = mount(LogsWrapper, {global: globalConfig})
-        await flushPromises()
-
-        // When: simulate the store having level counts by directly setting the component's internal ref
-        // LogLevelNavigator only renders for levels where serverLevelCounts[level] > 0
-        // Without API data the toolbar is still present (no QuickFilters legend replaces it)
-        const toolbar = wrapper.find(".logs-toolbar")
-        expect(toolbar.exists()).toBe(true)
-
-        // Then: the left section for navigator chips exists and no legend is injected there
-        expect(toolbar.find("[data-test='quick-filters-level']").exists()).toBe(false)
+        expect(wrapper.find(".logs-toolbar").exists()).toBe(true)
     })
 })
 
@@ -110,14 +96,11 @@ describe("executions/Logs toolbar layout", () => {
         const wrapper = mount(ExecutionLogs, {global: executionLogsGlobalConfig})
         await flushPromises()
 
+        // Then
         const actions = wrapper.find(".logs-toolbar__actions")
         expect(actions.exists()).toBe(true)
-
-        // Then: Download and Copy are present
         expect(actions.find("[aria-label='download logs']").exists()).toBe(true)
         expect(actions.find("[aria-label='copy logs']").exists()).toBe(true)
-
-        // Then: no standalone Refresh button
         expect(actions.find("[aria-label='refresh']").exists()).toBe(false)
         expect(actions.find("[aria-label='Refresh']").exists()).toBe(false)
     })

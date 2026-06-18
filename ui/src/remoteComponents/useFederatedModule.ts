@@ -4,6 +4,7 @@ import {loadRemote, registerRemotes, registerShared} from "@module-federation/en
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
 import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
+import {getCsrfToken} from "../utils/csrf"
 
 
 function wrapWithErrorBoundary(inner: any) {
@@ -58,9 +59,14 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         try {
             // get the manifest of the all the tasks we will
             // have in the graph
-            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({
-                body: Array.from(taskTypes),
-            })
+            // The generated SDK client (client.gen) uses its own axios.create() instance
+            // which does not pick up the CSRF interceptor configured in main.ts.
+            // Explicitly forward the CSRF token so this POST is not rejected by CsrfTokenFilter.
+            const csrfToken = getCsrfToken()
+            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest(
+                {body: Array.from(taskTypes)},
+                csrfToken ? {headers: {"X-CSRF-TOKEN": csrfToken}} : undefined,
+            )
             pluginTaskManifests = pluginTaskManifestsResponse?.manifest ?? {}
         } catch (error) {
             console.error("[FederatedModule] Failed to load plugin UI manifest:", error)

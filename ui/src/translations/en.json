@@ -423,7 +423,12 @@
       "custom": "Custom Blueprints",
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
-      "dashboards": "Dashboard Blueprints"
+      "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Category type",
+        "links": "Link & Resources",
+        "openInEditor": "Open in Edit Flow"
+      }
     },
     "use": "Use",
     "plugins": {

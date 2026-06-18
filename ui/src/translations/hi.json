@@ -1889,6 +1889,12 @@
     "source and topology": "स्रोत और टोपोलॉजी",
     "source only": "केवल स्रोत",
     "source search": "स्रोत खोज",
+    "source_search": {
+      "match_count": "{count} मिलान | {count} मिलान",
+      "open_flow": "flow खोलें",
+      "preview_empty": "पूर्वावलोकन के लिए एक परिणाम चुनें। स्रोत देखने के लिए परिणाम सूची में किसी flow पर क्लिक करें।",
+      "preview_error": "flow स्रोत लोड करने में विफल"
+    },
     "specific task": "विशिष्ट task",
     "start date": "प्रारंभ तिथि",
     "start datetime": "प्रारंभ दिनांक और समय",

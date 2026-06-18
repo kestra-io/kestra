@@ -1889,6 +1889,12 @@
     "source and topology": "源代码和拓扑",
     "source only": "仅限来源",
     "source search": "源搜索",
+    "source_search": {
+      "match_count": "{count} 个匹配 | {count} 个匹配",
+      "open_flow": "打开 flow",
+      "preview_empty": "选择一个结果进行预览。点击结果列表中的 flow 查看其源码。",
+      "preview_error": "加载 flow 源码失败"
+    },
     "specific task": "特定任务",
     "start date": "开始日期",
     "start datetime": "开始日期时间",

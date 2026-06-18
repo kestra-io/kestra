@@ -1889,6 +1889,12 @@
     "source and topology": "Fuente y topología",
     "source only": "Solo fuente",
     "source search": "Búsqueda de fuente",
+    "source_search": {
+      "match_count": "{count} coincidencia | {count} coincidencias",
+      "open_flow": "Abrir flow",
+      "preview_empty": "Selecciona un resultado para previsualizarlo. Haz clic en un flow de la lista de resultados para ver su código fuente.",
+      "preview_error": "Error al cargar el código fuente del flow"
+    },
     "specific task": "Tarea específica",
     "start date": "Fecha de inicio",
     "start datetime": "Fecha y hora de inicio",

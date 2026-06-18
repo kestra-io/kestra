@@ -1889,6 +1889,12 @@
     "source and topology": "ソースとトポロジー",
     "source only": "ソースのみ",
     "source search": "ソース検索",
+    "source_search": {
+      "match_count": "{count} 件一致 | {count} 件一致",
+      "open_flow": "flow を開く",
+      "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
+      "preview_error": "flow ソースの読み込みに失敗しました"
+    },
     "specific task": "特定のTask",
     "start date": "開始日",
     "start datetime": "開始日時",

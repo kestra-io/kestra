@@ -1889,6 +1889,12 @@
     "source and topology": "Sorgente e topologia",
     "source only": "Solo sorgente",
     "source search": "Cerca fonte",
+    "source_search": {
+      "match_count": "{count} corrispondenza | {count} corrispondenze",
+      "open_flow": "Apri flow",
+      "preview_empty": "Seleziona un risultato per visualizzarne l'anteprima. Fai clic su un flow nell'elenco dei risultati per vedere il suo sorgente.",
+      "preview_error": "Impossibile caricare il sorgente del flow"
+    },
     "specific task": "Task specifico",
     "start date": "Data di inizio",
     "start datetime": "Data e ora di inizio",

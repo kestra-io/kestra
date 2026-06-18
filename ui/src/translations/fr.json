@@ -93,6 +93,11 @@
       "create": "Créer un blueprint",
       "custom": "Plans personnalisés",
       "dashboards": "Tableaux de bord Blueprints",
+      "detail": {
+        "category": "Type de catégorie",
+        "links": "Liens et ressources",
+        "openInEditor": "Ouvrir dans Modifier Flow"
+      },
       "edit": "Modifier un blueprint",
       "empty": "Aucun blueprint à afficher.",
       "flows": "Plans de Flow",

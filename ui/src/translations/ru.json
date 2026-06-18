@@ -93,6 +93,11 @@
       "create": "Создать blueprint",
       "custom": "Пользовательские blueprints",
       "dashboards": "Панель управления Blueprints",
+      "detail": {
+        "category": "Тип категории",
+        "links": "Ссылка и ресурсы",
+        "openInEditor": "Открыть в Edit Flow"
+      },
       "edit": "Редактировать blueprint",
       "empty": "Нет blueprints для отображения.",
       "flows": "Черновики Flow",

@@ -93,6 +93,11 @@
       "create": "Erstellen Sie ein Blueprint",
       "custom": "Benutzerdefinierte Blueprints",
       "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Kategorietyp",
+        "links": "Link & Ressourcen",
+        "openInEditor": "In Flow bearbeiten öffnen"
+      },
       "edit": "Bearbeiten Sie ein Blueprint",
       "empty": "Keine Blueprints zum Anzeigen.",
       "flows": "Flow-Blueprints",

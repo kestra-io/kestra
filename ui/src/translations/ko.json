@@ -93,6 +93,11 @@
       "create": "블루프린트 생성",
       "custom": "사용자 정의 blueprints",
       "dashboards": "대시보드 Blueprints",
+      "detail": {
+        "category": "카테고리 유형",
+        "links": "링크 및 리소스",
+        "openInEditor": "편집 Flow에서 열기"
+      },
       "edit": "블루프린트 편집",
       "empty": "블루프린트가 없습니다.",
       "flows": "플로우 Blueprints",

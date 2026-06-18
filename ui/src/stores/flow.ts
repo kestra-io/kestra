@@ -426,6 +426,10 @@ export const useFlowStore = defineStore("flow", () => {
                 },
             })
 
+        if (options.store === false) {
+            return response.data
+        }
+
         if (response.data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
@@ -445,10 +449,6 @@ export const useFlowStore = defineStore("flow", () => {
         validateFlow({
             flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`,
         })
-
-        if (options.store === false) {
-            return response.data
-        }
 
         flow.value = response.data
         flowYaml.value = response.data.source

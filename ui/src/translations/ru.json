@@ -1889,6 +1889,12 @@
     "source and topology": "Источник и топология",
     "source only": "Источник только",
     "source search": "Поиск по источнику",
+    "source_search": {
+      "match_count": "{count} совпадение | {count} совпадения",
+      "open_flow": "Открыть flow",
+      "preview_empty": "Выберите результат для предпросмотра. Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
+      "preview_error": "Не удалось загрузить исходный код flow"
+    },
     "specific task": "Конкретная задача",
     "start date": "Дата начала",
     "start datetime": "Дата и время начала",

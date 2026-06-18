@@ -180,7 +180,7 @@
         align-items: center;
         pointer-events: none;
         z-index: 1;
-        white-space: nowrap;
+        max-width: min(52%, 7rem);
         text-align: center;
         line-height: 1.2;
 
@@ -188,6 +188,7 @@
             font-size: var(--ks-font-size-3xl);
             color: var(--ks-text-primary);
             font-weight: 700;
+            white-space: nowrap;
         }
 
         &__success {

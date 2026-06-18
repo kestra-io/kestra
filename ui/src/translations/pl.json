@@ -1889,6 +1889,12 @@
     "source and topology": "Źródło i topologia",
     "source only": "Tylko źródło",
     "source search": "Wyszukaj źródło",
+    "source_search": {
+      "match_count": "{count} wynik | {count} wyniki",
+      "open_flow": "Otwórz flow",
+      "preview_empty": "Wybierz wynik, aby wyświetlić podgląd. Kliknij flow na liście wyników, aby zobaczyć jego źródło.",
+      "preview_error": "Nie udało się załadować źródła flow"
+    },
     "specific task": "Specyficzny task",
     "start date": "Data rozpoczęcia",
     "start datetime": "Data i godzina rozpoczęcia",

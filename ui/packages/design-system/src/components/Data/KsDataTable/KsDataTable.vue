@@ -8,7 +8,7 @@
             <slot name="navbar" />
         </nav>
 
-        <div style="flex: 1; display: flex; flex-direction: column;" v-ks-loading="isLoading">
+        <div class="ks-data-table-body" :class="{'ks-data-table-body--fit': fitHeight}" v-ks-loading="isLoading">
             <div v-if="$slots.top" class="ks-data-table-top">
                 <slot name="top" />
             </div>
@@ -108,6 +108,7 @@
         noGutter?: boolean
         noFirstColumnGutter?: boolean
         tableLayout?: "fixed" | "auto"
+        fitHeight?: boolean
     }>(), {
         data: () => [],
         total: 0,
@@ -126,6 +127,7 @@
         noGutter: false,
         noFirstColumnGutter: false,
         tableLayout: "auto",
+        fitHeight: false,
     })
 
     export interface SortItem {
@@ -417,7 +419,7 @@
 
 <style lang="scss">
     .ks-data-table-wrapper {
-        --ks-data-table-gutter: var(--ks-spacing-4);
+        --ks-data-table-gutter: 24px;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -459,6 +461,17 @@
 
         .kel-scrollbar__view {
             height: 100%;
+        }
+    }
+
+    .ks-data-table-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        &--fit {
+            min-height: 0;
+            overflow: hidden;
         }
     }
 

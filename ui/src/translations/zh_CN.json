@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "折叠所有多行",
     "font size": "Font size",
     "for flow": "用于 flow",
+    "forbidden system labels": "只有 system.correlationId 可以用作系统 label",
     "force run": "强制运行",
     "force run confirm": "您确定要强制运行执行 <code>{id}</code> 吗？<br/><br/>WARNING: 强制运行执行不保证成功，并且可能会创建重复的任务执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED 任务将被移动到 RUNNING 状态。</li><li>RUNNING 任务将被重新提交。</li><li>QUEUED 任务将被取消排队。</li><li>PAUSED 任务将被恢复。</li></ul>",
     "force run done": "执行被强制运行",
@@ -866,6 +867,8 @@
     "form error": "表单错误",
     "from": "从",
     "gantt": "甘特图",
+    "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
+    "gantt_no_tasks_match_filters": "没有任务符合所选过滤器。<br> 尝试调整搜索、状态或log-level过滤器。",
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
@@ -939,6 +942,7 @@
     "line": "行",
     "line-by-line": "逐行",
     "loaded x dependencies": "已加载 {count} 个依赖项",
+    "loading": "加载中...",
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
     "logs": "日志",
@@ -950,6 +954,7 @@
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
     "main_configuration": "主配置",
+    "manage labels": "管理labels",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",
@@ -1146,6 +1151,7 @@
     "no data current task": "当前task没有可用数据",
     "no inputs": "此流程没有输入。",
     "no result": "没有结果显示。",
+    "no revisions": "无修订",
     "no revisions found": "此流程只有一个修订版",
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
@@ -1669,7 +1675,6 @@
     "sequential": "顺序",
     "server type": "服务器类型",
     "services": "服务",
-    "set_extra_labels": "设置额外的labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1687,8 @@
             "flow_default_tab": "导航到flow时选择的选项卡。",
             "log_display": "打开执行时日志的呈现方式。",
             "log_level": "执行日志中显示的最低日志级别。",
-            "playground": "在编辑器游乐场中单独运行任务。"
+            "playground": "在编辑器游乐场中单独运行任务。",
+            "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。"
           },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
@@ -1695,7 +1701,8 @@
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
             "multi_panel_editor": "多面板编辑器",
-            "playground": "游乐场"
+            "playground": "游乐场",
+            "triggers_default_tab": "默认 Trigger 标签页"
           },
           "label": "主要配置"
         },
@@ -1796,7 +1803,9 @@
         "firstName": "名字",
         "lastName": "姓氏",
         "password": "密码",
-        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
+        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。",
+        "username": "用户名",
+        "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
       "login_subtitle": "输入您的凭证以访问您的Kestra实例",
@@ -1885,6 +1894,12 @@
     "source and topology": "源代码和拓扑",
     "source only": "仅限来源",
     "source search": "源搜索",
+    "source_search": {
+      "match_count": "{count} 个匹配 | {count} 个匹配",
+      "open_flow": "打开 flow",
+      "preview_empty": "选择一个结果进行预览。点击结果列表中的 flow 查看其源码。",
+      "preview_error": "加载 flow 源码失败"
+    },
     "specific task": "特定任务",
     "start date": "开始日期",
     "start datetime": "开始日期时间",

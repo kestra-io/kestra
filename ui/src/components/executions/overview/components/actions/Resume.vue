@@ -39,13 +39,10 @@
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
 
-    const props = withDefaults(defineProps<{
+    const props = defineProps<{
         // FIXME: any - execution is an untyped domain object
         execution: any // FIXME: any
-        component?: string
-    }>(), {
-        component: "el-button",
-    })
+    }>()
 
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
@@ -57,7 +54,6 @@
 
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
-    // FIXME: any - form ref type from element-plus
     const form = ref<any>(null) // FIXME: any
 
     const enabled = computed(() => {

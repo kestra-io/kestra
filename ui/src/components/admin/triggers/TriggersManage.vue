@@ -234,7 +234,7 @@
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
-                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK)"
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
                                     @click="unlock(scope.row)"
                                 >

@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Comprimi Tutte le Linee Multiple",
     "font size": "Font size",
     "for flow": "per flow",
+    "forbidden system labels": "Solo system.correlationId può essere usato come label di sistema",
     "force run": "Esegui forzatamente",
     "force run confirm": "Sei sicuro di voler forzare l'esecuzione <code>{id}</code>?<br/><br/>WARNING: forzare l'esecuzione non è garantito e potrebbe creare esecuzioni duplicate dei task.<br/><br/>Le seguenti transizioni saranno effettuate:<br/><ul><li>I task in stato CREATED saranno spostati allo stato RUNNING.</li><li>I task in stato RUNNING saranno ri-sottomessi.</li><li>I task in stato QUEUED saranno rimossi dalla coda.</li><li>I task in stato PAUSED saranno ripresi.</li></ul>",
     "force run done": "L'esecuzione è forzata a RUNNING",
@@ -866,6 +867,8 @@
     "form error": "Errore del modulo",
     "from": "Da",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Questa esecuzione è terminata senza eseguire alcun task. Controlla la sua panoramica e i log per il motivo.",
+    "gantt_no_tasks_match_filters": "Nessun task corrisponde ai filtri selezionati. <br> Prova a modificare i filtri di ricerca, stato o livello di log.",
     "healthcheck date": "Data di HealthCheck",
     "hide task documentation": "Nascondi la documentazione del task",
     "home": "Home",
@@ -939,6 +942,7 @@
     "line": "Linea",
     "line-by-line": "riga per riga",
     "loaded x dependencies": "{count} dipendenze caricate",
+    "loading": "Caricamento...",
     "log expand setting": "Visualizzazione predefinita del Log",
     "logExporters": "Esportatori di Log",
     "logs": "Logs",
@@ -950,6 +954,7 @@
       "raw_details": "Mostra i task logs e i flow logs completi in un formato grezzo ordinato per timestamp"
     },
     "main_configuration": "Configurazione Principale",
+    "manage labels": "Gestisci etichette",
     "management port": "Porta di gestione",
     "mark as": "Contrassegna come <code>{status}</code>",
     "max": "Max",
@@ -1146,6 +1151,7 @@
     "no data current task": "Non ci sono dati disponibili per il task corrente",
     "no inputs": "Questo flow non ha inputs.",
     "no result": "Non ci sono risultati da mostrare.",
+    "no revisions": "Nessuna revisione",
     "no revisions found": "Esiste solo una revisione per questo flow",
     "no-executions-view": {
       "guidance_desc": "Hai bisogno di assistenza per eseguire il tuo flow?",
@@ -1669,7 +1675,6 @@
     "sequential": "Sequenziale",
     "server type": "Tipo di server",
     "services": "Servizi",
-    "set_extra_labels": "Imposta etichette extra",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1687,8 @@
             "flow_default_tab": "Scheda selezionata durante la navigazione a un flow.",
             "log_display": "Come vengono presentati i log quando si apre un'esecuzione.",
             "log_level": "Livello minimo di log mostrato nei log di esecuzione.",
-            "playground": "Esegui i task singolarmente nel playground dell'editor."
+            "playground": "Esegui i task singolarmente nel playground dell'editor.",
+            "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger."
           },
           "fields": {
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
@@ -1695,7 +1701,8 @@
             "log_display": "Visualizzazione Log predefinita",
             "log_level": "Livello di Log predefinito",
             "multi_panel_editor": "Editor Multi Pannello",
-            "playground": "Playground"
+            "playground": "Playground",
+            "triggers_default_tab": "Scheda Trigger Predefiniti"
           },
           "label": "Configurazione principale"
         },
@@ -1796,7 +1803,9 @@
         "firstName": "Nome",
         "lastName": "Cognome",
         "password": "Password",
-        "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero."
+        "password_requirements": "Almeno 8 caratteri con 1 lettera maiuscola e 1 numero.",
+        "username": "Nome utente",
+        "username_hint": "Deve essere un indirizzo email valido."
       },
       "login": "Accedi",
       "login_subtitle": "Inserisci le tue credenziali per accedere alla tua istanza di Kestra",
@@ -1885,6 +1894,12 @@
     "source and topology": "Sorgente e topologia",
     "source only": "Solo sorgente",
     "source search": "Cerca fonte",
+    "source_search": {
+      "match_count": "{count} corrispondenza | {count} corrispondenze",
+      "open_flow": "Apri flow",
+      "preview_empty": "Seleziona un risultato per visualizzarne l'anteprima. Fai clic su un flow nell'elenco dei risultati per vedere il suo sorgente.",
+      "preview_error": "Impossibile caricare il sorgente del flow"
+    },
     "specific task": "Task specifico",
     "start date": "Data di inizio",
     "start datetime": "Data e ora di inizio",

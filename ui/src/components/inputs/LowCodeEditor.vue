@@ -10,7 +10,7 @@
             :isAllowedEdit="isAllowedEdit"
             :source="source"
             :toggleOrientationButton="toggleOrientationButton"
-            :flowGraph="effectiveFlowGraph"
+            :flowGraph="augmentedFlowGraph"
             :flowId="flowId"
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
@@ -40,7 +40,7 @@
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
                     <TopologyDetailsRemote
-                        :taskType="taskProps.data.node?.task?.type"
+                        :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
                         :execution="execution"
                         :namespace="props.namespace"
@@ -50,6 +50,17 @@
                 </slot>
             </template>
         </Topology>
+
+        <KsDialog
+            v-if="isTaskModalOpen && taskModalCtx"
+            v-model="isTaskModalOpen"
+            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
+            :destroyOnClose="true"
+            :appendToBody="true"
+            width="600px"
+        >
+            <TopologyTaskModalRemote v-bind="(taskModalCtx as any)" />
+        </KsDialog>
 
         <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
@@ -130,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, ref, inject, watch, computed} from "vue"
+    import {nextTick, onMounted, ref, inject, provide, watch, computed} from "vue"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
@@ -143,7 +154,7 @@
     import Collapse from "../layout/Collapse.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, KsMarkdown, KsEditor} from "@kestra-io/design-system"
+    import {SECTIONS, KsMarkdown, KsEditor, KsDialog} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -174,15 +185,45 @@
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
+    // forExecution() on the server strips taskRunner from graph nodes. Re-inject
+    // the runner type from the parsed flow YAML so topology-details and the
+    // burger-menu "Show Details" item work correctly in execution view too.
+    const runnerTypeByTaskId = computed((): Record<string, string> => {
+        const result: Record<string, string> = {}
+        const parsed = flowStore.flowParsed
+        for (const task of [...(parsed?.tasks ?? []), ...(parsed?.errors ?? []), ...(parsed?.finally ?? [])]) {
+            if (task?.id && task?.taskRunner?.type) {
+                result[task.id] = task.taskRunner.type
+            }
+        }
+        return result
+    })
+
+    const augmentedFlowGraph = computed(() => {
+        const graph = effectiveFlowGraph.value
+        const byId = runnerTypeByTaskId.value
+        if (!graph || !Object.keys(byId).length) return graph
+        return {
+            ...graph,
+            nodes: (graph.nodes ?? []).map((n: any) => {
+                const taskId = n.task?.id
+                const runnerType = taskId ? byId[taskId] : undefined
+                if (!runnerType || n.task?.taskRunner?.type) return n
+                return {...n, task: {...n.task, taskRunner: {type: runnerType}}}
+            }),
+        }
+    })
+
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
+    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
         const result: Record<string, { label: string; taskProp: string; lang: string }> = {}
         for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
             const ca = (info as any)?.customAction
-            if (ca?.label && ca?.taskProp && ca?.lang) {
+            if (ca?.label) {
                 result[type] = ca
             }
         }
@@ -191,15 +232,27 @@
 
     const hasExtraDetails = computed(() => {
         const types = taskAdditionalInfoRemote.value
-        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) => n.task?.type && types[n.task.type])
+        return (augmentedFlowGraph.value?.nodes ?? []).some((n: any) =>
+            (n.task?.type && types[n.task.type]) ||
+            (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
+        )
     })
 
     const taskMetrics = (taskId: string | undefined) =>
         executionsStore.metrics.filter((m) => m.taskId === taskId)
 
+    const isTaskModalOpen = ref(false)
+    const taskModalCtx = ref<Record<string, any> | null>(null)
+
+    provide("kestra:openTaskModal", (ctx: Record<string, any>) => {
+        taskModalCtx.value = ctx
+        isTaskModalOpen.value = true
+    })
+
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type
-        const addInfo = taskAdditionalInfoRemote.value[taskType]
+        const runnerType = node?.task?.taskRunner?.type
+        const addInfo = taskAdditionalInfoRemote.value[taskType] ?? taskAdditionalInfoRemote.value[runnerType]
         const hasExecution = !!executionsStore.execution?.id
         const height = hasExecution
             ? (addInfo?.heightWithExecution ?? addInfo?.height ?? getNodeHeight(node))
@@ -212,23 +265,37 @@
 
     const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
         const taskTypes = new Set<string>()
+        const runnerTypes = new Set<string>()
         tasks.forEach((task: any) => {
             if (!task?.type) {
                 return
             }
             taskTypes.add(`${task.type}:${task.version ?? "null"}`)
+            if (task?.taskRunner?.type) {
+                runnerTypes.add(`${task.taskRunner.type}:${task.taskRunner.version ?? "null"}`)
+            }
         })
 
         const taskTypesReParsed: {cls: string, version: string | undefined}[] = []
+        const runnerTypesReParsed: {cls: string, version: string | undefined}[] = []
 
         for (const tt of taskTypes) {
             const [cls, version] = tt.split(":")
             taskTypesReParsed.push({cls, version: version === "null" ? undefined : version})
         }
+        for (const tt of runnerTypes) {
+            const [cls, version] = tt.split(":")
+            runnerTypesReParsed.push({cls, version: version === "null" ? undefined : version})
+        }
 
         await Promise.all([
             resolveRemoteComponent(taskTypesReParsed),
             resolveDrawerComponent(taskTypesReParsed),
+            resolveTaskModalComponent(taskTypesReParsed),
+            ...(runnerTypesReParsed.length ? [
+                resolveTaskModalComponent(runnerTypesReParsed),
+                resolveRemoteComponent(runnerTypesReParsed),
+            ] : []),
         ])
     }
 
@@ -273,7 +340,7 @@
             if (flowStore.flowParsed?.tasks?.length) return
             const tasks = (flowGraph?.nodes ?? [])
                 .filter((n: any) => n.task?.type)
-                .map((n: any) => ({type: n.task.type, version: n.task.version}))
+                .map((n: any) => ({type: n.task.type, version: n.task.version, taskRunner: n.task.taskRunner}))
             await resolveTaskTopologyDetails(tasks)
         },
         {immediate: true},
@@ -502,6 +569,20 @@
             ...(parsed?.finally ?? []),
         ]
         const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
+        if (!event.customAction.taskProp) {
+            const runnerType = fullTask?.taskRunner?.type as string | undefined
+            taskModalCtx.value = {
+                taskType: runnerType ?? fullTask?.type,
+                title: event.customAction.label,
+                task: fullTask,
+                execution: execution.value,
+                namespace: props.namespace,
+                flowId: props.flowId,
+                metrics: taskMetrics(fullTask?.id),
+            }
+            isTaskModalOpen.value = true
+            return
+        }
         selectedTask.value = fullTask
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true

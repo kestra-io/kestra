@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Zwiń wszystkie linie wielokrotne",
     "font size": "Font size",
     "for flow": "dla flow",
+    "forbidden system labels": "Tylko system.correlationId może być użyty jako system label",
     "force run": "Wymuś uruchomienie",
     "force run confirm": "Czy na pewno chcesz wymusić uruchomienie wykonania <code>{id}</code>?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Następujące przejścia zostaną wykonane:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
     "force run done": "Wymuszone uruchomienie Execution",
@@ -866,6 +867,8 @@
     "form error": "Błąd formularza",
     "from": "Od",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Ta wykonanie zakończyło się bez uruchomienia żadnego taska.\nSprawdź jego podsumowanie i logi, aby poznać przyczynę.",
+    "gantt_no_tasks_match_filters": "Brak zadań pasujących do wybranych filtrów. <br> Spróbuj dostosować filtry wyszukiwania, stanu lub poziomu logów.",
     "healthcheck date": "Data HealthCheck",
     "hide task documentation": "Ukryj dokumentację task",
     "home": "Strona główna",
@@ -939,6 +942,7 @@
     "line": "Linia",
     "line-by-line": "linia po linii",
     "loaded x dependencies": "{count} zależności załadowane",
+    "loading": "Ładowanie...",
     "log expand setting": "Domyślne wyświetlanie Logs",
     "logExporters": "Eksporterzy Logów",
     "logs": "Logs",
@@ -950,6 +954,7 @@
       "raw_details": "Pokaż pełne task logs i flow logs w surowym formacie uporządkowanym według znaczników czasu"
     },
     "main_configuration": "Główna konfiguracja",
+    "manage labels": "Zarządzaj label",
     "management port": "Port zarządzania",
     "mark as": "Oznacz jako <code>{status}</code>",
     "max": "Max",
@@ -1146,6 +1151,7 @@
     "no data current task": "Brak dostępnych danych dla bieżącego taska",
     "no inputs": "Ten flow nie ma inputs.",
     "no result": "Nie ma wyników do wyświetlenia.",
+    "no revisions": "Brak rewizji",
     "no revisions found": "Istnieje tylko jedna wersja dla tego flow",
     "no-executions-view": {
       "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
@@ -1669,7 +1675,6 @@
     "sequential": "Sekwencyjny",
     "server type": "Typ serwera",
     "services": "Usługi",
-    "set_extra_labels": "Ustaw dodatkowe label",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1687,8 @@
             "flow_default_tab": "Karta wybrana podczas nawigacji do flow.",
             "log_display": "Jak logi są prezentowane podczas otwierania wykonania.",
             "log_level": "Minimalny poziom logów wyświetlany w logach wykonania.",
-            "playground": "Uruchom taski indywidualnie w edytorze playground."
+            "playground": "Uruchom taski indywidualnie w edytorze playground.",
+            "triggers_default_tab": "Karta wybrana podczas nawigacji do strony triggerów."
           },
           "fields": {
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
@@ -1695,7 +1701,8 @@
             "log_display": "Domyślne Wyświetlanie Log",
             "log_level": "Domyślna Poziom Logs",
             "multi_panel_editor": "Edytor Wielopanelowy",
-            "playground": "Plac zabaw"
+            "playground": "Plac zabaw",
+            "triggers_default_tab": "Domyślna karta Triggers"
           },
           "label": "Główna konfiguracja"
         },
@@ -1796,7 +1803,9 @@
         "firstName": "Imię",
         "lastName": "Nazwisko",
         "password": "Hasło",
-        "password_requirements": "Co najmniej 8 znaków, w tym 1 wielka litera i 1 cyfra."
+        "password_requirements": "Co najmniej 8 znaków, w tym 1 wielka litera i 1 cyfra.",
+        "username": "Użytkownik",
+        "username_hint": "Musi być prawidłowym adresem e-mail."
       },
       "login": "Zaloguj się",
       "login_subtitle": "Wprowadź swoje dane uwierzytelniające, aby uzyskać dostęp do instancji Kestra",
@@ -1885,6 +1894,12 @@
     "source and topology": "Źródło i topologia",
     "source only": "Tylko źródło",
     "source search": "Wyszukaj źródło",
+    "source_search": {
+      "match_count": "{count} wynik | {count} wyniki",
+      "open_flow": "Otwórz flow",
+      "preview_empty": "Wybierz wynik, aby wyświetlić podgląd. Kliknij flow na liście wyników, aby zobaczyć jego źródło.",
+      "preview_error": "Nie udało się załadować źródła flow"
+    },
     "specific task": "Specyficzny task",
     "start date": "Data rozpoczęcia",
     "start datetime": "Data i godzina rozpoczęcia",

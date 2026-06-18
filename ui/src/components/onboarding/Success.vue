@@ -89,12 +89,12 @@
                 </div>
 
                 <div class="welcome-success-actions">
-                    <router-link
-                        class="el-button"
+                    <KsButton
+                        tag="router-link"
                         :to="restartRoute"
                     >
                         {{ $t("welcome_copilot.success_page.restart") }}
-                    </router-link>
+                    </KsButton>
                 </div>
             </KsCol>
         </KsRow>

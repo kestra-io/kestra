@@ -2,7 +2,7 @@
     <KsCard class="card">
         <div v-if="showIcon" class="header">
             <KsLink :href="link" target="_blank">
-                <KsIcon class="el-icon--right">
+                <KsIcon>
                     <OpenInNew />
                 </KsIcon>
             </KsLink>

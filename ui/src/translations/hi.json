@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
     "font size": "Font size",
     "for flow": "फ्लो के लिए",
+    "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "force run": "फोर्स रन",
     "force run confirm": "क्या आप सुनिश्चित हैं कि आप निष्पादन <code>{id}</code> को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: निष्पादन को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task निष्पादन बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को पुनः शुरू किया जाएगा।</li></ul>",
     "force run done": "निष्पादन को मजबूरन चलाया गया है",
@@ -866,6 +867,8 @@
     "form error": "फ़ॉर्म त्रुटि",
     "from": "से",
     "gantt": "गैंट",
+    "gantt_no_tasks_executed": "यह execution बिना किसी task के चलाए समाप्त हो गया।  \nकारण के लिए इसका अवलोकन और logs जांचें।",
+    "gantt_no_tasks_match_filters": "कोई task चयनित फ़िल्टर से मेल नहीं खाता। <br> खोज, स्थिति, या log-level फ़िल्टर को समायोजित करने का प्रयास करें।",
     "healthcheck date": "HealthCheck तिथि",
     "hide task documentation": "Task दस्तावेज़ छिपाएं",
     "home": "होम",
@@ -939,6 +942,7 @@
     "line": "रेखा",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
+    "loading": "लोड हो रहा है...",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
     "logs": "Logs",
@@ -950,6 +954,7 @@
       "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं"
     },
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
+    "manage labels": "labels प्रबंधित करें",
     "management port": "प्रबंधन पोर्ट",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "max": "अधिकतम",
@@ -1146,6 +1151,7 @@
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
     "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "no revisions": "कोई संशोधन नहीं",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
     "no-executions-view": {
       "guidance_desc": "क्या आपको अपने flow को निष्पादित करने के लिए मार्गदर्शन चाहिए?",
@@ -1669,7 +1675,6 @@
     "sequential": "अनुक्रमिक",
     "server type": "सर्वर प्रकार",
     "services": "सेवाएँ",
-    "set_extra_labels": "अतिरिक्त labels सेट करें",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1687,8 @@
             "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
             "log_display": "जब एक execution खोला जाता है तो logs कैसे प्रस्तुत किए जाते हैं।",
             "log_level": "न्यूनतम log स्तर जो execution logs में दिखाया गया है।",
-            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।"
+            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।"
           },
           "fields": {
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
@@ -1695,7 +1701,8 @@
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर",
             "multi_panel_editor": "मल्टी पैनल एडिटर",
-            "playground": "प्लेग्राउंड"
+            "playground": "प्लेग्राउंड",
+            "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },
@@ -1796,7 +1803,9 @@
         "firstName": "पहला नाम",
         "lastName": "अंतिम नाम",
         "password": "पासवर्ड",
-        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।"
+        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।",
+        "username": "उपयोगकर्ता नाम",
+        "username_hint": "मान्य ईमेल पता होना चाहिए।"
       },
       "login": "लॉगिन",
       "login_subtitle": "अपने Kestra instance तक पहुँचने के लिए अपने क्रेडेंशियल्स दर्ज करें।",
@@ -1885,6 +1894,12 @@
     "source and topology": "स्रोत और टोपोलॉजी",
     "source only": "केवल स्रोत",
     "source search": "स्रोत खोज",
+    "source_search": {
+      "match_count": "{count} मिलान | {count} मिलान",
+      "open_flow": "flow खोलें",
+      "preview_empty": "पूर्वावलोकन के लिए एक परिणाम चुनें। स्रोत देखने के लिए परिणाम सूची में किसी flow पर क्लिक करें।",
+      "preview_error": "flow स्रोत लोड करने में विफल"
+    },
     "specific task": "विशिष्ट task",
     "start date": "प्रारंभ तिथि",
     "start datetime": "प्रारंभ दिनांक और समय",

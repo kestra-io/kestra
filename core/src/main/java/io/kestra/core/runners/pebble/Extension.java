@@ -60,6 +60,10 @@ public class Extension extends AbstractExtension {
     @Inject
     private HttpFunction httpFunction;
 
+    @Inject
+    @Nullable
+    private SubflowFunction subflowFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -174,6 +178,9 @@ public class Extension extends AbstractExtension {
         functions.put(NanoIDFunction.NAME, new NanoIDFunction());
         functions.put(TasksWithStateFunction.NAME, new TasksWithStateFunction());
         functions.put(HttpFunction.NAME, httpFunction);
+        if (subflowFunction != null) {
+            functions.put(SubflowFunction.NAME, subflowFunction);
+        }
         functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
         functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
         functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());

@@ -382,4 +382,20 @@ describe("KsDataTable", () => {
         await tick()
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
     })
+
+    test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, fitHeight: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(true)
+    })
+
+    test("does not apply ks-data-table-body--fit modifier class when fitHeight is false (default)", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(false)
+    })
 })

@@ -163,6 +163,55 @@ public abstract class AbstractServiceInstanceRepositoryTest {
                     .value(Instant.now().minusSeconds(60).toString())
                     .build()
             )
+            .build(),
+
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(runningInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(runningInstance.uid())
+                    .build()
+            )
+            .build(),
+
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(schedulerInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("scheduler")
+                    .build()
+            )
+            .build(),
+
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(runningInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.NOT_EQUALS)
+                    .value("scheduler")
+                    .build()
+            )
+            .build(),
+
+        // QUERY matches on the server hostname (all fixtures run on "localhost")
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(runningInstance, schedulerInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("localhost")
+                    .build()
+            )
             .build()
     );
 

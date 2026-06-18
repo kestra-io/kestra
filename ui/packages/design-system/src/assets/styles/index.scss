@@ -66,15 +66,15 @@
 }
 
 // global
-html {
-    font-size: 14px;
-}
-
 html, body {
     height: 100%;
     background: var(--ks-bg-base);
     color: var(--ks-text-primary);
     margin: 0;
+}
+
+body {
+    font-size: var(--ks-font-size-base);
 }
 
 a {

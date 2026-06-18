@@ -54,7 +54,8 @@ public class TriggerSchedulingLoop implements Runnable {
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     private final AtomicBoolean running = new AtomicBoolean(false);
-    private final CountDownLatch stopped = new CountDownLatch(1);
+    private volatile CountDownLatch started = new CountDownLatch(1);
+    private volatile CountDownLatch stopped = new CountDownLatch(1);
 
     // Pause & Resume
     private final AtomicBoolean paused = new AtomicBoolean(false);
@@ -117,6 +118,9 @@ public class TriggerSchedulingLoop implements Runnable {
         }
 
         this.thread = Thread.currentThread();
+        // Signal that this loop has actually started, so that a stop() request issued right after
+        // submission cannot race startup and be silently dropped (see awaitStarted/stop).
+        this.started.countDown();
         Instant nextScheduleTime = clock.instant();
         Instant tick = clock.instant();
         try {
@@ -202,6 +206,34 @@ public class TriggerSchedulingLoop implements Runnable {
             } finally {
                 triggerEventQueueLock.unlock();
             }
+        }
+    }
+
+    /**
+     * Resets the lifecycle latches so this loop can be safely (re)submitted to an executor.
+     * <p>
+     * Must only be called when the loop is not running, i.e. before resubmitting it via
+     * {@link #run()}. This makes the {@code started}/{@code stopped} latches per-run instead of
+     * one-shot, which is required for a loop instance to be reliably started and stopped more
+     * than once (e.g. when toggling maintenance mode).
+     */
+    public void prepareForStart() {
+        this.started = new CountDownLatch(1);
+        this.stopped = new CountDownLatch(1);
+    }
+
+    /**
+     * Blocks until this loop has actually started running, or the timeout elapses.
+     *
+     * @param timeout the maximum time to wait.
+     */
+    public void awaitStarted(final Duration timeout) {
+        try {
+            if (!started.await(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+                LOG.warn("Timeout while waiting for scheduling loop {} to start", schedulingLoopId);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

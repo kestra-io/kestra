@@ -67,7 +67,7 @@
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const props = withDefaults(defineProps<{
-        blueprint?: FlowBlueprint;
+        blueprint?: FlowBlueprint & {shortDescription?: string};
         flowGraph?: any;
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;

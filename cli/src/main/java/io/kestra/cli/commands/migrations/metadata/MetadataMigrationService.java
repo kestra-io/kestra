@@ -29,14 +29,18 @@ import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.tenant.TenantService;
 
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Slf4j
 @Singleton
 public class MetadataMigrationService {
     // Captures the logical path (group 1) and the revision number (group 2) of a stored namespace
-    // file. Version 1 is stored under the bare path, later versions under a ".vN" suffix.
+    // file. Version 1 is stored under the bare path (no suffix); later versions use a ".vN" suffix
+    // where N >= 2. A ".v1" suffix is therefore invalid: it would collide with the bare path and
+    // corrupt the version chain if both existed simultaneously.
     private static final Pattern REVISION_FILE_PATTERN = Pattern.compile("(.*)\\.v(\\d+)$");
 
     protected FlowRepositoryInterface flowRepository;
@@ -109,37 +113,53 @@ public class MetadataMigrationService {
     }
 
     public void nsFilesMigration(boolean verbose, String tenantFilter) throws IOException {
-        for (Map.Entry<String, List<String>> tenantNamespaces : filterTenants(this.namespacesPerTenant(), tenantFilter).entrySet()) {
-            String tenant = tenantNamespaces.getKey();
-            for (String namespace : tenantNamespaces.getValue()) {
-                List<PathAndAttributes> list = listAllFromStorage(storageInterface, StorageContext::namespaceFilePrefix, tenant, namespace);
+        for (var tenantNamespaces : filterTenants(this.namespacesPerTenant(), tenantFilter).entrySet()) {
+            var tenant = tenantNamespaces.getKey();
+            for (var namespace : tenantNamespaces.getValue()) {
+                var list = listAllFromStorage(storageInterface, StorageContext::namespaceFilePrefix, tenant, namespace);
 
                 // Group every stored object (the bare file plus its ".vN" revisions) by logical path
                 // so the full version history is reconstructed instead of keeping only the bare file.
-                Map<String, List<PathAndAttributes>> revisionsByPath = list.stream()
+                var revisionsByPath = list.stream()
                     .collect(Collectors.groupingBy(pathAndAttributes -> logicalPath(pathAndAttributes.path())));
 
-                for (Map.Entry<String, List<PathAndAttributes>> revisions : revisionsByPath.entrySet()) {
-                    String path = revisions.getKey();
+                for (var revisions : revisionsByPath.entrySet()) {
+                    var path = revisions.getKey();
 
                     // Highest version already indexed (0 if the path was never migrated). A previously
                     // broken run only indexed the bare file as v1, so the higher ".vN" revisions still
                     // need backfilling; replaying only revisions above this threshold keeps the
                     // migration idempotent while repairing partially-migrated paths.
-                    int alreadyMigratedVersions = namespaceFileMetadataRepository.findByPath(tenant, namespace, path)
+                    var alreadyMigratedVersions = namespaceFileMetadataRepository.findByPath(tenant, namespace, path)
                         .map(NamespaceFileMetadata::getVersion)
                         .orElse(0);
 
+                    // Compute revision numbers once per element so the sort key, filter, and log
+                    // all share the same value without repeated Matcher allocations.
+                    var withRevision = revisions.getValue().stream()
+                        .map(paa -> Map.entry(paa, revisionNumber(tenant, namespace, paa.path())))
+                        .toList();
+
                     // Replay the missing revisions from oldest to newest: save() increments the version
                     // and flags the latest one as "last", mirroring how files are normally versioned.
-                    revisions.getValue().stream()
-                        .sorted(Comparator.comparingInt(pathAndAttributes -> revisionNumber(pathAndAttributes.path())))
-                        .filter(pathAndAttributes -> revisionNumber(pathAndAttributes.path()) > alreadyMigratedVersions)
-                        .forEach(pathAndAttributes ->
+                    withRevision.stream()
+                        .sorted(Comparator.comparingInt(Map.Entry::getValue))
+                        .filter(entry -> entry.getValue() > alreadyMigratedVersions)
+                        .forEach(entry ->
                         {
-                            namespaceFileMetadataRepository.save(NamespaceFileMetadata.of(tenant, namespace, path, pathAndAttributes.attributes()));
-                            if (verbose) {
-                                System.out.println("Migrated namespace file metadata: " + namespace + " - " + path + " (v" + revisionNumber(pathAndAttributes.path()) + ")");
+                            try {
+                                var saved = namespaceFileMetadataRepository.save(
+                                    NamespaceFileMetadata.of(tenant, namespace, path, entry.getKey().attributes())
+                                );
+                                if (verbose) {
+                                    System.out.println("Migrated namespace file metadata: " + namespace + " - " + path + " (v" + saved.getVersion() + ")");
+                                }
+                            } catch (Exception e) {
+                                log.error(
+                                    "Failed to migrate namespace file metadata for tenant='{}' namespace='{}' path='{}' storageRevision={} — migration aborted at this entry",
+                                    tenant, namespace, path, entry.getValue(), e
+                                );
+                                throw e instanceof RuntimeException re ? re : new RuntimeException(e);
                             }
                         });
                 }
@@ -152,9 +172,24 @@ public class MetadataMigrationService {
         return matcher.matches() ? matcher.group(1) : path;
     }
 
-    private static int revisionNumber(String path) {
-        Matcher matcher = REVISION_FILE_PATTERN.matcher(path);
-        return matcher.matches() ? Integer.parseInt(matcher.group(2)) : 1;
+    // Returns the storage revision for a given object path. Bare paths (no ".vN" suffix) are
+    // revision 1. A ".v1" suffix is invalid: it would collide with the bare path and produce two
+    // objects with revision 1, silently overwriting the first on save(). Fail loudly to prevent
+    // silent corruption; the operator must inspect and remove the offending object manually.
+    private static int revisionNumber(String tenant, String namespace, String path) {
+        var matcher = REVISION_FILE_PATTERN.matcher(path);
+        if (!matcher.matches()) {
+            return 1;
+        }
+        var revision = Integer.parseInt(matcher.group(2));
+        if (revision == 1) {
+            throw new IllegalStateException(
+                "Storage object with '.v1' suffix found — this collides with the bare path and would corrupt the version chain. " +
+                "Tenant='" + tenant + "' namespace='" + namespace + "' path='" + path + "'. " +
+                "Remove or rename the offending object and re-run the migration."
+            );
+        }
+        return revision;
     }
 
     public void secretMigration(String tenantFilter) throws Exception {

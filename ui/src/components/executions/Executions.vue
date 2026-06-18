@@ -89,7 +89,7 @@
                 <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                     {{ $t("change state") }}
                 </KsButton>
-                <KsButton v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                <KsButton v-if="canUpdate" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
                     {{ $t("restart") }}
                 </KsButton>
                 <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
@@ -381,6 +381,31 @@
             </KsButton>
         </template>
     </KsDialog>
+
+    <KsDialog v-if="isOpenRestartModal" v-model="isOpenRestartModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeRestartToast()" />
+        </template>
+
+        <template #footer>
+            <KsButton @click="isOpenRestartModal = false">
+                {{ $t('cancel') }}
+            </KsButton>
+            <KsButton @click="restartExecutions(true)">
+                {{ $t('restart latest revision') }}
+            </KsButton>
+            <KsButton
+                type="primary"
+                @click="restartExecutions(false)"
+            >
+                {{ $t('ok') }}
+            </KsButton>
+        </template>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -497,6 +522,7 @@
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
     const isOpenReplayModal = ref(false)
+    const isOpenRestartModal = ref(false)
     const selectedStatus = ref(undefined)
     const lastRefreshDate = ref(new Date())
     const unqueueDialogVisible = ref(false)
@@ -900,12 +926,14 @@
         )
     }
 
-    const restartExecutions = () => {
-        genericConfirmAction(
-            "bulk restart",
+    const restartExecutions = (latestRevision: boolean) => {
+        isOpenRestartModal.value = false
+
+        genericConfirmCallback(
             "queryRestartExecution",
             "bulkRestartExecution",
             "executions restarted",
+            {latestRevision: latestRevision},
         )
     }
 
@@ -922,6 +950,10 @@
 
     const changeReplayToast = () => {
         return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
+    }
+
+    const changeRestartToast = () => {
+        return t("bulk restart", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
     }
 
     const changeStatus = async () => {

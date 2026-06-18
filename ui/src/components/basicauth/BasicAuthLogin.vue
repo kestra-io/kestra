@@ -3,60 +3,49 @@
         <img src="../../assets/monogram.svg" alt="Kestra" class="oss-login__icon" />
         <h1 class="oss-login__title">{{ $t("setup.login_title") }}</h1>
 
-        <form class="oss-login__form" @submit.prevent="handleSubmit">
+        <KsForm ref="form" :model="credentials" :rules="rules" class="oss-login__form" @submit.prevent="handleSubmit">
             <input type="hidden" name="from" :value="redirectPath">
 
-            <div class="login-field-group">
-                <div class="login-field" :class="{'login-field--error': errors.username}">
-                    <AccountOutline class="login-field__icon" />
-                    <input
-                        class="login-field__input"
-                        name="username"
-                        id="input-username"
-                        v-model="credentials.username"
-                        :placeholder="$t('email')"
-                        type="email"
-                        required
-                        autocomplete="username"
-                        @blur="validateEmailField"
-                        @input="errors.username = undefined"
-                    />
-                </div>
-                <p v-if="errors.username" class="login-field-error">{{ errors.username }}</p>
-            </div>
+            <KsFormItem prop="username">
+                <KsInput
+                    id="input-username"
+                    v-model="credentials.username"
+                    name="username"
+                    type="email"
+                    :placeholder="$t('email')"
+                    autocomplete="username"
+                >
+                    <template #prefix><KsIcon><AccountOutline /></KsIcon></template>
+                </KsInput>
+            </KsFormItem>
 
-            <div class="login-field-group">
-                <div class="login-field" :class="{'login-field--error': errors.password}">
-                    <LockOutline class="login-field__icon" />
-                    <input
-                        class="login-field__input"
-                        name="password"
-                        id="input-password"
-                        v-model="credentials.password"
-                        :type="showPasswordText ? 'text' : 'password'"
-                        :placeholder="$t('password')"
-                        required
-                        autocomplete="current-password"
-                        @blur="validatePasswordField"
-                        @input="errors.password = undefined"
-                    />
-                    <button class="login-field__eye" type="button" @click="showPasswordText = !showPasswordText" tabindex="-1">
-                        <Eye v-if="!showPasswordText" />
-                        <EyeOff v-else />
-                    </button>
-                </div>
-                <p v-if="errors.password" class="login-field-error">{{ errors.password }}</p>
-            </div>
+            <KsFormItem prop="password">
+                <KsInput
+                    id="input-password"
+                    v-model="credentials.password"
+                    name="password"
+                    showPassword
+                    :placeholder="$t('password')"
+                    autocomplete="current-password"
+                >
+                    <template #prefix><KsIcon><LockOutline /></KsIcon></template>
+                </KsInput>
+            </KsFormItem>
 
-            <button class="login-btn" type="submit" :disabled="isLoading">
-                <span v-if="!isLoading">{{ $t("setup.login") }}</span>
-                <span v-else class="login-btn__spinner" />
-            </button>
+            <KsButton
+                type="primary"
+                nativeType="submit"
+                class="oss-login__submit"
+                :loading="isLoading"
+                :disabled="isLoading"
+            >
+                {{ $t("setup.login") }}
+            </KsButton>
 
-            <button class="login-trouble" type="button" @click="openTroubleshootingGuide">
+            <KsButton text type="primary" @click="openTroubleshootingGuide">
                 {{ $t("setup.troubleshooting") }}
-            </button>
-        </form>
+            </KsButton>
+        </KsForm>
     </div>
 </template>
 
@@ -64,13 +53,12 @@
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsMessage} from "@kestra-io/design-system"
+    import {KsMessage, KsIcon} from "@kestra-io/design-system"
+    import type {FormInstance} from "@kestra-io/design-system"
     import {useClient} from "@kestra-io/kestra-sdk"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
-    import EyeOff from "vue-material-design-icons/EyeOff.vue"
 
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
@@ -94,35 +82,36 @@
     const miscStore = useMiscStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
+    const form = ref<FormInstance>()
     const isLoading = ref(false)
-    const showPasswordText = ref(false)
     const credentials = ref<Credentials>({username: "", password: ""})
-    const errors = ref<{username?: string; password?: string}>({})
 
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     const redirectPath = computed(() => route.query.from as string | undefined)
 
-    function validateEmailField() {
-        const val = credentials.value.username
-        if (!val?.trim()) {
-            errors.value.username = t("setup.validation.email_required")
-        } else if (!EMAIL_REGEX.test(val)) {
-            errors.value.username = t("setup.validation.email_invalid")
+    const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+        if (!value?.trim()) {
+            callback(new Error(t("setup.validation.email_required")))
+        } else if (!EMAIL_REGEX.test(value)) {
+            callback(new Error(t("setup.validation.email_invalid")))
         } else {
-            errors.value.username = undefined
+            callback()
         }
     }
 
-    function validatePasswordField() {
-        errors.value.password = credentials.value.password ? undefined : t("setup.validation.password_required")
+    const validatePassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+        if (!value) {
+            callback(new Error(t("setup.validation.password_required")))
+        } else {
+            callback()
+        }
     }
 
-    function isFormValid() {
-        validateEmailField()
-        validatePasswordField()
-        return !errors.value.username && !errors.value.password
-    }
+    const rules = computed(() => ({
+        username: [{required: true, validator: validateEmail, trigger: "blur"}],
+        password: [{required: true, validator: validatePassword, trigger: "blur"}],
+    }))
 
     const axios = useClient()
 
@@ -165,8 +154,8 @@
     const handleSubmit = async () => {
         try {
             coreStore.error = undefined
-            if (isLoading.value) return
-            if (!isFormValid()) return
+            if (!form.value || isLoading.value) return
+            if (!(await form.value.validate().catch(() => false))) return
 
             isLoading.value = true
 
@@ -203,7 +192,7 @@
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
-                KsMessage.error("Login failed")
+                KsMessage.error(t("setup.validation.incorrect_creds"))
             }
         } finally {
             isLoading.value = false
@@ -225,8 +214,8 @@
         width: 320px;
 
         &__icon {
-            width: 3.9286rem;
-            height: 3.9286rem;
+            width: 3.5rem;
+            height: 3.5rem;
         }
 
         &__title {
@@ -243,135 +232,9 @@
             gap: var(--ks-spacing-4);
             width: 100%;
         }
-    }
 
-    .login-field {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        height: 30px;
-        padding: var(--ks-spacing-2);
-        background: var(--ks-bg-input);
-        border: 1px solid var(--ks-border-strong);
-        border-radius: 0.5rem;
-        box-shadow: 0 1px 2px var(--ks-shadow-element);
-        width: 100%;
-        box-sizing: border-box;
-
-        &--error {
-            border-color: var(--ks-border-error);
+        &__submit {
+            width: 100%;
         }
-
-        &__icon {
-            flex-shrink: 0;
-            color: var(--ks-text-secondary);
-
-            :deep(svg) {
-                width: 14px;
-                height: 14px;
-            }
-        }
-
-        &__input {
-            flex: 1;
-            min-width: 0;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-primary);
-            font-family: inherit;
-
-            &::placeholder {
-                color: var(--ks-text-primary);
-            }
-        }
-
-        &__eye {
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            background: none;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            color: var(--ks-text-secondary);
-
-            :deep(svg) {
-                width: 14px;
-                height: 14px;
-            }
-
-            &:hover {
-                color: var(--ks-text-primary);
-            }
-        }
-    }
-
-    .login-field-group {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-1);
-        width: 100%;
-    }
-
-    .login-field-error {
-        margin: 0;
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-error);
-    }
-
-    .login-btn {
-        width: 100%;
-        height: 32px;
-        background: var(--ks-btn-primary-bg-default);
-        border: none;
-        border-radius: 0.5rem;
-        color: white;
-        font-size: var(--ks-font-size-sm);
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 1px 2px var(--ks-shadow-element);
-        font-family: inherit;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &:hover:not(:disabled) {
-            opacity: 0.9;
-        }
-
-        &:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        &__spinner {
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-    }
-
-    .login-trouble {
-        background: none;
-        border: none;
-        padding: 0;
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-secondary);
-        cursor: pointer;
-        text-align: center;
-        font-family: inherit;
-
-        &:hover {
-            color: var(--ks-text-primary);
-        }
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
     }
 </style>

@@ -1891,7 +1891,8 @@
         "firstName_required": "名が必要です",
         "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
-        "password_invalid": "無効なパスワード"
+        "password_invalid": "無効なパスワード",
+        "password_required": "パスワードは必須です"
       }
     },
     "show": "表示",

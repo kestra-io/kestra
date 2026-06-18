@@ -1891,7 +1891,8 @@
         "firstName_required": "Prénom requis",
         "incorrect_creds": "Nom d'utilisateur ou mot de passe invalide. Assurez-vous que vos identifiants sont corrects.",
         "lastName_required": "Nom de famille requis",
-        "password_invalid": "Mot de passe invalide"
+        "password_invalid": "Mot de passe invalide",
+        "password_required": "Le mot de passe est requis"
       }
     },
     "show": "Afficher",

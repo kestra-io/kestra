@@ -1891,7 +1891,8 @@
         "firstName_required": "Imię jest wymagane",
         "incorrect_creds": "Nieprawidłowa nazwa użytkownika lub hasło. Upewnij się, że Twoje dane uwierzytelniające są poprawne.",
         "lastName_required": "Wymagane nazwisko",
-        "password_invalid": "Nieprawidłowe hasło"
+        "password_invalid": "Nieprawidłowe hasło",
+        "password_required": "Hasło jest wymagane"
       }
     },
     "show": "Pokaż",

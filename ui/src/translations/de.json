@@ -1891,7 +1891,8 @@
         "firstName_required": "Vorname erforderlich",
         "incorrect_creds": "Ungültiger Benutzername oder Passwort. Stellen Sie sicher, dass Ihre Anmeldedaten korrekt sind.",
         "lastName_required": "Nachname erforderlich",
-        "password_invalid": "Ungültiges Passwort"
+        "password_invalid": "Ungültiges Passwort",
+        "password_required": "Passwort ist erforderlich"
       }
     },
     "show": "Anzeigen",

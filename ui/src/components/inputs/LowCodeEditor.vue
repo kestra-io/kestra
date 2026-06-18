@@ -10,7 +10,7 @@
             :isAllowedEdit="isAllowedEdit"
             :source="source"
             :toggleOrientationButton="toggleOrientationButton"
-            :flowGraph="effectiveFlowGraph"
+            :flowGraph="augmentedFlowGraph"
             :flowId="flowId"
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
@@ -185,6 +185,35 @@
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
+    // forExecution() on the server strips taskRunner from graph nodes. Re-inject
+    // the runner type from the parsed flow YAML so topology-details and the
+    // burger-menu "Show Details" item work correctly in execution view too.
+    const runnerTypeByTaskId = computed((): Record<string, string> => {
+        const result: Record<string, string> = {}
+        const parsed = flowStore.flowParsed
+        for (const task of [...(parsed?.tasks ?? []), ...(parsed?.errors ?? []), ...(parsed?.finally ?? [])]) {
+            if (task?.id && task?.taskRunner?.type) {
+                result[task.id] = task.taskRunner.type
+            }
+        }
+        return result
+    })
+
+    const augmentedFlowGraph = computed(() => {
+        const graph = effectiveFlowGraph.value
+        const byId = runnerTypeByTaskId.value
+        if (!graph || !Object.keys(byId).length) return graph
+        return {
+            ...graph,
+            nodes: (graph.nodes ?? []).map((n: any) => {
+                const taskId = n.task?.id
+                const runnerType = taskId ? byId[taskId] : undefined
+                if (!runnerType || n.task?.taskRunner?.type) return n
+                return {...n, task: {...n.task, taskRunner: {type: runnerType}}}
+            }),
+        }
+    })
+
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
     const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
@@ -203,12 +232,9 @@
 
     const hasExtraDetails = computed(() => {
         const types = taskAdditionalInfoRemote.value
-        return (effectiveFlowGraph.value?.nodes ?? []).some((n: any) =>
+        return (augmentedFlowGraph.value?.nodes ?? []).some((n: any) =>
             (n.task?.type && types[n.task.type]) ||
             (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
-        ) || (flowStore.flowParsed?.tasks ?? []).some((t: any) =>
-            (t?.type && types[t.type]) ||
-            (t?.taskRunner?.type && types[t.taskRunner.type]),
         )
     })
 

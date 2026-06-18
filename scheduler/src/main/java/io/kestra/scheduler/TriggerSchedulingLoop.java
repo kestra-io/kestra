@@ -122,17 +122,18 @@ public class TriggerSchedulingLoop implements Runnable {
         // submission cannot race startup and be silently dropped (see awaitStarted/stop).
         this.started.countDown();
         Instant nextScheduleTime = clock.instant();
-        Instant tick = clock.instant();
+        // Use the monotonic clock to measure the loop period.
+        long tick = System.nanoTime();
         try {
             while (running.get()) {
                 long start = System.nanoTime();
                 try {
-                    long elapsed = clock.instant().toEpochMilli() - tick.toEpochMilli();
+                    long elapsed = (start - tick) / 1_000_000;
                     if (elapsed > (SCHEDULE_INTERVAL_MILLIS + (SCHEDULE_INTERVAL_MILLIS / 10))) {
                         // useful for debugging unexpected schedule delay
-                        LOG.warn("Thread starvation, clock leap detected, or too many triggers to evaluate (elapsed since previous loop {}ms)", elapsed);
+                        LOG.warn("Thread starvation or too many triggers to evaluate (elapsed since previous loop {}ms)", elapsed);
                     }
-                    tick = clock.instant();
+                    tick = start;
 
                     waitIfPaused();
 

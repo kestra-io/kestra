@@ -7,6 +7,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.secret.SecretService;
 import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.Sequential;
 
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -195,6 +196,35 @@ class DisplayExpressionResolverTest {
         // Then: Property serializes as its expression string, which gets resolved
         assertThat(resolved).containsKey("format");
         assertThat(resolved.get("format")).isEqualTo("hello-world");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldResolveNestedObjectPropertiesPreservingKeyPath() {
+        // Mirrors a plugin task with a nested config object (e.g. taskRunner.computeEnvironmentArn):
+        // the resolved structure must keep the exact same nested key path with the leaves resolved, so a
+        // topology slot reading props.task.<path> finds the resolved value at props.resolvedProperties.<path>.
+        var inner = Return.builder()
+            .id("inner")
+            .type(Return.class.getName())
+            .format(Property.ofExpression("{{ vars.region }}"))
+            .build();
+        var task = Sequential.builder()
+            .id("seq")
+            .type(Sequential.class.getName())
+            .tasks(List.of(inner))
+            .build();
+        var vars = Map.of("region", "us-east-1");
+        var variables = Map.of("vars", (Object) vars);
+
+        // When
+        var resolved = resolver.resolveProperties(task, variables);
+
+        // Then: the nested list/map key path is preserved and the leaf expression resolved
+        assertThat(resolved).containsKey("tasks");
+        var tasks = (List<Map<String, Object>>) resolved.get("tasks");
+        assertThat(tasks).hasSize(1);
+        assertThat(tasks.get(0).get("format")).isEqualTo("us-east-1");
     }
 
     @Test

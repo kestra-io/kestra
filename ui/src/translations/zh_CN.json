@@ -1149,6 +1149,7 @@
     "no data current task": "当前task没有可用数据",
     "no inputs": "此流程没有输入。",
     "no result": "没有结果显示。",
+    "no revisions": "无修订",
     "no revisions found": "此流程只有一个修订版",
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",

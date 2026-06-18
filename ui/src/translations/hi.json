@@ -1149,6 +1149,7 @@
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
     "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "no revisions": "कोई संशोधन नहीं",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
     "no-executions-view": {
       "guidance_desc": "क्या आपको अपने flow को निष्पादित करने के लिए मार्गदर्शन चाहिए?",

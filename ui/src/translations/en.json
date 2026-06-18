@@ -437,6 +437,7 @@
     "date count": "{count} on the {date}",
     "revisions": "Revisions",
     "no revisions found": "Only one revision exists for this flow",
+    "no revisions": "No Revisions",
     "see full revision": "See full revision",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",

@@ -1149,6 +1149,7 @@
     "no data current task": "No hay datos disponibles para el task actual.",
     "no inputs": "Este flow no tiene inputs.",
     "no result": "No hay resultados para mostrar.",
+    "no revisions": "Sin revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
     "no-executions-view": {
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",

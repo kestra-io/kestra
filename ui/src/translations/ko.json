@@ -1149,6 +1149,7 @@
     "no data current task": "현재 task에 대한 데이터가 없습니다.",
     "no inputs": "이 flow에는 입력이 없습니다.",
     "no result": "결과가 없습니다.",
+    "no revisions": "리비전 없음",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
     "no-executions-view": {
       "guidance_desc": "당신의 flow를 실행하는 데 도움이 필요하신가요?",

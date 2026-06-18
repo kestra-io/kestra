@@ -1149,6 +1149,7 @@
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
     "no inputs": "Ce flow n'a pas d'entrée.",
     "no result": "Il n'y a aucun résultat à afficher.",
+    "no revisions": "Aucune révision",
     "no revisions found": "Une seule révision existe pour ce flow",
     "no-executions-view": {
       "guidance_desc": "Besoin d'aide pour exécuter votre flow ?",

@@ -1626,9 +1626,9 @@ class ExecutionControllerRunnerTest {
         assertThat(runningExecution.getState().isRunning()).isTrue();
 
         HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/main/executions/" + runningExecution.getId() + "/actions/kill")
+            HttpRequest.DELETE("/api/v1/main/executions/" + runningExecution.getId() + "/kill")
         );
-        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         Execution execution = awaitExecution(runningExecution.getId(), exec ->
             exec.getState().getCurrent() == State.Type.KILLED &&

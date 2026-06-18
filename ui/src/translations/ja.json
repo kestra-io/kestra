@@ -93,6 +93,11 @@
       "create": "ブループリントを作成",
       "custom": "カスタムblueprint",
       "dashboards": "ダッシュボード Blueprints",
+      "detail": {
+        "category": "カテゴリタイプ",
+        "links": "リンクとリソース",
+        "openInEditor": "フローを編集で開く"
+      },
       "edit": "ブループリントを編集する",
       "empty": "設計図が表示されていません。",
       "flows": "フローBlueprints",

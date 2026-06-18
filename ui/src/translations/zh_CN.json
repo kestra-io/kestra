@@ -93,6 +93,11 @@
       "create": "创建一个blueprint",
       "custom": "自定义blueprints",
       "dashboards": "仪表板 Blueprints",
+      "detail": {
+        "category": "类别类型",
+        "links": "链接与资源",
+        "openInEditor": "在编辑 Flow 中打开"
+      },
       "edit": "编辑蓝图",
       "empty": "没有可显示的blueprints。",
       "flows": "流程蓝图",

@@ -93,6 +93,11 @@
       "create": "Utwórz blueprint",
       "custom": "Niestandardowe blueprints",
       "dashboards": "Dashboard Blueprinty",
+      "detail": {
+        "category": "Typ kategorii",
+        "links": "Linki i zasoby",
+        "openInEditor": "Otwórz w Edytuj Flow"
+      },
       "edit": "Edytuj blueprint",
       "empty": "Brak blueprintów do wyświetlenia.",
       "flows": "Schematy Flow",

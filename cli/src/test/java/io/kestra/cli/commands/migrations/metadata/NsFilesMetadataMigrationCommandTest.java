@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.cli.App;
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
@@ -25,6 +27,7 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -139,6 +142,138 @@ public class NsFilesMetadataMigrationCommandTest {
     }
 
     @Test
+    void shouldReconstructVersionHistoryFromStorageRevisions() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            String tenantId = TenantService.MAIN_TENANT;
+            String namespace = TestsUtils.randomNamespace();
+            StorageInterface storage = ctx.getBean(StorageInterface.class);
+
+            /*
+             * A file that went through three versions. v1 is stored under the bare path, v2 and v3
+             * under ".vN" suffixes. It lives in a subdirectory to mirror the reported issue (#8665).
+             */
+            String path = "/scripts/main.py";
+            putOldNsFile(storage, namespace, path, "v1");
+            putOldNsFile(storage, namespace, path + ".v2", "v2-content");
+            putOldNsFile(storage, namespace, path + ".v3", "v3-longer-content");
+
+            // The namespace must own a flow, otherwise the migration does not pick it up.
+            FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
+            flowRepository.create(
+                GenericFlow.of(
+                    Flow.builder()
+                        .tenantId(tenantId)
+                        .id("a-flow")
+                        .namespace(namespace)
+                        .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("logging").build()))
+                        .build()
+                )
+            );
+
+            String[] nsFilesMetadataMigrationCommand = { "migrate", "metadata", "nsfiles" };
+            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+
+            NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository = ctx.getBean(NamespaceFileMetadataRepositoryInterface.class);
+
+            // The latest version is recorded as version 3 and flagged as the last one.
+            Optional<NamespaceFileMetadata> last = namespaceFileMetadataRepository.findByPath(tenantId, namespace, path);
+            assertThat(last.isPresent()).isTrue();
+            assertThat(last.get().getVersion()).isEqualTo(3);
+            assertThat(last.get().isLast()).isTrue();
+            assertThat(last.get().getSize()).isEqualTo("v3-longer-content".length());
+
+            // All three versions are now visible: this is what PurgeFiles relies on to purge old ones.
+            List<QueryFilter> namespaceFilter = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(namespace)
+                    .build()
+            );
+            assertThat(versionsOf(namespaceFileMetadataRepository, tenantId, namespaceFilter, path))
+                .containsExactlyInAnyOrder(1, 2, 3);
+
+            // Running the migration again is idempotent: still three versions, not six.
+            out.reset();
+            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+            assertThat(namespaceFileMetadataRepository.findByPath(tenantId, namespace, path).get().getVersion()).isEqualTo(3);
+            assertThat(versionsOf(namespaceFileMetadataRepository, tenantId, namespaceFilter, path))
+                .containsExactlyInAnyOrder(1, 2, 3);
+        }
+    }
+
+    @Test
+    void shouldBackfillVersionsForAlreadyMigratedFile() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            String tenantId = TenantService.MAIN_TENANT;
+            String namespace = TestsUtils.randomNamespace();
+            StorageInterface storage = ctx.getBean(StorageInterface.class);
+
+            /*
+             * Storage holds the full history (bare + .v2 + .v3), as it would on a real instance...
+             */
+            String path = "/scripts/main.py";
+            putOldNsFile(storage, namespace, path, "v1");
+            putOldNsFile(storage, namespace, path + ".v2", "v2-content");
+            putOldNsFile(storage, namespace, path + ".v3", "v3-longer-content");
+
+            FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
+            flowRepository.create(
+                GenericFlow.of(
+                    Flow.builder()
+                        .tenantId(tenantId)
+                        .id("a-flow")
+                        .namespace(namespace)
+                        .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("logging").build()))
+                        .build()
+                )
+            );
+
+            NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository = ctx.getBean(NamespaceFileMetadataRepositoryInterface.class);
+
+            /*
+             * ...but the metadata table only has the bare file as v1, exactly as left behind by the
+             * previous (broken) migration that discarded the ".vN" revisions.
+             */
+            FileAttributes v1Attributes = storage.getAttributes(tenantId, namespace, getNsFileStorageUri(namespace, path));
+            namespaceFileMetadataRepository.save(NamespaceFileMetadata.of(tenantId, namespace, path, v1Attributes));
+            assertThat(namespaceFileMetadataRepository.findByPath(tenantId, namespace, path).get().getVersion()).isEqualTo(1);
+
+            // Running the fixed migration backfills the missing v2 and v3 revisions.
+            String[] nsFilesMetadataMigrationCommand = { "migrate", "metadata", "nsfiles" };
+            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+
+            Optional<NamespaceFileMetadata> last = namespaceFileMetadataRepository.findByPath(tenantId, namespace, path);
+            assertThat(last.isPresent()).isTrue();
+            assertThat(last.get().getVersion()).isEqualTo(3);
+            assertThat(last.get().isLast()).isTrue();
+            assertThat(last.get().getSize()).isEqualTo("v3-longer-content".length());
+
+            // The full history is now visible, so PurgeFiles can purge the old versions.
+            List<QueryFilter> namespaceFilter = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(namespace)
+                    .build()
+            );
+            assertThat(versionsOf(namespaceFileMetadataRepository, tenantId, namespaceFilter, path))
+                .containsExactlyInAnyOrder(1, 2, 3);
+
+            // Re-running stays idempotent: still three versions, no duplicate backfill.
+            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+            assertThat(versionsOf(namespaceFileMetadataRepository, tenantId, namespaceFilter, path))
+                .containsExactlyInAnyOrder(1, 2, 3);
+        }
+    }
+
+    @Test
     void namespaceWithoutNsFile() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
@@ -170,6 +305,13 @@ public class NsFilesMetadataMigrationCommandTest {
             assertThat(out.toString()).contains("✅ Namespace Files Metadata migration complete.");
             assertThat(err.toString()).doesNotContain("java.nio.file.NoSuchFileException");
         }
+    }
+
+    private static List<Integer> versionsOf(NamespaceFileMetadataRepositoryInterface repository, String tenantId, List<QueryFilter> namespaceFilter, String path) {
+        return repository.find(Pageable.UNPAGED, tenantId, namespaceFilter, true, FetchVersion.ALL).stream()
+            .filter(metadata -> metadata.getPath().equals(path))
+            .map(NamespaceFileMetadata::getVersion)
+            .toList();
     }
 
     private static void putOldNsFile(StorageInterface storage, String namespace, String path, String value) throws IOException {

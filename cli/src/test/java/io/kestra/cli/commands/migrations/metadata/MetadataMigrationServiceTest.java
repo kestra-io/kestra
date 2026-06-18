@@ -12,9 +12,11 @@ import org.mockito.Mockito;
 
 import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.namespaces.NamespaceInterface;
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
@@ -81,7 +83,7 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
     }
 
     @Test
-    void shouldNotMigrateRevisionFiles() throws Exception {
+    void shouldMigrateRevisionsAsVersionsOfTheSamePath() throws Exception {
         NamespaceFileMetadataRepositoryInterface repo = Mockito.mock(NamespaceFileMetadataRepositoryInterface.class);
         StorageInterface storage = Mockito.mock(StorageInterface.class);
 
@@ -106,19 +108,17 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
             }
         };
 
-        URI normalUri = URI.create("kestra://namespace/test.namespace/file.yaml");
-        URI revisionUri = URI.create("kestra://namespace/test.namespace/file.yaml.v1");
+        String prefix = StorageContext.namespaceFilePrefix(namespace);
+        URI v1 = URI.create("kestra://namespace" + prefix + "/file.yaml");
+        URI v2 = URI.create("kestra://namespace" + prefix + "/file.yaml.v2");
+        URI v3 = URI.create("kestra://namespace" + prefix + "/file.yaml.v3");
 
-        Mockito.doReturn(List.of(normalUri, revisionUri))
+        Mockito.doReturn(List.of(v1, v2, v3))
             .when(storage)
             .allByPrefix(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
 
         FileAttributes attributes = Mockito.mock(FileAttributes.class);
-
-        Mockito.when(storage.getAttributes(Mockito.any(), Mockito.any(), Mockito.eq(normalUri)))
-            .thenReturn(attributes);
-
-        Mockito.when(storage.getAttributes(Mockito.any(), Mockito.any(), Mockito.eq(revisionUri)))
+        Mockito.when(storage.getAttributes(Mockito.any(), Mockito.any(), Mockito.any()))
             .thenReturn(attributes);
 
         Mockito.when(repo.findByPath(Mockito.any(), Mockito.any(), Mockito.any()))
@@ -126,11 +126,63 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
 
         service.nsFilesMigration(false, null);
 
+        // All three revisions are migrated under the logical path, never under a ".vN" path; save()
+        // then rebuilds the v1/v2/v3 chain (verified end-to-end in NsFilesMetadataMigrationCommandTest).
+        Mockito.verify(repo, Mockito.times(3))
+            .save(Mockito.argThat(meta -> meta.getPath().equals("/file.yaml")));
         Mockito.verify(repo, Mockito.never())
-            .save(Mockito.argThat(meta -> meta.getPath().endsWith(".v1")));
+            .save(Mockito.argThat(meta -> meta.getPath().contains(".v")));
+    }
 
-        Mockito.verify(repo)
-            .save(Mockito.argThat(meta -> !meta.getPath().endsWith(".v1")));
+    @Test
+    void shouldBackfillMissingRevisionsForAlreadyMigratedPath() throws Exception {
+        NamespaceFileMetadataRepositoryInterface repo = Mockito.mock(NamespaceFileMetadataRepositoryInterface.class);
+        StorageInterface storage = Mockito.mock(StorageInterface.class);
+
+        String namespace = "test.namespace";
+
+        MetadataMigrationService service = new MetadataMigrationService(
+            Mockito.mock(FlowRepositoryInterface.class),
+            new TenantService() {
+                @Override
+                public String resolveTenant() {
+                    return TENANT_ID;
+                }
+            },
+            null,
+            repo,
+            storage,
+            Mockito.mock(KestraConfig.class)
+        ) {
+            @Override
+            public Map<String, List<String>> namespacesPerTenant() {
+                return Map.of(TENANT_ID, List.of(namespace));
+            }
+        };
+
+        String prefix = StorageContext.namespaceFilePrefix(namespace);
+        URI v1 = URI.create("kestra://namespace" + prefix + "/file.yaml");
+        URI v2 = URI.create("kestra://namespace" + prefix + "/file.yaml.v2");
+        URI v3 = URI.create("kestra://namespace" + prefix + "/file.yaml.v3");
+
+        Mockito.doReturn(List.of(v1, v2, v3))
+            .when(storage)
+            .allByPrefix(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+
+        FileAttributes attributes = Mockito.mock(FileAttributes.class);
+        Mockito.when(storage.getAttributes(Mockito.any(), Mockito.any(), Mockito.any()))
+            .thenReturn(attributes);
+
+        // Simulate a previously broken migration that indexed only the bare file as v1.
+        NamespaceFileMetadata alreadyMigrated = NamespaceFileMetadata.of(TENANT_ID, namespace, "/file.yaml", attributes);
+        Mockito.when(repo.findByPath(Mockito.any(), Mockito.any(), Mockito.any()))
+            .thenReturn(Optional.of(alreadyMigrated));
+
+        service.nsFilesMigration(false, null);
+
+        // v1 is already indexed: only the missing v2 and v3 revisions are backfilled, never re-saving v1.
+        Mockito.verify(repo, Mockito.times(2))
+            .save(Mockito.argThat(meta -> meta.getPath().equals("/file.yaml")));
     }
 
     protected T metadataMigrationService(Map<String, List<String>> namespacesPerTenant) {

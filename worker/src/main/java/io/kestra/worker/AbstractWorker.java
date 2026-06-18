@@ -75,6 +75,9 @@ public abstract class AbstractWorker extends AbstractService {
 
     protected String workerGroupId;
 
+    // Single per-Worker meter deriving the task completion rate from worker.ended.count.
+    private RateMeter rateMeter;
+
     protected AbstractWorker(
         final ServiceType serviceType,
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
@@ -140,6 +143,10 @@ public abstract class AbstractWorker extends AbstractService {
             numThreads + WorkerQueueRegistry.bufferSize(numThreads),
             metricRegistry.workerGroupTags(workerGroupId)
         );
+        // Tasks-completed throughput (tasks/s), surfaced in the Worker Group UI. The
+        // rate is derived from the existing worker.ended.count counter and sampled on
+        // each heartbeat (see getMetrics) — no extra metric is registered.
+        this.rateMeter = new RateMeter(metricRegistry, workerGroupId);
 
         WorkerContext workerContext = new WorkerContext(getId(), workerGroupId, numThreads);
 
@@ -208,13 +215,29 @@ public abstract class AbstractWorker extends AbstractService {
 
         String ownGroup = WorkerGroups.normalize(this.workerGroupId);
         // Only expose worker-level (global) gauges in the heartbeat.
-        return metrics
+        Set<Metric> result = metrics
             .flatMap(metric -> metricRegistry.findGauges(metric).stream())
             .filter(gauge -> ownGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP)))
             .filter(gauge -> gauge.getId().getTag(MetricRegistry.TAG_TENANT_ID) == null
                 && gauge.getId().getTag(MetricRegistry.TAG_NAMESPACE_ID) == null)
             .map(Metric::of)
             .collect(Collectors.toSet());
+
+        // Task completion rate (tasks/s). Sampled here rather than registered as a
+        // Micrometer gauge — the heartbeat is the only consumer, and getMetrics() is
+        // serialized by the liveness manager so the meter is sampled single-threaded.
+        if (rateMeter != null) {
+            result.add(new Metric(
+                MetricRegistry.METRIC_WORKER_TASKS_RATE,
+                "GAUGE",
+                MetricRegistry.METRIC_WORKER_TASKS_RATE_DESCRIPTION,
+                null,
+                List.of(new Metric.Tag(MetricRegistry.TAG_WORKER_GROUP, ownGroup)),
+                rateMeter.sampleRatePerSecond()
+            ));
+        }
+
+        return result;
     }
 
     @Override

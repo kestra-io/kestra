@@ -59,6 +59,10 @@ export interface InputMetaData {
     allowedFileExtensions?: string[];
     accept?: string;
     prefill?: unknown;
+    // present only on the raw flow inputs (props.initialInputs); the rendered
+    // validate response strips `expression`, keeping `dependsOn` at most
+    expression?: string;
+    dependsOn?: unknown;
 }
 
 interface LogsState {

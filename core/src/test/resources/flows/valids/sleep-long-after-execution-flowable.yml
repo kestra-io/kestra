@@ -1,0 +1,20 @@
+id: sleep-long-after-execution-flowable
+namespace: io.kestra.tests
+
+tasks:
+  - id: sleep-long
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT30S
+
+afterExecution:
+  - id: after-if
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: after-if-log
+        type: io.kestra.plugin.core.log.Log
+        message: after execution if child ran
+
+  - id: after-end
+    type: io.kestra.plugin.core.log.Log
+    message: after execution following task ran

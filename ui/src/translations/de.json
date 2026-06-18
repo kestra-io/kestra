@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",
     "font size": "Font size",
     "for flow": "für Flow",
+    "forbidden system labels": "Nur system.correlationId kann als System-Label verwendet werden",
     "force run": "Erzwungene Ausführung",
     "force run confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> erzwingen möchten?<br/><br/>WARNING: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
     "force run done": "Ausführung ist erzwungener Lauf",
@@ -866,6 +867,8 @@
     "form error": "Formularfehler",
     "from": "Von",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Diese Ausführung endete, ohne dass eine Task ausgeführt wurde. Überprüfen Sie die Übersicht und die Logs, um den Grund zu erfahren.",
+    "gantt_no_tasks_match_filters": "Keine Tasks entsprechen den ausgewählten Filtern. <br> Versuchen Sie, die Such-, Zustands- oder Log-Ebenen-Filter anzupassen.",
     "healthcheck date": "HealthCheck-Datum",
     "hide task documentation": "Task-Dokumentation ausblenden",
     "home": "Startseite",
@@ -939,6 +942,7 @@
     "line": "Linie",
     "line-by-line": "Zeile für Zeile",
     "loaded x dependencies": "{count} Abhängigkeiten geladen",
+    "loading": "Wird geladen...",
     "log expand setting": "Log-Standardanzeige",
     "logExporters": "Log-Exporteure",
     "logs": "Logs",
@@ -950,6 +954,7 @@
       "raw_details": "Vollständige Task Logs und Flow Logs in einem rohen, nach Zeitstempel geordneten Format anzeigen"
     },
     "main_configuration": "Hauptkonfiguration",
+    "manage labels": "Labels verwalten",
     "management port": "Management-Port",
     "mark as": "Als <code>{status}</code> markieren",
     "max": "Max",
@@ -1669,7 +1674,6 @@
     "sequential": "Sequenziell",
     "server type": "Servertyp",
     "services": "Dienste",
-    "set_extra_labels": "Zusätzliche Labels festlegen",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1798,7 +1802,9 @@
         "firstName": "Vorname",
         "lastName": "Nachname",
         "password": "Passwort",
-        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl."
+        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl.",
+        "username": "Benutzername",
+        "username_hint": "Muss eine gültige E-Mail-Adresse sein."
       },
       "login": "Anmelden",
       "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",
@@ -1887,6 +1893,12 @@
     "source and topology": "Quelle und Topologie",
     "source only": "Nur Quelle",
     "source search": "Quellensuche",
+    "source_search": {
+      "match_count": "{count} Treffer | {count} Treffer",
+      "open_flow": "flow öffnen",
+      "preview_empty": "Wähle ein Ergebnis zur Vorschau aus. Klicke auf einen flow in der Ergebnisliste, um dessen Quellcode zu sehen.",
+      "preview_error": "Fehler beim Laden des flow-Quellcodes"
+    },
     "specific task": "Spezifischer Task",
     "start date": "Startdatum",
     "start datetime": "Startdatum und -zeit",

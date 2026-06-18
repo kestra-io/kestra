@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Replier toutes les lignes multiples",
     "font size": "Font size",
     "for flow": "pour flow",
+    "forbidden system labels": "Seul system.correlationId peut être utilisé comme system label",
     "force run": "Forcer l'exécution",
     "force run confirm": "Êtes-vous sûr de vouloir forcer l'exécution <code>{id}</code>?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâche en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront retirées de la file d'attente.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
     "force run done": "L'exécution est forcée d'exécuter",
@@ -866,6 +867,8 @@
     "form error": "Formulaire invalid",
     "from": "De",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Cette exécution s'est terminée sans exécuter de tâche.  \nConsultez son aperçu et ses logs pour en connaître la raison.",
+    "gantt_no_tasks_match_filters": "Aucune tâche ne correspond aux filtres sélectionnés. <br> Essayez d'ajuster les filtres de recherche, d'état ou de niveau de log.",
     "healthcheck date": "Dernier Healthcheck",
     "hide task documentation": "Cacher la documentation des tâches",
     "home": "Accueil",
@@ -939,6 +942,7 @@
     "line": "Ligne",
     "line-by-line": "ligne par ligne",
     "loaded x dependencies": "{count} dépendances chargées",
+    "loading": "Chargement...",
     "log expand setting": "Affichage par défaut des journaux",
     "logExporters": "Exportateurs de Logs",
     "logs": "Fichiers journaux",
@@ -950,6 +954,7 @@
       "raw_details": "Affiche les logs des tâches et du flow dans un format brut ordonné par horodatage"
     },
     "main_configuration": "Configuration Principale",
+    "manage labels": "Gérer les labels",
     "management port": "Port de gestion",
     "mark as": "Marqué comme <code>{status}</code>",
     "max": "Maximum",
@@ -1669,7 +1674,6 @@
     "sequential": "Séquentiel",
     "server type": "Type de serveur",
     "services": "Services",
-    "set_extra_labels": "Définir des labels supplémentaires",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1798,7 +1802,9 @@
         "firstName": "Prénom",
         "lastName": "Nom de famille",
         "password": "Mot de passe",
-        "password_requirements": "Au moins 8 caractères avec 1 lettre majuscule et 1 chiffre."
+        "password_requirements": "Au moins 8 caractères avec 1 lettre majuscule et 1 chiffre.",
+        "username": "Nom d'utilisateur",
+        "username_hint": "Doit être une adresse e-mail valide."
       },
       "login": "Connexion",
       "login_subtitle": "Entrez vos identifiants pour accéder à votre instance Kestra",
@@ -1887,6 +1893,12 @@
     "source and topology": "Source et topologie",
     "source only": "Source uniquement",
     "source search": "Recherche de code source",
+    "source_search": {
+      "match_count": "{count} résultat | {count} résultats",
+      "open_flow": "Ouvrir le flow",
+      "preview_empty": "Sélectionnez un résultat pour l'afficher. Cliquez sur un flow dans la liste des résultats pour voir sa source.",
+      "preview_error": "Échec du chargement de la source du flow"
+    },
     "specific task": "Tâche spécifique",
     "start date": "Date de début",
     "start datetime": "Date de départ",

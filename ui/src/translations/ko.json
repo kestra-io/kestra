@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "모든 다중 라인 접기",
     "font size": "Font size",
     "for flow": "flow용",
+    "forbidden system labels": "system label로는 system.correlationId만 사용할 수 있습니다",
     "force run": "강제 실행",
     "force run confirm": "실행 <code>{id}</code>을(를) 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동합니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
     "force run done": "실행이 강제 실행됩니다.",
@@ -866,6 +867,8 @@
     "form error": "양식 오류",
     "from": "시작",
     "gantt": "간트",
+    "gantt_no_tasks_executed": "이 실행은 어떤 task도 실행하지 않고 종료되었습니다.  \n개요와 logs를 확인하여 이유를 알아보세요.",
+    "gantt_no_tasks_match_filters": "선택한 필터와 일치하는 task가 없습니다. <br> 검색, 상태 또는 log-level 필터를 조정해 보세요.",
     "healthcheck date": "HealthCheck 날짜",
     "hide task documentation": "task 문서 숨기기",
     "home": "홈",
@@ -939,6 +942,7 @@
     "line": "라인",
     "line-by-line": "줄별로",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
+    "loading": "로딩 중...",
     "log expand setting": "기본 Log 표시",
     "logExporters": "로그 Exporters",
     "logs": "Logs",
@@ -950,6 +954,7 @@
       "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시"
     },
     "main_configuration": "주요 설정",
+    "manage labels": "label 관리",
     "management port": "관리 포트",
     "mark as": "<code>{status}</code>로 표시",
     "max": "Max",
@@ -1669,7 +1674,6 @@
     "sequential": "순차적",
     "server type": "서버 유형",
     "services": "서비스",
-    "set_extra_labels": "추가 label 설정",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1798,7 +1802,9 @@
         "firstName": "이름",
         "lastName": "성씨",
         "password": "비밀번호",
-        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
+        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함.",
+        "username": "사용자 이름",
+        "username_hint": "유효한 이메일 주소여야 합니다."
       },
       "login": "로그인",
       "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",
@@ -1887,6 +1893,12 @@
     "source and topology": "소스 및 토폴로지",
     "source only": "소스 전용",
     "source search": "소스 검색",
+    "source_search": {
+      "match_count": "{count}개 일치 | {count}개 일치",
+      "open_flow": "flow 열기",
+      "preview_empty": "미리 볼 결과를 선택하세요. 결과 목록에서 flow를 클릭하면 소스를 확인할 수 있습니다.",
+      "preview_error": "flow 소스를 불러오지 못했습니다"
+    },
     "specific task": "특정 task",
     "start date": "시작 날짜",
     "start datetime": "시작 날짜 및 시간",

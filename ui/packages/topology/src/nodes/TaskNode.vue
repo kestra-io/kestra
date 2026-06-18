@@ -296,8 +296,9 @@
 
     const actionConfig = computed(() => {
         const taskType = props.data.node.task?.type as string | undefined
+        const runnerType = (props.data.node.task as any)?.taskRunner?.type as string | undefined
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType]
+        const customAction = props.customActions?.[taskType] ?? (runnerType ? props.customActions?.[runnerType] : undefined)
         if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
         const showDetail = props.showDetails?.[taskType]
         if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const

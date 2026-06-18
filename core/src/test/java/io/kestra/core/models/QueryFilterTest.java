@@ -364,6 +364,22 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.QUERY, Resource.BANNER,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.SERVICE_INSTANCE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TYPE, Resource.BANNER,
                 Set.of(
                     Op.EQUALS,

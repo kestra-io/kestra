@@ -345,7 +345,13 @@ public class ExecutorService {
                 );
 
                 if (!nexts.isEmpty()) {
-                    return saveFlowableOutput(nexts, executor);
+                    List<TaskRun> taskRuns = saveFlowableOutput(nexts, executor);
+                    if (Boolean.TRUE.equals(parentTaskRun.getForceExecution())) {
+                        return taskRuns.stream()
+                            .map(taskRun -> taskRun.withForceExecution(true))
+                            .toList();
+                    }
+                    return taskRuns;
                 }
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);

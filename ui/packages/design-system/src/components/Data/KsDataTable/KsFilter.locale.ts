@@ -4,6 +4,7 @@ export default {
         none: "None",
         filter: {
             "update": "Update",
+            "update conditions hint": "The currently applied filters will replace this saved filter's conditions.",
             "save": "Save",
             "footer_apply": "Apply",
             "cancel": "Cancel",
@@ -768,6 +769,7 @@ export default {
             "unrenderable_title": "Komplexe Abfrage",
             "unwrap_group": "Gruppierung aufheben",
             "update": "Aktualisieren",
+            "update conditions hint": "Die aktuell angewandten Filter ersetzen die Bedingungen dieses gespeicherten Filters.",
             "username": {
                 "description": "Nach Benutzername filtern",
                 "label": "Benutzername",
@@ -1148,6 +1150,7 @@ export default {
             "unrenderable_title": "Consulta compleja",
             "unwrap_group": "Desagrupar",
             "update": "Actualizar",
+            "update conditions hint": "Los filtros actualmente aplicados reemplazarán las condiciones de este filter guardado.",
             "username": {
                 "description": "Filtrar por nombre de usuario",
                 "label": "Nombre de usuario",
@@ -1528,6 +1531,7 @@ export default {
             "unrenderable_title": "Requête complexe",
             "unwrap_group": "Dégrouper",
             "update": "Mettre à jour",
+            "update conditions hint": "Les filtres actuellement appliqués remplaceront les conditions de ce filter enregistré.",
             "username": {
                 "description": "Filtrer par nom d'utilisateur",
                 "label": "Nom d'utilisateur",
@@ -1908,6 +1912,7 @@ export default {
             "unrenderable_title": "जटिल क्वेरी",
             "unwrap_group": "समूह हटाएं",
             "update": "अपडेट",
+            "update conditions hint": "वर्तमान में लागू filter इस सहेजे गए filter की शर्तों को बदल देंगे।",
             "username": {
                 "description": "उपयोगकर्ता नाम द्वारा फ़िल्टर करें",
                 "label": "उपयोगकर्ता नाम",
@@ -2288,6 +2293,7 @@ export default {
             "unrenderable_title": "Query complessa",
             "unwrap_group": "Separa gruppo",
             "update": "Aggiorna",
+            "update conditions hint": "I filtri attualmente applicati sostituiranno le condizioni di questo filter salvato.",
             "username": {
                 "description": "Filtra per nome utente",
                 "label": "Nome utente",
@@ -2668,6 +2674,7 @@ export default {
             "unrenderable_title": "複雑なクエリ",
             "unwrap_group": "グループ解除",
             "update": "更新",
+            "update conditions hint": "現在適用されているfilterが、この保存されたfilterの条件に置き換わります。",
             "username": {
                 "description": "ユーザー名でフィルター",
                 "label": "ユーザー名",
@@ -3048,6 +3055,7 @@ export default {
             "unrenderable_title": "복잡한 쿼리",
             "unwrap_group": "그룹 해제",
             "update": "업데이트",
+            "update conditions hint": "현재 적용된 filter가 이 저장된 filter의 조건을 대체합니다.",
             "username": {
                 "description": "사용자 이름으로 필터링",
                 "label": "사용자 이름",
@@ -3428,6 +3436,7 @@ export default {
             "unrenderable_title": "Złożone zapytanie",
             "unwrap_group": "Rozgrupuj",
             "update": "Aktualizuj",
+            "update conditions hint": "Aktualnie zastosowane filtry zastąpią warunki tego zapisanego filter.",
             "username": {
                 "description": "Filtruj według nazwy użytkownika",
                 "label": "Nazwa użytkownika",
@@ -3808,6 +3817,7 @@ export default {
             "unrenderable_title": "Consulta complexa",
             "unwrap_group": "Desagrupar",
             "update": "Atualizar",
+            "update conditions hint": "Os filtros atualmente aplicados substituirão as condições deste filter guardado.",
             "username": {
                 "description": "Filtrar por nome de usuário",
                 "label": "Nome de Usuário",
@@ -4188,6 +4198,7 @@ export default {
             "unrenderable_title": "Consulta complexa",
             "unwrap_group": "Desagrupar",
             "update": "Atualizar",
+            "update conditions hint": "Os filtros atualmente aplicados substituirão as condições deste filter salvo.",
             "username": {
                 "description": "Filtrar por nome de usuário",
                 "label": "Nome de Usuário",
@@ -4568,6 +4579,7 @@ export default {
             "unrenderable_title": "Сложный запрос",
             "unwrap_group": "Разгруппировать",
             "update": "Обновить",
+            "update conditions hint": "Текущие применённые filter заменят условия этого сохранённого filter.",
             "username": {
                 "description": "Фильтр по имени пользователя",
                 "label": "Имя пользователя",
@@ -4948,6 +4960,7 @@ export default {
             "unrenderable_title": "复杂查询",
             "unwrap_group": "取消分组",
             "update": "更新",
+            "update conditions hint": "当前应用的filter将替换此保存的filter的条件。",
             "username": {
                 "description": "按用户名筛选",
                 "label": "用户名",

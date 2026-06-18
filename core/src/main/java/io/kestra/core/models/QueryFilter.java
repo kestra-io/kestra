@@ -678,7 +678,7 @@ public record QueryFilter(
         SERVICE_INSTANCE {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.STATE, Field.TYPE, Field.CREATED);
+                return List.of(Field.QUERY, Field.STATE, Field.TYPE, Field.CREATED);
             }
         },
         TENANT {
@@ -702,7 +702,7 @@ public record QueryFilter(
         BANNER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.TYPE);
+                return List.of(Field.QUERY, Field.TYPE);
             }
         };
 

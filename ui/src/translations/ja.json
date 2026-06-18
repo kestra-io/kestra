@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
     "font size": "Font size",
     "for flow": "フロー用",
+    "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "force run": "強制実行",
     "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
     "force run done": "実行は強制的にRUNNINGです。",
@@ -866,6 +867,8 @@
     "form error": "フォームエラー",
     "from": "から",
     "gantt": "ガント",
+    "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
+    "gantt_no_tasks_match_filters": "選択したフィルターに一致するタスクがありません。<br> 検索、状態、またはログレベルのフィルターを調整してみてください。",
     "healthcheck date": "HealthCheck日",
     "hide task documentation": "taskのドキュメントを非表示",
     "home": "ホーム",
@@ -939,6 +942,7 @@
     "line": "ライン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
+    "loading": "読み込み中...",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",
@@ -950,6 +954,7 @@
       "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示"
     },
     "main_configuration": "メイン設定",
+    "manage labels": "ラベルを管理",
     "management port": "管理ポート",
     "mark as": "<code>{status}</code>としてマーク",
     "max": "Max",
@@ -1669,7 +1674,6 @@
     "sequential": "逐次",
     "server type": "サーバータイプ",
     "services": "サービス",
-    "set_extra_labels": "追加のラベルを設定",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1798,7 +1802,9 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。",
+        "username": "ユーザー名",
+        "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
       "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
@@ -1887,6 +1893,12 @@
     "source and topology": "ソースとトポロジー",
     "source only": "ソースのみ",
     "source search": "ソース検索",
+    "source_search": {
+      "match_count": "{count} 件一致 | {count} 件一致",
+      "open_flow": "flow を開く",
+      "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
+      "preview_error": "flow ソースの読み込みに失敗しました"
+    },
     "specific task": "特定のTask",
     "start date": "開始日",
     "start datetime": "開始日時",

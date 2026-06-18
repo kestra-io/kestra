@@ -162,7 +162,7 @@
     }
 
     const handleEdit = (id: string, name: string, description: string) => {
-        filter.updateSavedFilter(id, name, description)
+        filter.updateSavedFilter(id, name, description, filter.appliedFilters.value)
     }
 
     const handleLoad = (savedFilter: any) => {

@@ -1,74 +1,79 @@
 <template>
     <div class="variable-explorer">
         <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <!-- Left: searchable list of context variables grouped by source -->
-            <KsSplitterPanel v-model:size="leftWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
-                <SidebarList
-                    :sections="sections"
-                    :selectedExpression="selectedBase"
-                    @select="selectItem"
-                />
-            </KsSplitterPanel>
-
-            <!-- Center: tree / raw JSON of the selected value -->
-            <KsSplitterPanel class="variable-explorer__panel">
-                <div class="viewer">
-                    <div class="viewer__header">
-                        <KsSegmented
-                            v-if="isExpandableValue && !fileSelectedOutput" 
-                            v-model="viewMode"
-                            :options="viewModes"
-                            size="small"
+            <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
+            <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
+                <KsSplitter layout="horizontal" class="variable-explorer__inner-splitter">
+                    <!-- Left: searchable list of context variables grouped by source -->
+                    <KsSplitterPanel v-model:size="leftWidth" :min="'25%'" :max="'60%'" class="variable-explorer__panel variable-explorer__panel--sidebar">
+                        <SidebarList
+                            :sections="sections"
+                            :selectedExpression="selectedBase"
+                            @select="selectItem"
                         />
-                        <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
-                        <KsIconButton
-                            v-if="selectedValue !== undefined && !fileSelectedOutput"
-                            :aria-label="$t('copy')"
-                            @click="copyValue"
-                        >
-                            <ContentCopy :size="16" />
-                        </KsIconButton>
-                    </div>
-                    
-                    <template v-if="selectedValue === undefined">
-                        <KsEmpty :description="$t('variable_explorer.select_prompt')" />
-                    </template>
+                    </KsSplitterPanel>
 
-                    <KsEditor
-                        v-else-if="viewMode === 'raw' && isExpandableValue"
-                        v-bind="editorBindings"
-                        :readOnly="true"
-                        :inline="true"
-                        :navbar="false"
-                        :options="{fullHeight: true}"
-                        :modelValue="rawValue"
-                        lang="json"
-                    />
+                    <!-- Center: tree / raw JSON of the selected value -->
+                    <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
+                        <div class="viewer">
+                            <div class="viewer__header">
+                                <KsSegmented
+                                    v-if="isExpandableValue && !fileSelectedOutput"
+                                    v-model="viewMode"
+                                    :options="viewModes"
+                                    size="small"
+                                />
+                                <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
+                                <KsIconButton
+                                    v-if="selectedValue !== undefined && !fileSelectedOutput"
+                                    :aria-label="$t('copy')"
+                                    @click="copyValue"
+                                >
+                                    <ContentCopy :size="16" />
+                                </KsIconButton>
+                            </div>
 
-                    <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
-                        <FilePreview
-                            :key="fileSelectedOutput"
-                            :path="fileSelectedOutput"
-                            :executionId="execution.id"
-                        />
-                    </div>
+                            <template v-if="selectedValue === undefined">
+                                <KsEmpty :description="$t('variable_explorer.select_prompt')" />
+                            </template>
 
-                    <VariableTreeView
-                        v-else-if="isExpandableValue"
-                        :value="selectedValue"
-                        :basePath="selectedBase"
-                        :selectedPath="expressionPath"
-                        @select="onSelectPath"
-                    />
+                            <KsEditor
+                                v-else-if="viewMode === 'raw' && isExpandableValue"
+                                v-bind="editorBindings"
+                                :readOnly="true"
+                                :inline="true"
+                                :navbar="false"
+                                :options="{fullHeight: true}"
+                                :modelValue="rawValue"
+                                lang="json"
+                            />
 
-                    <div v-else class="viewer__scalar">
-                        <code>{{ rawValue }}</code>
-                    </div>
-                </div>
+                            <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
+                                <FilePreview
+                                    :key="fileSelectedOutput"
+                                    :path="fileSelectedOutput"
+                                    :executionId="execution.id"
+                                />
+                            </div>
+
+                            <VariableTreeView
+                                v-else-if="isExpandableValue"
+                                :value="selectedValue"
+                                :basePath="selectedBase"
+                                :selectedPath="expressionPath"
+                                @select="onSelectPath"
+                            />
+
+                            <div v-else class="viewer__scalar">
+                                <code>{{ rawValue }}</code>
+                            </div>
+                        </div>
+                    </KsSplitterPanel>
+                </KsSplitter>
             </KsSplitterPanel>
 
             <!-- Right: evaluate a Pebble expression against the live execution -->
-            <KsSplitterPanel v-if="!fileSelectedOutput" v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
+            <KsSplitterPanel v-if="!fileSelectedOutput" v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel variable-explorer__panel--debug">
                 <div class="debug">
                     <ExpressionDebugger
                         :execution="execution"
@@ -334,12 +339,30 @@
         min-height: 0;
         overflow: hidden;
     }
+
+    &__panel--main {
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-spacing-2);
+        overflow: hidden;
+    }
+
+    &__panel--sidebar {
+        background-color: var(--ks-bg-base);
+    }
+
+    &__panel--debug {
+        border-left: 1px solid var(--ks-border-default);
+    }
 }
 
 :deep(.kel-splitter),
 :deep(.kel-splitter-panel) {
     height: 100%;
     min-height: 0;
+}
+
+.variable-explorer__inner-splitter {
+    width: 100%;
 }
 
 .viewer {
@@ -369,11 +392,11 @@
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
         word-break: break-word;
-        padding: .5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
     }
 
-    .file-preview{
-        padding: 1rem;
+    .file-preview {
+        padding: var(--ks-spacing-4);
     }
 }
 

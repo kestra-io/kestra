@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",
     "font size": "Font size",
     "for flow": "für Flow",
+    "forbidden system labels": "Nur system.correlationId kann als System-Label verwendet werden",
     "force run": "Erzwungene Ausführung",
     "force run confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> erzwingen möchten?<br/><br/>WARNING: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
     "force run done": "Ausführung ist erzwungener Lauf",
@@ -939,6 +940,7 @@
     "line": "Linie",
     "line-by-line": "Zeile für Zeile",
     "loaded x dependencies": "{count} Abhängigkeiten geladen",
+    "loading": "Wird geladen...",
     "log expand setting": "Log-Standardanzeige",
     "logExporters": "Log-Exporteure",
     "logs": "Logs",
@@ -1796,7 +1798,9 @@
         "firstName": "Vorname",
         "lastName": "Nachname",
         "password": "Passwort",
-        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl."
+        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl.",
+        "username": "Benutzername",
+        "username_hint": "Muss eine gültige E-Mail-Adresse sein."
       },
       "login": "Anmelden",
       "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",

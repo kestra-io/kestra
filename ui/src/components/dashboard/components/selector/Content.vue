@@ -1,5 +1,5 @@
 <template>
-    <el-button
+    <KsButton
         type="primary"
         :icon="Plus"
         tag="router-link"
@@ -7,7 +7,7 @@
         class="w-100"
     >
         <small>{{ $t("dashboards.creation.label") }}</small>
-    </el-button>
+    </KsButton>
 
     <Item
         :dashboard="{
@@ -79,12 +79,12 @@
 .items {
     max-height: 193.4px !important; // 5 visible items
 
-    :deep(li.el-dropdown-menu__item) {
+    :deep(li.kel-dropdown-menu__item) {
         border-radius: unset;
     }
 }
 
-:deep(li.el-dropdown-menu__item) {
+:deep(li.kel-dropdown-menu__item) {
     &:hover,
     &:focus {
         background: var(--ks-bg-hover);

@@ -11,19 +11,19 @@
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
 
                     <div class="onboarding-success-card__actions">
-                        <button
-                            class="el-button"
-                            type="button"
+                        <KsButton
+                            nativeType="button"
                             @click="goToTutorial"
                         >
                             {{ $t("welcome_copilot.success_popup.tutorial") }}
-                        </button>
-                        <router-link
-                            class="el-button el-button--primary"
+                        </KsButton>
+                        <KsButton
+                            type="primary"
+                            tag="router-link"
                             :to="successRoute"
                         >
                             {{ $t("welcome_copilot.success_popup.explore") }}
-                        </router-link>
+                        </KsButton>
                     </div>
                 </div>
             </div>

@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "Свернуть все многострочные строки",
     "font size": "Font size",
     "for flow": "для flow",
+    "forbidden system labels": "Только system.correlationId можно использовать как system label",
     "force run": "Принудительный запуск",
     "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение <code>{id}</code>?<br/><br/>WARNING: принудительный запуск выполнения не гарантирован и может создать дублирующие выполнения task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED tasks будут переведены в состояние RUNNING.</li><li>RUNNING tasks будут повторно отправлены.</li><li>QUEUED tasks будут извлечены из очереди.</li><li>PAUSED tasks будут возобновлены.</li></ul>",
     "force run done": "Выполнение принудительного запуска",
@@ -939,6 +940,7 @@
     "line": "Линия",
     "line-by-line": "построчно",
     "loaded x dependencies": "{count} зависимости загружены",
+    "loading": "Загрузка...",
     "log expand setting": "Отображение logs по умолчанию",
     "logExporters": "Экспортеры Log",
     "logs": "Логи",
@@ -1796,7 +1798,9 @@
         "firstName": "Имя",
         "lastName": "Фамилия",
         "password": "Пароль",
-        "password_requirements": "Не менее 8 символов, включая 1 заглавную букву и 1 цифру."
+        "password_requirements": "Не менее 8 символов, включая 1 заглавную букву и 1 цифру.",
+        "username": "Имя пользователя",
+        "username_hint": "Должен быть действительный адрес электронной почты."
       },
       "login": "Войти",
       "login_subtitle": "Введите свои учетные данные для доступа к вашему экземпляру Kestra",

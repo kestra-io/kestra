@@ -1,42 +1,11 @@
 <template>
-    <KsTooltip
-        v-if="tooltipType === TooltipType.EXTERNAL"
-        trigger="manual"
-        :visible="tooltipVisible"
-        :content="tooltipContent"
-        :rawContent="true"
-        placement="bottom"
-        popperClass="ks-chart-tooltip"
-        :popperOptions="tooltipPopperOptions"
-    >
-        <div
-            ref="wrapperRef"
-            v-ks-loading="loading"
-            class="ks-chart-wrapper"
-            v-bind="$attrs"
-            @mouseleave="onMouseleave"
-        >
-            <VChart
-                v-if="canRender"
-                ref="vChartRef"
-                class="ks-chart__inner"
-                :theme="currentTheme"
-                :option="effectiveOption"
-                :initOptions="{renderer: renderer}"
-                autoresize
-                @mouseover="emit('echarts-mouseover', $event)"
-                @mouseout="emit('echarts-mouseout', $event)"
-                @click="emit('echarts-click', $event)"
-            />
-        </div>
-    </KsTooltip>
-
     <div
-        v-else
         ref="wrapperRef"
         v-ks-loading="loading"
         class="ks-chart-wrapper"
         v-bind="$attrs"
+        @mousemove="onMousemove"
+        @mouseleave="hide"
     >
         <VChart
             v-if="canRender"
@@ -46,9 +15,23 @@
             :option="effectiveOption"
             :initOptions="{renderer: renderer}"
             autoresize
-            @mouseover="emit('echarts-mouseover', $event)"
-            @mouseout="emit('echarts-mouseout', $event)"
+            @mouseover="onMouseover"
+            @mouseout="onMouseout"
             @click="emit('echarts-click', $event)"
+        />
+
+        <KsTooltip
+            v-if="tooltipType === TooltipType.EXTERNAL"
+            trigger="manual"
+            :visible="tooltipVisible"
+            :content="tooltipContent"
+            :rawContent="true"
+            :enterable="false"
+            placement="bottom"
+            popperClass="ks-chart-tooltip"
+            :virtualRef="virtualRef"
+            virtualTriggering
+            :popperOptions="tooltipPopperOptions"
         />
     </div>
 </template>
@@ -137,7 +120,6 @@
                     position: () => [-9999, -9999],
                     formatter: (params: unknown) => {
                         tooltipContent.value = buildContentFromParams(params)
-                        tooltipVisible.value = true
                         return " "
                     },
                 },
@@ -160,6 +142,11 @@
     const wrapperRef = ref<HTMLElement | null>(null)
     const tooltipVisible = ref(false)
     const tooltipContent = ref("")
+    const cursor = ref({x: 0, y: 0})
+
+    const virtualRef = computed(() => ({
+        getBoundingClientRect: () => new DOMRect(cursor.value.x, cursor.value.y, 0, 0),
+    }))
 
     const tooltipPopperOptions = {
         modifiers: [
@@ -224,9 +211,41 @@
         return `<div style="font-size:var(--ks-font-size-2xs);color:var(--ks-text-secondary);font-variant-numeric:tabular-nums">${rows.join("")}</div>`
     }
 
-    function onMouseleave() {
+    function onMousemove(event: MouseEvent) {
+        cursor.value = {x: event.clientX, y: event.clientY}
+    }
+
+    function hide() {
         tooltipVisible.value = false
     }
+
+    function onMouseover(params: unknown) {
+        tooltipVisible.value = true
+        emit("echarts-mouseover", params)
+    }
+
+    function onMouseout(params: unknown) {
+        hide()
+        emit("echarts-mouseout", params)
+    }
+
+    function onZrMousemove(event: {target?: unknown}) {
+        if (!event.target) hide()
+    }
+
+    let boundZr: ReturnType<ECharts["getZr"]> | null = null
+
+    function bindZr(chart?: ECharts) {
+        boundZr?.off("mousemove", onZrMousemove)
+        boundZr?.off("globalout", hide)
+        boundZr = chart && props.tooltipType === TooltipType.EXTERNAL ? chart.getZr() : null
+        boundZr?.on("mousemove", onZrMousemove)
+        boundZr?.on("globalout", hide)
+    }
+
+    watch(() => vChartRef.value?.chart as ECharts | undefined, (chart) => bindZr(chart), {immediate: true})
+
+    onUnmounted(() => bindZr())
 
     defineExpose({
         getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,
@@ -259,5 +278,6 @@
     :global(.ks-chart-tooltip) {
         max-width: min(20rem, 90vw);
         overflow-wrap: anywhere;
+        pointer-events: none;
     }
 </style>

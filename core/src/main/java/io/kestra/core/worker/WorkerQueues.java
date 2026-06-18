@@ -83,9 +83,14 @@ public final class WorkerQueues {
     /**
      * Format a Worker Queue id for log display. Returns {@code default} for the global
      * default queue and the id otherwise.
+     *
+     * <p>This accepts both representations of the default queue: the {@link #DEFAULT_ID}
+     * sentinel and the dispatch-side routing key (see
+     * {@link QueueSubscription#normalizedWorkerQueueId()}), which renders the default queue
+     * as {@code null} or the empty string.
      */
     public static String forLog(String id) {
-        return isDefault(id) ? "default" : id;
+        return normalize(id);
     }
 
     /**

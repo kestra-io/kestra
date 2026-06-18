@@ -1,12 +1,12 @@
 <template>
     <div class="mcp-edit">
-        <el-form
+        <KsForm
             ref="formRef"
             :model="form"
             labelPosition="top"
             @submit.prevent="save"
         >
-            <el-form-item
+            <KsFormItem
                 :label="t('id')"
                 prop="id"
                 :rules="[
@@ -14,26 +14,26 @@
                     {pattern: /^[a-z0-9][a-z0-9_-]*$/, message: t('mcp.id_invalid'), trigger: 'blur'},
                 ]"
             >
-                <el-input
+                <KsInput
                     v-model="form.id"
                     :placeholder="t('mcp.id_placeholder')"
                     :disabled="isUpdate || readOnly"
                     class="mcp-edit__name-input"
                 />
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('description')">
-                <el-input
+            <KsFormItem :label="t('description')">
+                <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
                     :placeholder="t('description')"
                     :disabled="readOnly"
                 />
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('mcp.instructions')">
-                <el-input
+            <KsFormItem :label="t('mcp.instructions')">
+                <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
@@ -41,9 +41,9 @@
                     class="mcp-edit__instructions-input"
                     :disabled="readOnly"
                 />
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('mcp.server_type')">
+            <KsFormItem :label="t('mcp.server_type')">
                 <div class="mcp-edit__type-buttons">
                     <button
                         type="button"
@@ -66,9 +66,9 @@
                         {{ t("mcp.public") }}
                     </button>
                 </div>
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item v-if="form.serverType === 'PRIVATE'" :label="t('mcp.auth_type')">
+            <KsFormItem v-if="form.serverType === 'PRIVATE'" :label="t('mcp.auth_type')">
                 <div class="mcp-edit__auth-list">
                     <label
                         v-for="opt in AUTH_OPTIONS"
@@ -93,9 +93,9 @@
                         </span>
                     </label>
                 </div>
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item
+            <KsFormItem
                 v-if="form.serverType === 'PRIVATE' && form.authType === 'OAUTH'"
                 :label="t('mcp.oauth_provider')"
                 prop="oauthProvider"
@@ -114,9 +114,9 @@
                         :value="provider"
                     />
                 </KsSelect>
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item
+            <KsFormItem
                 v-if="form.serverType === 'PRIVATE' && form.authType === 'OAUTH'"
                 :label="t('mcp.scopes_supported')"
             >
@@ -133,15 +133,15 @@
                 <div class="mcp-edit__field-hint">
                     {{ t("mcp.scopes_supported_hint") }}
                 </div>
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('enabled')">
-                <el-switch
+            <KsFormItem :label="t('enabled')">
+                <KsSwitch
                     :modelValue="!form.disabled"
                     :disabled="readOnly"
-                    @update:model-value="(val: boolean) => (form.disabled = !val)"
+                    @update:model-value="(val) => (form.disabled = !val)"
                 />
-            </el-form-item>
+            </KsFormItem>
 
             <div class="mcp-edit__actions">
                 <KsButton v-if="canSave" type="primary" @click="save">
@@ -156,7 +156,7 @@
                     {{ t("delete") }}
                 </KsButton>
             </div>
-        </el-form>
+        </KsForm>
     </div>
 </template>
 
@@ -164,7 +164,7 @@
     import {computed, onMounted, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import type {FormInstance} from "element-plus"
+    import type {FormInstance} from "@kestra-io/design-system"
     import {useMcpStore} from "../../../../stores/mcp"
     import {useMiscStore} from "override/stores/misc"
     import {useAuthStore} from "override/stores/auth"

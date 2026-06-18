@@ -12,6 +12,7 @@ import org.reactivestreams.Publisher;
 
 import io.kestra.webserver.configuration.WebserverConfiguration;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -33,6 +34,7 @@ import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Filter("/ui/**")
+@Requires(property = "kestra.webserver.ui.enabled", notEquals = "false", defaultValue = "true")
 public class StaticFilter implements HttpServerFilter {
     @Nullable
     @Value("${micronaut.server.context-path}")

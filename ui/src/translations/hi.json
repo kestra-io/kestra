@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
     "font size": "Font size",
     "for flow": "फ्लो के लिए",
+    "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "force run": "फोर्स रन",
     "force run confirm": "क्या आप सुनिश्चित हैं कि आप निष्पादन <code>{id}</code> को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: निष्पादन को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task निष्पादन बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को पुनः शुरू किया जाएगा।</li></ul>",
     "force run done": "निष्पादन को मजबूरन चलाया गया है",
@@ -939,6 +940,7 @@
     "line": "रेखा",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
+    "loading": "लोड हो रहा है...",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
     "logs": "Logs",
@@ -1796,7 +1798,9 @@
         "firstName": "पहला नाम",
         "lastName": "अंतिम नाम",
         "password": "पासवर्ड",
-        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।"
+        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।",
+        "username": "उपयोगकर्ता नाम",
+        "username_hint": "मान्य ईमेल पता होना चाहिए।"
       },
       "login": "लॉगिन",
       "login_subtitle": "अपने Kestra instance तक पहुँचने के लिए अपने क्रेडेंशियल्स दर्ज करें।",

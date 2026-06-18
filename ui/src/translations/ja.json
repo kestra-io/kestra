@@ -857,6 +857,7 @@
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
     "font size": "Font size",
     "for flow": "フロー用",
+    "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "force run": "強制実行",
     "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
     "force run done": "実行は強制的にRUNNINGです。",
@@ -939,6 +940,7 @@
     "line": "ライン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
+    "loading": "読み込み中...",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",
@@ -1796,7 +1798,9 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。",
+        "username": "ユーザー名",
+        "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
       "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",

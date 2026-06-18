@@ -1,6 +1,6 @@
 @use "@kestra-io/design-system/src/assets/styles/variables.scss" as design;
 @use "@kestra-io/design-system/src/assets/styles/index.scss" as *;
-@use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
+@use 'responsive' as mixin;
 
 // element-plus
 @use "layout/element-plus-overload";
@@ -93,7 +93,6 @@ main {
     section.container:has(:is(.ks-data-table-wrapper, .full-width-table)),
     section.main-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
         padding-inline: 0;
-        margin-top: var(--ks-spacing-4);
         margin-bottom: 0;
         &:has(.empty-state) {
             flex: 1;

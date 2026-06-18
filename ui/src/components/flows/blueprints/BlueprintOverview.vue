@@ -21,12 +21,18 @@
             </div>
         </section>
 
-        <section class="block">
+        <section v-if="blueprint?.kind" class="block">
             <h4 class="label">{{ $t("blueprints.detail.links") }}</h4>
-            <KsLink :href="GITHUB_URL" class="pill" target="_blank" underline="never">
+            <KsButton
+                tag="a"
+                :href="githubUrl"
+                class="pill"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 GitHub
-                <OpenInNew :size="14" />
-            </KsLink>
+                <OpenInNew />
+            </KsButton>
         </section>
     </aside>
 </template>
@@ -39,8 +45,6 @@
 
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
-    const GITHUB_URL = "https://github.com/kestra-io/blueprints/tree/main/flows"
-
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint;
         tags?: Record<string, BlueprintTag>;
@@ -51,6 +55,16 @@
         tags: undefined,
         icons: () => ({}),
         columns: 1,
+    })
+
+    const GITHUB_REPO = "https://github.com/kestra-io/blueprints"
+
+    const githubUrl = computed(() => {
+        const kind = (props.blueprint?.kind ?? "flow").toLowerCase()
+        const directory = `${kind}s`
+        return props.blueprint?.id
+            ? `${GITHUB_REPO}/blob/main/${directory}/${props.blueprint.id}.yaml`
+            : `${GITHUB_REPO}/tree/main/${directory}`
     })
 
     const processedTags = computed(() =>
@@ -127,12 +141,11 @@
 
         .pill {
             width: fit-content;
-            padding: 0.125rem 0.375rem;
+            padding: 0 var(--ks-spacing-3);
             border: none;
             border-radius: var(--ks-radius-sm);
-            background: var(--ks-bg-tag);
             font-size: var(--ks-font-size-xs);
-            font-weight: var(--ks-font-weight-regular);
+            font-weight: var(--ks-font-weight-bold);
 
             :deep(.open-in-new-icon) {
                 margin-left: 0.25rem;

@@ -1,5 +1,6 @@
 <template>
     <ElSteps
+        :class="{'kel-steps--small': size === 'small'}"
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default>
@@ -22,9 +23,10 @@
         processStatus?: string
         simple?: boolean
         alignCenter?: boolean
+        size?: "default" | "small"
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["size"])
 
     defineSlots<{
         default?(): unknown

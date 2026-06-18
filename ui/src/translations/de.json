@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "Lesezeichen",
     "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk actions": "Massenaktionen",
@@ -217,6 +218,7 @@
     "copy url": "URL kopieren",
     "copy_and_close": "Kopieren und schließen",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
+    "copy_value": "Copy value",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
     "create_flow": "Flow erstellen",
@@ -230,6 +232,7 @@
     "current": "aktuell",
     "current execution": "Aktuelle Ausführung",
     "custom value": "Benutzerdefinierter Wert",
+    "customize sidebar": "Seitenleiste anpassen",
     "dark_version": "Dunkler Modus",
     "dashboards": {
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
@@ -431,6 +434,10 @@
       },
       "watch_the_video": "Sieh dir das Video an"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "Abhängigkeiten",
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
     "dependencies loaded": "Abhängigkeiten geladen",
@@ -471,6 +478,7 @@
     "display metric for specific task": "Metrik für einen spezifischen Task anzeigen",
     "display output for specific task": "Output für einen spezifischen Task anzeigen",
     "display topology for flow": "Topologie für Flow anzeigen",
+    "display_settings": "Display settings",
     "docs": "Dokumentation",
     "documentation": {
       "documentation": "Dokumentation",
@@ -481,7 +489,9 @@
     "download": "Herunterladen",
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
+    "drop items here": "Elemente hier ablegen",
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "duration": "Dauer",
     "dynamic": "Dynamisch",
@@ -572,8 +582,8 @@
         "title": "Auf diesem Server sind noch keine Tool flows registriert."
       },
       "panels": {
-        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Namespace-Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
-        "title": "Derzeit sind keine Panels geöffnet."
+        "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren.",
+        "title": "Kein Panel geöffnet"
       },
       "pluginDefaults": {
         "content": "Plugin-Standardeinstellungen ermöglichen es Ihnen, Ihre Plugin-Konfiguration zentral zu verwalten und mit allen flows in Ihrem namespace zu teilen.",
@@ -630,6 +640,8 @@
       }
     },
     "eval": {
+      "expression": "Ausdruck",
+      "preview": "Vorschau",
       "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
@@ -696,6 +708,7 @@
     "expand all": "Alle ausklappen",
     "expand dependencies": "Abhängigkeiten ausklappen",
     "expand error": "Nur fehlgeschlagene Tasks ausklappen",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "Ablauf",
     "expiration date": "Ablaufdatum",
     "export": "Exportieren",
@@ -717,8 +730,16 @@
     "file unavailable": "Datei nicht verfügbar",
     "file unavailable description": "Diese Datei ist nicht mehr verfügbar – sie wurde möglicherweise gelöscht oder ist abgelaufen.",
     "fileTypeNotAllowed": "Dateityp nicht erlaubt. Akzeptierte Typen: {types}",
+    "file_preview": {
+      "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
+      "load_anyway": "Trotzdem laden"
+    },
     "files": "Dateien",
     "filter by log level": "Nach Log-Ebene filtern",
+    "filter by status": "Filtere Ausführungen nach {status} Status",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "zwischen",
@@ -834,7 +855,9 @@
     "flows imported": "Flows importiert",
     "focus task": "Klicken Sie auf ein Element, um dessen Dokumentation zu sehen.",
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",
+    "font size": "Font size",
     "for flow": "für Flow",
+    "forbidden system labels": "Nur system.correlationId kann als System-Label verwendet werden",
     "force run": "Erzwungene Ausführung",
     "force run confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> erzwingen möchten?<br/><br/>WARNING: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
     "force run done": "Ausführung ist erzwungener Lauf",
@@ -917,9 +940,11 @@
     "line": "Linie",
     "line-by-line": "Zeile für Zeile",
     "loaded x dependencies": "{count} Abhängigkeiten geladen",
+    "loading": "Wird geladen...",
     "log expand setting": "Log-Standardanzeige",
     "logExporters": "Log-Exporteure",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "Standardansicht",
       "compact_details": "Task Logs in einer kompakten Ansicht, gruppiert nach jedem Task, anzeigen",
@@ -927,6 +952,7 @@
       "raw_details": "Vollständige Task Logs und Flow Logs in einem rohen, nach Zeitstempel geordneten Format anzeigen"
     },
     "main_configuration": "Hauptkonfiguration",
+    "manage labels": "Labels verwalten",
     "management port": "Management-Port",
     "mark as": "Als <code>{status}</code> markieren",
     "max": "Max",
@@ -1367,6 +1393,7 @@
     "open in new tab": "In einem neuen Tab",
     "open in same tab": "Im selben Tab",
     "open sidebar": "Seitenleiste öffnen",
+    "open_page": "Open page",
     "optional": "Optional",
     "original execution": "Originalausführung",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
@@ -1501,6 +1528,7 @@
     },
     "port": "Port",
     "prefill inputs": "Vorausfüllen",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "Vorherige Ausführung",
     "preview": {
       "auto-view": "Automatische Ansicht",
@@ -1551,6 +1579,7 @@
     "replayed": "Die Ausführung wird wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",
+    "reset to defaults": "Zurücksetzen auf Standardwerte",
     "restart": "Neustart",
     "restart change revision": "Sie können die Revision ändern, die für die neue Ausführung verwendet wird.",
     "restart confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> neu starten möchten?",
@@ -1643,7 +1672,6 @@
     "sequential": "Sequenziell",
     "server type": "Servertyp",
     "services": "Dienste",
-    "set_extra_labels": "Zusätzliche Labels festlegen",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1700,12 +1728,24 @@
           "unsaved_title": "Nicht gespeicherte Änderungen",
           "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
         },
+        "sidebar": {
+          "descriptions": {
+            "items": "Elemente in der Seitenleiste anzeigen, ausblenden und neu anordnen."
+          },
+          "fields": {
+            "items": "Navigationspunkte"
+          },
+          "label": "Seitenleiste"
+        },
         "theme": {
           "color_modes": {
             "dark_1": "Dunkel 1.0",
             "dark_2": "Dunkel 2.0",
             "light": "Hell",
             "sync": "Mit System synchronisieren"
+          },
+          "confirmations": {
+            "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
           },
           "descriptions": {
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
@@ -1758,7 +1798,9 @@
         "firstName": "Vorname",
         "lastName": "Nachname",
         "password": "Passwort",
-        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl."
+        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl.",
+        "username": "Benutzername",
+        "username_hint": "Muss eine gültige E-Mail-Adresse sein."
       },
       "login": "Anmelden",
       "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",
@@ -1821,6 +1863,7 @@
     "show details": "Details anzeigen",
     "show documentation": "Dokumentation anzeigen",
     "show more details": "Mehr Details anzeigen",
+    "show raw": "Show raw",
     "show task condition": "Bedingung des Tasks anzeigen",
     "show task documentation": "Task-Dokumentation anzeigen",
     "show task documentation in editor": "Task-Dokumentation im Editor anzeigen",
@@ -1830,6 +1873,7 @@
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "showMore": "Mehr anzeigen",
     "side-by-side": "nebeneinander",
+    "similar lines": "similar lines",
     "skipped": "Übersprungen",
     "slack support": "Fragen Sie via Slack",
     "something_went_wrong": {
@@ -1845,6 +1889,12 @@
     "source and topology": "Quelle und Topologie",
     "source only": "Nur Quelle",
     "source search": "Quellensuche",
+    "source_search": {
+      "match_count": "{count} Treffer | {count} Treffer",
+      "open_flow": "flow öffnen",
+      "preview_empty": "Wähle ein Ergebnis zur Vorschau aus. Klicke auf einen flow in der Ergebnisliste, um dessen Quellcode zu sehen.",
+      "preview_error": "Fehler beim Laden des flow-Quellcodes"
+    },
     "specific task": "Spezifischer Task",
     "start date": "Startdatum",
     "start datetime": "Startdatum und -zeit",
@@ -1943,15 +1993,8 @@
     "triggers": "Trigger",
     "triggers_add_card_add": "Hinzufügen",
     "triggers_add_card_add_to_flow": "Zum flow hinzufügen",
-    "triggers_add_category_app_description": "Externe Ressourcen regelmäßig auf Änderungen überprüfen.",
-    "triggers_add_category_app_title": "App-Trigger",
-    "triggers_add_category_core_description": "Eingebaute Trigger, die für die meisten Workflows unerlässlich sind.",
-    "triggers_add_category_core_title": "Kern-Trigger",
     "triggers_add_category_empty": "Keine Trigger in dieser Kategorie.",
-    "triggers_add_category_realtime_description": "Reagieren Sie sofort auf Ereignisse aus Messaging-Systemen.",
-    "triggers_add_category_realtime_title": "Echtzeit-Trigger",
     "triggers_add_ee_tooltip": "Dieser Trigger erfordert die Enterprise Edition.",
-    "triggers_add_empty_hint": "Versuchen Sie einen anderen Suchbegriff oder durchsuchen Sie alle Kategorien.",
     "triggers_add_empty_title": "Keine Trigger gefunden",
     "triggers_add_filter_all": "Alle",
     "triggers_add_filter_app": "App",
@@ -1969,8 +2012,6 @@
     "triggers_add_modal_trigger_id": "Trigger-ID",
     "triggers_add_modal_trigger_id_placeholder": "Eindeutiger Bezeichner für diesen Trigger",
     "triggers_add_search_placeholder": "Suche Trigger...",
-    "triggers_add_see_less": "Weniger anzeigen",
-    "triggers_add_see_more": "Mehr anzeigen ({count} mehr)",
     "triggers_header_description": "Durchsuchen, hinzufügen und verwalten Sie Trigger, um Ihre flows zu automatisieren. Wählen Sie aus, ob Sie Ihren flow als AI-Tool bereitstellen, planen, einen Webhook-Trigger hinzufügen, Änderungen in externen Apps abfragen oder Echtzeit-Ereignislistener verwenden möchten.",
     "triggers_state": {
       "options": {
@@ -2016,6 +2057,19 @@
     "valid": "Gültig",
     "validate": "Validieren",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "Keine Variablen für diese Ausführung verfügbar.",
+      "n_items": "[ {count} Elemente ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 Element ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key oder value suchen...",
+      "select_prompt": "Wählen Sie eine Variable aus, um ihren value anzuzeigen.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Eingabe/Ausgabe",
+      "tree": "Baum"
+    },
     "variables": "Variablen",
     "version": "Version",
     "view metrics": "Metriken anzeigen",
@@ -2025,6 +2079,7 @@
     "watch": "Beobachten",
     "watch_video": "Video ansehen",
     "webhook": {
+      "copy_url": "Webhook-URL kopieren",
       "curl_command": "Webhook-cURL-Befehl",
       "curl_note": "Verwenden Sie diesen cURL-Befehl, um den flow über Webhook mit benutzerdefiniertem JSON-Payload zu triggern.",
       "no_triggers": "Dieser flow hat keine aktivierten Webhook-Triggers.",

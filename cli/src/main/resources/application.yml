@@ -12,6 +12,7 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
+        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**

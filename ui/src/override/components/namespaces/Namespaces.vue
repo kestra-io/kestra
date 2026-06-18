@@ -9,7 +9,7 @@
         </template>
     </Navbar>
 
-    <KsRow class="p-5">
+    <KsRow class="p-4">
         <KSFilter
             :configuration="namespacesFilter"
             :prefix="'namespaces-list'"

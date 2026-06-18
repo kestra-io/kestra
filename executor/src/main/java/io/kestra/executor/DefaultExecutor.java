@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -22,6 +23,7 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
@@ -722,7 +724,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 }
 
                 // purge the trigger: reset scheduler trigger at end
-                if (execution.getTrigger() != null) {
+                if (execution.getTrigger() != null && !isRealtimeTriggerExecution(executor.getFlow(), execution)) {
                     sendTriggerExecutionTerminated(execution);
                 }
 
@@ -765,6 +767,24 @@ public class DefaultExecutor extends AbstractService implements Executor {
             TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
             triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
         }
+    }
+
+    /**
+     * A realtime trigger's lock spans the trigger's whole lifetime on the worker, not a single execution.
+     * Terminations of the executions it emits must not send {@link TriggerExecutionTerminated}, otherwise the
+     * scheduler would unlock and resubmit a trigger that is still running. The trigger-creation failure path
+     * (FAILED execution with no task run) bypasses this check and remains the termination signal.
+     */
+    static boolean isRealtimeTriggerExecution(FlowWithSource flow, Execution execution) {
+        if (flow == null || flow.getTriggers() == null) {
+            return false;
+        }
+        for (AbstractTrigger trigger : flow.getTriggers()) {
+            if (trigger.getId().equals(execution.getTrigger().getId())) {
+                return TriggerType.REALTIME.equals(TriggerType.from(trigger));
+            }
+        }
+        return false;
     }
 
     private void processFlowTriggers(Execution execution) throws QueueException {

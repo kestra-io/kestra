@@ -105,6 +105,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "ブックマーク",
     "bulk action async warning": "少々お待ちください。",
     "bulk actions": "一括操作",
@@ -217,6 +218,7 @@
     "copy url": "URLをコピー",
     "copy_and_close": "コピーして閉じる",
     "copy_to_clipboard": "クリップボードにコピー",
+    "copy_value": "Copy value",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_flow": "フローを作成",
@@ -230,6 +232,7 @@
     "current": "現在",
     "current execution": "現在の実行",
     "custom value": "カスタム value",
+    "customize sidebar": "サイドバーをカスタマイズ",
     "dark_version": "ダークバージョン",
     "dashboards": {
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
@@ -431,6 +434,10 @@
       },
       "watch_the_video": "ビデオを見る"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "依存関係",
     "dependencies delete flow": "このflowには依存関係があります。削除すると、依存関係が実行されなくなります。<br /><br /> 影響を受けるflowのリストはこちらです:",
     "dependencies loaded": "依存関係が読み込まれました",
@@ -471,6 +478,7 @@
     "display metric for specific task": "特定のTaskのメトリクスを表示",
     "display output for specific task": "特定のTaskの出力を表示",
     "display topology for flow": "Flowのトポロジーを表示",
+    "display_settings": "Display settings",
     "docs": "ドキュメント",
     "documentation": {
       "documentation": "ドキュメント",
@@ -481,7 +489,9 @@
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "エディターでドラフト変更が利用可能です",
+    "drop items here": "ここにアイテムをドロップしてください",
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "duration": "期間",
     "dynamic": "動的",
@@ -572,8 +582,8 @@
         "title": "このサーバーにはまだツールflowが登録されていません。"
       },
       "panels": {
-        "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
-        "title": "現在、パネルは開いていません。"
+        "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。",
+        "title": "パネルが開いていません"
       },
       "pluginDefaults": {
         "content": "プラグインデフォルトを使用すると、プラグインの設定を一元管理し、namespace内のすべてのflowと共有できます。",
@@ -630,6 +640,8 @@
       }
     },
     "eval": {
+      "expression": "式",
+      "preview": "プレビュー",
       "render": "式をレンダリング",
       "title": "デバッグ式",
       "tooltip": "任意のPebble式をレンダリングし、実行コンテキストを検査します。"
@@ -696,6 +708,7 @@
     "expand all": "すべて展開",
     "expand dependencies": "依存関係を展開",
     "expand error": "失敗したtaskのみ展開",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "有効期限",
     "expiration date": "有効期限",
     "export": "エクスポート",
@@ -717,8 +730,16 @@
     "file unavailable": "ファイルが利用できません",
     "file unavailable description": "このファイルは利用できなくなりました — 削除されたか、有効期限が切れた可能性があります。",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
+    "file_preview": {
+      "big_file_warning": "このファイルのサイズは{size}です。読み込みに時間がかかり、ブラウザがブロックされる可能性があります。それでも読み込みますか？",
+      "load_anyway": "読み込みを続行"
+    },
     "files": "ファイル",
     "filter by log level": "Logレベルでフィルター",
+    "filter by status": "{status}ステータスで実行をフィルタリング",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "間",
@@ -834,7 +855,9 @@
     "flows imported": "フローがインポートされました",
     "focus task": "任意の要素をクリックしてそのドキュメントを表示します。",
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
+    "font size": "Font size",
     "for flow": "フロー用",
+    "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "force run": "強制実行",
     "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
     "force run done": "実行は強制的にRUNNINGです。",
@@ -917,9 +940,11 @@
     "line": "ライン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
+    "loading": "読み込み中...",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示",
@@ -927,6 +952,7 @@
       "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示"
     },
     "main_configuration": "メイン設定",
+    "manage labels": "ラベルを管理",
     "management port": "管理ポート",
     "mark as": "<code>{status}</code>としてマーク",
     "max": "Max",
@@ -1367,6 +1393,7 @@
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
     "open sidebar": "サイドバーを開く",
+    "open_page": "Open page",
     "optional": "オプション",
     "original execution": "元の実行",
     "originalCreatedDate": "元の作成日",
@@ -1501,6 +1528,7 @@
     },
     "port": "ポート",
     "prefill inputs": "自動入力",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "前回の実行",
     "preview": {
       "auto-view": "自動ビュー",
@@ -1551,6 +1579,7 @@
     "replayed": "実行が再生されました",
     "required field": "必須フィールド",
     "reset": "再起動",
+    "reset to defaults": "デフォルトにリセット",
     "restart": "再起動",
     "restart change revision": "新しい実行に使用されるリビジョンを変更できます。",
     "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
@@ -1643,7 +1672,6 @@
     "sequential": "逐次",
     "server type": "サーバータイプ",
     "services": "サービス",
-    "set_extra_labels": "追加のラベルを設定",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1700,12 +1728,24 @@
           "unsaved_title": "未保存の変更",
           "unsaved_warning": "保存されていない変更があります。離れる前に保存しますか？"
         },
+        "sidebar": {
+          "descriptions": {
+            "items": "サイドバーの項目を表示、非表示、および並べ替えします。"
+          },
+          "fields": {
+            "items": "ナビゲーション項目"
+          },
+          "label": "サイドバー"
+        },
         "theme": {
           "color_modes": {
             "dark_1": "ダーク 1.0",
             "dark_2": "ダーク 2.0",
             "light": "ライト",
             "sync": "システムと同期"
+          },
+          "confirmations": {
+            "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
@@ -1758,7 +1798,9 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。",
+        "username": "ユーザー名",
+        "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
       "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
@@ -1821,6 +1863,7 @@
     "show details": "詳細を表示",
     "show documentation": "ドキュメントを表示",
     "show more details": "詳細を表示",
+    "show raw": "Show raw",
     "show task condition": "タスク条件を表示",
     "show task documentation": "taskのドキュメントを表示",
     "show task documentation in editor": "エディタでtaskのドキュメントを表示",
@@ -1830,6 +1873,7 @@
     "showLess": "表示を減らす",
     "showMore": "もっと表示",
     "side-by-side": "並列表示",
+    "similar lines": "similar lines",
     "skipped": "スキップされました",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
@@ -1845,6 +1889,12 @@
     "source and topology": "ソースとトポロジー",
     "source only": "ソースのみ",
     "source search": "ソース検索",
+    "source_search": {
+      "match_count": "{count} 件一致 | {count} 件一致",
+      "open_flow": "flow を開く",
+      "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
+      "preview_error": "flow ソースの読み込みに失敗しました"
+    },
     "specific task": "特定のTask",
     "start date": "開始日",
     "start datetime": "開始日時",
@@ -1943,15 +1993,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "追加",
     "triggers_add_card_add_to_flow": "flowに追加",
-    "triggers_add_category_app_description": "外部リソースの変更を定期的にチェックします。",
-    "triggers_add_category_app_title": "アプリケーショントリガー",
-    "triggers_add_category_core_description": "ほとんどのワークフローに不可欠なビルトイントリガー。",
-    "triggers_add_category_core_title": "コアトリガー",
     "triggers_add_category_empty": "このカテゴリにはトリガーがありません。",
-    "triggers_add_category_realtime_description": "メッセージングシステムからのイベントに即座に反応します。",
-    "triggers_add_category_realtime_title": "リアルタイムトリガー",
     "triggers_add_ee_tooltip": "このtriggerはEnterprise Editionが必要です。",
-    "triggers_add_empty_hint": "別の検索用語を試すか、すべてのカテゴリを閲覧してください。",
     "triggers_add_empty_title": "トリガーが見つかりません",
     "triggers_add_filter_all": "すべて",
     "triggers_add_filter_app": "アプリケーション",
@@ -1969,8 +2012,6 @@
     "triggers_add_modal_trigger_id": "トリガーID",
     "triggers_add_modal_trigger_id_placeholder": "このtriggerのユニークな識別子",
     "triggers_add_search_placeholder": "トリガーを検索...",
-    "triggers_add_see_less": "表示を減らす",
-    "triggers_add_see_more": "さらに表示（{count} 件の追加）",
     "triggers_header_description": "トリガーを閲覧、追加、管理して、flowを自動化します。flowをAIツールとして公開する、スケジューリング、Webhookトリガーの追加、外部アプリの変更をポーリング、またはリアルタイムイベントリスナーから選択します。",
     "triggers_state": {
       "options": {
@@ -2016,6 +2057,19 @@
     "valid": "有効",
     "validate": "検証",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "この実行に利用可能な変数はありません。",
+      "n_items": "[ {count} 件 ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 件 ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key または value を検索...",
+      "select_prompt": "value を確認する変数を選択してください。",
+      "tasks_outputs": "Tasks outputs",
+      "title": "入力/出力",
+      "tree": "ツリー"
+    },
     "variables": "変数",
     "version": "バージョン",
     "view metrics": "メトリクスを表示",
@@ -2025,6 +2079,7 @@
     "watch": "ウォッチ",
     "watch_video": "ビデオを見る",
     "webhook": {
+      "copy_url": "Webhook URLをコピー",
       "curl_command": "Webhook cURL コマンド",
       "curl_note": "このcURLコマンドを使用して、カスタムJSONペイロードでwebhookを介してflowをtriggerします。",
       "no_triggers": "このflowには有効なWebhookトリガーがありません",

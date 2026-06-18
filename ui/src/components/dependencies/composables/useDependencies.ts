@@ -420,9 +420,19 @@ export function useDependencies(
     // ─── Data loading ─────────────────────────────────────────────────────────
 
     /**
-     * Polls until KsEchart's deferred `canRender` flag has triggered and ECharts
-     * has initialised, then registers a one-shot `finished` handler so positions
-     * are captured only after the force simulation has fully settled.
+     * Polls until ECharts has completed the initial force layout and node positions
+     * are available, then centres the view on the selected node (or fits all nodes
+     * for NAMESPACE graphs where no node is pre-selected).
+     *
+     * Why polling instead of listening for the `finished` event:
+     * `chartNodes` is set synchronously, which schedules a Vue microtask flush.
+     * That flush updates KsGraph's props, VChart calls setOption, and ECharts
+     * queues its own RAF for rendering.  `captureAndFocusWhenReady` is called
+     * right afterwards and queues *our* RAF.  Because both RAFs are in the same
+     * browser frame, ECharts renders (and fires `finished`) before our first poll
+     * fires — so the event is missed and positions are never captured.
+     * Polling `capturePositions()` every frame avoids that race: positions become
+     * non-empty one frame after ECharts renders, and we capture them reliably.
      */
     const captureAndFocusWhenReady = (): void => {
         let attempts = 0
@@ -434,18 +444,17 @@ export function useDependencies(
                 requestAnimationFrame(poll)
                 return
             }
-            // ECharts 'finished' fires once all animations (incl. force layout) complete.
-            const onFinished = () => {
-                chart.off("finished", onFinished)
-                capturePositions()
-                // Defer focusNode — calling setOption inside a 'finished' handler
-                // causes ECharts "setOption during main process" error.
-                if (selectedNodeID.value) {
-                    const id = selectedNodeID.value
-                    requestAnimationFrame(() => focusNode(id))
-                }
+            capturePositions()
+            if (storedPositions.value.size > 0) {
+                const id = selectedNodeID.value
+                requestAnimationFrame(() => {
+                    if (id) focusNode(id)
+                    else fitGraph()
+                })
+                return
             }
-            chart.on("finished", onFinished)
+            if (++attempts >= MAX_ATTEMPTS) return
+            requestAnimationFrame(poll)
         }
         requestAnimationFrame(poll)
     }

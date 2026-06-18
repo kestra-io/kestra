@@ -469,6 +469,8 @@ public class ExecutionController {
     @Delete(uri = "/by-query")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -999,7 +1001,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Restart a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> restartExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1033,7 +1035,7 @@ public class ExecutionController {
             }
         }
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk restart")
@@ -1052,7 +1054,8 @@ public class ExecutionController {
     @Post(uri = "/restart/by-query")
     @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> restartExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -1262,7 +1265,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Change executions state by id asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public HttpResponse<?> updateExecutionsStatusByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
         if (!newStatus.isTerminated()) {
@@ -1300,7 +1303,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk change executions state")
@@ -1319,7 +1322,8 @@ public class ExecutionController {
     @Post(uri = "/change-status/by-query")
     @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> updateExecutionsStatusByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -1380,7 +1384,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Kill a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> killExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1423,7 +1427,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk kill")
@@ -1532,7 +1536,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> resumeExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1575,7 +1579,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk resume")
@@ -1594,7 +1598,8 @@ public class ExecutionController {
     @Post(uri = "/resume/by-query")
     @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> resumeExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -1627,7 +1632,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Pause a list of running executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> pauseExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1660,7 +1665,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk pause")
@@ -1679,7 +1684,8 @@ public class ExecutionController {
     @Post(uri = "/pause/by-query")
     @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> pauseExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -1692,7 +1698,9 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/kill/by-query")
     @Operation(tags = { "Executions" }, summary = "Kill executions filter by query parameters")
-    public HttpResponse<?> killExecutionsByQuery(
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -1706,7 +1714,8 @@ public class ExecutionController {
     @Post(uri = "/replay/by-query")
     @Operation(tags = { "Executions" }, summary = "Create new executions from old ones filter by query parameters asynchronously. Keep the flow revision")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> replayExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -1723,7 +1732,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Create new executions from old ones asynchronously. Keep the flow revision")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> replayExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -1747,7 +1756,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk replay")
@@ -1960,7 +1969,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Set labels on a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> setLabelsOnTerminatedExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
         @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1993,7 +2002,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk set labels")
@@ -2017,7 +2026,8 @@ public class ExecutionController {
     @Post(uri = "/labels/by-query")
     @Operation(tags = { "Executions" }, summary = "Set label on executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> setLabelsOnTerminatedExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -2054,7 +2064,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Unqueue a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> unqueueExecutionsByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type state) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -2088,7 +2098,7 @@ public class ExecutionController {
             }
         }
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk unqueue")
@@ -2107,7 +2117,8 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-query")
     @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> unqueueExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -2143,7 +2154,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Force run a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
-    public MutableHttpResponse<?> forceRunByIds(
+    public MutableHttpResponse<ApiAsyncOperationResponse> forceRunByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -2186,7 +2197,7 @@ public class ExecutionController {
             }
         }
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest(
+            return bulkValidationError(
                 BulkErrorResponse
                     .builder()
                     .message("invalid bulk force run")
@@ -2205,7 +2216,8 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-query")
     @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    public HttpResponse<?> forceRunExecutionsByQuery(
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -2536,6 +2548,15 @@ public class ExecutionController {
                     );
             })
             .map(HttpResponse::ok);
+    }
+
+    /**
+     * Returns an HTTP 400 response typed as {@code MutableHttpResponse<T>} so callers with a
+     * specific return type do not need to declare a wildcard.  The cast is safe at runtime.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> MutableHttpResponse<T> bulkValidationError(BulkErrorResponse errorResponse) {
+        return (MutableHttpResponse<T>) HttpResponse.badRequest(errorResponse);
     }
 
     /**

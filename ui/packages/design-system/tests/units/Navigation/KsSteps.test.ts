@@ -23,6 +23,22 @@ describe("KsSteps", () => {
         expect(wrapper.find(".kel-steps--vertical").exists()).toBe(true)
     })
 
+    test("small size applies modifier class", () => {
+        const wrapper = mount(KsSteps, {
+            props: {active: 0, size: "small"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-steps--small").exists()).toBe(true)
+    })
+
+    test("default size has no small modifier class", () => {
+        const wrapper = mount(KsSteps, {
+            props: {active: 0},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-steps--small").exists()).toBe(false)
+    })
+
     test("renders step items", () => {
         const wrapper = mount({
             components: {KsSteps, KsStep},

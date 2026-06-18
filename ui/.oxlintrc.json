@@ -32,14 +32,12 @@
   },
   "overrides": [
     {
-      "files": ["src/generated/**/*.ts"],
-      "rules": {
-        "@typescript-eslint/ban-ts-comment": "off",
-        "@typescript-eslint/no-empty-object-type": "off"
-      }
-    },
-    {
-      "files": ["src/translations/check.js", "**/tests/**"],
+      "files": [
+        "scripts/**", 
+        "**/scripts/**", 
+        "src/translations/check.js", 
+        "**/tests/**"
+      ],
       "rules": {
         "no-console": "off"
       }

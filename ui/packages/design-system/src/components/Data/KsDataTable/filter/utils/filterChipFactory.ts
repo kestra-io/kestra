@@ -8,6 +8,20 @@ import {
 import {type DecodedParam, keyOfComparator} from "./helpers"
 import {TIME_RANGE_KEY} from "./constants"
 
+export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
+    const comparator = key.comparators?.[0]
+    if (!comparator) return null
+    return {
+        id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        key: key.key,
+        keyLabel: key.label,
+        comparator,
+        comparatorLabel: COMPARATOR_LABELS[comparator],
+        value: [],
+        valueLabel: "",
+    }
+}
+
 export const createAppliedFilter = (
     key: string,
     config: FilterKeyConfig | undefined,
@@ -153,3 +167,24 @@ export const createDefaultVisibleFilters = (
                 isDefaultVisible: true,
             } as AppliedFilter
         }) ?? []
+
+export const pickStarterField = (
+    allKeys: FilterKeyConfig[],
+    usedFilters: {key: string; comparator: Comparators}[],
+): {key: FilterKeyConfig; comparator: Comparators} | null => {
+    const groupable = allKeys.filter((k) => k.groupable !== false && k.comparators?.length)
+    if (groupable.length === 0) return null
+
+    const usedKeys = new Set(usedFilters.map((f) => f.key))
+    const usedPairs = new Set(usedFilters.map((f) => `${f.key}::${f.comparator}`))
+
+    const freshKey = groupable.find((k) => !usedKeys.has(k.key))
+    if (freshKey) return {key: freshKey, comparator: freshKey.comparators[0]}
+
+    for (const key of groupable) {
+        const comparator = key.comparators.find((c) => !usedPairs.has(`${key.key}::${c}`))
+        if (comparator) return {key, comparator}
+    }
+
+    return {key: groupable[0], comparator: groupable[0].comparators[0]}
+}

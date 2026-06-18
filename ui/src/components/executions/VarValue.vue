@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </KsButton>
-        <FilePreview v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
+        <FilePreviewDrawer v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <KsButton disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </KsButton>
@@ -68,19 +68,16 @@
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
-    import FilePreview from "./FilePreview.vue"
+    import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
+
     import * as Utils from "../../utils/utils"
 
     interface Execution {
         id: string;
-    }
-
-    interface FileMetadata {
-        size: number;
     }
 
     const props = withDefaults(defineProps<{
@@ -157,22 +154,23 @@
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`
     }
 
-    const axios = useClient()
-
     const getFileSize = async (): Promise<void> => {
         if (Utils.isFile(props.value) && props.execution?.id) {
             humanSize.value = ""
             fileStatus.value = "loading"
-            const response = await axios.get<FileMetadata>(
-                `${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`,
-                {validateStatus: (status: number) => status === 200 || status === 404 || status === 422},
-            )
-            if (response.status === 200) {
-                humanSize.value = Utils.humanFileSize(response.data.size)
-                fileStatus.value = "available"
-            } else {
+
+            const data = await ExecutionsAPI.fileMetadatasFromExecution({
+                executionId: props.execution.id, 
+                path: props.value.toString(),
+            }, {
+                validateStatus: (status: number) => status === 200 || status === 404 || status === 422,
+            })
+            if(!data){
                 fileStatus.value = "missing"
-            }
+                return
+            }    
+            humanSize.value = Utils.humanFileSize(data.size)
+            fileStatus.value = "available"
         }
     }
 

@@ -24,19 +24,16 @@
                 :collapsed="getSectionCollapsed(section)"
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
-                <Motion
-                    v-for="(item, iIdx) in getDisplayedItems(section)"
+                <template v-if="getSectionCollapsed(section) && sectionHasNewChild(section)" #suffix>
+                    <KsNewBadge>{{ t("new") }}</KsNewBadge>
+                </template>
+                <MenuLink
+                    v-for="item in getDisplayedItems(section)"
                     :key="item.id"
-                    as="div"
-                    :initial="{opacity: 0, x: -10}"
-                    :animate="{opacity: 1, x: 0}"
-                    :transition="{...ITEM_SPRING, delay: itemEntranceDelay(section, iIdx)}"
-                >
-                    <MenuLink
-                        :item="item"
-                        :active="isItemActive(item)"
-                    />
-                </Motion>
+                    :item="item"
+                    :active="isItemActive(item)"
+                    :isNew="isItemNew(item)"
+                />
             </KsSideBarSection>
         </template>
 
@@ -52,16 +49,6 @@
 
         <template #footer>
             <slot name="footer" />
-            <div class="sidebar-customize-trigger">
-                <KsButton
-                    type="text"
-                    size="small"
-                    class="customize-btn"
-                    @click="showCustomizeModal = true"
-                >
-                    {{ $t("customize sidebar") }}
-                </KsButton>
-            </div>
         </template>
     </KsSideBar>
 
@@ -83,13 +70,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref, defineComponent, onUnmounted, nextTick} from "vue"
+    import {computed, h, ref, defineComponent, onUnmounted, nextTick, watch} from "vue"
 
     defineOptions({inheritAttrs: false})
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
-    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsButton} from "@kestra-io/design-system"
-    import {Motion} from "motion-v"
+    import {useI18n} from "vue-i18n"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsNewBadge} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
@@ -97,6 +84,7 @@
     import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
+    import {useFeatureSpotlightStore} from "../../stores/featureSpotlight"
     import {
         menuSectionId,
         resolveSectionItemIds,
@@ -121,25 +109,16 @@
     }>()
 
     const $route = useRoute()
+    const {t} = useI18n({useScope: "global"})
     const layoutStore = useLayoutStore()
     const bookmarksStore = useBookmarksStore()
+    const featureSpotlightStore = useFeatureSpotlightStore()
     const showCustomizeModal = ref(false)
     const contextMenu = ref<{visible: boolean; x: number; y: number}>({visible: false, x: 0, y: 0})
     const contextMenuItem = ref<HTMLButtonElement | null>(null)
 
     const CONTEXT_MENU_WIDTH = 200
     const CONTEXT_MENU_HEIGHT = 60
-
-    const ITEM_SPRING = {type: "spring", stiffness: 420, damping: 30, mass: 0.6}
-
-    function itemEntranceDelay(section: MenuItem, localIndex: number): number {
-        let offset = 0
-        for (const candidate of props.menu) {
-            if (candidate === section) break
-            if (candidate.child) offset += getDisplayedItems(candidate).length
-        }
-        return Math.min((offset + localIndex) * 0.04, 0.6)
-    }
 
     function onContextMenu(event: MouseEvent) {
         const x = Math.max(0, Math.min(event.clientX, window.innerWidth - CONTEXT_MENU_WIDTH))
@@ -173,13 +152,27 @@
     }
 
     function isItemActive(item: MenuItem): boolean {
-        if (typeof item.href !== "string" || item.href === "/") return false
         if (item.routes) return item.routes.includes($route.name)
+        if (typeof item.href !== "string" || item.href === "/") return false
         return $route.path.startsWith(item.href)
     }
 
     function sectionHasActiveChild(section: MenuItem): boolean {
         return Boolean(section.child?.some((child) => !child.hidden && isItemActive(child)))
+    }
+
+    watch(() => $route.name, () => {
+        for (const item of props.menu.flatMap((section) => section.child ?? [section])) {
+            if (item.id && isItemActive(item)) featureSpotlightStore.markSeenById(item.id)
+        }
+    }, {immediate: true})
+
+    function isItemNew(item: MenuItem): boolean {
+        return featureSpotlightStore.hasUnseenForId(item.id)
+    }
+
+    function sectionHasNewChild(section: MenuItem): boolean {
+        return getDisplayedItems(section).some((item) => isItemNew(item))
     }
 
     const FAVOURITES_SECTION_ID = "favourites"
@@ -210,6 +203,7 @@
         props: {
             item: {type: Object as PropType<MenuItem>, required: true},
             active: {type: Boolean, default: false},
+            isNew: {type: Boolean, default: false},
         },
         setup(itemProps) {
             const hrefString = computed(() => (typeof itemProps.item.href === "string" ? itemProps.item.href : ""))
@@ -222,7 +216,9 @@
                     active: itemProps.active,
                     locked: locked.value,
                     ...extraProps,
-                })
+                }, itemProps.isNew ? {
+                    suffix: () => h(KsNewBadge, null, {default: () => t("new")}),
+                } : undefined)
 
                 if (!hrefString.value) return itemNode()
 
@@ -260,21 +256,6 @@
     right: var(--ks-spacing-4);
     z-index: 1;
     color: var(--ks-icon-muted);
-}
-
-.sidebar-customize-trigger {
-    padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
-
-    .customize-btn {
-        width: 100%;
-        justify-content: flex-start;
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-xs);
-
-        &:hover {
-            color: var(--ks-text-secondary);
-        }
-    }
 }
 
 .sidebar-context-menu {

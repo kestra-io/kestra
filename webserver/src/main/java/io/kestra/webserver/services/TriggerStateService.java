@@ -13,8 +13,6 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -27,6 +25,7 @@ import io.kestra.core.scheduler.events.SetDisableTrigger;
 import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.services.AsyncOperationWaiter;
@@ -77,12 +76,17 @@ public class TriggerStateService {
      * @param trigger the trigger identifier.
      * @return the refreshed trigger state.
      * @throws NotFoundException if the trigger does not exist.
-     * @throws ConflictException if the trigger is already unlocked or the reset failed.
+     * @throws ConflictException if the trigger is already unlocked, is a realtime trigger, or the reset failed.
      */
     public TriggerState unlockTriggerById(final TriggerId trigger) throws NotFoundException, ConflictException {
         TriggerState state = getTriggerState(trigger);
         if (!state.isLocked()) {
             throw new ConflictException("trigger %s is already unlocked".formatted(trigger));
+        }
+        if (TriggerType.REALTIME.equals(state.getType())) {
+            // Locked is the normal running state of a realtime trigger: unlocking it would make the
+            // scheduler submit a second instance while the first is still running on a worker.
+            throw new ConflictException("trigger %s is a realtime trigger, reset it to kill and restart it".formatted(trigger));
         }
         awaitBlockingAction(
             trigger.uid(),
@@ -93,15 +97,15 @@ public class TriggerStateService {
     }
 
     /**
-     * Unlocks all locked triggers among the given identifiers. Non-existing and already-unlocked
-     * triggers are silently skipped.
+     * Unlocks all locked triggers among the given identifiers. Non-existing, already-unlocked
+     * and realtime triggers are silently skipped.
      *
      * @param triggers the trigger identifiers.
      * @return an async-operation response with the count of unlock events emitted.
      */
     public ApiAsyncOperationResponse unlockAllByIds(List<TriggerId> triggers) {
         List<TriggerId> lockedIds = triggers.stream()
-            .filter(id -> triggerRepository.findById(id).map(TriggerState::isLocked).orElse(false))
+            .filter(id -> triggerRepository.findById(id).map(TriggerStateService::isUnlockable).orElse(false))
             .toList();
         return submitBatch(
             lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
@@ -109,7 +113,7 @@ public class TriggerStateService {
     }
 
     /**
-     * Unlocks all locked triggers matching the given filters.
+     * Unlocks all locked triggers matching the given filters. Realtime triggers are silently skipped.
      *
      * @param tenant the tenant identifier.
      * @param filters the query filters.
@@ -117,7 +121,7 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse unlockAllMatching(String tenant, List<QueryFilter> filters) {
         List<TriggerId> lockedIds = triggerRepository.find(tenant, filters)
-            .filter(TriggerState::isLocked)
+            .filter(TriggerStateService::isUnlockable)
             .map(TriggerId::of)
             .collectList()
             .blockOptional()
@@ -141,6 +145,9 @@ public class TriggerStateService {
         getTriggerState(triggerId);
         executionKilledQueue.emit(
             ExecutionKilledTrigger.builder()
+                // Trigger kills are not processed by the Executor: emit them directly in the
+                // EXECUTED state, the only state forwarded to the workers.
+                .state(ExecutionKilled.State.EXECUTED)
                 .tenantId(triggerId.getTenantId())
                 .namespace(triggerId.getNamespace())
                 .flowId(triggerId.getFlowId())
@@ -294,7 +301,7 @@ public class TriggerStateService {
      * Enables or disables a trigger and waits for the scheduler to acknowledge.
      *
      * @throws NotFoundException if the flow or trigger does not exist.
-     * @throws ConflictException if the trigger is a realtime trigger or the change failed.
+     * @throws ConflictException if the change failed.
      */
     public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled) throws NotFoundException, ConflictException {
         validateToggleable(trigger);
@@ -307,7 +314,7 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables the given triggers. Realtime and missing triggers are silently skipped.
+     * Enables or disables the given triggers. Missing triggers are silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled) {
         List<TriggerId> toggleable = triggers.stream()
@@ -316,7 +323,7 @@ public class TriggerStateService {
                 try {
                     validateToggleable(id);
                     return true;
-                } catch (NotFoundException | ConflictException e) {
+                } catch (NotFoundException e) {
                     return false;
                 }
             })
@@ -339,7 +346,7 @@ public class TriggerStateService {
                     validateToggleable(id);
                     triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId));
                     return 1;
-                } catch (NotFoundException | ConflictException ignored) {
+                } catch (NotFoundException ignored) {
                     return 0;
                 }
             })
@@ -347,6 +354,10 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(0);
         return new ApiAsyncOperationResponse(operationId, count);
+    }
+
+    private static boolean isUnlockable(TriggerState state) {
+        return state.isLocked() && !TriggerType.REALTIME.equals(state.getType());
     }
 
     private TriggerState getTriggerState(TriggerId triggerId) throws NotFoundException {
@@ -359,18 +370,14 @@ public class TriggerStateService {
             .orElseThrow(() -> new NoSuchElementException("Trigger disappeared after " + action + ": " + triggerId));
     }
 
-    private void validateToggleable(TriggerId triggerId) throws NotFoundException, ConflictException {
+    private void validateToggleable(TriggerId triggerId) throws NotFoundException {
         Flow flow = flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
             .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(triggerId)));
 
-        AbstractTrigger abstractTrigger = flow.getTriggers().stream()
+        flow.getTriggers().stream()
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
-
-        if (abstractTrigger instanceof RealtimeTriggerInterface) {
-            throw new ConflictException("Realtime triggers can not be updated through the API, please edit the trigger from the flow.");
-        }
     }
 
     private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {

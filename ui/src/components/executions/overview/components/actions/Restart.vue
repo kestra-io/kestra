@@ -16,7 +16,7 @@
         rawContent
     >
         <component
-            v-if="component !== 'el-dropdown-item'"
+            v-if="component !== 'KsDropdownItem'"
             v-bind="$attrs"
             :is="component"
             :icon="icon"
@@ -203,7 +203,7 @@
     const asItem = inject(asItemKey, false)
 
     const props = defineProps({
-        component: {type: String, default: "el-button"},
+        component: {type: String, default: "KsButton"},
         isReplay: {type: Boolean, default: false},
         isButton: {type: Boolean, default: true},
         execution: {type: Object, required: true},

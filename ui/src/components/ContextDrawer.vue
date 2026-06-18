@@ -32,9 +32,6 @@
                                 </KsTabPane>
                             </KsTabs>
 
-                            <KsIconButton class="close-btn" :ariaLabel="$t('close')" @click="setActiveTab('')">
-                                <Close />
-                            </KsIconButton>
                         </div>
 
                         <div class="panelContent">
@@ -58,7 +55,6 @@
     import {useStorage, useWindowSize} from "@vueuse/core"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import Close from "vue-material-design-icons/Close.vue"
 
     import {useApiStore} from "../stores/api"
     import {useMiscStore} from "override/stores/misc"
@@ -215,14 +211,6 @@
 
         .open-in-new {
             opacity: 0.5;
-        }
-
-        .close-btn {
-            align-self: center;
-            margin-right: 0.5rem;
-            border: none;
-            color: var(--ks-text-dim);
-            flex-shrink: 0;
         }
 
         .newsDot {

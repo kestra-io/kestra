@@ -123,8 +123,8 @@
         blueprintKind: "flow",
         embed: false,
         system: false,
-        tagsResponseMapper: tagsResponse =>
-            Object.fromEntries(tagsResponse.map(tag => [tag.id, tag])),
+        tagsResponseMapper: (tagsResponse: any[]) =>
+            Object.fromEntries(tagsResponse.map((tag: any) => [tag.id, tag])),
     })
 
     const emit = defineEmits<{

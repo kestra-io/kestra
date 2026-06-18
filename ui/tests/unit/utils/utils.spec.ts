@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme} from "../../../src/utils/utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -55,7 +55,7 @@ describe("theme utils", () => {
     })
 
     describe("switchTheme()", () => {
-        const newStore = () => ({theme: undefined} as Record<string, unknown>)
+        const newStore = () => ({theme: undefined} as unknown as {theme: SelectedTheme})
 
         it("layers both dark and dark-2 classes for the dark-2 theme", () => {
             switchTheme(newStore(), "dark-2")

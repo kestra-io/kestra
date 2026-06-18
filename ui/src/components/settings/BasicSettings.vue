@@ -505,7 +505,7 @@
 
     function onTheme(value: string) {
         settings.theme = value as SelectedTheme
-        Utils.switchTheme(miscStore, value)
+        Utils.switchTheme(miscStore, value as SelectedTheme)
         const mode = themeOptions.value.find((option) => option.value === value)?.label ?? value
         notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
     }

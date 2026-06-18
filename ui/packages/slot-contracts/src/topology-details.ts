@@ -9,6 +9,7 @@ export const propsSchema = z.object({
     namespace: z.string().optional(),
     flowId: z.string().optional(),
     metrics: z.custom<MetricEntry>().array(),
+    resolvedProperties: z.record(z.unknown()).optional(),
 })
 
 export default defineArtifactSlot(() => ({

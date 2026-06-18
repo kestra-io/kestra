@@ -12,8 +12,13 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.models.property.PropertyContext;
+import io.kestra.core.runners.DisplayExpressionResolver;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.RunContextLogger;
+import io.kestra.core.runners.RunVariables;
+import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.PebbleUtil;
@@ -29,14 +34,29 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @Slf4j
 public class GraphService {
+    private final FlowRepositoryInterface flowRepository;
+    private final TriggerRepositoryInterface triggerRepository;
+    private final PluginDefaultService pluginDefaultService;
+    private final RunContextFactory runContextFactory;
+    private final DisplayExpressionResolver displayExpressionResolver;
+    private final VariableRenderer variableRenderer;
+
     @Inject
-    private FlowRepositoryInterface flowRepository;
-    @Inject
-    private TriggerRepositoryInterface triggerRepository;
-    @Inject
-    private PluginDefaultService pluginDefaultService;
-    @Inject
-    private RunContextFactory runContextFactory;
+    public GraphService(
+        FlowRepositoryInterface flowRepository,
+        TriggerRepositoryInterface triggerRepository,
+        PluginDefaultService pluginDefaultService,
+        RunContextFactory runContextFactory,
+        DisplayExpressionResolver displayExpressionResolver,
+        VariableRenderer variableRenderer
+    ) {
+        this.flowRepository = flowRepository;
+        this.triggerRepository = triggerRepository;
+        this.pluginDefaultService = pluginDefaultService;
+        this.runContextFactory = runContextFactory;
+        this.displayExpressionResolver = displayExpressionResolver;
+        this.variableRenderer = variableRenderer;
+    }
 
     public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException, FlowProcessingException {
         return this.flowGraph(flow, expandedSubflows, null);
@@ -70,6 +90,22 @@ public class GraphService {
             triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
         }
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, execution, triggers);
+
+        // Build a display variable context and attach resolved properties to each task node.
+        var displayVariables = buildDisplayVariables(flow, execution);
+        GraphUtils.nodes(graphCluster).stream()
+            .filter(AbstractGraphTask.class::isInstance)
+            .map(AbstractGraphTask.class::cast)
+            .filter(node -> node.getTask() instanceof Task)
+            .forEach(node ->
+            {
+                try {
+                    var resolved = displayExpressionResolver.resolveProperties((Task) node.getTask(), displayVariables);
+                    node.withRenderedProperties(resolved);
+                } catch (Exception e) {
+                    log.debug("Could not resolve display properties for task {}: {}", node.getTask().getId(), e.getMessage());
+                }
+            });
 
         Stream<Map.Entry<GraphCluster, SubflowGraphTask>> subflowToReplaceByParent = graphCluster.allNodesByParent().entrySet().stream()
             .flatMap(entry ->
@@ -151,6 +187,40 @@ public class GraphService {
             .forEach(TaskToClusterReplacer::replace);
 
         return graphCluster;
+    }
+
+    /**
+     * Builds the variable map used to resolve task properties for display.
+     *
+     * <p>When an execution is present, the full execution context is used so that
+     * {@code inputs.*}, {@code outputs.*}, {@code trigger.*}, etc. are available.
+     * Without an execution, only flow-level variables ({@code flow.*}, {@code vars.*},
+     * {@code globals.*}) are included; runtime-only variables are simply absent, causing
+     * their expression segments to fall back to raw text naturally.
+     *
+     * <p>The {@code envs} entry is always removed: environment variables must only ever be
+     * surfaced through the masked {@code env()} function, never via direct {@code envs.*} map
+     * access which would bypass that mask.
+     */
+    private Map<String, Object> buildDisplayVariables(FlowWithSource flow, Execution execution) {
+        if (execution != null) {
+            var variables = new HashMap<>(runContextFactory.of(flow, execution).getVariables());
+            variables.remove("envs");
+            return variables;
+        }
+
+        // Pre-exec: build a minimal context with only flow-level stable variables.
+        // vars are not added automatically without an execution, so inject them explicitly.
+        var logger = new RunContextLogger();
+        var extraVars = flow.getVariables() != null
+            ? Map.of("vars", (Object) flow.getVariables())
+            : Map.<String, Object>of();
+        var variables = new HashMap<>(new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .withVariables(extraVars)
+            .build(logger, PropertyContext.create(variableRenderer)));
+        variables.remove("envs");
+        return variables;
     }
 
     private record TaskToClusterReplacer(GraphCluster parentCluster, AbstractGraph taskToReplace,

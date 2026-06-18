@@ -46,6 +46,7 @@
                         :namespace="props.namespace"
                         :flowId="props.flowId"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
+                        :resolvedProperties="taskProps.data.node?.task?.renderedProperties"
                     />
                 </slot>
             </template>

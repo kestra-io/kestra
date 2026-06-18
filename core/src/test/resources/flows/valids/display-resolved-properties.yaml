@@ -1,0 +1,23 @@
+id: display-resolved-properties
+namespace: io.kestra.tests
+
+variables:
+  greeting: hello
+  region: us-east-1
+
+tasks:
+  - id: task-with-vars
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ vars.greeting }}-{{ vars.region }}"
+  - id: task-with-inputs
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.myInput }}"
+  - id: task-with-flow
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ flow.id }}"
+  - id: task-with-now
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ now() }}"
+  - id: task-with-envs
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ env('PATH') }}|{{ envs.path }}"

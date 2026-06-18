@@ -19,7 +19,6 @@ import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.filter.FilterPatternStyle;
 import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.http.server.HttpServerConfiguration;
-import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
 import io.micronaut.security.csrf.resolver.CsrfTokenResolver;
 import io.micronaut.security.csrf.validator.CsrfTokenValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +29,9 @@ import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_COOKIE_NA
  * Custom CSRF filter that only enforces token validation on cookie-authenticated requests.
  * SDK/API clients using the Authorization header bypass CSRF since they are not vulnerable
  * to cross-site request forgery (attackers cannot set custom headers cross-origin).
- *
- * Requires CsrfTokenGenerator to be registered: if no generator exists (e.g. empty signature-key),
- * no CSRF token is injected into the page, so validation would always fail — the filter must be
- * disabled in that case too.
  */
 @Requires(property = "micronaut.security.csrf.enabled", value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
-@Requires(beans = {CsrfTokenValidator.class, CsrfTokenGenerator.class})
+@Requires(beans = CsrfTokenValidator.class)
 @ServerFilter(patternStyle = FilterPatternStyle.REGEX, value = "/api/.*")
 @Slf4j
 public class CsrfTokenFilter implements Ordered {

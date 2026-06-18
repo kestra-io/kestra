@@ -149,6 +149,12 @@
             font-size: var(--ks-font-size-xs);
         }
 
+        .kel-select__placeholder.is-transparent {
+            color: var(--ks-text-inactive);
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-regular);
+        }
+
         .kel-select__wrapper {
             .kel-tag.kel-tag--default.kel-tag--light {
                 --kel-tag-text-color: var(--ks-text-primary);

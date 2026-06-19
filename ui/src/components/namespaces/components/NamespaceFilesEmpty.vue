@@ -24,7 +24,7 @@
     import {KsButton, KsEmptyState} from "@kestra-io/design-system"
     import FilePlus from "vue-material-design-icons/FilePlus.vue"
 
-    import artwork from "../../../assets/empty_visuals/namespace-files.svg"
+    import artwork from "../../../assets/empty_visuals/generic.svg"
     import {links} from "../../layout/empty/links"
 
     const {t} = useI18n()

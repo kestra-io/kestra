@@ -606,6 +606,10 @@
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
       },
+      "variables": {
+        "content": "フロー間で設定を共有するためにkv storeにkey-valueペアを追加します。子namespaceはそれらを自動的に継承し、任意のvalueを参照することができます。",
+        "title": "変数はまだありません"
+      },
       "versionPlugin": {
         "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
         "title": "まだバージョン管理されたプラグインがありません！"

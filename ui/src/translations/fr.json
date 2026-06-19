@@ -606,6 +606,10 @@
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> dans notre documentation.",
         "title": "Votre flow n'a pas de triggers."
       },
+      "variables": {
+        "content": "Ajoutez des paires clé-valeur pour partager la configuration entre les flows. Les namespaces enfants les héritent automatiquement, et vous pouvez référencer n'importe quelle valeur avec",
+        "title": "Aucune variable pour le moment"
+      },
       "versionPlugin": {
         "content": "Ici, vous pouvez gérer tous les plugins installés sur votre instance Kestra. Les plugins nouvellement installés peuvent ne pas être immédiatement disponibles dans tous les services Kestra, selon la configuration de votre instance.",
         "title": "Vous n'avez pas encore de plugin versionné !"

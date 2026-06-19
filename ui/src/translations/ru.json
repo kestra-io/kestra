@@ -606,6 +606,10 @@
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."
       },
+      "variables": {
+        "content": "Добавьте пары ключ-значение для совместного использования конфигурации между flows. Дочерние namespaces автоматически наследуют их, и вы можете ссылаться на любое значение с помощью",
+        "title": "Пока нет переменных"
+      },
       "versionPlugin": {
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
         "title": "У вас еще нет версионированного плагина!"

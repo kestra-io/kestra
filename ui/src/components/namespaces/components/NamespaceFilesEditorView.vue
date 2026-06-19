@@ -10,7 +10,7 @@
     />
     <KsSplitter
         v-show="!filesStore.isEmpty"
-        class="default-theme"
+        class="default-theme file-splitter"
         v-bind="$attrs"
         @resize-end="onResize"
     >
@@ -108,6 +108,14 @@
 </script>
 
 <style lang="scss" scoped>
+    .file-splitter {
+        margin: 2rem;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg);
+        width: auto;
+        height: calc(100% - 4rem);
+        overflow: auto;
+    }
     .namespace-files-no-selection {
         width: 100%;
         height: 100%;

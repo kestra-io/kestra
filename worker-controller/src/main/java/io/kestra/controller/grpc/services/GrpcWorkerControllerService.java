@@ -252,7 +252,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                         // The realtime trigger stream ended without producing an execution — clean
                         // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
                         // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
-                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED));
+                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
                     }
                     if (isTerminalRealtimeResult(evaluation)) {
                         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());

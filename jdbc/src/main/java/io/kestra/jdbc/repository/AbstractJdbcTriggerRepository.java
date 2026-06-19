@@ -27,6 +27,7 @@ import jakarta.annotation.Nullable;
 import lombok.Getter;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -210,17 +211,27 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     public Trigger create(Trigger trigger) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSL.using(configuration)
-                    .insertInto(this.jdbcRepository.getTable())
-                    .set(AbstractJdbcRepository.field("key"), this.jdbcRepository.key(trigger))
-                    .set(this.jdbcRepository.persistFields(trigger))
-                    .execute();
+        // Idempotent insert: the trigger row may already exist when this runs. The scheduler creates triggers on every
+        // flow change/import (initializedTriggers), while the trigger-evaluation path concurrently upserts the same row
+        // via save(). A plain INSERT then collides on the primary key (triggers_pkey). We let that insert roll back its
+        // own transaction and treat the violation as a no-op, so create() means "insert this trigger unless it already
+        // exists" without clobbering the existing row (which save()/upsert would). The catch is outside the transaction
+        // on purpose: catching it inside would leave a Postgres transaction in an aborted state.
+        try {
+            this.jdbcRepository
+                .getDslContextWrapper()
+                .transactionResult(configuration ->
+                    DSL.using(configuration)
+                        .insertInto(this.jdbcRepository.getTable())
+                        .set(AbstractJdbcRepository.field("key"), this.jdbcRepository.key(trigger))
+                        .set(this.jdbcRepository.persistFields(trigger))
+                        .execute()
+                );
+        } catch (IntegrityConstraintViolationException ignored) {
+            // row already exists (created concurrently) — create() is idempotent
+        }
 
-                return trigger;
-            });
+        return trigger;
     }
 
     @Override

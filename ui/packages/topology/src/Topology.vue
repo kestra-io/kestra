@@ -10,7 +10,7 @@
     >
         <Background :patternColor="cssVariable('--ks-topology-bg')" />
 
-        <Panel v-if="showDetailsToggle" position="top-right">
+        <Panel v-if="showDetailsToggle" position="top-right" @click.stop>
             <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
         </Panel>
 

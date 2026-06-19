@@ -31,6 +31,9 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 :allowCreate="input.allowCustomValue"
+                :disabled="isComputingInput(input.id)"
+                :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                :suffixIcon="isLoadingInput(input.id) ? LoadingSpinner : undefined"
                 filterable
                 clearable
             >
@@ -69,6 +72,9 @@
                 filterable
                 clearable
                 :allowCreate="input.allowCustomValue"
+                :disabled="isComputingInput(input.id)"
+                :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                :suffixIcon="isLoadingInput(input.id) ? LoadingSpinner : undefined"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"
@@ -263,7 +269,7 @@
     import {ElMessage} from "element-plus";
     import type {FormItemRule} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue";
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, h, type Component, getCurrentInstance} from "vue";
     import {Execution, useExecutionsStore} from "../../stores/executions";
     import {useI18n} from "vue-i18n";
     import debounce from "lodash/debounce";
@@ -279,6 +285,7 @@
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import LoadingIcon from "vue-material-design-icons/Loading.vue";
     import {Flow} from "../../stores/flow";
 
     interface InputError {
@@ -304,6 +311,10 @@
         allowedFileExtensions?: string[];
         accept?: string;
         prefill?: unknown;
+        // present only on the raw flow inputs (props.initialInputs); the rendered values are
+        // computed server-side (e.g. via the subflow() function), so the validate response strips them
+        expression?: string;
+        dependsOn?: unknown;
     }
 
     interface SelectedTrigger {
@@ -368,11 +379,25 @@
     const editingArrayId = ref<string | null>(null);
     const editableItems = reactive<Record<string, string[]>>({});
 
+    // true while an input-rendering call (which may run a subflow() function) is in flight
+    const isComputingValues = ref(false);
+    // bumped on every user input change; a validate response built before the latest change is stale
+    // and must be discarded, otherwise it would reset a value the user just picked (e.g. while a slow
+    // subflow() render is still in flight)
+    let inputGeneration = 0;
+
     // Icons exposed to template (markRaw to avoid reactivity overhead)
     const DeleteOutline = markRaw(DeleteOutlineIcon) as Component;
     const Pencil = markRaw(PencilIcon) as Component;
     const Plus = markRaw(PlusIcon) as Component;
     const ContentSave = markRaw(ContentSaveIcon) as Component;
+
+    // Ad-hoc spinner rendered into a dynamic input's el-select suffix while its values are being
+    // (re)computed. 1.3 has no design-system loading affordance for el-select, so render the icon
+    // into the suffix slot and rotate it via a scoped keyframe.
+    const LoadingSpinner = markRaw({
+        render: () => h("span", {class: "input-loading-spinner"}, h(LoadingIcon)),
+    }) as Component;
 
     // Computed
     const inputErrors = computed<string[] | null>(() => {
@@ -386,6 +411,31 @@
                 .flatMap(it => it.errors?.flatMap(err => err.message) ?? [])
             : null;
     });
+
+    // Inputs whose `values` are rendered dynamically (e.g. via the subflow() function).
+    // Derived from the raw flow inputs because the validate response strips `expression`.
+    const dynamicInputIds = computed(() =>
+        new Set((props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
+    );
+
+    // True while a dynamic input's values are being (re)computed. Drives the loading spinner so the
+    // user knows the available values may change — on the initial fetch AND on later recomputations.
+    function isLoadingInput(id: string): boolean {
+        return isComputingValues.value && dynamicInputIds.value.has(id);
+    }
+
+    // True while a dynamic input's values are being (re)computed and it still has no value. Drives the
+    // disabled state + "computing" placeholder, on the initial fetch and on any later recomputation
+    // (e.g. a dependsOn change). Once a value is present the input stays usable and keeps it (spinner
+    // only), so a user's pick is never disrupted.
+    function isComputingInput(id: string): boolean {
+        if (!isLoadingInput(id)) {
+            return false;
+        }
+        const value = inputsValues[id] ?? multiSelectInputs[id];
+        return value === undefined || value === null || value === ""
+            || (Array.isArray(value) && value.length === 0);
+    }
 
     // Methods
     function normalizeJSON(value: string): unknown {
@@ -439,6 +489,8 @@
     }
 
     function onChange(input: InputMetaData): void {
+        // mark inputs as changed so any in-flight (older) validate response is discarded as stale
+        inputGeneration++;
         // give 2 seconds for the user to finish their edit
         // and for the server to return with validated content
         setTimeout(() => {
@@ -545,7 +597,14 @@
 
         const formData = inputsToFormData(instance?.proxy, inputsMetaData.value, inputsValuesNoDefault);
 
+        // generation this request was built at; if the user changes an input before the response
+        // lands, the response is stale and applying it would clobber the user's new value
+        const requestGeneration = inputGeneration;
+
         const metadataCallback = (response: ValidationResponse): void => {
+            if (requestGeneration !== inputGeneration) {
+                return;
+            }
             emit("update:checks", response.checks || []);
             inputsMetaData.value = response.inputs.reduce((acc: InputMetaData[], it) => {
                 if (it.enabled) {
@@ -561,24 +620,32 @@
             updateDefaults();
         };
 
-        if (props.flow !== undefined) {
-            const options = {namespace: props.flow.namespace, id: props.flow.id};
-            const {data} = await executionsStore.validateExecution({...options, formData});
+        // Dynamic inputs (e.g. values rendered via the subflow() function) are disabled and show a
+        // "computing" placeholder while this render call is in flight — regardless of its duration.
+        isComputingValues.value = true;
 
-            metadataCallback(data);
-        } else if (props.execution !== undefined) {
-            const options = {id: props.execution.id};
-            const {data} = await executionsStore.validateResume({...options, formData});
+        try {
+            if (props.flow !== undefined) {
+                const options = {namespace: props.flow.namespace, id: props.flow.id};
+                const {data} = await executionsStore.validateExecution({...options, formData});
 
-            metadataCallback(data);
-        } else {
-            emit("validation", {
-                formData: formData,
-                inputsMetaData: inputsMetaData.value,
-                callback: (response: ValidationResponse) => {
-                    metadataCallback(response);
-                }
-            });
+                metadataCallback(data);
+            } else if (props.execution !== undefined) {
+                const options = {id: props.execution.id};
+                const {data} = await executionsStore.validateResume({...options, formData});
+
+                metadataCallback(data);
+            } else {
+                emit("validation", {
+                    formData: formData,
+                    inputsMetaData: inputsMetaData.value,
+                    callback: (response: ValidationResponse) => {
+                        metadataCallback(response);
+                    }
+                });
+            }
+        } finally {
+            isComputingValues.value = false;
         }
     }
 
@@ -709,6 +776,17 @@
         Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs));
     }
 
+    // Apply defaults from the raw inputs immediately so static inputs show their default value
+    // without waiting for the initial validate call (which may be slow, e.g. a subflow() render).
+    // Mark not-yet-provided inputs as default first so they stay excluded from the validate request,
+    // matching the post-validate path (inputsValuesWithNoDefault keys off isDefault).
+    inputsMetaData.value.forEach((input) => {
+        if (inputsValues[input.id] === undefined) {
+            input.isDefault = true;
+        }
+    });
+    updateDefaults();
+
     // Run initial validation and setup watcher
     validateInputs().then(() => {
         watch(
@@ -773,6 +851,10 @@
         validateInputs,
         inputsValues,
         inputsMetaData,
+        isComputingValues,
+        isComputingInput,
+        isLoadingInput,
+        onChange,
     });
 </script>
 
@@ -978,5 +1060,17 @@
     white-space: nowrap;
     padding-right: 16px;
   }
+}
+
+// Ad-hoc rotating loader injected into a dynamic input's el-select suffix (see LoadingSpinner).
+:deep(.input-loading-spinner) {
+    display: inline-flex;
+    align-items: center;
+    animation: input-loading-spin 1s linear infinite;
+}
+
+@keyframes input-loading-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 </style>

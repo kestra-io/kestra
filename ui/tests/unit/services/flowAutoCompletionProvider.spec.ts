@@ -185,6 +185,26 @@ describe("FlowAutoCompletionProvider", () => {
         ]);
     })
 
+    it("subflow() is suggested only inside a flow-root input's values/expression", async () => {
+        const flow = `id: scoped-flow
+namespace: my.namespace
+inputs:
+  - id: region
+    type: SELECT
+    expression: "SUBFLOW_IN_INPUT"
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "SUBFLOW_IN_TASK"`;
+
+        const inInput = await provider.rootFieldAutoCompletion({source: flow, offset: flow.indexOf("SUBFLOW_IN_INPUT")});
+        expect(inInput.some(s => s.startsWith("subflow("))).toBe(true);
+
+        const inTask = await provider.rootFieldAutoCompletion({source: flow, offset: flow.indexOf("SUBFLOW_IN_TASK")});
+        expect(inTask.some(s => s.startsWith("subflow("))).toBe(false);
+        expect(inTask).toContain("uuid()");
+    })
+
     it("nested field autocompletions", async () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "inputs")).toEqual(["input1", "input2"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs")).toEqual(["task1", "task2", "subflow"]);
@@ -246,5 +266,14 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.functionAutoCompletion(parsed, "secret", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstSecret'", "'anotherNsSecondSecret'"]);
         expect(await provider.functionAutoCompletion(parsed, "kv", {})).toEqual(["'myFirstKv'", "'mySecondKv'"]);
         expect(await provider.functionAutoCompletion(parsed, "kv", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstKv'", "'anotherNsSecondKv'"]);
+    })
+
+    it("subflow function autocompletions suggest namespaces and flow ids", async () => {
+        // editing the `namespace` arg → all namespaces, quoted (Monaco does the prefix filtering)
+        expect(await provider.functionAutoCompletion(parsed, "subflow", {namespace: "'m"})).toEqual(["'my.namespace'", "'another.namespace'"]);
+        // editing the `id` arg → flow ids of the chosen namespace, quoted
+        expect(await provider.functionAutoCompletion(parsed, "subflow", {namespace: "'another.namespace'", id: "'fl"})).toEqual(["'flow-other-namespace'", "'another-flow-other-namespace'"]);
+        // editing the `id` arg in the flow's own namespace excludes the flow itself (avoids self-recursion)
+        expect(await provider.functionAutoCompletion(parsed, "subflow", {namespace: "'my.namespace'", id: "'m"})).toEqual([]);
     })
 })

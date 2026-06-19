@@ -1129,6 +1129,7 @@
     "light_version": "轻量版本",
     "line-by-line": "逐行",
     "loaded x dependencies": "已加载 {count} 个依赖项",
+    "loading": "加载中...",
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
     "logs": "日志",

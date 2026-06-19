@@ -15,6 +15,7 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
+        setupFiles: ["./tests/unit/setup.ts"],
         reporters: [
             ["default"],
             ["junit"]

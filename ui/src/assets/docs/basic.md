@@ -285,6 +285,7 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble?u
 | `split`          | `{{ "a,b,c" \| split(",") }}` — Splits the string into a list, resulting in ["a", "b", "c"].                                     |
 | `startsWith`     | `{{ "hello world" \| startsWith("hello") }}` — Checks if a string starts with a given prefix. |
 | `string`         | `{{ 123 \| string }}` — Converts 123 into a string.                                                                              |
+| `subflow`        | `{{ subflow(namespace='company.team', id='my_subflow', inputs={'k': 'v'}).outputs.my_output }}` — Synchronously runs a subflow and returns its terminal execution, so you can read its outputs (e.g. to populate a SELECT input's `values`). |
 | `substringAfter` | `{{ "a.b.c" \| substringAfter(".") }}` — Extracts the substring after the first occurrence of a separator. |
 | `substringAfterLast` | `{{ "a.b.c" \| substringAfterLast(".") }}` — Extracts the substring after the last occurrence of a separator. |
 | `substringBefore` | `{{ "a.b.c" \| substringBefore(".") }}` — Extracts the substring before the first occurrence of a separator. |

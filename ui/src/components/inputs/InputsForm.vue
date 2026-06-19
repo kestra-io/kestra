@@ -32,6 +32,9 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 :allowCreate="input.allowCustomValue"
+                :disabled="isComputingInput(input.id)"
+                :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                :loading="isLoadingInput(input.id)"
                 filterable
                 clearable
             >
@@ -70,6 +73,9 @@
                 filterable
                 clearable
                 :allowCreate="input.allowCustomValue"
+                :disabled="isComputingInput(input.id)"
+                :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                :loading="isLoadingInput(input.id)"
             >
                 <KsOption
                     v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
@@ -114,7 +120,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
+                @update:model-value="onChangeBool(input)"
                 class="w-100 boolean-inputs"
             />
             <KsDatePicker
@@ -138,12 +144,12 @@
                 @update:model-value="onChange(input)"
                 type="time"
             />
-            <div class="el-input el-input-file" v-if="input.type === 'FILE'">
-                <div class="el-input__wrapper">
+            <div class="kel-input kel-input-file" v-if="input.type === 'FILE'">
+                <div class="kel-input__wrapper">
                     <input
                         :data-testid="`input-form-${input.id}`"
                         :id="input.id+'-file'"
-                        class="el-input__inner custom-file-input"
+                        class="kel-input__inner custom-file-input"
                         type="file"
                         :accept="getAcceptedFileTypes(input)"
                         @change="onFileChange(input, $event)"
@@ -250,8 +256,8 @@
     import {KsMessage, KsEditor} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
-    import {Execution, useExecutionsStore} from "../../stores/executions"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
+    import {Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -264,33 +270,7 @@
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import {Flow} from "../../stores/flow"
-
-    interface InputError {
-        message: string;
-    }
-
-    type ValueOptionLike = string | {label: string; value: string};
-
-    interface InputMetaData {
-        id: string;
-        type: InputType
-        displayName?: string;
-        description?: string;
-        required?: boolean;
-        defaults?: unknown;
-        value?: unknown;
-        values?: ValueOptionLike[];
-        options?: ValueOptionLike[];
-        errors?: InputError[];
-        isDefault?: boolean;
-        isRadio?: boolean;
-        allowCustomValue?: boolean;
-        min?: number;
-        max?: number;
-        allowedFileExtensions?: string[];
-        accept?: string;
-        prefill?: unknown;
-    }
+    import {InputMetaData} from "../../stores/executions"
 
     function toOption(item: ValueOptionLike): {label: string; value: string} {
         return typeof item === "string" ? {label: item, value: item} : item
@@ -300,34 +280,17 @@
         inputs?: Record<string, unknown>;
     }
 
-    interface ValidationResponse {
-        checks?: unknown[];
-        inputs: Array<{
-            enabled: boolean;
-            input: InputMetaData;
-            errors?: InputError[];
-            value?: unknown;
-            isDefault?: boolean;
-        }>;
-    }
-
-    interface ValidationEventPayload {
-        formData: FormData | undefined;
-        inputsMetaData: InputMetaData[];
-        callback: (response: ValidationResponse) => void;
-    }
+    const modelValue = defineModel<Record<string, unknown>>()
 
     // Props
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;
-        modelValue?: Record<string, unknown>;
         initialInputs?: InputMetaData[];
         flow?: Flow;
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
     }>(), {
         executeClicked: false,
-        modelValue: () => ({}),
         initialInputs: () => [],
         flow: undefined,
         execution: undefined,
@@ -336,9 +299,8 @@
 
     // Emits
     const emit = defineEmits<{
-        "update:modelValue": [value: Record<string, unknown>];
         "update:modelValueNoDefault": [value: Record<string, unknown>];
-        "update:checks": [checks: unknown[]];
+        "update:checks": [checks: Check[]];
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
     }>()
@@ -351,13 +313,19 @@
 
     // Reactive state
     // Using 'any' type for v-model compatibility with various Element Plus components
-    const inputsValues = reactive<Record<string, any>>({...props.modelValue})
+    const inputsValues = reactive<Record<string, any>>({...modelValue.value})
     const previousInputsValues = ref<Record<string, any>>({})
     const inputsMetaData = ref<InputMetaData[]>([])
     const multiSelectInputs = reactive<Record<string, any>>({})
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
     const editableItems = reactive<Record<string, string[]>>({})
+    // true while an input-rendering call (which may run a subflow() function) is in flight
+    const isComputingValues = ref(false)
+    // bumped on every user input change; a validate response built before the latest change is stale
+    // and must be discarded, otherwise it would reset a value the user just picked (e.g. while a slow
+    // subflow() render is still in flight)
+    let inputGeneration = 0
 
     // Icons exposed to template (markRaw to avoid reactivity overhead)
     const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
@@ -377,6 +345,31 @@
                 .flatMap(it => it.errors?.flatMap(err => err.message) ?? [])
             : null
     })
+
+    // Inputs whose `values` are rendered dynamically (e.g. via the subflow() function).
+    // Derived from the raw flow inputs because the validate response strips `expression`.
+    const dynamicInputIds = computed(() =>
+        new Set((props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
+    )
+
+    // True while a dynamic input's values are being (re)computed. Drives the loading spinner so the
+    // user knows the available values may change — on the initial fetch AND on later recomputations.
+    function isLoadingInput(id: string): boolean {
+        return isComputingValues.value && dynamicInputIds.value.has(id)
+    }
+
+    // True while a dynamic input's values are being (re)computed and it still has no value. Drives the
+    // disabled state + "computing" placeholder, on the initial fetch and on any later recomputation
+    // (e.g. a dependsOn change). Once a value is present the input stays usable and keeps it (spinner
+    // only), so a user's pick is never disrupted.
+    function isComputingInput(id: string): boolean {
+        if (!isLoadingInput(id)) {
+            return false
+        }
+        const value = inputsValues[id] ?? multiSelectInputs[id]
+        return value === undefined || value === null || value === ""
+            || (Array.isArray(value) && value.length === 0)
+    }
 
     // Methods
     function normalizeJSON(value: string): unknown {
@@ -429,15 +422,21 @@
         }
     }
 
+    function onChangeBool(input: InputMetaData): void {
+        onChange(input)
+    }
+
     function onChange(input: InputMetaData): void {
+        // mark inputs as changed so any in-flight (older) validate response is discarded as stale
+        inputGeneration++
         // give 2 seconds for the user to finish their edit
         // and for the server to return with validated content
         setTimeout(() => {
             inputsValidated.value.add(input.id)
         }, 2000)
         input.isDefault = false
-        emit("update:modelValue", {...inputsValues})
-        emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
+        modelValue.value = {...inputsValues}
+        emit("update:modelValueNoDefault", {...inputsValuesWithNoDefault.value})
     }
 
     function onSubmit(): void {
@@ -506,12 +505,12 @@
         onChange(input)
     }
 
-    function inputsValuesWithNoDefault(): Record<string, unknown> {
+    const inputsValuesWithNoDefault = computed<Record<string, unknown>>(() => {
         return inputsMetaData.value.reduce((acc: Record<string, unknown>, input) => {
             acc[input.id] = input.isDefault ? undefined : inputsValues[input.id]
             return acc
         }, {})
-    }
+    })
 
     function numberHint(input: InputMetaData): string | false {
         const {min, max} = input
@@ -532,11 +531,16 @@
             return
         }
 
-        const inputsValuesNoDefault = inputsValuesWithNoDefault()
+        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
 
-        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesNoDefault)
+        // generation this request was built at; if the user changes an input before the response
+        // lands, the response is stale and applying it would clobber the user's new value
+        const requestGeneration = inputGeneration
 
-        const metadataCallback = (response: ValidationResponse): void => {
+        const metadataCallback = async (response: ValidationResponse): Promise<void> => {
+            if (requestGeneration !== inputGeneration) {
+                return
+            }
             emit("update:checks", response.checks || [])
             inputsMetaData.value = response.inputs.reduce((acc: InputMetaData[], it) => {
                 if (it.enabled) {
@@ -549,27 +553,37 @@
                 }
                 return acc
             }, [])
+            await nextTick() // wait for the DOM to update validations before updating defaults
+            // NOTE: validations happen mostly using an object updated in the parent form.
             updateDefaults()
         }
 
-        if (props.flow !== undefined) {
-            const options = {namespace: props.flow.namespace, id: props.flow.id}
-            const {data} = await executionsStore.validateExecution({...options, formData})
+        // Dynamic inputs (e.g. values rendered via the subflow() function) are disabled and show a
+        // "computing" placeholder while this render call is in flight — regardless of its duration.
+        isComputingValues.value = true
 
-            metadataCallback(data)
-        } else if (props.execution !== undefined) {
-            const options = {id: props.execution.id}
-            const {data} = await executionsStore.validateResume({...options, formData})
+        try {
+            if (props.flow !== undefined) {
+                const options = {namespace: props.flow.namespace, id: props.flow.id}
+                const {data} = await executionsStore.validateExecution({...options, formData})
 
-            metadataCallback(data)
-        } else {
-            emit("validation", {
-                formData: formData,
-                inputsMetaData: inputsMetaData.value,
-                callback: (response: ValidationResponse) => {
-                    metadataCallback(response)
-                },
-            })
+                metadataCallback(data)
+            } else if (props.execution !== undefined) {
+                const options = {id: props.execution.id}
+                const {data} = await executionsStore.validateResume({...options, formData})
+
+                metadataCallback(data)
+            } else {
+                emit("validation", {
+                    formData: formData,
+                    inputsMetaData: inputsMetaData.value,
+                    callback: (response: ValidationResponse) => {
+                        metadataCallback(response)
+                    },
+                })
+            }
+        } finally {
+            isComputingValues.value = false
         }
     }
 
@@ -578,10 +592,10 @@
             return undefined
         }
 
-        if (input.type === "BOOLEAN") {
+        if (["BOOLEAN", "BOOL"].includes(input.type)) {
             return [{
                 validator: (_rule, val: unknown, callback: (error?: Error) => void) => {
-                    if (val === "undefined") {
+                    if (typeof val === "undefined") {
                         return callback(new Error(t("is required", {field: input.displayName || input.id})))
                     }
                     callback()
@@ -700,6 +714,17 @@
         Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs))
     }
 
+    // Apply defaults from the raw inputs immediately so static inputs show their default value
+    // without waiting for the initial validate call (which may be slow, e.g. a subflow() render).
+    // Mark not-yet-provided inputs as default first so they stay excluded from the validate request,
+    // matching the post-validate path (inputsValuesWithNoDefault keys off isDefault).
+    inputsMetaData.value.forEach((input) => {
+        if (inputsValues[input.id] === undefined) {
+            input.isDefault = true
+        }
+    })
+    updateDefaults()
+
     // Run initial validation and setup watcher
     validateInputs().then(() => {
         watch(
@@ -710,8 +735,8 @@
                     // only revalidate if values are stable for more than 500ms
                     // to avoid too many calls to the server
                     debouncedValidation()
-                    emit("update:modelValue", {...inputsValues})
-                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
+                    modelValue.value = {...inputsValues}
+                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val))
             },
@@ -720,7 +745,7 @@
 
         // on first load default values need to be sent to the parent
         // since they are part of the actual value
-        emit("update:modelValue", {...inputsValues})
+        modelValue.value = {...inputsValues}
     })
 
     // Lifecycle hooks
@@ -764,6 +789,10 @@
         validateInputs,
         inputsValues,
         inputsMetaData,
+        isComputingValues,
+        isComputingInput,
+        isLoadingInput,
+        onChange,
     })
 </script>
 

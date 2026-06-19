@@ -2,12 +2,19 @@
     <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
-            <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
+            <Badge
+                v-if="isATestExecution"
+                :label="$t('test-badge-text')"
+                :tooltip="$t('test-badge-tooltip')"
+            />
         </template>
         <template #actions>
             <slot name="actions" />
-            <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
-                <ul class="d-none d-xl-flex align-items-center">
+            <div
+                v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'"
+                class="d-flex align-items-center gap-2"
+            >
+                <ul v-if="!isOverviewTab" class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
                         <KsButton
                             class="execution-edit-flow-button"
@@ -19,9 +26,9 @@
                     </li>
                 </ul>
 
-                <KsDropdown class="d-flex d-xl-none align-items-center">
+                <KsDropdown v-if="!isOverviewTab" class="d-flex d-xl-none align-items-center">
                     <KsButton>
-                        <KsIcon><DotsVerticalIcon /></KsIcon>
+                        <KsIcon><DotsVertical /></KsIcon>
                         <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
                     </KsButton>
                     <template #dropdown>
@@ -34,23 +41,30 @@
                     </template>
                 </KsDropdown>
 
-                <div v-if="primaryAction || fallbackToExecute">
-                    <div class="d-flex align-items-center gap-2">
-                        <component
-                            v-if="primaryAction"
-                            :is="primaryAction.component"
-                            v-bind="primaryAction.props"
-                            :execution="execution"
-                            type="primary"
-                        />
+                <ExecutionActions
+                    v-if="isOverviewTab && overviewActions.length"
+                    :actions="overviewActions"
+                    :execution="execution"
+                />
 
-                        <TriggerFlow
-                            v-else-if="fallbackToExecute"
-                            type="primary"
-                            :flowId="$route.params.flowId as string"
-                            :namespace="$route.params.namespace as string"
-                        />
-                    </div>
+                <div
+                    v-if="primaryAction || fallbackToExecute"
+                    class="d-flex align-items-center gap-2"
+                >
+                    <component
+                        v-if="primaryAction"
+                        :is="primaryAction.component"
+                        v-bind="primaryAction.props"
+                        :execution="execution"
+                        type="primary"
+                    />
+
+                    <TriggerFlow
+                        v-else-if="fallbackToExecute"
+                        type="primary"
+                        :flowId="$route.params.flowId as string"
+                        :namespace="$route.params.namespace as string"
+                    />
                 </div>
             </div>
         </template>
@@ -59,18 +73,25 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useRouter, useRoute} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
-    import DotsVerticalIcon from "vue-material-design-icons/DotsVertical.vue"
-    import Badge from "../global/Badge.vue"
     import {State} from "@kestra-io/design-system"
-    import TriggerFlow from "../flows/TriggerFlow.vue"
-    import Pause from "./overview/components/actions/Pause.vue"
-    import Resume from "./overview/components/actions/Resume.vue"
-    import Restart from "./overview/components/actions/Restart.vue"
+
+    import Badge from "../global/Badge.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
-    import resource from "../../models/resource"
+    import TriggerFlow from "../flows/TriggerFlow.vue"
+    import ExecutionActions from "./ExecutionActions.vue"
+    import Api from "./overview/components/actions/Api.vue"
+    import Delete from "./overview/components/actions/Delete.vue"
+    import ForceRun from "./overview/components/actions/ForceRun.vue"
+    import Kill from "./overview/components/actions/Kill.vue"
+    import Pause from "./overview/components/actions/Pause.vue"
+    import Restart from "./overview/components/actions/Restart.vue"
+    import Resume from "./overview/components/actions/Resume.vue"
+    import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
+    import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
 
@@ -123,12 +144,37 @@
         execution.value && isAllowedTrigger.value && !primaryAction.value,
     )
 
+    const isOverviewTab = computed(() =>
+        !route.params.tab || route.params.tab === "overview",
+    )
+
+    const overviewActions = computed(() => {
+        if (!execution.value?.state) return []
+        return [
+            {component: Restart},
+            {component: Restart, props: {isReplay: true}},
+            {component: Kill},
+            execution.value.state.current !== "PAUSED"
+                ? {component: Pause}
+                : {component: Resume},
+            {component: Unqueue},
+            {component: ForceRun},
+            {component: Api},
+            {component: Delete},
+        ]
+    })
+
     const hasVisibleActions = computed(() =>
-        isAllowedEdit.value || primaryAction.value || fallbackToExecute.value,
+        isAllowedEdit.value ||
+        primaryAction.value ||
+        fallbackToExecute.value ||
+        (isOverviewTab.value && overviewActions.value.length > 0),
     )
 
     const isATestExecution = computed(() =>
-        execution.value && execution.value.labels && execution.value.labels.some((label: {key: string; value: string}) => label.key === "system.test" && label.value === "true"),
+        execution.value?.labels?.some(
+            (label: {key: string; value: string}) => label.key === "system.test" && label.value === "true",
+        ) ?? false,
     )
 
     function editFlow() {
@@ -142,12 +188,3 @@
         })
     }
 </script>
-<style scoped>
-
-@media (max-width: 575.98px) {
-  .sm-extra-padding {
-    padding: 0;
-  }
-}
-
-</style>

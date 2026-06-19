@@ -59,7 +59,7 @@
     border-radius: var(--ks-radius-base);
     text-decoration: none;
     color: var(--ks-text-secondary);
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     font-weight: var(--ks-font-weight-medium);
     transition: background-color 0.15s ease, color 0.15s ease;
     cursor: pointer;
@@ -104,6 +104,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--ks-sidebar-item-title-color, var(--ks-text-primary));
+}
+
+.ks-sidebar-item.is-locked .ks-sidebar-item__title {
+    color: var(--ks-text-inactive);
 }
 
 .ks-sidebar-item__lock {

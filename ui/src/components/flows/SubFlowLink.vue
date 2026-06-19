@@ -1,6 +1,6 @@
 <template>
     <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small">
-        <span v-if="component !== 'el-button'">{{ $t('sub flow') }}</span>
+        <span v-if="component !== 'KsButton'">{{ $t('sub flow') }}</span>
     </component>
 </template>
 
@@ -18,9 +18,9 @@
         tabFlow?: string;
         tabExecution?: string;
     }>(), {
-        component: "el-button",
+        component: "KsButton",
         tabFlow: "overview",
-        tabExecution: "topology",
+        tabExecution: "overview",
         executionId: undefined,
         namespace: undefined,
         flowId: undefined,

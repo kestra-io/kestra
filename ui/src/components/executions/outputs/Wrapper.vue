@@ -156,7 +156,7 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue"
-    import {CascaderOption, CascaderProps}from "element-plus"
+    import type {CascaderOption, CascaderProps} from "@kestra-io/design-system"
     import {useExecutionsStore} from "../../../stores/executions"
     import {usePluginsStore} from "../../../stores/plugins"
 
@@ -207,7 +207,7 @@
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined)
+            : ((cascader.value?.cascader?.getCheckedNodes(false)?.[0] as any)?.label as string | undefined)
         const taskRunList = [...execution.value?.taskRunList ?? []]
         return taskRunList.find((e) => e.taskId === filter)
     })
@@ -352,7 +352,7 @@
 
         if (!node?.length) return {label: undefined, value: undefined}
 
-        const {label, value} = node[0]
+        const {label, value} = node[0] as any
 
         return {label, value: value as string}
     }

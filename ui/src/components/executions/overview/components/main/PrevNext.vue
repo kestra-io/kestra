@@ -10,7 +10,7 @@
 
         <KsButton :disabled="!results.next" @click="navigate('next')">
             {{ $t("next_execution") }}
-            <KsIcon class="el-icon--right">
+            <KsIcon class="ms-1">
                 <ChevronRight />
             </KsIcon>
         </KsButton>

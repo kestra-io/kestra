@@ -32,7 +32,12 @@
                 <DocsMenu />
                 <DocsLayout>
                     <template #content>
-                        <KsMarkdown class="markdown" :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
+                        <KsMarkdown 
+                            class="markdown" 
+                            :content="markdownContent" 
+                            :xssProtection="false" 
+                            :components="markdownComponents" 
+                        />
                     </template>
                 </DocsLayout>
             </template>

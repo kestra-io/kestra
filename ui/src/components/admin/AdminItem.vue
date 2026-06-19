@@ -77,7 +77,8 @@
 
 <style scoped lang="scss">
     .admin-item {
-        margin: 0 var(--ks-spacing-4) var(--ks-spacing-2);
+        margin: 0;
+        --ks-sidebar-item-title-color: currentColor;
     }
 
     .admin-item__version {

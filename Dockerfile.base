@@ -1,6 +1,8 @@
-FROM eclipse-temurin:25-jre
+ARG JRE_VERSION="25"
+FROM eclipse-temurin:${JRE_VERSION}-jre
 
 ARG UV_VERSION="0.6.17"
+ARG WITH_PYTHON="false"
 
 RUN groupadd kestra && \
     useradd -m -g kestra kestra
@@ -9,10 +11,19 @@ WORKDIR /app
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl jattach && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
 RUN curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh && \
     mv /root/.local/bin/uv /bin && \
     mv /root/.local/bin/uvx /bin
+
+RUN if [ "$WITH_PYTHON" = "true" ]; then \
+        apt-get update -y && \
+        apt-get install -y --no-install-recommends python3 python-is-python3 python3-pip && \
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/* && \
+        uv venv /app/.venv && \
+        PURE_PYTHON=1 uv pip install --python /app/.venv/bin/python kestra; \
+    fi

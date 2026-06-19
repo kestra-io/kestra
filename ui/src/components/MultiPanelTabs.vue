@@ -1,7 +1,11 @@
 <template>
     <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <div v-if="!panels.length" class="empty-panels">
-            <Empty type="panels" />
+            <KsNoData
+                :icon="ViewArrayOutline"
+                :title="$t('empty.panels.title')"
+                :description="$t('empty.panels.content')"
+            />
         </div>
         <template v-else>
             <KsSplitterPanel
@@ -185,8 +189,6 @@
     import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
 
-    import Empty from "./layout/empty/Empty.vue"
-
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
     import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
@@ -195,6 +197,7 @@
     import DockRight from "vue-material-design-icons/DockRight.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import Keyboard from "vue-material-design-icons/Keyboard.vue"
+    import ViewArrayOutline from "vue-material-design-icons/ViewArrayOutline.vue"
 
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
@@ -290,7 +293,7 @@
         }
     }
 
-    // let the panelSizes be dealt with by the el-splitter once set
+    // let the panelSizes be dealt with by the KsSplitter once set
     // by the prop
     const panelSizes = computed<number[]>((prevValue) => {
         if(prevValue?.length === panels.value.length){

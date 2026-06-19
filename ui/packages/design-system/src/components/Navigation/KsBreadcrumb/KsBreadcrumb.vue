@@ -116,6 +116,7 @@
         align-items: center;
         gap: var(--ks-spacing-1);
         align-self: stretch;
+        font-size: var(--ks-font-size-md);
 
         &__leading {
             display: inline-flex;
@@ -129,7 +130,6 @@
         }
 
         &__separator {
-            font-size: var(--ks-font-size-sm);
             font-weight: var(--ks-font-weight-semibold);
             color: var(--ks-border-strong);
             user-select: none;
@@ -158,7 +158,6 @@
             display: inline-flex;
             align-items: center;
             gap: var(--ks-spacing-2);
-            font-size: var(--ks-font-size-sm);
             font-weight: var(--ks-font-weight-regular);
             color: inherit;
             text-decoration: none;
@@ -169,7 +168,6 @@
             display: inline-flex;
             align-items: center;
             font-size: var(--ks-font-size-lg);
-            color: var(--ks-text-primary);
 
             :deep(svg) {
                 stroke-width: 1.5;
@@ -182,7 +180,8 @@
             gap: var(--ks-spacing-2);
             margin: 0;
             padding: var(--ks-spacing-1) var(--ks-spacing-2);
-            font-size: var(--ks-font-size-sm);
+            font-size: inherit;
+            line-height: 1.5;
             font-weight: var(--ks-font-weight-semibold);
             color: var(--ks-text-primary);
             white-space: nowrap;
@@ -193,7 +192,7 @@
         }
 
         &__ellipsis {
-            font-size: var(--ks-font-size-sm);
+            font-size: inherit;
             color: var(--ks-text-primary);
             background: none;
             border: 0;

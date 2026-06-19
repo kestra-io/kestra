@@ -286,6 +286,7 @@
         (e: "confirm", value?: string): void
         (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
         (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
+        (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
     }>()
 
     const icon = {
@@ -337,6 +338,7 @@
 
     const showPlaceholder = computed(() =>
         props.inline === true &&
+        !props.placeholder &&
         !mergedOptions.value.shouldFocus &&
         (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
         !isFocused.value,
@@ -410,7 +412,7 @@
             scrollBeyondLastLine: false,
             roundedSelection: false,
             ...opts,
-            ...(props.options?.editor ?? {}),
+            ...props.options?.editor,
         }
     })
 
@@ -1014,6 +1016,7 @@
 
         // Editor-did-mount: setup keybindings + decorations
         editorDidMount(editorResolved.value)
+        emit("editorMounted", editorResolved.value)
 
         resizeObserver.value = new ResizeObserver(() => {
             if (localEditor.value) localEditor.value.layout()
@@ -1416,10 +1419,10 @@
             &.single-line {
                 min-height: var(--kel-component-size);
                 padding: 7px 11px;
-                background-color: var(--kel-input-bg-color, var(--kel-fill-color-blank));
+                background-color: var(--ks-bg-input);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
                 transition: var(--kel-transition-box-shadow);
-                box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
+                box-shadow: 0 0 0 1px var(--ks-border-default) inset;
 
                 &.custom-dark-vs-theme {
                     background-color: var(--ks-bg-input);
@@ -1533,6 +1536,11 @@
         color: var(--ks-text-inactive) !important;
     }
 
+    .monaco-editor .codelens-decoration > a:hover,
+    .monaco-editor .codelens-decoration > a:hover .codicon {
+        color: var(--ks-text-link) !important;
+    }
+
     .ks-monaco-editor {
         position: absolute;
         width: 100%;
@@ -1544,12 +1552,12 @@
         padding: 1rem 0 0 1rem;
     }
 
-    .custom-dark-vs-theme .ks-monaco-editor :deep(.sticky-widget) {
+    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
         background-color: var(--ks-bg-input);
     }
 
     .monaco-editor {
-        :deep(.monaco-scrollable-element) {
+        .monaco-scrollable-element {
             > .scrollbar {
                 .slider {
                     width: 13px !important;

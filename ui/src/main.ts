@@ -19,7 +19,7 @@ loadNodeTypes()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
-import {configureAxios} from "@kestra-io/kestra-sdk"
+import {configureAxios, configureClient} from "@kestra-io/kestra-sdk"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter} from "./composables/useTenant"
@@ -79,6 +79,11 @@ function setupAxios(router: Router) {
         }
         return config
     })
+
+    // The generated OpenAPI client (client.gen) is configured via configureClient() inside
+    // configureAxios(), but its internal axios instance is created before the CSRF interceptor
+    // above is added. Re-bind it now so all generated-client POSTs also carry the CSRF token.
+    configureClient({axios: axiosInstance})
 
     return axiosInstance
 }

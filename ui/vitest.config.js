@@ -86,6 +86,15 @@ export default defineConfig({
                             },
                         ],
                     },
+                    coverage: {
+                        reporter: ["text", "html"],
+                        exclude: [
+                            "**/*.stories.{ts,tsx}",
+                            "**/*.spec.{ts,tsx}",
+                            "**/node_modules/**",
+                            "**/*.json",
+                        ],
+                    },
                 },
             }),
         ],

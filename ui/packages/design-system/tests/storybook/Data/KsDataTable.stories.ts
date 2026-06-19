@@ -289,3 +289,30 @@ export const CustomContent: Story = {
         `,
     }),
 }
+
+export const FitHeight: Story = {
+    name: "fitHeight — bounded container with tall slot content",
+    parameters: {
+        docs: {
+            description: {
+                story: "When `fitHeight` is true the internal flex body gets `min-height:0; overflow:hidden`, breaking the flexbox min-height:auto trap so tall slot content scrolls within the container instead of expanding it.",
+            },
+        },
+    },
+    render: () => ({
+        components: {KsDataTable},
+        template: `
+            <div style="height: 400px; display: flex; flex-direction: column; border: 1px solid var(--ks-border-primary); border-radius: 8px; overflow: hidden">
+                <ks-data-table :total="0" fit-height>
+                    <template #table>
+                        <div style="overflow-y: auto; height: 100%; padding: 8px">
+                            <div v-for="i in 50" :key="i" style="padding: 8px; border-bottom: 1px solid var(--ks-border-subtle)">
+                                Row {{ i }} — scrolls within the bounded container
+                            </div>
+                        </div>
+                    </template>
+                </ks-data-table>
+            </div>
+        `,
+    }),
+}

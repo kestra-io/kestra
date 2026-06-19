@@ -16,6 +16,8 @@ import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
@@ -23,6 +25,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
+import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.worker.models.WorkerTriggerResult;
@@ -129,6 +132,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(
                         workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
                     );
+                    context.setMaxInboundMessageSize(connInfo.getMaxInboundMessageSize());
                     contextRef.set(context);
 
                     // Register with dispatcher
@@ -237,18 +241,38 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             var evaluation = workerTriggerResult.evaluation();
 
             switch (workerTriggerResult.type()) {
-                case POLLING -> triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                case POLLING -> {
+                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+                }
                 case REALTIME -> {
                     if (evaluation != null) {
                         triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
+                    } else {
+                        // The realtime trigger stream ended without producing an execution — clean
+                        // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
+                        // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
+                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED));
+                    }
+                    if (isTerminalRealtimeResult(evaluation)) {
+                        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
                     }
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + workerTriggerResult.type());
             }
-            workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
         });
         responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();
+    }
+
+    /**
+     * A realtime trigger sends one result per emitted execution while it keeps running on the worker;
+     * those results must not release its WorkerJobRunning entry, which the liveness coordinator relies
+     * on to notify the scheduler when the worker dies. Only a terminal result does — a FAILED
+     * evaluation, or a stream end reported without an evaluation.
+     */
+    static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
+        return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
     }
 
     @Override

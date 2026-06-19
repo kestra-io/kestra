@@ -426,6 +426,10 @@ export const useFlowStore = defineStore("flow", () => {
                 },
             })
 
+        if (options.store === false) {
+            return response.data
+        }
+
         if (response.data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
@@ -445,10 +449,6 @@ export const useFlowStore = defineStore("flow", () => {
         validateFlow({
             flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`,
         })
-
-        if (options.store === false) {
-            return response.data
-        }
 
         flow.value = response.data
         flowYaml.value = response.data.source
@@ -573,15 +573,13 @@ function deleteFlowAndDependencies() {
 
                 if (deps.length) {
                     warning =
-                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                        "<div class=\"el-alert__content\">\n" +
-                        "<p class=\"el-alert__description\">\n" +
+                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
+                        "<p style=\"margin: 0;\">\n" +
                         t("dependencies delete flow") +
                         "<ul>\n" +
                         deps +
                         "</ul>\n" +
                         "</p>\n" +
-                        "</div>\n" +
                         "</div>"
                 }
             }
@@ -708,7 +706,7 @@ function deleteFlowAndDependencies() {
     async function exportFlowAsCSV(params: any) {
         const response = await axios.get(
             `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "blob"},
+            {params, responseType: "text", headers: {Accept: "text/csv"}},
         )
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")

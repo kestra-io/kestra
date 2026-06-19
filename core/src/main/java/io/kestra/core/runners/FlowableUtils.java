@@ -1,8 +1,7 @@
 package io.kestra.core.runners;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
@@ -28,6 +27,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 import org.apache.commons.lang3.tuple.Pair;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
@@ -530,41 +530,17 @@ public class FlowableUtils {
      *         immediately after the last value read
      */
     public static LoopInitialValuesFromUri readAndCountLoopValuesFromUri(RunContext runContext, String uri, int limit) throws IOException, IllegalVariableEvaluationException {
-        try (var is = URIFetcher.of(uri).fetch(runContext)) {
-            int totalCount = 0;
+        try (var is = new BufferedInputStream(URIFetcher.of(uri).fetch(runContext), FileSerde.BUFFER_SIZE)) {
             List<String> result = new ArrayList<>();
-            long currentOffset = 0;
-            long nextOffset = 0;
-            var lineBuffer = new ByteArrayOutputStream();
-            byte[] readBuf = new byte[FileSerde.BUFFER_SIZE];
-            int bytesRead;
-            while ((bytesRead = is.read(readBuf)) != -1) {
-                for (int i = 0; i < bytesRead; i++) {
-                    currentOffset++;
-                    int b = readBuf[i] & 0xFF;
-                    if (b == '\n') {
-                        if (lineBuffer.size() > 0) {
-                            totalCount++;
-                            if (result.size() < limit) {
-                                result.add(ionLineToString(lineBuffer));
-                                nextOffset = currentOffset;
-                            }
-                            lineBuffer.reset();
-                        }
-                    } else {
-                        lineBuffer.write(b);
-                    }
-                }
-            }
-            // handle last line without trailing newline
-            if (lineBuffer.size() > 0) {
-                totalCount++;
+            int[] totalCount = {0};
+            FileSerde.read(is, throwConsumer(record -> {
                 if (result.size() < limit) {
-                    result.add(ionLineToString(lineBuffer));
-                    nextOffset = currentOffset;
+                    result.add(ionValueToString(record));
                 }
-            }
-            return new LoopInitialValuesFromUri(totalCount, result, nextOffset);
+                totalCount[0]++;
+            }));
+            long nextOffset = result.size();
+            return new LoopInitialValuesFromUri(totalCount[0], result, nextOffset);
         }
     }
 
@@ -572,55 +548,28 @@ public class FlowableUtils {
     public record LoopInitialValuesFromUri(int totalCount, List<String> values, long nextOffset) {}
 
     /**
-     * Reads up to {@code count} ION values from the URI-backed ION file, starting at the given byte offset.
-     * Uses a read buffer for efficiency while maintaining accurate byte-offset tracking.
+     * Reads up to {@code count} ION values from the URI-backed ION file, starting at the given record index.
      *
      * @param uri    the rendered URI pointing to the ION file
-     * @param offset the byte offset from which to start reading (0 for the beginning of the file)
+     * @param offset the record index from which to start reading (0 for the beginning of the file)
      * @param count  the maximum number of values to read
-     * @return a pair of the parsed string values and the byte offset immediately after the last byte read
+     * @return a pair of the parsed string values and the record index immediately after the last value read
      */
     public static Pair<List<String>, Long> readLoopValuesFromUri(RunContext runContext, String uri, long offset, int count) throws IOException, IllegalVariableEvaluationException {
-        try (var is = URIFetcher.of(uri).fetch(runContext)) {
-            if (offset > 0) {
-                is.skipNBytes(offset);
-            }
-
+        try (var is = new BufferedInputStream(URIFetcher.of(uri).fetch(runContext), FileSerde.BUFFER_SIZE)) {
             List<String> result = new ArrayList<>(count);
-            long currentOffset = offset;
-            var lineBuffer = new ByteArrayOutputStream();
-            byte[] readBuf = new byte[FileSerde.BUFFER_SIZE];
-            int bytesRead;
-            while ((bytesRead = is.read(readBuf)) != -1) {
-                for (int i = 0; i < bytesRead; i++) {
-                    currentOffset++;
-                    int b = readBuf[i] & 0xFF;
-                    if (b == '\n') {
-                        if (lineBuffer.size() > 0) {
-                            result.add(ionLineToString(lineBuffer));
-                            lineBuffer.reset();
-                            if (result.size() == count) {
-                                return Pair.of(result, currentOffset);
-                            }
-                        }
-                    } else {
-                        lineBuffer.write(b);
-                    }
+            long[] index = {0};
+            FileSerde.read(is, throwConsumer(record -> {
+                if (index[0] >= offset && result.size() < count) {
+                    result.add(ionValueToString(record));
                 }
-            }
-
-            // handle last line without trailing newline
-            if (lineBuffer.size() > 0 && result.size() < count) {
-                result.add(ionLineToString(lineBuffer));
-            }
-            return Pair.of(result, currentOffset);
+                index[0]++;
+            }));
+            return Pair.of(result, offset + result.size());
         }
     }
 
-    /** Parses a single ION line (accumulated in {@code buf}) into a String value. */
-    private static String ionLineToString(ByteArrayOutputStream buf) throws IOException, IllegalVariableEvaluationException {
-        String line = buf.toString(StandardCharsets.UTF_8);
-        Object parsed = JacksonMapper.ofIon().readValue(line, Object.class);
+    private static String ionValueToString(Object parsed) throws IllegalVariableEvaluationException {
         return switch (parsed) {
             case String s -> s;
             case Number n -> n.toString();

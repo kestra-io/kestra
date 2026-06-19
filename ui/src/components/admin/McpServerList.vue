@@ -15,9 +15,11 @@
             </KsIcon>
         </div>
 
-        <KsEmpty v-else-if="displayServers.length === 0" class="mcp-list__empty">
-            {{ t("mcp.no_servers") }}
-        </KsEmpty>
+        <KsNoData
+            v-else-if="displayServers.length === 0"
+            class="mcp-list__empty"
+            :description="t('mcp.no_servers')"
+        />
 
         <template v-else>
             <KsCol

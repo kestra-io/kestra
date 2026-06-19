@@ -422,7 +422,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels} from "./utils"
+    import {filterValidLabels, keepSupportedFilters} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import BreakableText from "../BreakableText"
@@ -756,9 +756,25 @@
         dataTable.value?.reload()
     }
 
+    const supportedFilterFields = computed<Set<string>>(() => {
+        const configuration = (props.namespace === undefined || props.flowId === undefined)
+            ? executionFilter.value
+            : flowExecutionFilter.value
+        const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
+            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
+        )
+        if (configuration.searchPlaceholder) {
+            fields.push("q")
+        }
+        return new Set(fields)
+    })
+
+    const dropUnsupportedFilters = (query: Record<string, any>): Record<string, any> =>
+        keepSupportedFilters(query, supportedFilterFields.value) as Record<string, any>
+
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
-        let queryFilter: Record<string, any> = {...restQuery}
+        let queryFilter: Record<string, any> = dropUnsupportedFilters(restQuery)
 
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = props.namespace
@@ -1065,7 +1081,7 @@
 
     async function exportExecutionsAsStream() {
         await executionsStore.exportExecutionsAsCSV(
-            route.query,
+            dropUnsupportedFilters(route.query),
         )
     }
 </script>

@@ -1194,7 +1194,6 @@
 
       .line {
         border-top: none;
-        padding-inline: 0;
       }
     }
 

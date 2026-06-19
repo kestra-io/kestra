@@ -73,7 +73,10 @@
                         </div>
 
                         <div v-else-if="!isLoading">
-                            <KsEmpty :description="$t('no_logs_data_description')" />
+                            <KsNoData
+                                :title="$t('no_logs_data_title')"
+                                :description="$t('no_logs_data_description')"
+                            />
                         </div>
                     </div>
                 </template>

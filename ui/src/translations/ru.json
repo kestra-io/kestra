@@ -93,6 +93,11 @@
       "create": "Создать blueprint",
       "custom": "Пользовательские blueprints",
       "dashboards": "Панель управления Blueprints",
+      "detail": {
+        "category": "Тип категории",
+        "links": "Ссылка и ресурсы",
+        "openInEditor": "Открыть в Edit Flow"
+      },
       "edit": "Редактировать blueprint",
       "empty": "Нет blueprints для отображения.",
       "flows": "Черновики Flow",
@@ -656,7 +661,7 @@
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
     "execution id": "Идентификатор выполнения",
     "execution labels": "Метки выполнения",
-    "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
+    "execution not found": "Выполнение {executionId} не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
     "execution not in state PAUSED": "Выполнение <code>{executionId}</code> не в состоянии PAUSED",
     "execution replay": "Это выполнение является повтором",
@@ -867,6 +872,9 @@
     "form error": "Ошибка формы",
     "from": "От",
     "gantt": "Гантт",
+    "gantt_no_tasks_executed": "Это выполнение завершилось без запуска каких-либо task. Проверьте его обзор и логи, чтобы узнать причину.",
+    "gantt_no_tasks_match_filters": "Попробуйте изменить фильтры поиска, состояния или уровня Log.",
+    "gantt_no_tasks_match_filters_title": "Нет задач, соответствующих выбранным фильтрам.",
     "healthcheck date": "HealthCheck Дата",
     "hide task documentation": "Скрыть документацию задачи",
     "home": "Домой",
@@ -952,6 +960,7 @@
       "raw_details": "Показать полные task logs и flow логи в формате необработанных временных меток"
     },
     "main_configuration": "Основная конфигурация",
+    "manage labels": "Управление labels",
     "management port": "Порт управления",
     "mark as": "Пометить как <code>{status}</code>",
     "max": "Макс",
@@ -1148,6 +1157,7 @@
     "no data current task": "Для текущего task нет доступных данных",
     "no inputs": "Этот flow не имеет входных данных.",
     "no result": "Нет результатов для отображения.",
+    "no revisions": "Нет ревизий",
     "no revisions found": "Для этого flow существует только одна редакция",
     "no-executions-view": {
       "guidance_desc": "Нужна помощь для выполнения вашего flow?",
@@ -1243,7 +1253,8 @@
     "no_history": "История недоступна",
     "no_inputs": "Нет доступных input.",
     "no_logs_data": "Нет данных",
-    "no_logs_data_description": "Для выбранных фильтров логи не найдены. <br> Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
+    "no_logs_data_description": "Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
+    "no_logs_data_title": "Для выбранных фильтров логи не найдены.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
     "no_results": {
       "assets": "Активы не найдены",
@@ -1671,7 +1682,6 @@
     "sequential": "Последовательный",
     "server type": "Тип сервера",
     "services": "Сервисы",
-    "set_extra_labels": "Установить дополнительные labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1684,7 +1694,8 @@
             "flow_default_tab": "Вкладка выбрана при переходе к flow.",
             "log_display": "Как отображаются логи при открытии выполнения.",
             "log_level": "Минимальный уровень log, отображаемый в execution logs.",
-            "playground": "Запускайте задачи по отдельности в редакторе playground."
+            "playground": "Запускайте задачи по отдельности в редакторе playground.",
+            "triggers_default_tab": "Вкладка выбрана при переходе на страницу триггеров."
           },
           "fields": {
             "auto_refresh_interval": "Интервал автоматического обновления",
@@ -1697,7 +1708,8 @@
             "log_display": "Отображение логов по умолчанию",
             "log_level": "Уровень логов по умолчанию",
             "multi_panel_editor": "Многооконный редактор",
-            "playground": "Песочница"
+            "playground": "Песочница",
+            "triggers_default_tab": "Вкладка по умолчанию Triggers"
           },
           "label": "Основная конфигурация"
         },
@@ -1889,6 +1901,12 @@
     "source and topology": "Источник и топология",
     "source only": "Источник только",
     "source search": "Поиск по источнику",
+    "source_search": {
+      "match_count": "{count} совпадение | {count} совпадения",
+      "open_flow": "Открыть flow",
+      "preview_empty": "Выберите результат для предпросмотра. Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
+      "preview_error": "Не удалось загрузить исходный код flow"
+    },
     "specific task": "Конкретная задача",
     "start date": "Дата начала",
     "start datetime": "Дата и время начала",

@@ -47,6 +47,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION = "The total number of tasks that timeout inside the Worker";
     public static final String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
     public static final String METRIC_WORKER_ENDED_COUNT_DESCRIPTION = "The total number of tasks ended by the Worker";
+    public static final String METRIC_WORKER_TASKS_RATE = "worker.tasks.rate";
+    public static final String METRIC_WORKER_TASKS_RATE_DESCRIPTION = "The smoothed rate of tasks completed by the Worker, in tasks per second";
     public static final String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
     public static final String METRIC_WORKER_ENDED_DURATION_DESCRIPTION = "Task run duration inside the Worker";
     public static final String METRIC_WORKER_TRIGGER_DURATION = "worker.trigger.duration";

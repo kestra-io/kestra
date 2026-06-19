@@ -8,7 +8,7 @@
             <slot name="navbar" />
         </nav>
 
-        <div style="flex: 1; display: flex; flex-direction: column;" v-ks-loading="isLoading">
+        <div class="ks-data-table-body" :class="{'ks-data-table-body--fit': fitHeight}" v-ks-loading="isLoading">
             <div v-if="$slots.top" class="ks-data-table-top">
                 <slot name="top" />
             </div>
@@ -52,7 +52,7 @@
                         <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
                         <slot />
                         <template #empty>
-                            <KsTableEmpty :title="noDataText" />
+                            <KsNoData :title="noDataText" />
                         </template>
                     </KsTable>
                 </div>
@@ -82,7 +82,7 @@
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
-    import KsTableEmpty from "../KsTableEmpty.vue"
+    import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -108,6 +108,7 @@
         noGutter?: boolean
         noFirstColumnGutter?: boolean
         tableLayout?: "fixed" | "auto"
+        fitHeight?: boolean
     }>(), {
         data: () => [],
         total: 0,
@@ -126,6 +127,7 @@
         noGutter: false,
         noFirstColumnGutter: false,
         tableLayout: "auto",
+        fitHeight: false,
     })
 
     export interface SortItem {
@@ -459,6 +461,17 @@
 
         .kel-scrollbar__view {
             height: 100%;
+        }
+    }
+
+    .ks-data-table-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        &--fit {
+            min-height: 0;
+            overflow: hidden;
         }
     }
 

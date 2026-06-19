@@ -36,6 +36,7 @@ export interface FlowBlueprint {
     id: string,
     title: string,
     description: string,
+    kind?: string,
     includedTasks?: string[],
     tags?: string[],
     source: string,

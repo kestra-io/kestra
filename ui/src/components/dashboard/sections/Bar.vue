@@ -24,7 +24,7 @@
             @echarts-click="onChartClick"
         />
     </div>
-    <KsTableEmpty v-else :class="{empty: !props.short}" />
+    <KsNoData v-else :class="{empty: !props.short}" />
 </template>
 
 <script setup lang="ts">

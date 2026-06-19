@@ -1,9 +1,11 @@
 <template>
     <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <div v-if="!panels.length" class="empty-panels">
-            <KsTableEmpty :icon="ViewArrayOutline" :title="$t('empty.panels.title')">
-                {{ $t("empty.panels.content") }}
-            </KsTableEmpty>
+            <KsNoData
+                :icon="ViewArrayOutline"
+                :title="$t('empty.panels.title')"
+                :description="$t('empty.panels.content')"
+            />
         </div>
         <template v-else>
             <KsSplitterPanel

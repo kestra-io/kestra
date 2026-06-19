@@ -272,4 +272,13 @@ tasks:
         expect(await provider.functionAutoCompletion(parsed, "kv", {})).toEqual(["'myFirstKv'", "'mySecondKv'"])
         expect(await provider.functionAutoCompletion(parsed, "kv", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstKv'", "'anotherNsSecondKv'"])
     })
+
+    it("subflow function autocompletions suggest namespaces and flow ids", async () => {
+        // editing the `namespace` arg → all namespaces, quoted (Monaco does the prefix filtering)
+        expect(await provider.functionAutoCompletion(parsed, "subflow", {namespace: "'m"})).toEqual(["'my.namespace'", "'another.namespace'"])
+        // editing the `id` arg → flow ids of the chosen namespace, quoted
+        expect(await provider.functionAutoCompletion(parsed, "subflow", {namespace: "'another.namespace'", id: "'fl"})).toEqual(["'flow-other-namespace'", "'another-flow-other-namespace'"])
+        // editing the `id` arg in the flow's own namespace excludes the flow itself (avoids self-recursion)
+        expect(await provider.functionAutoCompletion(parsed, "subflow", {namespace: "'my.namespace'", id: "'m"})).toEqual([])
+    })
 })

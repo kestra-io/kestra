@@ -48,6 +48,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
+- Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
 - Use semantic tokens, not raw colors. `var(--ks-text-link)` communicates intent; `var(--ks-text-blue-500)` does not exist for a reason.
 - Co-locate component-specific tokens (e.g. `--ks-card-shadow`) in the component's SCSS, but always derive them from semantic tokens.
 

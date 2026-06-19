@@ -107,7 +107,12 @@ public class StaticFilter implements HttpServerFilter {
             return response;
         }
 
-        String csrfToken = csrfTokenGenerator.get().generateCsrfToken(request);
+        // Reuse the existing cookie token so multiple tabs and BFCache-restored pages
+        // all share one stable token. Generate only when the cookie is absent.
+        String csrfToken = request.getCookies()
+            .findCookie(csrfConfiguration.get().getCookieName())
+            .map(Cookie::getValue)
+            .orElseGet(() -> csrfTokenGenerator.get().generateCsrfToken(request));
         if (csrfToken == null) {
             return response;
         }

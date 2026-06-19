@@ -93,6 +93,11 @@
       "create": "Crea un blueprint",
       "custom": "Blueprint personalizzati",
       "dashboards": "Blueprint del Dashboard",
+      "detail": {
+        "category": "Tipo di categoria",
+        "links": "Link e Risorse",
+        "openInEditor": "Apri in Modifica Flow"
+      },
       "edit": "Modifica un blueprint",
       "empty": "Nessun blueprint da mostrare.",
       "flows": "Blueprint dei Flow",
@@ -656,7 +661,7 @@
     "execution already finished": "Esecuzione <code>{executionId}</code> già terminata",
     "execution id": "ID di Esecuzione",
     "execution labels": "Etichette di esecuzione",
-    "execution not found": "L'esecuzione <code>{executionId}</code> non è stata trovata.",
+    "execution not found": "L'esecuzione {executionId} non è stata trovata.",
     "execution not in state FAILED": "Esecuzione <code>{executionId}</code> non in stato FAILED",
     "execution not in state PAUSED": "Esecuzione <code>{executionId}</code> non in stato PAUSED",
     "execution replay": "Questa esecuzione è una ripetizione di",
@@ -867,6 +872,9 @@
     "form error": "Errore del modulo",
     "from": "Da",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Questa esecuzione è terminata senza eseguire alcun task. Controlla la sua panoramica e i log per il motivo.",
+    "gantt_no_tasks_match_filters": "Prova a modificare i filtri di ricerca, stato o livello di log.",
+    "gantt_no_tasks_match_filters_title": "Nessun task corrisponde ai filtri selezionati.",
     "healthcheck date": "Data di HealthCheck",
     "hide task documentation": "Nascondi la documentazione del task",
     "home": "Home",
@@ -952,6 +960,7 @@
       "raw_details": "Mostra i task logs e i flow logs completi in un formato grezzo ordinato per timestamp"
     },
     "main_configuration": "Configurazione Principale",
+    "manage labels": "Gestisci etichette",
     "management port": "Porta di gestione",
     "mark as": "Contrassegna come <code>{status}</code>",
     "max": "Max",
@@ -1148,6 +1157,7 @@
     "no data current task": "Non ci sono dati disponibili per il task corrente",
     "no inputs": "Questo flow non ha inputs.",
     "no result": "Non ci sono risultati da mostrare.",
+    "no revisions": "Nessuna revisione",
     "no revisions found": "Esiste solo una revisione per questo flow",
     "no-executions-view": {
       "guidance_desc": "Hai bisogno di assistenza per eseguire il tuo flow?",
@@ -1243,7 +1253,8 @@
     "no_history": "Nessuna cronologia disponibile",
     "no_inputs": "Nessun input disponibile.",
     "no_logs_data": "Nessun dato",
-    "no_logs_data_description": "Nessun log trovato per i filtri selezionati. <br> Prova a modificare i filtri, cambiare l'intervallo di tempo o verifica se il flow è stato eseguito di recente.",
+    "no_logs_data_description": "Prova a modificare i filtri, cambiare l'intervallo di tempo o verifica se il flow è stato eseguito di recente.",
+    "no_logs_data_title": "Nessun log trovato per i filtri selezionati.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
     "no_results": {
       "assets": "Nessun asset trovato",
@@ -1671,7 +1682,6 @@
     "sequential": "Sequenziale",
     "server type": "Tipo di server",
     "services": "Servizi",
-    "set_extra_labels": "Imposta etichette extra",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1684,7 +1694,8 @@
             "flow_default_tab": "Scheda selezionata durante la navigazione a un flow.",
             "log_display": "Come vengono presentati i log quando si apre un'esecuzione.",
             "log_level": "Livello minimo di log mostrato nei log di esecuzione.",
-            "playground": "Esegui i task singolarmente nel playground dell'editor."
+            "playground": "Esegui i task singolarmente nel playground dell'editor.",
+            "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger."
           },
           "fields": {
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
@@ -1697,7 +1708,8 @@
             "log_display": "Visualizzazione Log predefinita",
             "log_level": "Livello di Log predefinito",
             "multi_panel_editor": "Editor Multi Pannello",
-            "playground": "Playground"
+            "playground": "Playground",
+            "triggers_default_tab": "Scheda Trigger Predefiniti"
           },
           "label": "Configurazione principale"
         },
@@ -1889,6 +1901,12 @@
     "source and topology": "Sorgente e topologia",
     "source only": "Solo sorgente",
     "source search": "Cerca fonte",
+    "source_search": {
+      "match_count": "{count} corrispondenza | {count} corrispondenze",
+      "open_flow": "Apri flow",
+      "preview_empty": "Seleziona un risultato per visualizzarne l'anteprima. Fai clic su un flow nell'elenco dei risultati per vedere il suo sorgente.",
+      "preview_error": "Impossibile caricare il sorgente del flow"
+    },
     "specific task": "Task specifico",
     "start date": "Data di inizio",
     "start datetime": "Data e ora di inizio",

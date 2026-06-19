@@ -344,6 +344,30 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE)
             }
+            case "subflow": {
+                // subflow(namespace='...', id='...'): the arg under the cursor is the last one parsed
+                const argNames = Object.keys(args)
+                const currentArg = argNames[argNames.length - 1]
+                if (currentArg === "namespace") {
+                    const availableNamespaces = this.namespacesStore.autocomplete
+                        ?? await this.namespacesStore.loadAutocomplete()
+                    return availableNamespaces.map((namespace: string) => QUOTE + namespace + QUOTE)
+                }
+                if (currentArg === "id") {
+                    const namespace = this.extractArgValue(namespaceArg)
+                    if (namespace === undefined) {
+                        return Promise.resolve([])
+                    }
+                    let flowIds: string[] = (await this.flowStore.flowsByNamespace(namespace))
+                        .map((flow: {id: string}) => flow.id)
+                    // avoid suggesting the flow itself: subflow() on its own id recurses (depth-capped)
+                    if (parsed?.id !== undefined && parsed?.namespace === namespace) {
+                        flowIds = flowIds.filter(flowId => flowId !== parsed?.id)
+                    }
+                    return flowIds.map(flowId => QUOTE + flowId + QUOTE)
+                }
+                break
+            }
         }
         return Promise.resolve([])
     }

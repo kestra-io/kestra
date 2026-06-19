@@ -813,9 +813,14 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
+      "new_file": "New File",
       "no_items": {
         "heading": "No files found in your namespace yet.",
         "paragraph": "Create or import files to share code across flows in your namespace."
+      },
+      "no_selection": {
+        "heading": "No Files Selected",
+        "description": "Select a file from the tree to view its content."
       },
       "tree": {
         "expand": "Expand all folders",
@@ -1708,6 +1713,10 @@
     "dataFilters": "Data Filters",
     "logExporters": "Log Exporters",
     "empty": {
+      "namespaceFiles": {
+        "title": "No files in this namespace yet",
+        "content": "Namespace Files work like a project folder for this namespace. Store Python, SQL, dbt or Terraform code, then reference any file in your flows with"
+      },
       "announcements": {
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."

@@ -4,6 +4,10 @@ export interface EmptyLinks {
 }
 
 export const links: Record<string, EmptyLinks> = {
+    namespaceFiles: {
+        video: "https://www.youtube.com/watch?v=BeQNI2XRddA",
+        learnMore: "https://kestra.io/docs/concepts/namespace-files",
+    },
     versionPlugin: {
         video: "https://www.youtube.com/watch?v=h-vmMGlTGM8&t=79s",
         learnMore: "https://kestra.io/docs/enterprise/instance/versioned-plugins",

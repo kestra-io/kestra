@@ -528,6 +528,10 @@
     "email": "电子邮件",
     "email length constraint": "电子邮件不得超过256个字符",
     "empty": {
+      "namespaceFiles": {
+        "title": "此命名空间中尚无文件",
+        "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用"
+      },
       "announcements": {
         "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
         "title": "您还没有公告！"
@@ -1094,6 +1098,7 @@
       "export": "导出命名空间文件",
       "export_single": "导出文件",
       "filter": "过滤",
+      "new_file": "新建文件",
       "import": {
         "error": "导入文件时出错",
         "files": "导入文件",
@@ -1104,6 +1109,10 @@
       "no_items": {
         "heading": "尚未在您的namespace中找到文件。",
         "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"
+      },
+      "no_selection": {
+        "heading": "未选择文件",
+        "description": "从树中选择一个文件以查看其内容。"
       },
       "path": {
         "copy": "复制路径",

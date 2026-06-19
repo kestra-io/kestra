@@ -528,6 +528,10 @@
     "email": "Email",
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "empty": {
+      "namespaceFiles": {
+        "title": "Nessun file in questo namespace per ora",
+        "content": "I file del namespace funzionano come una cartella di progetto per questo namespace. Archivia codice Python, SQL, dbt o Terraform, quindi fai riferimento a qualsiasi file nei tuoi flows con"
+      },
       "announcements": {
         "content": "Gli annunci ti permettono di notificare ai tuoi utenti eventuali modifiche o di informarli su periodi di manutenzione programmata. Seleziona semplicemente il tipo di annuncio, l'intervallo di date in cui deve essere visualizzato e scrivi il messaggio dell'annuncio.",
         "title": "Non hai ancora annunci!"
@@ -1094,6 +1098,7 @@
       "export": "Esporta file del namespace",
       "export_single": "Esporta file",
       "filter": "Filtro",
+      "new_file": "Nuovo file",
       "import": {
         "error": "Si sono verificati errori durante l'importazione dei file",
         "files": "Importa file",
@@ -1104,6 +1109,10 @@
       "no_items": {
         "heading": "Nessun file trovato nel tuo namespace.",
         "paragraph": "Crea o importa file per condividere il codice tra i flow nel tuo namespace."
+      },
+      "no_selection": {
+        "heading": "Nessun file selezionato",
+        "description": "Seleziona un file dall'albero per visualizzarne il contenuto."
       },
       "path": {
         "copy": "Copia percorso",

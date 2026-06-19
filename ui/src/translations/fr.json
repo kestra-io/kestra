@@ -528,6 +528,10 @@
     "email": "Email",
     "email length constraint": "L'e-mail ne doit pas dépasser 256 caractères.",
     "empty": {
+      "namespaceFiles": {
+        "title": "Aucun fichier dans cet espace de noms pour le moment",
+        "content": "Les fichiers de l'espace de noms fonctionnent comme un dossier de projet pour cet espace de noms. Stockez du code Python, SQL, dbt ou Terraform, puis référencez n'importe quel fichier dans vos flows avec"
+      },
       "announcements": {
         "content": "Les annonces vous permettent de notifier vos utilisateurs de tout changement ou de les informer des temps d'arrêt de maintenance planifiés. Sélectionnez simplement le type d'annonce, la plage de dates pendant laquelle elle doit être affichée, et rédigez le message d'annonce.",
         "title": "Vous n'avez pas encore d'annonces !"
@@ -1094,6 +1098,7 @@
       "export": "Exporter les fichiers de l'espace de noms",
       "export_single": "Exporter le fichier",
       "filter": "Filtrer",
+      "new_file": "Nouveau fichier",
       "import": {
         "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)",
         "files": "Importer des fichiers",
@@ -1104,6 +1109,10 @@
       "no_items": {
         "heading": "Aucun fichier trouvé dans votre namespace pour le moment.",
         "paragraph": "Créer ou importer des fichiers pour partager du code entre les flows dans votre namespace."
+      },
+      "no_selection": {
+        "heading": "Aucun fichier sélectionné",
+        "description": "Sélectionnez un fichier dans l'arborescence pour afficher son contenu."
       },
       "path": {
         "copy": "Copier le chemin",

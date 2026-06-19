@@ -606,6 +606,10 @@
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
       },
+      "variables": {
+        "content": "添加kv store以在不同的flow之间共享配置。子namespace会自动继承这些配置，您可以引用任何value。",
+        "title": "尚无变量"
+      },
       "versionPlugin": {
         "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
         "title": "您还没有版本化的插件！"

@@ -443,7 +443,11 @@
         "message": "Zweryfikuj logikę swoich flow w izolacji, wcześnie wykrywaj regresje i utrzymuj pewność w swoich automatyzacjach, gdy się zmieniają i rozwijają.",
         "title": "Zapewnij niezawodność przy każdej zmianie"
       },
-      "watch_the_video": "Obejrzyj wideo"
+      "watch_the_video": "Obejrzyj wideo",
+      "quotas": {
+        "title": "Egzekwowanie kwot wykonania dla flows",
+        "message": "Kestra Enterprise Edition umożliwia definiowanie kwot dla flows w celu ograniczenia liczby równoczesnych lub łącznych wykonań w danym oknie czasowym. Kwoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflows."
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -2274,6 +2278,7 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
-    "yes": "Tak"
+    "yes": "Tak",
+    "quotas": "Kwoty"
   }
 }

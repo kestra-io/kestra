@@ -443,7 +443,11 @@
         "message": "Vérifiez la logique de vos flows de manière isolée, détectez les régressions tôt et maintenez la confiance dans vos automatisations à mesure qu'elles évoluent et se développent.",
         "title": "Assurez la fiabilité à chaque changement"
       },
-      "watch_the_video": "Regarder la vidéo"
+      "watch_the_video": "Regarder la vidéo",
+      "quotas": {
+        "title": "Appliquer des quotas d'exécution sur les flows",
+        "message": "Kestra Enterprise Edition vous permet de définir des quotas sur les flows pour limiter le nombre d'exécutions simultanées ou totales dans une fenêtre de temps. Les quotas vous aident à protéger l'infrastructure partagée, à appliquer les SLAs et à empêcher les workflows incontrôlés de consommer des ressources excessives."
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -2274,6 +2278,7 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",
-    "yes": "Oui"
+    "yes": "Oui",
+    "quotas": "Quotas"
   }
 }

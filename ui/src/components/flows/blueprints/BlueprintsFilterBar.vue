@@ -1,9 +1,17 @@
 <template>
     <div :class="{'embed-top': showEmbed}">
-        <KsRow :class="{'mb-3': !showEmbed}" justify="center">
+        <KsRow :class="{'mb-3': !showEmbed && !inline}" justify="center">
             <KsFilter
                 :configuration="blueprintFilter"
-                :buttons="FILTER_BUTTONS"
+                :buttons="{
+                    savedFilters: {shown: false},
+                    tableOptions: {shown: false}
+                }"
+                :tableOptions="{
+                    chart: {shown: false},
+                    columns: {shown: false},
+                    refresh: {shown: false}
+                }"
                 searchInputFullWidth
                 @search="emit('search', $event)"
             />
@@ -42,17 +50,13 @@
         system: boolean;
         tags?: Record<string, BlueprintTag>;
         modelValue: string[];
+        inline?: boolean;
     }>()
 
     const emit = defineEmits<{
         search: [query: string];
         "update:modelValue": [value: string[]];
     }>()
-
-    const FILTER_BUTTONS = {
-        savedFilters: {shown: false},
-        tableOptions: {shown: false},
-    } as const
 
     const blueprintFilter = useBlueprintFilter()
 
@@ -70,7 +74,7 @@
         display: flex;
         flex-direction: column;
         margin-inline: calc(var(--ks-data-table-gutter) * -1);
-        padding: 0 1.25rem var(--ks-spacing-3);
+        padding: var(--ks-spacing-5) 1.25rem;
         border-bottom: 1px solid var(--ks-border-default);
     }
 

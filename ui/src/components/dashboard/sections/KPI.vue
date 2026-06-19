@@ -19,7 +19,7 @@
         <span v-if="description" class="description">{{ description }}</span>
     </section>
 
-    <KsTableEmpty v-else />
+    <KsNoData v-else />
 </template>
 
 <script setup lang="ts">

@@ -84,10 +84,12 @@
     "overview": "Overview",
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
-    "gantt_no_tasks_match_filters": "No tasks match the selected filters. <br> Try adjusting the search, state, or log-level filters.",
+    "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
+    "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data": "No Data",
-    "no_logs_data_description": "No logs found for the selected filters. <br> Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_title": "No logs found for the selected filters.",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -423,7 +425,12 @@
       "custom": "Custom Blueprints",
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
-      "dashboards": "Dashboard Blueprints"
+      "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Category type",
+        "links": "Link & Resources",
+        "openInEditor": "Open in Edit Flow"
+      }
     },
     "use": "Use",
     "plugins": {
@@ -595,7 +602,7 @@
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
-    "execution not found": "Execution <code>{executionId}</code> is not found.",
+    "execution not found": "Execution {executionId} is not found.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",

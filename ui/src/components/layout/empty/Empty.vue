@@ -37,7 +37,7 @@
     import {useI18n} from "vue-i18n"
     import {KsButton, KsEmptyState} from "@kestra-io/design-system"
 
-    import artwork from "../../../assets/empty_visuals/assets-illus.svg"
+    import artwork from "../../../assets/empty_visuals/generic.svg"
     import {links} from "./links"
 
     const props = withDefaults(

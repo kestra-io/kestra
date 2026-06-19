@@ -2235,6 +2235,9 @@
       "open_flow": "Open flow",
       "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source"
-    }
+    },
+    "open source": "Open Source",
+    "pricing": "Pricing",
+    "license": "License"
   }
 }

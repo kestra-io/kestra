@@ -93,6 +93,11 @@
       "create": "创建一个blueprint",
       "custom": "自定义blueprints",
       "dashboards": "仪表板 Blueprints",
+      "detail": {
+        "category": "类别类型",
+        "links": "链接与资源",
+        "openInEditor": "在编辑 Flow 中打开"
+      },
       "edit": "编辑蓝图",
       "empty": "没有可显示的blueprints。",
       "flows": "流程蓝图",
@@ -656,7 +661,7 @@
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "execution id": "执行 Id",
     "execution labels": "执行标签",
-    "execution not found": "执行 <code>{executionId}</code> 未找到。",
+    "execution not found": "执行 {executionId} 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
     "execution replay": "此执行是以下内容的重放",
@@ -867,6 +872,9 @@
     "form error": "表单错误",
     "from": "从",
     "gantt": "甘特图",
+    "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
+    "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
+    "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
@@ -952,6 +960,7 @@
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
     "main_configuration": "主配置",
+    "manage labels": "管理labels",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",
@@ -1148,6 +1157,7 @@
     "no data current task": "当前task没有可用数据",
     "no inputs": "此流程没有输入。",
     "no result": "没有结果显示。",
+    "no revisions": "无修订",
     "no revisions found": "此流程只有一个修订版",
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
@@ -1243,7 +1253,8 @@
     "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
-    "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_title": "未找到所选过滤器的日志。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
       "assets": "未找到资产",
@@ -1671,7 +1682,6 @@
     "sequential": "顺序",
     "server type": "服务器类型",
     "services": "服务",
-    "set_extra_labels": "设置额外的labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1684,7 +1694,8 @@
             "flow_default_tab": "导航到flow时选择的选项卡。",
             "log_display": "打开执行时日志的呈现方式。",
             "log_level": "执行日志中显示的最低日志级别。",
-            "playground": "在编辑器游乐场中单独运行任务。"
+            "playground": "在编辑器游乐场中单独运行任务。",
+            "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。"
           },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
@@ -1697,7 +1708,8 @@
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
             "multi_panel_editor": "多面板编辑器",
-            "playground": "游乐场"
+            "playground": "游乐场",
+            "triggers_default_tab": "默认 Trigger 标签页"
           },
           "label": "主要配置"
         },

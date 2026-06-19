@@ -65,8 +65,9 @@
             :showProgressBar="false"
         />
         <KsCard v-else class="attempt-wrapper" style="--kel-card-padding: 0">
-            <KsEmpty
+            <KsNoData
                 v-if="Array.isArray((executionsStore.logs as any)) && temporalLogs.length === 0"
+                :title="t('no_logs_data_title')"
                 :description="t('no_logs_data_description')"
             />
             <DynamicScroller

@@ -1127,18 +1127,16 @@ class ExecutionControllerRunnerTest {
         assertThat(execution).isNotNull();
         assertThat(execution.getId()).isNotNull();
 
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(
-                HttpRequest
-                    .POST(
-                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                        new Hello("webhook")
-                    ),
-                Execution.class
-            )
+        // When the condition is not met, no execution is created and the webhook returns 204 (not 409).
+        var response = client.toBlocking().exchange(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    new Hello("webhook")
+                )
         );
-        assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getResponse().body()).isNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        assertThat(response.body()).isNull();
     }
 
     @Test

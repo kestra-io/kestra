@@ -27,6 +27,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookInputRenderException;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -101,7 +102,8 @@ public class WebhookService {
      * @param context The webhook context containing request, path, flow, and services
      * @param trigger The webhook trigger
      * @param output The trigger output to attach to the execution
-     * @return The prepared execution, or empty if conditions are not met
+     * @return The prepared execution, or empty if the trigger conditions are not met
+     * @throws WebhookInputRenderException if the trigger inputs cannot be rendered or processed
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         Execution execution = Execution.builder()
@@ -139,8 +141,10 @@ public class WebhookService {
                 renderedInputs = readExecutionInputs(flow, execution, renderedInputs);
                 execution = execution.withInputs(renderedInputs);
             } catch (Exception e) {
-                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
-                return Optional.empty(); // Input rendering failed
+                // Distinct from "conditions not met": a rendering failure is a real error and must
+                // not be silently turned into a 204, so we surface it to the caller.
+                log.warn("Unable to render the webhook inputs", e);
+                throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
             }
         }
 

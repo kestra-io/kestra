@@ -45,7 +45,8 @@
                 />
             </div>
 
-            <div v-if="!isEditMode">
+            <div>
+                <p v-if="isEditMode" class="update-hint">{{ $t("filter.update conditions hint") }}</p>
                 <div class="filter-summary">
                     <div v-if="appliedFilters.length > 0" class="filter-list">
                         <div
@@ -168,6 +169,12 @@
             font-size: var(--ks-font-size-sm);
             color: var(--ks-text-secondary);
         }
+    }
+
+    .update-hint {
+        margin: 0 0 0.5rem;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
     }
 
     .filter-summary {

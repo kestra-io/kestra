@@ -11,7 +11,7 @@
         <template #reference>
             <button class="set-labels-tag" :class="{'is-active': isOpen}" :disabled="!enabled">
                 <Plus />
-                {{ $t("set_extra_labels") }}
+                {{ $t("manage labels") }}
             </button>
         </template>
 
@@ -37,7 +37,7 @@
                         {{ $t("cancel") }}
                     </KsButton>
                     <KsButton type="primary" :loading="isSaving" @click="setLabels()">
-                        {{ $t("ok") }}
+                        {{ $t("save") }}
                     </KsButton>
                 </div>
             </div>

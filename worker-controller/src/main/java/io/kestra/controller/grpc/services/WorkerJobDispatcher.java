@@ -286,7 +286,8 @@ public class WorkerJobDispatcher {
         ClusterEvent.EventType.MAINTENANCE_ENTER,
         ClusterEvent.EventType.MAINTENANCE_EXIT,
         ClusterEvent.EventType.KILL_SWITCH_SYNC_REQUESTED,
-        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED
+        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED,
+        ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED
     );
 
     /**
@@ -296,6 +297,10 @@ public class WorkerJobDispatcher {
     private void onClusterEvent(ClusterEvent event) {
         if (event.eventType() == ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED) {
             onWorkerGroupSync(event.message());
+            return;
+        }
+        if (event.eventType() == ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED) {
+            evictWorker(event.message());
             return;
         }
         if (EXCLUDED_EVENT_TYPES.contains(event.eventType())) {
@@ -350,6 +355,26 @@ public class WorkerJobDispatcher {
                 );
             }
         }
+    }
+
+    /**
+     * Forcibly drops a single worker by id: unregisters it from all indices and closes its
+     * stream. Used to act on a {@link ClusterEvent.EventType#WORKER_DISCONNECT_REQUESTED} event
+     * The worker must reconnect and re-authenticate, which fails closed once the token is gone.
+     * <p>
+     * No-op if the worker is not connected to this controller.
+     *
+     * @param workerId the worker to drop
+     */
+    public void evictWorker(String workerId) {
+        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
+        if (context == null) {
+            log.debug("Worker '{}' is not connected to this controller, nothing to evict", workerId);
+            return;
+        }
+        log.info("Evicting worker '{}': its registration token was revoked or removed", workerId);
+        unregisterWorker(context);
+        context.complete();
     }
 
     /**

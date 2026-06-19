@@ -164,6 +164,7 @@
                         combinedView: true,
                         kind: tab?.props?.blueprintKind,
                         embed: tab?.props?.embed ?? true,
+                        system: tab?.props?.system ?? false,
                     })
                 }
                 if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null
@@ -184,6 +185,8 @@
         margin: 0 !important;
         padding: 0;
         flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     section.no-overflow {

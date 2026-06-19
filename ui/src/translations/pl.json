@@ -93,6 +93,11 @@
       "create": "Utwórz blueprint",
       "custom": "Niestandardowe blueprints",
       "dashboards": "Dashboard Blueprinty",
+      "detail": {
+        "category": "Typ kategorii",
+        "links": "Linki i zasoby",
+        "openInEditor": "Otwórz w Edytuj Flow"
+      },
       "edit": "Edytuj blueprint",
       "empty": "Brak blueprintów do wyświetlenia.",
       "flows": "Schematy Flow",
@@ -656,7 +661,7 @@
     "execution already finished": "Wykonanie <code>{executionId}</code> już zakończone",
     "execution id": "Id wykonania",
     "execution labels": "Etykiety wykonania",
-    "execution not found": "Wykonanie <code>{executionId}</code> nie zostało znalezione.",
+    "execution not found": "Wykonanie {executionId} nie zostało znalezione.",
     "execution not in state FAILED": "Wykonanie <code>{executionId}</code> nie jest w stanie FAILED",
     "execution not in state PAUSED": "Wykonanie <code>{executionId}</code> nie jest w stanie PAUSED",
     "execution replay": "To wykonanie jest powtórką z",
@@ -867,6 +872,9 @@
     "form error": "Błąd formularza",
     "from": "Od",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Ta wykonanie zakończyło się bez uruchomienia żadnego taska.\nSprawdź jego podsumowanie i logi, aby poznać przyczynę.",
+    "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, stanu lub poziomu logów.",
+    "gantt_no_tasks_match_filters_title": "Brak zadań pasujących do wybranych filtrów.",
     "healthcheck date": "Data HealthCheck",
     "hide task documentation": "Ukryj dokumentację task",
     "home": "Strona główna",
@@ -952,6 +960,7 @@
       "raw_details": "Pokaż pełne task logs i flow logs w surowym formacie uporządkowanym według znaczników czasu"
     },
     "main_configuration": "Główna konfiguracja",
+    "manage labels": "Zarządzaj label",
     "management port": "Port zarządzania",
     "mark as": "Oznacz jako <code>{status}</code>",
     "max": "Max",
@@ -1148,6 +1157,7 @@
     "no data current task": "Brak dostępnych danych dla bieżącego taska",
     "no inputs": "Ten flow nie ma inputs.",
     "no result": "Nie ma wyników do wyświetlenia.",
+    "no revisions": "Brak rewizji",
     "no revisions found": "Istnieje tylko jedna wersja dla tego flow",
     "no-executions-view": {
       "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
@@ -1243,7 +1253,8 @@
     "no_history": "Brak dostępnej historii",
     "no_inputs": "Brak dostępnych inputów.",
     "no_logs_data": "Brak danych",
-    "no_logs_data_description": "Nie znaleziono logów dla wybranych filtrów. <br> Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
+    "no_logs_data_description": "Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
+    "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "no_results": {
       "assets": "Nie znaleziono zasobów",
@@ -1671,7 +1682,6 @@
     "sequential": "Sekwencyjny",
     "server type": "Typ serwera",
     "services": "Usługi",
-    "set_extra_labels": "Ustaw dodatkowe label",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1684,7 +1694,8 @@
             "flow_default_tab": "Karta wybrana podczas nawigacji do flow.",
             "log_display": "Jak logi są prezentowane podczas otwierania wykonania.",
             "log_level": "Minimalny poziom logów wyświetlany w logach wykonania.",
-            "playground": "Uruchom taski indywidualnie w edytorze playground."
+            "playground": "Uruchom taski indywidualnie w edytorze playground.",
+            "triggers_default_tab": "Karta wybrana podczas nawigacji do strony triggerów."
           },
           "fields": {
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
@@ -1697,7 +1708,8 @@
             "log_display": "Domyślne Wyświetlanie Log",
             "log_level": "Domyślna Poziom Logs",
             "multi_panel_editor": "Edytor Wielopanelowy",
-            "playground": "Plac zabaw"
+            "playground": "Plac zabaw",
+            "triggers_default_tab": "Domyślna karta Triggers"
           },
           "label": "Główna konfiguracja"
         },

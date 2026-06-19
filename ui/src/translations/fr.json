@@ -93,6 +93,11 @@
       "create": "Créer un blueprint",
       "custom": "Plans personnalisés",
       "dashboards": "Tableaux de bord Blueprints",
+      "detail": {
+        "category": "Type de catégorie",
+        "links": "Liens et ressources",
+        "openInEditor": "Ouvrir dans Modifier Flow"
+      },
       "edit": "Modifier un blueprint",
       "empty": "Aucun blueprint à afficher.",
       "flows": "Plans de Flow",
@@ -656,7 +661,7 @@
     "execution already finished": "Exécution <code>{executionId}</code> déjà terminée",
     "execution id": "Identifiant d'exécution",
     "execution labels": "Labels d'exécution",
-    "execution not found": "L'exécution <code>{executionId}</code> est introuvable.",
+    "execution not found": "L'exécution {executionId} est introuvable.",
     "execution not in state FAILED": "Exécution <code>{executionId}</code> n'est pas dans l'état FAILED",
     "execution not in state PAUSED": "Exécution <code>{executionId}</code> n'est pas dans l'état PAUSED",
     "execution replay": "Cette exécution est une relecture de",
@@ -867,6 +872,9 @@
     "form error": "Formulaire invalid",
     "from": "De",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Cette exécution s'est terminée sans exécuter de tâche.  \nConsultez son aperçu et ses logs pour en connaître la raison.",
+    "gantt_no_tasks_match_filters": "Essayez d'ajuster les filtres de recherche, d'état ou de niveau de log.",
+    "gantt_no_tasks_match_filters_title": "Aucune tâche ne correspond aux filtres sélectionnés.",
     "healthcheck date": "Dernier Healthcheck",
     "hide task documentation": "Cacher la documentation des tâches",
     "home": "Accueil",
@@ -952,6 +960,7 @@
       "raw_details": "Affiche les logs des tâches et du flow dans un format brut ordonné par horodatage"
     },
     "main_configuration": "Configuration Principale",
+    "manage labels": "Gérer les labels",
     "management port": "Port de gestion",
     "mark as": "Marqué comme <code>{status}</code>",
     "max": "Maximum",
@@ -1148,6 +1157,7 @@
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
     "no inputs": "Ce flow n'a pas d'entrée.",
     "no result": "Il n'y a aucun résultat à afficher.",
+    "no revisions": "Aucune révision",
     "no revisions found": "Une seule révision existe pour ce flow",
     "no-executions-view": {
       "guidance_desc": "Besoin d'aide pour exécuter votre flow ?",
@@ -1243,7 +1253,8 @@
     "no_history": "Aucun historique disponible",
     "no_inputs": "Aucun input disponible.",
     "no_logs_data": "Pas de données",
-    "no_logs_data_description": "Aucun log trouvé pour les filtres sélectionnés. <br> Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
+    "no_logs_data_description": "Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
+    "no_logs_data_title": "Aucun log trouvé pour les filtres sélectionnés.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
     "no_results": {
       "assets": "Aucun actif trouvé",
@@ -1671,7 +1682,6 @@
     "sequential": "Séquentiel",
     "server type": "Type de serveur",
     "services": "Services",
-    "set_extra_labels": "Définir des labels supplémentaires",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1684,7 +1694,8 @@
             "flow_default_tab": "Onglet sélectionné lors de la navigation vers un flow.",
             "log_display": "Comment les logs sont présentés lors de l'ouverture d'une exécution.",
             "log_level": "Niveau de log minimum affiché dans les logs d'exécution.",
-            "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur."
+            "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
+            "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers."
           },
           "fields": {
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
@@ -1697,7 +1708,8 @@
             "log_display": "Affichage des journaux par défaut",
             "log_level": "Niveau d'affichage des journaux par défaut",
             "multi_panel_editor": "Éditeur Multi-Panneaux",
-            "playground": "Aire de jeu"
+            "playground": "Aire de jeu",
+            "triggers_default_tab": "Onglet par défaut des Triggers"
           },
           "label": "Configuration Principale"
         },

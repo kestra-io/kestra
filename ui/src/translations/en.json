@@ -83,9 +83,13 @@
     "details": "Details",
     "overview": "Overview",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
+    "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
+    "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data": "No Data",
-    "no_logs_data_description": "No logs found for the selected filters. <br> Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_title": "No logs found for the selected filters.",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -421,7 +425,12 @@
       "custom": "Custom Blueprints",
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
-      "dashboards": "Dashboard Blueprints"
+      "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Category type",
+        "links": "Link & Resources",
+        "openInEditor": "Open in Edit Flow"
+      }
     },
     "use": "Use",
     "plugins": {
@@ -437,6 +446,7 @@
     "date count": "{count} on the {date}",
     "revisions": "Revisions",
     "no revisions found": "Only one revision exists for this flow",
+    "no revisions": "No Revisions",
     "see full revision": "See full revision",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
@@ -592,7 +602,7 @@
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
-    "execution not found": "Execution <code>{executionId}</code> is not found.",
+    "execution not found": "Execution {executionId} is not found.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",
@@ -891,7 +901,7 @@
     "backfill": "Backfill",
     "Set labels tooltip": "Set labels to the execution",
     "Set labels": "Set labels",
-    "set_extra_labels": "Set extra labels",
+    "manage labels": "Manage labels",
     "Set labels to execution": "Add or update the labels of the execution <code>{id}</code>",
     "Set labels done": "Successfully set the labels of the execution",
     "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code> executions(s)?",
@@ -990,6 +1000,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           },
@@ -1001,6 +1012,7 @@
             "execute_flow": "Where execution results open after triggering a run.",
             "execute_default_tab": "Tab selected when navigating to an execution.",
             "flow_default_tab": "Tab selected when navigating to a flow.",
+            "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground."
           }

@@ -1,4 +1,28 @@
 <template>
+    <KsSearch
+        v-model="search"
+        :placeholder="$t('search')"
+        clearable
+    />
+
+    <div class="items">
+        <Item
+            v-for="dashboard in filtered"
+            :key="dashboard.id"
+            :dashboard
+            :active="dashboard.id === selected?.id"
+            @set-default="$emit('setDefault', $event)"
+            @edit="$emit('edit', $event)"
+            @remove="$emit('remove', $event)"
+            @click="$emit('select', dashboard.id)"
+        />
+        <span v-if="!filtered.length">
+            {{ $t("dashboards.empty") }}
+        </span>
+    </div>
+
+    <KsDivider class="divider" />
+
     <KsButton
         type="primary"
         :icon="Plus"
@@ -6,43 +30,8 @@
         :to="{name: 'dashboards/create', query}"
         class="w-100"
     >
-        <small>{{ $t("dashboards.creation.label") }}</small>
+        {{ $t("dashboards.creation.label") }}
     </KsButton>
-
-    <Item
-        :dashboard="{
-            id: filtered.filter(d => d.id === selected?.id)?.[0]?.id ?? 'default',
-            title: (selected?.title ?? $t('dashboards.default')),
-            isDefault: filtered.filter(d => d.id === selected?.id)?.[0]?.isDefault
-        }"
-        :edit="(id: string) => $emit('edit', id)"
-        :setAsDefault="(id: string) => $emit('setDefault', id)"
-        class="mt-3"
-    />
-
-    <hr class="my-2">
-
-    <KsSearch
-        v-model="search"
-        :placeholder="$t('search')"
-        clearable
-        class="my-1 mb-3 search"
-    />
-
-    <div class="overflow-x-auto items">
-        <Item
-            v-for="(dashboard, index) in filtered"
-            :key="index"
-            :dashboard
-            :edit="(id: string) => $emit('edit', id)"
-            :remove="(d: {id: string; title: string}) => $emit('remove', d)"
-            :setAsDefault="(id: string) => $emit('setDefault', id)"
-            @click="$emit('select', dashboard.id)"
-        />
-        <span v-if="!filtered.length" class="empty">
-            {{ $t("dashboards.empty") }}
-        </span>
-    </div>
 </template>
 
 <script setup lang="ts">
@@ -72,22 +61,13 @@
 </script>
 
 <style scoped lang="scss">
-.search {
-    font-size: revert;
-}
-
 .items {
-    max-height: 193.4px !important; // 5 visible items
-
-    :deep(li.kel-dropdown-menu__item) {
-        border-radius: unset;
-    }
+    max-height: 12rem; // ~5 visible items before scrolling
+    overflow-y: auto;
+    margin-top: var(--ks-spacing-2);
 }
 
-:deep(li.kel-dropdown-menu__item) {
-    &:hover,
-    &:focus {
-        background: var(--ks-bg-hover);
-    }
+.divider {
+    margin: var(--ks-spacing-2) 0;
 }
 </style>

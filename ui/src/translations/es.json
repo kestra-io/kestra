@@ -93,6 +93,11 @@
       "create": "Crear un blueprint",
       "custom": "Planos personalizados",
       "dashboards": "Planos del Dashboard",
+      "detail": {
+        "category": "Tipo de categoría",
+        "links": "Enlace y Recursos",
+        "openInEditor": "Abrir en Edit Flow"
+      },
       "edit": "Editar un blueprint",
       "empty": "No hay blueprints para mostrar.",
       "flows": "Planos de Flow",
@@ -656,7 +661,7 @@
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
     "execution id": "Id de Ejecución",
     "execution labels": "Etiquetas de ejecución",
-    "execution not found": "La ejecución <code>{executionId}</code> no se encuentra.",
+    "execution not found": "La ejecución {executionId} no se encuentra.",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
     "execution replay": "Esta ejecución es una repetición de",
@@ -867,6 +872,9 @@
     "form error": "Error en formulario",
     "from": "Desde",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Esta ejecución terminó sin ejecutar ninguna task.\nVerifique su resumen y logs para conocer la razón.",
+    "gantt_no_tasks_match_filters": "Intenta ajustar los filtros de búsqueda, estado o nivel de log.",
+    "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
     "healthcheck date": "Fecha de HealthCheck",
     "hide task documentation": "Ocultar documentación de la task",
     "home": "Inicio",
@@ -952,6 +960,7 @@
       "raw_details": "Mostrar task logs y flow logs completos en un formato crudo ordenado por marca de tiempo"
     },
     "main_configuration": "Configuración Principal",
+    "manage labels": "Gestionar etiquetas",
     "management port": "Puerto de gestión",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -1148,6 +1157,7 @@
     "no data current task": "No hay datos disponibles para el task actual.",
     "no inputs": "Este flow no tiene inputs.",
     "no result": "No hay resultados para mostrar.",
+    "no revisions": "Sin revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
     "no-executions-view": {
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
@@ -1243,7 +1253,8 @@
     "no_history": "No hay historial disponible",
     "no_inputs": "No hay inputs disponibles.",
     "no_logs_data": "Sin datos",
-    "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
+    "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
+    "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
     "no_results": {
       "assets": "No se encontraron activos",
@@ -1671,7 +1682,6 @@
     "sequential": "Secuencial",
     "server type": "Tipo de servidor",
     "services": "Servicios",
-    "set_extra_labels": "Establecer etiquetas adicionales",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1684,7 +1694,8 @@
             "flow_default_tab": "Pestaña seleccionada al navegar a un flow.",
             "log_display": "Cómo se presentan los logs al abrir una ejecución.",
             "log_level": "Nivel mínimo de log mostrado en los logs de ejecución.",
-            "playground": "Ejecutar tasks individualmente en el editor de pruebas."
+            "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
+            "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers."
           },
           "fields": {
             "auto_refresh_interval": "Intervalo de Auto Refresh",
@@ -1697,7 +1708,8 @@
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado",
             "multi_panel_editor": "Editor de Panel Múltiple",
-            "playground": "Área de pruebas"
+            "playground": "Área de pruebas",
+            "triggers_default_tab": "Pestaña de Triggers Predeterminados"
           },
           "label": "Configuración Principal"
         },

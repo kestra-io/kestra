@@ -1,7 +1,18 @@
 <template>
     <template v-if="initialInputs">
+        <!-- Wizard progress: one step per fillable step (FORM titles, "Inputs" for ungrouped runs).
+             active = currentStep, so earlier steps render as finished and the recap marks them all done. -->
+        <el-steps v-if="isWizard" :active="currentStep" finishStatus="success" class="wizard-steps" data-testid="wizard-steps">
+            <el-step v-for="section in recapSections" :key="section.index" :title="section.title" />
+        </el-steps>
+        <!-- The section name lives in the stepper (bold when active); only the optional description
+             is shown above the fields. -->
+        <div v-if="isWizard && current?.kind === 'form' && current.description" class="wizard-step-header">
+            <Markdown :source="current.description" class="text-description" />
+        </div>
+
         <el-form-item
-            v-for="input in inputsMetaData"
+            v-for="input in visibleInputs"
             :key="input.id"
             :required="input.required !== false"
             :rules="requiredRules(input)"
@@ -10,7 +21,7 @@
             :inlineMessage="true"
         >
             <template #label>
-                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <Markdown :source="inputLabel(input)" class="d-inline-flex md-label" />
             </template>
             <Editor
                 :fullHeight="false"
@@ -255,8 +266,44 @@
                 </el-text>
             </template>
         </el-form-item>
+
+        <div v-if="isOnRecap" class="wizard-recap" data-testid="inputs-wizard-recap">
+            <h5 class="wizard-step-title">
+                {{ $t('review your inputs') }}
+            </h5>
+            <div v-for="section in recapSections" :key="section.index" class="wizard-recap-section">
+                <div class="wizard-recap-section-header">
+                    <span class="wizard-recap-section-title">{{ section.title }}</span>
+                    <el-button :icon="Pencil" @click="editStep(section.index)" :data-testid="`recap-edit-${section.index}`">
+                        {{ $t('edit') }}
+                    </el-button>
+                </div>
+                <div v-for="field in section.fields" :key="field.id" class="wizard-recap-field">
+                    <span class="wizard-recap-field-label">{{ inputLabel(field) }}</span>
+                    <span class="wizard-recap-field-value">{{ recapDisplayValue(field) }}</span>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
+        </div>
+
+        <div v-if="isWizard" class="wizard-nav">
+            <el-button v-if="currentStep > 0" :icon="ChevronLeft" @click="goBack" data-testid="wizard-back">
+                {{ $t('back') }}
+            </el-button>
+            <span class="wizard-nav-spacer" />
+            <el-button
+                v-if="current?.kind !== 'recap'"
+                type="primary"
+                :icon="returnToRecap ? CheckMark : ChevronRight"
+                :loading="navLoading"
+                @click="goNext"
+                data-testid="wizard-next"
+            >
+                {{ showComputingLabel ? $t('loading') : $t(returnToRecap ? 'done' : 'next') }}
+            </el-button>
         </div>
     </template>
 
@@ -271,11 +318,13 @@
     import ValidationError from "../flows/ValidationError.vue";
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, h, type Component, getCurrentInstance} from "vue";
     import {Execution, useExecutionsStore} from "../../stores/executions";
+    import type {Check, InputMetaData, ValidationEventPayload, ValidationResponse} from "../../stores/executions";
     import {useI18n} from "vue-i18n";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
-    import {normalize, type InputType} from "../../utils/inputs";
+    import {normalize, flattenInputs, type InputType} from "../../utils/inputs";
+    import {useInputsWizard} from "../../composables/useInputsWizard";
     import DurationPicker from "./DurationPicker.vue";
     // @ts-expect-error no types for it yet
     import {inputsToFormData} from "../../utils/submitTask";
@@ -285,57 +334,14 @@
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue";
+    import CheckIcon from "vue-material-design-icons/Check.vue";
     import LoadingIcon from "vue-material-design-icons/Loading.vue";
     import {Flow} from "../../stores/flow";
 
-    interface InputError {
-        message: string;
-    }
-
-    interface InputMetaData {
-        id: string;
-        type: InputType
-        displayName?: string;
-        description?: string;
-        required?: boolean;
-        defaults?: unknown;
-        value?: unknown;
-        values?: string[];
-        options?: string[];
-        errors?: InputError[];
-        isDefault?: boolean;
-        isRadio?: boolean;
-        allowCustomValue?: boolean;
-        min?: number;
-        max?: number;
-        allowedFileExtensions?: string[];
-        accept?: string;
-        prefill?: unknown;
-        // present only on the raw flow inputs (props.initialInputs); the rendered values are
-        // computed server-side (e.g. via the subflow() function), so the validate response strips them
-        expression?: string;
-        dependsOn?: unknown;
-    }
-
     interface SelectedTrigger {
         inputs?: Record<string, unknown>;
-    }
-
-    interface ValidationResponse {
-        checks?: unknown[];
-        inputs: Array<{
-            enabled: boolean;
-            input: InputMetaData;
-            errors?: InputError[];
-            value?: unknown;
-            isDefault?: boolean;
-        }>;
-    }
-
-    interface ValidationEventPayload {
-        formData: FormData | undefined;
-        inputsMetaData: InputMetaData[];
-        callback: (response: ValidationResponse) => void;
     }
 
     // Props
@@ -346,6 +352,8 @@
         flow?: Flow;
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
+        mode?: "flat" | "wizard";
+        formGroups?: Record<string, {displayName?: string; description?: string}>;
     }>(), {
         executeClicked: false,
         modelValue: () => ({}),
@@ -353,15 +361,18 @@
         flow: undefined,
         execution: undefined,
         selectedTrigger: undefined,
+        mode: "flat",
+        formGroups: undefined,
     });
 
     // Emits
     const emit = defineEmits<{
         "update:modelValue": [value: Record<string, unknown>];
         "update:modelValueNoDefault": [value: Record<string, unknown>];
-        "update:checks": [checks: unknown[]];
+        "update:checks": [checks: Check[]];
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
+        "update:onRecap": [value: boolean];
     }>();
 
     // Stores and composables
@@ -391,6 +402,9 @@
     const Pencil = markRaw(PencilIcon) as Component;
     const Plus = markRaw(PlusIcon) as Component;
     const ContentSave = markRaw(ContentSaveIcon) as Component;
+    const ChevronLeft = markRaw(ChevronLeftIcon) as Component;
+    const ChevronRight = markRaw(ChevronRightIcon) as Component;
+    const CheckMark = markRaw(CheckIcon) as Component;
 
     // Ad-hoc spinner rendered into a dynamic input's el-select suffix while its values are being
     // (re)computed. 1.3 has no design-system loading affordance for el-select, so render the icon
@@ -412,10 +426,44 @@
             : null;
     });
 
+    // ---- FORM wizard ----
+    // A flow whose inputs contain a FORM renders as a multi-step Next/Back wizard; otherwise this
+    // degrades to flat mode. The composable owns the nav/recap/persistence as well as
+    // visibleInputs/inputLabel (which also drive the flat form). Destructured with identical names so
+    // the template needs no changes; the refs/computeds keep their reactivity through the destructure.
+    const {
+        isWizard,
+        current,
+        currentStep,
+        returnToRecap,
+        navLoading,
+        showComputingLabel,
+        isOnRecap,
+        visibleInputs,
+        inputLabel,
+        recapSections,
+        recapDisplayValue,
+        goNext,
+        goBack,
+        editStep,
+        restorePersistedValues,
+        persistValues,
+    } = useInputsWizard({
+        props,
+        inputsMetaData,
+        inputsValues,
+        multiSelectInputs,
+        inputsValidated,
+        validateInputs,
+        onRecapChange: (val) => emit("update:onRecap", val),
+    });
+
     // Inputs whose `values` are rendered dynamically (e.g. via the subflow() function).
     // Derived from the raw flow inputs because the validate response strips `expression`.
+    // FORM groups are expanded to dotted leaves so a dynamic input nested in a FORM (wizard mode)
+    // is matched by its dotted id (e.g. `setup.region`), same as inputsMetaData/template ids.
     const dynamicInputIds = computed(() =>
-        new Set((props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
+        new Set(flattenInputs(props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
     );
 
     // True while a dynamic input's values are being (re)computed. Drives the loading spinner so the
@@ -454,23 +502,45 @@
         }
     }
 
-    function inputError(id: string): string | null {
-        // if this input has not been edited yet
-        // showing any error is annoying
-        if (!inputsValidated.value.has(id)) {
-            return null;
+    function inputError(id: string): string | undefined {
+        // While a dynamic input's values are being (re)computed its metadata is stale — an error from
+        // an earlier validate (e.g. "Missing required" computed when it was still empty) would otherwise
+        // flash even though the field is now filled, until the in-flight validate's clean response lands.
+        // Suppress it until the recompute settles.
+        if (isLoadingInput(id)) {
+            return undefined;
+        }
+        const meta = inputsMetaData.value.find((it) => it.id === id && it.errors && it.errors.length > 0);
+        if (!meta) {
+            return undefined;
+        }
+        const message = meta.errors!.map(err => err.message).join("\n");
+
+        // A render/resolution failure (a SELECT whose expression/subflow() can't resolve, or an input
+        // whose `defaults` Pebble expression throws) means the field itself is broken — the backend flags
+        // these with `renderError`. Surface them as soon as the input is shown (initial load / wizard step
+        // arrival), without waiting for an edit or a Next click. Plain value errors (e.g. a required input
+        // left empty) are not flagged and stay gated until interaction.
+        const isRenderError = meta.errors!.some(err => err.renderError);
+
+        // if this input has not been edited yet showing a value error is annoying
+        if (!isRenderError && !inputsValidated.value.has(id)) {
+            return undefined;
         }
 
-        const errors = inputsMetaData.value
-            .filter((it) => it.id === id && it.errors && it.errors.length > 0)
-            .map(it => it.errors!.map(err => err.message).join("\n"));
-
-        return errors.length > 0 ? errors[0] : null;
+        return message;
     }
 
     function updateDefaults(): void {
         for (const input of inputsMetaData.value) {
             const {type, id, value, defaults} = input;
+            // An unrendered Pebble-expression default must be rendered server-side, not pre-filled as a
+            // raw template string. Until there's a concrete rendered `value`, leave the field empty: a
+            // successful render returns a value (filled on the next validate); a failed render then
+            // surfaces its renderError instead of being masked by re-submitting the raw `{{ ... }}`.
+            if (value == null && typeof defaults === "string" && defaults.includes("{{")) {
+                continue;
+            }
             const valueOrDefault = value ?? defaults;
             if (inputsValues[id] === undefined || inputsValues[id] === null || input.isDefault) {
                 if (type === "MULTISELECT") {
@@ -647,6 +717,14 @@
         } finally {
             isComputingValues.value = false;
         }
+
+        // A change made while this validate was in flight was dropped by the generation guard above and
+        // predates the change-watcher (attached only after the initial validate resolves). Re-validate so
+        // a change during ANY in-flight round-trip is never swallowed. Bounded: onChange is the only thing
+        // that moves inputGeneration, so a pass that sees no new edit terminates.
+        if (inputGeneration !== requestGeneration) {
+            return validateInputs();
+        }
     }
 
     function requiredRules(input: InputMetaData): FormItemRule[] | undefined {
@@ -776,6 +854,9 @@
         Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs));
     }
 
+    // Wizard: restore in-progress values (e.g. after a page reload) before the first validate.
+    restorePersistedValues();
+
     // Apply defaults from the raw inputs immediately so static inputs show their default value
     // without waiting for the initial validate call (which may be slow, e.g. a subflow() render).
     // Mark not-yet-provided inputs as default first so they stay excluded from the validate request,
@@ -799,6 +880,7 @@
                     debouncedValidation();
                     emit("update:modelValue", {...inputsValues});
                     emit("update:modelValueNoDefault", inputsValuesWithNoDefault());
+                    persistValues();
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val));
             },
@@ -851,9 +933,11 @@
         validateInputs,
         inputsValues,
         inputsMetaData,
+        inputsValidated,
         isComputingValues,
         isComputingInput,
         isLoadingInput,
+        inputError,
         onChange,
     });
 </script>

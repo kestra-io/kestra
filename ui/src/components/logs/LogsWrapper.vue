@@ -22,7 +22,17 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
+                    <Sections
+                        ref="dashboard"
+                        :charts
+                        :dashboard="DEFAULT_DASHBOARD"
+                        showDefault
+                        class="mb-4"
+                        selectableChartId="logs_timeseries"
+                        :brushStart="brushStart"
+                        :brushEnd="brushEnd"
+                        @chart-select="onChartSelect"
+                    />
                 </template>
 
                 <template #table>
@@ -163,6 +173,7 @@
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import {buildBrushTimeRangeQuery} from "../../utils/logsBrushMappers"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -269,6 +280,26 @@
 
         return rawValue as string | undefined
     })
+    const brushStart = computed(() => route.query.startDate as string | undefined)
+    const brushEnd = computed(() => route.query.endDate as string | undefined)
+
+    function onChartSelect(event: {chartId: string; payload: {startDate: string; endDate: string} | null}) {
+        if (event.payload) {
+            const query = buildBrushTimeRangeQuery(
+                route.query as Record<string, string | string[] | undefined>,
+                event.payload.startDate,
+                event.payload.endDate,
+                pageKey,
+            )
+            router.push({query})
+        } else {
+            const query: Record<string, any> = {...route.query}
+            delete query.startDate
+            delete query.endDate
+            router.push({query})
+        }
+    }
+
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => [

@@ -202,8 +202,6 @@
         scheduleDate.value !== undefined,
     )
 
-    defineExpose({isDirty})
-
     const hasWebhookTriggers = computed(() => {
         if (!flow.value?.triggers) {
             return false
@@ -217,6 +215,27 @@
     const hasBlockingChecks = computed(() =>
         checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
     )
+
+    const canPrefill = computed(() =>
+        Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
+    )
+
+    function submit() {
+        onSubmit()
+        executeClicked.value = true
+    }
+
+    defineExpose({
+        isDirty,
+        submit,
+        prefill: fillInputsFromExecution,
+        canPrefill,
+        flowCanBeExecuted,
+        hasBlockingChecks,
+        buttonText: props.buttonText,
+        buttonIcon: props.buttonIcon,
+        buttonTestId: props.buttonTestId,
+    })
 
     function getExecutionLabels(): Label[] {
         if (!execution.value?.labels) {

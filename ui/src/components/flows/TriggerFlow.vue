@@ -34,7 +34,10 @@
             <template #header>
                 <span v-html="t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun ref="flowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <template #footer>
+                <FlowRunActions :flowRun="flowRunRef" />
+            </template>
         </KsDialog>
         <KsDialog
             v-if="isSelectFlowOpen"
@@ -77,10 +80,13 @@
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="t('inputs')">
                     <div class="w-100">
-                        <FlowRun ref="selectFlowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
             </KsForm>
+            <template #footer>
+                <FlowRunActions :flowRun="selectFlowRunRef" />
+            </template>
         </KsDialog>
     </div>
 </template>
@@ -97,6 +103,7 @@
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
     import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
     import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
 

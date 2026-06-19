@@ -72,4 +72,8 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=9zQTUeL0KMc",
         learnMore: "https://kestra.io/docs/workflow-components/plugin-defaults",
     },
+    variables: {
+        video: "https://www.youtube.com/watch?v=fs86GLg-OGM",
+        learnMore: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore",
+    },
 }

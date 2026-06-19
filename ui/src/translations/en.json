@@ -1748,6 +1748,10 @@
         "title": "You have no plugin defaults yet!",
         "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
       },
+      "variables": {
+        "title": "No variables yet",
+        "content": "Add key-value pairs to share configuration across flows. Child namespaces inherit them automatically, and you can reference any value with"
+      },
       "workerRegistrationTokens": {
         "title": "You have no registration tokens yet!",
         "content": "Registration tokens let remote workers securely authenticate and register with your Kestra instance. Create a token, then use it to connect new workers to this cluster."

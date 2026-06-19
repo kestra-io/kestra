@@ -284,6 +284,7 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
                 .body(buildSeeBody(session.get(), jsonrpcRequest)
                     .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
                 ));
+            default -> throw new IllegalStateException("Unexpected message type: " + message);
         };
 
         return response

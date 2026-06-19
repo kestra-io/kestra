@@ -943,6 +943,7 @@
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "leave page": "पृष्ठ छोड़ें",
+    "license": "लाइसेंस",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
     "light_version": "लाइट संस्करण",
     "line": "रेखा",
@@ -1403,6 +1404,7 @@
     "open in new tab": "एक नए टैब में",
     "open in same tab": "उसी टैब में",
     "open sidebar": "साइडबार खोलें",
+    "open source": "ओपन सोर्स",
     "open_page": "Open page",
     "optional": "वैकल्पिक",
     "original execution": "मूल निष्पादन",
@@ -1554,6 +1556,7 @@
       "showing_rows": "पंक्तियाँ {start}-{end} में से {total} दिखा रहा है",
       "view": "देखें"
     },
+    "pricing": "मूल्य निर्धारण",
     "product_tour": "उत्पाद यात्रा",
     "properties": {
       "hidden": "टेबल में छिपा हुआ",

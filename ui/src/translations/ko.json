@@ -943,6 +943,7 @@
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "leave page": "페이지 나가기",
+    "license": "라이선스",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
     "light_version": "라이트 버전",
     "line": "라인",
@@ -1403,6 +1404,7 @@
     "open in new tab": "새 탭에서",
     "open in same tab": "동일한 탭에서",
     "open sidebar": "사이드바 열기",
+    "open source": "오픈 소스",
     "open_page": "Open page",
     "optional": "선택 사항",
     "original execution": "원래 실행",
@@ -1554,6 +1556,7 @@
       "showing_rows": "{total}개 중 {start}-{end} 행 표시",
       "view": "보기"
     },
+    "pricing": "가격 책정",
     "product_tour": "제품 둘러보기",
     "properties": {
       "hidden": "테이블에 숨김",

@@ -943,6 +943,7 @@
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
     "leave page": "Покинуть страницу",
+    "license": "Лицензия",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
     "light_version": "Легкая версия",
     "line": "Линия",
@@ -1403,6 +1404,7 @@
     "open in new tab": "В новой вкладке",
     "open in same tab": "В той же вкладке",
     "open sidebar": "открыть боковую панель",
+    "open source": "Открытый исходный код",
     "open_page": "Open page",
     "optional": "Опционально",
     "original execution": "Оригинальное выполнение",
@@ -1554,6 +1556,7 @@
       "showing_rows": "Показаны строки {start}-{end} из {total}",
       "view": "Просмотр"
     },
+    "pricing": "Цены",
     "product_tour": "Тур по продукту",
     "properties": {
       "hidden": "Скрыто в таблице",

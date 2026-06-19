@@ -943,6 +943,7 @@
     "launch execution": "执行",
     "learn_more": "了解更多",
     "leave page": "离开页面",
+    "license": "许可证",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line": "行",
@@ -1403,6 +1404,7 @@
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
     "open sidebar": "打开侧边栏",
+    "open source": "开源",
     "open_page": "Open page",
     "optional": "可选",
     "original execution": "原始执行",
@@ -1554,6 +1556,7 @@
       "showing_rows": "显示第 {start}-{end} 行，共 {total} 行",
       "view": "查看"
     },
+    "pricing": "定价",
     "product_tour": "产品导览",
     "properties": {
       "hidden": "隐藏在表格中",

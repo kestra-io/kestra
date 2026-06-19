@@ -943,6 +943,7 @@
     "launch execution": "実行",
     "learn_more": "詳細を確認",
     "leave page": "ページを離れる",
+    "license": "ライセンス",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line": "ライン",
@@ -1403,6 +1404,7 @@
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
     "open sidebar": "サイドバーを開く",
+    "open source": "オープンソース",
     "open_page": "Open page",
     "optional": "オプション",
     "original execution": "元の実行",
@@ -1554,6 +1556,7 @@
       "showing_rows": "{total}のうち{start}から{end}の行を表示中",
       "view": "表示"
     },
+    "pricing": "料金",
     "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",

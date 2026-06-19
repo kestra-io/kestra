@@ -943,6 +943,7 @@
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
     "leave page": "Salir de la página",
+    "license": "Licencia",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
     "line": "Línea",
@@ -1403,6 +1404,7 @@
     "open in new tab": "En una nueva pestaña",
     "open in same tab": "En la misma pestaña",
     "open sidebar": "abrir barra lateral",
+    "open source": "Código Abierto",
     "open_page": "Open page",
     "optional": "Opcional",
     "original execution": "Ejecución original",
@@ -1554,6 +1556,7 @@
       "showing_rows": "Mostrando filas {start}-{end} de {total}",
       "view": "Ver"
     },
+    "pricing": "Precios",
     "product_tour": "Recorrido del Producto",
     "properties": {
       "hidden": "Oculto en la Tabla",

@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         :disabled="!enabled"
         :icon="Pause"
         @click="click"
     >
         {{ $t('pause') }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
     import Pause from "vue-material-design-icons/Pause.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"

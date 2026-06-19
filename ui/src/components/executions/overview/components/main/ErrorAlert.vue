@@ -1,46 +1,59 @@
 <template>
-    <KsAlert id="error" type="error" :closable="false">
-        <template #title>
-            <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
-        </template>
+    <div class="error-wrapper">
+        <KsAlert id="error" type="error" :closable="false" @click="expanded = !expanded">
+            <template #title>
+                <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}</span>
+            </template>
 
-        <div v-if="logs" class="logs">
-            <div v-for="(log, lIdx) in logs.slice(0, 4)" :key="lIdx">
-                <LogLine
-                    :level="log.level"
-                    :log="{...log, message: stripBackticks(log.message ?? '')}"
-                    :excludeMetas="['namespace', 'flowId', 'executionId']"
-                />
+            <div v-if="logs.length">
+                <p v-if="!expanded" class="error-preview">
+                    {{ $t('last error was') }}: {{ stripBackticks(logs.at(-1)?.message ?? '') }}
+                </p>
+
+                <div v-else class="logs">
+                    <div v-for="(log, index) in logs.slice(0, MAX_PREVIEW_LOGS)" :key="index">
+                        <LogLine
+                            :level="log.level"
+                            :log="{...log, message: stripBackticks(log.message ?? '')}"
+                            :excludeMetas="EXCLUDED_METAS"
+                        />
+                    </div>
+                    <div v-if="logs.length >= MAX_PREVIEW_LOGS" class="link">
+                        <router-link :to @click.stop>
+                            <KsButton>{{ $t("errorLogs") }}</KsButton>
+                        </router-link>
+                    </div>
+                </div>
             </div>
-            <div v-if="logs.length > 3" class="link">
-                <router-link :to>
-                    <KsButton>
-                        {{ $t("errorLogs") }}
-                    </KsButton>
-                </router-link>
-            </div>
-        </div>
-    </KsAlert>
+        </KsAlert>
+
+        <button class="expand-btn" @click="expanded = !expanded">
+            <ChevronUp v-if="expanded" />
+            <ChevronDown v-else />
+        </button>
+    </div>
 </template>
 
 <script setup lang="ts">
     import {onMounted, ref} from "vue"
 
-    import {
-        Execution,
-        useExecutionsStore,
-    } from "../../../../../stores/executions"
-    const store = useExecutionsStore()
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 
+    import {Execution, useExecutionsStore} from "../../../../../stores/executions"
     import {Log} from "../../../../../stores/logs"
-
     import LogLine from "../../../../logs/LogLine.vue"
 
-    const props = defineProps<{ execution: Execution }>()
+    const MAX_PREVIEW_LOGS = 4
+    const EXCLUDED_METAS: (keyof Log)[] = ["namespace", "flowId", "executionId"]
+    const BACKTICKS_REGEX = /`([^`]*)`/g
 
-    function stripBackticks(message: string): string {
-        return message.replace(/`([^`]*)`/g, "$1")
-    }
+    const props = defineProps<{execution: Execution}>()
+
+    const store = useExecutionsStore()
+
+    const expanded = ref(false)
+    const logs = ref<Log[]>([])
 
     const to = {
         name: "executions/update",
@@ -54,7 +67,9 @@
         query: {"filters[level][EQUALS]": "ERROR"},
     }
 
-    const logs = ref<Log[]>([])
+    function stripBackticks(message: string): string {
+        return message.replace(BACKTICKS_REGEX, "$1")
+    }
 
     onMounted(async () => {
         try {
@@ -65,68 +80,99 @@
                 showMessageOnError: false,
             })
 
-            if (!response.length) return
-
-            logs.value = response
+            if (response.length) logs.value = response
         } catch {
             // User may not have ACCESS_LOGS permission — silently skip
         }
     })
 </script>
+
 <style scoped lang="scss">
+    .error-wrapper {
+        position: relative;
+    }
 
-#error {
-    :deep(.kel-alert__content) {
+    .expand-btn {
+        position: absolute;
+        top: var(--ks-spacing-3);
+        right: var(--ks-spacing-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
         cursor: pointer;
-        width: 100%;
-        max-width: 100%;
-        gap: 0;
+        color: var(--ks-text-error);
+        padding: var(--ks-spacing-1);
+        border-radius: var(--ks-radius-xs);
+        z-index: 1;
 
-        & .kel-alert__title {
-            & div,
-            & span {
+        &:hover {
+            background: color-mix(in srgb, var(--ks-text-error) 10%, transparent);
+        }
+    }
+
+    .error-preview {
+        margin: 0;
+        color: var(--ks-text-error);
+        font-size: var(--ks-font-size-sm);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #error {
+        overflow: hidden;
+        cursor: pointer;
+
+        :deep(.kel-alert__content) {
+            min-width: 0;
+            width: 100%;
+            gap: 0;
+
+            .kel-alert__title > div,
+            .kel-alert__title > span {
                 display: flex;
                 justify-content: space-between;
+                align-items: center;
                 font-size: var(--kel-alert-title-font-size);
-                line-height: 24px;
-                color: var(--ks-status-error);
-
+                line-height: 1.5;
+                color: var(--ks-text-error);
             }
-        }
 
-        & .kel-alert__description {
-            color: var(--ks-text-primary);
+            .kel-alert__description {
+                min-width: 0;
+                overflow: hidden;
+                color: var(--ks-text-primary);
 
-            & .logs {
-                padding-top: calc(1rem * 1.5);
+                .logs {
+                    padding-top: var(--ks-spacing-5);
 
-                > div {
-                    width: 100%;
+                    > div {
+                        width: 100%;
+                    }
 
-                    & .line {
-                        & .header {
-                            display: flex;
-                            flex-wrap: wrap;
-                            margin-bottom: calc(1rem / 2);
+                    .line .header {
+                        display: flex;
+                        flex-wrap: wrap;
+                        margin-bottom: var(--ks-spacing-2);
 
-                            & span {
-                                margin-left: 0;
-                            }
+                        span {
+                            margin-left: 0;
                         }
                     }
-                }
 
-                .kel-button {
-                    color: var(--ks-status-error);
-                }
+                    .kel-button {
+                        color: var(--ks-text-error);
+                    }
 
-                .link {
-                    padding: 1rem 0 calc(1rem / 2) 0;
-                    border-top: 1px solid var(--ks-border-default);
-                    text-align: right;
+                    .link {
+                        padding: var(--ks-spacing-4) 0 var(--ks-spacing-2);
+                        border-top: 1px solid var(--ks-border-default);
+                        text-align: right;
+                    }
                 }
             }
         }
     }
-}
 </style>

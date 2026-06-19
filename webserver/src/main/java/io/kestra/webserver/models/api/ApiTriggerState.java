@@ -7,13 +7,16 @@ import java.util.List;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 
 import jakarta.validation.constraints.NotNull;
 
 /**
  * API DTO for exposing trigger state to the UI.
  * <p>
- * Excludes internal scheduler fields ({@code tenantId}, {@code vnode}, {@code lastEventId}, {@code type}).
+ * Excludes internal scheduler fields ({@code tenantId}, {@code vnode}, {@code lastEventId}). The
+ * scheduler's {@code type} is exposed as {@code kind} to not clash with the trigger definition's
+ * {@code type} (the plugin class) when both are merged by API consumers.
  */
 public record ApiTriggerState(
     @NotNull String namespace,
@@ -28,7 +31,8 @@ public record ApiTriggerState(
     boolean locked,
     String workerId,
     Instant lastTriggeredDate,
-    String executionId
+    String executionId,
+    TriggerType kind
 ) {
     public static ApiTriggerState from(TriggerState state) {
         return new ApiTriggerState(
@@ -44,7 +48,8 @@ public record ApiTriggerState(
             state.isLocked(),
             state.getWorkerId(),
             truncate(state.getLastTriggeredDate()),
-            state.getExecutionId()
+            state.getExecutionId(),
+            state.getType()
         );
     }
 

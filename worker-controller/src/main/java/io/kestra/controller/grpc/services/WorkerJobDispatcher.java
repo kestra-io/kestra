@@ -286,7 +286,8 @@ public class WorkerJobDispatcher {
         ClusterEvent.EventType.MAINTENANCE_ENTER,
         ClusterEvent.EventType.MAINTENANCE_EXIT,
         ClusterEvent.EventType.KILL_SWITCH_SYNC_REQUESTED,
-        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED
+        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED,
+        ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED
     );
 
     /**
@@ -296,6 +297,10 @@ public class WorkerJobDispatcher {
     private void onClusterEvent(ClusterEvent event) {
         if (event.eventType() == ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED) {
             onWorkerGroupSync(event.message());
+            return;
+        }
+        if (event.eventType() == ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED) {
+            evictWorker(event.message());
             return;
         }
         if (EXCLUDED_EVENT_TYPES.contains(event.eventType())) {
@@ -350,6 +355,26 @@ public class WorkerJobDispatcher {
                 );
             }
         }
+    }
+
+    /**
+     * Forcibly drops a single worker by id: unregisters it from all indices and closes its
+     * stream. Used to act on a {@link ClusterEvent.EventType#WORKER_DISCONNECT_REQUESTED} event
+     * The worker must reconnect and re-authenticate, which fails closed once the token is gone.
+     * <p>
+     * No-op if the worker is not connected to this controller.
+     *
+     * @param workerId the worker to drop
+     */
+    public void evictWorker(String workerId) {
+        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
+        if (context == null) {
+            log.debug("Worker '{}' is not connected to this controller, nothing to evict", workerId);
+            return;
+        }
+        log.info("Evicting worker '{}': its registration token was revoked or removed", workerId);
+        unregisterWorker(context);
+        context.complete();
     }
 
     /**
@@ -866,24 +891,41 @@ public class WorkerJobDispatcher {
 
         // The permit and bucket slot were already atomically reserved in findAndReserveWorker.
 
-        // 1. PERSIST before sending (critical for recovery)
-        persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        WorkerJobResponse response = WorkerJobResponse.newBuilder()
+            .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
+            .addJobs(
+                WorkerJobPayload.newBuilder()
+                    .setJobId(jobId)
+                    .setJobData(MessageFormats.JSON.toByteString(job))
+                    .build()
+            )
+            .build();
+
+        // Reject a payload the worker's gRPC channel could never receive: dispatching it would
+        // trigger RESOURCE_EXHAUSTED on the worker stream, hot-loop reconnects, and hang the
+        // execution in RUNNING forever. Fail the job cleanly instead.
+        int workerLimit = context.getMaxInboundMessageSize();
+        if (workerLimit > 0 && response.getSerializedSize() > workerLimit) {
+            rejectOversizedJob(context, job, dispatchWorkerQueueId, bucket, response.getSerializedSize(), workerLimit);
+            return;
+        }
+
+        // 1. PERSIST before sending (critical for recovery). A transient failure (e.g. pool
+        // exhaustion) must not bubble up to the poller, which treats it as fatal and shuts down.
+        try {
+            persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        } catch (Exception e) {
+            log.warn("Failed to persist running state for job {} on worker {}; re-queuing for redelivery: {}",
+                jobId, context.getWorkerId(), e.getMessage());
+            handlePersistFailure(context, job, originalEvent, dispatchWorkerQueueId, bucket);
+            return;
+        }
 
         // 2. Track in-flight locally
         context.trackInFlight(jobId, job, bucket);
 
         // 3. Send to worker
         try {
-            WorkerJobResponse response = WorkerJobResponse.newBuilder()
-                .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
-                .addJobs(
-                    WorkerJobPayload.newBuilder()
-                        .setJobId(jobId)
-                        .setJobData(MessageFormats.JSON.toByteString(job))
-                        .build()
-                )
-                .build();
-
             context.sendResponse(response);
             log.debug("Dispatched job {} to worker {}", jobId, context.getWorkerId());
             metricRegistry.counter(
@@ -939,6 +981,57 @@ public class WorkerJobDispatcher {
 
         // Re-queue the job
         requeue(originalEvent);
+    }
+
+    /**
+     * Handles a failure to persist the running state before dispatch. The job is not yet tracked
+     * in-flight, so the reserved permit and bucket are released directly (as in
+     * {@link #rejectOversizedJob}), then the job is re-queued for redelivery.
+     */
+    private void handlePersistFailure(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
+        WorkerJobEvent originalEvent, String dispatchWorkerQueueId, String bucket) {
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
+            metricRegistry.workerGroupAndQueueTags(context.getWorkerGroupId(), dispatchWorkerQueueId)
+        ).increment();
+
+        context.addPermits(1);
+        context.releaseBucket(bucket);
+
+        requeue(originalEvent);
+    }
+
+    /**
+     * Rejects a job whose serialized payload exceeds the worker's advertised gRPC inbound
+     * limit. Releases the reserved permit and bucket and fails the job cleanly so the
+     * execution terminates instead of hanging while the worker hot-loops reconnecting.
+     */
+    private void rejectOversizedJob(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
+        String dispatchWorkerQueueId, String bucket, int payloadSize, int workerLimit) {
+        log.error("Job {} payload ({} bytes) exceeds worker {} max inbound gRPC message size ({} bytes); failing the job instead of dispatching",
+            job.uid(), payloadSize, context.getWorkerId(), workerLimit);
+
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
+            metricRegistry.workerGroupAndQueueTags(context.getWorkerGroupId(), dispatchWorkerQueueId)
+        ).increment();
+
+        // Release the permit + bucket reserved in findAndReserveWorker (the job is not dispatched).
+        context.addPermits(1);
+        context.releaseBucket(bucket);
+
+        // Fail the job cleanly so the execution reaches a terminal state.
+        if (job instanceof WorkerTask workerTask) {
+            try {
+                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().fail()));
+            } catch (QueueException e) {
+                log.error("Failed to emit FAILED result for oversized job {}: {}", job.uid(), e.getMessage(), e);
+            }
+        } else if (job instanceof WorkerTrigger workerTrigger) {
+            triggerEventQueue.send(new TriggerEvaluated(workerTrigger.triggerId(), null));
+        }
     }
 
     /**

@@ -271,7 +271,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
             condition = condition.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
         }
         if (namespace != null) {
-            condition = condition.and(field("namespace").eq(namespace));
+            // Without a flowId, the namespace is a prefix: it matches the namespace itself and all
+            // its descendants, consistent with the documented behavior and PurgeExecutions. With a
+            // flowId, it targets that flow's exact namespace.
+            if (flowId != null) {
+                condition = condition.and(field("namespace").eq(namespace));
+            } else {
+                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+            }
         }
         if (flowId != null) {
             condition = condition.and(field("flow_id").eq(flowId));

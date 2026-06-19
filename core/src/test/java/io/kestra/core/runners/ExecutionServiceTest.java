@@ -15,11 +15,13 @@ import org.slf4j.event.Level;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.executor.command.Create;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
@@ -30,6 +32,7 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
 
 import jakarta.inject.Inject;
@@ -695,5 +698,22 @@ class ExecutionServiceTest {
         labels.add(new Label("test", "test"));
         Execution newExecution = executionService.updateLabels(execution, labels);
         assertThat(newExecution.getLabels()).contains(new Label("test", "test"));
+    }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void createShouldSetOriginalIdToCreateCommandExecutionId() throws Exception {
+        // Given
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        String executionId = IdUtils.create();
+        Create createCommand = Create.of(new ExecutionId(flow.toFlowId(), executionId));
+
+        // When
+        Execution execution = executionService.create(createCommand, flow);
+
+        // Then
+        // originalId must match the provided execution id, not the auto-generated id from newExecution().
+        assertThat(execution.getId()).isEqualTo(executionId);
+        assertThat(execution.getOriginalId()).isEqualTo(executionId);
     }
 }

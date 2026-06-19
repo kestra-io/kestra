@@ -8,6 +8,62 @@ import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as ExecutionUtils from "../utils/executionUtils"
+import {executionLogsDownloadFilename} from "../utils/logs"
+import {InputType} from "../utils/inputs"
+
+export interface Check {
+    message: string
+    style: string
+    behavior: string
+}
+
+export interface InputError {
+    message: string;
+}
+
+export interface ValidationResponse {
+    checks?: Check[];
+    inputs: Array<{
+        enabled: boolean;
+        input: InputMetaData;
+        errors?: InputError[];
+        value?: unknown;
+        isDefault?: boolean;
+    }>;
+}
+
+export interface ValidationEventPayload {
+    formData: FormData | undefined;
+    inputsMetaData: InputMetaData[];
+    callback: (response: ValidationResponse) => void;
+}
+
+export type ValueOptionLike = string | {label: string; value: string};
+
+export interface InputMetaData {
+    id: string;
+    type: InputType
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+    defaults?: unknown;
+    value?: unknown;
+    values?: ValueOptionLike[];
+    options?: ValueOptionLike[];
+    errors?: InputError[];
+    isDefault?: boolean;
+    isRadio?: boolean;
+    allowCustomValue?: boolean;
+    min?: number;
+    max?: number;
+    allowedFileExtensions?: string[];
+    accept?: string;
+    prefill?: unknown;
+    // present only on the raw flow inputs (props.initialInputs); the rendered
+    // validate response strips `expression`, keeping `dependsOn` at most
+    expression?: string;
+    dependsOn?: unknown;
+}
 
 interface LogsState {
     total: number;
@@ -316,7 +372,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data",
@@ -496,6 +552,15 @@ export const useExecutionsStore = defineStore("executions", () => {
             params: options.params,
         }).then(response => {
             return response.data
+        })
+    }
+
+    const downloadLogsFile = (options: { executionId: string; params?: Record<string, any> }) => {
+        return downloadLogs(options).then((text: unknown) => {
+            Utils.downloadUrl(
+                window.URL.createObjectURL(new Blob([text as BlobPart])),
+                executionLogsDownloadFilename(options.executionId, new Date()),
+            )
         })
     }
 
@@ -826,6 +891,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLogs,
         loadMetrics,
         downloadLogs,
+        downloadLogsFile,
         deleteLogs,
         filePreview,
         setLabels,

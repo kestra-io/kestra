@@ -4,12 +4,13 @@
             <KsTooltip
                 v-for="element of tabs"
                 :key="element.uid"
-                :content="element.button.label"
+                :content="element.button.disabled ? (element.button.disabledTooltip ?? element.button.label) : element.button.label"
                 placement="bottom"
                 :showAfter="500"
             >
                 <button
                     :class="{active: openTabs.includes(element.uid)}"
+                    :disabled="element.button.disabled"
                     @click="setTabValue(element.uid)"
                 >
                     <component class="tabs-icon" :is="element.button.icon" />
@@ -33,6 +34,7 @@
                         v-for="element of tabs"
                         :key="element.uid"
                         :class="{active: openTabs.includes(element.uid)}"
+                        :disabled="element.button.disabled"
                         @click="setTabValue(element.uid)"
                     >
                         <component class="tabs-icon" :is="element.button.icon" />
@@ -100,8 +102,13 @@
             transition: all 0.2s ease-in-out;
             gap: var(--ks-spacing-2);
 
-            &:hover {
+            &:hover:not(:disabled) {
                 background-color: var(--ks-bg-base);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
 
             &.active {

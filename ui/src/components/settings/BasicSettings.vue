@@ -64,6 +64,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.triggers_default_tab')"
+                :description="$t('settings.blocks.configuration.descriptions.triggers_default_tab')"
+            >
+                <KsSelect fit :modelValue="settings.triggersDefaultTab" @update:model-value="onTriggersDefaultTab">
+                    <KsOption v-for="item in triggersDefaultTabOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')"
                 :description="$t('settings.blocks.configuration.descriptions.auto_refresh_interval')"
             >
@@ -144,23 +153,10 @@
 
             <SettingRow
                 :label="$t('settings.blocks.theme.fields.environment_name')"
-                :description="$t('settings.blocks.theme.descriptions.environment_name')"
+                :description="isEnvNameFromConfig ? $t('settings.blocks.theme.fields.environment_name_tooltip') : $t('settings.blocks.theme.descriptions.environment_name')"
             >
-                <KsTooltip
-                    v-if="isEnvNameFromConfig"
-                    :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
-                    placement="top"
-                >
-                    <KsInput
-                        :modelValue="settings.envName"
-                        @change="onEnvName"
-                        :placeholder="$t('name')"
-                        clearable
-                    />
-                </KsTooltip>
                 <KsInput
-                    v-else
-                    :modelValue="settings.envName"
+                    v-model="settings.envName"
                     @change="onEnvName"
                     :placeholder="$t('name')"
                     clearable
@@ -176,6 +172,17 @@
                     @change="onEnvColor"
                     showAlpha
                 />
+            </SettingRow>
+        </Block>
+
+        <Block :heading="$t('settings.blocks.sidebar.label')">
+            <SettingRow
+                :label="$t('settings.blocks.sidebar.fields.items')"
+                :description="$t('settings.blocks.sidebar.descriptions.items')"
+            >
+                <KsButton @click="showSidebarCustomize = true">
+                    {{ $t("customize sidebar") }}
+                </KsButton>
             </SettingRow>
         </Block>
 
@@ -218,10 +225,12 @@
             </SettingRow>
         </Block>
     </Wrapper>
+
+    <SidebarCustomizeModal v-model="showSidebarCustomize" :menu="menu" />
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import moment from "moment-timezone"
 
@@ -234,6 +243,7 @@
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../stores/layout"
+    import {useLeftMenu} from "override/components/useLeftMenu"
 
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue"
@@ -242,6 +252,8 @@
     import Block from "./components/block/Block.vue"
     import SettingRow from "./components/block/SettingRow.vue"
     import ThemePicker, {type ThemeOption} from "./components/block/ThemePicker.vue"
+    import SidebarCustomizeModal from "../layout/SidebarCustomizeModal.vue"
+    import {KsButton} from "@kestra-io/design-system"
 
     const FONT_SIZES = [10, 11, 12, 13, 14, 15, 16, 18, 20]
     const AUTO_REFRESH_INTERVALS = [5, 10, 15, 30, 60, 120]
@@ -258,6 +270,7 @@
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
         executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
         flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
+        triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
         editorPlayground: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
         logsFontSize: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
@@ -275,6 +288,8 @@
     const toast = useToast()
     const miscStore = useMiscStore()
     const layoutStore = useLayoutStore()
+    const {menu} = useLeftMenu()
+    const showSidebarCustomize = ref(false)
 
     const routeInfo = computed(() => ({title: t("settings.label")}))
     useRouteContext(routeInfo)
@@ -287,9 +302,10 @@
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
         executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
         flowDefaultTab: localStorage.getItem("flowDefaultTab") || "overview",
+        triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
-        logsFontSize: parseInt(localStorage.getItem("logsFontSize") ?? "") || 12,
+        logsFontSize: parseInt(localStorage.getItem("logsFontSize") ?? "") || 14,
         editorFontFamily: localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace",
         editorFontSize: parseInt(localStorage.getItem("editorFontSize") ?? "") || 12,
         autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",
@@ -396,6 +412,11 @@
         {value: "auditlogs", label: t("auditlogs")},
     ])
 
+    const triggersDefaultTabOptions = computed(() => [
+        {value: "add", label: t("triggers_tabs_add")},
+        {value: "manage", label: t("triggers_tabs_manage")},
+    ])
+
     const dateFormats = [
         {value: "YYYY-MM-DDTHH:mm:ssZ"},
         {value: "YYYY-MM-DD hh:mm:ss A"},
@@ -424,11 +445,11 @@
         notifySaved(meta?.[0], meta?.[1])
     }
 
-    function notifySaved(labelKey?: string, descriptionKey?: string) {
+    function notifySaved(labelKey?: string, descriptionKey?: string, bodyOverride?: string) {
         const title = labelKey
             ? t("settings.updated", {name: t(labelKey)})
             : t("saved")
-        const body = descriptionKey ? t(descriptionKey) : t("settings.label")
+        const body = bodyOverride ?? (descriptionKey ? t(descriptionKey) : t("settings.label"))
         toast.success(body, title)
     }
 
@@ -493,6 +514,11 @@
         persist("flowDefaultTab", value)
     }
 
+    function onTriggersDefaultTab(value: string) {
+        settings.triggersDefaultTab = value
+        persist("triggersDefaultTab", value)
+    }
+
     function onAutoRefreshInterval(value: number) {
         settings.autoRefreshInterval = value
         persist(storageKeys.AUTO_REFRESH_INTERVAL, value)
@@ -500,8 +526,9 @@
 
     function onTheme(value: string) {
         settings.theme = value as SelectedTheme
-        Utils.switchTheme(miscStore, value)
-        notifySaved(`${THEME}.fields.color_mode`, `${THEME}.descriptions.color_mode`)
+        Utils.switchTheme(miscStore, value as SelectedTheme)
+        const mode = themeOptions.value.find((option) => option.value === value)?.label ?? value
+        notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
     }
 
     function onLogsFontSize(value: number) {
@@ -534,8 +561,7 @@
         persist("editorPlayground", settings.editorPlayground)
     }
 
-    function onEnvName(value: string | number) {
-        settings.envName = String(value)
+    function onEnvName() {
         layoutStore.setEnvName(settings.envName)
         notifySaved(`${THEME}.fields.environment_name`)
     }

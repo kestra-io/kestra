@@ -40,6 +40,7 @@ logger.warnOnce = (msg, options) => {
 }
 
 import {commit} from "./plugins/commit"
+import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
@@ -75,6 +76,7 @@ export default defineConfig(({mode}) => {
             ],
         },
         plugins: [
+            symlinkAlias(__dirname),
             vue({
                 template: {
                     compilerOptions: {

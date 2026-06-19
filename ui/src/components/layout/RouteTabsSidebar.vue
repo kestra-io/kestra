@@ -87,6 +87,7 @@
         width: 200px;
         flex-shrink: 0;
         --ks-sidebar-item-font-weight: normal;
+        --ks-sidebar-item-title-color: currentColor;
     }
 
     .tabs-list {

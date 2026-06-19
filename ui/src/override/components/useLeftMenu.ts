@@ -108,9 +108,11 @@ export function useLeftMenu() {
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
+                id: "workspace",
                 title: "Workspace",
                 child: [
                     {
+                        id: "dashboards",
                         title: t("dashboards.labels.plural"),
                         routes: routeStartWith("home"),
                         href: {
@@ -121,6 +123,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "ai-flow",
                         title: t("ai.flow.title"),
                         routes: routeStartWith("welcome"),
                         href: {
@@ -131,6 +134,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "flows",
                         title: t("flows"),
                         routes: routeStartWith("flows"),
                         href: {
@@ -141,6 +145,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "executions",
                         title: t("executions"),
                         routes: routeStartWith("executions"),
                         href: {
@@ -151,6 +156,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "logs",
                         title: t("logs"),
                         routes: routeStartWith("logs"),
                         href: {
@@ -161,6 +167,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "apps",
                         title: t("apps"),
                         routes: routeStartWith("apps"),
                         href: {
@@ -174,6 +181,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "tests",
                         title: t("demos.tests.label"),
                         routes: routeStartWith("tests"),
                         href: {
@@ -189,9 +197,11 @@ export function useLeftMenu() {
                 ],
             },
             {
+                id: "resources",
                 title: "Resources",
                 child: [
                     {
+                        id: "namespaces",
                         title: t("namespaces"),
                         routes: routeStartWith("namespaces"),
                         href: {
@@ -202,6 +212,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "assets",
                         title: t("demos.assets.label"),
                         routes: routeStartWith("assets"),
                         href: {
@@ -215,6 +226,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "plugins",
                         title: t("plugins.names"),
                         routes: routeStartWith("plugins"),
                         href: {
@@ -225,6 +237,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "blueprints",
                         title: t("blueprints.title"),
                         routes: routeStartWith("blueprints"),
                         href: {
@@ -241,9 +254,11 @@ export function useLeftMenu() {
                 ],
             },
             {
+                id: "tenant",
                 title: t("tenant.name"),
                 child: [
                     {
+                        id: "system-overview",
                         title: t("system overview"),
                         routes: routeStartWith("admin/stats"),
                         href: {
@@ -254,6 +269,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "kv",
                         title: t("kv.name"),
                         routes: routeStartWith("kv"),
                         href: {
@@ -264,6 +280,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "secrets",
                         title: t("secret.names"),
                         routes: routeStartWith("secrets"),
                         href: {
@@ -277,6 +294,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "triggers",
                         title: t("triggers"),
                         routes: routeStartWith("admin/triggers"),
                         href: {
@@ -287,6 +305,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "mcp-servers",
                         title: t("mcp.servers"),
                         routes: routeStartWith("admin/mcp-servers"),
                         href: {
@@ -297,6 +316,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "audit-logs",
                         title: t("auditlogs"),
                         routes: routeStartWith("admin/auditlogs"),
                         href: {
@@ -310,6 +330,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "concurrency-limits",
                         title: t("concurrency limits"),
                         routes: routeStartWith("admin/concurrency-limits"),
                         href: {
@@ -321,6 +342,7 @@ export function useLeftMenu() {
                         hidden: !configs?.isConcurrencyViewEnabled,
                     },
                     {
+                        id: "iam",
                         title: t("iam"),
                         routes: routeStartWith("admin/iam"),
                         href: {
@@ -338,7 +360,9 @@ export function useLeftMenu() {
         ]
 
         flatten(generated).forEach((item: MenuItem) => {
-            item.id = item.title.toLowerCase().replaceAll(" ", "-")
+            if (!item.id) {
+                item.id = item.title.toLowerCase().replaceAll(" ", "-")
+            }
 
             if (item.icon?.element) item.icon.class = "menu-icon"
 

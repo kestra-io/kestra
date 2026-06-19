@@ -28,7 +28,7 @@
                 </KsTable>
             </template>
         </KsDataTable>
-        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px" :beforeClose="beforeEditClose">
             <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
@@ -55,6 +55,7 @@
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const {t} = useI18n()
 
@@ -90,6 +91,11 @@
     const editRunning = ref(false)
     const newRunningCount = ref(0)
     const editingRow = ref<ConcurrencyLimit|null>(null)
+
+    const {guardedClose} = useDiscardGuard(
+        () => editingRow.value != null && newRunningCount.value !== editingRow.value.running,
+    )
+    const beforeEditClose = (done: () => void) => guardedClose(() => done())
 
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true

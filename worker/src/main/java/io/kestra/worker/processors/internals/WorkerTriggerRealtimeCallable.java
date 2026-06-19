@@ -1,5 +1,6 @@
 package io.kestra.worker.processors.internals;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -23,6 +24,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
     TriggerContext triggerContext;
     Consumer<? super Throwable> onError;
     Consumer<TriggerEvaluationResult> onNext;
+    private final AtomicBoolean errorReported = new AtomicBoolean(false);
 
     public WorkerTriggerRealtimeCallable(
         RunContext runContext,
@@ -57,7 +59,11 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
 
         Flux.from(evaluate)
             .onBackpressureBuffer()
-            .doOnError(onError)
+            .doOnError(throwable ->
+            {
+                errorReported.set(true);
+                onError.accept(throwable);
+            })
             .doOnNext(onNext)
             .onErrorComplete()
             .blockLast();
@@ -65,5 +71,13 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
         // Here the publisher can be created, so the task is in success.
         // Errors can still occur, but they should be recovered automatically.
         return SUCCESS;
+    }
+
+    /**
+     * Whether the publisher terminated with an error that was already reported through the
+     * {@code onError} callback — in which case the stream end must not be reported again.
+     */
+    public boolean isErrorReported() {
+        return errorReported.get();
     }
 }

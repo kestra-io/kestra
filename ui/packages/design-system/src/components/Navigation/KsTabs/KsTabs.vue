@@ -2,7 +2,10 @@
     <ElTabs
         v-model="model"
         :type="type"
-        :class="{'kel-tabs--box': props.type === 'box'}"
+        :class="{
+            'kel-tabs--box': props.type === 'box',
+            'kel-tabs--segmented': props.type === 'segmented',
+        }"
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default>
@@ -21,7 +24,7 @@
     const model = defineModel<string>()
 
     const props = defineProps<{
-        type?: "" | "card" | "border-card" | "box"
+        type?: "" | "card" | "border-card" | "box" | "segmented"
     }>()
 
     defineSlots<{
@@ -29,7 +32,7 @@
     }>()
 
     const type = computed(() =>
-        (props.type === "box" ? "" : props.type),
+        (props.type === "box" || props.type === "segmented" ? "" : props.type),
     )
 
     const filteredProps = useFilteredProps(props, ["type"])
@@ -80,21 +83,18 @@
             }
         }
 
-        &.kel-tabs--box {
-            position: sticky;
-            z-index: 1000;
-
+        &.kel-tabs--box,
+        &.kel-tabs--segmented {
             .kel-tabs__active-bar {
                 display: none;
             }
 
-            .kel-tabs__nav-wrap {
-                background: var(--ks-bg-input);
-                border-bottom: var(--ks-border-width-thin) solid var(--ks-border-subtle);
+            .kel-tabs__nav-wrap::after {
+                display: none;
+            }
 
-                &::after {
-                    display: none;
-                }
+            .kel-tabs__header {
+                margin-bottom: 0;
             }
 
             .kel-tabs__nav {
@@ -102,8 +102,51 @@
                 padding: var(--ks-spacing-2);
             }
 
-            .kel-tabs__header {
-                margin-bottom: 0;
+            .kel-tabs__item {
+                min-width: 45px;
+                max-width: fit-content;
+                height: 28px;
+                padding: var(--ks-spacing-2) var(--ks-spacing-3) !important;
+                font-size: var(--ks-font-size-xs);
+                color: var(--ks-text-secondary);
+                border: 0.5px solid transparent;
+                border-radius: 6px;
+                transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+                &.is-active {
+                    background: var(--ks-btn-secondary-bg-active);
+                    color: var(--ks-text-primary);
+                    border-color: var(--ks-btn-secondary-border-active);
+                }
+
+                &:hover {
+                    color: var(--ks-text-primary);
+                }
+
+                &.is-disabled {
+                    background: transparent;
+                    border-color: transparent;
+                }
+            }
+        }
+
+        &.kel-tabs--box {
+            position: sticky;
+            z-index: 1000;
+
+            .kel-tabs__nav-scroll {
+                display: flex;
+                align-items: center;
+                height: 44px;
+            }
+
+            .kel-tabs__item {
+                padding: 4px 8px !important;
+            }
+
+            .kel-tabs__nav-wrap {
+                background: var(--ks-bg-surface);
+                border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
             }
 
             .kel-tabs__nav-prev {
@@ -131,31 +174,26 @@
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
+        }
 
-            .kel-tabs__item {
-                min-width: 45px;
-                max-width: fit-content;
-                height: 1.75rem;
-                padding: var(--ks-spacing-1) var(--ks-spacing-2) !important;
-                font-size: var(--ks-font-size-xs);
-                color: var(--ks-text-secondary);
-                border: var(--ks-border-width-thin) solid transparent;
-                border-radius: var(--ks-radius-sm);
-                transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        &.kel-tabs--segmented {
+            .kel-tabs__nav-wrap {
+                background: transparent;
+                border-bottom: none;
+            }
 
-                &:hover,
-                &.is-active {
-                    background: var(--ks-btn-secondary-bg-active);
-                    color: var(--ks-text-primary);
-                    border-color: var(--ks-btn-secondary-border-active);
-                }
+            .kel-tabs__nav {
+                width: fit-content;
+                padding: 4px;
+                background: var(--ks-bg-tabs-default);
+                border-radius: var(--ks-radius-lg);
+                border: var(--ks-border-width-thin) solid var(--ks-border-default);
+            }
 
-                &.is-disabled {
-                    background: transparent;
-                    border-color: transparent;
-                }
+            .kel-tabs__item.is-active {
+                background: var(--ks-btn-secondary-bg-default);
+                border-color: var(--ks-btn-secondary-border-active);
             }
         }
     }
-
 </style>

@@ -3,7 +3,7 @@
         <KsMarkdown :content="data" />
     </section>
 
-    <KsEmpty v-else :description="EMPTY_TEXT" />
+    <KsNoData v-else />
 </template>
 
 <script setup lang="ts">

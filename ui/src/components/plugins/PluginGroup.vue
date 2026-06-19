@@ -71,10 +71,10 @@
             </section>
         </template>
 
-        <KsEmpty
+        <KsNoData
             v-else-if="pluginsStore.plugins"
-            :description="$t('pluginPage.notFound')"
             class="plugin-group__state"
+            :description="$t('pluginPage.notFound')"
         />
 
         <div v-else class="plugin-group__state">
@@ -88,7 +88,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import axios from "axios"
-    import {KsPluginCard, KsEmpty, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import {KsPluginCard, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginLayout from "./PluginLayout.vue"
     import BlueprintIconStack from "./BlueprintIconStack.vue"
     import {usePluginsStore} from "../../stores/plugins"

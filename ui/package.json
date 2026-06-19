@@ -24,7 +24,7 @@
         "lint": "oxlint --fix src packages && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks || true",
+        "prepare": "cd .. && husky ui/.husky && ([ -d .git ] && rimraf .git/hooks) || true",
         "postinstall": "npx patch-package"
     },
     "dependencies": {
@@ -87,7 +87,9 @@
         "moment-timezone": "^0.6.2",
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
+        "motion-v": "^2.3.0",
         "nprogress": "^0.2.0",
+        "openai": "^6.42.0",
         "oxlint": "^1.67.0",
         "patch-package": "^8.0.1",
         "path-browserify": "^1.0.1",

@@ -3,7 +3,7 @@ import type {Chart} from "../../../../../src/components/dashboard/types.ts";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {setMockClient} from "@kestra-io/kestra-sdk"
-import {expect, within} from "storybook/test";
+import {expect, waitFor, within} from "storybook/test";
 
 const meta: Meta<typeof Table> = {
     title: "Dashboard/Sections/Table",
@@ -124,9 +124,11 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
     }),
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        await expect(await canvas.findByText("2wJlDoXR")).toBeVisible();
-        await expect(await canvas.findByText("2yiYHSqL")).toBeVisible();
-        await expect(await canvas.findByText("2Iq5tjur")).toBeVisible();
-        await expect(await canvas.findByText("69d95APm")).toBeVisible();
+        await waitFor(async () => {
+            await expect(await canvas.findByText("2wJlDoXR")).toBeVisible();
+            await expect(await canvas.findByText("2yiYHSqL")).toBeVisible();
+            await expect(await canvas.findByText("2Iq5tjur")).toBeVisible();
+            await expect(await canvas.findByText("69d95APm")).toBeVisible();
+        });
     }
 }

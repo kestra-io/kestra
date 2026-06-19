@@ -386,6 +386,58 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void findShouldSortByTotalDurationAcrossMinuteBoundary() {
+        // given - two terminated executions whose durations straddle the one-minute boundary,
+        // saved under a dedicated tenant so the result is isolated from other test data.
+        // This guards against backends that only compare the sub-minute part of the duration
+        // (e.g. the former Postgres EXTRACT(MILLISECONDS FROM interval) generated column), which
+        // would sort the multi-minute execution below the sub-minute one.
+        final String tenant = "stateDurationSortTenant";
+        final Instant clock = Instant.now();
+
+        var longExecution = Execution.builder()
+            .id("longExecution__" + FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(
+                    new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.SUCCESS, clock.plus(Duration.ofMinutes(5)))
+                )
+            )).build();
+        executionRepository.save(longExecution);
+
+        var shortExecution = Execution.builder()
+            .id("shortExecution__" + FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(
+                    new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.SUCCESS, clock.plus(Duration.ofSeconds(20)))
+                )
+            )).build();
+        executionRepository.save(shortExecution);
+
+        // when / then - state_duration is the (mapped) database column used by the controllers
+        var asc = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.asc("state_duration"))), tenant, null);
+        assertThat(asc.stream().map(Execution::getId))
+            .as("shortest total duration first when sorting ascending")
+            .containsExactly(shortExecution.getId(), longExecution.getId());
+
+        var desc = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("state_duration"))), tenant, null);
+        assertThat(desc.stream().map(Execution::getId))
+            .as("longest total duration first when sorting descending")
+            .containsExactly(longExecution.getId(), shortExecution.getId());
+    }
+
+    @Test
     protected void findTaskRun() {
         inject();
 

@@ -215,6 +215,7 @@
                     : $t('namespace files.create.folder')
             "
             width="500"
+            appendToBody
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >

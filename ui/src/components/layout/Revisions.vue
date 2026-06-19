@@ -105,15 +105,12 @@
             <span class="ml-2">Loading revisions...</span>
         </div>
     </div>
-    <div v-else class="no-revisions">
-        <div class="no-revisions-content">
-            <History class="no-revisions-icon" />
-            <div class="no-revisions-text">
-                <p class="no-revisions-title">{{ $t("no revisions") }}</p>
-                <p class="no-revisions-subtitle">{{ $t("no revisions found") }}</p>
-            </div>
-        </div>
-    </div>
+    <KsNoData
+        v-else
+        :icon="History"
+        :title="$t('no revisions')"
+        :description="$t('no revisions found')"
+    />
 </template>
 
 <script setup lang="ts">
@@ -427,46 +424,5 @@
         font-size: 0.85em;
         text-align: right;
         flex-shrink: 0;
-    }
-
-    .no-revisions {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: calc(100vh - 190px);
-    }
-
-    .no-revisions-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-    }
-
-    .no-revisions-text {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-    }
-
-    .no-revisions-icon {
-        color: var(--ks-icon-muted);
-
-        :deep(svg) {
-            width: 28px;
-            height: 28px;
-        }
-    }
-
-    .no-revisions-title {
-        font-weight: var(--ks-font-weight-semibold);
-        color: var(--ks-text-primary);
-        margin: 0;
-    }
-
-    .no-revisions-subtitle {
-        color: var(--ks-text-secondary);
-        margin: 0;
     }
 </style>

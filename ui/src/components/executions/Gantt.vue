@@ -177,8 +177,9 @@
                             </template>
                         </DynamicScroller>
                         <!-- Task runs exist but the active filters/search hid them all. -->
-                        <KsEmpty
+                        <KsNoData
                             v-else
+                            :title="t('gantt_no_tasks_match_filters_title')"
                             :description="t('gantt_no_tasks_match_filters')"
                         />
                     </template>
@@ -225,7 +226,6 @@
         KsTaskIcon,
         KsFilter as KSFilter,
         KsEmptyState,
-        KsEmpty,
         type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"

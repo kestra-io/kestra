@@ -14,16 +14,70 @@
             @toggle="onLegendToggle"
         />
 
-        <KsEchart
-            ref="ksEchartRef"
-            :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
-            class="canvas"
-            :options="echartsOption"
-            :loading="false"
-            :tooltipType="TooltipType.EXTERNAL"
-            :stickyTooltip="props.short"
-            @echarts-click="onChartClick"
-        />
+        <div
+            ref="chartWrapper"
+            class="canvas-wrapper"
+            :class="{'canvas-wrapper--selectable': isSelectable}"
+        >
+            <KsEchart
+                ref="ksEchartRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
+                class="canvas"
+                :options="echartsOption"
+                :loading="false"
+                :tooltipType="TooltipType.EXTERNAL"
+                :stickyTooltip="props.short"
+                @echarts-click="onChartClick"
+            />
+
+            <template v-if="isSelectable">
+                <div
+                    v-if="brushState.active"
+                    class="brush-scrim brush-scrim--left"
+                    :style="scrimLeftStyle"
+                />
+                <div
+                    v-if="brushState.active"
+                    class="brush-scrim brush-scrim--right"
+                    :style="scrimRightStyle"
+                />
+
+                <Motion
+                    v-if="brushState.active"
+                    as="div"
+                    class="brush-band"
+                    :layout="true"
+                    :style="bandStyle"
+                    :initial="{opacity: 0, scaleX: 0.8}"
+                    :animate="{opacity: 1, scaleX: 1}"
+                    :exit="{opacity: 0, scaleX: 0.8}"
+                    :transition="{duration: 0.15, ease: 'easeOut'}"
+                >
+                    <div
+                        class="brush-edge brush-edge--left"
+                        @mousedown.stop="startEdgeDrag('left', $event)"
+                    />
+                    <div
+                        class="brush-label"
+                        @mousedown.stop="startBandDrag($event)"
+                    >
+                        <span v-if="brushLabel">{{ brushLabel }}</span>
+                    </div>
+                    <div
+                        class="brush-edge brush-edge--right"
+                        @mousedown.stop="startEdgeDrag('right', $event)"
+                    />
+                </Motion>
+
+                <div
+                    v-if="isDragging"
+                    class="brush-drag-overlay"
+                    @mousemove="onDragMove"
+                    @mouseup="onDragEnd"
+                    @mouseleave="onDragEnd"
+                />
+            </template>
+        </div>
     </div>
     <KsNoData
         v-else-if="!props.short || (props.execution && generated?.total === 0)"
@@ -32,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, ref, watch, onMounted, onUnmounted, nextTick} from "vue"
     import {useRoute} from "vue-router"
 
     import moment from "moment"
@@ -40,6 +94,8 @@
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {Motion} from "motion-v"
+    import momentTz from "moment-timezone"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
@@ -47,6 +103,11 @@
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping, useTheme} from "../../../utils/utils"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
+    import {storageKeys} from "../../../utils/constants"
+    import {
+        bucketLabelToDateRange,
+        pixelSelectionToBucketIndices,
+    } from "../../../utils/logsBrushMappers"
 
     use([BarChart, LineChart])
 
@@ -61,6 +122,9 @@
         execution?: boolean;
         flow?: string;
         namespace?: string;
+        selectable?: boolean;
+        brushStart?: string;
+        brushEnd?: string;
     }>(), {
         dashboardId: undefined,
         filters: () => [],
@@ -69,7 +133,14 @@
         execution: false,
         flow: undefined,
         namespace: undefined,
+        selectable: false,
+        brushStart: undefined,
+        brushEnd: undefined,
     })
+
+    const emit = defineEmits<{
+        select: [{startDate: string; endDate: string} | null]
+    }>()
 
     const route = useRoute()
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
@@ -143,7 +214,6 @@
             const column = chartOptions?.column ?? ""
             const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
 
-            // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column)
@@ -169,7 +239,6 @@
                 const current = acc[stack]
                 const parsedDate = parseValue(params[column])
 
-                // Check if the date is already processed
                 if (!current.unique.has(parsedDate)) {
                     current.unique.add(parsedDate)
                     current.data.push({
@@ -177,7 +246,6 @@
                         y: params[field],
                     })
                 } else {
-                    // Update existing stack value for the same date
                     const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate)
                     if (existing) existing.y += params[field]
                 }
@@ -199,7 +267,6 @@
 
         const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
-        // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) =>
             (a.label ?? "").localeCompare(b.label ?? ""),
         )
@@ -211,7 +278,6 @@
             const column = chartOptions?.column ?? ""
             const durationKey = aggregator.value[1][0]
 
-            // Step 1: Group durations by formatted date
             const groupedDurations: Record<string, number> = {}
             rawData?.forEach((item: Record<string, any>) => {
                 const formattedDate = parseValue(item[column]) as string
@@ -376,6 +442,7 @@
     )
 
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
+    const chartWrapper = ref<HTMLElement | null>(null)
 
     const dimensionColumn = computed(() => {
         const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
@@ -402,6 +469,329 @@
     })
 
     watch(() => route.params.filters, () => refresh(), {deep: true})
+
+    // --- Brush ---
+
+    const currentDateFormat = computed(() => grouping.value.format)
+
+    const isSelectable = computed(() =>
+        props.selectable &&
+        !props.short &&
+        !props.execution &&
+        !["yyyy-MM", "yyyy-'W'ww"].includes(currentDateFormat.value),
+    )
+
+    const userTz = () =>
+        localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? momentTz.tz.guess()
+
+    type BrushState = {
+        active: boolean;
+        startIdx: number;
+        endIdx: number;
+    }
+
+    const brushState = ref<BrushState>({active: false, startIdx: 0, endIdx: 0})
+
+    const bucketPixels = ref<number[]>([])
+
+    function computeBucketPixels() {
+        const chart = ksEchartRef.value?.getEchartsInstance()
+        if (!chart) return
+        const labels = parsedData.value.labels as string[]
+        bucketPixels.value = labels.map((_, i) =>
+            (chart.convertToPixel({xAxisIndex: 0}, i) as unknown) as number,
+        )
+    }
+
+    function idxToPixelCenter(idx: number): number {
+        return bucketPixels.value[idx] ?? 0
+    }
+
+    function idxToPixelLeft(idx: number): number {
+        const px = bucketPixels.value
+        if (px.length === 0) return 0
+        const step = px.length > 1 ? Math.abs(px[1] - px[0]) / 2 : 0
+        return (px[idx] ?? 0) - step
+    }
+
+    function idxToPixelRight(idx: number): number {
+        const px = bucketPixels.value
+        if (px.length === 0) return 0
+        const step = px.length > 1 ? Math.abs(px[1] - px[0]) / 2 : 0
+        return (px[idx] ?? 0) + step
+    }
+
+    const bandStyle = computed(() => {
+        if (!brushState.value.active || bucketPixels.value.length === 0) return {}
+        const left = idxToPixelLeft(brushState.value.startIdx)
+        const right = idxToPixelRight(brushState.value.endIdx)
+        return {
+            left: `${left}px`,
+            width: `${right - left}px`,
+        }
+    })
+
+    const scrimLeftStyle = computed(() => {
+        if (!brushState.value.active || bucketPixels.value.length === 0) return {}
+        return {
+            left: "0px",
+            width: `${idxToPixelLeft(brushState.value.startIdx)}px`,
+        }
+    })
+
+    const scrimRightStyle = computed(() => {
+        if (!brushState.value.active || bucketPixels.value.length === 0) return {}
+        const right = idxToPixelRight(brushState.value.endIdx)
+        return {
+            left: `${right}px`,
+            right: "0px",
+        }
+    })
+
+    const brushLabel = computed(() => {
+        if (!brushState.value.active) return ""
+        const labels = parsedData.value.labels as string[]
+        const fmt = currentDateFormat.value
+        const tz = userTz()
+        const startRange = bucketLabelToDateRange(labels[brushState.value.startIdx], fmt, tz)
+        const endRange = bucketLabelToDateRange(labels[brushState.value.endIdx], fmt, tz)
+        if (!startRange || !endRange) return ""
+        const formatStr = "YYYY-MM-DD HH:mm"
+        const start = momentTz.tz(startRange.startMs, tz).format(formatStr)
+        const end = momentTz.tz(endRange.endMs, tz).format(formatStr)
+        const durationMs = endRange.endMs - startRange.startMs
+        return `${start} → ${end} (${durationUtils.humanDuration(durationMs)})`
+    })
+
+    type DragMode = "create" | "band" | "left-edge" | "right-edge"
+
+    const isDragging = ref(false)
+    const dragMode = ref<DragMode>("create")
+    const dragStartX = ref(0)
+    const dragCurrentX = ref(0)
+    const dragOriginalStart = ref(0)
+    const dragOriginalEnd = ref(0)
+
+    function getChartLocalX(e: MouseEvent): number {
+        const rect = chartWrapper.value?.getBoundingClientRect()
+        if (!rect) return 0
+        return e.clientX - rect.left
+    }
+
+    function snapToIndices(xStart: number, xEnd: number): {start: number; end: number} {
+        const result = pixelSelectionToBucketIndices(xStart, xEnd, bucketPixels.value)
+        if (!result) return {start: 0, end: 0}
+        return result
+    }
+
+    function commitBrush() {
+        if (!brushState.value.active) {
+            emit("select", null)
+            return
+        }
+        const labels = parsedData.value.labels as string[]
+        const fmt = currentDateFormat.value
+        const tz = userTz()
+        const startRange = bucketLabelToDateRange(labels[brushState.value.startIdx], fmt, tz)
+        const endRange = bucketLabelToDateRange(labels[brushState.value.endIdx], fmt, tz)
+        if (!startRange || !endRange) return
+        emit("select", {
+            startDate: new Date(startRange.startMs).toISOString(),
+            endDate: new Date(endRange.endMs).toISOString(),
+        })
+    }
+
+    function clearBrush() {
+        brushState.value = {active: false, startIdx: 0, endIdx: 0}
+        emit("select", null)
+    }
+
+    function startCreateDrag(localX: number) {
+        computeBucketPixels()
+        const idx = snapToIndices(localX, localX)
+        brushState.value = {active: true, startIdx: idx.start, endIdx: idx.end}
+        dragMode.value = "create"
+        dragStartX.value = localX
+        dragCurrentX.value = localX
+        isDragging.value = true
+    }
+
+    function startEdgeDrag(edge: "left" | "right", e: MouseEvent) {
+        computeBucketPixels()
+        dragMode.value = edge === "left" ? "left-edge" : "right-edge"
+        dragStartX.value = getChartLocalX(e)
+        dragOriginalStart.value = brushState.value.startIdx
+        dragOriginalEnd.value = brushState.value.endIdx
+        isDragging.value = true
+    }
+
+    function startBandDrag(e: MouseEvent) {
+        computeBucketPixels()
+        dragMode.value = "band"
+        dragStartX.value = getChartLocalX(e)
+        dragOriginalStart.value = brushState.value.startIdx
+        dragOriginalEnd.value = brushState.value.endIdx
+        isDragging.value = true
+    }
+
+    function onDragMove(e: MouseEvent) {
+        if (!isDragging.value) return
+        const localX = getChartLocalX(e)
+        dragCurrentX.value = localX
+
+        const px = bucketPixels.value
+        if (px.length === 0) return
+
+        if (dragMode.value === "create") {
+            const snap = snapToIndices(dragStartX.value, localX)
+            brushState.value = {active: true, startIdx: snap.start, endIdx: snap.end}
+        } else if (dragMode.value === "left-edge") {
+            const deltaX = localX - dragStartX.value
+            const newLeftPx = idxToPixelCenter(dragOriginalStart.value) + deltaX
+            const nearestIdx = pixelSelectionToBucketIndices(newLeftPx, newLeftPx, px)?.start ?? 0
+            const rightIdx = brushState.value.endIdx
+            if (nearestIdx <= rightIdx) {
+                brushState.value = {active: true, startIdx: nearestIdx, endIdx: rightIdx}
+            } else {
+                brushState.value = {active: true, startIdx: rightIdx, endIdx: nearestIdx}
+            }
+        } else if (dragMode.value === "right-edge") {
+            const deltaX = localX - dragStartX.value
+            const newRightPx = idxToPixelCenter(dragOriginalEnd.value) + deltaX
+            const nearestIdx = pixelSelectionToBucketIndices(newRightPx, newRightPx, px)?.start ?? px.length - 1
+            const leftIdx = brushState.value.startIdx
+            if (nearestIdx >= leftIdx) {
+                brushState.value = {active: true, startIdx: leftIdx, endIdx: nearestIdx}
+            } else {
+                brushState.value = {active: true, startIdx: nearestIdx, endIdx: leftIdx}
+            }
+        } else if (dragMode.value === "band") {
+            const deltaX = localX - dragStartX.value
+            const origLeftPx = idxToPixelCenter(dragOriginalStart.value)
+            const duration = dragOriginalEnd.value - dragOriginalStart.value
+
+            const newLeftIdx = pixelSelectionToBucketIndices(origLeftPx + deltaX, origLeftPx + deltaX, px)?.start ?? 0
+            const clampedStart = Math.max(0, Math.min(newLeftIdx, px.length - 1 - duration))
+            const clampedEnd = clampedStart + duration
+            brushState.value = {active: true, startIdx: clampedStart, endIdx: clampedEnd}
+        }
+    }
+
+    function onDragEnd(e: MouseEvent) {
+        if (!isDragging.value) return
+
+        const localX = getChartLocalX(e)
+        const CLICK_THRESHOLD = 4
+
+        if (dragMode.value === "create" && Math.abs(localX - dragStartX.value) < CLICK_THRESHOLD) {
+            const snap = snapToIndices(localX, localX)
+            brushState.value = {active: true, startIdx: snap.start, endIdx: snap.end}
+        }
+
+        isDragging.value = false
+        commitBrush()
+    }
+
+    let zrMousedownHandler: ((e: any) => void) | null = null
+    let zrDblclickHandler: ((e: any) => void) | null = null
+
+    function bindZrEvents() {
+        const chart = ksEchartRef.value?.getEchartsInstance()
+        if (!chart || !isSelectable.value) return
+
+        const zr = chart.getZr()
+
+        zrMousedownHandler = (e: any) => {
+            if (!isSelectable.value) return
+            computeBucketPixels()
+            const rect = chartWrapper.value?.getBoundingClientRect()
+            if (!rect) return
+            const localX = e.event.clientX - rect.left
+            startCreateDrag(localX)
+        }
+
+        zrDblclickHandler = () => {
+            clearBrush()
+        }
+
+        zr.on("mousedown", zrMousedownHandler)
+        zr.on("dblclick", zrDblclickHandler)
+    }
+
+    function unbindZrEvents() {
+        const chart = ksEchartRef.value?.getEchartsInstance()
+        if (!chart) return
+        const zr = chart.getZr()
+        if (zrMousedownHandler) zr.off("mousedown", zrMousedownHandler)
+        if (zrDblclickHandler) zr.off("dblclick", zrDblclickHandler)
+    }
+
+    watch(ksEchartRef, () => {
+        unbindZrEvents()
+        nextTick(bindZrEvents)
+    })
+
+    watch(isSelectable, (val) => {
+        if (val) nextTick(bindZrEvents)
+        else unbindZrEvents()
+    })
+
+    watch(() => [props.brushStart, props.brushEnd], ([start, end]) => {
+        if (start && end) {
+            nextTick(() => {
+                computeBucketPixels()
+                restoreBrushFromProps()
+            })
+        } else {
+            brushState.value = {active: false, startIdx: 0, endIdx: 0}
+        }
+    })
+
+    watch(parsedData, () => {
+        nextTick(() => {
+            computeBucketPixels()
+            restoreBrushFromProps()
+        })
+    })
+
+    function restoreBrushFromProps() {
+        if (!props.brushStart || !props.brushEnd || !isSelectable.value) return
+        const labels = parsedData.value.labels as string[]
+        const fmt = currentDateFormat.value
+        const tz = userTz()
+        const brushStartMs = new Date(props.brushStart).getTime()
+        const brushEndMs = new Date(props.brushEnd).getTime()
+
+        let startIdx = 0
+        let endIdx = labels.length - 1
+
+        for (let i = 0; i < labels.length; i++) {
+            const range = bucketLabelToDateRange(labels[i], fmt, tz)
+            if (!range) continue
+            if (range.startMs <= brushStartMs && brushStartMs < range.endMs) startIdx = i
+            if (range.startMs < brushEndMs && brushEndMs <= range.endMs) endIdx = i
+        }
+
+        if (startIdx <= endIdx) {
+            brushState.value = {active: true, startIdx, endIdx}
+        }
+    }
+
+    function onKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape" && brushState.value.active) {
+            clearBrush()
+        }
+    }
+
+    onMounted(() => {
+        window.addEventListener("keydown", onKeydown)
+        nextTick(bindZrEvents)
+    })
+
+    onUnmounted(() => {
+        window.removeEventListener("keydown", onKeydown)
+        unbindZrEvents()
+    })
 </script>
 
 <style scoped lang="scss">
@@ -421,13 +811,101 @@
             min-height: 0;
         }
 
-        .canvas {
+        .canvas-wrapper {
             flex: 1;
             min-height: 0;
+            position: relative;
+
+            &--selectable {
+                cursor: crosshair;
+            }
+
+            .canvas {
+                width: 100%;
+                height: 100%;
+            }
         }
     }
 
     .empty {
         min-height: 200px;
+    }
+
+    .brush-scrim {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+        background: var(--ks-brush-scrim-color, rgba(0, 0, 0, 0.35));
+        z-index: 2;
+    }
+
+    .brush-band {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: var(--ks-brush-band-color, rgba(132, 5, 255, 0.12));
+        border: 1px solid var(--ks-brush-band-border, rgba(132, 5, 255, 0.4));
+        border-radius: var(--ks-radius-sm);
+        z-index: 3;
+        display: flex;
+        align-items: stretch;
+        overflow: visible;
+        cursor: move;
+
+        html.dark & {
+            --ks-brush-band-color: rgba(132, 5, 255, 0.2);
+            --ks-brush-band-border: rgba(132, 5, 255, 0.5);
+        }
+    }
+
+    .brush-edge {
+        width: 8px;
+        flex-shrink: 0;
+        cursor: ew-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &::after {
+            content: "";
+            display: block;
+            width: 2px;
+            height: 40%;
+            border-radius: 1px;
+            background: var(--ks-btn-primary-default-background, #8405ff);
+            opacity: 0.7;
+        }
+
+        &:hover::after {
+            opacity: 1;
+        }
+    }
+
+    .brush-label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        overflow: hidden;
+        cursor: move;
+
+        span {
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 var(--ks-spacing-1);
+            pointer-events: none;
+        }
+    }
+
+    .brush-drag-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        cursor: crosshair;
     }
 </style>

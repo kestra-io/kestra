@@ -44,7 +44,6 @@ const nonEmpty = (value: string | undefined) =>
     value && value.length > 0 ? value : undefined
 
 export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw): LevelFilterValue | undefined => {
-    // EQUALS means "exactly this level" (the quick level buttons); GTE/LTE are the threshold filters.
     const equals = nonEmpty(firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]))
     if (equals) {
         return {value: equals, direction: "exact"}

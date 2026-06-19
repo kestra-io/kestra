@@ -356,9 +356,7 @@
     }
 
     const selectLevel = (level: string) => {
-        // Quick level buttons select an EXACT level (filters[level][EQUALS] → level = X). Rebuild the
-        // query preserving key order so the level chip keeps its position instead of jumping to the
-        // end of the filter bar.
+        // Rebuild preserving key order so the level chip keeps its position in the filter bar.
         const next: Record<string, any> = {}
         let levelWritten = false
         const writeLevel = () => {

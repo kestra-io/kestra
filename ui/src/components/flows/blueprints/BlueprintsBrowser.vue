@@ -47,7 +47,7 @@
                 </template>
 
                 <template #table>
-                    <KsTableEmpty
+                    <KsNoData
                         v-if="isEmpty"
                         :title="$t('blueprints.empty')"
                     />

@@ -38,6 +38,7 @@ export const storageKeys = {
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
     TIMEZONE_STORAGE_KEY: "timezone",
     SAVED_FILTERS_PREFIX: "saved_filters",
+    EXECUTE_FORM_VALUES_PREFIX: "executeFormValues",
     FILTER_DATA_OPTIONS_PREFIX: "filterDataOptions",
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",

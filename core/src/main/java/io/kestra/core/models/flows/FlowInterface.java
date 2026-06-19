@@ -41,7 +41,31 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
     List<Label> getLabels();
 
+    /**
+     * The inputs as authored in the flow source, which may contain {@link io.kestra.core.models.flows.input.FormInput}
+     * grouping nodes. This is the structure meant for serialization and the UI.
+     * <p>
+     * <strong>Do not use this when resolving, validating, or turning inputs into variables</strong> — use
+     * {@link #resolvableInputs()} instead, which expands every {@code FORM} into its dotted-path leaves. Reaching for
+     * {@code getInputs()} on a resolution path and forgetting to expand silently leaks {@code FORM} nodes into the
+     * flat keyspace.
+     */
     List<Input<?>> getInputs();
+
+    /**
+     * The inputs flattened for resolution: every {@link io.kestra.core.models.flows.input.FormInput} is expanded into
+     * its dotted-path leaves (see {@link Input#expandToLeaves(List)}).
+     * <p>
+     * Use this anywhere inputs are resolved, validated, or turned into variables. {@link #getInputs()} returns the
+     * authored structure (which may contain {@code FORM} nodes) and is meant for serialization and the UI only —
+     * reaching for it during resolution and forgetting to expand silently leaks {@code FORM} nodes into the flat
+     * keyspace.
+     */
+    @JsonIgnore
+    default List<Input<?>> resolvableInputs() {
+        List<Input<?>> inputs = getInputs();
+        return inputs == null ? List.of() : Input.expandToLeaves(inputs);
+    }
 
     List<Output> getOutputs();
 

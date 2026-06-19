@@ -1,5 +1,10 @@
 {
   "de": {
+    "loading": "Wird geladen...",
+        "back": "Zurück",
+        "next": "Weiter",
+        "done": "Fertig",
+        "review your inputs": "Überprüfen Sie Ihre Eingaben",
     "Add flow": "Flow hinzufügen",
     "Default log level": "Standard-Log-Ebene",
     "Default namespace": "Standard-Namespace",

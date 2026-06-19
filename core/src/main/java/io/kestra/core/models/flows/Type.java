@@ -22,7 +22,8 @@ public enum Type {
     ARRAY(ArrayInput.class.getName()),
     MULTISELECT(MultiselectInput.class.getName()),
     YAML(YamlInput.class.getName()),
-    EMAIL(EmailInput.class.getName());
+    EMAIL(EmailInput.class.getName()),
+    FORM(FormInput.class.getName());
 
     private final String clsName;
 

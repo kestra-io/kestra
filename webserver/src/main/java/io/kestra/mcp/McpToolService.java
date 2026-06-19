@@ -18,7 +18,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionStreamingService;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -102,7 +101,7 @@ public class McpToolService {
         Flow flow,
         McpToolTrigger toolTrigger
     ) {
-        final List<String> defaultsInputs = ListUtils.emptyOnNull(flow.getInputs())
+        final List<String> defaultsInputs = flow.resolvableInputs()
             .stream().map(Input::getId).toList();
 
         return (exchange, request) -> {

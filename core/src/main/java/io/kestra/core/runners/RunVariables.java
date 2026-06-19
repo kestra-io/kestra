@@ -415,7 +415,9 @@ public final class RunVariables {
                     if (decryptVariables && flow != null && flow.getInputs() != null) {
                         // if some inputs are of type secret, we decode them
                         final Secret secret = new Secret(secretKey, logger);
-                        for (Input<?> input : flow.getInputs()) {
+                        // Expand FORM inputs so SECRET children are decoded by their dotted path; decodeInput already
+                        // navigates the nested inputs map for dotted ids.
+                        for (Input<?> input : flow.resolvableInputs()) {
                             if (input instanceof SecretInput) {
                                 decodeInput(secret, input.getId(), inputs);
                             }
@@ -427,13 +429,14 @@ public final class RunVariables {
                     // Create a new PropertyContext with 'flow' variables which are required by some pebble expressions.
                     PropertyContextWithVariables context = new PropertyContextWithVariables(propertyContext, Map.of("flow", RunVariables.of(flow)));
 
-                    // we add default inputs value from the flow if not already set, this will be useful for triggers
-                    flow.getInputs().stream()
-                        .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
+                    // we add default inputs value from the flow if not already set, this will be useful for triggers.
+                    // FORM inputs are expanded to dotted leaves so a grouped child's default nests under its form key.
+                    flow.resolvableInputs().stream()
+                        .filter(input -> input.getDefaults() != null && !containsNested(inputs, input.getId()))
                         .forEach(input ->
                         {
                             try {
-                                inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
+                                putNested(inputs, input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
                             } catch (IllegalVariableEvaluationException e) {
                                 // Silent catch, if an input depends on another input, or a variable that is populated at runtime / input filling time, we can't resolve it here.
                             }
@@ -446,7 +449,7 @@ public final class RunVariables {
                     // if a secret input is used, add it to the list of secrets to mask on the logger
                     if (logger != null && !ListUtils.isEmpty(secretInputs)) {
                         for (String secretInput : secretInputs) {
-                            Object secretValue = inputs.get(secretInput);
+                            Object secretValue = getNested(inputs, secretInput);
                             if (secretValue != null) {
                                 String secret;
                                 // if decryption is disabled, secret input would be still a map of type and encrypted value
@@ -545,6 +548,54 @@ public final class RunVariables {
                     throw new RuntimeException(e);
                 }
             }
+        }
+
+        /**
+         * Nested-aware containsKey for a dotted id (e.g. {@code environment.region}): walks the nested input map and
+         * returns true only when every segment resolves down to the leaf key.
+         */
+        @SuppressWarnings("unchecked")
+        private boolean containsNested(Map<String, Object> inputs, String id) {
+            int dot = id.indexOf('.');
+            if (dot < 0) {
+                return inputs.containsKey(id);
+            }
+            Object child = inputs.get(id.substring(0, dot));
+            return child instanceof Map<?, ?> map && containsNested((Map<String, Object>) map, id.substring(dot + 1));
+        }
+
+        /**
+         * Nested-aware get for a dotted id (e.g. {@code credentials.api_key}): walks the nested input map and returns
+         * the leaf value, or {@code null} if any segment is missing or not a map.
+         */
+        @SuppressWarnings("unchecked")
+        private Object getNested(Map<String, Object> inputs, String id) {
+            int dot = id.indexOf('.');
+            if (dot < 0) {
+                return inputs.get(id);
+            }
+            Object child = inputs.get(id.substring(0, dot));
+            return child instanceof Map<?, ?> map ? getNested((Map<String, Object>) map, id.substring(dot + 1)) : null;
+        }
+
+        /**
+         * Nested-aware put for a dotted id: creates intermediate maps as needed so a FORM child default lands under its
+         * form key (mirrors {@link io.kestra.core.utils.MapUtils#flattenToNestedMap(Map)}).
+         */
+        @SuppressWarnings("unchecked")
+        private void putNested(Map<String, Object> inputs, String id, Object value) {
+            int dot = id.indexOf('.');
+            if (dot < 0) {
+                inputs.put(id, value);
+                return;
+            }
+            String head = id.substring(0, dot);
+            Object child = inputs.get(head);
+            if (!(child instanceof Map)) {
+                child = new HashMap<String, Object>();
+                inputs.put(head, child);
+            }
+            putNested((Map<String, Object>) child, id.substring(dot + 1), value);
         }
 
         private List<Map<String, Object>> parents(Execution execution, TaskRun taskRun) {

@@ -1,5 +1,10 @@
 {
   "hi": {
+    "loading": "लोड हो रहा है...",
+        "back": "वापस",
+        "next": "अगला",
+        "done": "पूर्ण",
+        "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",

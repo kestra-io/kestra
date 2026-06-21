@@ -93,6 +93,11 @@
       "create": "创建一个blueprint",
       "custom": "自定义blueprints",
       "dashboards": "仪表板 Blueprints",
+      "detail": {
+        "category": "类别类型",
+        "links": "链接与资源",
+        "openInEditor": "在编辑 Flow 中打开"
+      },
       "edit": "编辑蓝图",
       "empty": "没有可显示的blueprints。",
       "flows": "流程蓝图",
@@ -601,6 +606,10 @@
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
       },
+      "variables": {
+        "content": "添加kv store以在不同的flow之间共享配置。子namespace会自动继承这些配置，您可以引用任何value。",
+        "title": "尚无变量"
+      },
       "versionPlugin": {
         "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
         "title": "您还没有版本化的插件！"
@@ -656,7 +665,7 @@
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "execution id": "执行 Id",
     "execution labels": "执行标签",
-    "execution not found": "执行 <code>{executionId}</code> 未找到。",
+    "execution not found": "执行 {executionId} 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
     "execution replay": "此执行是以下内容的重放",
@@ -736,6 +745,7 @@
     },
     "files": "文件",
     "filter by log level": "按日志级别过滤",
+    "filter by status": "按{status}状态筛选执行",
     "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
@@ -856,6 +866,7 @@
     "fold_all_multi_lines": "折叠所有多行",
     "font size": "Font size",
     "for flow": "用于 flow",
+    "forbidden system labels": "只有 system.correlationId 可以用作系统 label",
     "force run": "强制运行",
     "force run confirm": "您确定要强制运行执行 <code>{id}</code> 吗？<br/><br/>WARNING: 强制运行执行不保证成功，并且可能会创建重复的任务执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED 任务将被移动到 RUNNING 状态。</li><li>RUNNING 任务将被重新提交。</li><li>QUEUED 任务将被取消排队。</li><li>PAUSED 任务将被恢复。</li></ul>",
     "force run done": "执行被强制运行",
@@ -865,6 +876,9 @@
     "form error": "表单错误",
     "from": "从",
     "gantt": "甘特图",
+    "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
+    "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
+    "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
@@ -933,11 +947,13 @@
     "launch execution": "执行",
     "learn_more": "了解更多",
     "leave page": "离开页面",
+    "license": "许可证",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line": "行",
     "line-by-line": "逐行",
     "loaded x dependencies": "已加载 {count} 个依赖项",
+    "loading": "加载中...",
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
     "logs": "日志",
@@ -949,6 +965,7 @@
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
     "main_configuration": "主配置",
+    "manage labels": "管理labels",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",
@@ -1145,6 +1162,7 @@
     "no data current task": "当前task没有可用数据",
     "no inputs": "此流程没有输入。",
     "no result": "没有结果显示。",
+    "no revisions": "无修订",
     "no revisions found": "此流程只有一个修订版",
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
@@ -1240,7 +1258,8 @@
     "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
-    "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_title": "未找到所选过滤器的日志。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
       "assets": "未找到资产",
@@ -1389,6 +1408,7 @@
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
     "open sidebar": "打开侧边栏",
+    "open source": "开源",
     "open_page": "Open page",
     "optional": "可选",
     "original execution": "原始执行",
@@ -1540,6 +1560,7 @@
       "showing_rows": "显示第 {start}-{end} 行，共 {total} 行",
       "view": "查看"
     },
+    "pricing": "定价",
     "product_tour": "产品导览",
     "properties": {
       "hidden": "隐藏在表格中",
@@ -1668,7 +1689,6 @@
     "sequential": "顺序",
     "server type": "服务器类型",
     "services": "服务",
-    "set_extra_labels": "设置额外的labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1681,7 +1701,8 @@
             "flow_default_tab": "导航到flow时选择的选项卡。",
             "log_display": "打开执行时日志的呈现方式。",
             "log_level": "执行日志中显示的最低日志级别。",
-            "playground": "在编辑器游乐场中单独运行任务。"
+            "playground": "在编辑器游乐场中单独运行任务。",
+            "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。"
           },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
@@ -1694,7 +1715,8 @@
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
             "multi_panel_editor": "多面板编辑器",
-            "playground": "游乐场"
+            "playground": "游乐场",
+            "triggers_default_tab": "默认 Trigger 标签页"
           },
           "label": "主要配置"
         },
@@ -1795,7 +1817,9 @@
         "firstName": "名字",
         "lastName": "姓氏",
         "password": "密码",
-        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
+        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。",
+        "username": "用户名",
+        "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
       "login_subtitle": "输入您的凭证以访问您的Kestra实例",
@@ -1884,6 +1908,12 @@
     "source and topology": "源代码和拓扑",
     "source only": "仅限来源",
     "source search": "源搜索",
+    "source_search": {
+      "match_count": "{count} 个匹配 | {count} 个匹配",
+      "open_flow": "打开 flow",
+      "preview_empty": "选择一个结果进行预览。点击结果列表中的 flow 查看其源码。",
+      "preview_error": "加载 flow 源码失败"
+    },
     "specific task": "特定任务",
     "start date": "开始日期",
     "start datetime": "开始日期时间",

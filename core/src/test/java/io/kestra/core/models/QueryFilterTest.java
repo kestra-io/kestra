@@ -176,6 +176,16 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.KIND, Resource.LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
@@ -357,6 +367,22 @@ public class QueryFilterTest {
 
             buildQueryFiltersForOperations(
                 Field.QUERY, Resource.WORKER_GROUP,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.BANNER,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.SERVICE_INSTANCE,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
@@ -953,6 +979,21 @@ public class QueryFilterTest {
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.KIND, Resource.LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
                     Op.REGEX,
                     Op.PREFIX
                 )

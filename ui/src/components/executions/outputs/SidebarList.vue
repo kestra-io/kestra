@@ -19,7 +19,7 @@
                         <template #title>
                             <span class="section-title">
                                 <span>{{ section.label }}</span>
-                                <KsTag>{{ section.items.length }}</KsTag>
+                                <KsTag round size="small">{{ section.items.length }}</KsTag>
                             </span>
                         </template>
 
@@ -39,7 +39,7 @@
                 </KsCollapse>
             </template>
 
-            <KsEmpty v-else :description="$t('variable_explorer.empty')" />
+            <KsNoData v-else :title="$t('variable_explorer.empty')" />
         </KsScrollbar>
     </div>
 </template>
@@ -53,7 +53,6 @@
         KsCollapse,
         KsCollapseItem,
         KsTag,
-        KsEmpty,
     } from "@kestra-io/design-system"
 
     export interface ExplorerItem {
@@ -136,6 +135,7 @@
     display: flex;
     align-items: center;
     gap: var(--ks-spacing-2);
+    font-weight: 600;
 }
 
 .item {
@@ -145,10 +145,11 @@
             "key tag"
             "preview tag";
     cursor: pointer;
-    margin-bottom: .5rem;
+    margin-bottom: var(--ks-spacing-2);
     background-color: var(--ks-bg-surface);
-    border-radius: 4px;
-    padding: .75rem 1rem;
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-spacing-2);
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
 
     &:hover {
         background-color: var(--ks-border-default);
@@ -161,6 +162,7 @@
     .key {
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
+        font-weight: 600;
         grid-area: key;
         overflow: hidden;
         text-overflow: ellipsis;

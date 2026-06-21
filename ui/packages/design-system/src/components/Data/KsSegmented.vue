@@ -36,4 +36,9 @@
     .el-segmented__item-selected {
         font-weight: 500;
     }
+
+    .el-segmented.is-disabled .el-segmented__item-selected,
+    .kel-segmented.is-disabled .kel-segmented__item-selected {
+        background-color: var(--ks-bg-inactive);
+    }
 </style>

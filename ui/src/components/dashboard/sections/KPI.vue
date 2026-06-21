@@ -7,7 +7,7 @@
         </p>
 
         <KsProgress
-            v-if="percentageShown"
+            v-if="percentageShown && progressValue > 0"
             class="progress"
             :percentage="progressValue"
             :strokeWidth="6"
@@ -19,7 +19,7 @@
         <span v-if="description" class="description">{{ description }}</span>
     </section>
 
-    <KsTableEmpty v-else />
+    <KsNoData v-else />
 </template>
 
 <script setup lang="ts">
@@ -99,7 +99,7 @@
         .progress {
             width: 100%;
             margin-top: var(--ks-spacing-3);
-            
+
             :deep(.kel-progress-bar__outer) {
                 background-color: var(--ks-bg-base);
             }

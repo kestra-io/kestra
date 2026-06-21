@@ -1,5 +1,9 @@
 package io.kestra.repository.postgres;
 
+import java.util.List;
+
+import org.jooq.Condition;
+
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
@@ -13,5 +17,10 @@ public class PostgresServiceInstanceRepository extends AbstractJdbcServiceInstan
     @Inject
     public PostgresServiceInstanceRepository(@Named("serviceinstance") PostgresRepository<ServiceInstance> repository) {
         super(repository);
+    }
+
+    @Override
+    protected Condition findQueryCondition(String query) {
+        return jdbcRepository.fullTextCondition(List.of("fulltext"), query);
     }
 }

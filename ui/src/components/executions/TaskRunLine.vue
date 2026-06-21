@@ -53,7 +53,13 @@
         </div>
 
         <div class="task-status">
-            <KsExecutionStatus size="small" :status="currentTaskRun.state.current" />
+            <KsExecutionStatus
+                size="small"
+                :status="currentTaskRun.state.current"
+                clickable
+                :aria-label="t('filter by status', {status: currentTaskRun.state.current})"
+                @click.stop="navigateToStateFilter(currentTaskRun.state.current)"
+            />
         </div>
 
         <slot name="buttons" />
@@ -104,6 +110,7 @@
     import {useI18n} from "vue-i18n"
     import {State, KsExecutionStatus, KsTaskIcon} from "@kestra-io/design-system"
     import TaskRunActions from "./TaskRunActions.vue"
+    import {useStateFilter} from "../filter/composables/useStateFilter"
     import Clock from "vue-material-design-icons/Clock.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -115,6 +122,7 @@
 
     const {t} = useI18n()
     const pluginsStore = usePluginsStore()
+    const {navigateToStateFilter} = useStateFilter()
 
     interface Props {
         currentTaskRun: any

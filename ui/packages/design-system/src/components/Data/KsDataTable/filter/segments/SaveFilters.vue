@@ -1,4 +1,16 @@
 <template>
+    <KsTooltip v-if="$slots.default" :content="$t('filter.save filter tooltip')" placement="top">
+        <KsButton
+            type="default"
+            :disabled="disabled"
+            @click="showSaveDialog = true"
+            :icon="ContentSaveOutline"
+            class="no-bg-border"
+        >
+            <slot />
+        </KsButton>
+    </KsTooltip>
+
     <KsDialog
         v-model="showSaveDialog"
         :title="isEditMode ? $t('filter.edit filter') : $t('filter.save filter')"
@@ -33,7 +45,8 @@
                 />
             </div>
 
-            <div v-if="!isEditMode">
+            <div>
+                <p v-if="isEditMode" class="update-hint">{{ $t("filter.update conditions hint") }}</p>
                 <div class="filter-summary">
                     <div v-if="appliedFilters.length > 0" class="filter-list">
                         <div
@@ -86,6 +99,7 @@
         savedFilters: SavedFilter[];
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
+        disabled?: boolean;
     }>()
 
     const emits = defineEmits<{
@@ -155,6 +169,12 @@
             font-size: var(--ks-font-size-sm);
             color: var(--ks-text-secondary);
         }
+    }
+
+    .update-hint {
+        margin: 0 0 0.5rem;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
     }
 
     .filter-summary {

@@ -120,7 +120,7 @@
             <template #default="scope">
                 <KsIconButton
                     v-if="canUpdate(scope.row)"
-                    :tooltip="$t('update')"
+                    :tooltip="$t('edit')"
                     placement="left"
                     @click="updateKvModal(scope.row)"
                 >

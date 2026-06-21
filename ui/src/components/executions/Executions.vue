@@ -53,6 +53,16 @@
             :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
+                <QuickFilters
+                    v-if="!hasComplexFilters"
+                    :states="quickStates"
+                    :state="selectedStates"
+                    :stateLabel="t('filter.state.label')"
+                    :showInterval="false"
+                    :showLevel="false"
+                    :showState="true"
+                    @update:state="onQuickFilterState"
+                />
                 <KSFilter
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
@@ -68,13 +78,6 @@
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
-                />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
                 />
             </template>
 
@@ -210,7 +213,13 @@
                         <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
-                        <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
+                        <KsExecutionStatus
+                            :status="scope.row?.state?.current"
+                            size="small"
+                            clickable
+                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            @click.stop="onStateClick(scope.row?.state?.current)"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'flowRevision'">
                         <code class="code-text">{{ scope.row?.flowRevision }}</code>
@@ -413,7 +422,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels} from "./utils"
+    import {filterValidLabels, keepSupportedFilters} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import BreakableText from "../BreakableText"
@@ -432,12 +441,13 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
+    import {useQuickStateFilter} from "../filter/composables/useQuickStateFilter"
+    import {useStateFilter} from "../filter/composables/useStateFilter"
     import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
+    const {quickStates, selectedStates, onQuickFilterState, hasComplexFilters} = useQuickStateFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -601,6 +611,20 @@
         return execution.id
     }
 
+    const {filterByState, navigateToStateFilter} = useStateFilter()
+
+    const onStateClick = (state?: string) => {
+        if (!state) return
+        if (!props.embed) {
+            filterByState(state)
+            return
+        }
+        const scope: Record<string, string> = {}
+        if (props.namespace) scope["filters[namespace][PREFIX]"] = props.namespace
+        if (props.flowId) scope["filters[flowId][EQUALS]"] = props.flowId
+        navigateToStateFilter(state, scope)
+    }
+
     const ready = ref(false)
     const dataTable = useTemplateRef<any>("dataTable")
 
@@ -732,9 +756,25 @@
         dataTable.value?.reload()
     }
 
+    const supportedFilterFields = computed<Set<string>>(() => {
+        const configuration = (props.namespace === undefined || props.flowId === undefined)
+            ? executionFilter.value
+            : flowExecutionFilter.value
+        const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
+            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
+        )
+        if (configuration.searchPlaceholder) {
+            fields.push("q")
+        }
+        return new Set(fields)
+    })
+
+    const dropUnsupportedFilters = (query: Record<string, any>): Record<string, any> =>
+        keepSupportedFilters(query, supportedFilterFields.value) as Record<string, any>
+
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
-        let queryFilter: Record<string, any> = {...restQuery}
+        let queryFilter: Record<string, any> = dropUnsupportedFilters(restQuery)
 
      // startDate/endDate and timeRange are mutually exclusive on the API.
      // If a relative timeRange filter is present (either from the legacy DateFilter
@@ -1053,7 +1093,7 @@
 
     async function exportExecutionsAsStream() {
         await executionsStore.exportExecutionsAsCSV(
-            route.query,
+            dropUnsupportedFilters(route.query),
         )
     }
 </script>

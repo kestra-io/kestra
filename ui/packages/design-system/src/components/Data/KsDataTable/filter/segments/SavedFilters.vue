@@ -1,5 +1,17 @@
 <template>
     <div class="saved-filters-panel">
+        <div v-if="!hideHeader" class="panel-header">
+            <h6>
+                {{ $t("filter.saved filters") }}
+            </h6>
+            <KsButton
+                link
+                :icon="Close"
+                @click="$emit('close')"
+                size="small"
+            />
+        </div>
+
         <div v-if="savedFilters.length" class="saved-filters-list">
             <div
                 v-for="savedFilter in savedFilters"
@@ -55,18 +67,20 @@
     import {useI18n} from "vue-i18n"
     import {KsMessageBox} from "../../../../Feedback/KsMessageBox"
     import type {SavedFilter} from "../utils/filterTypes"
-    import {BookmarkOffOutline, BookmarkOutline, Delete, PencilOutline} from "../utils/icons"
+    import {BookmarkOffOutline, BookmarkOutline, Close, Delete, PencilOutline} from "../utils/icons"
 
     const {t} = useI18n({useScope: "global"})
 
     defineProps<{
         savedFilters: SavedFilter[];
+        hideHeader?: boolean;
     }>()
 
     const emit = defineEmits<{
         load: [savedFilter: SavedFilter];
         edit: [savedFilter: SavedFilter];
         delete: [savedFilter: SavedFilter];
+        close: [];
     }>()
 
     const deleteFilter = (savedFilter: SavedFilter) => {

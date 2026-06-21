@@ -152,11 +152,11 @@ export function extractFileNameFromContentDisposition(header: string | null | un
     return null // Return null if no filename is found
 }
 
-export function switchTheme(miscStore: any, theme?: string) {
+export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedTheme) {
     // default theme
     if (theme === undefined) {
         if (localStorage.getItem("theme")) {
-            theme = localStorage.getItem("theme")!
+            theme = localStorage.getItem("theme") as SelectedTheme
         } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
             theme = "dark"
         } else {

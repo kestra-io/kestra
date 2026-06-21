@@ -47,10 +47,10 @@
             </div>
         </div>
 
-        <KsEmpty
+        <KsNoData
             v-if="pluginsList.length === 0"
-            :description="$t('pluginPage.noResults')"
             class="my-6"
+            :description="$t('pluginPage.noResults')"
         />
 
         <section v-else class="plugins-container">
@@ -101,7 +101,7 @@
     import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsPluginCard, KsSearch, KsAlert, KsEmpty, KsSkeleton} from "@kestra-io/design-system"
+    import {KsPluginCard, KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
     import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"

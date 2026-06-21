@@ -24,11 +24,12 @@
                         @filter="onFilterRouteSync"
                     />
                     <QuickFilters
-                        :showLevel="false"
-                        :intervals="quickIntervals"
-                        :timeRange="selectedTimeRange"
-                        :intervalLabel="t('filter.timeRange_log.label')"
-                        @update:time-range="onQuickFilterTimeRange"
+                        v-if="!hasComplexFilters"
+                        :levels="VALUES.LEVELS"
+                        :level="effectiveLogLevel?.value"
+                        :levelLabel="t('filter.level_log_executions.label')"
+                        :showInterval="false"
+                        @update:level="selectLevel"
                     />
                 </template>
 
@@ -72,7 +73,10 @@
                         </div>
 
                         <div v-else-if="!isLoading">
-                            <KsEmpty :description="$t('no_logs_data_description')" />
+                            <KsNoData
+                                :title="$t('no_logs_data_title')"
+                                :description="$t('no_logs_data_description')"
+                            />
                         </div>
                     </div>
                 </template>
@@ -109,6 +113,7 @@
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
+    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
@@ -129,7 +134,6 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
-        normalizeRouteTimeRangeFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
@@ -173,6 +177,7 @@
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
+    const {hasComplexFilters} = useComplexFilters()
     const quickIntervals = computed(() => [
         {label: t("datepicker.short.15m"), value: "PT15M"},
         {label: t("datepicker.short.1h"), value: "PT1H"},
@@ -232,6 +237,8 @@
         return key ? String(route.query[key] ?? "") : ""
     })
 
+    // Kind has no bespoke handling here: when no kind filter is in the URL the backend defaults to
+    // NORMAL only, and an explicit kind chip flows through `...routeFilters` like any other filter.
     const selectedTimeRange = computed(() => {
         if (route.query.timeRange) {
             return route.query.timeRange as string
@@ -247,38 +254,11 @@
 
         return rawValue as string | undefined
     })
-    const endDate = computed(() => {
-        if (route.query.endDate) {
-            return route.query.endDate
-        }
-        if (selectedTimeRange.value) {
-            return moment().toISOString(true)
-        }
-        return undefined
-    })
-    const startDate = computed(() => {
-        // we mention the last refresh date here to trick
-        // VueJs fine grained reactivity system and invalidate
-        // computed property startDate
-        if (route.query.startDate && lastRefreshDate.value) {
-            return route.query.startDate
-        }
-        if (selectedTimeRange.value) {
-            return moment().subtract(moment.duration(selectedTimeRange.value).as("milliseconds")).toISOString(true)
-        }
-
-        // the default is PT30D
-        return moment().subtract(7, "days").toISOString(true)
-    })
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => [
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
-
-    const onQuickFilterTimeRange = (value: string) => {
-        router.replace({query: normalizeRouteTimeRangeFilter(route.query, value)})
-    }
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
@@ -291,17 +271,9 @@
             queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value
         }
 
-        // Level filter is a minimum threshold. Always normalize to a single EQUALS query.
         if (!props.filters) {
             queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
         }
-
-        if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
-            queryFilter["startDate"] = startDate.value
-            queryFilter["endDate"] = endDate.value
-        }
-
-        delete queryFilter["level"]
 
         return _merge(base, queryFilter)
     }
@@ -358,8 +330,8 @@
                 .toISOString(true)
             params.endDate = moment().toISOString(true)
         } else {
-            if (startDate.value) params.startDate = startDate.value
-            if (endDate.value) params.endDate = endDate.value
+            if (_sd) params.startDate = _sd
+            if (_ed) params.endDate = _ed
         }
         params.sort = "timestamp:desc"
 

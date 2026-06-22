@@ -494,6 +494,7 @@
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
     "down trend": "घट रहा है",
     "download": "डाउनलोड करें",
+    "jsonl": "JSONL",
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

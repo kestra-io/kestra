@@ -307,6 +307,235 @@ class FlowValidationTest {
         assertThat(warnings).anyMatch(w -> w.contains("secret-task") && w.contains("secretField"));
     }
 
+    @Test
+    void formInputs_validNestedGrouping_succeeds() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: region
+                    type: STRING
+                  - id: data_center
+                    type: STRING
+              - id: api_key
+                type: SECRET
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void formInputs_sameChildIdInDifferentForms_succeeds() {
+        // Scoped uniqueness: a child id may repeat across different forms because the expanded paths differ.
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: region
+                    type: STRING
+              - id: staging
+                type: FORM
+                inputs:
+                  - id: region
+                    type: STRING
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void formInputs_duplicateExpandedPath_failValidation() {
+        // Two children with the same id inside one form expand to the same dotted path.
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: region
+                    type: STRING
+                  - id: region
+                    type: STRING
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Duplicate input path [environment.region]");
+    }
+
+    @Test
+    void formInputs_prefixConflict_failValidation() {
+        // Children 'a' and 'a.b' expand to 'grp.a' and 'grp.a.b'; one would nest under the other.
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: grp
+                type: FORM
+                inputs:
+                  - id: a
+                    type: STRING
+                  - id: a.b
+                    type: STRING
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Input path 'grp.a' conflicts with 'grp.a.b'; one cannot be nested under the other.");
+    }
+
+    @Test
+    void formInputs_twoTopLevelFormsSameId_failValidation() {
+        // Disjoint children, so expanded paths don't collide — only the top-level duplicate check catches it.
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: region
+                    type: STRING
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: data_center
+                    type: STRING
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Duplicate input with name [environment]");
+    }
+
+    @Test
+    void formInputs_dottedDependsOn_succeeds() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: data_center
+                    type: STRING
+                  - id: region
+                    type: STRING
+                    dependsOn:
+                      inputs:
+                        - environment.data_center
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void formInputs_bareDependsOn_failValidation() {
+        // A child must reference a sibling by its full dotted path; a bare ref resolves to no node.
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                inputs:
+                  - id: data_center
+                    type: STRING
+                  - id: region
+                    type: STRING
+                    dependsOn:
+                      inputs:
+                        - data_center
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("depends on a non-existent input 'data_center'");
+    }
+
+    @Test
+    void formInputs_nestedForm_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: outer
+                type: FORM
+                inputs:
+                  - id: inner
+                    type: FORM
+                    inputs:
+                      - id: region
+                        type: STRING
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("A FORM input cannot contain another FORM input; grouping is limited to a single level.");
+    }
+
+    @Test
+    void formInputs_withDefaults_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: environment
+                type: FORM
+                defaults: "x"
+                inputs:
+                  - id: region
+                    type: STRING
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("A FORM input groups other inputs and cannot declare a default value or a prefill.");
+    }
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

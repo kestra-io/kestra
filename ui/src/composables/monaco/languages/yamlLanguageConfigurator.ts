@@ -139,7 +139,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
             validate: validateYAML.value ?? true,
-            format: true,
             schemas: yamlSchemas(),
         })
 

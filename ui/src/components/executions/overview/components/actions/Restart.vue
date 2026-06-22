@@ -45,7 +45,6 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="500px"
     >
         <template #header>
             <div class="modal-header m-0">
@@ -75,7 +74,6 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="600px"
     >
         <template #header>
             <div class="modal-header m-0">
@@ -160,7 +158,6 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
-        width="60%"
     >
         <template #header>
             <span

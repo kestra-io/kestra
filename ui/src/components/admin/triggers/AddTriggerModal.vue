@@ -1,9 +1,9 @@
 <template>
     <KsDialog
         v-model="visible"
-        width="40%"
         destroyOnClose
         appendToBody
+        :width="dialogWidth"
     >
         <template #header>
             <div class="header">
@@ -163,6 +163,10 @@
     const displayName = computed(() => triggerDisplayName(props.trigger))
     const canSubmit = computed(() =>
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),
+    )
+
+    const dialogWidth = computed(() =>
+        activeTab.value === "documentation" ? "min(800px, 90vw)" : "min(500px, 90vw)",
     )
 
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"

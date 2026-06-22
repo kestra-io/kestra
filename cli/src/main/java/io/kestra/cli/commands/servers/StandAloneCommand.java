@@ -143,6 +143,9 @@ public class StandAloneCommand extends AbstractServerCommand {
                 fileWatcher.startListeningFromConfig();
             }
 
+            embeddedServer.ifPresent(server ->
+                System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
+
             Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }
 

@@ -333,7 +333,7 @@ class FlowableUtilsTest {
         assertThat(result.getLeft()).containsExactly("x", "y");
     }
 
-    /** Creates an ION file from a list of strings, stores it, and returns its kestra:// URI. */
+    /** Creates a text ION file from a list of strings, stores it, and returns its kestra:// URI. */
     private URI createIonFile(RunContext runContext, List<String> values) throws IOException {
         Path path = runContext.workingDir().createTempFile(".ion");
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
@@ -343,6 +343,46 @@ class FlowableUtilsTest {
             }
         }
         return runContext.storage().putFile(path.toFile());
+    }
+
+    /** Creates a binary ION file from a list of strings, stores it, and returns its kestra:// URI. */
+    private URI createBinaryIonFile(RunContext runContext, List<String> values) throws IOException {
+        Path path = runContext.workingDir().createTempFile(".ion");
+        try (var output = new java.io.BufferedOutputStream(new java.io.FileOutputStream(path.toFile()), io.kestra.core.serializers.FileSerde.BUFFER_SIZE)) {
+            for (String value : values) {
+                io.kestra.core.serializers.FileSerde.write(output, value);
+            }
+        }
+        return runContext.storage().putFile(path.toFile());
+    }
+
+    @Test
+    void readAndCountLoopValuesFromUri_withBinaryIon_shouldReturnAllValuesAndCorrectCount() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+        URI uri = createBinaryIonFile(runContext, List.of("a", "b", "c", "d", "e"));
+
+        // When
+        var result = FlowableUtils.readAndCountLoopValuesFromUri(runContext, uri.toString(), 3);
+
+        // Then
+        assertThat(result.totalCount()).isEqualTo(5);
+        assertThat(result.values()).containsExactly("a", "b", "c");
+        assertThat(result.nextOffset()).isEqualTo(3);
+    }
+
+    @Test
+    void readLoopValuesFromUri_withBinaryIon_shouldResumeFromOffset() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+        URI uri = createBinaryIonFile(runContext, List.of("a", "b", "c", "d", "e"));
+
+        // When — read 2 starting at offset 2
+        var result = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 2, 2);
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("c", "d");
+        assertThat(result.getRight()).isEqualTo(4L);
     }
 
     private static ResolvedTask resolvedTask(String id) {

@@ -105,17 +105,19 @@
             <span class="ml-2">Loading revisions...</span>
         </div>
     </div>
-    <div v-else>
-        <KsAlert class="mb-0" :closable="false">
-            {{ $t("no revisions found") }}
-        </KsAlert>
-    </div>
+    <KsNoData
+        v-else
+        :icon="History"
+        :title="$t('no revisions')"
+        :description="$t('no revisions found')"
+    />
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
     import {KsEditor} from "@kestra-io/design-system"
@@ -423,5 +425,4 @@
         text-align: right;
         flex-shrink: 0;
     }
-
 </style>

@@ -48,6 +48,7 @@
     export interface Tab extends RouterTab {
         locked?: boolean;
         props?: any;
+        blueprintDetail?: boolean;
     }
 
     const props = withDefaults(defineProps<{
@@ -163,6 +164,7 @@
                         combinedView: true,
                         kind: tab?.props?.blueprintKind,
                         embed: tab?.props?.embed ?? true,
+                        system: tab?.props?.system ?? false,
                     })
                 }
                 if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null
@@ -171,8 +173,7 @@
                     ...attrsWithoutClass.value,
                     ...toHandlers(tab["v-on"] ?? {}),
                     namespace: getNamespaceToForward(tab),
-                    embed: tab.props?.embed ?? true,
-                    onGoToDetail: (id: string) => (selectedBlueprintId.value = id),
+                    ...(tab.blueprintDetail ? {onGoToDetail: (id: string) => (selectedBlueprintId.value = id)} : {}),
                 })
             }
         },
@@ -184,6 +185,8 @@
         margin: 0 !important;
         padding: 0;
         flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     section.no-overflow {
@@ -208,6 +211,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        font-weight: var(--ks-font-weight-regular);
     }
 
     .inline-badge {

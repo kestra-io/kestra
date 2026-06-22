@@ -2,16 +2,15 @@
     <KsRow class="setup-container" :gutter="30" justify="center" align="middle">
         <KsCol :xs="24" :md="8" class="setup-sidebar">
             <div class="logo-container">
-                <Logo style="width: 14rem;" />
+                <Logo class="setup-logo" />
             </div>
             <KsSteps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
-                <KsStep :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="$t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
+                <KsStep :icon="activeStep > 0 ? CheckBold : AccountOutline" :title="$t('setup.steps.user')" />
                 <KsStep
                     :icon="activeStep > 1 ? CheckBold : MessageOutline"
                     :title="$t('setup.steps.survey')"
-                    :class="{'primary-icon': activeStep <= 1}"
                 />
-                <KsStep :icon="LightningBolt" :title="$t('setup.steps.complete')" class="primary-icon" />
+                <KsStep :icon="LightningBolt" :title="$t('setup.steps.complete')" />
             </KsSteps>
         </KsCol>
         <KsCol :xs="24" :md="16" class="setup-main">
@@ -35,39 +34,49 @@
 
                 <div class="setup-card-body">
                     <div v-if="activeStep === 0">
-                        <KsForm ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
-                            <KsFormItem :label="$t('setup.form.email')" prop="username" class="mb-2">
-                                <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
-                                    <template #suffix v-if="getFieldError('username')">
-                                        <KsTooltip placement="top" :content="getFieldError('username')">
-                                            <InformationOutline class="validation-icon error" />
-                                        </KsTooltip>
-                                    </template>
-                                </KsInput>
-                            </KsFormItem>
-                            <div class="username-requirements mb-2">
-                                <KsText>
-                                    Used as your admin login. No emails unless you opt in.
-                                </KsText>
+                        <KsForm ref="userForm" class="user-form" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
+                            <div class="user-field">
+                                <KsFormItem :label="$t('setup.form.username')" prop="username">
+                                    <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
+                                        <template #suffix v-if="getFieldError('username')">
+                                            <KsTooltip placement="top" :content="getFieldError('username')">
+                                                <KsIcon name="information-outline" class="validation-icon error" />
+                                            </KsTooltip>
+                                        </template>
+                                    </KsInput>
+                                </KsFormItem>
+                                <div class="username-requirements">
+                                    <KsText>
+                                        {{ $t('setup.form.username_hint') }}
+                                    </KsText>
+                                </div>
                             </div>
-                            <KsFormItem :label="$t('setup.form.password')" prop="password" class="mb-2">
-                                <KsInput
-                                    type="password"
-                                    showPassword
-                                    v-model="userFormData.password"
-                                    placeholder="StrongPass1"
-                                >
-                                    <template #suffix v-if="getFieldError('password')">
-                                        <KsTooltip placement="top" :content="getFieldError('password')">
-                                            <InformationOutline class="validation-icon error" />
-                                        </KsTooltip>
-                                    </template>
-                                </KsInput>
-                            </KsFormItem>
-                            <div class="password-requirements mb-2">
-                                <KsText>
-                                    {{ $t('setup.form.password_requirements') }}
-                                </KsText>
+                            <div class="user-field">
+                                <KsFormItem :label="$t('setup.form.password')" prop="password">
+                                    <KsInput
+                                        type="password"
+                                        showPassword
+                                        v-model="userFormData.password"
+                                        placeholder="StrongPass1"
+                                    />
+                                </KsFormItem>
+                                <KsPasswordRequirements
+                                    :password="userFormData.password"
+                                    v-model:valid="isPasswordValid"
+                                />
+                            </div>
+                            <div class="user-field">
+                                <KsFormItem :label="$t('confirm password')">
+                                    <KsInput
+                                        type="password"
+                                        showPassword
+                                        v-model="confirmPassword"
+                                        placeholder="Re-enter your password"
+                                    />
+                                </KsFormItem>
+                                <KsCheckItem :met="passwordsMatch">
+                                    {{ $t('password_requirements.match') }}
+                                </KsCheckItem>
                             </div>
                         </KsForm>
                         <div class="d-flex justify-content-end gap-1">
@@ -78,20 +87,21 @@
                     </div>
 
                     <div v-else-if="activeStep === 1">
-                        <KsForm ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
+                        <KsForm ref="surveyForm" class="survey-form" labelPosition="top" :model="surveyData" :showMessage="false">
                             <KsFormItem :label="$t('setup.survey.company_size')">
-                                <KsRadioGroup v-model="surveyData.mainGoal" class="survey-radio-group">
-                                    <KsRadio
+                                <KsSelect
+                                    v-model="surveyData.mainGoal"
+                                    placeholder="Select"
+                                    class="survey-select"
+                                >
+                                    <KsOption
                                         v-for="option in intentOptions"
                                         :key="option.value"
+                                        :label="option.label"
                                         :value="option.value"
-                                    >
-                                        {{ option.label }}
-                                    </KsRadio>
-                                </KsRadioGroup>
+                                    />
+                                </KsSelect>
                             </KsFormItem>
-
-                            <KsDivider class="survey-divider" />
 
                             <KsFormItem :label="$t('setup.survey.use_case')">
                                 <div class="use-case-checkboxes">
@@ -108,8 +118,6 @@
                                 </div>
                             </KsFormItem>
 
-                            <KsDivider class="survey-divider" />
-
                             <KsFormItem :label="$t('setup.survey.newsletter_heading')" class="newsletter-form-item">
                                 <KsCheckbox v-model="surveyData.newsletter" class="newsletter-checkbox">
                                     {{ $t('setup.survey.newsletter') }}
@@ -125,7 +133,7 @@
                     </div>
 
                     <div v-else-if="activeStep === 2" class="success-step">
-                        <img :src="success" alt="success" class="success-img">
+                        <KsLogoBadge />
                         <div class="success-content">
                             <h1 class="success-title">
                                 {{ $t('setup.success.title') }}
@@ -154,13 +162,11 @@
     import {trackSetupEvent} from "../../composables/usePosthog"
     import {identifyPosthogUser, initPosthogIfEnabled} from "../../utils/posthog"
 
-    import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import success from "../../assets/success.svg"
     import * as BasicAuth from "../../utils/basicAuth"
 
     interface UserFormData {
@@ -182,6 +188,7 @@
     const {t} = useI18n()
     const router = useRouter()
     const miscStore = useMiscStore()
+
     const {storeSurveySkipData} = useSurveySkip()
 
     const activeStep = ref(0)
@@ -191,6 +198,8 @@
         username: "",
         password: "",
     })
+
+    const confirmPassword = ref("")
 
     const surveyData = ref<SurveyData>({
         mainGoal: "",
@@ -249,7 +258,6 @@
     ])
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {
@@ -270,16 +278,24 @@
         callback()
     }
 
+    const isPasswordValid = ref(false)
+
+    const passwordsMatch = computed(() =>
+        userFormData.value.password.length > 0 &&
+        userFormData.value.password === confirmPassword.value,
+    )
+
     const userRules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
-        password: [{required: true, pattern: PASSWORD_REGEX, message: t("setup.validation.password_invalid"), trigger: "blur"}],
     }))
 
     const isUserStepValid = computed(() => {
         const data = userFormData.value
-        return data.username && data.password &&
-            EMAIL_REGEX.test(data.username) && PASSWORD_REGEX.test(data.password) &&
-            MailChecker.isValid(data.username)
+        return Boolean(data.username) &&
+            EMAIL_REGEX.test(data.username) &&
+            MailChecker.isValid(data.username) &&
+            isPasswordValid.value &&
+            passwordsMatch.value
     })
 
     const getFieldError = (fieldName: string) => {

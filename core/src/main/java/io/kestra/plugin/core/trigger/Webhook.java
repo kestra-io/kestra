@@ -39,7 +39,7 @@ import reactor.core.publisher.Mono;
 
         Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
-        Responses: 404 (not found), 200 (triggered), 204 (conditions not met)."""
+        Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
 @Plugin(
     examples = {
@@ -168,23 +168,30 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         String body = context.request().getBody() != null ? (String) context.request().getBody().getContent() : null;
 
-        Optional<Execution> maybeExecution = context.webhookService().newExecution(
-            context,
-            context.flow(),
-            this,
-            Webhook.Output.builder()
-                .body(
-                    tryMap(body)
-                        .or(() -> tryArray(body))
-                        .orElse(body)
-                )
-                .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
-                .parameters(context.webhookService().parseParameters(context))
-                .build()
-        );
+        Optional<Execution> maybeExecution;
+        try {
+            maybeExecution = context.webhookService().newExecution(
+                context,
+                context.flow(),
+                this,
+                Webhook.Output.builder()
+                    .body(
+                        tryMap(body)
+                            .or(() -> tryArray(body))
+                            .orElse(body)
+                    )
+                    .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
+                    .parameters(context.webhookService().parseParameters(context))
+                    .build()
+            );
+        } catch (WebhookInputRenderException e) {
+            // The inputs could not be rendered: a real error, not a "conditions not met" outcome.
+            return Mono.just(HttpResponse.of(HttpResponse.Status.UNPROCESSABLE_ENTITY));
+        }
 
         if (maybeExecution.isEmpty()) {
-            return Mono.just(HttpResponse.of(HttpResponse.Status.CONFLICT));
+            // Conditions are not met: no execution is created, return 204 as documented.
+            return Mono.just(HttpResponse.of(HttpResponse.Status.NO_CONTENT));
         }
 
         Execution execution = maybeExecution.get();

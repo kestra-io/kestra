@@ -253,31 +253,31 @@ public final class FileSerde {
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
-        try (var parser = objectMapper.createParser(reader)) {
-            return objectMapper.readerFor(type).readValues(parser);
-        }
+        var parser = objectMapper.createParser(reader);
+        return objectMapper.readerFor(type).readValues(parser);
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
-        try (var parser = objectMapper.createParser(reader)) {
-            return objectMapper.readerFor(type).readValues(parser);
-        }
+        var parser = objectMapper.createParser(reader);
+        return objectMapper.readerFor(type).readValues(parser);
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, InputStream inputStream, TypeReference<T> type) throws IOException {
-        try (var parser = objectMapper.createParser(inputStream)) {
-            return objectMapper.readerFor(type).readValues(parser);
-        }
+        var parser = objectMapper.createParser(inputStream);
+        return objectMapper.readerFor(type).readValues(parser);
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, InputStream inputStream, Class<T> type) throws IOException {
-        try (var parser = objectMapper.createParser(inputStream)) {
-            return objectMapper.readerFor(type).readValues(parser);
-        }
+        var parser = objectMapper.createParser(inputStream);
+        return objectMapper.readerFor(type).readValues(parser);
     }
 
     public static <T> SequenceWriter createSequenceWriter(ObjectMapper objectMapper, Writer writer, TypeReference<T> type) throws IOException {
         return objectMapper.writerFor(type).writeValues(writer);
+    }
+
+    public static <T> SequenceWriter createBinarySequenceWriter(OutputStream outputStream, TypeReference<T> type) throws IOException {
+        return BINARY_OBJECT_MAPPER.writerFor(type).writeValues(outputStream);
     }
 
     public static <T> SequenceWriter createJsonSequenceWriter(Writer writer, TypeReference<T> type) throws IOException {

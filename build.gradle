@@ -536,7 +536,10 @@ run.jvmArgs(
     "-noverify",
     "-XX:TieredStopAtLevel=1",
     "-Dcom.sun.management.jmxremote",
-    '-Dmicronaut.environments=dev,override'
+    '-Dmicronaut.environments=dev,override',
+    // Silence the sun.misc.Unsafe memory-access startup warning (JEP 498) triggered by
+    // com.google.protobuf.UnsafeUtil (pulled in by gRPC), see https://github.com/kestra-io/kestra/issues/16513
+    '--sun-misc-unsafe-memory-access=allow'
 )
 
 /**********************************************************************************************************************\

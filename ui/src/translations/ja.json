@@ -93,6 +93,11 @@
       "create": "ブループリントを作成",
       "custom": "カスタムblueprint",
       "dashboards": "ダッシュボード Blueprints",
+      "detail": {
+        "category": "カテゴリタイプ",
+        "links": "リンクとリソース",
+        "openInEditor": "フローを編集で開く"
+      },
       "edit": "ブループリントを編集する",
       "empty": "設計図が表示されていません。",
       "flows": "フローBlueprints",
@@ -601,6 +606,10 @@
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
       },
+      "variables": {
+        "content": "フロー間で設定を共有するためにkv storeにkey-valueペアを追加します。子namespaceはそれらを自動的に継承し、任意のvalueを参照することができます。",
+        "title": "変数はまだありません"
+      },
       "versionPlugin": {
         "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
         "title": "まだバージョン管理されたプラグインがありません！"
@@ -656,7 +665,7 @@
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
     "execution id": "実行 Id",
     "execution labels": "実行ラベル",
-    "execution not found": "<code>{executionId}</code> の実行が見つかりません。",
+    "execution not found": "{executionId} の実行が見つかりません。",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
     "execution not in state PAUSED": "実行<code>{executionId}</code>はPAUSED状態ではありません",
     "execution replay": "この実行は次のリプレイです",
@@ -857,6 +866,7 @@
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
     "font size": "Font size",
     "for flow": "フロー用",
+    "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "force run": "強制実行",
     "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
     "force run done": "実行は強制的にRUNNINGです。",
@@ -866,6 +876,9 @@
     "form error": "フォームエラー",
     "from": "から",
     "gantt": "ガント",
+    "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
+    "gantt_no_tasks_match_filters": "検索、状態、またはログレベルのフィルターを調整してみてください。",
+    "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "healthcheck date": "HealthCheck日",
     "hide task documentation": "taskのドキュメントを非表示",
     "home": "ホーム",
@@ -934,11 +947,13 @@
     "launch execution": "実行",
     "learn_more": "詳細を確認",
     "leave page": "ページを離れる",
+    "license": "ライセンス",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line": "ライン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
+    "loading": "読み込み中...",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",
@@ -950,6 +965,7 @@
       "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示"
     },
     "main_configuration": "メイン設定",
+    "manage labels": "ラベルを管理",
     "management port": "管理ポート",
     "mark as": "<code>{status}</code>としてマーク",
     "max": "Max",
@@ -1146,6 +1162,7 @@
     "no data current task": "現在のタスクに利用可能なデータがありません。",
     "no inputs": "このflowにはinputがありません。",
     "no result": "表示する結果がありません。",
+    "no revisions": "リビジョンなし",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
     "no-executions-view": {
       "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
@@ -1241,7 +1258,8 @@
     "no_history": "履歴はありません",
     "no_inputs": "入力が利用できません。",
     "no_logs_data": "データなし",
-    "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
+    "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
+    "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
       "assets": "アセットが見つかりません",
@@ -1390,6 +1408,7 @@
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
     "open sidebar": "サイドバーを開く",
+    "open source": "オープンソース",
     "open_page": "Open page",
     "optional": "オプション",
     "original execution": "元の実行",
@@ -1541,6 +1560,7 @@
       "showing_rows": "{total}のうち{start}から{end}の行を表示中",
       "view": "表示"
     },
+    "pricing": "料金",
     "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",
@@ -1669,7 +1689,6 @@
     "sequential": "逐次",
     "server type": "サーバータイプ",
     "services": "サービス",
-    "set_extra_labels": "追加のラベルを設定",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1701,8 @@
             "flow_default_tab": "フローに移動するときに選択されたタブ。",
             "log_display": "実行を開いたときにログが表示される方法。",
             "log_level": "実行ログに表示される最小のLogレベル。",
-            "playground": "エディタープレイグラウンドでタスクを個別に実行します。"
+            "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
+            "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。"
           },
           "fields": {
             "auto_refresh_interval": "自動更新間隔",
@@ -1695,7 +1715,8 @@
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル",
             "multi_panel_editor": "マルチパネルエディタ",
-            "playground": "プレイグラウンド"
+            "playground": "プレイグラウンド",
+            "triggers_default_tab": "デフォルトトリガーのタブ"
           },
           "label": "メイン設定"
         },
@@ -1796,7 +1817,9 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。",
+        "username": "ユーザー名",
+        "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
       "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
@@ -1885,6 +1908,12 @@
     "source and topology": "ソースとトポロジー",
     "source only": "ソースのみ",
     "source search": "ソース検索",
+    "source_search": {
+      "match_count": "{count} 件一致 | {count} 件一致",
+      "open_flow": "flow を開く",
+      "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
+      "preview_error": "flow ソースの読み込みに失敗しました"
+    },
     "specific task": "特定のTask",
     "start date": "開始日",
     "start datetime": "開始日時",

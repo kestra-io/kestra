@@ -16,7 +16,7 @@
                 </KsDropdownItem>
                 <SubFlowLink
                     v-if="isSubflow"
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     tabExecution="logs"
                     :executionId="taskRun.outputs.executionId"
                 />
@@ -29,7 +29,7 @@
                 />
 
                 <Restart
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
                     isReplay
                     tooltipPosition="left"
@@ -40,7 +40,7 @@
                 />
 
                 <ChangeStatus
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
                     :execution="execution"
                     :taskRun="taskRun"
@@ -50,7 +50,7 @@
                 <TaskEdit
                     v-if="canReadFlow"
                     :readOnly="true"
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :taskId="taskRun.taskId"
                     section="tasks"
                     :flowId="execution.flowId"
@@ -77,7 +77,7 @@
                     {{ t("delete logs") }}
                 </KsDropdownItem>
                 <WorkerInfo
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     v-if="hasWorkerId !== null"
                     :taskRun="taskRun"
                     @follow="emit('follow', $event)"

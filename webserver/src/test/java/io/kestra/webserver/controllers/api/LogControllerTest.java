@@ -130,6 +130,46 @@ class LogControllerTest {
         assertThat(logs.get(1).getExecutionId()).isEqualTo(log1.getExecutionId());
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDefaultToNormalKindAndAllowKindFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry playgroundLog = logEntry(tenant, Level.INFO).toBuilder()
+            .executionKind(ExecutionKind.PLAYGROUND)
+            .build();
+        logRepository.save(playgroundLog);
+
+        // Execution-scoped endpoint defaults to NORMAL kind only, so a playground log is hidden...
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId()),
+            Argument.of(List.class, LogEntry.class)
+        );
+        assertThat(logs).isEmpty();
+
+        // ...unless the caller explicitly asks for that kind.
+        logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId() + "?filters[kind][EQUALS]=PLAYGROUND"),
+            Argument.of(List.class, LogEntry.class)
+        );
+        assertThat(logs.size()).isEqualTo(1);
+        assertThat(logs.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.PLAYGROUND);
+
+        // Global search defaults to NORMAL kind only too...
+        PagedResults<LogEntry> search = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(PagedResults.class, LogEntry.class)
+        );
+        assertThat(search.getTotal()).isEqualTo(0L);
+
+        // ...and can be narrowed with an explicit KIND filter.
+        search = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search?filters[kind][EQUALS]=PLAYGROUND"),
+            Argument.of(PagedResults.class, LogEntry.class)
+        );
+        assertThat(search.getTotal()).isEqualTo(1L);
+    }
+
     @Test
     void downloadLogsFromExecution() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -376,6 +416,14 @@ class LogControllerTest {
     private static final LogEntry errorLog = baseLog(Level.ERROR, "transform", "task-run-2", 1, "error line");
     private static final List<LogEntry> allLogs = List.of(traceLog, debugLog, infoLog, warnLog, errorLog);
 
+    private static final LogEntry normalKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "normal kind line")
+        .toBuilder().executionKind(ExecutionKind.NORMAL).build();
+    private static final LogEntry playgroundKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "playground kind line")
+        .toBuilder().executionKind(ExecutionKind.PLAYGROUND).build();
+    private static final LogEntry loopKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "loop kind line")
+        .toBuilder().executionKind(ExecutionKind.LOOP).build();
+    private static final List<LogEntry> kindLogs = List.of(normalKindLog, playgroundKindLog, loopKindLog);
+
     private static final List<FiltersTestCase> filtersTestCases = List.of(
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
@@ -463,6 +511,58 @@ class LogControllerTest {
                     .field(QueryFilter.Field.TASK_ID)
                     .operation(QueryFilter.Op.EQUALS)
                     .value("load-data")
+                    .build()
+            ))
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(playgroundKindLog))
+            .filters(List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.PLAYGROUND.name())
+                    .build()
+            ))
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(normalKindLog, loopKindLog))
+            .filters(List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.NOT_EQUALS)
+                    .value(ExecutionKind.PLAYGROUND.name())
+                    .build()
+            ))
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(playgroundKindLog, loopKindLog))
+            .filters(List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.IN)
+                    .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
+                    .build()
+            ))
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(normalKindLog))
+            .filters(List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.NOT_IN)
+                    .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
                     .build()
             ))
             .build()

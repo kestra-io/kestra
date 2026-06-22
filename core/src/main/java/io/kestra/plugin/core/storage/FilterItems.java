@@ -1,12 +1,11 @@
 package io.kestra.plugin.core.storage;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -22,6 +21,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TruthUtils;
 
@@ -119,12 +119,15 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         long processedItemsTotal = 0L;
         long droppedItemsTotal = 0L;
         try (
-            final BufferedWriter writer = Files.newBufferedWriter(path);
-            final BufferedReader reader = newBufferedReader(runContext, from)
+            final OutputStream output = new BufferedOutputStream(new FileOutputStream(path.toFile()), FileSerde.BUFFER_SIZE);
+            final var input = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)
         ) {
 
-            String item;
-            while ((item = reader.readLine()) != null) {
+            var records = new java.util.ArrayList<>();
+            FileSerde.read(input, records::add);
+
+            for (Object record : records) {
+                String item = PebbleExpressionPredicate.MAPPER.writeValueAsString(record);
                 IllegalVariableEvaluationException exception = null;
                 Boolean match = null;
                 try {
@@ -161,10 +164,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
                 }
 
                 switch (action) {
-                    case INCLUDE -> {
-                        writer.write(item);
-                        writer.newLine();
-                    }
+                    case INCLUDE -> FileSerde.write(output, record);
                     case EXCLUDE -> droppedItemsTotal++;
                 }
                 processedItemsTotal++;
@@ -180,11 +180,6 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
 
     private PebbleExpressionPredicate getExpressionPredication(RunContext runContext) {
         return new PebbleExpressionPredicate(runContext, filterCondition);
-    }
-
-    private BufferedReader newBufferedReader(final RunContext runContext, final URI objectURI) throws IOException {
-        InputStream is = runContext.storage().getFile(objectURI);
-        return new BufferedReader(new InputStreamReader(is));
     }
 
     @Builder

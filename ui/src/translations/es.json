@@ -93,6 +93,11 @@
       "create": "Crear un blueprint",
       "custom": "Planos personalizados",
       "dashboards": "Planos del Dashboard",
+      "detail": {
+        "category": "Tipo de categoría",
+        "links": "Enlace y Recursos",
+        "openInEditor": "Abrir en Edit Flow"
+      },
       "edit": "Editar un blueprint",
       "empty": "No hay blueprints para mostrar.",
       "flows": "Planos de Flow",
@@ -601,6 +606,10 @@
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> en nuestra documentación.",
         "title": "Tu flow no tiene ningún trigger."
       },
+      "variables": {
+        "content": "Agrega pares de key-value para compartir la configuración entre flows. Los namespaces secundarios los heredan automáticamente, y puedes referenciar cualquier value con",
+        "title": "Aún no hay variables"
+      },
       "versionPlugin": {
         "content": "Aquí puedes gestionar todos los plugins instalados en tu instancia de Kestra. Los plugins recién instalados pueden no estar disponibles de inmediato en todos los servicios de Kestra, dependiendo de la configuración de tu instancia.",
         "title": "¡Aún no tienes ningún plugin versionado!"
@@ -656,7 +665,7 @@
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
     "execution id": "Id de Ejecución",
     "execution labels": "Etiquetas de ejecución",
-    "execution not found": "La ejecución <code>{executionId}</code> no se encuentra.",
+    "execution not found": "La ejecución {executionId} no se encuentra.",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
     "execution replay": "Esta ejecución es una repetición de",
@@ -857,6 +866,7 @@
     "fold_all_multi_lines": "Plegar Todas las Líneas Múltiples",
     "font size": "Font size",
     "for flow": "para flow",
+    "forbidden system labels": "Solo system.correlationId puede usarse como label del sistema",
     "force run": "Forzar ejecución",
     "force run confirm": "¿Está seguro de forzar la ejecución <code>{id}</code>?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se descolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
     "force run done": "La ejecución es forzada a RUNNING",
@@ -866,6 +876,9 @@
     "form error": "Error en formulario",
     "from": "Desde",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Esta ejecución terminó sin ejecutar ninguna task.\nVerifique su resumen y logs para conocer la razón.",
+    "gantt_no_tasks_match_filters": "Intenta ajustar los filtros de búsqueda, estado o nivel de log.",
+    "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
     "healthcheck date": "Fecha de HealthCheck",
     "hide task documentation": "Ocultar documentación de la task",
     "home": "Inicio",
@@ -934,11 +947,13 @@
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
     "leave page": "Salir de la página",
+    "license": "Licencia",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
     "line": "Línea",
     "line-by-line": "línea por línea",
     "loaded x dependencies": "{count} dependencias cargadas",
+    "loading": "Cargando...",
     "log expand setting": "Visualización predeterminada del Log",
     "logExporters": "Exportadores de Logs",
     "logs": "Logs",
@@ -950,6 +965,7 @@
       "raw_details": "Mostrar task logs y flow logs completos en un formato crudo ordenado por marca de tiempo"
     },
     "main_configuration": "Configuración Principal",
+    "manage labels": "Gestionar etiquetas",
     "management port": "Puerto de gestión",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -1146,6 +1162,7 @@
     "no data current task": "No hay datos disponibles para el task actual.",
     "no inputs": "Este flow no tiene inputs.",
     "no result": "No hay resultados para mostrar.",
+    "no revisions": "Sin revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
     "no-executions-view": {
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
@@ -1241,7 +1258,8 @@
     "no_history": "No hay historial disponible",
     "no_inputs": "No hay inputs disponibles.",
     "no_logs_data": "Sin datos",
-    "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
+    "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
+    "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
     "no_results": {
       "assets": "No se encontraron activos",
@@ -1390,6 +1408,7 @@
     "open in new tab": "En una nueva pestaña",
     "open in same tab": "En la misma pestaña",
     "open sidebar": "abrir barra lateral",
+    "open source": "Código Abierto",
     "open_page": "Open page",
     "optional": "Opcional",
     "original execution": "Ejecución original",
@@ -1541,6 +1560,7 @@
       "showing_rows": "Mostrando filas {start}-{end} de {total}",
       "view": "Ver"
     },
+    "pricing": "Precios",
     "product_tour": "Recorrido del Producto",
     "properties": {
       "hidden": "Oculto en la Tabla",
@@ -1669,7 +1689,6 @@
     "sequential": "Secuencial",
     "server type": "Tipo de servidor",
     "services": "Servicios",
-    "set_extra_labels": "Establecer etiquetas adicionales",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1701,8 @@
             "flow_default_tab": "Pestaña seleccionada al navegar a un flow.",
             "log_display": "Cómo se presentan los logs al abrir una ejecución.",
             "log_level": "Nivel mínimo de log mostrado en los logs de ejecución.",
-            "playground": "Ejecutar tasks individualmente en el editor de pruebas."
+            "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
+            "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers."
           },
           "fields": {
             "auto_refresh_interval": "Intervalo de Auto Refresh",
@@ -1695,7 +1715,8 @@
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado",
             "multi_panel_editor": "Editor de Panel Múltiple",
-            "playground": "Área de pruebas"
+            "playground": "Área de pruebas",
+            "triggers_default_tab": "Pestaña de Triggers Predeterminados"
           },
           "label": "Configuración Principal"
         },
@@ -1796,7 +1817,9 @@
         "firstName": "Nombre",
         "lastName": "Apellido",
         "password": "Contraseña",
-        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número."
+        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número.",
+        "username": "Nombre de usuario",
+        "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
       "login_subtitle": "Ingrese sus credenciales para acceder a su instancia de Kestra",
@@ -1885,6 +1908,12 @@
     "source and topology": "Fuente y topología",
     "source only": "Solo fuente",
     "source search": "Búsqueda de fuente",
+    "source_search": {
+      "match_count": "{count} coincidencia | {count} coincidencias",
+      "open_flow": "Abrir flow",
+      "preview_empty": "Selecciona un resultado para previsualizarlo. Haz clic en un flow de la lista de resultados para ver su código fuente.",
+      "preview_error": "Error al cargar el código fuente del flow"
+    },
     "specific task": "Tarea específica",
     "start date": "Fecha de inicio",
     "start datetime": "Fecha y hora de inicio",

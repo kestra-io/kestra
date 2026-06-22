@@ -24,6 +24,15 @@ jobs:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           path: artifact-sdk
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Build slot-contracts
+        working-directory: ui/packages/slot-contracts
+        run: npm install && npm run build
+
       - name: Set up Git
         run: |
           git config --global user.name "GitHub Action"

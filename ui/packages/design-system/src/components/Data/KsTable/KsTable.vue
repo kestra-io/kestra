@@ -13,7 +13,7 @@
         </template>
         <template #empty>
             <slot name="empty">
-                <KsTableEmpty :title="emptyText" />
+                <KsNoData :title="emptyText" />
             </slot>
         </template>
     </ElTable>
@@ -24,7 +24,7 @@
     import {ElTable} from "element-plus"
     import type {TableInstance} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import KsTableEmpty from "../KsTableEmpty.vue"
+    import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 

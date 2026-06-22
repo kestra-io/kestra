@@ -28,4 +28,5 @@ jobs:
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}
+      use-kestra-base-images: true
     secrets: inherit

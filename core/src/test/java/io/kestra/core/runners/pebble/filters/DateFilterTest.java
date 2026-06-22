@@ -163,23 +163,38 @@ class DateFilterTest {
 
     @Test
     void now() throws IllegalVariableEvaluationException {
+        // now() reads the wall clock, but the assertions re-read it after rendering. A minute, second or
+        // date rollover can happen between the two reads, so every comparison brackets the render with the
+        // clock value captured just before and just after, and accepts either — never a single exact instant.
+        ZoneId lisbon = ZoneId.of("Europe/Lisbon");
+        DateTimeFormatter hourMinute = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter sqlSeconds = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        String beforeDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
         String render = variableRenderer.render("{{ now() }}", ImmutableMap.of());
-        assertThat(render).contains(ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        String afterDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        assertThat(render).containsAnyOf(beforeDate, afterDate);
 
+        String beforeLisbonDate = ZonedDateTime.now(lisbon).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String beforeLisbonMinute = ZonedDateTime.now(lisbon).format(hourMinute);
         render = variableRenderer.render("{{ now(timeZone=\"Europe/Lisbon\") }}", ImmutableMap.of());
+        String afterLisbonDate = ZonedDateTime.now(lisbon).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String afterLisbonMinute = ZonedDateTime.now(lisbon).format(hourMinute);
+        assertThat(render).containsAnyOf(beforeLisbonDate, afterLisbonDate);
+        assertThat(render).containsAnyOf(beforeLisbonMinute, afterLisbonMinute);
 
-        assertThat(render).contains(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE));
-        assertThat(render).contains(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ofPattern("HH:mm")));
-
+        // no timeZone arg => now() renders in the JVM default zone, so the expected date is read in that zone.
+        beforeDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
         render = variableRenderer.render("{{ now(format=\"iso_local_date\") }}", ImmutableMap.of());
+        afterDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        assertThat(render).isIn(beforeDate, afterDate);
 
-        assertThat(render).isEqualTo(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE));
-
+        String beforeSeconds = LocalDateTime.now().format(sqlSeconds);
         render = variableRenderer.render("{{ now(format=\"sql_milli\") }}", ImmutableMap.of());
-
-        // a millisecond can pass between the render and now so we can't assert on a precise to millisecond date
-        assertThat(render).startsWith(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        String afterSeconds = LocalDateTime.now().format(sqlSeconds);
+        // a (sub)second can pass between the render and now, so we assert only down to the second, not the millis
         assertThat(render).hasSize(23);
+        assertThat(render.substring(0, beforeSeconds.length())).isIn(beforeSeconds, afterSeconds);
     }
 
     @Test

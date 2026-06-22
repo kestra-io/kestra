@@ -32,7 +32,8 @@ import reactor.core.publisher.Flux;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
 
-    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
+    private static final Condition DEFAULT_VISIBLE_KIND_CONDITION = field("execution_kind").isNull()
+        .or(field("execution_kind").in(ExecutionKind.NORMAL.name(), ExecutionKind.LOOP.name()));
     private static final String DATE_COLUMN = "timestamp";
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
@@ -74,10 +75,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public ArrayListTotal<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
-        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // Default to user-facing execution kinds; an explicit KIND filter overrides that and selects the requested kind(s).
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
         if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
+            condition = DEFAULT_VISIBLE_KIND_CONDITION.and(condition);
         }
         return findPage(pageable, tenantId, condition);
     }
@@ -104,10 +105,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
-        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // Default to user-facing execution kinds; an explicit KIND filter overrides that and selects the requested kind(s).
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
         if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
+            condition = DEFAULT_VISIBLE_KIND_CONDITION.and(condition);
         }
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
     }
@@ -362,7 +363,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
             SelectConditionStep selectStep = context.select(field).from(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId));
 
-            var selectConditionStep = where(selectStep, filterService, filters, getFieldsMapping()).and(NORMAL_KIND_CONDITION);
+            var selectConditionStep = where(selectStep, filterService, filters, getFieldsMapping()).and(DEFAULT_VISIBLE_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -393,7 +394,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
             SelectConditionStep<Record> selectConditionStep = select(context, filterService, columnsWithoutDate, dateFields, this.getFieldsMapping(), this.jdbcRepository.getTable(), tenantId);
 
             // Apply Where filter
-            selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping()).and(NORMAL_KIND_CONDITION);
+            selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping()).and(DEFAULT_VISIBLE_KIND_CONDITION);
 
             List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream().filter(column -> column.getAgg() == null).toList();
 

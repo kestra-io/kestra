@@ -261,6 +261,8 @@
         "plural": "Панели управления",
         "singular": "Панель управления"
       },
+      "no_description": "Нет описания",
+      "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "preview": "Предварительный просмотр Dashboard",
       "quick_filters": {
         "all": "Все",
@@ -1777,6 +1779,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
+            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",

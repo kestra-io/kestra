@@ -53,7 +53,7 @@
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         size?: "small" | "default" | "large" | ""
         disabled?: boolean
-        icon?: string | Component
+        icon?: string | object
         nativeType?: "button" | "submit" | "reset"
         loading?: boolean
         text?: boolean

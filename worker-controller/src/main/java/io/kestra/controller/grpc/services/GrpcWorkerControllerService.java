@@ -158,11 +158,13 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     workerJobDispatcher.onCompletionsReceived(context, completions);
                 }
 
-                // Process permits
+                // Process permits. The worker advertises its total remaining capacity as a level,
+                // so zero is meaningful: it means "stop dispatching to me" — queue full, or intake
+                // paused for maintenance / cordon. onPermitsReceived pauses the worker's
+                // subscriptions when capacity reaches zero (and ignores negatives), so it must not
+                // be gated out here.
                 int permits = request.getPermits();
-                if (permits > 0) {
-                    workerJobDispatcher.onPermitsReceived(context, permits);
-                }
+                workerJobDispatcher.onPermitsReceived(context, permits);
             }
 
             @Override

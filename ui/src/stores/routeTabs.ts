@@ -34,6 +34,16 @@ export interface RouteTab {
 const startsWithSegment = (value: string, prefix: string) =>
     value === prefix || value.startsWith(`${prefix}/`)
 
+const SUBVIEW_PARAM = "tab"
+
+const paramsMatchScope = (
+    routeParams: RouteLocationNormalizedLoaded["params"],
+    targetParams: RouteLocationNormalizedLoaded["params"],
+): boolean =>
+    Object.keys(targetParams).every(key =>
+        key === SUBVIEW_PARAM
+        || String(routeParams[key] ?? "") === String(targetParams[key] ?? ""))
+
 export function activeScopeTab(
     route: RouteLocationNormalizedLoaded,
     tabs: RouteTab[],
@@ -43,7 +53,7 @@ export function activeScopeTab(
         .filter(tab => tab.route && !tab.header && !tab.excludeFromScope)
         .map(tab => {
             const target = router.resolve(tab.route!)
-            return {tab, path: target.path, name: String(target.name ?? "")}
+            return {tab, path: target.path, name: String(target.name ?? ""), params: target.params}
         })
 
     const nameCount = new Map<string, number>()
@@ -54,7 +64,9 @@ export function activeScopeTab(
 
     return scoped.reduce<{tab?: RouteTab; score: number}>((best, scope) => {
         const byPath = startsWithSegment(path, scope.path) ? scope.path.length : 0
-        const byName = scope.name && nameCount.get(scope.name) === 1 && startsWithSegment(name, scope.name)
+        const byName = scope.name && nameCount.get(scope.name) === 1
+            && startsWithSegment(name, scope.name)
+            && paramsMatchScope(route.params, scope.params)
             ? scope.name.length
             : 0
         const score = Math.max(byPath, byName)

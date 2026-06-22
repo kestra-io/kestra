@@ -83,7 +83,7 @@
             </KsDataTable>
         </div>
 
-        <KsDialog v-model="downloadOpen" :title="t('download logs')" width="480px" destroyOnClose>
+        <KsDialog v-model="downloadOpen" :title="t('download logs')" destroyOnClose>
             <p class="download-hint">{{ t('download_logs_description') }}</p>
             <QuickFilters
                 :levels="VALUES.LEVELS"

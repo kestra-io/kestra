@@ -1,28 +1,34 @@
 <template>
     <div
         v-if="generated?.results?.length"
-        class="chart"
+        class="chart-wrapper"
         :class="{short: props.short}"
-        :style="props.short ? undefined : {height: `${chartHeight}px`}"
+        :style="props.short ? undefined : {maxHeight: `${MAX_CHART_HEIGHT}px`}"
     >
-        <ChartLegend
-            v-if="showLegend"
-            :items="legendItems"
-            :chart="ksBarRef"
-            @toggle="onLegendToggle"
-        />
-        <KsBar
-            ref="ksBarRef"
-            class="canvas"
-            :data="seriesData"
-            :categories="categories"
-            :loading="false"
-            :stack="true"
-            :options="echartsOption"
-            :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
-            :tooltipType="TooltipType.EXTERNAL"
-            @echarts-click="onChartClick"
-        />
+        <div
+            class="chart"
+            :class="{short: props.short}"
+            :style="props.short ? undefined : {height: `${naturalChartHeight}px`}"
+        >
+            <ChartLegend
+                v-if="showLegend"
+                :items="legendItems"
+                :chart="ksBarRef"
+                @toggle="onLegendToggle"
+            />
+            <KsBar
+                ref="ksBarRef"
+                class="canvas"
+                :data="seriesData"
+                :categories="categories"
+                :loading="false"
+                :stack="true"
+                :options="echartsOption"
+                :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
+                :tooltipType="TooltipType.EXTERNAL"
+                @echarts-click="onChartClick"
+            />
+        </div>
     </div>
     <KsNoData v-else :class="{empty: !props.short}" />
 </template>
@@ -118,9 +124,12 @@
 
     const showLegend = computed(() => !props.short && !!chartOptions?.legend?.enabled)
 
-    const chartHeight = computed(() =>
-        Math.max(231, categories.value.length * 18 + (showLegend.value ? 68 : 36)),
-    )
+    const MAX_CHART_HEIGHT = 500
+
+    const naturalChartHeight = computed(() => {
+        const overhead = showLegend.value ? 68 : 36
+        return Math.max(231, categories.value.length * 18 + overhead)
+    })
 
     const legendItems = computed(() =>
         parsedData.value.datasets.map((ds) => ({
@@ -202,6 +211,15 @@
 </script>
 
 <style scoped lang="scss">
+    .chart-wrapper {
+        overflow-y: auto;
+
+        &.short {
+            height: 40px;
+            overflow: hidden;
+        }
+    }
+
     .chart {
         display: flex;
         flex-direction: column;

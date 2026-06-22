@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -16,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.FileUtils;
 
 import jakarta.annotation.Nullable;
 
@@ -178,11 +178,8 @@ public class InternalStorage implements Storage {
         try (InputStream is = new FileInputStream(file)) {
             return putFile(is, resolved);
         } finally {
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                logger.warn("Failed to delete temporary file '{}'", file.toPath(), e);
-            }
+            FileUtils.deleteWithRetry(file.toPath())
+                .ifPresent(e -> logger.warn("Failed to delete temporary file '{}'", file.toPath(), e));
         }
     }
 
@@ -239,11 +236,8 @@ public class InternalStorage implements Storage {
         try (InputStream is = new FileInputStream(file)) {
             return this.putFile(is, uri);
         } finally {
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                logger.warn("Failed to delete temporary file '{}'", file.toPath(), e);
-            }
+            FileUtils.deleteWithRetry(file.toPath())
+                .ifPresent(e -> logger.warn("Failed to delete temporary file '{}'", file.toPath(), e));
         }
     }
 

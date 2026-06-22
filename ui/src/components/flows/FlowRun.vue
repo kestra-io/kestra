@@ -193,7 +193,7 @@
     )
 
     const flowCanBeExecuted = computed(() =>
-        flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value,
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
     )
 
     const isDirty = computed(() =>

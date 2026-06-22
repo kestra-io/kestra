@@ -115,12 +115,9 @@ public class VariableRenderer {
             compiledTemplate.evaluate(writer, variables);
             result = writer.output();
         } catch (IOException | PebbleException e) {
-            // The Handlebars fallback only exists to bridge legacy Handlebars-vs-Pebble syntax
-            // differences. If the failure originates from a function that hit a real error - e.g.
-            // the secret() function failing because the secret backend (Vault) is unreachable -
-            // re-rendering with Handlebars cannot help and only masks the real cause, surfacing a
-            // cryptic "found: '...', expected: 'id'" syntax error instead. Skip the fallback in that
-            // case and let the error propagate (properPebbleException keeps the real cause in the chain).
+            // The Handlebars fallback only bridges legacy syntax differences; it can't fix a real
+            // runtime error (e.g. secret() failing because Vault is unreachable) and would only mask
+            // it behind a cryptic syntax error. Skip it in that case and let the real cause propagate.
             boolean hasNonTemplateCause = findNonTemplateCause(e) != null;
 
             String alternativeRender = hasNonTemplateCause ? null : this.alternativeRender(e, (String) inline, variables);

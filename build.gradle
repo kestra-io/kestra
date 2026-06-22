@@ -27,9 +27,6 @@ plugins {
     // helper
     id "com.github.ben-manes.versions" version "0.54.0"
 
-    // front
-    id 'com.github.node-gradle.node' version '7.1.0'
-
     // release
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -568,7 +565,6 @@ distZip.dependsOn shadowJar
 distTar.dependsOn shadowJar
 startScripts.dependsOn shadowJar
 startShadowScripts.dependsOn jar
-shadowJar.dependsOn 'ui:assembleFrontend'
 shadowJar.dependsOn jar
 
 /**********************************************************************************************************************\
@@ -622,13 +618,13 @@ tasks.register('executableJar', Zip) {
 tasks.register('runLocal') {
     group = "application"
     description = "Run Kestra as server local"
-    dependsOn ':ui:assembleFrontend', ':cli:runLocal'
+    dependsOn ':cli:runLocal'
 }
 
 tasks.register('runStandalone') {
     group = "application"
     description = "Run Kestra as server standalone"
-    dependsOn ':ui:assembleFrontend', ':cli:runStandalone'
+    dependsOn ':cli:runStandalone'
 }
 
 /**********************************************************************************************************************\
@@ -650,12 +646,10 @@ subprojects {subProject ->
 
         tasks.register('sourcesJar', Jar) {
             dependsOn = [':core:copyGradleProperties']
-            dependsOn = [':ui:assembleFrontend']
             archiveClassifier.set('sources')
             from sourceSets.main.allSource
         }
         sourcesJar.dependsOn ':core:copyGradleProperties'
-        sourcesJar.dependsOn ':ui:assembleFrontend'
 
         tasks.register('javadocJar', Jar) {
             archiveClassifier.set('javadoc')

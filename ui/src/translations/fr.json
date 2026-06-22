@@ -261,6 +261,8 @@
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"
       },
+      "no_description": "Aucune description",
+      "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "preview": "Aperçu du Dashboard",
       "quick_filters": {
         "all": "Tout",
@@ -528,6 +530,10 @@
     "email": "Email",
     "email length constraint": "L'e-mail ne doit pas dépasser 256 caractères.",
     "empty": {
+      "namespaceFiles": {
+        "title": "Aucun fichier dans cet espace de noms pour le moment",
+        "content": "Les fichiers de l'espace de noms fonctionnent comme un dossier de projet pour cet espace de noms. Stockez du code Python, SQL, dbt ou Terraform, puis référencez n'importe quel fichier dans vos flows avec"
+      },
       "announcements": {
         "content": "Les annonces vous permettent de notifier vos utilisateurs de tout changement ou de les informer des temps d'arrêt de maintenance planifiés. Sélectionnez simplement le type d'annonce, la plage de dates pendant laquelle elle doit être affichée, et rédigez le message d'annonce.",
         "title": "Vous n'avez pas encore d'annonces !"
@@ -1099,6 +1105,7 @@
       "export": "Exporter les fichiers de l'espace de noms",
       "export_single": "Exporter le fichier",
       "filter": "Filtrer",
+      "new_file": "Nouveau fichier",
       "import": {
         "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)",
         "files": "Importer des fichiers",
@@ -1109,6 +1116,10 @@
       "no_items": {
         "heading": "Aucun fichier trouvé dans votre namespace pour le moment.",
         "paragraph": "Créer ou importer des fichiers pour partager du code entre les flows dans votre namespace."
+      },
+      "no_selection": {
+        "heading": "Aucun fichier sélectionné",
+        "description": "Sélectionnez un fichier dans l'arborescence pour afficher son contenu."
       },
       "path": {
         "copy": "Copier le chemin",
@@ -1161,6 +1172,8 @@
     "next_execution": "Prochaine exécution",
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
     "no inputs": "Ce flow n'a pas d'entrée.",
+    "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
+    "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
     "no result": "Il n'y a aucun résultat à afficher.",
     "no revisions": "Aucune révision",
     "no revisions found": "Une seule révision existe pour ce flow",
@@ -1590,6 +1603,7 @@
     "replay inputs": "Entrées",
     "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
     "replay latest revision": "Rejouer avec la dernière révision",
+    "replay select taskrun": "Sélectionnez le task run à rejouer à partir de :",
     "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
     "replay using": "Rejouer en utilisant",
     "replay with inputs": "Rejouer avec inputs",
@@ -1768,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "Choisissez votre thème d'interface préféré.",
+            "color_mode_shortcut": "Astuce : appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>L</kbd> pour changer de thème depuis n'importe où.",
             "editor_folding_stratgy": "Réduire les blocs YAML longs par défaut lors de l'ouverture d'un flow.",
             "editor_font_family": "Police monospace utilisée dans l'éditeur YAML.",
             "editor_font_size": "Taille de police utilisée dans les éditeurs YAML et sans code.",

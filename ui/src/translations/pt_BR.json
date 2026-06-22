@@ -261,6 +261,8 @@
         "plural": "Dashboards",
         "singular": "Dashboard"
       },
+      "no_description": "Sem descrição",
+      "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
       "preview": "Visualizar Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -528,6 +530,10 @@
     "email": "Email",
     "email length constraint": "Email não deve exceder 256 caracteres",
     "empty": {
+      "namespaceFiles": {
+        "title": "Ainda não há arquivos neste namespace",
+        "content": "Os arquivos do namespace funcionam como uma pasta de projeto para este namespace. Armazene código Python, SQL, dbt ou Terraform e, em seguida, referencie qualquer arquivo nos seus flows com"
+      },
       "announcements": {
         "content": "Os anúncios permitem que você notifique seus usuários sobre quaisquer alterações ou informe-os sobre o tempo de inatividade planejado para manutenção. Basta selecionar o tipo de anúncio, o intervalo de datas em que ele deve ser exibido e escrever a mensagem do anúncio.",
         "title": "Você ainda não tem anúncios!"
@@ -1099,6 +1105,7 @@
       "export": "Exportar arquivos do namespace",
       "export_single": "Exportar arquivo",
       "filter": "Filtro",
+      "new_file": "Novo arquivo",
       "import": {
         "error": "Ocorreu(ram) erro(s) ao importar o(s) arquivo(s)",
         "files": "Importar arquivos",
@@ -1109,6 +1116,10 @@
       "no_items": {
         "heading": "Nenhum arquivo encontrado no seu namespace ainda.",
         "paragraph": "Crie ou importe arquivos para compartilhar código entre flows no seu namespace."
+      },
+      "no_selection": {
+        "heading": "Nenhum arquivo selecionado",
+        "description": "Selecione um arquivo da árvore para ver seu conteúdo."
       },
       "path": {
         "copy": "Copiar caminho",
@@ -1161,6 +1172,8 @@
     "next_execution": "Próxima execução",
     "no data current task": "Não há dados disponíveis para a tarefa atual",
     "no inputs": "Este flow não tem inputs.",
+    "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
+    "no outputs available": "Nenhuma saída disponível para esta execução de task.",
     "no result": "Não há resultados para serem exibidos.",
     "no revisions": "Sem revisões",
     "no revisions found": "Existe apenas uma revisão para este flow",
@@ -1590,6 +1603,7 @@
     "replay inputs": "Entradas",
     "replay inputs new required": "Esta revisão possui inputs. Você será solicitado a preenchê-los.",
     "replay latest revision": "Repetir usando a última revisão",
+    "replay select taskrun": "Selecione o task run para reproduzir a partir de:",
     "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir com inputs",
@@ -1768,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
+            "color_mode_shortcut": "Dica: pressione <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas de qualquer lugar.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
             "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",

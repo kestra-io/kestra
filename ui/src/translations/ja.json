@@ -261,6 +261,8 @@
         "plural": "ダッシュボード",
         "singular": "ダッシュボード"
       },
+      "no_description": "説明なし",
+      "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "preview": "プレビュー ダッシュボード",
       "quick_filters": {
         "all": "すべて",
@@ -528,6 +530,10 @@
     "email": "メール",
     "email length constraint": "メールは256文字を超えてはいけません",
     "empty": {
+      "namespaceFiles": {
+        "title": "このnamespaceにはまだファイルがありません",
+        "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます"
+      },
       "announcements": {
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。",
         "title": "お知らせはまだありません！"
@@ -1099,6 +1105,7 @@
       "export": "namespaceファイルをエクスポート",
       "export_single": "ファイルをエクスポート",
       "filter": "フィルター",
+      "new_file": "新規ファイル",
       "import": {
         "error": "ファイルのインポート中にエラーが発生しました",
         "files": "ファイルをインポート",
@@ -1109,6 +1116,10 @@
       "no_items": {
         "heading": "まだnamespaceにファイルが見つかりません。",
         "paragraph": "フロー間でコードを共有するためにファイルを作成またはインポートします。"
+      },
+      "no_selection": {
+        "heading": "ファイルが選択されていません",
+        "description": "ツリーからファイルを選択して内容を表示します。"
       },
       "path": {
         "copy": "パスをコピー",
@@ -1161,6 +1172,8 @@
     "next_execution": "次回の実行",
     "no data current task": "現在のタスクに利用可能なデータがありません。",
     "no inputs": "このflowにはinputがありません。",
+    "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
+    "no outputs available": "このタスク実行には利用可能なoutputがありません。",
     "no result": "表示する結果がありません。",
     "no revisions": "リビジョンなし",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
@@ -1590,6 +1603,7 @@
     "replay inputs": "入力",
     "replay inputs new required": "このリビジョンにはinputがあります。入力を求められます。",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
+    "replay select taskrun": "再生するタスク実行を選択してください:",
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "replay using": "を使用してリプレイ",
     "replay with inputs": "入力を使用してリプレイ",
@@ -1768,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
+            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",

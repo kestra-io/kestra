@@ -121,7 +121,7 @@
     import ChartBar from "vue-material-design-icons/ChartBar.vue"
     import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
     import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue"
-    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg"
+    import EmptyVisualDashboard from "../../../assets/empty_visuals/dashboard.svg"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import intro from "../../../assets/docs/dashboard_home.md?raw"
     import yaml from "yaml"

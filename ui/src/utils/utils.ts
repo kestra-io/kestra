@@ -20,17 +20,17 @@ export function isFile(value: unknown): boolean {
 }
 
 export function flatten(object: Record<string, any>) {
-    return Object.assign({}, function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any> {
+    return Object.assign({}, ...function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any>[] {
         if (child === null) {
-            return {[path.join(".")]: null}
+            return [{[path.join(".")]: null}]
         }
 
-        return Object
+        return ([] as Record<string, any>[]).concat(...Object
             .keys(child)
             .map(key => typeof child[key] === "object" ?
                 _flatten(child[key], path.concat([key])) :
-                ({[path.concat([key]).join(".")]: child[key]}),
-            )
+                [{[path.concat([key]).join(".")]: child[key]}],
+            ))
     }(object))
 }
 

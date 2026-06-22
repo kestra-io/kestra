@@ -19,6 +19,7 @@
             :subflowsExecutions="executionsStore.subflowsExecutions"
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
+            :replayEnabled="replayEnabled"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
             :showDetailsToggle="hasExtraDetails"
@@ -27,6 +28,8 @@
             @delete="onDelete"
             @open-link="openFlow"
             @show-logs="showLogs"
+            @show-outputs="showOutputs"
+            @replay-task="onReplayTask"
             @show-description="showDescription"
             @show-condition="showCondition"
             @show-custom-action="showCustomAction"
@@ -65,37 +68,81 @@
             <template #header>
                 <code>{{ selectedTask.id }}</code>
             </template>
-            <div v-if="isShowLogsOpen">
-                <Collapse>
-                    <KsFormItem>
-                        <SearchField
-                            :router="false"
-                            @search="onSearch"
-                            class="me-2"
+            <KsTabs v-if="isInspectOpen" v-model="inspectTab" type="box" class="inspect-tabs">
+                <KsTabPane :label="$t('logs')" name="logs">
+                    <div class="tab-body">
+                        <Collapse>
+                            <KsFormItem>
+                                <SearchField
+                                    :router="false"
+                                    @search="onSearch"
+                                    class="me-2"
+                                />
+                            </KsFormItem>
+                            <KsFormItem>
+                                <LogLevelSelector
+                                    :value="logLevel"
+                                    @update:model-value="onLevelChange"
+                                />
+                            </KsFormItem>
+                        </Collapse>
+                        <TaskRunDetails
+                            v-for="taskRun in selectedTask.taskRuns"
+                            :key="taskRun.id"
+                            :targetExecutionId="selectedTask.execution?.id"
+                            :taskRunId="taskRun.id"
+                            :filter="logFilter"
+                            :excludeMetas="[
+                                'namespace',
+                                'flowId',
+                                'taskId',
+                                'executionId',
+                            ]"
+                            :level="logLevel"
+                            @follow="emit('follow', $event)"
                         />
-                    </KsFormItem>
-                    <KsFormItem>
-                        <LogLevelSelector
-                            :value="logLevel"
-                            @update:model-value="onLevelChange"
-                        />
-                    </KsFormItem>
-                </Collapse>
-                <TaskRunDetails
-                    v-for="taskRun in selectedTask.taskRuns"
-                    :key="taskRun.id"
-                    :targetExecutionId="selectedTask.execution?.id"
-                    :taskRunId="taskRun.id"
-                    :filter="logFilter"
-                    :excludeMetas="[
-                        'namespace',
-                        'flowId',
-                        'taskId',
-                        'executionId',
-                    ]"
-                    :level="logLevel"
-                    @follow="emit('follow', $event)"
-                />
+                    </div>
+                </KsTabPane>
+                <KsTabPane :label="$t('outputs')" name="outputs">
+                    <div class="tab-body outputs-view">
+                        <section v-for="taskRun in selectedTask.taskRuns" :key="taskRun.id" class="taskrun-card">
+                            <div v-if="selectedTask.taskRuns.length > 1" class="taskrun-card__header">
+                                <KsExecutionStatus size="small" :status="taskRun.state.current" />
+                                <code class="taskrun-card__value">{{ taskRun.value ?? taskRun.id }}</code>
+                            </div>
+                            <Vars
+                                v-if="taskRun.outputs && Object.keys(taskRun.outputs).length > 0"
+                                :data="taskRun.outputs"
+                            />
+                            <span v-else class="taskrun-card__empty">{{ $t("no outputs available") }}</span>
+                        </section>
+                    </div>
+                </KsTabPane>
+                <KsTabPane :label="$t('metrics')" name="metrics" lazy>
+                    <div class="tab-body outputs-view">
+                        <section v-for="taskRun in selectedTask.taskRuns" :key="taskRun.id" class="taskrun-card">
+                            <div v-if="selectedTask.taskRuns.length > 1" class="taskrun-card__header">
+                                <KsExecutionStatus size="small" :status="taskRun.state.current" />
+                                <code class="taskrun-card__value">{{ taskRun.value ?? taskRun.id }}</code>
+                            </div>
+                            <MetricsTable :taskRunId="taskRun.id" :execution="selectedTask.execution">
+                                <template #empty>
+                                    <span class="taskrun-card__empty">{{ $t("no metrics available") }}</span>
+                                </template>
+                            </MetricsTable>
+                        </section>
+                    </div>
+                </KsTabPane>
+            </KsTabs>
+            <div v-if="isReplayPickerOpen" class="replay-picker">
+                <span class="replay-picker__hint">{{ $t("replay select taskrun") }}</span>
+                <div v-for="taskRun in selectedTask.taskRuns" :key="taskRun.id" class="replay-picker__item">
+                    <KsExecutionStatus size="small" :status="taskRun.state.current" />
+                    <code class="replay-picker__value">{{ taskRun.value ?? taskRun.id }}</code>
+                    <KsButton size="small" :icon="PlayBoxMultiple" @click="openReplayDialog(selectedTask.execution, taskRun)">
+                        {{ $t("replay") }}
+                    </KsButton>
+                </div>
             </div>
             <div v-if="isShowDescriptionOpen">
                 <KsMarkdown
@@ -136,6 +183,16 @@
                 />
             </div>
         </KsDrawer>
+
+        <Restart
+            v-if="replayExecution && replayTaskRun"
+            ref="replayRef"
+            isReplay
+            :trigger="false"
+            :execution="replayExecution"
+            :taskRun="replayTaskRun"
+            :attemptIndex="replayAttemptIndex"
+        />
     </div>
 </template>
 
@@ -151,14 +208,21 @@
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
+    import Vars from "../executions/Vars.vue"
+    import MetricsTable from "../executions/MetricsTable.vue"
+    import Restart from "../executions/overview/components/actions/Restart.vue"
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, KsMarkdown, KsEditor, KsDialog} from "@kestra-io/design-system"
+    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
+    import {useAuthStore} from "override/stores/auth"
+    import action from "../../models/action"
+    import resource from "../../models/resource"
     import {useCoreStore} from "../../stores/core"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
@@ -373,13 +437,32 @@
     const timer = ref<ReturnType<typeof setTimeout>>()
     const taskEditData = ref()
     const taskEditDomElement = ref()
-    const isShowLogsOpen = ref(false)
     const logFilter = ref("")
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
+    const isInspectOpen = ref(false)
+    const inspectTab = ref<"logs" | "outputs" | "metrics">("logs")
+    const isReplayPickerOpen = ref(false)
     const selectedTask = ref()
+    const replayExecution = ref()
+    const replayTaskRun = ref()
+    const replayRef = ref<InstanceType<typeof Restart>>()
+
+    const authStore = useAuthStore()
+
+    const replayEnabled = computed(() => {
+        const currentExecution = executionsStore.execution as any
+        if (!currentExecution?.state || State.isRunning(currentExecution.state.current)) {
+            return false
+        }
+        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, currentExecution.namespace) === true
+    })
+
+    const replayAttemptIndex = computed(() =>
+        replayTaskRun.value?.attempts ? replayTaskRun.value.attempts.length - 1 : undefined,
+    )
 
     onMounted(() => {
         // Regenerate graph on window resize
@@ -396,12 +479,19 @@
         }
     }, {immediate: true})
 
+    const resetDrawerSections = () => {
+        isShowDescriptionOpen.value = false
+        isShowConditionOpen.value = false
+        isShowCustomActionOpen.value = false
+        isInspectOpen.value = false
+        isReplayPickerOpen.value = false
+    }
+
     watch(
         () => isDrawerOpen.value,
         () => {
             if (!isDrawerOpen.value) {
-                isShowDescriptionOpen.value = false
-                isShowLogsOpen.value = false
+                resetDrawerSections()
                 selectedTask.value = null
             }
         },
@@ -515,9 +605,33 @@
         )
     }
 
-    const showLogs = (event: string) => {
+    const openInspect = (event: unknown, tab: "logs" | "outputs" | "metrics") => {
+        resetDrawerSections()
         selectedTask.value = event
-        isShowLogsOpen.value = true
+        inspectTab.value = tab
+        isInspectOpen.value = true
+        isDrawerOpen.value = true
+    }
+
+    const showLogs = (event: string) => openInspect(event, "logs")
+
+    const showOutputs = (event: unknown) => openInspect(event, "outputs")
+
+    const openReplayDialog = (taskExecution: unknown, taskRun: unknown) => {
+        replayExecution.value = taskExecution
+        replayTaskRun.value = taskRun
+        isDrawerOpen.value = false
+        nextTick(() => replayRef.value?.open())
+    }
+
+    const onReplayTask = (event: {execution: unknown; taskRuns: unknown[]}) => {
+        if (event.taskRuns.length === 1) {
+            openReplayDialog(event.execution, event.taskRuns[0])
+            return
+        }
+        resetDrawerSections()
+        selectedTask.value = event
+        isReplayPickerOpen.value = true
         isDrawerOpen.value = true
     }
 
@@ -530,12 +644,14 @@
     }
 
     const showDescription = (event: string) => {
+        resetDrawerSections()
         selectedTask.value = event
         isShowDescriptionOpen.value = true
         isDrawerOpen.value = true
     }
 
     const showCondition = (event: {task: string}) => {
+        resetDrawerSections()
         selectedTask.value = event.task
         isShowConditionOpen.value = true
         isDrawerOpen.value = true
@@ -566,6 +682,7 @@
             isTaskModalOpen.value = true
             return
         }
+        resetDrawerSections()
         selectedTask.value = fullTask
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true
@@ -591,6 +708,75 @@
 </script>
 
 <style scoped lang="scss">
+.tab-body {
+    padding-block: var(--ks-spacing-3) var(--ks-spacing-6);
+}
+
+.outputs-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-5);
+}
+
+.taskrun-card {
+    &__header {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    &__value {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__empty {
+        display: block;
+        padding: var(--ks-spacing-3);
+        border: 1px dashed var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
+    }
+}
+
+.replay-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    margin-top: var(--ks-spacing-4);
+
+    &__hint {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
+    }
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        background: var(--ks-bg-surface);
+        transition: background-color 0.1s ease;
+
+        &:hover {
+            background: var(--ks-bg-hover);
+        }
+    }
+
+    &__value {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
 .vueflow {
     height: 100%;
     width: 100%;

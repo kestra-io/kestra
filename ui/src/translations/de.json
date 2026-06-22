@@ -261,6 +261,8 @@
         "plural": "Dashboards",
         "singular": "Dashboard"
       },
+      "no_description": "Keine Beschreibung",
+      "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "preview": "Vorschau-Dashboard",
       "quick_filters": {
         "all": "Alle",
@@ -528,6 +530,10 @@
     "email": "E-Mail",
     "email length constraint": "E-Mail darf 256 Zeichen nicht überschreiten",
     "empty": {
+      "namespaceFiles": {
+        "title": "Noch keine Dateien in diesem Namespace",
+        "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit"
+      },
       "announcements": {
         "content": "Ankündigungen ermöglichen es Ihnen, Ihre Benutzer über Änderungen zu informieren oder sie über geplante Wartungsarbeiten zu benachrichtigen. Wählen Sie einfach den Ankündigungstyp, den Zeitraum, in dem sie angezeigt werden soll, und schreiben Sie die Ankündigungsnachricht.",
         "title": "Sie haben noch keine Ankündigungen!"
@@ -1099,6 +1105,7 @@
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
       "filter": "Filter",
+      "new_file": "Neue Datei",
       "import": {
         "error": "Fehler beim Importieren der Datei(en)",
         "files": "Dateien importieren",
@@ -1109,6 +1116,10 @@
       "no_items": {
         "heading": "Noch keine Dateien in Ihrem Namespace gefunden.",
         "paragraph": "Erstellen oder importieren Sie Dateien, um Code zwischen Flows in Ihrem Namespace zu teilen."
+      },
+      "no_selection": {
+        "heading": "Keine Dateien ausgewählt",
+        "description": "Wählen Sie eine Datei aus dem Baum aus, um ihren Inhalt anzuzeigen."
       },
       "path": {
         "copy": "Pfad kopieren",
@@ -1161,6 +1172,8 @@
     "next_execution": "Nächste Ausführung",
     "no data current task": "Für die aktuelle Task sind keine Daten verfügbar.",
     "no inputs": "Dieser Flow hat keine Inputs.",
+    "no metrics available": "Für diesen Task-Lauf wurden keine Metriken aufgezeichnet.",
+    "no outputs available": "Keine Outputs für diesen Task Run verfügbar.",
     "no result": "Es gibt keine Ergebnisse anzuzeigen.",
     "no revisions": "Keine Revisionen",
     "no revisions found": "Es existiert nur eine Revision für diesen Flow",
@@ -1590,6 +1603,7 @@
     "replay inputs": "Eingaben",
     "replay inputs new required": "Diese Revision hat Inputs. Sie werden aufgefordert, diese auszufüllen.",
     "replay latest revision": "Wiederholen mit neuester Revision",
+    "replay select taskrun": "Wählen Sie den Task-Lauf aus, von dem aus Sie die Wiedergabe starten möchten:",
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
     "replay using": "Wiederholen mit",
     "replay with inputs": "Wiedergabe mit Inputs",
@@ -1768,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
+            "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
             "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
             "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",

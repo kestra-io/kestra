@@ -261,6 +261,8 @@
         "plural": "대시보드",
         "singular": "대시보드"
       },
+      "no_description": "설명 없음",
+      "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -528,6 +530,10 @@
     "email": "이메일",
     "email length constraint": "이메일은 256자를 초과할 수 없습니다.",
     "empty": {
+      "namespaceFiles": {
+        "title": "이 namespace에 아직 파일이 없습니다",
+        "content": "namespace 파일은 이 namespace의 프로젝트 폴더처럼 작동합니다. Python, SQL, dbt 또는 Terraform 코드를 저장한 다음, flow에서 다음을 사용하여 모든 파일을 참조하세요"
+      },
       "announcements": {
         "content": "공지사항을 통해 사용자에게 변경 사항을 알리거나 계획된 유지보수 중단에 대해 알릴 수 있습니다. 공지사항 유형을 선택하고, 표시할 날짜 범위를 설정한 후 공지사항 메시지를 작성하세요.",
         "title": "아직 공지가 없습니다!"
@@ -1099,6 +1105,7 @@
       "export": "namespace 파일 내보내기",
       "export_single": "파일 내보내기",
       "filter": "필터",
+      "new_file": "새 파일",
       "import": {
         "error": "파일을 가져오는 동안 오류가 발생했습니다",
         "files": "파일 가져오기",
@@ -1109,6 +1116,10 @@
       "no_items": {
         "heading": "아직 namespace에 파일이 없습니다.",
         "paragraph": "파일을 생성하거나 가져와서 namespace 내의 flow 간에 코드를 공유하세요."
+      },
+      "no_selection": {
+        "heading": "선택된 파일 없음",
+        "description": "내용을 보려면 트리에서 파일을 선택하세요."
       },
       "path": {
         "copy": "경로 복사",
@@ -1161,6 +1172,8 @@
     "next_execution": "다음 실행",
     "no data current task": "현재 task에 대한 데이터가 없습니다.",
     "no inputs": "이 flow에는 입력이 없습니다.",
+    "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
+    "no outputs available": "이 task 실행에 대한 output이 없습니다.",
     "no result": "결과가 없습니다.",
     "no revisions": "리비전 없음",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
@@ -1590,6 +1603,7 @@
     "replay inputs": "입력",
     "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
+    "replay select taskrun": "어떤 task run을 재생할지 선택하십시오:",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "replay using": "사용하여 재실행",
     "replay with inputs": "입력과 함께 재실행",
@@ -1768,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
+            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
             "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",

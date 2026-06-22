@@ -97,8 +97,11 @@
             <SettingRow
                 stacked
                 :label="$t('settings.blocks.theme.fields.color_mode')"
-                :description="$t('settings.blocks.theme.descriptions.color_mode')"
             >
+                <template #description>
+                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
+                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
+                </template>
                 <ThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
             </SettingRow>
 
@@ -613,3 +616,17 @@
         settings.theme = Utils.getSelectedTheme()
     }, {immediate: true})
 </script>
+
+<style scoped lang="scss">
+:deep(kbd) {
+    display: inline-block;
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--ks-border-default);
+    border-radius: 3px;
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-primary);
+    font-family: inherit;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+</style>

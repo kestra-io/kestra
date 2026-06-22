@@ -1770,6 +1770,7 @@
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
+            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
             "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",

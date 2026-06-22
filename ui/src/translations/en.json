@@ -395,8 +395,8 @@
       "n_items": "[ {count} items ]"
     },
     "file_preview": {
-        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-        "load_anyway": "Load anyway"
+      "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "load_anyway": "Load anyway"
     },
     "no_variables": "No variables available.",
     "download": "Download",
@@ -525,7 +525,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-       "404": {
+      "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -1047,6 +1047,7 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",

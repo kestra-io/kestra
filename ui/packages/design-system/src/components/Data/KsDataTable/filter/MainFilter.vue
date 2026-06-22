@@ -92,7 +92,7 @@
                 ref="globalFiltersRef"
                 class="global-filters"
                 :class="{'is-wrapped': globalWrapOffset > 0}"
-                :style="globalWrapOffset > 0 ? {marginLeft: `-${globalWrapOffset}px`} : undefined"
+                :style="globalWrapOffset > 0 ? {transform: `translateX(-${globalWrapOffset}px)`} : undefined"
             >
                 <div
                     v-for="gf in globalFilters"
@@ -337,8 +337,7 @@
     min-height: 1.75rem;
 
     &.is-wrapped {
-        padding-left: 0;
-        border-left: none;
+        border-left-color: transparent;
     }
 }
 

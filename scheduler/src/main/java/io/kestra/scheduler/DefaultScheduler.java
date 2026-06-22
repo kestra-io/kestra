@@ -1,6 +1,7 @@
 package io.kestra.scheduler;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -236,7 +237,17 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         startTriggerEventConsumers();
 
         // (Re)submit all scheduling loops
-        schedulingLoops.forEach(executorService::execute);
+        schedulingLoops.forEach(schedulingLoop ->
+        {
+            // Reset lifecycle latches so a reused loop can be started again (e.g. exiting maintenance).
+            schedulingLoop.prepareForStart();
+            executorService.execute(schedulingLoop);
+        });
+
+        // Wait until all loops have effectively started before returning. Otherwise a subsequent
+        // stop() (e.g. entering maintenance mode) could race loop startup: stop() would be a no-op
+        // on a not-yet-running loop, which would then start and keep running indefinitely.
+        schedulingLoops.forEach(schedulingLoop -> schedulingLoop.awaitStarted(Duration.ofSeconds(5)));
     }
 
     private void stopAllSchedulingLoop(boolean clearAssignment) {

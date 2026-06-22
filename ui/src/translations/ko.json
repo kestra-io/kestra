@@ -93,6 +93,11 @@
       "create": "블루프린트 생성",
       "custom": "사용자 정의 blueprints",
       "dashboards": "대시보드 Blueprints",
+      "detail": {
+        "category": "카테고리 유형",
+        "links": "링크 및 리소스",
+        "openInEditor": "편집 Flow에서 열기"
+      },
       "edit": "블루프린트 편집",
       "empty": "블루프린트가 없습니다.",
       "flows": "플로우 Blueprints",
@@ -601,6 +606,10 @@
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
         "title": "flow에 Triggers가 없습니다."
       },
+      "variables": {
+        "content": "flow 간의 구성을 공유하기 위해 key-value 쌍을 추가하세요. 하위 namespace는 이를 자동으로 상속하며, 모든 value를 참조할 수 있습니다.",
+        "title": "아직 변수가 없습니다"
+      },
       "versionPlugin": {
         "content": "여기에서 Kestra 인스턴스에 설치된 모든 플러그인을 관리할 수 있습니다. 새로 설치된 플러그인은 인스턴스의 구성에 따라 모든 Kestra 서비스에서 즉시 사용 가능하지 않을 수 있습니다.",
         "title": "아직 버전이 지정된 플러그인이 없습니다!"
@@ -656,7 +665,7 @@
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
     "execution id": "실행 Id",
     "execution labels": "실행 라벨",
-    "execution not found": "<code>{executionId}</code> 실행을 찾을 수 없습니다.",
+    "execution not found": "{executionId} 실행을 찾을 수 없습니다.",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
     "execution replay": "이 실행은 다음의 재실행입니다:",
@@ -857,6 +866,7 @@
     "fold_all_multi_lines": "모든 다중 라인 접기",
     "font size": "Font size",
     "for flow": "flow용",
+    "forbidden system labels": "system label로는 system.correlationId만 사용할 수 있습니다",
     "force run": "강제 실행",
     "force run confirm": "실행 <code>{id}</code>을(를) 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동합니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
     "force run done": "실행이 강제 실행됩니다.",
@@ -866,6 +876,9 @@
     "form error": "양식 오류",
     "from": "시작",
     "gantt": "간트",
+    "gantt_no_tasks_executed": "이 실행은 어떤 task도 실행하지 않고 종료되었습니다.  \n개요와 logs를 확인하여 이유를 알아보세요.",
+    "gantt_no_tasks_match_filters": "검색, 상태 또는 log-level 필터를 조정해 보세요.",
+    "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "healthcheck date": "HealthCheck 날짜",
     "hide task documentation": "task 문서 숨기기",
     "home": "홈",
@@ -934,11 +947,13 @@
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "leave page": "페이지 나가기",
+    "license": "라이선스",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
     "light_version": "라이트 버전",
     "line": "라인",
     "line-by-line": "줄별로",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
+    "loading": "로딩 중...",
     "log expand setting": "기본 Log 표시",
     "logExporters": "로그 Exporters",
     "logs": "Logs",
@@ -950,6 +965,7 @@
       "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시"
     },
     "main_configuration": "주요 설정",
+    "manage labels": "label 관리",
     "management port": "관리 포트",
     "mark as": "<code>{status}</code>로 표시",
     "max": "Max",
@@ -1146,6 +1162,7 @@
     "no data current task": "현재 task에 대한 데이터가 없습니다.",
     "no inputs": "이 flow에는 입력이 없습니다.",
     "no result": "결과가 없습니다.",
+    "no revisions": "리비전 없음",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
     "no-executions-view": {
       "guidance_desc": "당신의 flow를 실행하는 데 도움이 필요하신가요?",
@@ -1241,7 +1258,8 @@
     "no_history": "기록 없음",
     "no_inputs": "입력값이 없습니다.",
     "no_logs_data": "데이터 없음",
-    "no_logs_data_description": "선택한 필터에 대한 로그가 없습니다. <br> 필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
+    "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
+    "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
     "no_results": {
       "assets": "자산을 찾을 수 없음",
@@ -1390,6 +1408,7 @@
     "open in new tab": "새 탭에서",
     "open in same tab": "동일한 탭에서",
     "open sidebar": "사이드바 열기",
+    "open source": "오픈 소스",
     "open_page": "Open page",
     "optional": "선택 사항",
     "original execution": "원래 실행",
@@ -1541,6 +1560,7 @@
       "showing_rows": "{total}개 중 {start}-{end} 행 표시",
       "view": "보기"
     },
+    "pricing": "가격 책정",
     "product_tour": "제품 둘러보기",
     "properties": {
       "hidden": "테이블에 숨김",
@@ -1669,7 +1689,6 @@
     "sequential": "순차적",
     "server type": "서버 유형",
     "services": "서비스",
-    "set_extra_labels": "추가 label 설정",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1682,7 +1701,8 @@
             "flow_default_tab": "flow로 이동할 때 선택된 탭.",
             "log_display": "실행을 열 때 로그가 표시되는 방식.",
             "log_level": "실행 로그에 표시되는 최소 log level.",
-            "playground": "편집기 플레이그라운드에서 개별적으로 task 실행."
+            "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
+            "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭."
           },
           "fields": {
             "auto_refresh_interval": "자동 새로고침 간격",
@@ -1695,7 +1715,8 @@
             "log_display": "기본 Log 표시",
             "log_level": "기본 Log 레벨",
             "multi_panel_editor": "멀티 패널 편집기",
-            "playground": "플레이그라운드"
+            "playground": "플레이그라운드",
+            "triggers_default_tab": "기본 Trigger 탭"
           },
           "label": "기본 구성"
         },
@@ -1796,7 +1817,9 @@
         "firstName": "이름",
         "lastName": "성씨",
         "password": "비밀번호",
-        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
+        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함.",
+        "username": "사용자 이름",
+        "username_hint": "유효한 이메일 주소여야 합니다."
       },
       "login": "로그인",
       "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",
@@ -1885,6 +1908,12 @@
     "source and topology": "소스 및 토폴로지",
     "source only": "소스 전용",
     "source search": "소스 검색",
+    "source_search": {
+      "match_count": "{count}개 일치 | {count}개 일치",
+      "open_flow": "flow 열기",
+      "preview_empty": "미리 볼 결과를 선택하세요. 결과 목록에서 flow를 클릭하면 소스를 확인할 수 있습니다.",
+      "preview_error": "flow 소스를 불러오지 못했습니다"
+    },
     "specific task": "특정 task",
     "start date": "시작 날짜",
     "start datetime": "시작 날짜 및 시간",

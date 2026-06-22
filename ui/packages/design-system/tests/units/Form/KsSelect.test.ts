@@ -1,6 +1,7 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import {defineComponent} from "vue"
+import {ElSelect} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsSelect from "../../../src/components/Form/KsSelect/KsSelect.vue"
 import KsOption from "../../../src/components/Form/KsSelect/KsOption.vue"
@@ -61,5 +62,31 @@ describe("KsSelect", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
+    })
+
+    test("loading renders a spinning suffix icon", () => {
+        const wrapper = mount(KsSelect, {
+            props: {loading: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(true)
+    })
+
+    test("loading drives only the suffix spinner, not ElSelect (dropdown stays usable)", () => {
+        const wrapper = mount(KsSelect, {
+            props: {loading: true},
+            global: globalConfig,
+        })
+        // `loading` must NOT reach ElSelect — it v-shows the option list on `!loading`,
+        // so forwarding would hide still-valid options while they recompute.
+        expect(wrapper.findComponent(ElSelect).props("loading")).toBe(false)
+    })
+
+    test("no spinner when loading is falsy", () => {
+        const wrapper = mount(KsSelect, {
+            props: {placeholder: "Idle"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(false)
     })
 })

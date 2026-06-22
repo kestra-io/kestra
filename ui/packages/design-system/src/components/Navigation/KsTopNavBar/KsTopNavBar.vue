@@ -26,6 +26,7 @@
                 </KsTooltip>
                 <KsTag v-if="beta" type="primary" size="small" class="beta-tag">Beta</KsTag>
                 <KsIconButton
+                    v-if="!hideBookmark"
                     class="icon-btn star"
                     :class="{active: isBookmarked}"
                     :ariaLabel="t('topnav_bookmark')"
@@ -98,6 +99,7 @@
         mainIcon?: Component
         beta?: boolean
         isBookmarked?: boolean
+        hideBookmark?: boolean
         sidebarCollapsed?: boolean
         tabs?: KsTopNavBarTab[]
         activeTab?: string

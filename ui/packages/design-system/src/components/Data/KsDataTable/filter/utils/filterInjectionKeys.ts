@@ -51,7 +51,7 @@ export interface FilterContext {
     clearFilters: () => void;
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;
-    updateSavedFilter: (id: string, name: string, description: string) => void;
+    updateSavedFilter: (id: string, name: string, description: string, filters: AppliedFilter[]) => void;
     saveFilter: (name: string, description: string, filters: AppliedFilter[]) => void;
 }
 

@@ -214,7 +214,6 @@
                     ? $t('namespace files.create.file')
                     : $t('namespace files.create.folder')
             "
-            width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
@@ -268,7 +267,6 @@
         <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
-            width="500"
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
@@ -302,7 +300,6 @@
         <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
-            width="500"
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3" v-html="confirmationLabels.message" />
@@ -321,7 +318,6 @@
         <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
-            width="75%"
             top="10vh"
         >
             <Revisions

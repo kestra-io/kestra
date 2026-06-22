@@ -286,7 +286,8 @@ public class WorkerJobDispatcher {
         ClusterEvent.EventType.MAINTENANCE_ENTER,
         ClusterEvent.EventType.MAINTENANCE_EXIT,
         ClusterEvent.EventType.KILL_SWITCH_SYNC_REQUESTED,
-        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED
+        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED,
+        ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED
     );
 
     /**
@@ -296,6 +297,10 @@ public class WorkerJobDispatcher {
     private void onClusterEvent(ClusterEvent event) {
         if (event.eventType() == ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED) {
             onWorkerGroupSync(event.message());
+            return;
+        }
+        if (event.eventType() == ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED) {
+            evictWorker(event.message());
             return;
         }
         if (EXCLUDED_EVENT_TYPES.contains(event.eventType())) {
@@ -350,6 +355,26 @@ public class WorkerJobDispatcher {
                 );
             }
         }
+    }
+
+    /**
+     * Forcibly drops a single worker by id: unregisters it from all indices and closes its
+     * stream. Used to act on a {@link ClusterEvent.EventType#WORKER_DISCONNECT_REQUESTED} event
+     * The worker must reconnect and re-authenticate, which fails closed once the token is gone.
+     * <p>
+     * No-op if the worker is not connected to this controller.
+     *
+     * @param workerId the worker to drop
+     */
+    public void evictWorker(String workerId) {
+        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
+        if (context == null) {
+            log.debug("Worker '{}' is not connected to this controller, nothing to evict", workerId);
+            return;
+        }
+        log.info("Evicting worker '{}': its registration token was revoked or removed", workerId);
+        unregisterWorker(context);
+        context.complete();
     }
 
     /**
@@ -885,8 +910,16 @@ public class WorkerJobDispatcher {
             return;
         }
 
-        // 1. PERSIST before sending (critical for recovery)
-        persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        // 1. PERSIST before sending (critical for recovery). A transient failure (e.g. pool
+        // exhaustion) must not bubble up to the poller, which treats it as fatal and shuts down.
+        try {
+            persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        } catch (Exception e) {
+            log.warn("Failed to persist running state for job {} on worker {}; re-queuing for redelivery: {}",
+                jobId, context.getWorkerId(), e.getMessage());
+            handlePersistFailure(context, job, originalEvent, dispatchWorkerQueueId, bucket);
+            return;
+        }
 
         // 2. Track in-flight locally
         context.trackInFlight(jobId, job, bucket);
@@ -947,6 +980,25 @@ public class WorkerJobDispatcher {
         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, job.uid());
 
         // Re-queue the job
+        requeue(originalEvent);
+    }
+
+    /**
+     * Handles a failure to persist the running state before dispatch. The job is not yet tracked
+     * in-flight, so the reserved permit and bucket are released directly (as in
+     * {@link #rejectOversizedJob}), then the job is re-queued for redelivery.
+     */
+    private void handlePersistFailure(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
+        WorkerJobEvent originalEvent, String dispatchWorkerQueueId, String bucket) {
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
+            metricRegistry.workerGroupAndQueueTags(context.getWorkerGroupId(), dispatchWorkerQueueId)
+        ).increment();
+
+        context.addPermits(1);
+        context.releaseBucket(bucket);
+
         requeue(originalEvent);
     }
 

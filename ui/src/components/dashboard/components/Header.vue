@@ -2,13 +2,30 @@
     <TopNavBar
         :title="routeInfo.title"
         :description="props.dashboard?.description"
+        :hideMainIcon="showSelector"
     >
+        <template
+            v-if="showSelector"
+            #title
+        >
+            <Dashboards
+                placement="bottom-start"
+                @dashboard="(value: string) => props.load?.(value)"
+            >
+                <button type="button" class="dashboard-trigger">
+                    <KsIcon size="sm" class="leading">
+                        <ChartLineVariant />
+                    </KsIcon>
+                    <span class="text-truncate">{{ routeInfo.title }}</span>
+                    <KsIcon size="sm" class="chevron">
+                        <ChevronDown />
+                    </KsIcon>
+                </button>
+            </Dashboards>
+        </template>
+
         <template v-if="isAllowedDashboard || isAllowedFlow" #actions>
             <NavBarActions>
-                <Dashboards
-                    v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard"
-                    @dashboard="(value: any) => props.load?.(value)"
-                />
                 <NavBarAction
                     v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
                     :icon="Pencil"
@@ -46,6 +63,8 @@
     import NavBarActions from "../../layout/NavBarActions.vue"
     import NavBarAction from "../../layout/NavBarAction.vue"
 
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
 
@@ -62,8 +81,50 @@
 
     const isAllowedDashboard = computed(() => authStore.user?.isAllowed(resource.DASHBOARD, action.CREATE, "*"))
 
+    const showSelector = computed(() =>
+        ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard.value,
+    )
+
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}))
 
     import useRouteContext from "../../../composables/useRouteContext"
     useRouteContext(routeInfo)
 </script>
+
+<style scoped lang="scss">
+    .dashboard-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2);
+        background: none;
+        border: none;
+        border-radius: var(--ks-radius-sm);
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        .leading {
+            flex-shrink: 0;
+        }
+
+        .chevron {
+            flex-shrink: 0;
+            color: var(--ks-text-secondary);
+            transition: transform 0.1s ease;
+        }
+
+        &:hover {
+            background-color: var(--ks-bg-hover);
+
+            .leading {
+                color: var(--ks-icon-active);
+            }
+        }
+
+        &[aria-expanded="true"] .chevron {
+            transform: rotate(180deg);
+        }
+    }
+</style>

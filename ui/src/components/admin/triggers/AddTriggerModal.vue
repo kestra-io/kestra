@@ -1,9 +1,9 @@
 <template>
     <KsDialog
         v-model="visible"
-        width="40%"
         destroyOnClose
         appendToBody
+        :width="dialogWidth"
     >
         <template #header>
             <div class="header">
@@ -18,7 +18,7 @@
         </template>
 
         <div class="modal-body">
-            <KsTabs v-model="activeTab" type="box">
+            <KsTabs v-model="activeTab" type="segmented">
                 <KsTabPane name="form" :label="$t('triggers_add_modal_tab_form')">
                     <div class="form">
                         <KsForm labelPosition="left" labelWidth="122px" :model="formModel">
@@ -165,6 +165,10 @@
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),
     )
 
+    const dialogWidth = computed(() =>
+        activeTab.value === "documentation" ? "min(800px, 90vw)" : "min(500px, 90vw)",
+    )
+
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
     const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n    type: ${props.trigger.type}`)
 
@@ -260,29 +264,13 @@
         }
     }
 
-    .modal-body :deep(.kel-tabs--box) {
+    .modal-body :deep(.kel-tabs--segmented) {
         .kel-tabs__header {
             margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-        }
-
-        .kel-tabs__nav-wrap {
-            background: transparent;
-            border-bottom: none;
-        }
-
-        .kel-tabs__nav {
-            width: fit-content;
-            background: var(--ks-bg-input);
-            border-radius: var(--ks-radius-lg);
-            border: 1px solid var(--ks-border-default);
         }
     }
 
     .form {
-        :deep(.kel-form) {
-            --kel-color-danger: var(--ks-text-error);
-        }
-
         :deep(.kel-form-item):first-of-type {
             margin-top: 0;
         }

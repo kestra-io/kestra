@@ -1,10 +1,11 @@
 <template>
     <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb" />
-    <Tabs :tabs="tabs" :routeName="serverId ? 'admin/mcp-servers/update' : ''" />
+    <Tabs :tabs="tabs" :routeName="serverId ? String(route.name) : ''" />
 </template>
 
 <script lang="ts" setup>
     import {computed, watch, onMounted} from "vue"
+    import {useRoute} from "vue-router"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Tabs from "../Tabs.vue"
     import {useMcpStore} from "../../stores/mcp"
@@ -12,6 +13,7 @@
     import {useMcpTabs} from "./mcp/useMcpTabs"
     import useRouteContext from "../../composables/useRouteContext"
 
+    const route = useRoute()
     const mcpStore = useMcpStore()
     const {details, serverId} = useHelpers()
     const {tabs} = useMcpTabs()

@@ -10,7 +10,7 @@
             </KsAlert>
         </div>
         <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <KsTabs v-model="openTab" type="box">
+            <KsTabs v-model="openTab" type="segmented">
                 <KsTabPane name="inputs" :label="$t('inputs')" class="execution-pane">
                     <InputsForm
                         v-if="flow.inputs?.length"
@@ -35,6 +35,12 @@
                         <LabelInput
                             v-model:labels="executionLabels"
                         />
+                        <KsText v-if="haveBadLabels" type="danger" size="small">
+                            {{ $t('wrong labels') }}
+                        </KsText>
+                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
+                            {{ $t('forbidden system labels') }}
+                        </KsText>
                     </KsFormItem>
                     <KsFormItem
                         :label="$t('scheduleDate')"
@@ -76,12 +82,6 @@
                                 {{ $t(buttonText) }}
                             </KsButton>
                         </span>
-                        <KsText v-if="haveBadLabels" type="danger" size="small">
-                            {{ $t('wrong labels') }}
-                        </KsText>
-                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
-                            {{ $t('forbidden system labels') }}
-                        </KsText>
                     </KsFormItem>
                 </div>
             </div>
@@ -193,7 +193,7 @@
     )
 
     const flowCanBeExecuted = computed(() =>
-        flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value,
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
     )
 
     const isDirty = computed(() =>
@@ -201,8 +201,6 @@
         executionLabels.value.some(label => label.key || label.value) ||
         scheduleDate.value !== undefined,
     )
-
-    defineExpose({isDirty})
 
     const hasWebhookTriggers = computed(() => {
         if (!flow.value?.triggers) {
@@ -217,6 +215,27 @@
     const hasBlockingChecks = computed(() =>
         checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
     )
+
+    const canPrefill = computed(() =>
+        Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
+    )
+
+    function submit() {
+        onSubmit()
+        executeClicked.value = true
+    }
+
+    defineExpose({
+        isDirty,
+        submit,
+        prefill: fillInputsFromExecution,
+        canPrefill,
+        flowCanBeExecuted,
+        hasBlockingChecks,
+        buttonText: props.buttonText,
+        buttonIcon: props.buttonIcon,
+        buttonTestId: props.buttonTestId,
+    })
 
     function getExecutionLabels(): Label[] {
         if (!execution.value?.labels) {
@@ -382,13 +401,6 @@
         }
         100% {
             box-shadow: 0px 0px 50px 2px #8405FF;
-        }
-    }
-
-    :deep(.kel-tabs--box ) {
-        .kel-tabs__nav-wrap{
-            flex: initial;
-            border-radius: 8px;
         }
     }
 

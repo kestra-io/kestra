@@ -555,6 +555,9 @@
         const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
         if (!event.customAction.taskProp) {
             const runnerType = fullTask?.taskRunner?.type as string | undefined
+            // Forward the display-resolved properties from the matching graph node so the modal slot
+            // can show rendered expressions instead of the raw config (mirrors the taskDetails slot).
+            const node = augmentedFlowGraph.value?.nodes?.find((n: any) => n.task?.id === event.task.id)
             taskModalCtx.value = {
                 taskType: runnerType ?? fullTask?.type,
                 title: event.customAction.label,
@@ -563,6 +566,7 @@
                 namespace: props.namespace,
                 flowId: props.flowId,
                 metrics: taskMetrics(fullTask?.id),
+                resolvedProperties: node?.renderedProperties,
             }
             isTaskModalOpen.value = true
             return

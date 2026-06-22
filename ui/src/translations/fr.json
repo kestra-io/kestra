@@ -240,8 +240,6 @@
     "customize sidebar": "Personnaliser la barre latérale",
     "dark_version": "Version sombre",
     "dashboards": {
-      "no_description": "Aucune description",
-      "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
       "creation": {
         "confirmation": "Le tableau de bord <code>{title}</code> est créé.",
@@ -263,6 +261,8 @@
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"
       },
+      "no_description": "Aucune description",
+      "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "preview": "Aperçu du Dashboard",
       "quick_filters": {
         "all": "Tout",

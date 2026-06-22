@@ -240,8 +240,6 @@
     "customize sidebar": "Seitenleiste anpassen",
     "dark_version": "Dunkler Modus",
     "dashboards": {
-      "no_description": "Keine Beschreibung",
-      "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "creation": {
         "confirmation": "Das Dashboard <code>{title}</code> wurde erstellt.",
@@ -263,6 +261,8 @@
         "plural": "Dashboards",
         "singular": "Dashboard"
       },
+      "no_description": "Keine Beschreibung",
+      "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "preview": "Vorschau-Dashboard",
       "quick_filters": {
         "all": "Alle",

@@ -240,8 +240,6 @@
     "customize sidebar": "自定义侧边栏",
     "dark_version": "深色版本",
     "dashboards": {
-      "no_description": "无描述",
-      "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "chart_preview": "单击图表源代码以查看其预览",
       "creation": {
         "confirmation": "仪表板 <code>{title}</code> 已创建。",
@@ -263,6 +261,8 @@
         "plural": "仪表板",
         "singular": "仪表板"
       },
+      "no_description": "无描述",
+      "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "preview": "预览仪表板",
       "quick_filters": {
         "all": "全部",

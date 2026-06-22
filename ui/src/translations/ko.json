@@ -240,8 +240,6 @@
     "customize sidebar": "사이드바 사용자 정의",
     "dark_version": "다크 버전",
     "dashboards": {
-      "no_description": "설명 없음",
-      "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "creation": {
         "confirmation": "대시보드 <code>{title}</code>이(가) 생성되었습니다.",
@@ -263,6 +261,8 @@
         "plural": "대시보드",
         "singular": "대시보드"
       },
+      "no_description": "설명 없음",
+      "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",

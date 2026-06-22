@@ -240,8 +240,6 @@
     "customize sidebar": "Dostosuj pasek boczny",
     "dark_version": "Ciemna wersja",
     "dashboards": {
-      "no_description": "Brak opisu",
-      "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "creation": {
         "confirmation": "Dashboard <code>{title}</code> został utworzony.",
@@ -263,6 +261,8 @@
         "plural": "Dashboardy",
         "singular": "Dashboard"
       },
+      "no_description": "Brak opisu",
+      "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "preview": "Podgląd Dashboardu",
       "quick_filters": {
         "all": "Wszystkie",

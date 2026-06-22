@@ -240,8 +240,6 @@
     "customize sidebar": "Personalizza barra laterale",
     "dark_version": "Versione scura",
     "dashboards": {
-      "no_description": "Nessuna descrizione",
-      "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
       "creation": {
         "confirmation": "Il dashboard <code>{title}</code> è stato creato.",
@@ -263,6 +261,8 @@
         "plural": "Dashboard",
         "singular": "Dashboard"
       },
+      "no_description": "Nessuna descrizione",
+      "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "preview": "Anteprima Dashboard",
       "quick_filters": {
         "all": "Tutti",

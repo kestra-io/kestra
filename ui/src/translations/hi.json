@@ -240,8 +240,6 @@
     "customize sidebar": "साइडबार को अनुकूलित करें",
     "dark_version": "डार्क संस्करण",
     "dashboards": {
-      "no_description": "कोई विवरण नहीं",
-      "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
       "creation": {
         "confirmation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
@@ -263,6 +261,8 @@
         "plural": "डैशबोर्ड्स",
         "singular": "डैशबोर्ड"
       },
+      "no_description": "कोई विवरण नहीं",
+      "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "preview": "पूर्वावलोकन डैशबोर्ड",
       "quick_filters": {
         "all": "सभी",

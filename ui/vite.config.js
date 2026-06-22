@@ -52,6 +52,11 @@ export default defineConfig(({mode}) => {
         base: "",
         build: {
             outDir: "../webserver/src/main/resources/ui",
+            rolldownOptions: {
+                checks: {
+                    invalidAnnotation: false,
+                },
+            },
         },
         server: {
             watch: {

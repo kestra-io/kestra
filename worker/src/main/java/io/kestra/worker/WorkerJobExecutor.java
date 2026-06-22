@@ -14,7 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
@@ -144,6 +146,35 @@ public class WorkerJobExecutor {
         if (!this.started.get()) {
             throw new IllegalStateException("WorkerJobExecutor not started");
         }
+    }
+
+    /**
+     * Gracefully stops every running realtime trigger, leaving in-flight tasks untouched.
+     * <p>
+     * Used when the worker enters maintenance mode: stopping a realtime trigger cleanly makes its
+     * scheduler lease release, so another worker can re-evaluate it once maintenance is over.
+     *
+     * @return the number of realtime triggers signalled to stop.
+     */
+    public int stopRealtimeTriggers() {
+        checkIsStarted();
+        int stopped = 0;
+        for (WorkerJobConsumer consumer : workerJobConsumers) {
+            if (consumer.stopIfRealtimeTrigger()) {
+                stopped++;
+            }
+        }
+        log.debug("Stopped {} running realtime trigger(s)", stopped);
+        return stopped;
+    }
+
+    /**
+     * Returns whether the given job is a realtime trigger (a long-lived streaming subscription),
+     * as opposed to a task or a polling trigger.
+     */
+    static boolean isRealtimeTriggerJob(final WorkerJob job) {
+        return job instanceof WorkerTrigger workerTrigger
+            && workerTrigger.getTrigger() instanceof RealtimeTriggerInterface;
     }
 
     /**
@@ -310,6 +341,21 @@ public class WorkerJobExecutor {
             if (processor != null) {
                 processor.stop();
             }
+        }
+
+        /**
+         * Signals stop only when the currently running job is a realtime trigger; tasks and
+         * polling triggers are left untouched.
+         *
+         * @return {@code true} if a realtime trigger was signalled to stop.
+         */
+        boolean stopIfRealtimeTrigger() {
+            WorkerJobProcessor<WorkerJob> processor = running.get();
+            if (processor != null && isRealtimeTriggerJob(workerJob.get())) {
+                processor.stop();
+                return true;
+            }
+            return false;
         }
     }
 }

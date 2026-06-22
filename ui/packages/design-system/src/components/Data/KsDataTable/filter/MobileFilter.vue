@@ -128,7 +128,7 @@
                             :editingFilter="filter.editingFilter?.value"
                             :savedFilters="filter.savedFilters?.value ?? []"
                             @save="onSaveFilter"
-                            @edit="filter.updateSavedFilter"
+                            @edit="(id, name, desc) => filter.updateSavedFilter(id, name, desc, filter.appliedFilters?.value ?? [])"
                             @close-edit="filter.closeEditFilter"
                         >
                             {{ $t("filter.save") }}

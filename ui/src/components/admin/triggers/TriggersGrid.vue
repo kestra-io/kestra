@@ -39,7 +39,7 @@
             <KsSkeleton :rows="3" animated />
         </div>
 
-        <KsTableEmpty
+        <KsNoData
             v-else-if="!hasAnyVisibleTrigger"
             class="triggers-empty"
             :title="$t('triggers_add_empty_title')"

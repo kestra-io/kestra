@@ -5,17 +5,16 @@ $font-family-sans-serif: "Inter", sans-serif;
 $font-family-monospace: "JetBrains Mono", monospace;
 
 // font sizes
-$font-size-base-px: 14px;
-$font-size-base: 1rem; // This represents 14px
-$font-size-2xs: calc(10 / 14) * $font-size-base;
-$font-size-xs:  calc(11 / 14) * $font-size-base;
-$font-size-sm:  calc(12 / 14) * $font-size-base;
-$font-size-md:  $font-size-base;
-$font-size-lg:  calc(16 / 14) * $font-size-base;
-$font-size-xl:  calc(18 / 14) * $font-size-base;
-$font-size-2xl: calc(20 / 14) * $font-size-base;
-$font-size-3xl: calc(22 / 14) * $font-size-base;
-$font-size-4xl: calc(26 / 14) * $font-size-base;
+$font-size-2xs: 0.625rem;
+$font-size-xs:  0.6875rem;
+$font-size-sm:  0.75rem;
+$font-size-base: 0.875rem;
+$font-size-md:  0.875rem;
+$font-size-lg:  1rem;
+$font-size-xl:  1.125rem;
+$font-size-2xl: 1.25rem;
+$font-size-3xl: 1.375rem;
+$font-size-4xl: 1.625rem;
 
 // base colors
 $black: #14181f;

@@ -5,9 +5,10 @@
         :title="store.title"
         :description="store.description"
         :breadcrumb="store.breadcrumb"
-        :mainIcon="activeMenuIcon"
+        :mainIcon="store.hideMainIcon ? undefined : activeMenuIcon"
         :beta="store.beta"
         :isBookmarked="bookmarked"
+        :hideBookmark
         :sidebarCollapsed="layoutStore.sideMenuCollapsed"
         :tabs="selectTabs"
         :activeTab="activeTabValue"
@@ -101,6 +102,11 @@
     })
 
     const activeMenuIcon = computed(() => activeMenuItem.value?.icon?.element)
+
+    const hideBookmark = computed(() => {
+        const href = activeMenuItem.value?.href
+        return !!href && router.resolve(href).name === route.name
+    })
 
     const currentFavURI = computed(() =>
         route.fullPath

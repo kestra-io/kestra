@@ -713,6 +713,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/after-execution-flowable.yaml")
+    public void shouldCallFlowableTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallFlowableTasksAfterExecution(execution);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/workertask-result-too-large.yaml" })
     protected void workerTaskResultTooLarge() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();

@@ -66,7 +66,7 @@
 </script>
 
 <style scoped lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+    @use '../../styles/responsive' as *;
 
     .sidebar {
         background: var(--ks-bg-surface);

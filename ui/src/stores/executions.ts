@@ -59,6 +59,10 @@ export interface InputMetaData {
     allowedFileExtensions?: string[];
     accept?: string;
     prefill?: unknown;
+    // present only on the raw flow inputs (props.initialInputs); the rendered
+    // validate response strips `expression`, keeping `dependsOn` at most
+    expression?: string;
+    dependsOn?: unknown;
 }
 
 interface LogsState {
@@ -513,8 +517,18 @@ export const useExecutionsStore = defineStore("executions", () => {
         return new EventSource(`${apiUrl()}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true})
     }
 
-    const followLogs = (options: { id: string }) => {
-        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow`, {withCredentials: true}))
+    const followLogs = (options: { id: string; params?: Record<string, any> }) => {
+        const search = new URLSearchParams()
+        Object.entries(options.params ?? {}).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === "") return
+            if (Array.isArray(value)) {
+                value.forEach(item => search.append(key, String(item)))
+            } else {
+                search.append(key, String(value))
+            }
+        })
+        const query = search.toString()
+        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean; showMessageOnError?: boolean }) => {

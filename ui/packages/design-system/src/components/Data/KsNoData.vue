@@ -1,11 +1,12 @@
 <template>
     <div class="empty-state">
         <component :is="icon ?? FilterRemoveOutlineIcon" class="empty-icon" />
-        <strong v-if="title">{{ title }}</strong>
+        <strong>{{ title ?? t("ks_no_data.no_results") }}</strong>
         <p v-if="$slots.default"><slot /></p>
+        <p v-else-if="description">{{ description }}</p>
         <template v-else>
-            <p>{{ t("ks_table_empty.nothing_here") }}</p>
-            <p>{{ t("ks_table_empty.adjust_filters") }}</p>
+            <p>{{ t("ks_no_data.nothing_here") }}</p>
+            <p>{{ t("ks_no_data.will_appear") }}</p>
         </template>
     </div>
 </template>
@@ -17,6 +18,7 @@
 
     defineProps<{
         title?: string
+        description?: string
         icon?: Component
     }>()
 
@@ -31,6 +33,7 @@
         align-items: center;
         height: 100%;
         text-align: center;
+        padding: var(--ks-spacing-4) 0;
         strong{
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);

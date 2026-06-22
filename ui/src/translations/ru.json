@@ -240,6 +240,8 @@
     "customize sidebar": "Настроить боковую панель",
     "dark_version": "Темная версия",
     "dashboards": {
+      "no_description": "Нет описания",
+      "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "chart_preview": "Нажмите на исходный код диаграммы, чтобы увидеть его предварительный просмотр",
       "creation": {
         "confirmation": "Панель <code>{title}</code> создана.",

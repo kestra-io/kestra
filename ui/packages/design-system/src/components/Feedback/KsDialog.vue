@@ -96,6 +96,7 @@
             margin-bottom: calc(var(--kel-dialog-padding-primary) * -1);
             padding-bottom: var(--kel-dialog-padding-primary);
             padding-right: var(--kel-dialog-padding-primary);
+            padding-left: var(--kel-dialog-padding-primary);
             width: calc(100% + var(--kel-dialog-padding-primary) * 2);
             background-color: var(--ks-bg-base);
             border-bottom-left-radius: var(--ks-radius-xl);

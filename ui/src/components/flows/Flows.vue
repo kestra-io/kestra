@@ -236,16 +236,21 @@
             v-model="showRunModal"
             destroyOnClose
             appendToBody
-            width="70%"
+            :width="dialogWidth"
         >
             <template #header>
                 <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
             </template>
             <FlowRun
                 v-if="executionsStore.flow"
+                ref="flowRunRef"
+                :embed="true"
                 :redirect="false"
                 @execution-trigger="handleExecutionStart"
             />
+            <template #footer>
+                <FlowRunActions :flowRun="flowRunRef" />
+            </template>
         </KsDialog>
     </section>
 </template>
@@ -254,6 +259,7 @@
     import {ref, computed, useTemplateRef, watch, h} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import {useMediaQuery} from "@vueuse/core"
     import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -279,6 +285,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue"
 
     import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
@@ -327,6 +334,8 @@
     const lastExecutionByFlowReady = ref(false)
     const latestExecutions = ref<any[]>([])
     const file = ref<HTMLInputElement | null>(null)
+
+    const isLargeScreen = useMediaQuery("(min-width: 768px)")
 
     const optionalColumns = ref([
         {
@@ -385,6 +394,10 @@
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
     const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
 
+    const dialogWidth = computed(() =>
+        isLargeScreen.value ? "50%" : "90%",
+    )
+    
     const routeInfo = computed(() => ({title: t("flows")}))
 
     useRouteContext(routeInfo)
@@ -503,6 +516,7 @@
     }
 
     const showRunModal = ref(false)
+    const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectedFlow = ref<any | null>(null)
 
     async function openExecuteModal(flow: any) {

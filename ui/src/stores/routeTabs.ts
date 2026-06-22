@@ -1,7 +1,7 @@
 import {defineStore} from "pinia"
 import {markRaw} from "vue"
 import type {Component} from "vue"
-import type {RouteLocationRaw} from "vue-router"
+import type {RouteLocationRaw, RouteLocationNormalizedLoaded, Router} from "vue-router"
 
 export interface RouteTab {
     name?: string;
@@ -29,6 +29,37 @@ export interface RouteTab {
      * inside RouteTabsSidebar (same typography as items, but no link/hover/active).
      */
     header?: boolean;
+}
+
+const startsWithSegment = (value: string, prefix: string) =>
+    value === prefix || value.startsWith(`${prefix}/`)
+
+export function activeScopeTab(
+    route: RouteLocationNormalizedLoaded,
+    tabs: RouteTab[],
+    router: Router,
+): RouteTab | undefined {
+    const scoped = tabs
+        .filter(tab => tab.route && !tab.header && !tab.excludeFromScope)
+        .map(tab => {
+            const target = router.resolve(tab.route!)
+            return {tab, path: target.path, name: String(target.name ?? "")}
+        })
+
+    const nameCount = new Map<string, number>()
+    for (const {name} of scoped) nameCount.set(name, (nameCount.get(name) ?? 0) + 1)
+
+    const path = route.path
+    const name = String(route.name ?? "")
+
+    return scoped.reduce<{tab?: RouteTab; score: number}>((best, scope) => {
+        const byPath = startsWithSegment(path, scope.path) ? scope.path.length : 0
+        const byName = scope.name && nameCount.get(scope.name) === 1 && startsWithSegment(name, scope.name)
+            ? scope.name.length
+            : 0
+        const score = Math.max(byPath, byName)
+        return score > best.score ? {tab: scope.tab, score} : best
+    }, {score: 0}).tab
 }
 
 type RouteTabsDisplayMode = "sidebar" | "select";

@@ -152,7 +152,13 @@
     }
 
     function isItemActive(item: MenuItem): boolean {
-        if (item.routes) return item.routes.includes($route.name)
+        if (item.routes?.includes($route.name)) {
+            const type = $route.params.type
+            if (typeof type === "string" && type && typeof item.href === "string") {
+                return item.href.split("?")[0].endsWith(`/${type}`)
+            }
+            return true
+        }
         if (typeof item.href !== "string" || item.href === "/") return false
         return $route.path.startsWith(item.href)
     }

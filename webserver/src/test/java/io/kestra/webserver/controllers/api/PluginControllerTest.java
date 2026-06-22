@@ -202,7 +202,7 @@ class PluginControllerTest {
             Argument.listOf(InputType.class)
         );
 
-        assertThat(doc.size()).isEqualTo(19);
+        assertThat(doc.size()).isEqualTo(20);
     }
 
     @SuppressWarnings("unchecked")

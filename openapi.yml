@@ -8881,10 +8881,14 @@ components:
           items:
             $ref: "#/components/schemas/ExecutionController.ApiValidateExecutionInputsResponse.ApiInputError"
     ExecutionController.ApiValidateExecutionInputsResponse.ApiInputError:
+      required:
+      - message
       type: object
       properties:
         message:
           type: string
+        renderError:
+          type: boolean
     ExecutionController.EvalResult:
       type: object
       properties:
@@ -10922,6 +10926,7 @@ components:
       - MULTISELECT
       - YAML
       - EMAIL
+      - FORM
     ValidateConstraintViolation:
       required:
       - index

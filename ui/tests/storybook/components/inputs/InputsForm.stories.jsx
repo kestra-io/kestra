@@ -3,6 +3,7 @@ import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
 import {useAxios} from "../../../../src/utils/axios.js";
+import {flattenInputs} from "../../../../src/utils/inputs";
 
 const meta = {
     title: "inputs/InputsForm",
@@ -129,6 +130,103 @@ export const InputTypes = {
                 type: "DURATION",
                 displayName: "Duration select input",
             }]}
+        />;
+    }
+};
+
+// Wizard harness: the validate mock expands FORM groups to dotted leaves, exactly like the
+// backend, so InputsForm receives the same flat-by-dotted-id metadata it does in production.
+const WizardSut = defineComponent((props) => {
+    const axios = useAxios()
+    axios.post = (uri) => {
+        if (!uri.endsWith("/validate")) {
+            return {data: []}
+        }
+        return Promise.resolve({data: {
+            inputs: flattenInputs(props.inputs).map(x => ({
+                input: x,
+                enabled: true,
+                isDefault: false,
+                errors: [],
+            })),
+        }})
+    }
+
+    const onRecap = ref(false)
+    const values = ref({})
+    return () => (<>
+        <el-form label-position="top">
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} mode="wizard"
+                        flow={{namespace: "ns1", id: "flowid1"}}
+                        onUpdate:modelValue={(value) => values.value = value}
+                        onUpdate:onRecap={(value) => onRecap.value = value}
+            />
+        </el-form>
+        <pre data-testid="on-recap">{String(onRecap.value)}</pre>
+    </>);
+}, {
+    props: {"inputs": {type: Array, required: true}}
+});
+
+/**
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const Wizard = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        // Step 1 (plain "name"): Next visible, Back hidden, not on recap yet.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        expect(can.queryByTestId("wizard-back")).toBeNull();
+        expect(can.queryByTestId("inputs-wizard-recap")).toBeNull();
+        expect(can.getByTestId("on-recap")).toHaveTextContent("false");
+
+        // Progress stepper (el-steps): one step per fillable step ("Inputs", "Environment", "Inputs"),
+        // the current one in the "process" state.
+        const stepper = can.getByTestId("wizard-steps");
+        expect(stepper.querySelectorAll(".el-step")).toHaveLength(3);
+        expect(stepper).toHaveTextContent("Environment");
+        expect(stepper.querySelectorAll(".el-step__head")[0].className).toContain("is-process");
+
+        // Next -> step 2 (the FORM "Environment", showing its dotted child region).
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
+        expect(can.getByTestId("wizard-back")).toBeTruthy();
+
+        // Stepper tracks progress: step 0 completed (success), step 1 ("Environment") now in process.
+        expect(stepper.querySelectorAll(".el-step__head")[0].className).toContain("is-success");
+        expect(stepper.querySelectorAll(".el-step__head")[1].className).toContain("is-process");
+
+        // Next -> step 3 (plain "team").
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("input-form-team")).toBeTruthy());
+
+        // Next -> recap: every section listed, Execute lives in the footer so onRecap flips true.
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("inputs-wizard-recap")).toBeTruthy());
+        expect(can.getByTestId("on-recap")).toHaveTextContent("true");
+        expect(can.queryByTestId("wizard-next")).toBeNull(); // no Next on recap
+
+        // Edit the FORM section -> jump back to step 2, primary button now reads "Done".
+        await userEvent.click(can.getByTestId("recap-edit-1"));
+        await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
+        expect(can.getByTestId("wizard-next")).toHaveTextContent("Done");
+
+        // Done returns straight to the recap (not the next sequential step).
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("inputs-wizard-recap")).toBeTruthy());
+    },
+    render() {
+        return <WizardSut inputs={[
+            {id: "name", type: "STRING", required: false, displayName: "Name"},
+            {
+                id: "environment",
+                type: "FORM",
+                displayName: "Environment",
+                inputs: [{id: "region", type: "STRING", required: false, displayName: "Region"}],
+            },
+            {id: "team", type: "STRING", required: false, displayName: "Team"},
+        ]}
         />;
     }
 };

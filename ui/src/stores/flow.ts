@@ -17,7 +17,7 @@ import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
 import {useClient} from "@kestra-io/kestra-sdk"
 import {defaultNamespace} from "../composables/useNamespaces"
-import {TUTORIAL_NAMESPACE, storageKeys, saveDefaultActions} from "../utils/constants"
+import {TUTORIAL_NAMESPACE} from "../utils/constants"
 
 const textYamlHeader = {
     headers: {
@@ -63,10 +63,7 @@ export interface Flow {
     revision?: number;
     deleted?: boolean;
     disabled?: boolean;
-    /**
-     * When true the flow revision is a draft: it will not be picked up by webhooks, schedules,
-     * subflows or by executions started without an explicit revision.
-     */
+    /** A draft revision is never picked up by webhooks, schedules, subflows or revision-less executions. */
     draft?: boolean;
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
@@ -143,23 +140,13 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
-    // The draft flag is metadata about the flow revision, not part of the flow definition,
-    // so it travels alongside the request as a query parameter rather than being injected
-    // into the YAML source - mirroring how `revision` works. It is threaded through the save
-    // call chain as a parameter rather than kept on shared state, so interleaved saves can't
-    // read each other's intent.
-
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
-        // When not specified, preserve the current flow's draft status so that
-        // Ctrl+S on a draft flow keeps it a draft rather than silently publishing it.
         const isDraft = draft ?? flow.value?.draft ?? false
 
         if (!haveChange.value && !isCreating.value) {
             return "no_op"
         }
 
-        // Block invalid non-draft flows client-side; drafts are deliberately allowed to be
-        // invalid since the backend is the authoritative validator.
         if (flowErrors.value?.length && !isDraft) {
             return "blocked"
         }
@@ -196,23 +183,6 @@ export const useFlowStore = defineStore("flow", () => {
         return saveAll(true)
     }
 
-    // Promote the current draft to a live (non-draft) revision. Unlike saveAll(), save(false)
-    // has no have-change short-circuit, so publishing an unedited draft still persists: the
-    // server creates a new revision because the draft flag flips from true to false (the draft
-    // field is part of revision equality). Invalid flows can't be published, which save(false)
-    // already guards via the flowErrors check.
-    async function publish(): Promise<FlowSaveOutcome> {
-        return save(false)
-    }
-
-    // Single source of truth for keyboard Ctrl+S: it follows the user's default save action
-    // preference (Save vs Save as draft), matching what the split-button dropdown shows. Every
-    // Ctrl+S entry point delegates here so they can't drift apart.
-    async function saveWithDefaultAction(): Promise<FlowSaveOutcome> {
-        const draft = localStorage.getItem(storageKeys.SAVE_DEFAULT_ACTION) === saveDefaultActions.SAVE_AS_DRAFT
-        return saveAll(draft)
-    }
-
     const route = useRoute()
 
     const getNamespace = () => {
@@ -220,8 +190,6 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     async function save(draft: boolean = false): Promise<FlowSaveOutcome> {
-        // Drafts are deliberately allowed to be invalid (backend validates); only block
-        // invalid non-draft saves.
         if (flowErrors.value?.length && !draft) {
             return "blocked"
         }
@@ -300,9 +268,6 @@ export const useFlowStore = defineStore("flow", () => {
 
     const toast = makeToast(t)
 
-    // Local toast for the post-save success: distinguishes "saved as draft" from a regular
-    // save so the user can tell the two modes apart, without leaking that distinction into
-    // the global toast utility.
     function notifySaved(name: string, draft: boolean) {
         if (draft) {
             toast.success(
@@ -317,8 +282,6 @@ export const useFlowStore = defineStore("flow", () => {
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
         const flowSource = flowYaml.value ?? ""
 
-        // Draft saves intentionally bypass YAML parse validation: the backend is the
-        // authoritative validator and drafts are allowed to have invalid content.
         if (flowParsed.value === undefined && !draft) {
             coreStore.message = {
                 variant: "error",
@@ -537,8 +500,6 @@ export const useFlowStore = defineStore("flow", () => {
             })
     }
     function saveFlow(options: { flow: string, draft?: boolean }) {
-        // For draft saves the YAML may be unparseable; fall back to the currently loaded
-        // flow's identity (safe because saveFlow is only called when !isCreating).
         let namespace: string
         let id: string
         try {
@@ -552,8 +513,6 @@ export const useFlowStore = defineStore("flow", () => {
         return axios.put(`${apiUrl()}/flows/${namespace}/${id}`, options.flow, {
             ...textYamlHeader,
             ...VALIDATE,
-            // Draft is a server-side flag, not part of the YAML the user wrote - we ride it
-            // alongside the request the same way `revision` is omitted from the editor source.
             params: {draft: options.draft ?? false},
         })
             .then(response => {
@@ -585,7 +544,6 @@ export const useFlowStore = defineStore("flow", () => {
             ...textYamlHeader,
             ...VALIDATE,
             showMessageOnError: false,
-            // Draft is a server-side flag, not part of the YAML - see saveFlow().
             params: {draft: options.draft ?? false},
         }).then(response => {
             if (response.status >= 300) {
@@ -709,7 +667,6 @@ function deleteFlowAndDependencies() {
                 flowVar.source = options.flow
                 // prevent losing revision when loading graph from source
                 flowVar.revision = flow.value?.revision
-                // draft is server-side metadata not present in YAML - preserve it across graph reloads
                 flowVar.draft = flow.value?.draft
                 flow.value = flowVar
 
@@ -1073,8 +1030,6 @@ function deleteFlowAndDependencies() {
         onSaveMetadata,
         saveAll,
         saveAsDraft,
-        saveWithDefaultAction,
-        publish,
         save,
         onEdit,
         initYamlSource,

@@ -3,10 +3,10 @@ import {createPinia, setActivePinia} from "pinia"
 import {defineComponent, h, KeepAlive} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
 
-const saveWithDefaultActionMock = vi.fn()
+const saveAllMock = vi.fn()
 
 vi.mock("../../../src/stores/flow", () => ({
-    useFlowStore: () => ({saveWithDefaultAction: saveWithDefaultActionMock}),
+    useFlowStore: () => ({saveAll: saveAllMock}),
 }))
 
 vi.mock("vue-router", () => ({
@@ -23,7 +23,6 @@ async function mountKeyboardSave() {
         template: "<div />",
     })
 
-    // onActivated fires when the component is first mounted inside KeepAlive.
     return mount(
         defineComponent({render: () => h(KeepAlive, null, () => h(Inner))}),
     )
@@ -42,32 +41,29 @@ describe("useKeyboardSave", () => {
 
     beforeEach(() => {
         localStorage.clear()
-        saveWithDefaultActionMock.mockClear()
+        saveAllMock.mockClear()
         setActivePinia(createPinia())
     })
 
     afterEach(() => {
-        // Unmounting triggers onDeactivated, which removes the document listener.
         wrapper?.unmount()
     })
 
-    // Ctrl+S delegates to the store's single source of truth for the default save action
-    // (Save vs Save as draft); the composable itself no longer resolves the preference.
-    it("delegates Ctrl+S to saveWithDefaultAction", async () => {
+    it("delegates Ctrl+S to saveAll", async () => {
         wrapper = await mountKeyboardSave()
         ctrlS()
-        expect(saveWithDefaultActionMock).toHaveBeenCalledOnce()
+        expect(saveAllMock).toHaveBeenCalledOnce()
     })
 
-    it("delegates Cmd+S (metaKey) to saveWithDefaultAction", async () => {
+    it("delegates Cmd+S (metaKey) to saveAll", async () => {
         wrapper = await mountKeyboardSave()
         metaS()
-        expect(saveWithDefaultActionMock).toHaveBeenCalledOnce()
+        expect(saveAllMock).toHaveBeenCalledOnce()
     })
 
     it("ignores a plain 's' keypress without a modifier", async () => {
         wrapper = await mountKeyboardSave()
         document.dispatchEvent(new KeyboardEvent("keydown", {key: "s", bubbles: true}))
-        expect(saveWithDefaultActionMock).not.toHaveBeenCalled()
+        expect(saveAllMock).not.toHaveBeenCalled()
     })
 })

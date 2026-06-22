@@ -1,3 +1,9 @@
+/**
+ * Registers a global Ctrl+Shift+L keyboard shortcut that cycles through
+ * the three available themes: light → dark → dark-2 → light.
+ *
+ * Call once from the root App component, passing the misc store instance.
+ */
 import {onMounted, onUnmounted} from "vue"
 import {switchTheme} from "../utils/utils"
 import type {SelectedTheme} from "../utils/utils"

@@ -55,6 +55,9 @@ public record PluginArtifact(
     public static PluginArtifact fromFile(final File file) throws IOException {
         try (JarFile jarFile = new JarFile(file)) {
             Manifest manifest = jarFile.getManifest();
+            if (manifest == null) {
+                throw new IOException("JAR file '" + file.getName() + "' has no manifest (META-INF/MANIFEST.MF). Kestra plugin JARs must include X-Kestra-Version, X-Kestra-Name and X-Kestra-Group manifest attributes.");
+            }
             final String version = manifest.getMainAttributes().getValue("X-Kestra-Version");
             final String artifactId = manifest.getMainAttributes().getValue("X-Kestra-Name");
             final String groupId = manifest.getMainAttributes().getValue("X-Kestra-Group");

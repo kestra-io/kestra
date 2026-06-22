@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 
 

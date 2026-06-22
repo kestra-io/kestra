@@ -1768,14 +1768,14 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
             "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
             "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
             "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
-            "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
-            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।"
+            "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।"
           },
           "fields": {
             "chart_color_scheme": {

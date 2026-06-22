@@ -1768,14 +1768,14 @@
           },
           "descriptions": {
             "color_mode": "Choisissez votre thème d'interface préféré.",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "editor_folding_stratgy": "Réduire les blocs YAML longs par défaut lors de l'ouverture d'un flow.",
             "editor_font_family": "Police monospace utilisée dans l'éditeur YAML.",
             "editor_font_size": "Taille de police utilisée dans les éditeurs YAML et sans code.",
             "editor_hover_description": "Afficher les descriptions des propriétés au survol dans l'éditeur.",
             "environment_color": "Couleur d'accent utilisée pour l'environnement actuel dans la navigation.",
             "environment_name": "Nom d'affichage pour l'environnement actuel, affiché dans la navigation.",
-            "logs_font_size": "Taille de police utilisée dans les visionneuses de log et les terminaux.",
-            "color_mode_shortcut": "Astuce : appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>L</kbd> pour changer de thème depuis n'importe où."
+            "logs_font_size": "Taille de police utilisée dans les visionneuses de log et les terminaux."
           },
           "fields": {
             "chart_color_scheme": {

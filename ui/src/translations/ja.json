@@ -1768,14 +1768,14 @@
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
-            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
-            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。"
+            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
           },
           "fields": {
             "chart_color_scheme": {

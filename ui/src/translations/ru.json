@@ -1768,14 +1768,14 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
             "editor_hover_description": "Показывать описания свойств при наведении в редакторе.",
             "environment_color": "Цвет акцента, используемый для текущей среды в навигации.",
             "environment_name": "Отображаемое имя для текущей среды, показанное в навигации.",
-            "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах.",
-            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места."
+            "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах."
           },
           "fields": {
             "chart_color_scheme": {

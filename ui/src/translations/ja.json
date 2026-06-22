@@ -530,10 +530,6 @@
     "email": "メール",
     "email length constraint": "メールは256文字を超えてはいけません",
     "empty": {
-      "namespaceFiles": {
-        "title": "このnamespaceにはまだファイルがありません",
-        "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます"
-      },
       "announcements": {
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。",
         "title": "お知らせはまだありません！"
@@ -591,6 +587,10 @@
       "mcpToolFlows": {
         "content": "<code>McpToolTrigger</code>を追加して、flowをMCPツールとして公開します。<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このサーバーにはまだツールflowが登録されていません。"
+      },
+      "namespaceFiles": {
+        "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます",
+        "title": "このnamespaceにはまだファイルがありません"
       },
       "panels": {
         "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。",
@@ -1105,7 +1105,6 @@
       "export": "namespaceファイルをエクスポート",
       "export_single": "ファイルをエクスポート",
       "filter": "フィルター",
-      "new_file": "新規ファイル",
       "import": {
         "error": "ファイルのインポート中にエラーが発生しました",
         "files": "ファイルをインポート",
@@ -1113,13 +1112,14 @@
         "import": "インポート",
         "success": "ファイルが正常にインポートされました"
       },
+      "new_file": "新規ファイル",
       "no_items": {
         "heading": "まだnamespaceにファイルが見つかりません。",
         "paragraph": "フロー間でコードを共有するためにファイルを作成またはインポートします。"
       },
       "no_selection": {
-        "heading": "ファイルが選択されていません",
-        "description": "ツリーからファイルを選択して内容を表示します。"
+        "description": "ツリーからファイルを選択して内容を表示します。",
+        "heading": "ファイルが選択されていません"
       },
       "path": {
         "copy": "パスをコピー",

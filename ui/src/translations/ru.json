@@ -530,10 +530,6 @@
     "email": "Email",
     "email length constraint": "Email не должен превышать 256 символов",
     "empty": {
-      "namespaceFiles": {
-        "title": "В этом namespace пока нет файлов",
-        "content": "Файлы namespace работают как папка проекта для этого namespace. Храните код Python, SQL, dbt или Terraform, а затем ссылайтесь на любой файл в своих flows с помощью"
-      },
       "announcements": {
         "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
         "title": "У вас пока нет объявлений!"
@@ -591,6 +587,10 @@
       "mcpToolFlows": {
         "content": "Представьте flow как инструмент MCP, добавив в него <code>McpToolTrigger</code>. Подробнее о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> читайте в нашей документации.",
         "title": "На этом сервере еще не зарегистрированы tool flows."
+      },
+      "namespaceFiles": {
+        "content": "Файлы namespace работают как папка проекта для этого namespace. Храните код Python, SQL, dbt или Terraform, а затем ссылайтесь на любой файл в своих flows с помощью",
+        "title": "В этом namespace пока нет файлов"
       },
       "panels": {
         "content": "Вы закрыли все панели.  \nВыберите вкладку выше, чтобы продолжить.",
@@ -1105,7 +1105,6 @@
       "export": "Экспортировать файлы namespace",
       "export_single": "Экспортировать файл",
       "filter": "Фильтр",
-      "new_file": "Новый файл",
       "import": {
         "error": "Произошли ошибки при импорте файла(ов)",
         "files": "Импортировать файлы",
@@ -1113,13 +1112,14 @@
         "import": "Импортировать",
         "success": "Файл(ы) успешно импортированы"
       },
+      "new_file": "Новый файл",
       "no_items": {
         "heading": "В вашем namespace пока нет файлов.",
         "paragraph": "Создайте или импортируйте файлы для обмена кодом между flows в вашем namespace."
       },
       "no_selection": {
-        "heading": "Файлы не выбраны",
-        "description": "Выберите файл из дерева, чтобы просмотреть его содержимое."
+        "description": "Выберите файл из дерева, чтобы просмотреть его содержимое.",
+        "heading": "Файлы не выбраны"
       },
       "path": {
         "copy": "Скопировать путь",

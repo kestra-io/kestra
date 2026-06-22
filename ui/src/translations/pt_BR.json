@@ -530,10 +530,6 @@
     "email": "Email",
     "email length constraint": "Email não deve exceder 256 caracteres",
     "empty": {
-      "namespaceFiles": {
-        "title": "Ainda não há arquivos neste namespace",
-        "content": "Os arquivos do namespace funcionam como uma pasta de projeto para este namespace. Armazene código Python, SQL, dbt ou Terraform e, em seguida, referencie qualquer arquivo nos seus flows com"
-      },
       "announcements": {
         "content": "Os anúncios permitem que você notifique seus usuários sobre quaisquer alterações ou informe-os sobre o tempo de inatividade planejado para manutenção. Basta selecionar o tipo de anúncio, o intervalo de datas em que ele deve ser exibido e escrever a mensagem do anúncio.",
         "title": "Você ainda não tem anúncios!"
@@ -591,6 +587,10 @@
       "mcpToolFlows": {
         "content": "Exponha um flow como uma ferramenta MCP adicionando um <code>McpToolTrigger</code> a ele. Leia mais sobre o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> em nossa documentação.",
         "title": "Ainda não há flows de ferramenta registrados neste servidor."
+      },
+      "namespaceFiles": {
+        "content": "Os arquivos do namespace funcionam como uma pasta de projeto para este namespace. Armazene código Python, SQL, dbt ou Terraform e, em seguida, referencie qualquer arquivo nos seus flows com",
+        "title": "Ainda não há arquivos neste namespace"
       },
       "panels": {
         "content": "Você fechou todos os painéis.  \nEscolha uma aba acima para continuar.",
@@ -1105,7 +1105,6 @@
       "export": "Exportar arquivos do namespace",
       "export_single": "Exportar arquivo",
       "filter": "Filtro",
-      "new_file": "Novo arquivo",
       "import": {
         "error": "Ocorreu(ram) erro(s) ao importar o(s) arquivo(s)",
         "files": "Importar arquivos",
@@ -1113,13 +1112,14 @@
         "import": "Importar",
         "success": "Arquivo(s) importado(s) com sucesso"
       },
+      "new_file": "Novo arquivo",
       "no_items": {
         "heading": "Nenhum arquivo encontrado no seu namespace ainda.",
         "paragraph": "Crie ou importe arquivos para compartilhar código entre flows no seu namespace."
       },
       "no_selection": {
-        "heading": "Nenhum arquivo selecionado",
-        "description": "Selecione um arquivo da árvore para ver seu conteúdo."
+        "description": "Selecione um arquivo da árvore para ver seu conteúdo.",
+        "heading": "Nenhum arquivo selecionado"
       },
       "path": {
         "copy": "Copiar caminho",

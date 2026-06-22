@@ -530,10 +530,6 @@
     "email": "E-Mail",
     "email length constraint": "E-Mail darf 256 Zeichen nicht überschreiten",
     "empty": {
-      "namespaceFiles": {
-        "title": "Noch keine Dateien in diesem Namespace",
-        "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit"
-      },
       "announcements": {
         "content": "Ankündigungen ermöglichen es Ihnen, Ihre Benutzer über Änderungen zu informieren oder sie über geplante Wartungsarbeiten zu benachrichtigen. Wählen Sie einfach den Ankündigungstyp, den Zeitraum, in dem sie angezeigt werden soll, und schreiben Sie die Ankündigungsnachricht.",
         "title": "Sie haben noch keine Ankündigungen!"
@@ -591,6 +587,10 @@
       "mcpToolFlows": {
         "content": "Expose einen flow als MCP-Tool, indem Sie einen <code>McpToolTrigger</code> hinzufügen. Lesen Sie mehr über den <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in unserer Dokumentation.",
         "title": "Auf diesem Server sind noch keine Tool flows registriert."
+      },
+      "namespaceFiles": {
+        "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit",
+        "title": "Noch keine Dateien in diesem Namespace"
       },
       "panels": {
         "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren.",
@@ -1105,7 +1105,6 @@
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
       "filter": "Filter",
-      "new_file": "Neue Datei",
       "import": {
         "error": "Fehler beim Importieren der Datei(en)",
         "files": "Dateien importieren",
@@ -1113,13 +1112,14 @@
         "import": "Importieren",
         "success": "Datei(en) erfolgreich importiert"
       },
+      "new_file": "Neue Datei",
       "no_items": {
         "heading": "Noch keine Dateien in Ihrem Namespace gefunden.",
         "paragraph": "Erstellen oder importieren Sie Dateien, um Code zwischen Flows in Ihrem Namespace zu teilen."
       },
       "no_selection": {
-        "heading": "Keine Dateien ausgewählt",
-        "description": "Wählen Sie eine Datei aus dem Baum aus, um ihren Inhalt anzuzeigen."
+        "description": "Wählen Sie eine Datei aus dem Baum aus, um ihren Inhalt anzuzeigen.",
+        "heading": "Keine Dateien ausgewählt"
       },
       "path": {
         "copy": "Pfad kopieren",

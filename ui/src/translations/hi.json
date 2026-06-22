@@ -530,10 +530,6 @@
     "email": "ईमेल",
     "email length constraint": "ईमेल 256 वर्णों से अधिक नहीं होना चाहिए",
     "empty": {
-      "namespaceFiles": {
-        "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है",
-        "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें"
-      },
       "announcements": {
         "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।",
         "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
@@ -591,6 +587,10 @@
       "mcpToolFlows": {
         "content": "<code>McpToolTrigger</code> जोड़कर एक flow को MCP टूल के रूप में प्रदर्शित करें। हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> के बारे में और पढ़ें।",
         "title": "इस सर्वर पर अभी तक कोई टूल flows पंजीकृत नहीं हैं।"
+      },
+      "namespaceFiles": {
+        "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें",
+        "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है"
       },
       "panels": {
         "content": "आपने सभी पैनल बंद कर दिए हैं।  \nजारी रखने के लिए ऊपर एक टैब चुनें।",
@@ -1105,7 +1105,6 @@
       "export": "Namespace फ़ाइलें निर्यात करें",
       "export_single": "फ़ाइल निर्यात करें",
       "filter": "फ़िल्टर",
-      "new_file": "नई फ़ाइल",
       "import": {
         "error": "फ़ाइलें आयात करते समय त्रुटि हुई",
         "files": "फ़ाइलें आयात करें",
@@ -1113,13 +1112,14 @@
         "import": "आयात करें",
         "success": "फ़ाइलें सफलतापूर्वक आयात की गईं"
       },
+      "new_file": "नई फ़ाइल",
       "no_items": {
         "heading": "आपके namespace में अभी तक कोई फ़ाइलें नहीं मिली हैं।",
         "paragraph": "फाइलें बनाने या आयात करने के लिए, अपने namespace में flows के बीच कोड साझा करें।"
       },
       "no_selection": {
-        "heading": "कोई फ़ाइल चयनित नहीं",
-        "description": "इसकी सामग्री देखने के लिए ट्री से एक फ़ाइल चुनें।"
+        "description": "इसकी सामग्री देखने के लिए ट्री से एक फ़ाइल चुनें।",
+        "heading": "कोई फ़ाइल चयनित नहीं"
       },
       "path": {
         "copy": "पथ कॉपी करें",

@@ -1,10 +1,5 @@
 {
   "zh_CN": {
-    "loading": "加载中...",
-        "back": "返回",
-        "next": "下一步",
-        "done": "完成",
-        "review your inputs": "检查您的输入",
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",
     "Default namespace": "默认命名空间",
@@ -83,6 +78,7 @@
     "automatic refresh": "自动刷新",
     "avg": "平均",
     "avg duration": "平均执行时间",
+    "back": "返回",
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
@@ -497,6 +493,7 @@
       "github": "打开一个GitHub问题"
     },
     "documentationMenu": "文档菜单",
+    "done": "完成",
     "down trend": "减少",
     "download": "下载",
     "download logs": "下载日志",
@@ -535,10 +532,6 @@
     "email": "电子邮件",
     "email length constraint": "电子邮件不得超过256个字符",
     "empty": {
-      "namespaceFiles": {
-        "title": "此命名空间中尚无文件",
-        "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用"
-      },
       "announcements": {
         "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
         "title": "您还没有公告！"
@@ -596,6 +589,10 @@
       "mcpToolFlows": {
         "content": "通过向flow添加<code>McpToolTrigger</code>，将flow公开为MCP工具。请在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>的信息。",
         "title": "此服务器上尚未注册任何工具flow。"
+      },
+      "namespaceFiles": {
+        "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用",
+        "title": "此命名空间中尚无文件"
       },
       "panels": {
         "content": "您已关闭所有面板。  \n请选择上面的选项卡以继续。",
@@ -1110,7 +1107,6 @@
       "export": "导出命名空间文件",
       "export_single": "导出文件",
       "filter": "过滤",
-      "new_file": "新建文件",
       "import": {
         "error": "导入文件时出错",
         "files": "导入文件",
@@ -1118,13 +1114,14 @@
         "import": "导入",
         "success": "文件成功导入"
       },
+      "new_file": "新建文件",
       "no_items": {
         "heading": "尚未在您的namespace中找到文件。",
         "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"
       },
       "no_selection": {
-        "heading": "未选择文件",
-        "description": "从树中选择一个文件以查看其内容。"
+        "description": "从树中选择一个文件以查看其内容。",
+        "heading": "未选择文件"
       },
       "path": {
         "copy": "复制路径",
@@ -1171,6 +1168,7 @@
     "neutral trend": "稳定",
     "new": "新建",
     "new version": "新版本 {version} 可用！",
+    "next": "下一步",
     "next evaluation date": "下次评估日期",
     "next evaluation date tooltip": "根据其间隔，下一次评估trigger的时间。如果条件不满足，可能与下一次执行日期不同。",
     "next execution date": "下次执行日期",
@@ -1636,6 +1634,7 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "reuse original inputs": "重用原始input",
     "reuse_original_inputs": "重用原始input",
+    "review your inputs": "检查您的输入",
     "revision": "修订版",
     "revision deleted": "修订版 {revision} 已成功删除",
     "revisions": "修订版",

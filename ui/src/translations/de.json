@@ -93,6 +93,11 @@
       "create": "Erstellen Sie ein Blueprint",
       "custom": "Benutzerdefinierte Blueprints",
       "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Kategorietyp",
+        "links": "Link & Ressourcen",
+        "openInEditor": "In Flow bearbeiten öffnen"
+      },
       "edit": "Bearbeiten Sie ein Blueprint",
       "empty": "Keine Blueprints zum Anzeigen.",
       "flows": "Flow-Blueprints",
@@ -256,6 +261,8 @@
         "plural": "Dashboards",
         "singular": "Dashboard"
       },
+      "no_description": "Keine Beschreibung",
+      "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "preview": "Vorschau-Dashboard",
       "quick_filters": {
         "all": "Alle",
@@ -523,6 +530,10 @@
     "email": "E-Mail",
     "email length constraint": "E-Mail darf 256 Zeichen nicht überschreiten",
     "empty": {
+      "namespaceFiles": {
+        "title": "Noch keine Dateien in diesem Namespace",
+        "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit"
+      },
       "announcements": {
         "content": "Ankündigungen ermöglichen es Ihnen, Ihre Benutzer über Änderungen zu informieren oder sie über geplante Wartungsarbeiten zu benachrichtigen. Wählen Sie einfach den Ankündigungstyp, den Zeitraum, in dem sie angezeigt werden soll, und schreiben Sie die Ankündigungsnachricht.",
         "title": "Sie haben noch keine Ankündigungen!"
@@ -601,6 +612,10 @@
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
         "title": "Ihr flow hat keine Trigger."
       },
+      "variables": {
+        "content": "Fügen Sie kv store-Paare hinzu, um Konfigurationen über flows hinweg zu teilen. Untergeordnete namespaces erben sie automatisch, und Sie können jeden Wert mit referenzieren.",
+        "title": "Noch keine Variablen vorhanden"
+      },
       "versionPlugin": {
         "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
         "title": "Sie haben noch kein versioniertes Plugin!"
@@ -656,7 +671,7 @@
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
     "execution id": "Ausführungs-ID",
     "execution labels": "Ausführungs-Labels",
-    "execution not found": "Ausführung <code>{executionId}</code> wurde nicht gefunden.",
+    "execution not found": "Ausführung {executionId} wurde nicht gefunden.",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Zustand FAILED",
     "execution not in state PAUSED": "Ausführung <code>{executionId}</code> nicht im Zustand PAUSED",
     "execution replay": "Diese Ausführung ist eine Wiederholung von",
@@ -868,7 +883,8 @@
     "from": "Von",
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Diese Ausführung endete, ohne dass eine Task ausgeführt wurde. Überprüfen Sie die Übersicht und die Logs, um den Grund zu erfahren.",
-    "gantt_no_tasks_match_filters": "Keine Tasks entsprechen den ausgewählten Filtern. <br> Versuchen Sie, die Such-, Zustands- oder Log-Ebenen-Filter anzupassen.",
+    "gantt_no_tasks_match_filters": "Versuchen Sie, die Such-, Zustands- oder Log-Ebenen-Filter anzupassen.",
+    "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "healthcheck date": "HealthCheck-Datum",
     "hide task documentation": "Task-Dokumentation ausblenden",
     "home": "Startseite",
@@ -937,6 +953,7 @@
     "launch execution": "Ausführen",
     "learn_more": "Erfahren Sie mehr",
     "leave page": "Seite verlassen",
+    "license": "Lizenz",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
     "light_version": "Helle Version",
     "line": "Linie",
@@ -1088,6 +1105,7 @@
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
       "filter": "Filter",
+      "new_file": "Neue Datei",
       "import": {
         "error": "Fehler beim Importieren der Datei(en)",
         "files": "Dateien importieren",
@@ -1098,6 +1116,10 @@
       "no_items": {
         "heading": "Noch keine Dateien in Ihrem Namespace gefunden.",
         "paragraph": "Erstellen oder importieren Sie Dateien, um Code zwischen Flows in Ihrem Namespace zu teilen."
+      },
+      "no_selection": {
+        "heading": "Keine Dateien ausgewählt",
+        "description": "Wählen Sie eine Datei aus dem Baum aus, um ihren Inhalt anzuzeigen."
       },
       "path": {
         "copy": "Pfad kopieren",
@@ -1249,7 +1271,8 @@
     "no_history": "Keine Historie verfügbar",
     "no_inputs": "Keine Inputs verfügbar.",
     "no_logs_data": "Keine Daten",
-    "no_logs_data_description": "Keine Logs für die ausgewählten Filter gefunden. <br> Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
+    "no_logs_data_description": "Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
+    "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
     "no_results": {
       "assets": "Keine Assets gefunden",
@@ -1398,6 +1421,7 @@
     "open in new tab": "In einem neuen Tab",
     "open in same tab": "Im selben Tab",
     "open sidebar": "Seitenleiste öffnen",
+    "open source": "Open Source",
     "open_page": "Open page",
     "optional": "Optional",
     "original execution": "Originalausführung",
@@ -1549,6 +1573,7 @@
       "showing_rows": "Zeige Zeilen {start}-{end} von {total}",
       "view": "Anzeigen"
     },
+    "pricing": "Preise",
     "product_tour": "Produkteinführung",
     "properties": {
       "hidden": "In Tabelle versteckt",
@@ -1757,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
+            "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
             "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
             "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",

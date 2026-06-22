@@ -93,6 +93,11 @@
       "create": "ブループリントを作成",
       "custom": "カスタムblueprint",
       "dashboards": "ダッシュボード Blueprints",
+      "detail": {
+        "category": "カテゴリタイプ",
+        "links": "リンクとリソース",
+        "openInEditor": "フローを編集で開く"
+      },
       "edit": "ブループリントを編集する",
       "empty": "設計図が表示されていません。",
       "flows": "フローBlueprints",
@@ -256,6 +261,8 @@
         "plural": "ダッシュボード",
         "singular": "ダッシュボード"
       },
+      "no_description": "説明なし",
+      "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "preview": "プレビュー ダッシュボード",
       "quick_filters": {
         "all": "すべて",
@@ -523,6 +530,10 @@
     "email": "メール",
     "email length constraint": "メールは256文字を超えてはいけません",
     "empty": {
+      "namespaceFiles": {
+        "title": "このnamespaceにはまだファイルがありません",
+        "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます"
+      },
       "announcements": {
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。",
         "title": "お知らせはまだありません！"
@@ -601,6 +612,10 @@
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
       },
+      "variables": {
+        "content": "フロー間で設定を共有するためにkv storeにkey-valueペアを追加します。子namespaceはそれらを自動的に継承し、任意のvalueを参照することができます。",
+        "title": "変数はまだありません"
+      },
       "versionPlugin": {
         "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
         "title": "まだバージョン管理されたプラグインがありません！"
@@ -656,7 +671,7 @@
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
     "execution id": "実行 Id",
     "execution labels": "実行ラベル",
-    "execution not found": "<code>{executionId}</code> の実行が見つかりません。",
+    "execution not found": "{executionId} の実行が見つかりません。",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
     "execution not in state PAUSED": "実行<code>{executionId}</code>はPAUSED状態ではありません",
     "execution replay": "この実行は次のリプレイです",
@@ -868,7 +883,8 @@
     "from": "から",
     "gantt": "ガント",
     "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
-    "gantt_no_tasks_match_filters": "選択したフィルターに一致するタスクがありません。<br> 検索、状態、またはログレベルのフィルターを調整してみてください。",
+    "gantt_no_tasks_match_filters": "検索、状態、またはログレベルのフィルターを調整してみてください。",
+    "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "healthcheck date": "HealthCheck日",
     "hide task documentation": "taskのドキュメントを非表示",
     "home": "ホーム",
@@ -937,6 +953,7 @@
     "launch execution": "実行",
     "learn_more": "詳細を確認",
     "leave page": "ページを離れる",
+    "license": "ライセンス",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line": "ライン",
@@ -1088,6 +1105,7 @@
       "export": "namespaceファイルをエクスポート",
       "export_single": "ファイルをエクスポート",
       "filter": "フィルター",
+      "new_file": "新規ファイル",
       "import": {
         "error": "ファイルのインポート中にエラーが発生しました",
         "files": "ファイルをインポート",
@@ -1098,6 +1116,10 @@
       "no_items": {
         "heading": "まだnamespaceにファイルが見つかりません。",
         "paragraph": "フロー間でコードを共有するためにファイルを作成またはインポートします。"
+      },
+      "no_selection": {
+        "heading": "ファイルが選択されていません",
+        "description": "ツリーからファイルを選択して内容を表示します。"
       },
       "path": {
         "copy": "パスをコピー",
@@ -1249,7 +1271,8 @@
     "no_history": "履歴はありません",
     "no_inputs": "入力が利用できません。",
     "no_logs_data": "データなし",
-    "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
+    "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
+    "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
       "assets": "アセットが見つかりません",
@@ -1398,6 +1421,7 @@
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
     "open sidebar": "サイドバーを開く",
+    "open source": "オープンソース",
     "open_page": "Open page",
     "optional": "オプション",
     "original execution": "元の実行",
@@ -1549,6 +1573,7 @@
       "showing_rows": "{total}のうち{start}から{end}の行を表示中",
       "view": "表示"
     },
+    "pricing": "料金",
     "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",
@@ -1757,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "お好みのインターフェーステーマを選択してください。",
+            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",

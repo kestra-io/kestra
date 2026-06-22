@@ -74,27 +74,41 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public ArrayListTotal<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
-        var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
         return findPage(pageable, tenantId, condition);
     }
 
     /**
-     * The log table column for {@code TASK_RUN_ID} is {@code taskrun_id} (one word), not
-     * {@code task_run_id} as the default snake-case derivation would produce. Override the
-     * default mapping for that one mismatch; the rest of the column names line up with
-     * {@link QueryFilter.Field#name()} lower-cased.
+     * Two log table columns don't line up with the default {@link QueryFilter.Field#name()}
+     * lower-cased derivation:
+     * <ul>
+     *   <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
+     *   <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
+     * </ul>
+     * Override the mapping for those; the rest of the column names match.
      */
     @Override
     protected Name getColumnName(QueryFilter.Field field) {
         if (field == QueryFilter.Field.TASK_RUN_ID) {
             return DSL.quotedName("taskrun_id");
         }
+        if (field == QueryFilter.Field.KIND) {
+            return DSL.quotedName("execution_kind");
+        }
         return super.getColumnName(field);
     }
 
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
-        var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
     }
 

@@ -236,16 +236,20 @@
             v-model="showRunModal"
             destroyOnClose
             appendToBody
-            width="70%"
         >
             <template #header>
                 <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
             </template>
             <FlowRun
                 v-if="executionsStore.flow"
+                ref="flowRunRef"
+                :embed="true"
                 :redirect="false"
                 @execution-trigger="handleExecutionStart"
             />
+            <template #footer>
+                <FlowRunActions :flowRun="flowRunRef" />
+            </template>
         </KsDialog>
     </section>
 </template>
@@ -279,6 +283,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue"
 
     import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
@@ -503,6 +508,7 @@
     }
 
     const showRunModal = ref(false)
+    const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectedFlow = ref<any | null>(null)
 
     async function openExecuteModal(flow: any) {

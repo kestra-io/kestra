@@ -215,6 +215,7 @@
                     : $t('namespace files.create.folder')
             "
             width="500"
+            appendToBody
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
@@ -268,7 +269,6 @@
         <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
-            width="500"
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
@@ -302,7 +302,6 @@
         <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
-            width="500"
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3" v-html="confirmationLabels.message" />
@@ -321,7 +320,6 @@
         <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
-            width="75%"
             top="10vh"
         >
             <Revisions
@@ -411,6 +409,12 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+
+    // exposed so parents (e.g. the dedicated empty state) can reuse the
+    // create dialog instead of duplicating file-creation logic
+    defineExpose({
+        openCreationDialog: (type: "file" | "folder" = "file") => toggleDialog(true, type),
+    })
 
     const route = useRoute()
     const namespacesStore = useNamespacesStore()

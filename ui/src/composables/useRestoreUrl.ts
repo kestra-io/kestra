@@ -83,7 +83,10 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
     // Settle loadInit in setup so children can gate their first load and avoid
     // racing the in-flight restore navigation.
     if (restoreUrl && localStorageValue.value && Object.keys(route.query).length === 0) {
-        loadInit.value = false
+        const {change} = getRestoredQuery(route)
+        if (change) {
+            loadInit.value = false
+        }
     }
 
     onMounted(() => {

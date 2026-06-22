@@ -1875,7 +1875,10 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        HttpResponse<?> validateResponse = this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file/preview?path=" + path);
+        String redirect = "/api/v1/" + this.getTenant() + "executions/{executionId}/file/preview?path=" + path
+            + (maxRows != null ? "&maxRows=" + maxRows : "")
+            + "&encoding=" + encoding;
+        HttpResponse<?> validateResponse = this.validateFile(execution.get(), path, redirect);
         if (validateResponse != null) {
             return validateResponse;
         }

@@ -60,7 +60,6 @@
             :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
             :destroyOnClose="true"
             :appendToBody="true"
-            width="600px"
         >
             <TopologyTaskModalRemote v-bind="(taskModalCtx as any)" />
         </KsDialog>
@@ -231,6 +230,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
+    import {openFlowInNewTab} from "../../utils/openFlow"
     
     const router = useRouter()
 
@@ -594,32 +594,15 @@
     }
 
     const openFlow = (data: any) => {
-        if (data.link.executionId) {
-            window.open(
-                router.resolve({
-                    name: "executions/update",
-                    params: {
-                        namespace: data.link.namespace,
-                        flowId: data.link.id,
-                        tab: "overview",
-                        id: data.link.executionId,
-                    },
-                }).href,
-                "_blank",
-            )
-        } else {
-            window.open(
-                router.resolve({
-                    name: "flows/update",
-                    params: {
-                        namespace: data.link.namespace,
-                        id: data.link.id,
-                        tab: "overview",
-                    },
-                }).href,
-                "_blank",
-            )
-        }
+        openFlowInNewTab(
+            {
+                namespace: data.link.namespace,
+                flowId: data.link.id,
+                executionId: data.link.executionId,
+                tab: "overview",
+            },
+            router,
+        )
     }
 
     const openInspect = (event: unknown, tab: "logs" | "outputs" | "metrics") => {

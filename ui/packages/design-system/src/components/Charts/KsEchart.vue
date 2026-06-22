@@ -23,6 +23,7 @@
         <KsTooltip
             v-if="tooltipType === TooltipType.EXTERNAL"
             trigger="manual"
+            transition="none"
             :visible="tooltipVisible"
             :content="tooltipContent"
             :rawContent="true"
@@ -73,6 +74,8 @@
             loading?: boolean
             /** Tooltip rendering mode. EXTERNAL uses KsTooltip (ideal for mini/sparkline charts). */
             tooltipType?: TooltipType
+            /** EXTERNAL only: anchor the tooltip below the chart and keep it visible on hover, instead of following the cursor over bars/slices. */
+            stickyTooltip?: boolean
             /** Features to disable (LEGEND, AXIS, AXIS_SPLITLINE, TOOLTIP). */
             disableFeatures?: ChartFeature[]
             /** Raw series data — if not provided as options. */
@@ -82,6 +85,7 @@
         {
             loading: false,
             tooltipType: TooltipType.NATIVE,
+            stickyTooltip: false,
             disableFeatures: () => [],
             data: null,
             renderer: ChartRenderer.CANVAS,
@@ -120,6 +124,7 @@
                     position: () => [-9999, -9999],
                     formatter: (params: unknown) => {
                         tooltipContent.value = buildContentFromParams(params)
+                        if (props.stickyTooltip) tooltipVisible.value = true
                         return " "
                     },
                 },
@@ -145,7 +150,9 @@
     const cursor = ref({x: 0, y: 0})
 
     const virtualRef = computed(() => ({
-        getBoundingClientRect: () => new DOMRect(cursor.value.x, cursor.value.y, 0, 0),
+        getBoundingClientRect: () => props.stickyTooltip && wrapperRef.value
+            ? wrapperRef.value.getBoundingClientRect()
+            : new DOMRect(cursor.value.x, cursor.value.y, 0, 0),
     }))
 
     const tooltipPopperOptions = {
@@ -220,12 +227,12 @@
     }
 
     function onMouseover(params: unknown) {
-        tooltipVisible.value = true
+        if (!props.stickyTooltip) tooltipVisible.value = true
         emit("echarts-mouseover", params)
     }
 
     function onMouseout(params: unknown) {
-        hide()
+        if (!props.stickyTooltip) hide()
         emit("echarts-mouseout", params)
     }
 
@@ -239,7 +246,7 @@
         boundZr?.off("mousemove", onZrMousemove)
         boundZr?.off("globalout", hide)
         boundZr = chart && props.tooltipType === TooltipType.EXTERNAL ? chart.getZr() : null
-        boundZr?.on("mousemove", onZrMousemove)
+        if (!props.stickyTooltip) boundZr?.on("mousemove", onZrMousemove)
         boundZr?.on("globalout", hide)
     }
 

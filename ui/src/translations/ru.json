@@ -93,6 +93,11 @@
       "create": "Создать blueprint",
       "custom": "Пользовательские blueprints",
       "dashboards": "Панель управления Blueprints",
+      "detail": {
+        "category": "Тип категории",
+        "links": "Ссылка и ресурсы",
+        "openInEditor": "Открыть в Edit Flow"
+      },
       "edit": "Редактировать blueprint",
       "empty": "Нет blueprints для отображения.",
       "flows": "Черновики Flow",
@@ -256,6 +261,8 @@
         "plural": "Панели управления",
         "singular": "Панель управления"
       },
+      "no_description": "Нет описания",
+      "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "preview": "Предварительный просмотр Dashboard",
       "quick_filters": {
         "all": "Все",
@@ -523,6 +530,10 @@
     "email": "Email",
     "email length constraint": "Email не должен превышать 256 символов",
     "empty": {
+      "namespaceFiles": {
+        "title": "В этом namespace пока нет файлов",
+        "content": "Файлы namespace работают как папка проекта для этого namespace. Храните код Python, SQL, dbt или Terraform, а затем ссылайтесь на любой файл в своих flows с помощью"
+      },
       "announcements": {
         "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
         "title": "У вас пока нет объявлений!"
@@ -601,6 +612,10 @@
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."
       },
+      "variables": {
+        "content": "Добавьте пары ключ-значение для совместного использования конфигурации между flows. Дочерние namespaces автоматически наследуют их, и вы можете ссылаться на любое значение с помощью",
+        "title": "Пока нет переменных"
+      },
       "versionPlugin": {
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
         "title": "У вас еще нет версионированного плагина!"
@@ -656,7 +671,7 @@
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
     "execution id": "Идентификатор выполнения",
     "execution labels": "Метки выполнения",
-    "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
+    "execution not found": "Выполнение {executionId} не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
     "execution not in state PAUSED": "Выполнение <code>{executionId}</code> не в состоянии PAUSED",
     "execution replay": "Это выполнение является повтором",
@@ -868,7 +883,8 @@
     "from": "От",
     "gantt": "Гантт",
     "gantt_no_tasks_executed": "Это выполнение завершилось без запуска каких-либо task. Проверьте его обзор и логи, чтобы узнать причину.",
-    "gantt_no_tasks_match_filters": "Нет задач, соответствующих выбранным фильтрам. <br> Попробуйте изменить фильтры поиска, состояния или уровня Log.",
+    "gantt_no_tasks_match_filters": "Попробуйте изменить фильтры поиска, состояния или уровня Log.",
+    "gantt_no_tasks_match_filters_title": "Нет задач, соответствующих выбранным фильтрам.",
     "healthcheck date": "HealthCheck Дата",
     "hide task documentation": "Скрыть документацию задачи",
     "home": "Домой",
@@ -937,6 +953,7 @@
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
     "leave page": "Покинуть страницу",
+    "license": "Лицензия",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
     "light_version": "Легкая версия",
     "line": "Линия",
@@ -1088,6 +1105,7 @@
       "export": "Экспортировать файлы namespace",
       "export_single": "Экспортировать файл",
       "filter": "Фильтр",
+      "new_file": "Новый файл",
       "import": {
         "error": "Произошли ошибки при импорте файла(ов)",
         "files": "Импортировать файлы",
@@ -1098,6 +1116,10 @@
       "no_items": {
         "heading": "В вашем namespace пока нет файлов.",
         "paragraph": "Создайте или импортируйте файлы для обмена кодом между flows в вашем namespace."
+      },
+      "no_selection": {
+        "heading": "Файлы не выбраны",
+        "description": "Выберите файл из дерева, чтобы просмотреть его содержимое."
       },
       "path": {
         "copy": "Скопировать путь",
@@ -1249,7 +1271,8 @@
     "no_history": "История недоступна",
     "no_inputs": "Нет доступных input.",
     "no_logs_data": "Нет данных",
-    "no_logs_data_description": "Для выбранных фильтров логи не найдены. <br> Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
+    "no_logs_data_description": "Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
+    "no_logs_data_title": "Для выбранных фильтров логи не найдены.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
     "no_results": {
       "assets": "Активы не найдены",
@@ -1398,6 +1421,7 @@
     "open in new tab": "В новой вкладке",
     "open in same tab": "В той же вкладке",
     "open sidebar": "открыть боковую панель",
+    "open source": "Открытый исходный код",
     "open_page": "Open page",
     "optional": "Опционально",
     "original execution": "Оригинальное выполнение",
@@ -1549,6 +1573,7 @@
       "showing_rows": "Показаны строки {start}-{end} из {total}",
       "view": "Просмотр"
     },
+    "pricing": "Цены",
     "product_tour": "Тур по продукту",
     "properties": {
       "hidden": "Скрыто в таблице",
@@ -1757,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
+            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",

@@ -34,6 +34,7 @@ jobs:
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}
       java-version: ${{ inputs.java-version }}
+      use-kestra-base-images: true
     secrets: inherit
 
   helm-release:

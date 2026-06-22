@@ -93,6 +93,11 @@
       "create": "Utwórz blueprint",
       "custom": "Niestandardowe blueprints",
       "dashboards": "Dashboard Blueprinty",
+      "detail": {
+        "category": "Typ kategorii",
+        "links": "Linki i zasoby",
+        "openInEditor": "Otwórz w Edytuj Flow"
+      },
       "edit": "Edytuj blueprint",
       "empty": "Brak blueprintów do wyświetlenia.",
       "flows": "Schematy Flow",
@@ -256,6 +261,8 @@
         "plural": "Dashboardy",
         "singular": "Dashboard"
       },
+      "no_description": "Brak opisu",
+      "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "preview": "Podgląd Dashboardu",
       "quick_filters": {
         "all": "Wszystkie",
@@ -523,6 +530,10 @@
     "email": "Email",
     "email length constraint": "Email nie może przekraczać 256 znaków",
     "empty": {
+      "namespaceFiles": {
+        "title": "Brak plików w tym namespace",
+        "content": "Pliki namespace działają jak folder projektu dla tego namespace. Przechowuj kod Python, SQL, dbt lub Terraform, a następnie odwołuj się do dowolnego pliku w swoich flows za pomocą"
+      },
       "announcements": {
         "content": "Ogłoszenia pozwalają powiadomić użytkowników o wszelkich zmianach lub poinformować ich o planowanej przerwie konserwacyjnej. Wystarczy wybrać typ ogłoszenia, zakres dat, w którym ma być wyświetlane, i napisać treść ogłoszenia.",
         "title": "Nie masz jeszcze ogłoszeń!"
@@ -601,6 +612,10 @@
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> w naszej dokumentacji.",
         "title": "Twój flow nie ma żadnych Triggerów."
       },
+      "variables": {
+        "content": "Dodaj pary klucz-wartość, aby udostępniać konfigurację między flow. Podrzędne namespace dziedziczą je automatycznie, a każdą wartość można odwołać za pomocą",
+        "title": "Jeszcze brak zmiennych"
+      },
       "versionPlugin": {
         "content": "Tutaj możesz zarządzać wszystkimi pluginami zainstalowanymi na Twojej instancji Kestra. Nowo zainstalowane pluginy mogą nie być od razu dostępne we wszystkich usługach Kestra, w zależności od konfiguracji Twojej instancji.",
         "title": "Nie masz jeszcze wersjonowanego pluginu!"
@@ -656,7 +671,7 @@
     "execution already finished": "Wykonanie <code>{executionId}</code> już zakończone",
     "execution id": "Id wykonania",
     "execution labels": "Etykiety wykonania",
-    "execution not found": "Wykonanie <code>{executionId}</code> nie zostało znalezione.",
+    "execution not found": "Wykonanie {executionId} nie zostało znalezione.",
     "execution not in state FAILED": "Wykonanie <code>{executionId}</code> nie jest w stanie FAILED",
     "execution not in state PAUSED": "Wykonanie <code>{executionId}</code> nie jest w stanie PAUSED",
     "execution replay": "To wykonanie jest powtórką z",
@@ -868,7 +883,8 @@
     "from": "Od",
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Ta wykonanie zakończyło się bez uruchomienia żadnego taska.\nSprawdź jego podsumowanie i logi, aby poznać przyczynę.",
-    "gantt_no_tasks_match_filters": "Brak zadań pasujących do wybranych filtrów. <br> Spróbuj dostosować filtry wyszukiwania, stanu lub poziomu logów.",
+    "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, stanu lub poziomu logów.",
+    "gantt_no_tasks_match_filters_title": "Brak zadań pasujących do wybranych filtrów.",
     "healthcheck date": "Data HealthCheck",
     "hide task documentation": "Ukryj dokumentację task",
     "home": "Strona główna",
@@ -937,6 +953,7 @@
     "launch execution": "Wykonaj",
     "learn_more": "Dowiedz się więcej",
     "leave page": "Opuść stronę",
+    "license": "Licencja",
     "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
     "light_version": "Wersja jasna",
     "line": "Linia",
@@ -1088,6 +1105,7 @@
       "export": "Eksportuj pliki namespace",
       "export_single": "Eksportuj plik",
       "filter": "Filtr",
+      "new_file": "Nowy plik",
       "import": {
         "error": "Wystąpiły błędy podczas importowania pliku(ów)",
         "files": "Importuj pliki",
@@ -1098,6 +1116,10 @@
       "no_items": {
         "heading": "Nie znaleziono jeszcze plików w twoim namespace.",
         "paragraph": "Utwórz lub zaimportuj pliki, aby udostępniać kod między flow w twoim namespace."
+      },
+      "no_selection": {
+        "heading": "Nie wybrano plików",
+        "description": "Wybierz plik z drzewa, aby wyświetlić jego zawartość."
       },
       "path": {
         "copy": "Skopiuj ścieżkę",
@@ -1249,7 +1271,8 @@
     "no_history": "Brak dostępnej historii",
     "no_inputs": "Brak dostępnych inputów.",
     "no_logs_data": "Brak danych",
-    "no_logs_data_description": "Nie znaleziono logów dla wybranych filtrów. <br> Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
+    "no_logs_data_description": "Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
+    "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "no_results": {
       "assets": "Nie znaleziono zasobów",
@@ -1398,6 +1421,7 @@
     "open in new tab": "W nowej zakładce",
     "open in same tab": "W tej samej zakładce",
     "open sidebar": "otwórz pasek boczny",
+    "open source": "Otwarte Źródło",
     "open_page": "Open page",
     "optional": "Opcjonalne",
     "original execution": "Oryginalne wykonanie",
@@ -1549,6 +1573,7 @@
       "showing_rows": "Wyświetlanie wierszy {start}-{end} z {total}",
       "view": "Zobacz"
     },
+    "pricing": "Cennik",
     "product_tour": "Przewodnik po produkcie",
     "properties": {
       "hidden": "Ukryte w tabeli",
@@ -1757,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "Wybierz preferowany motyw interfejsu.",
+            "color_mode_shortcut": "Wskazówka: naciśnij <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, aby zmieniać motywy z dowolnego miejsca.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML podczas otwierania flow.",
             "editor_font_family": "Czcionka monospace używana w edytorze YAML.",
             "editor_font_size": "Rozmiar czcionki używany w edytorach YAML i no-code.",

@@ -84,10 +84,12 @@
     "overview": "Overview",
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
-    "gantt_no_tasks_match_filters": "No tasks match the selected filters. <br> Try adjusting the search, state, or log-level filters.",
+    "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
+    "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data": "No Data",
-    "no_logs_data_description": "No logs found for the selected filters. <br> Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_title": "No logs found for the selected filters.",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -396,8 +398,8 @@
       "n_items": "[ {count} items ]"
     },
     "file_preview": {
-        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-        "load_anyway": "Load anyway"
+      "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "load_anyway": "Load anyway"
     },
     "no_variables": "No variables available.",
     "download": "Download",
@@ -426,7 +428,12 @@
       "custom": "Custom Blueprints",
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
-      "dashboards": "Dashboard Blueprints"
+      "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Category type",
+        "links": "Link & Resources",
+        "openInEditor": "Open in Edit Flow"
+      }
     },
     "use": "Use",
     "plugins": {
@@ -521,7 +528,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-       "404": {
+      "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -598,7 +605,7 @@
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
-    "execution not found": "Execution <code>{executionId}</code> is not found.",
+    "execution not found": "Execution {executionId} is not found.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",
@@ -809,9 +816,14 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
+      "new_file": "New File",
       "no_items": {
         "heading": "No files found in your namespace yet.",
         "paragraph": "Create or import files to share code across flows in your namespace."
+      },
+      "no_selection": {
+        "heading": "No Files Selected",
+        "description": "Select a file from the tree to view its content."
       },
       "tree": {
         "expand": "Expand all folders",
@@ -1043,6 +1055,7 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
@@ -1704,6 +1717,10 @@
     "dataFilters": "Data Filters",
     "logExporters": "Log Exporters",
     "empty": {
+      "namespaceFiles": {
+        "title": "No files in this namespace yet",
+        "content": "Namespace Files work like a project folder for this namespace. Store Python, SQL, dbt or Terraform code, then reference any file in your flows with"
+      },
       "announcements": {
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
@@ -1743,6 +1760,10 @@
       "pluginDefaults": {
         "title": "You have no plugin defaults yet!",
         "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
+      },
+      "variables": {
+        "title": "No variables yet",
+        "content": "Add key-value pairs to share configuration across flows. Child namespaces inherit them automatically, and you can reference any value with"
       },
       "workerRegistrationTokens": {
         "title": "You have no registration tokens yet!",
@@ -1838,6 +1859,8 @@
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
+      "no_description": "No description",
+      "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export to CSV",
       "quick_filters": {
@@ -2231,6 +2254,9 @@
       "open_flow": "Open flow",
       "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source"
-    }
+    },
+    "open source": "Open Source",
+    "pricing": "Pricing",
+    "license": "License"
   }
 }

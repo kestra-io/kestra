@@ -575,8 +575,15 @@
         () => props.levelFilter,
         () => {
             rawLogs.value = []
-            if (followedExecution.value)
+            if (!followedExecution.value) return
+
+            if (logsSSE.value && State.isRunning(followedExecution.value.state.current)) {
+                logsBuffer.value = []
+                closeLogsSSE()
+                followLogs(followedExecution.value.id)
+            } else {
                 loadLogs(followedExecution.value.id)
+            }
         },
     )
 
@@ -830,7 +837,7 @@
     }
 
     function followLogs(executionId: string) {
-        executionsStore.followLogs({id: executionId}).then((sse: any) => { // FIXME: any
+        executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse: any) => { // FIXME: any
             logsSSE.value = sse
 
             logsSSE.value.onmessage = (event: any) => { // FIXME: any
@@ -963,12 +970,23 @@
         return !(props.taskRunId && props.taskRunId !== currentTaskRun.id)
     }
 
-    function loadLogs(executionId?: string) {
+    function buildLogParams(): Record<string, unknown> {
         const p: Record<string, unknown> = {...levelToRequestParams(props.levelFilter)}
         const taskId = taskRunById.value[props.taskRunId as string]?.taskId
         if (taskId) {
             p["filters[taskId][EQUALS]"] = taskId
         }
+        // Logs default to NORMAL kind on the backend; surface this execution's own kind when it
+        // isn't NORMAL (e.g. PLAYGROUND) so its logs still load.
+        const kind = followedExecution.value?.kind
+        if (kind && kind !== "NORMAL") {
+            p["filters[kind][IN]"] = kind
+        }
+        return p
+    }
+
+    function loadLogs(executionId?: string) {
+        const p = buildLogParams()
         executionsStore
             .loadLogs({
                 executionId: executionId!,

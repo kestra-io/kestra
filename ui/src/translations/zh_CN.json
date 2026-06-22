@@ -93,6 +93,11 @@
       "create": "创建一个blueprint",
       "custom": "自定义blueprints",
       "dashboards": "仪表板 Blueprints",
+      "detail": {
+        "category": "类别类型",
+        "links": "链接与资源",
+        "openInEditor": "在编辑 Flow 中打开"
+      },
       "edit": "编辑蓝图",
       "empty": "没有可显示的blueprints。",
       "flows": "流程蓝图",
@@ -256,6 +261,8 @@
         "plural": "仪表板",
         "singular": "仪表板"
       },
+      "no_description": "无描述",
+      "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "preview": "预览仪表板",
       "quick_filters": {
         "all": "全部",
@@ -523,6 +530,10 @@
     "email": "电子邮件",
     "email length constraint": "电子邮件不得超过256个字符",
     "empty": {
+      "namespaceFiles": {
+        "title": "此命名空间中尚无文件",
+        "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用"
+      },
       "announcements": {
         "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
         "title": "您还没有公告！"
@@ -601,6 +612,10 @@
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
       },
+      "variables": {
+        "content": "添加kv store以在不同的flow之间共享配置。子namespace会自动继承这些配置，您可以引用任何value。",
+        "title": "尚无变量"
+      },
       "versionPlugin": {
         "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
         "title": "您还没有版本化的插件！"
@@ -656,7 +671,7 @@
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "execution id": "执行 Id",
     "execution labels": "执行标签",
-    "execution not found": "执行 <code>{executionId}</code> 未找到。",
+    "execution not found": "执行 {executionId} 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
     "execution replay": "此执行是以下内容的重放",
@@ -868,7 +883,8 @@
     "from": "从",
     "gantt": "甘特图",
     "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
-    "gantt_no_tasks_match_filters": "没有任务符合所选过滤器。<br> 尝试调整搜索、状态或log-level过滤器。",
+    "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
+    "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
@@ -937,6 +953,7 @@
     "launch execution": "执行",
     "learn_more": "了解更多",
     "leave page": "离开页面",
+    "license": "许可证",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line": "行",
@@ -1088,6 +1105,7 @@
       "export": "导出命名空间文件",
       "export_single": "导出文件",
       "filter": "过滤",
+      "new_file": "新建文件",
       "import": {
         "error": "导入文件时出错",
         "files": "导入文件",
@@ -1098,6 +1116,10 @@
       "no_items": {
         "heading": "尚未在您的namespace中找到文件。",
         "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"
+      },
+      "no_selection": {
+        "heading": "未选择文件",
+        "description": "从树中选择一个文件以查看其内容。"
       },
       "path": {
         "copy": "复制路径",
@@ -1249,7 +1271,8 @@
     "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
-    "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_title": "未找到所选过滤器的日志。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
       "assets": "未找到资产",
@@ -1398,6 +1421,7 @@
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
     "open sidebar": "打开侧边栏",
+    "open source": "开源",
     "open_page": "Open page",
     "optional": "可选",
     "original execution": "原始执行",
@@ -1549,6 +1573,7 @@
       "showing_rows": "显示第 {start}-{end} 行，共 {total} 行",
       "view": "查看"
     },
+    "pricing": "定价",
     "product_tour": "产品导览",
     "properties": {
       "hidden": "隐藏在表格中",
@@ -1757,6 +1782,7 @@
           },
           "descriptions": {
             "color_mode": "选择您偏好的界面主题。",
+            "color_mode_shortcut": "提示：在任意位置按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 即可循环切换主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
             "editor_font_family": "YAML编辑器中使用的等宽字体。",
             "editor_font_size": "YAML和无代码编辑器中使用的字体大小。",

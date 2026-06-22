@@ -283,13 +283,34 @@ public class ExecutionService {
             );
         }
 
+        final String newExecutionId = revision != null ? IdUtils.create() : null;
+
+        // When an execution has no task runs (e.g., failed due to concurrency limit exceeded
+        // before any task ran), restart it as a fresh child execution with an empty task-run list.
+        if (ListUtils.isEmpty(execution.getTaskRunList())) {
+            List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
+            if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
+                newLabels.add(new Label(Label.RESTARTED, "true"));
+            }
+            Execution newExecution = execution
+                .childExecution(newExecutionId, Collections.emptyList(), execution.withState(State.Type.RESTARTED).getState())
+                .withMetadata(execution.getMetadata().nextAttempt())
+                .withLabels(newLabels);
+            if (revision != null) {
+                newExecution = newExecution.withFlowRevision(revision);
+            }
+            if (emitEvent) {
+                eventPublisher.publishEvent(CrudEvent.create(newExecution));
+            }
+            return newExecution;
+        }
+
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getState().canBeRestarted()
         );
 
         Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, revision == null);
-        final String newExecutionId = revision != null ? IdUtils.create() : null;
 
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
@@ -353,8 +374,7 @@ public class ExecutionService {
         Set<String> finalTaskRunToRestart = this
             .taskRunWithAncestors(
                 execution,
-                execution
-                    .getTaskRunList()
+                execution.getTaskRunList()
                     .stream()
                     .filter(predicate)
                     .toList()

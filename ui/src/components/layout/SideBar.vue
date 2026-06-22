@@ -159,6 +159,7 @@
             }
             return true
         }
+        if (item.routes?.length) return false
         if (typeof item.href !== "string" || item.href === "/") return false
         return $route.path.startsWith(item.href)
     }

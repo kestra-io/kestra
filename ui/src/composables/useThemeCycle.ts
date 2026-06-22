@@ -9,7 +9,7 @@ import {switchTheme} from "../utils/utils"
 import type {SelectedTheme} from "../utils/utils"
 import type {useMiscStore} from "override/stores/misc"
 
-const THEMES: SelectedTheme[] = ["light", "dark", "dark-2"]
+const THEMES: SelectedTheme[] = ["dark-2", "dark", "light"]
 
 export function useThemeCycle(miscStore: ReturnType<typeof useMiscStore>) {
     function cycleTheme(e: KeyboardEvent) {

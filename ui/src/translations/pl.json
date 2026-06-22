@@ -1774,7 +1774,8 @@
             "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
             "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
             "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
-            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach."
+            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach.",
+            "color_mode_shortcut": "Wskazówka: naciśnij <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, aby zmieniać motywy z dowolnego miejsca."
           },
           "fields": {
             "chart_color_scheme": {

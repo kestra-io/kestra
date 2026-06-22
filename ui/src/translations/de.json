@@ -1774,7 +1774,8 @@
             "editor_hover_description": "Eigenschaftsbeschreibungen beim Hover im Editor anzeigen.",
             "environment_color": "Auffälligkeitsfarbe, die für die aktuelle Umgebung in der Navigation verwendet wird.",
             "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
-            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
+            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird.",
+            "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln."
           },
           "fields": {
             "chart_color_scheme": {

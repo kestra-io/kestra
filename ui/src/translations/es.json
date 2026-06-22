@@ -1774,7 +1774,8 @@
             "editor_hover_description": "Mostrar descripciones de propiedades al pasar el cursor en el editor.",
             "environment_color": "Color de acento utilizado para el entorno actual en la navegación.",
             "environment_name": "Nombre para mostrar del entorno actual, mostrado en la navegación.",
-            "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales."
+            "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales.",
+            "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar."
           },
           "fields": {
             "chart_color_scheme": {

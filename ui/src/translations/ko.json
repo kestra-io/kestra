@@ -1774,7 +1774,8 @@
             "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
             "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
             "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
-            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
+            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
+            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요."
           },
           "fields": {
             "chart_color_scheme": {

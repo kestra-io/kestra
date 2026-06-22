@@ -236,7 +236,6 @@
             v-model="showRunModal"
             destroyOnClose
             appendToBody
-            :width="dialogWidth"
         >
             <template #header>
                 <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
@@ -259,7 +258,6 @@
     import {ref, computed, useTemplateRef, watch, h} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {useMediaQuery} from "@vueuse/core"
     import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -335,8 +333,6 @@
     const latestExecutions = ref<any[]>([])
     const file = ref<HTMLInputElement | null>(null)
 
-    const isLargeScreen = useMediaQuery("(min-width: 768px)")
-
     const optionalColumns = ref([
         {
             label: t("labels"),
@@ -394,10 +390,6 @@
     const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
     const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.FLOW, action.EXECUTE, flow.namespace)
 
-    const dialogWidth = computed(() =>
-        isLargeScreen.value ? "50%" : "90%",
-    )
-    
     const routeInfo = computed(() => ({title: t("flows")}))
 
     useRouteContext(routeInfo)

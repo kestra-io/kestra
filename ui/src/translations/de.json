@@ -610,6 +610,10 @@
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
         "title": "Ihr flow hat keine Trigger."
       },
+      "variables": {
+        "content": "Fügen Sie kv store-Paare hinzu, um Konfigurationen über flows hinweg zu teilen. Untergeordnete namespaces erben sie automatisch, und Sie können jeden Wert mit referenzieren.",
+        "title": "Noch keine Variablen vorhanden"
+      },
       "versionPlugin": {
         "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
         "title": "Sie haben noch kein versioniertes Plugin!"
@@ -947,6 +951,7 @@
     "launch execution": "Ausführen",
     "learn_more": "Erfahren Sie mehr",
     "leave page": "Seite verlassen",
+    "license": "Lizenz",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
     "light_version": "Helle Version",
     "line": "Linie",
@@ -1412,6 +1417,7 @@
     "open in new tab": "In einem neuen Tab",
     "open in same tab": "Im selben Tab",
     "open sidebar": "Seitenleiste öffnen",
+    "open source": "Open Source",
     "open_page": "Open page",
     "optional": "Optional",
     "original execution": "Originalausführung",
@@ -1563,6 +1569,7 @@
       "showing_rows": "Zeige Zeilen {start}-{end} von {total}",
       "view": "Anzeigen"
     },
+    "pricing": "Preise",
     "product_tour": "Produkteinführung",
     "properties": {
       "hidden": "In Tabelle versteckt",

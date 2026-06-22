@@ -485,6 +485,11 @@ public class ExecutionService {
                         } else if (newState == State.Type.KILLING) {
                             targetState = State.Type.KILLED;
                         }
+                    } else if (newState == State.Type.KILLING) {
+                        // when killing a paused execution, terminate the Pause task directly instead of
+                        // resuming it to RUNNING; otherwise its subtasks would be spawned during the kill
+                        // (regression covered by ExecutionControllerRunnerTest.killExecutionPaused).
+                        targetState = State.Type.KILLED;
                     } else {
                         // when killing, terminate immediately without executing subtasks
                         if (newState == State.Type.KILLING) {

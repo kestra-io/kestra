@@ -34,6 +34,7 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
     import {usePluginsStore} from "./stores/plugins"
+    import {useThemeCycle} from "./composables/useThemeCycle"
 
     const loaded = ref(false)
 
@@ -41,7 +42,9 @@
     const layoutStore = useLayoutStore()
     const coreStore = useCoreStore()
     const docStore = useDocStore()
+
     const miscStore = useMiscStore()
+    useThemeCycle(miscStore)
 
     const route = useRoute()
 

@@ -264,7 +264,7 @@
         if (!props.execution?.state) return false
 
         const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
+            ? authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
             : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
 
         if (!hasPermission) return false

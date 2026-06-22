@@ -113,7 +113,7 @@
     )
 
     const isAllowedTrigger = computed(() =>
-        execution.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, execution.value.namespace),
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, execution.value.namespace),
     )
 
     const primaryAction = computed(() => {

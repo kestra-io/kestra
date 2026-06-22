@@ -32,7 +32,6 @@ include 'worker'
 include 'worker-controller'
 include 'indexer'
 
-include 'ui'
 include 'model'
 include 'processor'
 include 'script'

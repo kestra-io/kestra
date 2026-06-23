@@ -1,10 +1,5 @@
 {
   "it": {
-    "loading": "Caricamento...",
-        "back": "Indietro",
-        "next": "Avanti",
-        "done": "Fatto",
-        "review your inputs": "Rivedi i tuoi input",
     "Add flow": "Aggiungi flow",
     "Default log level": "Livello di log predefinito",
     "Default namespace": "Namespace predefinito",
@@ -83,6 +78,7 @@
     "automatic refresh": "Aggiornamento automatico",
     "avg": "Media",
     "avg duration": "Durata media dell'esecuzione",
+    "back": "Indietro",
     "back_to_dashboard": "Torna alla dashboard",
     "backfill": "Backfill",
     "backfill executions": "Esecuzioni di backfill",
@@ -497,6 +493,7 @@
       "github": "Apri un problema su GitHub"
     },
     "documentationMenu": "Menu documentazione",
+    "done": "Fatto",
     "down trend": "In diminuzione",
     "download": "Scarica",
     "download logs": "Scarica logs",
@@ -535,10 +532,6 @@
     "email": "Email",
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "empty": {
-      "namespaceFiles": {
-        "title": "Nessun file in questo namespace per ora",
-        "content": "I file del namespace funzionano come una cartella di progetto per questo namespace. Archivia codice Python, SQL, dbt o Terraform, quindi fai riferimento a qualsiasi file nei tuoi flows con"
-      },
       "announcements": {
         "content": "Gli annunci ti permettono di notificare ai tuoi utenti eventuali modifiche o di informarli su periodi di manutenzione programmata. Seleziona semplicemente il tipo di annuncio, l'intervallo di date in cui deve essere visualizzato e scrivi il messaggio dell'annuncio.",
         "title": "Non hai ancora annunci!"
@@ -596,6 +589,10 @@
       "mcpToolFlows": {
         "content": "Esporre un flow come uno strumento MCP aggiungendo un <code>McpToolTrigger</code> ad esso. Leggi di più sul <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> nella nostra documentazione.",
         "title": "Nessun flow di tool è ancora registrato su questo server."
+      },
+      "namespaceFiles": {
+        "content": "I file del namespace funzionano come una cartella di progetto per questo namespace. Archivia codice Python, SQL, dbt o Terraform, quindi fai riferimento a qualsiasi file nei tuoi flows con",
+        "title": "Nessun file in questo namespace per ora"
       },
       "panels": {
         "content": "Hai chiuso tutti i pannelli.  \nSeleziona una scheda sopra per continuare.",
@@ -1110,7 +1107,6 @@
       "export": "Esporta file del namespace",
       "export_single": "Esporta file",
       "filter": "Filtro",
-      "new_file": "Nuovo file",
       "import": {
         "error": "Si sono verificati errori durante l'importazione dei file",
         "files": "Importa file",
@@ -1118,13 +1114,14 @@
         "import": "Importa",
         "success": "File importati con successo"
       },
+      "new_file": "Nuovo file",
       "no_items": {
         "heading": "Nessun file trovato nel tuo namespace.",
         "paragraph": "Crea o importa file per condividere il codice tra i flow nel tuo namespace."
       },
       "no_selection": {
-        "heading": "Nessun file selezionato",
-        "description": "Seleziona un file dall'albero per visualizzarne il contenuto."
+        "description": "Seleziona un file dall'albero per visualizzarne il contenuto.",
+        "heading": "Nessun file selezionato"
       },
       "path": {
         "copy": "Copia percorso",
@@ -1171,6 +1168,7 @@
     "neutral trend": "Stabile",
     "new": "Nuovo",
     "new version": "Nuova versione {version} disponibile!",
+    "next": "Avanti",
     "next evaluation date": "Prossima data di valutazione",
     "next evaluation date tooltip": "Quando il trigger verrà valutato nuovamente, in base al suo intervallo. Non sempre coincide con la prossima data di esecuzione se le condizioni non sono soddisfatte.",
     "next execution date": "Data della prossima esecuzione",
@@ -1636,6 +1634,7 @@
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
     "reuse original inputs": "Riutilizza gli input originali",
     "reuse_original_inputs": "Riutilizza gli input originali",
+    "review your inputs": "Rivedi i tuoi input",
     "revision": "Revisione",
     "revision deleted": "La revisione {revision} è stata eliminata con successo",
     "revisions": "Revisions",

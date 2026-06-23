@@ -429,6 +429,10 @@
             padding-inline: var(--ks-data-table-gutter);
         }
 
+        > .ks-data-table-navbar {
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
+        }
+
         .kel-pagination {
             display: flex;
             padding-inline: var(--ks-data-table-gutter);

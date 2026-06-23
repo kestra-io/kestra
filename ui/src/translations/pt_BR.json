@@ -264,6 +264,7 @@
       },
       "no_description": "Sem descrição",
       "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
+      "others": "Outros",
       "preview": "Visualizar Dashboard",
       "quick_filters": {
         "all": "Todos",

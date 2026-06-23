@@ -3,12 +3,11 @@
         v-if="generated?.results?.length"
         class="chart-wrapper"
         :class="{short: props.short}"
-        :style="props.short ? undefined : {maxHeight: `${MAX_CHART_HEIGHT}px`}"
     >
         <div
             class="chart"
             :class="{short: props.short}"
-            :style="props.short ? undefined : {height: `${naturalChartHeight}px`}"
+            :style="props.short ? undefined : {height: `${chartHeight}px`}"
         >
             <ChartLegend
                 v-if="showLegend"
@@ -36,11 +35,12 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
 
     import {ChartFeature, KsBar, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {useTheme} from "../../../utils/utils"
@@ -63,6 +63,7 @@
 
     const route = useRoute()
     const theme = useTheme()
+    const {t} = useI18n()
 
     const {drillDown} = useChartDrillDown(props.chart)
 
@@ -74,70 +75,68 @@
 
     const {onLegendToggle, legendSelected} = useLegendToggle()
 
-    const parsedData = computed(() => {
-        const column = chartOptions?.column ?? ""
-        const columns = data?.columns ?? {}
+    const categoryKey = chartOptions?.column ?? ""
+    const stackKeys = Object.entries(data?.columns ?? {})
+        .filter(([key, value]) => !(value as Record<string, any>).agg && key !== categoryKey)
+        .map(([key]) => key)
+    const valueKey = aggregator[0][0]
+    const limit = (chartOptions as any)?.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
 
-        const stackColumns = Object.entries(columns)
-            .filter(([key, value]) => !(value as Record<string, any>).agg && key !== column)
-            .map(([key]) => key)
+    const parsedData = computed(() =>
+        rankStackedBars(generated.value?.results as Record<string, unknown>[] ?? [], {
+            categoryKey,
+            stackKeys,
+            valueKey,
+            limit,
+        }),
+    )
 
-        const grouped: Record<string, Record<string, number>> = {}
-        const rawData = generated.value?.results as Record<string, any>[] | undefined
+    const othersLabel = computed(() => `${t("dashboards.others")} · ${parsedData.value.othersCount}`)
 
-        rawData?.forEach((item) => {
-            const stack = stackColumns.map((col) => item[col]).join(", ")
-            const xLabel = item[column] as string
-
-            grouped[xLabel] ??= {}
-            grouped[xLabel][stack] = (grouped[xLabel][stack] ?? 0) + item[aggregator[0][0]]
-        })
-
-        const xLabels = [...new Set(rawData?.map((item) => item[column] as string))]
-
-        const datasets = xLabels.flatMap((xLabel) =>
-            Object.entries(grouped[xLabel as string] ?? {}).map(([label, value]) => ({
-                label,
-                data: xLabels.map((x) => (x === xLabel ? value : 0)),
-                backgroundColor: getConsistentHEXColor(theme.value, label),
-            })),
-        )
-
-        return {labels: xLabels, datasets}
+    const categories = computed(() => {
+        const cats = parsedData.value.categories
+        return parsedData.value.othersCount > 0 ? [...cats, othersLabel.value] : cats
     })
 
-    const categories = computed(() => parsedData.value.labels)
-
-    const seriesData = computed<KsChartSeriesItem[]>(() =>
-        parsedData.value.datasets.map((ds) => ({
-            name: ds.label,
-            data: ds.data,
-            barWidth: 12,
+    const seriesData = computed<KsChartSeriesItem[]>(() => {
+        const hasOthers = parsedData.value.othersCount > 0
+        return parsedData.value.series.map((s) => ({
+            name: s.name,
+            data: s.data.map((v, idx) => {
+                if (hasOthers && idx === s.data.length - 1) {
+                    return {value: v, itemStyle: {color: cssVar("--ks-chart-skipped")}}
+                }
+                return v
+            }),
+            barWidth: 16,
             itemStyle: {
-                color: ds.backgroundColor,
+                color: getConsistentHEXColor(theme.value, s.name),
                 borderColor: cssVar("--ks-bg-surface"),
                 borderWidth: 1,
-                borderRadius: 1,
+                borderRadius: 2,
             },
-        })),
-    )
+        }))
+    })
 
     const showLegend = computed(() => !props.short && !!chartOptions?.legend?.enabled)
 
-    const MAX_CHART_HEIGHT = 500
-
-    const naturalChartHeight = computed(() => {
-        const overhead = showLegend.value ? 68 : 36
-        return Math.max(231, categories.value.length * 18 + overhead)
-    })
+    const ROW_PITCH = 30
+    const MIN_CHART_HEIGHT = 200
+    const chartHeight = computed(() =>
+        Math.max(MIN_CHART_HEIGHT, categories.value.length * ROW_PITCH + (showLegend.value ? 56 : 24)),
+    )
 
     const legendItems = computed(() =>
-        parsedData.value.datasets.map((ds) => ({
-            label: ds.label,
-            color: ds.backgroundColor,
-            count: (ds.data as number[]).reduce((acc, n) => acc + (n || 0), 0),
+        parsedData.value.series.map((s) => ({
+            label: s.name,
+            color: getConsistentHEXColor(theme.value, s.name),
+            count: s.data.reduce((acc, n) => acc + (typeof n === "number" ? n : (n as any).value ?? 0), 0),
         })),
     )
+
+    function leftTruncate(s: string, max: number): string {
+        return s.length <= max ? s : "…" + s.slice(s.length - (max - 1))
+    }
 
     const echartsOption = computed((): Record<string, unknown> => {
         const showAxes = !props.short
@@ -165,14 +164,38 @@
                 axisTick: {show: false},
                 axisLabel: {
                     ...axisLabelStyle,
-                    margin: 24,
-                    width: 200,
-                    overflow: "truncate",
+                    margin: 14,
+                    formatter: (v: string) => leftTruncate(v, 28),
                 },
             },
             tooltip: props.short
                 ? {show: false}
-                : {trigger: "axis", axisPointer: {type: "none"}},
+                : {
+                    trigger: "axis",
+                    axisPointer: {type: "none"},
+                    formatter: (params: any[]) => {
+                        if (!params?.length) return ""
+                        const isOthers = parsedData.value.othersCount > 0 && params[0].dataIndex === categories.value.length - 1
+                        const categoryName = isOthers ? t("dashboards.others") : params[0].name
+                        const nonZero = params.filter((p: any) => {
+                            const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
+                            return val > 0
+                        })
+                        const rows = nonZero
+                            .map((p: any) => {
+                                const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
+                                const formatted = isDurationAgg() ? durationUtils.humanDuration(val) : val
+                                return `<span style="color:${cssVar("--ks-text-secondary")}">${p.seriesName}</span>: ${formatted}`
+                            })
+                            .join("<br/>")
+                        const total = nonZero.reduce((acc: number, p: any) => {
+                            const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
+                            return acc + val
+                        }, 0)
+                        const formattedTotal = isDurationAgg() ? durationUtils.humanDuration(total) : total
+                        return `<b>${categoryName}</b><br/>${rows}<br/><span style="color:${cssVar("--ks-text-secondary")}">${t("Total")}</span>: ${formattedTotal}`
+                    },
+                },
             legend: {
                 show: false,
                 selected: legendSelected(legendItems.value.map((item) => item.label)),
@@ -181,7 +204,6 @@
     })
 
     const ksBarRef = ref<InstanceType<typeof KsBar> | null>(null)
-
 
     const categoryColumn = computed(() =>
         (data?.columns?.[chartOptions?.column ?? ""]) as {field?: string; labelKey?: string} | undefined,
@@ -195,6 +217,8 @@
     })
 
     function onChartClick(params: any) {
+        const isOthers = parsedData.value.othersCount > 0 && params.name === othersLabel.value
+        if (isOthers) return
         drillDown([
             {column: stackColumn.value, value: params.seriesName},
             {column: categoryColumn.value, value: params.name},
@@ -212,8 +236,6 @@
 
 <style scoped lang="scss">
     .chart-wrapper {
-        overflow-y: auto;
-
         &.short {
             height: 40px;
             overflow: hidden;

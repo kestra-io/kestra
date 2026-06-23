@@ -264,6 +264,7 @@
       },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
+      "others": "Inne",
       "preview": "Podgląd Dashboardu",
       "quick_filters": {
         "all": "Wszystkie",

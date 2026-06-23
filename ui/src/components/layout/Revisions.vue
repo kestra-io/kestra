@@ -412,7 +412,7 @@
 
     .revision-timestamp {
         color: #888;
-        font-size: 0.85em;
+        font-size: var(--ks-font-size-sm);
     }
 
     .display-select {
@@ -421,7 +421,7 @@
 
     .revision-timestamp {
         color: #888;
-        font-size: 0.85em;
+        font-size: var(--ks-font-size-sm);
         text-align: right;
         flex-shrink: 0;
     }

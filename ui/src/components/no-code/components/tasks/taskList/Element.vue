@@ -117,7 +117,7 @@
 
         .placeholder-icon {
             display: inline-flex;
-            font-size: 1.25rem;
+            font-size: var(--ks-font-size-xl);
             color: var(--ks-text-link);
         }
     }

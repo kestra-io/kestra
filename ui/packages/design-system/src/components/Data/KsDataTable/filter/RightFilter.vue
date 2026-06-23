@@ -208,7 +208,7 @@
             color: var(--ks-text-secondary);
             border-radius: 0.35rem;
             border: none;
-            font-size: 0.625rem;
+            font-size: var(--ks-font-size-2xs);
         }
     }
 

@@ -657,7 +657,7 @@
     background: var(--ks-bg-surface);
     color: var(--ks-text-primary);
     font-family: inherit;
-    font-size: 0.7rem;
+    font-size: var(--ks-font-size-xs);
     line-height: 1.4;
 }
 </style>

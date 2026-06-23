@@ -29,7 +29,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
         title = "List of values available.",
         description = "Each item is either a plain string (used as both label and value) or an object `{label, value}` to decouple the displayed label from the workflow value."
     )
-    @NotNull
+
     List<@Valid ValueOption> values;
 
     @Schema(

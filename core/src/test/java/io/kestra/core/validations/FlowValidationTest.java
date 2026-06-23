@@ -183,6 +183,24 @@ class FlowValidationTest {
     }
 
     @Test
+    void multiselectInputWithExpressionAndNoValues_succeeds() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: zones
+                type: MULTISELECT
+                expression: "{{ ['a', 'b'] }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
     void shouldGetConstraintErrorGivenInputWithBothDefaultsAndPrefill() {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """

@@ -17,6 +17,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -60,6 +61,8 @@ public class LogController {
     private LogStreamingService logStreamingService;
     @Inject
     private ExecutionService executionService;
+    @Inject
+    private SseConnectionMetrics sseConnectionMetrics;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -160,7 +163,7 @@ public class LogController {
         String subscriberId = UUID.randomUUID().toString();
         final List<String> levels = LogEntry.findLevelsByMin(minLevel).stream().map(Enum::name).toList();
 
-        return Flux.<Event<LogEntry>> create(emitter ->
+        Flux<Event<LogEntry>> flux = Flux.<Event<LogEntry>> create(emitter ->
         {
             // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
             emitter.next(Event.of(LogEntry.builder().build()).id("start"));
@@ -172,8 +175,10 @@ public class LogController {
             // consume in realtime
             logStreamingService.registerSubscriber(executionId, subscriberId, emitter, levels);
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-            .doFinally(ignored -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
+            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+
+        return sseConnectionMetrics.track(flux, "logs",
+            () -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -733,9 +733,9 @@
             } else {
                 const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
                 const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
-                if (selectedNode?.leaf === false) {
-                    node = selectedNode.id
-                    folder = filesStore.getPath(selectedNode.id)
+                if (selectedNode?.data?.leaf === false) {
+                    node = selectedNode.data.id
+                    folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
             if(!type) return

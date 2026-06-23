@@ -180,12 +180,6 @@ public class ExecutorService {
                     && executor.getExecution().getState().getCurrent() != State.Type.QUEUED
             ) {
                 executor = this.handleNext(executor);
-            }
-
-            // process children of running flowable tasks; also runs in KILLED state so that
-            // afterExecution flowable tasks (e.g. If) can resolve their child tasks
-            if (executor.getExecution().getState().getCurrent() != State.Type.KILLING
-                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED) {
                 executor = this.handleChildNext(executor);
             }
 

@@ -265,6 +265,7 @@
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
+      "viewAll": "Tout voir",
       "preview": "Aperçu du Dashboard",
       "quick_filters": {
         "all": "Tout",

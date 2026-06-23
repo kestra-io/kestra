@@ -28,6 +28,14 @@
                 @echarts-click="onChartClick"
             />
         </div>
+        <div v-if="!props.short && canExpand" class="chart-footer">
+            <KsButton text size="small" :aria-expanded="expanded" @click="expanded = !expanded">
+                <span class="expand-toggle">
+                    {{ expanded ? t("showLess") : `${t("dashboards.viewAll")} (${totalNamespaces})` }}
+                    <component :is="expanded ? ChevronUp : ChevronDown" :size="14" />
+                </span>
+            </KsButton>
+        </div>
     </div>
     <KsNoData v-else :class="{empty: !props.short}" />
 </template>
@@ -43,6 +51,8 @@
     import {DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import {useTheme} from "../../../utils/utils"
     import {FilterObject} from "../../../utils/filters"
 
@@ -67,6 +77,8 @@
 
     const {drillDown} = useChartDrillDown(props.chart)
 
+    const expanded = ref(false)
+
     const {data, chartOptions} = props.chart
     const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
 
@@ -80,16 +92,19 @@
         .filter(([key, value]) => !(value as Record<string, any>).agg && key !== categoryKey)
         .map(([key]) => key)
     const valueKey = aggregator[0][0]
-    const limit = (chartOptions as any)?.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
+    const baseLimit = (chartOptions as any)?.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
 
     const parsedData = computed(() =>
         rankStackedBars(generated.value?.results as Record<string, unknown>[] ?? [], {
             categoryKey,
             stackKeys,
             valueKey,
-            limit,
+            limit: expanded.value ? 0 : baseLimit,
         }),
     )
+
+    const totalNamespaces = computed(() => parsedData.value.categories.length + parsedData.value.othersCount)
+    const canExpand = computed(() => totalNamespaces.value > baseLimit)
 
     const othersLabel = computed(() => `${t("dashboards.others")} · ${parsedData.value.othersCount}`)
 
@@ -136,6 +151,10 @@
 
     function leftTruncate(s: string, max: number): string {
         return s.length <= max ? s : "…" + s.slice(s.length - (max - 1))
+    }
+
+    function escapeHtml(s: string): string {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     }
 
     const echartsOption = computed((): Record<string, unknown> => {
@@ -185,7 +204,7 @@
                             .map((p: any) => {
                                 const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
                                 const formatted = isDurationAgg() ? durationUtils.humanDuration(val) : val
-                                return `<span style="color:${cssVar("--ks-text-secondary")}">${p.seriesName}</span>: ${formatted}`
+                                return `<span style="color:${cssVar("--ks-text-secondary")}">${escapeHtml(p.seriesName)}</span>: ${formatted}`
                             })
                             .join("<br/>")
                         const total = nonZero.reduce((acc: number, p: any) => {
@@ -193,7 +212,7 @@
                             return acc + val
                         }, 0)
                         const formattedTotal = isDurationAgg() ? durationUtils.humanDuration(total) : total
-                        return `<b>${categoryName}</b><br/>${rows}<br/><span style="color:${cssVar("--ks-text-secondary")}">${t("Total")}</span>: ${formattedTotal}`
+                        return `<b>${escapeHtml(categoryName)}</b><br/>${rows}<br/><span style="color:${cssVar("--ks-text-secondary")}">${t("Total")}</span>: ${formattedTotal}`
                     },
                 },
             legend: {
@@ -218,7 +237,10 @@
 
     function onChartClick(params: any) {
         const isOthers = parsedData.value.othersCount > 0 && params.name === othersLabel.value
-        if (isOthers) return
+        if (isOthers) {
+            expanded.value = true
+            return
+        }
         drillDown([
             {column: stackColumn.value, value: params.seriesName},
             {column: categoryColumn.value, value: params.name},
@@ -245,7 +267,6 @@
     .chart {
         display: flex;
         flex-direction: column;
-        height: 231px;
 
         &.short {
             height: 40px;
@@ -255,6 +276,20 @@
             flex: 1;
             min-height: 0;
         }
+    }
+
+    .chart-footer {
+        display: flex;
+        justify-content: center;
+        padding-top: var(--ks-spacing-2);
+    }
+
+    .expand-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        font-weight: var(--ks-font-weight-regular);
+        color: var(--ks-text-secondary);
     }
 
     .empty {

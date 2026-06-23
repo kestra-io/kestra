@@ -304,7 +304,7 @@
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
         executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
-        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "overview",
+        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
         triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),

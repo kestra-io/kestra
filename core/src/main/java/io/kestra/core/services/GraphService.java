@@ -40,6 +40,7 @@ public class GraphService {
     private final RunContextFactory runContextFactory;
     private final DisplayExpressionResolver displayExpressionResolver;
     private final VariableRenderer variableRenderer;
+    private final NamespaceVariablesProvider namespaceVariablesProvider;
 
     @Inject
     public GraphService(
@@ -48,7 +49,8 @@ public class GraphService {
         PluginDefaultService pluginDefaultService,
         RunContextFactory runContextFactory,
         DisplayExpressionResolver displayExpressionResolver,
-        VariableRenderer variableRenderer
+        VariableRenderer variableRenderer,
+        NamespaceVariablesProvider namespaceVariablesProvider
     ) {
         this.flowRepository = flowRepository;
         this.triggerRepository = triggerRepository;
@@ -56,6 +58,7 @@ public class GraphService {
         this.runContextFactory = runContextFactory;
         this.displayExpressionResolver = displayExpressionResolver;
         this.variableRenderer = variableRenderer;
+        this.namespaceVariablesProvider = namespaceVariablesProvider;
     }
 
     public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException, FlowProcessingException {
@@ -209,12 +212,17 @@ public class GraphService {
             return variables;
         }
 
-        // Pre-exec: build a minimal context with only flow-level stable variables.
-        // vars are not added automatically without an execution, so inject them explicitly.
+        // Pre-exec: build a minimal context merging namespace-level and flow-level variables.
+        // Namespace vars are fetched by NamespaceVariablesProvider (no-op in OSS, real in EE).
+        // Flow-level vars take precedence over namespace vars so local overrides always win.
         var logger = new RunContextLogger();
-        var extraVars = flow.getVariables() != null
-            ? Map.of("vars", (Object) flow.getVariables())
-            : Map.<String, Object>of();
+        var nsVars = namespaceVariablesProvider.fetchVariables(flow.getTenantId(), flow.getNamespace());
+        var flowVars = flow.getVariables() != null ? flow.getVariables() : Map.<String, Object>of();
+        var mergedVars = new HashMap<>(nsVars);
+        mergedVars.putAll(flowVars);
+        var extraVars = mergedVars.isEmpty()
+            ? Map.<String, Object>of()
+            : Map.of("vars", (Object) mergedVars);
         var variables = new HashMap<>(new RunVariables.DefaultBuilder()
             .withFlow(flow)
             .withVariables(extraVars)

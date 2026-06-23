@@ -15,6 +15,8 @@ import io.kestra.worker.processors.internals.AbstractWorkerCallable;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 
 public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements WorkerJobProcessor<T> {
 
@@ -76,7 +78,13 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
                 workerJobCallable.getRunContext(),
                 workerJobCallable.getType(),
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
-                () -> workerSecurityService.callInSecurityContext(workerJobCallable)
+                () -> {
+                    var state = workerSecurityService.callInSecurityContext(workerJobCallable);
+                    if (state != null && state.isTerminatedInError()) {
+                        Span.current().setStatus(StatusCode.ERROR, "Task ended in state " + state.name());
+                    }
+                    return state;
+                }
             );
         } catch (Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected

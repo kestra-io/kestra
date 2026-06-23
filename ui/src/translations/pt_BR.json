@@ -1,5 +1,10 @@
 {
   "pt_BR": {
+    "loading": "Carregando...",
+        "back": "Voltar",
+        "next": "Próximo",
+        "done": "Concluído",
+        "review your inputs": "Revise suas entradas",
     "Add flow": "Adicionar flow",
     "Default log level": "Nível de log padrão",
     "Default namespace": "Namespace padrão",

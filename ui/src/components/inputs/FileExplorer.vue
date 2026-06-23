@@ -321,6 +321,7 @@
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
             top="10vh"
+            width="min(1200px, 90vw)"
         >
             <Revisions
                 v-if="revisionsHistory.visible"

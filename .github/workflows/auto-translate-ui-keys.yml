@@ -37,7 +37,7 @@ jobs:
         - name: Generate translations
           run: node --experimental-strip-types ui/scripts/generate_translations.ts ${{ github.event.inputs.retranslate_modified_keys }}
           env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
         - name: Set up Git
           run: |

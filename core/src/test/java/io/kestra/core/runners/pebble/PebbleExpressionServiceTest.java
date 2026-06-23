@@ -111,6 +111,6 @@ class PebbleExpressionServiceTest {
         assertThat(findFunction("render").arguments()).extracting(PebbleFunction.Argument::name)
             .containsExactly("toRender", "recursive");
         assertThat(findFunction("read").arguments()).extracting(PebbleFunction.Argument::name)
-            .containsExactly("path", "namespace", "version");
+            .containsExactly("path", "namespace", "revision");
     }
 }

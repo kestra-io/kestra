@@ -42,7 +42,7 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         String namespace = TestsUtils.randomNamespace();
         kvStateStore.save(
             PersistedKvMetadata.builder()
-                .tenantId(tenantId).namespace(namespace).name("myKey").version(1)
+                .tenantId(tenantId).namespace(namespace).name("myKey").revision(1)
                 .created(Instant.now()).build()
         );
 
@@ -54,7 +54,7 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         assertThat(result.get().getTenantId()).isEqualTo(tenantId);
         assertThat(result.get().getNamespace()).isEqualTo(namespace);
         assertThat(result.get().getName()).isEqualTo("myKey");
-        assertThat(result.get().getVersion()).isEqualTo(1);
+        assertThat(result.get().getRevision()).isEqualTo(1);
     }
 
     @Test
@@ -77,12 +77,12 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         String namespace = TestsUtils.randomNamespace();
         kvStateStore.save(
             PersistedKvMetadata.builder()
-                .tenantId(tenantId).namespace(namespace).name("key1").version(1)
+                .tenantId(tenantId).namespace(namespace).name("key1").revision(1)
                 .created(Instant.now()).build()
         );
         kvStateStore.save(
             PersistedKvMetadata.builder()
-                .tenantId(tenantId).namespace(namespace).name("key2").version(1)
+                .tenantId(tenantId).namespace(namespace).name("key2").revision(1)
                 .created(Instant.now()).build()
         );
 
@@ -114,7 +114,7 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         String namespace = TestsUtils.randomNamespace();
         kvStateStore.save(
             PersistedKvMetadata.builder()
-                .tenantId(tenantId).namespace(namespace).name("key").version(1)
+                .tenantId(tenantId).namespace(namespace).name("key").revision(1)
                 .created(Instant.now()).build()
         );
 
@@ -138,7 +138,7 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
         PersistedKvMetadata input = PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("saved-key").version(1)
+            .tenantId(tenantId).namespace(namespace).name("saved-key").revision(1)
             .created(Instant.now()).build();
 
         // When
@@ -157,7 +157,7 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         String namespace = TestsUtils.randomNamespace();
         PersistedKvMetadata saved = kvStateStore.save(
             PersistedKvMetadata.builder()
-                .tenantId(tenantId).namespace(namespace).name("to-delete").version(1)
+                .tenantId(tenantId).namespace(namespace).name("to-delete").revision(1)
                 .created(Instant.now()).build()
         );
 
@@ -177,7 +177,7 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         String namespace = TestsUtils.randomNamespace();
         Instant expiration = Instant.parse("2026-12-31T23:59:59Z");
         PersistedKvMetadata input = PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("expiring").version(1)
+            .tenantId(tenantId).namespace(namespace).name("expiring").revision(1)
             .expirationDate(expiration).created(Instant.now()).build();
 
         // When

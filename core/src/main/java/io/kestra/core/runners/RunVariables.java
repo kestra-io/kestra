@@ -31,6 +31,7 @@ public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
     public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
     public static final String ENVS = "envs";
+    public static final String LABELS = "labels";
 
     /**
      * Explicit, sorted list of all dot-separated expression paths structurally available
@@ -476,7 +477,7 @@ public final class RunVariables {
                 }
 
                 if (execution.getLabels() != null) {
-                    builder.put("labels", Label.toNestedMap(execution.getLabels()));
+                    builder.put(LABELS, Label.toNestedMap(execution.getLabels()));
                 }
 
                 if (flow == null) {
@@ -510,7 +511,7 @@ public final class RunVariables {
             } else if (flow != null) {
                 // if the execution is null, we should add flow labels
                 // this is useful for triggers that don't have an execution
-                builder.put("labels", Label.toNestedMap(flow.getLabels()));
+                builder.put(LABELS, Label.toNestedMap(flow.getLabels()));
             }
 
             // Kestra configuration

@@ -42,6 +42,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private Level loglevel;
     private final List<String> useSecrets = new ArrayList<>();
     private final boolean logToFile;
+    private final Map<String, String> mdcLabels;
 
     @Getter
     private File logFile;
@@ -51,9 +52,14 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     public RunContextLogger() {
         this.loggerName = "unit-test";
         this.logToFile = false;
+        this.mdcLabels = Map.of();
     }
 
     public RunContextLogger(LogEntryEmitter logEmitter, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
+        this(logEmitter, logEntry, loglevel, logToFile, Map.of());
+    }
+
+    public RunContextLogger(LogEntryEmitter logEmitter, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile, Map<String, String> mdcLabels) {
         if (logEntry.getTaskId() != null) {
             this.loggerName = baseLoggerName(logEntry) + "." + logEntry.getTaskId();
         } else if (logEntry.getTriggerId() != null) {
@@ -66,6 +72,24 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
         this.logToFile = logToFile;
+        this.mdcLabels = mdcLabels == null ? Map.of() : mdcLabels;
+    }
+
+    /**
+     * Merges the configured execution labels with the {@link LogEntry} context for the MDC;
+     * {@link LogEntry} keys win over labels sharing the same name.
+     */
+    private Map<String, String> mdcContext() {
+        if (this.logEntry == null) {
+            return this.mdcLabels;
+        }
+        if (this.mdcLabels.isEmpty()) {
+            return this.logEntry.toMap();
+        }
+
+        Map<String, String> context = new HashMap<>(this.mdcLabels);
+        context.putAll(this.logEntry.toMap());
+        return context;
     }
 
     private String baseLoggerName(LogEntry logEntry) {
@@ -204,7 +228,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             // set in BaseAppender.transform()) still sees the execution context. Paired with
             // resetMDC() below on cleanup. Today both are effectively no-ops because the
             // snapshot in transform() short-circuits event.getMDCPropertyMap().
-            loggerContext.getMDCAdapter().setContextMap(this.logEntry.toMap());
+            loggerContext.getMDCAdapter().setContextMap(this.mdcContext());
         }
 
         // unit tests don't always have the log queue as we construct a logger directly without it
@@ -340,10 +364,10 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
-                // The new LoggingEvent has no MDC by default; pull it from the LogEntry so
-                // forwarded events carry it
+                // The new LoggingEvent has no MDC by default; pull it from the LogEntry (and
+                // configured labels) so forwarded events carry it
                 if (this.runContextLogger.logEntry != null) {
-                    lle.setMDCPropertyMap(this.runContextLogger.logEntry.toMap());
+                    lle.setMDCPropertyMap(this.runContextLogger.mdcContext());
                 }
                 if (customTimestamp != null) {
                     lle.setTimeStamp(customTimestamp.toEpochMilli());

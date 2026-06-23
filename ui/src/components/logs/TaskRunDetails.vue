@@ -41,7 +41,7 @@
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :minItemSize="32"
+                        :min-item-size="32"
                         key-field="index"
                         class="log-lines"
                         :class="{'single-line': currentTaskRuns.length === 1}"
@@ -488,6 +488,13 @@
                                 this.throttledExecutionUpdate.flush();
                             }
                         }
+
+                        // Close on error: without this, EventSource auto-reconnects
+                        // and each reconnect leaks a server-side SSE connection
+                        // (Netty direct buffers) over time. See kestra-io/kestra#16982.
+                        this.executionSSE.onerror = _ => {
+                            this.closeTargetExecutionSSE();
+                        }
                     });
             },
             followLogs(executionId) {
@@ -527,6 +534,12 @@
                                 title: this.$t("error"),
                                 message: this.$t("something_went_wrong.loading_execution"),
                             };
+
+                            // Close on error: EventSource auto-reconnects unless
+                            // explicitly closed, and each reconnect leaks a server-side
+                            // log-follow stream (Netty direct buffers) over time.
+                            // See kestra-io/kestra#16982.
+                            this.closeLogsSSE();
                         }
                     })
 

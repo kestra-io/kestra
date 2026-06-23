@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +55,50 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Services for parsing flows and injecting plugin default values.
+ * Parses flows and injects plugin default values into every plugin (task, trigger, task runner, …).
+ *
+ * <h2>Sources &amp; precedence</h2>
+ * Defaults come from three levels, ordered most-important-first: <b>flow</b> &gt; <b>namespace</b> (EE, closest
+ * namespace first) &gt; <b>global</b> (configuration). Each default is either:
+ * <ul>
+ *   <li><b>type-matched</b> — applied to every plugin whose {@code type} equals or is prefixed by the default's
+ *       {@code type}; or</li>
+ *   <li><b>named</b> — carries a {@code ref} id and is applied <i>only</i> to plugins that opt in with
+ *       {@code pluginDefaultsRef: <id>}, never by type matching.</li>
+ * </ul>
+ *
+ * <h2>{@code forced}</h2>
+ * {@code forced: true} marks an enforced default and is honored at every level (flow, namespace, global). A
+ * non-forced default fills only values the plugin does not set (the plugin wins); a forced default overrides the
+ * plugin's values. Forced defaults follow the <i>reverse</i> precedence of non-forced ones: the lowest (admin)
+ * level wins, so a global forced default beats a namespace forced one beats a flow forced one and enforcement at a
+ * higher (admin) level cannot be bypassed closer to the flow.
+ *
+ * <h2>How a single plugin is resolved</h2>
+ * <ol>
+ *   <li><b>No {@code pluginDefaultsRef}:</b> non-forced then forced type-matched defaults are applied (forced last,
+ *       so it wins).</li>
+ *   <li><b>With {@code pluginDefaultsRef: id}:</b> non-forced type-matched defaults are skipped. If a <i>forced</i>
+ *       type-matched default also applies, <b>it takes over entirely and the referenced default is ignored</b>
+ *       (no stacking) — enforcement always wins. Otherwise the referenced default is applied.</li>
+ * </ol>
+ *
+ * <h2>Resolving a {@code ref}</h2>
+ * All defaults sharing a {@code ref} collapse to a single winner (shadowing, not a merge): a forced entry beats a
+ * non-forced one; among forced entries the lowest-priority (admin) level wins (global over namespace over flow) so
+ * enforcement cannot be bypassed by a higher-level forced override; among non-forced entries the highest-priority
+ * level wins. The referenced default is applied only when its declared {@code type} matches the plugin's type
+ * (plugin aliases are canonicalized so an alias and its canonical name match).
+ * <p>
+ * Resulting precedence for a referenced plugin:
+ * {@code forced type-matched > forced ref > non-forced ref > the plugin's own values}.
+ *
+ * <h2>Unknown / inapplicable {@code ref}</h2>
+ * If a {@code pluginDefaultsRef} resolves to no default (none with that id) or to one declared for a different
+ * type, it is left unresolved: flow validation reports it as an error on create/update and via the validate API,
+ * and the plugin fails at runtime with {@code PluginDefaultsRefNotFoundException}. When a reference <i>is</i>
+ * applied (or is validly superseded by a forced type default), its marker is consumed so a surviving marker
+ * unambiguously means "unresolved or inapplicable".
  */
 @Singleton
 @Slf4j
@@ -65,6 +110,7 @@ public class PluginDefaultService {
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy()
         .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
     private static final String PLUGIN_DEFAULTS_FIELD = "pluginDefaults";
+    private static final String PLUGIN_DEFAULTS_REF_FIELD = "pluginDefaultsRef";
     private static final String TASK_DEFAULTS_FIELD = "taskDefaults";
 
     private static final TypeReference<List<PluginDefault>> PLUGIN_DEFAULTS_TYPE_REF = new TypeReference<>() {
@@ -448,9 +494,24 @@ public class PluginDefaultService {
             return flowAsMap;
         }
 
+        // alias-canonicalize all defaults (type-matched and named) so a default declared with a plugin alias
+        // also matches the canonical plugin type.
         addAliases(allDefaults);
 
-        Map<Boolean, List<PluginDefault>> allDefaultsGroup = allDefaults
+        // split named (ref) defaults from type-matched defaults: a 'ref' default is applied only to plugins
+        // that explicitly opt in via 'pluginDefaultsRef', never by type matching.
+        Map<Boolean, List<PluginDefault>> byHasRef = allDefaults
+            .stream()
+            .collect(Collectors.partitioningBy(pluginDefault -> pluginDefault.getRef() != null));
+        List<PluginDefault> typeDefaults = byHasRef.get(false);
+
+        // resolve, per ref, the winning values (shadowing) and the set of types it accepts (incl. alias
+        // canonical forms). Shadowing: a forced default always wins over a non-forced one; among forced
+        // defaults the lowest-priority (admin) level wins so enforcement cannot be bypassed; among non-forced
+        // defaults the highest-priority level wins. (allDefaults is ordered most-important-first: flow, namespace, global.)
+        Map<String, RefMatch> refMatches = resolveRefMatches(byHasRef.get(true));
+
+        Map<Boolean, List<PluginDefault>> allDefaultsGroup = typeDefaults
             .stream()
             .collect(Collectors.groupingBy(PluginDefault::isForced, Collectors.toList()));
 
@@ -460,7 +521,7 @@ public class PluginDefaultService {
         // beats global.
         Map<String, List<PluginDefault>> defaults = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(false, Collections.emptyList()));
 
-        // forced defaults stamp over the result, so the last (admin-most) entry wins — global beats namespace.
+        // forced defaults stamp over the result, so the last (admin-most) entry wins — global beats namespace beats flow.
         Map<String, List<PluginDefault>> forced = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(true, Collections.emptyList()));
 
         Object pluginDefaults = flowAsMap.get(PLUGIN_DEFAULTS_FIELD);
@@ -468,13 +529,29 @@ public class PluginDefaultService {
             flowAsMap.remove(PLUGIN_DEFAULTS_FIELD);
         }
 
-        // we apply default and overwrite with forced
+        // 1. non-forced type-matched defaults — suppressed for plugins that opted into a named (ref) default
         if (!defaults.isEmpty()) {
-            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults);
+            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults, false);
         }
 
+        // 2. named (ref) defaults — applied to plugins declaring a matching 'pluginDefaultsRef', UNLESS a forced
+        // type-matched default also applies to that plugin: enforcement takes over entirely and the ref is ignored
+        // (it must not stack on top of enforced values). Skipped when only injecting version defaults.
+        if (!onlyVersions && !refMatches.isEmpty()) {
+            flowAsMap = (Map<String, Object>) recursiveRefDefaults(flowAsMap, refMatches, forced.keySet());
+        }
+
+        // 3. forced type-matched defaults are admin enforcement and applied LAST so they win over everything,
+        // including a forced ref default — otherwise a flow could bypass enforcement via a forced ref.
+        // A WARN is logged when enforced onto a plugin that declared a 'pluginDefaultsRef'.
         if (!forced.isEmpty()) {
-            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, forced);
+            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, forced, true);
+        }
+
+        // 4. consume the 'pluginDefaultsRef' marker for refs that were actually applied (resolved + type match);
+        // a surviving marker therefore unambiguously means "unresolved or inapplicable" (validation error + runtime failure).
+        if (!onlyVersions && !refMatches.isEmpty()) {
+            flowAsMap = (Map<String, Object>) stripAppliedRefMarkers(flowAsMap, refMatches);
         }
 
         if (pluginDefaults != null) {
@@ -483,6 +560,39 @@ public class PluginDefaultService {
 
         return flowAsMap;
 
+    }
+
+    /**
+     * The values applied for a {@code ref} (the shadowing winner) and the set of plugin types it accepts
+     * (the declared types of every same-ref default, including alias canonical forms added by {@code addAliases}).
+     */
+    record RefMatch(PluginDefault winner, Set<String> types) {
+    }
+
+    /**
+     * Resolves, for each {@code ref}, the winning default and the set of accepted plugin types, given the list of
+     * all named defaults ordered most-important-first (flow, namespace, global). A {@code forced} default always
+     * wins over a non-forced one. Among forced defaults the lowest-priority (admin) level wins — the last forced
+     * occurrence — so an enforced default cannot be bypassed by a higher-level forced override (e.g. a flow-forced
+     * ref cannot beat a namespace- or global-forced ref of the same name). Among non-forced defaults the
+     * highest-priority level wins — the first occurrence.
+     */
+    private static Map<String, RefMatch> resolveRefMatches(List<PluginDefault> refDefaults) {
+        Map<String, List<PluginDefault>> byRef = refDefaults
+            .stream()
+            .collect(Collectors.groupingBy(PluginDefault::getRef, LinkedHashMap::new, Collectors.toList()));
+
+        Map<String, RefMatch> matches = new LinkedHashMap<>();
+        byRef.forEach((ref, candidates) ->
+        {
+            List<PluginDefault> forced = candidates.stream().filter(PluginDefault::isForced).toList();
+            PluginDefault winner = forced.isEmpty() ? candidates.getFirst() : forced.getLast();
+            Set<String> types = candidates.stream()
+                .map(PluginDefault::getType)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+            matches.put(ref, new RefMatch(winner, types));
+        });
+        return matches;
     }
 
     /**
@@ -542,6 +652,10 @@ public class PluginDefaultService {
 
     @VisibleForTesting
     Object recursiveDefaults(Object object, Map<String, List<PluginDefault>> defaults) {
+        return recursiveDefaults(object, defaults, false);
+    }
+
+    Object recursiveDefaults(Object object, Map<String, List<PluginDefault>> defaults, boolean forcedPass) {
         if (object instanceof Map<?, ?> value) {
             value = value
                 .entrySet()
@@ -549,20 +663,20 @@ public class PluginDefaultService {
                 .map(
                     e -> new AbstractMap.SimpleEntry<>(
                         e.getKey(),
-                        recursiveDefaults(e.getValue(), defaults)
+                        recursiveDefaults(e.getValue(), defaults, forcedPass)
                     )
                 )
                 .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
 
             if (value.containsKey("type")) {
-                value = defaults(value, defaults);
+                value = defaults(value, defaults, forcedPass);
             }
 
             return value;
         } else if (object instanceof Collection<?> value) {
             return value
                 .stream()
-                .map(r -> recursiveDefaults(r, defaults))
+                .map(r -> recursiveDefaults(r, defaults, forcedPass))
                 .toList();
         } else {
             return object;
@@ -570,7 +684,15 @@ public class PluginDefaultService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<?, ?> defaults(Map<?, ?> plugin, Map<String, List<PluginDefault>> defaults) {
+    private Map<?, ?> defaults(Map<?, ?> plugin, Map<String, List<PluginDefault>> defaults, boolean forcedPass) {
+        boolean hasRef = plugin.containsKey(PLUGIN_DEFAULTS_REF_FIELD);
+
+        // a plugin opting into a named (ref) default ('pluginDefaultsRef') ignores non-forced type-matched defaults;
+        // forced (admin-enforced) defaults are always applied regardless, see below.
+        if (hasRef && !forcedPass) {
+            return plugin;
+        }
+
         Object type = plugin.get("type");
         if (!(type instanceof String pluginType)) {
             return plugin;
@@ -584,6 +706,16 @@ public class PluginDefaultService {
 
         if (matching.isEmpty()) {
             return plugin;
+        }
+
+        if (hasRef) {
+            // forced defaults exist for a plugin that requested a named plugin-defaults: enforcement takes over
+            log.warn(
+                "A forced pluginDefault for type '{}' is enforced on a plugin declaring pluginDefaultsRef '{}'." +
+                    " The referenced plugin-defaults is ignored.",
+                pluginType,
+                plugin.get(PLUGIN_DEFAULTS_REF_FIELD)
+            );
         }
 
         Map<String, Object> result = (Map<String, Object>) plugin;
@@ -605,6 +737,151 @@ public class PluginDefaultService {
         }
 
         return result;
+    }
+
+    /**
+     * Traverses the flow and applies the named ({@code ref}) plugin-defaults to every plugin that opts in via
+     * {@code pluginDefaultsRef}. Mirrors {@link #recursiveDefaults(Object, Map)} but matches on the referenced
+     * id and the plugin type instead of the plugin type alone. The {@code pluginDefaultsRef} marker is consumed
+     * afterwards by {@link #stripAppliedRefMarkers(Object, Map)}.
+     */
+    @VisibleForTesting
+    Object recursiveRefDefaults(Object object, Map<String, RefMatch> refMatches, Set<String> forcedTypes) {
+        if (object instanceof Map<?, ?> value) {
+            value = value
+                .entrySet()
+                .stream()
+                .map(
+                    e -> new AbstractMap.SimpleEntry<>(
+                        e.getKey(),
+                        recursiveRefDefaults(e.getValue(), refMatches, forcedTypes)
+                    )
+                )
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+
+            if (value.containsKey(PLUGIN_DEFAULTS_REF_FIELD)) {
+                value = refDefaults(value, refMatches, forcedTypes);
+            }
+
+            return value;
+        } else if (object instanceof Collection<?> value) {
+            return value
+                .stream()
+                .map(r -> recursiveRefDefaults(r, refMatches, forcedTypes))
+                .toList();
+        } else {
+            return object;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<?, ?> refDefaults(Map<?, ?> plugin, Map<String, RefMatch> refMatches, Set<String> forcedTypes) {
+        Object ref = plugin.get(PLUGIN_DEFAULTS_REF_FIELD);
+        if (!(ref instanceof String refId)) {
+            return plugin;
+        }
+
+        RefMatch match = refMatches.get(refId);
+        if (match == null) {
+            // unknown ref: keep 'pluginDefaultsRef' so a surviving marker signals an unresolved reference
+            // (flagged as a validation error in the editor and failed at runtime).
+            log.warn("No plugin-defaults exists for pluginDefaultsRef '{}' referenced by plugin of type '{}'", refId, plugin.get("type"));
+            return plugin;
+        }
+
+        if (!typeMatches(plugin.get("type"), match.types())) {
+            // the named plugin-defaults is scoped to a different plugin type: do not apply it, and keep the
+            // marker so it surfaces the same way as an unresolved reference (validation error + runtime failure).
+            log.warn(
+                "The plugin-defaults for pluginDefaultsRef '{}' is declared for type(s) '{}' but is referenced by a plugin of type '{}'; it will not be applied",
+                refId, match.types(), plugin.get("type")
+            );
+            return plugin;
+        }
+
+        if (typeMatches(plugin.get("type"), forcedTypes)) {
+            // a forced (admin-enforced) type default also matches this plugin: enforcement takes over entirely
+            // and the referenced plugin-defaults is ignored (it must not stack on top of enforced values).
+            // The marker is still consumed by stripAppliedRefMarkers since the reference was valid.
+            return plugin;
+        }
+
+        PluginDefault winner = match.winner();
+        if (winner.isForced()) {
+            // forced plugin-defaults overrides the plugin's own values
+            return MapUtils.deepMerge((Map<String, Object>) plugin, winner.getValues());
+        }
+        // non-forced plugin-defaults yields to the plugin's explicit values
+        return MapUtils.deepMerge(winner.getValues(), (Map<String, Object>) plugin);
+    }
+
+    /**
+     * Whether the plugin-defaults referenced by a plugin both exists and is scoped to the plugin's type.
+     */
+    private static boolean refApplies(Map<?, ?> plugin, Map<String, RefMatch> refMatches) {
+        if (!(plugin.get(PLUGIN_DEFAULTS_REF_FIELD) instanceof String refId)) {
+            return false;
+        }
+        RefMatch match = refMatches.get(refId);
+        return match != null && typeMatches(plugin.get("type"), match.types());
+    }
+
+    private static boolean typeMatches(Object pluginType, Set<String> refTypes) {
+        return pluginType instanceof String type
+            && refTypes.stream().anyMatch(refType -> type.equals(refType) || type.startsWith(refType));
+    }
+
+    /**
+     * Removes the {@code pluginDefaultsRef} marker from every plugin whose reference was actually applied
+     * (i.e. it resolved and was type-compatible). A marker left in place means the reference was unresolved
+     * or inapplicable, which is surfaced as a validation error and fails the plugin at runtime.
+     */
+    @VisibleForTesting
+    Object stripAppliedRefMarkers(Object object, Map<String, RefMatch> refMatches) {
+        if (object instanceof Map<?, ?> value) {
+            Map<Object, Object> result = value
+                .entrySet()
+                .stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), stripAppliedRefMarkers(e.getValue(), refMatches)))
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+
+            if (refApplies(result, refMatches)) {
+                result.remove(PLUGIN_DEFAULTS_REF_FIELD);
+            }
+
+            return result;
+        } else if (object instanceof Collection<?> value) {
+            return value
+                .stream()
+                .map(r -> stripAppliedRefMarkers(r, refMatches))
+                .toList();
+        } else {
+            return object;
+        }
+    }
+
+    /**
+     * Returns the distinct {@code pluginDefaultsRef} ids that remain unresolved (or inapplicable) in an
+     * already-defaulted flow. A reference is unresolved when no plugin-defaults with that {@code ref} exists
+     * at flow, namespace or global level, or when the one that exists is scoped to a different plugin type
+     * (the marker is otherwise stripped during {@link #stripAppliedRefMarkers(Object, Map)}).
+     */
+    public Set<String> unresolvedPluginDefaultsRefs(FlowInterface flowWithDefaults) {
+        Map<String, Object> flowAsMap = OBJECT_MAPPER.convertValue(flowWithDefaults, JacksonMapper.MAP_TYPE_REFERENCE);
+        Set<String> refs = new LinkedHashSet<>();
+        collectUnresolvedRefs(flowAsMap, refs);
+        return refs;
+    }
+
+    private void collectUnresolvedRefs(Object object, Set<String> refs) {
+        if (object instanceof Map<?, ?> value) {
+            if (value.get(PLUGIN_DEFAULTS_REF_FIELD) instanceof String ref) {
+                refs.add(ref);
+            }
+            value.values().forEach(v -> collectUnresolvedRefs(v, refs));
+        } else if (object instanceof Collection<?> value) {
+            value.forEach(v -> collectUnresolvedRefs(v, refs));
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------

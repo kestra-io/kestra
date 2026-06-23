@@ -25,6 +25,7 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
@@ -88,9 +89,30 @@ public class FlowService {
         // Validate Flow with defaults values
         // Do not perform a strict parsing validation to ignore unknown
         // properties that might be injecting through default values.
-        modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
+        FlowWithSource withDefaults = pluginDefaultService.injectAllDefaults(parsed, false);
+        modelValidator.validate(withDefaults);
+        validatePluginDefaultsRefs(withDefaults);
 
         return repository().create(flow);
+    }
+
+    /**
+     * Validates that every {@code pluginDefaultsRef} used in the flow resolves to an applicable plugin-defaults
+     * (one that exists with that {@code ref} and is scoped to the plugin's type). Throws a
+     * {@link ConstraintViolationException} otherwise, so an unresolved reference is rejected on create/update
+     * and surfaced through the validate API exactly like other flow validation errors.
+     */
+    private void validatePluginDefaultsRefs(FlowWithSource flowWithDefaults) {
+        java.util.Set<String> unresolved = pluginDefaultService.unresolvedPluginDefaultsRefs(flowWithDefaults);
+        if (!unresolved.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "No plugin-defaults exists for pluginDefaultsRef: '" + String.join("', '", unresolved) + "'",
+                flowWithDefaults,
+                FlowWithSource.class,
+                "pluginDefaultsRef",
+                String.join(", ", unresolved)
+            );
+        }
     }
 
     private FlowRepositoryInterface repository() {
@@ -189,7 +211,9 @@ public class FlowService {
 
                 // Do not perform a strict parsing validation to ignore unknown
                 // properties that might be injecting through default values.
-                modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
+                FlowWithSource withDefaults = pluginDefaultService.injectAllDefaults(flow, false);
+                modelValidator.validate(withDefaults);
+                validatePluginDefaultsRefs(withDefaults);
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);

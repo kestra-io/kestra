@@ -12,6 +12,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.PluginDefaultsRefNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetIdentifier;
@@ -887,6 +888,13 @@ public class ExecutorService {
                     .task(task)
                     .executionKind(executor.getExecution().getKind())
                     .build();
+                // a surviving 'pluginDefaultsRef' means plugin-default injection could not resolve the referenced
+                // plugin-defaults: fail the task-run instead of sending a bad job to the worker
+                if (task.getPluginDefaultsRef() != null) {
+                    runContext.logger()
+                        .error(new PluginDefaultsRefNotFoundException(task.getPluginDefaultsRef()).getMessage());
+                    return workerTask.withTaskRun(workerTask.getTaskRun().fail());
+                }
                 // Get worker group
                 Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
                 if (workerGroup.isPresent()) {

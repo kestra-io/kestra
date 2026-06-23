@@ -1,5 +1,10 @@
 {
   "hi": {
+    "loading": "लोड हो रहा है...",
+        "back": "वापस",
+        "next": "अगला",
+        "done": "पूर्ण",
+        "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",
@@ -261,6 +266,8 @@
         "plural": "डैशबोर्ड्स",
         "singular": "डैशबोर्ड"
       },
+      "no_description": "कोई विवरण नहीं",
+      "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "preview": "पूर्वावलोकन डैशबोर्ड",
       "quick_filters": {
         "all": "सभी",
@@ -528,6 +535,10 @@
     "email": "ईमेल",
     "email length constraint": "ईमेल 256 वर्णों से अधिक नहीं होना चाहिए",
     "empty": {
+      "namespaceFiles": {
+        "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है",
+        "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें"
+      },
       "announcements": {
         "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।",
         "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
@@ -1099,6 +1110,7 @@
       "export": "Namespace फ़ाइलें निर्यात करें",
       "export_single": "फ़ाइल निर्यात करें",
       "filter": "फ़िल्टर",
+      "new_file": "नई फ़ाइल",
       "import": {
         "error": "फ़ाइलें आयात करते समय त्रुटि हुई",
         "files": "फ़ाइलें आयात करें",
@@ -1109,6 +1121,10 @@
       "no_items": {
         "heading": "आपके namespace में अभी तक कोई फ़ाइलें नहीं मिली हैं।",
         "paragraph": "फाइलें बनाने या आयात करने के लिए, अपने namespace में flows के बीच कोड साझा करें।"
+      },
+      "no_selection": {
+        "heading": "कोई फ़ाइल चयनित नहीं",
+        "description": "इसकी सामग्री देखने के लिए ट्री से एक फ़ाइल चुनें।"
       },
       "path": {
         "copy": "पथ कॉपी करें",
@@ -1161,6 +1177,8 @@
     "next_execution": "अगली निष्पादन",
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
+    "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
+    "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
     "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "no revisions": "कोई संशोधन नहीं",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
@@ -1590,6 +1608,7 @@
     "replay inputs": "इनपुट्स",
     "replay inputs new required": "इस संशोधन में inputs हैं। आपको इन्हें भरने के लिए कहा जाएगा।",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
+    "replay select taskrun": "जिस task रन को पुनः चलाना है, उसे चुनें:",
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "replay using": "पुनः चलाएं उपयोग करते हुए",
     "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
@@ -1768,6 +1787,7 @@
           },
           "descriptions": {
             "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
             "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
             "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
             "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",

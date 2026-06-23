@@ -3,7 +3,8 @@
         <component :is="icon ?? FilterRemoveOutlineIcon" class="empty-icon" />
         <strong>{{ title ?? t("ks_no_data.no_results") }}</strong>
         <p v-if="$slots.default"><slot /></p>
-        <p v-else-if="description">{{ description }}</p>
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <p v-else-if="description" v-html="description" />
         <template v-else>
             <p>{{ t("ks_no_data.nothing_here") }}</p>
             <p>{{ t("ks_no_data.will_appear") }}</p>

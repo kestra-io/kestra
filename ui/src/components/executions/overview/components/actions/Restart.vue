@@ -1,6 +1,6 @@
 <template>
     <NavBarAction
-        v-if="asItem && (isReplay || enabled)"
+        v-if="trigger && asItem && (isReplay || enabled)"
         :icon="icon"
         :disabled="!enabled"
         @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
         {{ $t(replayOrRestart) }}
     </NavBarAction>
     <KsTooltip
-        v-else-if="isReplay || enabled"
+        v-else-if="trigger && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -207,6 +207,7 @@
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
         tooltipPosition: {type: String, default: "bottom"},
+        trigger: {type: Boolean, default: true},
     })
 
     const {t} = useI18n()
@@ -396,6 +397,12 @@
 
     watch(canReuseInputs, (canReuse) => {
         inputMode.value = canReuse ? "reuse" : "modify"
+    })
+
+    defineExpose({
+        open: () => {
+            isOpen.value = true
+        },
     })
 </script>
 

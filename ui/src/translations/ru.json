@@ -1,5 +1,10 @@
 {
   "ru": {
+    "loading": "Загрузка...",
+        "back": "Назад",
+        "next": "Далее",
+        "done": "Готово",
+        "review your inputs": "Проверьте введённые данные",
     "Add flow": "Добавить flow",
     "Default log level": "Уровень log по умолчанию",
     "Default namespace": "Namespace по умолчанию",
@@ -261,6 +266,8 @@
         "plural": "Панели управления",
         "singular": "Панель управления"
       },
+      "no_description": "Нет описания",
+      "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "preview": "Предварительный просмотр Dashboard",
       "quick_filters": {
         "all": "Все",
@@ -528,6 +535,10 @@
     "email": "Email",
     "email length constraint": "Email не должен превышать 256 символов",
     "empty": {
+      "namespaceFiles": {
+        "title": "В этом namespace пока нет файлов",
+        "content": "Файлы namespace работают как папка проекта для этого namespace. Храните код Python, SQL, dbt или Terraform, а затем ссылайтесь на любой файл в своих flows с помощью"
+      },
       "announcements": {
         "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
         "title": "У вас пока нет объявлений!"
@@ -1099,6 +1110,7 @@
       "export": "Экспортировать файлы namespace",
       "export_single": "Экспортировать файл",
       "filter": "Фильтр",
+      "new_file": "Новый файл",
       "import": {
         "error": "Произошли ошибки при импорте файла(ов)",
         "files": "Импортировать файлы",
@@ -1109,6 +1121,10 @@
       "no_items": {
         "heading": "В вашем namespace пока нет файлов.",
         "paragraph": "Создайте или импортируйте файлы для обмена кодом между flows в вашем namespace."
+      },
+      "no_selection": {
+        "heading": "Файлы не выбраны",
+        "description": "Выберите файл из дерева, чтобы просмотреть его содержимое."
       },
       "path": {
         "copy": "Скопировать путь",
@@ -1161,6 +1177,8 @@
     "next_execution": "Следующее выполнение",
     "no data current task": "Для текущего task нет доступных данных",
     "no inputs": "Этот flow не имеет входных данных.",
+    "no metrics available": "Для этого выполнения task метрики не записаны.",
+    "no outputs available": "Для этого выполнения task нет доступных outputs.",
     "no result": "Нет результатов для отображения.",
     "no revisions": "Нет ревизий",
     "no revisions found": "Для этого flow существует только одна редакция",
@@ -1590,6 +1608,7 @@
     "replay inputs": "Входные данные",
     "replay inputs new required": "Эта редакция имеет inputs. Вам будет предложено их заполнить.",
     "replay latest revision": "Повтор с использованием последней редакции",
+    "replay select taskrun": "Выберите выполнение task для повторного воспроизведения из:",
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
     "replay using": "Повторное воспроизведение с использованием",
     "replay with inputs": "Воспроизвести с inputами",
@@ -1768,6 +1787,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
+            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",

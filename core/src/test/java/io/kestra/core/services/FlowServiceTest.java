@@ -422,6 +422,33 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldResolveNestedFormInputPathWhenRenderingChecks() {
+        // Given a check referencing a FORM child via its nested path, e.g. {{ inputs.environment.region }}
+        Check check = Check.builder()
+            .when("{{ inputs.environment.region == 'EU' }}")
+            .message("region must be EU")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(check));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+
+        // When inputs are passed as the NESTED map (what ExecutionController/CreateExecutionForm hand in
+        // for FORM inputs, via MapUtils.flattenToNestedMap), the nested path resolves...
+        List<Check> nestedEu = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "EU")));
+        List<Check> nestedUs = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "US")));
+
+        // Then EU satisfies the condition (no failed check) and US fails it.
+        assertThat(nestedEu).isEmpty();
+        assertThat(nestedUs).containsExactly(check);
+
+        // And a flat-dotted map (the un-nested form) cannot resolve the path — proving the nesting is required.
+        List<Check> flatDotted = flowService.getFailedChecks(flow, Map.of("environment.region", "EU"));
+        assertThat(flatDotted).isNotEmpty();
+    }
+
+    @Test
     void create() throws FlowProcessingException, QueueException, InterruptedException {
         Flow subflow = Flow.builder()
             .id(IdUtils.create())

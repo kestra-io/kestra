@@ -1,5 +1,10 @@
 {
   "it": {
+    "loading": "Caricamento...",
+        "back": "Indietro",
+        "next": "Avanti",
+        "done": "Fatto",
+        "review your inputs": "Rivedi i tuoi input",
     "Add flow": "Aggiungi flow",
     "Default log level": "Livello di log predefinito",
     "Default namespace": "Namespace predefinito",
@@ -261,6 +266,8 @@
         "plural": "Dashboard",
         "singular": "Dashboard"
       },
+      "no_description": "Nessuna descrizione",
+      "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "preview": "Anteprima Dashboard",
       "quick_filters": {
         "all": "Tutti",
@@ -528,6 +535,10 @@
     "email": "Email",
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "empty": {
+      "namespaceFiles": {
+        "title": "Nessun file in questo namespace per ora",
+        "content": "I file del namespace funzionano come una cartella di progetto per questo namespace. Archivia codice Python, SQL, dbt o Terraform, quindi fai riferimento a qualsiasi file nei tuoi flows con"
+      },
       "announcements": {
         "content": "Gli annunci ti permettono di notificare ai tuoi utenti eventuali modifiche o di informarli su periodi di manutenzione programmata. Seleziona semplicemente il tipo di annuncio, l'intervallo di date in cui deve essere visualizzato e scrivi il messaggio dell'annuncio.",
         "title": "Non hai ancora annunci!"
@@ -1099,6 +1110,7 @@
       "export": "Esporta file del namespace",
       "export_single": "Esporta file",
       "filter": "Filtro",
+      "new_file": "Nuovo file",
       "import": {
         "error": "Si sono verificati errori durante l'importazione dei file",
         "files": "Importa file",
@@ -1109,6 +1121,10 @@
       "no_items": {
         "heading": "Nessun file trovato nel tuo namespace.",
         "paragraph": "Crea o importa file per condividere il codice tra i flow nel tuo namespace."
+      },
+      "no_selection": {
+        "heading": "Nessun file selezionato",
+        "description": "Seleziona un file dall'albero per visualizzarne il contenuto."
       },
       "path": {
         "copy": "Copia percorso",
@@ -1161,6 +1177,8 @@
     "next_execution": "Prossima esecuzione",
     "no data current task": "Non ci sono dati disponibili per il task corrente",
     "no inputs": "Questo flow non ha inputs.",
+    "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
+    "no outputs available": "Nessun output disponibile per questa esecuzione del task.",
     "no result": "Non ci sono risultati da mostrare.",
     "no revisions": "Nessuna revisione",
     "no revisions found": "Esiste solo una revisione per questo flow",
@@ -1590,6 +1608,7 @@
     "replay inputs": "Ingressi",
     "replay inputs new required": "Questa revisione ha degli input. Ti verrà chiesto di compilarli.",
     "replay latest revision": "Ripeti utilizzando l'ultima revisione",
+    "replay select taskrun": "Seleziona l'esecuzione del task da riprodurre:",
     "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
     "replay using": "Riproduci utilizzando",
     "replay with inputs": "Riesegui con input",
@@ -1768,6 +1787,7 @@
           },
           "descriptions": {
             "color_mode": "Scegli il tema dell'interfaccia preferito.",
+            "color_mode_shortcut": "Suggerimento: premi <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>L</kbd> per cambiare tema da qualsiasi punto.",
             "editor_folding_stratgy": "Comprimi i blocchi YAML lunghi per impostazione predefinita quando si apre un flow.",
             "editor_font_family": "Carattere monospazio utilizzato nell'editor YAML.",
             "editor_font_size": "Dimensione del carattere utilizzata negli editor YAML e no-code.",

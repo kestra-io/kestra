@@ -192,7 +192,7 @@
         .comparator,
         .value,
         .in {
-            font-size: var(--ks-font-size-xs);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
             white-space: nowrap;
             display: flex;

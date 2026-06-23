@@ -322,6 +322,7 @@
             :title="$t('namespace files.revisions.history')"
             top="10vh"
             width="min(1200px, 90vw)"
+            appendToBody
         >
             <Revisions
                 v-if="revisionsHistory.visible"
@@ -936,17 +937,17 @@
 
 <style scoped lang="scss">
 
+.revision-history-dialog-body {
+    // We subtract the dialog margins and title height (78px)
+    height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
+}
+
 .sidebar {
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
-
-    :deep(.revision-history-dialog-body) {
-        // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
-    }
 
     .filter{
         .kel-input__wrapper {

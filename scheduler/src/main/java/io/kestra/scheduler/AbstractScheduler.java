@@ -281,18 +281,26 @@ public abstract class AbstractScheduler implements Scheduler {
                     }
 
                     WorkerTriggerResult workerTriggerResult = either.getLeft();
-                    if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface && workerTriggerResult.getExecution().isPresent()) {
-                        this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
-                    } else if (workerTriggerResult.getExecution().isPresent()) {
-                        SchedulerExecutionWithTrigger triggerExecution = new SchedulerExecutionWithTrigger(
-                            workerTriggerResult.getExecution().get(),
-                            workerTriggerResult.getTriggerContext()
-                        );
-                        ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
-                        this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
-                    } else {
-                        ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
-                        this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
+                    // Processing a single worker trigger result must never crash the consumer: an error here (e.g. a
+                    // misconfigured trigger whose nextEvaluationDate() throws) would otherwise bubble up to the queue
+                    // poller, which treats it as fatal and shuts the whole scheduler down. Log and skip the bad result
+                    // instead, so the other triggers keep being scheduled.
+                    try {
+                        if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface && workerTriggerResult.getExecution().isPresent()) {
+                            this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
+                        } else if (workerTriggerResult.getExecution().isPresent()) {
+                            SchedulerExecutionWithTrigger triggerExecution = new SchedulerExecutionWithTrigger(
+                                workerTriggerResult.getExecution().get(),
+                                workerTriggerResult.getTriggerContext()
+                            );
+                            ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                            this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
+                        } else {
+                            ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                            this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
+                        }
+                    } catch (Exception e) {
+                        log.error("Unable to process the worker trigger result for trigger '{}'. Skipping it.", workerTriggerResult.getTriggerContext().uid(), e);
                     }
                 }
             )

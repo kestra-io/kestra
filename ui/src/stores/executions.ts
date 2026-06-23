@@ -19,6 +19,9 @@ export interface Check {
 
 export interface InputError {
     message: string;
+    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
+    // input `defaults` Pebble expression that threw) rather than a value validation error
+    renderError?: boolean;
 }
 
 export interface ValidationResponse {

@@ -78,6 +78,7 @@
     "automatic refresh": "Actualización automática",
     "avg": "Promedio",
     "avg duration": "Duración promedio de ejecución",
+    "back": "Atrás",
     "back_to_dashboard": "Volver al panel de control",
     "backfill": "Backfill",
     "backfill executions": "Ejecuciones de backfill",
@@ -240,8 +241,6 @@
     "customize sidebar": "Personalizar barra lateral",
     "dark_version": "Versión oscura",
     "dashboards": {
-      "no_description": "Sin descripción",
-      "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
       "chart_preview": "Haz clic en un código fuente del gráfico para ver su vista previa",
       "creation": {
         "confirmation": "El Dashboard <code>{title}</code> ha sido creado.",
@@ -263,6 +262,8 @@
         "plural": "Dashboards",
         "singular": "Panel de control"
       },
+      "no_description": "Sin descripción",
+      "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
       "preview": "Vista previa del Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -492,6 +493,7 @@
       "github": "Abrir un issue en GitHub"
     },
     "documentationMenu": "Menú de documentación",
+    "done": "Hecho",
     "down trend": "Disminuyendo",
     "download": "Descargar",
     "download logs": "Descargar logs",
@@ -587,6 +589,10 @@
       "mcpToolFlows": {
         "content": "Exponga un flow como una herramienta MCP añadiendo un <code>McpToolTrigger</code> a él. Lea más sobre el <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> en nuestra documentación.",
         "title": "Aún no hay flows de herramientas registrados en este servidor."
+      },
+      "namespaceFiles": {
+        "content": "Los archivos del namespace funcionan como una carpeta de proyecto para este namespace. Almacena código Python, SQL, dbt o Terraform y luego referencia cualquier archivo en tus flows con",
+        "title": "Aún no hay archivos en este namespace"
       },
       "panels": {
         "content": "Has cerrado todos los paneles.  \nElige una pestaña arriba para continuar.",
@@ -1108,9 +1114,14 @@
         "import": "Importar",
         "success": "Archivo(s) importado(s) exitosamente"
       },
+      "new_file": "Nuevo archivo",
       "no_items": {
         "heading": "No se encontraron archivos en tu namespace aún.",
         "paragraph": "Crea o importa archivos para compartir código entre flows en tu namespace."
+      },
+      "no_selection": {
+        "description": "Selecciona un archivo del árbol para ver su contenido.",
+        "heading": "Ningún archivo seleccionado"
       },
       "path": {
         "copy": "Copiar ruta",
@@ -1157,12 +1168,15 @@
     "neutral trend": "Estable",
     "new": "Nuevo",
     "new version": "¡Nueva versión {version} disponible!",
+    "next": "Siguiente",
     "next evaluation date": "Próxima fecha de evaluación",
     "next evaluation date tooltip": "Cuando el trigger se evaluará la próxima vez, basado en su intervalo. No siempre es lo mismo que la próxima fecha de ejecución si no se cumplen las condiciones.",
     "next execution date": "Fecha de próxima ejecución",
     "next_execution": "Próxima ejecución",
     "no data current task": "No hay datos disponibles para el task actual.",
     "no inputs": "Este flow no tiene inputs.",
+    "no metrics available": "No se registraron métricas para esta ejecución de task.",
+    "no outputs available": "No hay outputs disponibles para esta ejecución de task.",
     "no result": "No hay resultados para mostrar.",
     "no revisions": "Sin revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
@@ -1592,6 +1606,7 @@
     "replay inputs": "Entradas",
     "replay inputs new required": "Esta revisión tiene inputs. Se le pedirá que los complete.",
     "replay latest revision": "Repetir usando la última revisión",
+    "replay select taskrun": "Seleccione la ejecución de task para reproducir desde:",
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir con inputs",
@@ -1619,6 +1634,7 @@
     "resumed title": "Reanudar ejecución <code>{id}</code>",
     "reuse original inputs": "Reutilizar inputs originales",
     "reuse_original_inputs": "Reutilizar inputs originales",
+    "review your inputs": "Revise sus entradas",
     "revision": "Revisión",
     "revision deleted": "La revisión {revision} ha sido eliminada con éxito",
     "revisions": "Revisiones",

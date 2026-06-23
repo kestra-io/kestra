@@ -78,6 +78,7 @@
     "automatic refresh": "स्वचालित ताज़ा",
     "avg": "औसत",
     "avg duration": "औसत निष्पादन अवधि",
+    "back": "वापस",
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
     "backfill": "Backfill",
     "backfill executions": "Backfill निष्पादन",
@@ -240,8 +241,6 @@
     "customize sidebar": "साइडबार को अनुकूलित करें",
     "dark_version": "डार्क संस्करण",
     "dashboards": {
-      "no_description": "कोई विवरण नहीं",
-      "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
       "creation": {
         "confirmation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
@@ -263,6 +262,8 @@
         "plural": "डैशबोर्ड्स",
         "singular": "डैशबोर्ड"
       },
+      "no_description": "कोई विवरण नहीं",
+      "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "preview": "पूर्वावलोकन डैशबोर्ड",
       "quick_filters": {
         "all": "सभी",
@@ -492,6 +493,7 @@
       "github": "एक GitHub समस्या खोलें"
     },
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "done": "पूर्ण",
     "down trend": "घट रहा है",
     "download": "डाउनलोड करें",
     "download logs": "Logs डाउनलोड करें",
@@ -587,6 +589,10 @@
       "mcpToolFlows": {
         "content": "<code>McpToolTrigger</code> जोड़कर एक flow को MCP टूल के रूप में प्रदर्शित करें। हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> के बारे में और पढ़ें।",
         "title": "इस सर्वर पर अभी तक कोई टूल flows पंजीकृत नहीं हैं।"
+      },
+      "namespaceFiles": {
+        "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें",
+        "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है"
       },
       "panels": {
         "content": "आपने सभी पैनल बंद कर दिए हैं।  \nजारी रखने के लिए ऊपर एक टैब चुनें।",
@@ -1108,9 +1114,14 @@
         "import": "आयात करें",
         "success": "फ़ाइलें सफलतापूर्वक आयात की गईं"
       },
+      "new_file": "नई फ़ाइल",
       "no_items": {
         "heading": "आपके namespace में अभी तक कोई फ़ाइलें नहीं मिली हैं।",
         "paragraph": "फाइलें बनाने या आयात करने के लिए, अपने namespace में flows के बीच कोड साझा करें।"
+      },
+      "no_selection": {
+        "description": "इसकी सामग्री देखने के लिए ट्री से एक फ़ाइल चुनें।",
+        "heading": "कोई फ़ाइल चयनित नहीं"
       },
       "path": {
         "copy": "पथ कॉपी करें",
@@ -1157,12 +1168,15 @@
     "neutral trend": "स्थिर",
     "new": "नया",
     "new version": "नया संस्करण {version} उपलब्ध है!",
+    "next": "अगला",
     "next evaluation date": "अगली मूल्यांकन तिथि",
     "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
     "next execution date": "अगली निष्पादन तिथि",
     "next_execution": "अगली निष्पादन",
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
+    "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
+    "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
     "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "no revisions": "कोई संशोधन नहीं",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
@@ -1592,6 +1606,7 @@
     "replay inputs": "इनपुट्स",
     "replay inputs new required": "इस संशोधन में inputs हैं। आपको इन्हें भरने के लिए कहा जाएगा।",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
+    "replay select taskrun": "जिस task रन को पुनः चलाना है, उसे चुनें:",
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "replay using": "पुनः चलाएं उपयोग करते हुए",
     "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
@@ -1619,6 +1634,7 @@
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
     "reuse original inputs": "मूल inputs का पुनः उपयोग करें",
     "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
+    "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "revision": "संशोधन",
     "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "revisions": "पुनरीक्षण",

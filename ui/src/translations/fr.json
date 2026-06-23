@@ -78,6 +78,7 @@
     "automatic refresh": "rafraîchissement automatique",
     "avg": "Moyenne",
     "avg duration": "Durée moyenne d'exécution",
+    "back": "Retour",
     "back_to_dashboard": "Retour au tableau de bord",
     "backfill": "Backfill",
     "backfill executions": "Backfill d'exécutions",
@@ -240,8 +241,6 @@
     "customize sidebar": "Personnaliser la barre latérale",
     "dark_version": "Version sombre",
     "dashboards": {
-      "no_description": "Aucune description",
-      "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
       "creation": {
         "confirmation": "Le tableau de bord <code>{title}</code> est créé.",
@@ -263,6 +262,8 @@
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"
       },
+      "no_description": "Aucune description",
+      "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "preview": "Aperçu du Dashboard",
       "quick_filters": {
         "all": "Tout",
@@ -492,6 +493,7 @@
       "github": "Bugs GitHub"
     },
     "documentationMenu": "Menu de documentation",
+    "done": "Terminé",
     "down trend": "En baisse",
     "download": "Télécharger",
     "download logs": "Télécharger les logs",
@@ -587,6 +589,10 @@
       "mcpToolFlows": {
         "content": "Exposez un flow comme un outil MCP en y ajoutant un <code>McpToolTrigger</code>. Lisez-en plus sur le <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> dans notre documentation.",
         "title": "Aucun flow d'outil n'est encore enregistré sur ce serveur."
+      },
+      "namespaceFiles": {
+        "content": "Les fichiers de l'espace de noms fonctionnent comme un dossier de projet pour cet espace de noms. Stockez du code Python, SQL, dbt ou Terraform, puis référencez n'importe quel fichier dans vos flows avec",
+        "title": "Aucun fichier dans cet espace de noms pour le moment"
       },
       "panels": {
         "content": "Vous avez fermé tous les panneaux.  \nChoisissez un onglet ci-dessus pour continuer.",
@@ -1108,9 +1114,14 @@
         "import": "Importer",
         "success": "Fichier(s) importé(s) avec succès"
       },
+      "new_file": "Nouveau fichier",
       "no_items": {
         "heading": "Aucun fichier trouvé dans votre namespace pour le moment.",
         "paragraph": "Créer ou importer des fichiers pour partager du code entre les flows dans votre namespace."
+      },
+      "no_selection": {
+        "description": "Sélectionnez un fichier dans l'arborescence pour afficher son contenu.",
+        "heading": "Aucun fichier sélectionné"
       },
       "path": {
         "copy": "Copier le chemin",
@@ -1157,12 +1168,15 @@
     "neutral trend": "Stable",
     "new": "Nouveau",
     "new version": "Nouvelle version {version} disponible!",
+    "next": "Suivant",
     "next evaluation date": "Prochaine date d'évaluation",
     "next evaluation date tooltip": "Quand le trigger sera évalué la prochaine fois, en fonction de son intervalle. Pas toujours identique à la prochaine date d'exécution si les conditions ne sont pas remplies.",
     "next execution date": "Prochaine date d'exécution",
     "next_execution": "Prochaine exécution",
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
     "no inputs": "Ce flow n'a pas d'entrée.",
+    "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
+    "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
     "no result": "Il n'y a aucun résultat à afficher.",
     "no revisions": "Aucune révision",
     "no revisions found": "Une seule révision existe pour ce flow",
@@ -1592,6 +1606,7 @@
     "replay inputs": "Entrées",
     "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
     "replay latest revision": "Rejouer avec la dernière révision",
+    "replay select taskrun": "Sélectionnez le task run à rejouer à partir de :",
     "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
     "replay using": "Rejouer en utilisant",
     "replay with inputs": "Rejouer avec inputs",
@@ -1619,6 +1634,7 @@
     "resumed title": "Reprendre l'exécution <code>{id}</code>",
     "reuse original inputs": "Réutiliser les inputs d'origine",
     "reuse_original_inputs": "Réutiliser les inputs d'origine",
+    "review your inputs": "Vérifiez vos entrées",
     "revision": "Révision",
     "revision deleted": "La révision {revision} a été supprimée avec succès",
     "revisions": "Révisions",

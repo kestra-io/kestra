@@ -75,6 +75,10 @@
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "review your inputs": "Review your inputs",
     "edit flow": "Edit flow",
     "executions": "Executions",
     "execution": "Execution",
@@ -278,6 +282,7 @@
     "reuse original inputs": "Reuse original inputs",
     "modify inputs": "Modify inputs",
     "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
+    "replay select taskrun": "Select the task run to replay from:",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
@@ -309,6 +314,8 @@
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
+    "no metrics available": "No metrics recorded for this task run.",
+    "no outputs available": "No outputs available for this task run.",
     "outputs": "Outputs",
     "flow_outputs": "Flow Outputs",
     "no_flow_outputs": "No outputs available.",
@@ -813,9 +820,14 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
+      "new_file": "New File",
       "no_items": {
         "heading": "No files found in your namespace yet.",
         "paragraph": "Create or import files to share code across flows in your namespace."
+      },
+      "no_selection": {
+        "heading": "No Files Selected",
+        "description": "Select a file from the tree to view its content."
       },
       "tree": {
         "expand": "Expand all folders",
@@ -1709,6 +1721,10 @@
     "dataFilters": "Data Filters",
     "logExporters": "Log Exporters",
     "empty": {
+      "namespaceFiles": {
+        "title": "No files in this namespace yet",
+        "content": "Namespace Files work like a project folder for this namespace. Store Python, SQL, dbt or Terraform code, then reference any file in your flows with"
+      },
       "announcements": {
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."

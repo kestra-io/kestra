@@ -214,6 +214,8 @@
                     ? $t('namespace files.create.file')
                     : $t('namespace files.create.folder')
             "
+            width="500"
+            appendToBody
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
@@ -407,6 +409,12 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+
+    // exposed so parents (e.g. the dedicated empty state) can reuse the
+    // create dialog instead of duplicating file-creation logic
+    defineExpose({
+        openCreationDialog: (type: "file" | "folder" = "file") => toggleDialog(true, type),
+    })
 
     const route = useRoute()
     const namespacesStore = useNamespacesStore()
@@ -725,9 +733,9 @@
             } else {
                 const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
                 const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
-                if (selectedNode?.leaf === false) {
-                    node = selectedNode.id
-                    folder = filesStore.getPath(selectedNode.id)
+                if (selectedNode?.data?.leaf === false) {
+                    node = selectedNode.data.id
+                    folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
             if(!type) return

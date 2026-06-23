@@ -78,6 +78,7 @@
     "automatic refresh": "자동 새로 고침",
     "avg": "평균",
     "avg duration": "평균 실행 시간",
+    "back": "뒤로",
     "back_to_dashboard": "대시보드로 돌아가기",
     "backfill": "Backfill",
     "backfill executions": "backfill 실행",
@@ -240,8 +241,6 @@
     "customize sidebar": "사이드바 사용자 정의",
     "dark_version": "다크 버전",
     "dashboards": {
-      "no_description": "설명 없음",
-      "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "creation": {
         "confirmation": "대시보드 <code>{title}</code>이(가) 생성되었습니다.",
@@ -263,6 +262,8 @@
         "plural": "대시보드",
         "singular": "대시보드"
       },
+      "no_description": "설명 없음",
+      "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -492,6 +493,7 @@
       "github": "GitHub 이슈 열기"
     },
     "documentationMenu": "문서 메뉴",
+    "done": "완료",
     "down trend": "감소 중",
     "download": "다운로드",
     "download logs": "Logs 다운로드",
@@ -587,6 +589,10 @@
       "mcpToolFlows": {
         "content": "<code>McpToolTrigger</code>를 추가하여 flow를 MCP 도구로 노출합니다. <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
         "title": "이 서버에는 아직 등록된 tool flow가 없습니다."
+      },
+      "namespaceFiles": {
+        "content": "namespace 파일은 이 namespace의 프로젝트 폴더처럼 작동합니다. Python, SQL, dbt 또는 Terraform 코드를 저장한 다음, flow에서 다음을 사용하여 모든 파일을 참조하세요",
+        "title": "이 namespace에 아직 파일이 없습니다"
       },
       "panels": {
         "content": "모든 패널을 닫았습니다.  \n계속하려면 위의 탭을 선택하세요.",
@@ -1108,9 +1114,14 @@
         "import": "가져오기",
         "success": "파일이 성공적으로 가져와졌습니다"
       },
+      "new_file": "새 파일",
       "no_items": {
         "heading": "아직 namespace에 파일이 없습니다.",
         "paragraph": "파일을 생성하거나 가져와서 namespace 내의 flow 간에 코드를 공유하세요."
+      },
+      "no_selection": {
+        "description": "내용을 보려면 트리에서 파일을 선택하세요.",
+        "heading": "선택된 파일 없음"
       },
       "path": {
         "copy": "경로 복사",
@@ -1157,12 +1168,15 @@
     "neutral trend": "안정적",
     "new": "새로 만들기",
     "new version": "새 버전 {version} 사용 가능!",
+    "next": "다음",
     "next evaluation date": "다음 평가 날짜",
     "next evaluation date tooltip": "트리거가 다음으로 평가될 시점은 간격을 기준으로 합니다. 조건이 충족되지 않으면 다음 실행 날짜와 항상 같지 않을 수 있습니다.",
     "next execution date": "다음 실행 날짜",
     "next_execution": "다음 실행",
     "no data current task": "현재 task에 대한 데이터가 없습니다.",
     "no inputs": "이 flow에는 입력이 없습니다.",
+    "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
+    "no outputs available": "이 task 실행에 대한 output이 없습니다.",
     "no result": "결과가 없습니다.",
     "no revisions": "리비전 없음",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
@@ -1592,6 +1606,7 @@
     "replay inputs": "입력",
     "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
+    "replay select taskrun": "어떤 task run을 재생할지 선택하십시오:",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "replay using": "사용하여 재실행",
     "replay with inputs": "입력과 함께 재실행",
@@ -1619,6 +1634,7 @@
     "resumed title": "실행 <code>{id}</code> 재개",
     "reuse original inputs": "원래 input 재사용",
     "reuse_original_inputs": "원래 input 재사용",
+    "review your inputs": "입력 내용을 검토하세요",
     "revision": "수정본",
     "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "revisions": "수정본들",

@@ -305,9 +305,9 @@
         },
     })
     const storedAppFontSizeMode = useStorage<string>("appFontSize", "medium")
-    const EDITOR_BASE_PX_MAP: Record<string, number> = {small: 14, medium: 16, large: 18}
+    const EDITOR_BASE_PX_MAP: Record<string, number> = {small: 12, medium: 14, large: 16}
     const resolvedEditorFontSize = computed(
-        () => storedEditorFontSizeOverride.value ?? (EDITOR_BASE_PX_MAP[storedAppFontSizeMode.value] ?? 16),
+        () => storedEditorFontSizeOverride.value ?? (EDITOR_BASE_PX_MAP[storedAppFontSizeMode.value] ?? 14),
     )
 
     const editorRef = ref<HTMLDivElement | null>(null)

@@ -14,12 +14,6 @@ export const BASE_PX: Record<AppFontSizeMode, number> = {
     large: 16,
 }
 
-export const EDITOR_BASE_PX: Record<AppFontSizeMode, number> = {
-    small: 14,
-    medium: 16,
-    large: 18,
-}
-
 export function appFontSizeInfo(mode: AppFontSizeMode): {scale: number; base: number} {
     return {scale: SCALE[mode], base: BASE_PX[mode]}
 }

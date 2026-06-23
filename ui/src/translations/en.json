@@ -1878,8 +1878,7 @@
     },
     "setup": {
       "login": "Login",
-      "login_title": "Sign in",
-      "login_subtitle": "Enter your credentials to access your Kestra instance",
+      "login_title": "Sign in to Kestra",
       "logout": "Logout",
       "troubleshooting": "Trouble signing in?",
       "steps": {
@@ -1914,6 +1913,7 @@
         "firstName_required": "First name required",
         "lastName_required": "Last name required",
         "password_invalid": "Invalid password",
+        "password_required": "Password is required",
         "incorrect_creds": "Invalid username or password. Make sure your credentials are correct.",
         "config_message": "Make sure to update your configuration to fix this error message"
       },

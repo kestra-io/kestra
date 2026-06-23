@@ -1841,7 +1841,6 @@
         "username_hint": "Muss eine gültige E-Mail-Adresse sein."
       },
       "login": "Anmelden",
-      "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",
       "login_title": "Anmelden",
       "logout": "Abmelden",
       "steps": {
@@ -1892,7 +1891,8 @@
         "firstName_required": "Vorname erforderlich",
         "incorrect_creds": "Ungültiger Benutzername oder Passwort. Stellen Sie sicher, dass Ihre Anmeldedaten korrekt sind.",
         "lastName_required": "Nachname erforderlich",
-        "password_invalid": "Ungültiges Passwort"
+        "password_invalid": "Ungültiges Passwort",
+        "password_required": "Passwort ist erforderlich"
       }
     },
     "show": "Anzeigen",

@@ -1841,7 +1841,6 @@
         "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
-      "login_subtitle": "Ingrese sus credenciales para acceder a su instancia de Kestra",
       "login_title": "Iniciar sesión",
       "logout": "Cerrar sesión",
       "steps": {
@@ -1892,7 +1891,8 @@
         "firstName_required": "Nombre requerido",
         "incorrect_creds": "Nombre de usuario o contraseña inválidos. Asegúrate de que tus credenciales sean correctas.",
         "lastName_required": "Apellido requerido",
-        "password_invalid": "Contraseña inválida"
+        "password_invalid": "Contraseña inválida",
+        "password_required": "La contraseña es obligatoria"
       }
     },
     "show": "Mostrar",

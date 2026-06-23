@@ -8,6 +8,9 @@
         <template v-if="$slots.prepend" #prepend>
             <slot name="prepend" />
         </template>
+        <template v-if="$slots.prefix" #prefix>
+            <slot name="prefix" />
+        </template>
         <template v-if="$slots.suffix" #suffix>
             <slot name="suffix" />
         </template>
@@ -46,6 +49,7 @@
 
     const slots = defineSlots<{
         prepend?(): unknown
+        prefix?(): unknown
         suffix?(): unknown
         default?(): unknown
     }>()

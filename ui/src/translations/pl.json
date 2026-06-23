@@ -1841,7 +1841,6 @@
         "username_hint": "Musi być prawidłowym adresem e-mail."
       },
       "login": "Zaloguj się",
-      "login_subtitle": "Wprowadź swoje dane uwierzytelniające, aby uzyskać dostęp do instancji Kestra",
       "login_title": "Zaloguj się",
       "logout": "Wyloguj się",
       "steps": {
@@ -1892,7 +1891,8 @@
         "firstName_required": "Imię jest wymagane",
         "incorrect_creds": "Nieprawidłowa nazwa użytkownika lub hasło. Upewnij się, że Twoje dane uwierzytelniające są poprawne.",
         "lastName_required": "Wymagane nazwisko",
-        "password_invalid": "Nieprawidłowe hasło"
+        "password_invalid": "Nieprawidłowe hasło",
+        "password_required": "Hasło jest wymagane"
       }
     },
     "show": "Pokaż",

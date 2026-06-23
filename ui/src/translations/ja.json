@@ -1841,7 +1841,6 @@
         "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
-      "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
       "login_title": "サインイン",
       "logout": "ログアウト",
       "steps": {
@@ -1892,7 +1891,8 @@
         "firstName_required": "名が必要です",
         "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
-        "password_invalid": "無効なパスワード"
+        "password_invalid": "無効なパスワード",
+        "password_required": "パスワードは必須です"
       }
     },
     "show": "表示",

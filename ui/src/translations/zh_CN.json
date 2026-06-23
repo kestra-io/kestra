@@ -1841,7 +1841,6 @@
         "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
-      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
       "login_title": "登录",
       "logout": "注销",
       "steps": {
@@ -1892,7 +1891,8 @@
         "firstName_required": "名字为必填项",
         "incorrect_creds": "用户名或密码无效。请确保您的凭据正确。",
         "lastName_required": "姓氏为必填项",
-        "password_invalid": "密码无效"
+        "password_invalid": "密码无效",
+        "password_required": "密码为必填项"
       }
     },
     "show": "显示",

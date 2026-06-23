@@ -662,11 +662,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, Collections.singletonList(field("source_code")));
 
                 if (query != null) {
-                    select.and(this.findSourceCodeCondition(query));
+                    select = select.and(this.findSourceCodeCondition(query));
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
+                    select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                 }
 
                 return (ArrayListTotal) this.jdbcRepository.fetchPage(

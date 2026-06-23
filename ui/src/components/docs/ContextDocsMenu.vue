@@ -191,7 +191,7 @@
 
     .expandIcon {
         margin-left: 1rem;
-        font-size: 1.5rem;
+        font-size: var(--ks-font-size-4xl);
         transition: transform 0.2s $transition-timing;
         &.rotate-icon {
             transform: rotate(180deg);

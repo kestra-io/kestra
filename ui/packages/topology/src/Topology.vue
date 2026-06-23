@@ -563,7 +563,7 @@
             padding: 5px 8px;
             cursor: pointer;
             color: var(--ks-text-primary);
-            font-size: 12px;
+            font-size: var(--ks-font-size-sm);
             width: 110px;
 
             &:first-child{

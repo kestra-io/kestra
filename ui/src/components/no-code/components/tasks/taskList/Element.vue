@@ -10,7 +10,7 @@
         </div>
 
         <button v-if="playgroundStore.enabled && element.id && isTask" @click.stop="playgroundStore.runUntilTask(element.id)" type="button" class="playground-run-task">
-            <PlayIcon />
+            <PlayIcon :size="4" />
         </button>
 
         <button
@@ -141,7 +141,6 @@
         background-color: var(--ks-btn-primary-bg-default);
         height: 16px;
         width: 16px;
-        font-size: 4px;
         display: flex;
         align-items: center;
         justify-content: center;

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import org.slf4j.event.Level;
 
@@ -59,6 +60,8 @@ public class LogController {
     private LogStreamingService logStreamingService;
     @Inject
     private ExecutionService executionService;
+    @Inject
+    private SseConnectionMetrics sseConnectionMetrics;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -131,7 +134,7 @@ public class LogController {
         String subscriberId = UUID.randomUUID().toString();
         List<QueryFilter> effectiveFilters = buildExecutionFilters(executionId, filters);
 
-        return Flux.<Event<FollowLogEvent>> create(emitter ->
+        Flux<Event<FollowLogEvent>> flux = Flux.<Event<FollowLogEvent>> create(emitter ->
         {
             // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
             emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
@@ -145,8 +148,10 @@ public class LogController {
             // the FollowLogEventMatcher (backed by Searchable<FollowLogEvent>) to apply it
             logStreamingService.registerSubscriber(executionId, subscriberId, emitter, effectiveFilters);
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-            .doFinally(ignored -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
+            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+
+        return sseConnectionMetrics.track(flux, "logs",
+            () -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     /**

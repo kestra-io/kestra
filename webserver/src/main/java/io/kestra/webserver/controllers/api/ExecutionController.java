@@ -83,6 +83,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
+import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -177,6 +178,9 @@ public class ExecutionController {
 
     @Inject
     private ExecutionDependenciesStreamingService executionDependenciesStreamingService;
+
+    @Inject
+    private SseConnectionMetrics sseConnectionMetrics;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -1797,7 +1801,7 @@ public class ExecutionController {
     public Flux<Event<Execution>> followExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         String subscriberId = UUID.randomUUID().toString();
-        return Flux.<Event<Execution>> create(emitter ->
+        Flux<Event<Execution>> flux = Flux.<Event<Execution>> create(emitter ->
         {
             // Send initial event
             emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
@@ -1861,8 +1865,10 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-            .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
+            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+
+        return sseConnectionMetrics.track(flux, "execution",
+            () -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2316,7 +2322,7 @@ public class ExecutionController {
 
         String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
 
-        return Flux.<Event<ExecutionStatusEvent>> create(emitter ->
+        Flux<Event<ExecutionStatusEvent>> flux = Flux.<Event<ExecutionStatusEvent>> create(emitter ->
         {
             // Send initial event
             emitter.next(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("start"));
@@ -2386,8 +2392,10 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-            .doFinally(ignored -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
+            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+
+        return sseConnectionMetrics.track(flux, "dependencies",
+            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
     }
 
     public String getTenant() {

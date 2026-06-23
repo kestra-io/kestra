@@ -42,6 +42,16 @@ interface Cluster {
     branchType: BranchType;
 }
 
+interface FlowGraphEdge {
+    source: string;
+    target: string;
+    relation?: {
+        relationType?: string;
+        value?: string;
+    };
+    unused?: boolean;
+}
+
 export interface FlowGraph {
     nodes: MinimalNode[];
     clusters: {
@@ -51,7 +61,7 @@ export interface FlowGraph {
             uid: string;
         }[];
     }[];
-    edges: GraphEdge[];
+    edges: FlowGraphEdge[];
 }
 
 type EdgeReplacer = Record<string, string>;
@@ -278,7 +288,7 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
 }
 
 export function haveAdd(
-    edge: GraphEdge,
+    edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clustersRootTaskUids: string[],
     readOnlyUidPrefixes: string[],
@@ -325,7 +335,7 @@ export function haveAdd(
 }
 
 export function getEdgeColor(
-    edge: GraphEdge,
+    edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clusterByNodeUid: Record<string, Cluster>,
 ) {
@@ -602,7 +612,9 @@ export function generateGraph(
                         nodeByUid[edge.target].type.endsWith("GraphTrigger") ||
                         edge.source.startsWith(TRIGGERS_NODE_UID),
                     color: edgeColor,
-                    unused: (edge as any).unused,
+                    unused: edge.unused,
+                    value: edge.relation?.value,
+                    relationType: edge.relation?.relationType,
                 },
                 style: {zIndex: 10},
                 animated: animated,
@@ -658,13 +670,13 @@ export function getTargetNodesEdges(graph: FlowGraph, nodeUid?: string) {
 }
 
 export function getNextTaskNodes(graph: FlowGraph, initialNode: MinimalNode) {
-    let edges: GraphEdge[],
+    let edges: FlowGraphEdge[],
         nextTaskNodes: MinimalNode[],
         nodeUIDs: string[] = [initialNode.uid]
     do {
         edges = nodeUIDs
             .flatMap((uid) => getTargetNodesEdges(graph, uid))
-            .filter(Boolean) as GraphEdge[]
+            .filter(Boolean) as FlowGraphEdge[]
         if (edges.length === 0) return []
         nodeUIDs = edges.map((edge) => edge.target)
         nextTaskNodes = graph.nodes.filter((node) => nodeUIDs.includes(node.uid) && node.task)

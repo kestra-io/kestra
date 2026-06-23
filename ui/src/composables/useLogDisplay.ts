@@ -1,4 +1,6 @@
+import {computed} from "vue"
 import {useStorage} from "@vueuse/core"
+import {getAppFontSizeMode, appFontSizeInfo} from "../utils/appFontSize"
 
 export type LogDensity = "compact" | "normal" | "expanded";
 
@@ -8,7 +10,42 @@ export const DENSITY_PADDING = {
     expanded: "12px",
 } as const
 
-export const logsFontSize = useStorage<number>("logsFontSize", 14)
+const LEGACY_LOGS_DEFAULT = 14
+const LEGACY_EDITOR_DEFAULT = 12
+
+export const logsFontSizeOverride = useStorage<number | null>("logsFontSize", null, localStorage, {
+    serializer: {
+        read: (v) => {
+            if (v === null || v === "null" || v === "") return null
+            const n = Number(v)
+            if (n === LEGACY_LOGS_DEFAULT) return null
+            return isNaN(n) ? null : n
+        },
+        write: (v) => (v === null ? "null" : String(v)),
+    },
+})
+
+export const editorFontSizeOverride = useStorage<number | null>("editorFontSize", null, localStorage, {
+    serializer: {
+        read: (v) => {
+            if (v === null || v === "null" || v === "") return null
+            const n = Number(v)
+            if (n === LEGACY_EDITOR_DEFAULT) return null
+            return isNaN(n) ? null : n
+        },
+        write: (v) => (v === null ? "null" : String(v)),
+    },
+})
+
+export const logsFontSize = computed({
+    get: () => logsFontSizeOverride.value ?? appFontSizeInfo(getAppFontSizeMode()).base,
+    set: (v: number) => { logsFontSizeOverride.value = v },
+})
+
+export const effectiveEditorFontSize = computed(
+    () => editorFontSizeOverride.value ?? appFontSizeInfo(getAppFontSizeMode()).base,
+)
+
 export const logsDensity = useStorage<LogDensity>("logsDensity", "normal")
 export const logsBodyClamp = useStorage<number>("logsBodyClamp", 0)
 export const logsPrettyJson = useStorage<boolean>("logsPrettyJson", true)

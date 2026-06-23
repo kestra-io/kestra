@@ -402,12 +402,15 @@
         opts.wordWrap = mergedOptions.value.wordWrap ? "on" : "off"
         opts.automaticLayout = true
 
-        const settingsEditorFontSize = localStorage.getItem("editorFontSize")
+        const storedFontSize = localStorage.getItem("editorFontSize")
+        const parsedFontSize = storedFontSize ? parseInt(storedFontSize) : null
+        const baseFontSize = parseInt(localStorage.getItem("_appBaseFontSize") ?? "") || 14
+        const editorFontSize = (parsedFontSize !== null && parsedFontSize !== 12) ? parsedFontSize : baseFontSize
 
         return {
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
-            fontSize: settingsEditorFontSize ? parseInt(settingsEditorFontSize) : 12,
+            fontSize: editorFontSize,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,

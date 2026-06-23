@@ -39,6 +39,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -473,7 +474,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                             // then select the last one (longest) or minPoll if all are beyond while means we are under the first interval
                             sleep = selectedSteps.isEmpty() ? configuration.minPollInterval : selectedSteps.getLast().pollInterval();
                         }
-                    } catch (CannotCreateTransactionException e) {
+                    } catch (CannotCreateTransactionException | CannotGetJdbcConnectionException e) {
+                        // These occur when the datasource / connection pool is closed during shutdown (e.g. context
+                        // teardown between rebuilt test contexts). They are benign teardown conditions, not fatal:
+                        // the poll loop will exit via running/isClosed once shutdown completes. Treating them as fatal
+                        // would needlessly shut the whole queue (and server) down.
                         if (log.isDebugEnabled()) {
                             log.debug("Can't poll on receive", e);
                         }

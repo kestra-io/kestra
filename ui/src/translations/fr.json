@@ -1005,6 +1005,7 @@
       "create": "Créer un serveur",
       "delete_confirm": "Êtes-vous sûr de vouloir supprimer ce serveur MCP ?",
       "id_invalid": "L'ID doit commencer par une lettre minuscule ou un chiffre, et ne contenir que des lettres minuscules, des chiffres, des tirets ou des underscores.",
+      "server_id": "ID du serveur",
       "id_placeholder": "par exemple, mon-serveur-mcp",
       "instructions": "Instructions",
       "main_tenant": "principal",

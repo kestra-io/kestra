@@ -1005,6 +1005,7 @@
       "create": "サーバーを作成",
       "delete_confirm": "このMCPサーバーを削除してもよろしいですか？",
       "id_invalid": "IDは小文字のアルファベットまたは数字で始まり、小文字のアルファベット、数字、ハイフン、またはアンダースコアのみを含む必要があります。",
+      "server_id": "サーバー ID",
       "id_placeholder": "例: my-mcp-server",
       "instructions": "指示",
       "main_tenant": "メイン",

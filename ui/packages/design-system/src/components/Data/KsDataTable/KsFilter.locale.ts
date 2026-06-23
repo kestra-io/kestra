@@ -303,6 +303,14 @@ export default {
                 "description": "Filter by aggregation method",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Display title shown to AI agents",
+                    "annotations": "Behavioural hints declared on the tool (read-only, destructive, etc.)",
+                    "flow": "The flow that defines this tool",
+                    "namespace": "Namespace of the flow that defines this tool",
+                    "triggerId": "Trigger id within the flow, distinct from the tool name",
+                    "description": "What the tool does and when an agent should call it",
+                },
                 "flows": {
                     "id": "Unique flow identifier",
                     "labels": "Flow labels (key:value format)",
@@ -386,6 +394,7 @@ export default {
                 "plugin_filters": "Plugin Search",
             },
             "search_placeholders": {
+                "search_mcp_tools": "Search MCP tools",
                 "search_executions": "Search executions",
                 "search_dashboards": "Search dashboards...",
                 "search_flows": "Search flows",
@@ -587,6 +596,7 @@ export default {
             },
             "search options": "Suche...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP-Tools durchsuchen",
                 "search_blueprints": "Blueprints durchsuchen",
                 "search_dashboards": "Dashboards durchsuchen...",
                 "search_executions": "Ausführungen suchen",
@@ -613,6 +623,14 @@ export default {
                 "label": "Zustand",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Anzeigetitel, der KI-Agenten angezeigt wird",
+                    "annotations": "Verhaltenshinweise, die für das Tool deklariert sind (read-only, destructive usw.)",
+                    "flow": "Der flow, der dieses Tool definiert",
+                    "namespace": "Namespace des flow, der dieses Tool definiert",
+                    "triggerId": "Trigger-id innerhalb des flow, unterscheidet sich vom Tool-Namen",
+                    "description": "Was das Tool tut und wann ein Agent es aufrufen sollte",
+                },
                 "blueprints": {
                     "tags": "Tags, die mit dem Blueprint verknüpft sind",
                 },
@@ -968,6 +986,7 @@ export default {
             },
             "search options": "Buscar...",
             "search_placeholders": {
+                "search_mcp_tools": "Buscar herramientas MCP",
                 "search_blueprints": "Buscar blueprints",
                 "search_dashboards": "Buscar dashboards...",
                 "search_executions": "Buscar ejecuciones",
@@ -994,6 +1013,14 @@ export default {
                 "label": "Estado",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título mostrado a los agentes de IA",
+                    "annotations": "Indicadores de comportamiento declarados en la herramienta (read-only, destructive, etc.)",
+                    "flow": "El flow que define esta herramienta",
+                    "namespace": "Namespace del flow que define esta herramienta",
+                    "triggerId": "Id del trigger dentro del flow, distinto del nombre de la herramienta",
+                    "description": "Qué hace la herramienta y cuándo debe llamarla un agente",
+                },
                 "blueprints": {
                     "tags": "Etiquetas asociadas con el blueprint",
                 },
@@ -1349,6 +1376,7 @@ export default {
             },
             "search options": "Rechercher...",
             "search_placeholders": {
+                "search_mcp_tools": "Rechercher des outils MCP",
                 "search_blueprints": "Rechercher des blueprints",
                 "search_dashboards": "Rechercher des tableaux de bord...",
                 "search_executions": "Rechercher des exécutions",
@@ -1375,6 +1403,14 @@ export default {
                 "label": "État",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Titre affiché aux agents IA",
+                    "annotations": "Indications de comportement déclarées sur l'outil (read-only, destructive, etc.)",
+                    "flow": "Le flow qui définit cet outil",
+                    "namespace": "Namespace du flow qui définit cet outil",
+                    "triggerId": "Id du trigger dans le flow, distinct du nom de l'outil",
+                    "description": "Ce que fait l'outil et quand un agent doit l'appeler",
+                },
                 "blueprints": {
                     "tags": "Étiquettes associées au blueprint",
                 },
@@ -1730,6 +1766,7 @@ export default {
             },
             "search options": "खोजें...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP टूल खोजें",
                 "search_blueprints": "ब्लूप्रिंट्स खोजें",
                 "search_dashboards": "डैशबोर्ड खोजें...",
                 "search_executions": "निष्पादन खोजें",
@@ -1756,6 +1793,14 @@ export default {
                 "label": "स्थिति",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "AI एजेंट्स को दिखाया जाने वाला शीर्षक",
+                    "annotations": "टूल पर घोषित व्यवहार संकेत (read-only, destructive, आदि)",
+                    "flow": "वह flow जो इस टूल को परिभाषित करता है",
+                    "namespace": "उस flow का namespace जो इस टूल को परिभाषित करता है",
+                    "triggerId": "flow के भीतर trigger id, टूल नाम से अलग",
+                    "description": "टूल क्या करता है और एजेंट को इसे कब कॉल करना चाहिए",
+                },
                 "blueprints": {
                     "tags": "ब्लूप्रिंट से जुड़े टैग्स",
                 },
@@ -2111,6 +2156,7 @@ export default {
             },
             "search options": "Cerca...",
             "search_placeholders": {
+                "search_mcp_tools": "Cerca strumenti MCP",
                 "search_blueprints": "Cerca blueprint",
                 "search_dashboards": "Cerca dashboard...",
                 "search_executions": "Cerca esecuzioni",
@@ -2137,6 +2183,14 @@ export default {
                 "label": "Zustato",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Titolo visualizzato agli agenti IA",
+                    "annotations": "Indicazioni di comportamento dichiarate sullo strumento (read-only, destructive, ecc.)",
+                    "flow": "Il flow che definisce questo strumento",
+                    "namespace": "Namespace del flow che definisce questo strumento",
+                    "triggerId": "Id del trigger all'interno del flow, distinto dal nome dello strumento",
+                    "description": "Cosa fa lo strumento e quando un agente dovrebbe chiamarlo",
+                },
                 "blueprints": {
                     "tags": "Tag associati al blueprint",
                 },
@@ -2492,6 +2546,7 @@ export default {
             },
             "search options": "検索...",
             "search_placeholders": {
+                "search_mcp_tools": "MCPツールを検索",
                 "search_blueprints": "ブループリントを検索",
                 "search_dashboards": "ダッシュボードを検索...",
                 "search_executions": "実行を検索",
@@ -2518,6 +2573,14 @@ export default {
                 "label": "状態",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "AIエージェントに表示されるタイトル",
+                    "annotations": "ツールに宣言された動作のヒント（read-only、destructive など）",
+                    "flow": "このツールを定義する flow",
+                    "namespace": "このツールを定義する flow の namespace",
+                    "triggerId": "flow 内の trigger id（ツール名とは異なる）",
+                    "description": "ツールの機能と、エージェントが呼び出すべきタイミング",
+                },
                 "blueprints": {
                     "tags": "ブループリントに関連付けられたタグ",
                 },
@@ -2873,6 +2936,7 @@ export default {
             },
             "search options": "검색...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP 도구 검색",
                 "search_blueprints": "블루프린트 검색",
                 "search_dashboards": "대시보드 검색...",
                 "search_executions": "실행 검색",
@@ -2899,6 +2963,14 @@ export default {
                 "label": "상태",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "AI 에이전트에게 표시되는 제목",
+                    "annotations": "도구에 선언된 동작 힌트 (read-only, destructive 등)",
+                    "flow": "이 도구를 정의하는 flow",
+                    "namespace": "이 도구를 정의하는 flow의 namespace",
+                    "triggerId": "flow 내의 trigger id (도구 이름과 다름)",
+                    "description": "도구의 기능과 에이전트가 호출해야 하는 시점",
+                },
                 "blueprints": {
                     "tags": "블루프린트와 연결된 태그",
                 },
@@ -3254,6 +3326,7 @@ export default {
             },
             "search options": "Szukaj...",
             "search_placeholders": {
+                "search_mcp_tools": "Wyszukaj narzędzia MCP",
                 "search_blueprints": "Wyszukaj blueprinty",
                 "search_dashboards": "Szukaj pulpitów...",
                 "search_executions": "Wyszukaj wykonania",
@@ -3280,6 +3353,14 @@ export default {
                 "label": "Zmienny",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Tytuł wyświetlany agentom AI",
+                    "annotations": "Wskazówki dotyczące zachowania zadeklarowane dla narzędzia (read-only, destructive itp.)",
+                    "flow": "flow, który definiuje to narzędzie",
+                    "namespace": "Namespace flow, który definiuje to narzędzie",
+                    "triggerId": "Id trigger w obrębie flow, inne niż nazwa narzędzia",
+                    "description": "Co robi narzędzie i kiedy agent powinien je wywołać",
+                },
                 "blueprints": {
                     "tags": "Tagi powiązane z blueprintem",
                 },
@@ -3635,6 +3716,7 @@ export default {
             },
             "search options": "Pesquisar...",
             "search_placeholders": {
+                "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_blueprints": "Pesquisar blueprints",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_executions": "Pesquisar execuções",
@@ -3661,6 +3743,14 @@ export default {
                 "label": "Zestado",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título exibido aos agentes de IA",
+                    "annotations": "Dicas de comportamento declaradas na ferramenta (read-only, destructive, etc.)",
+                    "flow": "O flow que define esta ferramenta",
+                    "namespace": "Namespace do flow que define esta ferramenta",
+                    "triggerId": "Id do trigger dentro do flow, distinto do nome da ferramenta",
+                    "description": "O que a ferramenta faz e quando um agente deve chamá-la",
+                },
                 "blueprints": {
                     "tags": "Tags associados ao blueprint",
                 },
@@ -4016,6 +4106,7 @@ export default {
             },
             "search options": "Pesquisar...",
             "search_placeholders": {
+                "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_blueprints": "Pesquisar blueprints",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_executions": "Pesquisar execuções",
@@ -4042,6 +4133,14 @@ export default {
                 "label": "Zestado",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título exibido aos agentes de IA",
+                    "annotations": "Dicas de comportamento declaradas na ferramenta (read-only, destructive, etc.)",
+                    "flow": "O flow que define esta ferramenta",
+                    "namespace": "Namespace do flow que define esta ferramenta",
+                    "triggerId": "Id do trigger dentro do flow, distinto do nome da ferramenta",
+                    "description": "O que a ferramenta faz e quando um agente deve chamá-la",
+                },
                 "blueprints": {
                     "tags": "Tags associados ao blueprint",
                 },
@@ -4397,6 +4496,7 @@ export default {
             },
             "search options": "Поиск...",
             "search_placeholders": {
+                "search_mcp_tools": "Поиск инструментов MCP",
                 "search_blueprints": "Поиск blueprints",
                 "search_dashboards": "Искать панели...",
                 "search_executions": "Поиск выполнений",
@@ -4423,6 +4523,14 @@ export default {
                 "label": "Состояние",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Заголовок, отображаемый ИИ-агентам",
+                    "annotations": "Подсказки о поведении, объявленные для инструмента (read-only, destructive и т. д.)",
+                    "flow": "flow, который определяет этот инструмент",
+                    "namespace": "Namespace flow, который определяет этот инструмент",
+                    "triggerId": "Id trigger в пределах flow, отличается от имени инструмента",
+                    "description": "Что делает инструмент и когда агент должен его вызвать",
+                },
                 "blueprints": {
                     "tags": "Теги, связанные с blueprint",
                 },
@@ -4778,6 +4886,7 @@ export default {
             },
             "search options": "搜索...",
             "search_placeholders": {
+                "search_mcp_tools": "搜索 MCP 工具",
                 "search_blueprints": "搜索blueprint",
                 "search_dashboards": "搜索仪表板...",
                 "search_executions": "搜索执行",
@@ -4804,6 +4913,14 @@ export default {
                 "label": "状态",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "向 AI 智能体显示的标题",
+                    "annotations": "在工具上声明的行为提示（read-only、destructive 等）",
+                    "flow": "定义此工具的 flow",
+                    "namespace": "定义此工具的 flow 的 namespace",
+                    "triggerId": "flow 内的 trigger id（与工具名称不同）",
+                    "description": "工具的功能以及智能体何时应调用它",
+                },
                 "blueprints": {
                     "tags": "与blueprint关联的标签",
                 },

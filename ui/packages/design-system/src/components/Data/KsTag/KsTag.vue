@@ -71,22 +71,22 @@
         warning: (
             bg: var(--ks-log-background-warn),
             border: var(--ks-log-border-warn),
-            text: var(--ks-log-warn),
+            text: var(--ks-status-warn),
         ),
         danger: (
-            bg: var(--ks-log-background-error),
+            bg: #FF6A6C1A,
             border: var(--ks-log-border-error),
-            text: var(--ks-log-error),
+            text: var(--ks-status-error),
         ),
         error: (
             bg: var(--ks-log-background-error),
             border: var(--ks-log-border-error),
-            text: var(--ks-log-error),
+            text: var(--ks-status-error),
         ),
         info: (
             bg: var(--ks-log-background-info),
             border: var(--ks-log-border-info),
-            text: var(--ks-log-info),
+            text: var(--ks-status-info),
         ),
     );
 
@@ -102,6 +102,16 @@
             display: inline-flex;
             align-items: center;
             line-height: 0;
+
+            .material-design-icon,
+            .material-design-icon__svg {
+                width: 1em;
+                height: 1em;
+            }
+
+            .material-design-icon__svg {
+                position: static;
+            }
         }
 
         &.kel-tag--plain {

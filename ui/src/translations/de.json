@@ -1005,6 +1005,7 @@
       "create": "Server erstellen",
       "delete_confirm": "Möchten Sie diesen MCP-Server wirklich löschen?",
       "id_invalid": "Die ID muss mit einem Kleinbuchstaben oder einer Ziffer beginnen und darf nur Kleinbuchstaben, Ziffern, Bindestriche oder Unterstriche enthalten.",
+      "server_id": "Server-ID",
       "id_placeholder": "z.B. mein-mcp-server",
       "instructions": "Anweisungen",
       "main_tenant": "Haupt",

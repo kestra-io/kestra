@@ -206,6 +206,10 @@
 </script>
 
 <style scoped lang="scss">
+    :global(body .fullscreen-layout:has(.oss-login)) {
+        background: var(--ks-bg-base) url("../onboarding/assets/grid.svg") center calc(50% + 165px) / auto no-repeat;
+    }
+
     .oss-login {
         display: flex;
         flex-direction: column;

@@ -186,19 +186,30 @@
     const executionKind = computed<string | undefined>(() => {
         const kind = props.playground
             ? "PLAYGROUND"
-            : (executionsStore.execution as {kind?: string} | undefined)?.kind
+            : executionsStore.execution?.kind
         return kind && kind !== "NORMAL" ? kind : undefined
     })
 
-    // Per-execution log views default to NORMAL kind on the backend; surface this execution's own
-    // kind when it isn't NORMAL (e.g. PLAYGROUND) so its logs still load.
+    // Per-execution log views default to NORMAL kind on the backend; send this execution's own
+    // kind when it isn't NORMAL (e.g. LOOP or PLAYGROUND) so its logs still load.
     const kindParams = computed<Record<string, string>>(() => {
         const params: Record<string, string> = {}
         if (executionKind.value) {
-            params["filters[kind][IN]"] = executionKind.value
+            params["filters[kind][EQUALS]"] = executionKind.value
         }
         return params
     })
+    const stripKindParams = (params: Record<string, unknown>): Record<string, unknown> => {
+        const {["filters[kind][EQUALS]"]: _kind, ...rest} = params
+        return rest
+    }
+    const isEmptyLogsResponse = (logs: unknown): boolean => {
+        if (Array.isArray(logs)) {
+            return logs.length === 0
+        }
+        return Array.isArray((logs as {results?: unknown[]} | undefined)?.results)
+            && (logs as {results: unknown[]}).results.length === 0
+    }
 
     const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
@@ -238,6 +249,7 @@
 
     const logs = useTemplateRef<InstanceType<typeof TaskRunDetails>>("logs")
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
+    const reloadLogsAfterCurrentLoad = ref(false)
 
     const executionId = computed(() => executionsStore.execution?.id)
 
@@ -323,6 +335,23 @@
     watch(routeLevel, () => {
         if (raw_view.value && executionId.value) {
             refreshTemporalLogs()
+        }
+    })
+
+    watch(executionKind, () => {
+        if (!executionId.value) {
+            return
+        }
+
+        if (logsLoading.value) {
+            reloadLogsAfterCurrentLoad.value = true
+            return
+        }
+
+        if (raw_view.value) {
+            refreshTemporalLogs()
+        } else {
+            loadLogs({allowKindFallback: true})
         }
     })
 
@@ -419,14 +448,28 @@
     )
 
     // methods
-    function loadLogs() {
+    function loadLogs(options?: {allowKindFallback?: boolean}) {
         if (logsLoading.value) return
         logsLoading.value = true
+        const allowKindFallback = options?.allowKindFallback ?? true
+        const params = {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value}
         executionsStore.loadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            params,
+        }).then((logs: unknown) => {
+            if (allowKindFallback && executionKind.value && isEmptyLogsResponse(logs)) {
+                return executionsStore.loadLogs({
+                    executionId: executionId.value!,
+                    params: stripKindParams(params),
+                })
+            }
+            return logs
         }).finally(() => {
             logsLoading.value = false
+            if (reloadLogsAfterCurrentLoad.value) {
+                reloadLogsAfterCurrentLoad.value = false
+                loadLogs({allowKindFallback: true})
+            }
         })
     }
 

@@ -238,6 +238,7 @@
     import {useGanttExecutionFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
     import {useComplexFilters} from "../filter/composables/useComplexFilters"
+    import {buildGanttTasks, type GanttTaskWrapper} from "./ganttTasks"
     import QuickFilters from "../filter/QuickFilters.vue"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
@@ -264,12 +265,6 @@
         };
     }
 
-    interface TaskWrapper {
-        task: TaskRun;
-        depth: number | undefined;
-        children?: TaskWrapper[];
-    }
-
     interface SeriesItem {
         id: string;
         name: string;
@@ -284,7 +279,7 @@
         namespace?: string;
         executionId?: string;
         attempts: number;
-        depth: number | undefined;
+        depth: number;
         parentEndPercent?: number;
     }
 
@@ -378,48 +373,9 @@
         return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0
     })
 
-    const tasks = computed<TaskWrapper[]>(() => {
-        const rootTasks: TaskWrapper[] = []
-        const childTasks: TaskWrapper[] = []
-        const sortedTasks: TaskWrapper[] = []
-        const tasksById: Record<string, TaskWrapper> = {}
-
-        for (const task of (execution.value?.taskRunList || []) as TaskRun[]) {
-            const taskWrapper: TaskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0}
-            if (task.parentTaskRunId) {
-                childTasks.push(taskWrapper)
-            } else {
-                rootTasks.push(taskWrapper)
-            }
-            tasksById[task.id] = taskWrapper
-        }
-
-        for (let i = 0; i < childTasks.length; i++) {
-            const taskWrapper = childTasks[i]
-            const parentTask = tasksById[taskWrapper.task.parentTaskRunId!]
-            if (parentTask) {
-                taskWrapper.depth = parentTask.depth! + 1
-                tasksById[taskWrapper.task.id] = taskWrapper
-                if (!parentTask.children) {
-                    parentTask.children = []
-                }
-                parentTask.children.push(taskWrapper)
-            }
-        }
-
-        const nodeStart = (node: TaskWrapper): number => ts(node.task.state.histories[0].date)
-        const childrenSort = (nodes: TaskWrapper[]): void => {
-            nodes.sort((n1, n2) => (nodeStart(n1) > nodeStart(n2) ? 1 : -1))
-            for (const node of nodes) {
-                sortedTasks.push(node)
-                if (node.children) {
-                    childrenSort(node.children)
-                }
-            }
-        }
-        childrenSort(rootTasks)
-        return sortedTasks
-    })
+    const tasks = computed<Array<GanttTaskWrapper<TaskRun>>>(() =>
+        buildGanttTasks((execution.value?.taskRunList || []) as TaskRun[]),
+    )
 
     const taskTypeByTaskRun = computed<Array<[TaskRun, string | undefined]>>(() => {
         return series.value.map(serie => [serie.task, taskType(serie.task)])

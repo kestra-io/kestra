@@ -375,6 +375,10 @@
             ? executionsStore.execution
             : targetExecution.value,
     )
+    const followedExecutionKind = computed(() => {
+        const kind = followedExecution.value?.kind
+        return kind && kind !== "NORMAL" ? kind : undefined
+    })
 
     const currentTaskRuns = computed(() =>
         (followedExecution.value?.taskRunList?.filter((tr: any) => // FIXME: any
@@ -586,6 +590,21 @@
             }
         },
     )
+
+    watch(followedExecutionKind, () => {
+        if (!followedExecution.value) {
+            return
+        }
+
+        rawLogs.value = []
+        if (logsSSE.value && State.isRunning(followedExecution.value.state.current)) {
+            logsBuffer.value = []
+            closeLogsSSE()
+            followLogs(followedExecution.value.id)
+        } else {
+            loadLogs(followedExecution.value.id)
+        }
+    })
 
     watch(
         currentTaskRuns,
@@ -972,17 +991,21 @@
 
     function buildLogParams(): Record<string, unknown> {
         const p: Record<string, unknown> = {...levelToRequestParams(props.levelFilter)}
-        const taskId = taskRunById.value[props.taskRunId as string]?.taskId
-        if (taskId) {
-            p["filters[taskId][EQUALS]"] = taskId
+        if (props.taskRunId) {
+            p["filters[taskRunId][EQUALS]"] = props.taskRunId
         }
-        // Logs default to NORMAL kind on the backend; surface this execution's own kind when it
-        // isn't NORMAL (e.g. PLAYGROUND) so its logs still load.
-        const kind = followedExecution.value?.kind
+        // Logs default to NORMAL kind on the backend; send this execution's own kind when it
+        // isn't NORMAL (e.g. LOOP or PLAYGROUND) so its logs still load.
+        const kind = followedExecutionKind.value
         if (kind && kind !== "NORMAL") {
-            p["filters[kind][IN]"] = kind
+            p["filters[kind][EQUALS]"] = kind
         }
         return p
+    }
+
+    const stripKindParams = (params: Record<string, unknown>): Record<string, unknown> => {
+        const {["filters[kind][EQUALS]"]: _kind, ...rest} = params
+        return rest
     }
 
     function loadLogs(executionId?: string) {
@@ -991,6 +1014,17 @@
             .loadLogs({
                 executionId: executionId!,
                 params: p,
+                store: false,
+            })
+            .then((logs: any) => { // FIXME: any
+                if (followedExecutionKind.value && (logs?.results ?? logs ?? []).length === 0) {
+                    return executionsStore.loadLogs({
+                        executionId: executionId!,
+                        params: stripKindParams(p),
+                        store: false,
+                    })
+                }
+                return logs
             })
             .then((logs: any) => { // FIXME: any
                 // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.

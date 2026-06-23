@@ -84,6 +84,7 @@ export interface Execution{
     id: string;
     namespace: string;
     flowId: string;
+    kind?: "NORMAL" | "LOOP" | "PLAYGROUND" | "TEST";
     tenantId?: string;
     taskRunList:  {
         id: string,

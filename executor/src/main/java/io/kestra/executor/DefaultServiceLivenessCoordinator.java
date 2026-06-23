@@ -176,7 +176,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             boolean isUncleanShutdownService = isUncleanShutdownService(serviceInstance, now);
             if (isUncleanShutdownService) {
                 if (serviceInstance.config().workerTaskRestartStrategy().isRestartable()) {
-                    log.info("Trigger task restart for non-responding worker after termination grace period: {}.", serviceInstance.uid());
+                    log.info("Trigger task restart for non-responding worker (strategy={}): {}.",
+    serviceInstance.config().workerTaskRestartStrategy(), serviceInstance.uid());
                     reEmitWorkerJobsForWorker(txContext, serviceInstance.uid());
                 }
             } else if (serviceInstance.is(Service.ServiceState.TERMINATED_GRACEFULLY)) {
@@ -284,17 +285,23 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private boolean isUncleanShutdownService(final ServiceInstance instance, final Instant now) {
-        // ...all services that have transitioned to DISCONNECTED or TERMINATING for more than terminationGracePeriod.
-        if (instance.state().isDisconnectedOrTerminating() && instance.isTerminationGracePeriodElapsed(now)) {
-            maybeLogNonRespondingAfterTerminationGracePeriod(instance, now);
-            return true;
-        }
+    // When the restart strategy is IMMEDIATELY, skip the termination grace period wait entirely.
+    boolean isImmediately = instance.config() != null &&
+        instance.config().workerTaskRestartStrategy() == WorkerTaskRestartStrategy.IMMEDIATELY;
 
-        // ...all services that have transitioned to TERMINATED_FORCED.
-        // Only select workers that have been terminated for at least the grace period, to ensure that all in-flight
-        // task runs had enough time to be fully handled by the executors.
-        return instance.is(Service.ServiceState.TERMINATED_FORCED) && instance.isTerminationGracePeriodElapsed(now);
+    // ...all services that have transitioned to DISCONNECTED or TERMINATING.
+    // With IMMEDIATELY strategy, act as soon as the state is detected; otherwise wait for terminationGracePeriod.
+    if (instance.state().isDisconnectedOrTerminating() && (isImmediately || instance.isTerminationGracePeriodElapsed(now))) {
+        maybeLogNonRespondingAfterTerminationGracePeriod(instance, now);
+        return true;
     }
+
+    // ...all services that have transitioned to TERMINATED_FORCED.
+    // Only select workers that have been terminated for at least the grace period, to ensure that all in-flight
+    // task runs had enough time to be fully handled by the executors.
+    // With IMMEDIATELY strategy, skip the grace period wait.
+    return instance.is(Service.ServiceState.TERMINATED_FORCED) && (isImmediately || instance.isTerminationGracePeriodElapsed(now));
+}
 
     private boolean isNonRespondingService(final ServiceInstance instance, final Instant now) {
         boolean isNonResponding = instance.config() != null && // protect against non-complete instance

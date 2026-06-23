@@ -212,29 +212,29 @@
         align-items: center;
         gap: var(--ks-spacing-6);
         width: 320px;
+    }
 
-        &__icon {
-            width: 3.5rem;
-            height: 3.5rem;
-        }
+    .oss-login__icon {
+        width: 3.5rem;
+        height: 3.5rem;
+    }
 
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-xl);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            text-align: center;
-        }
+    .oss-login__title {
+        margin: 0;
+        font-size: var(--ks-font-size-xl);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        text-align: center;
+    }
 
-        &__form {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-4);
-            width: 100%;
-        }
+    .oss-login__form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
+        width: 100%;
+    }
 
-        &__submit {
-            width: 100%;
-        }
+    .oss-login__submit {
+        width: 100%;
     }
 </style>

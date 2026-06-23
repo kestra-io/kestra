@@ -2,8 +2,13 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.secret.SecretException;
+import io.kestra.core.secret.SecretNotFoundException;
+import io.kestra.core.secret.SecretService;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -74,6 +79,23 @@ class VariableRendererTest {
     }
 
     @Test
+    void shouldFailFastWhenSecretFunctionFailsInsteadOfFallingBackToHandlebars() {
+        // When
+        HandlebarsFallbackRenderer renderer = new HandlebarsFallbackRenderer(applicationContext, variableConfiguration);
+
+        IllegalVariableEvaluationException exception = Assertions.assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> renderer.render("{{ secret('hr-squad') }}", Map.of("flow", Map.of("namespace", "io.kestra.unittest")))
+        );
+
+        // Then: The real infrastructure failure (Vault 503) must be propagated in the cause chain...
+        assertThat(exception).hasRootCauseInstanceOf(SecretException.class);
+        assertThat(exception).rootCause().hasMessageContaining("503");
+        // ...and the Handlebars fallback must NOT have been invoked to mask it.
+        assertThat(renderer.handlebarsFallbackInvoked).isFalse();
+    }
+
+    @Test
     void shouldKeepKeyOrderWhenRenderingMap() throws IllegalVariableEvaluationException {
         final Map<String, Object> input = new LinkedHashMap<>();
         input.put("foo-1", "A");
@@ -103,6 +125,40 @@ class VariableRendererTest {
         @Override
         protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
             return "result";
+        }
+    }
+
+    /**
+     * Simulates the EE templates renderer ({@code io.kestra.plugin.templates.runners.VariableRenderer}):
+     * its {@code alternativeRender} re-renders with Handlebars, which chokes on native Pebble syntax
+     * and throws the cryptic {@code found: '...', expected: 'id'} error.
+     */
+    public static class HandlebarsFallbackRenderer extends VariableRenderer {
+
+        boolean handlebarsFallbackInvoked = false;
+
+        public HandlebarsFallbackRenderer(ApplicationContext applicationContext,
+                                          VariableConfiguration variableConfiguration) {
+            super(applicationContext, variableConfiguration);
+        }
+
+        @Override
+        protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+            this.handlebarsFallbackInvoked = true;
+            throw new IllegalVariableEvaluationException(
+                "inline@4a54038:1:10: found: ''hr-squad'', expected: 'id'\n" + inline
+            );
+        }
+    }
+
+    /**
+     * Simulates a Vault-backed secret manager that is unreachable (HTTP 502/503) while under heavy load.
+     */
+    @MockBean(SecretService.class)
+    public static class VaultUnreachableSecretService extends SecretService {
+        @Override
+        public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
+            throw new SecretException("Vault is unreachable: HTTP 503 Service Unavailable");
         }
     }
 

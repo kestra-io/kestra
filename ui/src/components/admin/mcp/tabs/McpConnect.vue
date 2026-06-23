@@ -122,6 +122,8 @@
     import {baseUrl} from "override/utils/route"
     import {copy} from "../../../../utils/utils"
 
+    defineOptions({inheritAttrs: false})
+
     type ClientId = "claude_desktop" | "claude_code" | "cursor" | "codex";
 
     const OAUTH_CLIENT_ID_PLACEHOLDER = "<client-id>"

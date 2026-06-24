@@ -94,6 +94,14 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
     }
 
+    private static FlowWithSource.FlowWithSourceBuilder<?, ?> builder(String tenantId, String flowId, String taskId) {
+        return FlowWithSource.builder()
+            .tenantId(tenantId)
+            .id(flowId)
+            .namespace(TEST_NAMESPACE)
+            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
+    }
+
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter) {

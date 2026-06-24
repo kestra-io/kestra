@@ -118,6 +118,10 @@
         themeObserver.observe(html, {attributes: true, attributeFilter: ["class"]});
     });
 
+    const emit = defineEmits<{
+        (e: "rendered"): void;
+    }>();
+
     /**
      * Main render function
      */
@@ -138,6 +142,7 @@
         await nextTick();
         enhanceContent();
         applySearchFilter();
+        emit("rendered");
     }
 
     /**

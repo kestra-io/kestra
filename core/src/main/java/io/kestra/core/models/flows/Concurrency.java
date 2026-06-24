@@ -19,6 +19,9 @@ public class Concurrency {
     @Builder.Default
     private Behavior behavior = Behavior.QUEUE;
 
+    @Min(0)
+    private Integer queueSize;
+
     public enum Behavior {
         QUEUE,
         CANCEL,

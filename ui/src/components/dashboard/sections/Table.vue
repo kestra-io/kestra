@@ -18,7 +18,6 @@
                     :currentPage="pageNumber"
                     :pageSize="pageSize"
                     :height="240"
-                    size="small"
                     tableLayout="fixed"
                     noPaginationGutter
                     noFirstColumnGutter
@@ -179,7 +178,6 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        font-size: var(--ks-font-size-sm);
     }
     
     .table-motion {

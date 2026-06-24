@@ -101,7 +101,7 @@
         border-radius: 0;
         background-color: var(--ks-bg-overlay);
         border: none;
-        font-size: var(--ks-font-size-sm);
+        font-size: var(--ks-font-size-base);
         height: 100%;
 
         &--striped {
@@ -118,7 +118,7 @@
             padding: 0 8px;
             word-break: break-word;
             font-weight: 400;
-            font-size: var(--ks-font-size-xs);
+            font-size: var(--ks-font-size-base);
         }
 
         .kel-table__inner-wrapper::before {
@@ -140,14 +140,14 @@
             border-bottom: 1px solid var(--ks-border-default);
             color: var(--ks-text-secondary);
             font-weight: 600;
-            font-size: var(--ks-font-size-sm);
+            font-size: var(--ks-font-size-base);
 
             div.cell {
                 word-break: normal;
                 white-space: nowrap;
                 font-weight: 600;
                 color: var(--ks-text-secondary);
-                font-size: var(--ks-font-size-xs);
+                font-size: var(--ks-font-size-base);
             }
         }
 

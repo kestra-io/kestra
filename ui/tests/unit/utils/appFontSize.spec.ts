@@ -63,10 +63,4 @@ describe("applyFontScale", () => {
         const {scale} = appFontSizeInfo(mode)
         expect(parseFloat(value)).toBeCloseTo(scale)
     })
-
-    it.each(modes)("stores _appBaseFontSize for %s mode", (mode) => {
-        applyFontScale(mode)
-        const {base} = appFontSizeInfo(mode)
-        expect(localStorage.getItem("_appBaseFontSize")).toBe(String(base))
-    })
 })

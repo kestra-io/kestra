@@ -200,6 +200,7 @@
     import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useStorage, useThrottleFn} from "@vueuse/core"
+    import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     // @ts-expect-error tab focus path lacks types
@@ -304,10 +305,9 @@
             write: (v) => (v === null ? "null" : String(v)),
         },
     })
-    const storedAppFontSizeMode = useStorage<string>("appFontSize", "medium")
-    const EDITOR_BASE_PX_MAP: Record<string, number> = {small: 12, medium: 14, large: 16}
+    const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
     const resolvedEditorFontSize = computed(
-        () => storedEditorFontSizeOverride.value ?? (EDITOR_BASE_PX_MAP[storedAppFontSizeMode.value] ?? 14),
+        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
     )
 
     const editorRef = ref<HTMLDivElement | null>(null)

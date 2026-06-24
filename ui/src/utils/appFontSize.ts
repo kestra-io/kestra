@@ -1,17 +1,11 @@
-export type AppFontSizeMode = "small" | "medium" | "large"
+import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "@kestra-io/design-system"
 
-export const APP_FONT_SIZE_KEY = "appFontSize"
+export {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode}
 
 const SCALE: Record<AppFontSizeMode, number> = {
     small: 12 / 14,
     medium: 1,
     large: 16 / 14,
-}
-
-export const BASE_PX: Record<AppFontSizeMode, number> = {
-    small: 12,
-    medium: 14,
-    large: 16,
 }
 
 export function appFontSizeInfo(mode: AppFontSizeMode): {scale: number; base: number} {
@@ -27,7 +21,5 @@ export function getAppFontSizeMode(): AppFontSizeMode {
 }
 
 export function applyFontScale(mode: AppFontSizeMode): void {
-    const {scale, base} = appFontSizeInfo(mode)
-    document.documentElement.style.setProperty("--ks-font-scale", String(scale))
-    localStorage.setItem("_appBaseFontSize", String(base))
+    document.documentElement.style.setProperty("--ks-font-scale", String(appFontSizeInfo(mode).scale))
 }

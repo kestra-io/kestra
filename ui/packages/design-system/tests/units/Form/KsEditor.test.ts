@@ -1,5 +1,5 @@
 import {describe, test, expect} from "vitest"
-import {isOffsetInPebbleBlock, isPebbleEnabled, PEBBLE_SCHEMA_TYPES} from "../../../src/utils/pebbleBlock"
+import {createPebbleEntryTracker, isOffsetInPebbleBlock, isPebbleEnabled, PEBBLE_SCHEMA_TYPES} from "../../../src/utils/pebbleBlock"
 import {findDuplicateTaskIds} from "../../../src/utils/yamlValidation"
 
 describe("KsEditor / pebbleBlock", () => {
@@ -82,6 +82,54 @@ errors:
     test("handles invalid yaml without throwing", () => {
         const yaml = ":::: not yaml ::::"
         expect(() => findDuplicateTaskIds(yaml)).not.toThrow()
+    })
+})
+
+describe("KsEditor / createPebbleEntryTracker", () => {
+    test("detects a fresh entry into a Pebble block", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(false)
+        tracker.track(true)
+        expect(tracker.consumeEntered()).toBe(true)
+    })
+
+    test("consumeEntered resets the flag", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(false)
+        tracker.track(true)
+        expect(tracker.consumeEntered()).toBe(true)
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
+    test("no entry while staying outside a Pebble block", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(false)
+        tracker.track(false)
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
+    test("no fresh entry while staying inside the same block", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(true)
+        expect(tracker.consumeEntered()).toBe(true)
+        // cursor keeps moving but stays in the block — should not re-trigger
+        tracker.track(true)
+        tracker.track(true)
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
+    // Regression for kestra #14989: a fast move out of and back into a `{{ }}` block,
+    // collapsed into a single debounced settle, must still register as a fresh entry.
+    // The previous implementation updated the latch only inside the debounced callback,
+    // so the intermediate "out" position was swallowed and autocomplete never reopened.
+    test("detects re-entry after a fast out-and-back round-trip", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(true) // already inside
+        expect(tracker.consumeEntered()).toBe(true)
+        // within a single debounce burst: leave, then return
+        tracker.track(false)
+        tracker.track(true)
+        expect(tracker.consumeEntered()).toBe(true)
     })
 })
 

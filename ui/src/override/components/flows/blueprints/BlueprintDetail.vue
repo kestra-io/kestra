@@ -23,7 +23,6 @@
     <BlueprintEmbedView
         v-else
         :blueprint
-        :flowGraph
         :tags
         :icons="pluginsStore.icons"
         :kind

@@ -402,12 +402,6 @@
     .revision-crud-info {
         width: calc(100% - var(--ks-spacing-4));
         margin-right: var(--ks-spacing-4);
-        :deep(> div) {
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
     }
 
 

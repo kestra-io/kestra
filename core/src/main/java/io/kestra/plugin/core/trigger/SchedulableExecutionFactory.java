@@ -38,7 +38,7 @@ final class SchedulableExecutionFactory {
         List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), conditionContext.getFlow(), variables);
 
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
-        executionLabels.add(new Label(Label.FROM, "trigger"));
+        executionLabels.add(new Label(Label.FROM, Label.FromLabel.TRIGGER.value));
         if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
             // add a correlation ID if none exist
             executionLabels.add(new Label(Label.CORRELATION_ID, runContext.getTriggerExecutionId()));

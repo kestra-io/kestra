@@ -95,6 +95,26 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
+    public void flowConcurrencyQueueSize(String tenantId) throws QueueException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-size", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-size", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        Execution executionResult1 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
+        Execution executionResult2 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution2);
+
+        assertThat(executionResult1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
+        assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
+        assertThat(execution3.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution3.getState().getHistories()).extracting(State.History::getState).containsExactly(State.Type.CREATED, State.Type.CANCELLED);
+    }
+
     public void flowConcurrencyQueuePause(String tenantId) throws QueueException {
         Execution execution1 = runnerUtils.runOneUntilPaused(tenantId, NAMESPACE, "flow-concurrency-queue-pause");
         Flow flow = flowRepository

@@ -274,6 +274,7 @@ body{
 #app main {
     flex: 1;
     overflow: auto;
+    scrollbar-gutter: stable;
 }
 
 #ks-monaco-overflow-widgets {

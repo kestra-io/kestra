@@ -78,6 +78,7 @@
     "automatic refresh": "Atualização automática",
     "avg": "Média",
     "avg duration": "Duração média da execução",
+    "back": "Voltar",
     "back_to_dashboard": "Voltar ao dashboard",
     "backfill": "Backfill",
     "backfill executions": "Execuções de backfill",
@@ -261,6 +262,8 @@
         "plural": "Dashboards",
         "singular": "Dashboard"
       },
+      "no_description": "Sem descrição",
+      "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
       "preview": "Visualizar Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -490,6 +493,7 @@
       "github": "Abrir um issue no GitHub"
     },
     "documentationMenu": "Menu de documentação",
+    "done": "Concluído",
     "down trend": "Diminuindo",
     "download": "Baixar",
     "download logs": "Baixar logs",
@@ -585,6 +589,10 @@
       "mcpToolFlows": {
         "content": "Exponha um flow como uma ferramenta MCP adicionando um <code>McpToolTrigger</code> a ele. Leia mais sobre o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> em nossa documentação.",
         "title": "Ainda não há flows de ferramenta registrados neste servidor."
+      },
+      "namespaceFiles": {
+        "content": "Os ficheiros do namespace funcionam como uma pasta de projeto para este namespace. Armazene código Python, SQL, dbt ou Terraform e, em seguida, referencie qualquer ficheiro nos seus flows com",
+        "title": "Ainda não há ficheiros neste namespace"
       },
       "panels": {
         "content": "Você fechou todos os painéis.  \nEscolha uma aba acima para continuar.",
@@ -974,6 +982,7 @@
       "auth_type": "Autenticação",
       "basic_auth": "Autenticação Básica",
       "bearer_token": "Autenticação por token Bearer",
+      "client_setup": "Configuração do Cliente",
       "connect": "Conectar",
       "connect_tab": {
         "auth_api_token_hint": "Defina <code>KESTRA_TOKEN</code> como uma variável de ambiente antes de iniciar o cliente.",
@@ -1000,6 +1009,7 @@
       "id_placeholder": "por exemplo, my-mcp-server",
       "instructions": "Instruções",
       "main_tenant": "principal",
+      "managed_by_kestra": "Gerenciado por Kestra",
       "no_oauth_providers": "Nenhum provedor OIDC configurado nesta instância",
       "no_servers": "Nenhum servidor MCP encontrado. Crie seu primeiro servidor para expor triggers da ferramenta MCP a agentes de IA externos.",
       "oauth": "OAuth",
@@ -1009,14 +1019,18 @@
       "oauth_provider_required": "O provedor OAuth é obrigatório quando o tipo de autenticação é OAuth",
       "page_description": "Exponha seus flows do Kestra como ferramentas para agentes de IA compatíveis com MCP",
       "private": "Privado",
+      "private_server": "Servidor privado",
       "public": "Público",
+      "public_hint": "Aviso: Servidores públicos não exigem autenticação. Qualquer pessoa com o URL pode chamar todas as ferramentas expostas por este servidor, sem verificações de namespace ou permissão. Use apenas para servidores seguros para expor externamente.",
       "save": "Salvar Alterações",
       "scopes_supported": "Scopes suportados",
       "scopes_supported_hint": "Scopes anunciados no documento Protected Resource Metadata deste servidor. Clientes MCP conformes com a especificação restringem o pedido de autorização a esta lista. Deixe vazio para omitir o campo e deixar os clientes recorrerem aos scopes anunciados pelo IdP.",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "Servidor MCP",
+      "server_id": "ID do servidor",
       "server_type": "Tipo de Servidor",
       "servers": "Servidores MCP",
+      "servers_count": "{{count}} Servidores MCP",
       "tab_connect": "Conectar",
       "tab_edit": "Editar",
       "tab_tool_flows": "Fluxos de Ferramentas",
@@ -1039,7 +1053,8 @@
         "view_flow": "Abrir flow"
       },
       "url_copied": "URL copiado!",
-      "username_password": "Nome de usuário & senha"
+      "username_password": "Nome de usuário & senha",
+      "your_servers": "Seus Servidores"
     },
     "metric": "Métrica",
     "metric choice": "Nenhuma métrica disponível para este flow",
@@ -1106,9 +1121,14 @@
         "import": "Importar",
         "success": "Arquivo(s) importado(s) com sucesso"
       },
+      "new_file": "Novo ficheiro",
       "no_items": {
         "heading": "Nenhum arquivo encontrado no seu namespace ainda.",
         "paragraph": "Crie ou importe arquivos para compartilhar código entre flows no seu namespace."
+      },
+      "no_selection": {
+        "description": "Selecione um ficheiro da árvore para ver o seu conteúdo.",
+        "heading": "Nenhum ficheiro selecionado"
       },
       "path": {
         "copy": "Copiar caminho",
@@ -1155,12 +1175,15 @@
     "neutral trend": "Estável",
     "new": "Novo",
     "new version": "Nova versão {version} disponível!",
+    "next": "Próximo",
     "next evaluation date": "Próxima data de avaliação",
     "next evaluation date tooltip": "Quando o trigger será avaliado novamente, com base em seu intervalo. Nem sempre é o mesmo que a próxima data de execução se as condições não forem atendidas.",
     "next execution date": "Próxima data de execução",
     "next_execution": "Próxima execução",
     "no data current task": "Não há dados disponíveis para a tarefa atual",
     "no inputs": "Este flow não tem inputs.",
+    "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
+    "no outputs available": "Nenhuma saída disponível para esta execução de task.",
     "no result": "Não há resultados para serem exibidos.",
     "no revisions": "Sem revisões",
     "no revisions found": "Existe apenas uma revisão para este flow",
@@ -1590,6 +1613,7 @@
     "replay inputs": "Entradas",
     "replay inputs new required": "Esta revisão possui inputs. Você será solicitado a preenchê-los.",
     "replay latest revision": "Repetir usando a última revisão",
+    "replay select taskrun": "Selecione a execução da task para reproduzir a partir de:",
     "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir com inputs",
@@ -1617,6 +1641,7 @@
     "resumed title": "Retomar execução <code>{id}</code>",
     "reuse original inputs": "Reutilizar inputs originais",
     "reuse_original_inputs": "Reutilizar inputs originais",
+    "review your inputs": "Reveja as suas entradas",
     "revision": "Revisão",
     "revision deleted": "A revisão {revision} foi excluída com sucesso",
     "revisions": "Revisões",
@@ -1768,6 +1793,7 @@
           },
           "descriptions": {
             "color_mode": "Escolha o tema de interface preferido.",
+            "color_mode_shortcut": "Dica: prima <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas a partir de qualquer lugar.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
             "editor_font_family": "Fonte monoespaçada usada no editor YAML.",
             "editor_font_size": "Tamanho da fonte usado nos editores YAML e no-code.",
@@ -1822,7 +1848,6 @@
         "username_hint": "Deve ser um endereço de e-mail válido."
       },
       "login": "Login",
-      "login_subtitle": "Insira suas credenciais para acessar sua instância do Kestra",
       "login_title": "Entrar",
       "logout": "Sair",
       "steps": {
@@ -1873,7 +1898,8 @@
         "firstName_required": "Nome é obrigatório",
         "incorrect_creds": "Nome de usuário ou senha inválidos. Certifique-se de que suas credenciais estão corretas.",
         "lastName_required": "Sobrenome obrigatório",
-        "password_invalid": "Senha inválida"
+        "password_invalid": "Senha inválida",
+        "password_required": "A palavra-passe é obrigatória"
       }
     },
     "show": "Mostrar",

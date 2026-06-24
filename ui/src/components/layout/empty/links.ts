@@ -4,6 +4,10 @@ export interface EmptyLinks {
 }
 
 export const links: Record<string, EmptyLinks> = {
+    namespaceFiles: {
+        video: "https://www.youtube.com/watch?v=BeQNI2XRddA",
+        learnMore: "https://kestra.io/docs/concepts/namespace-files",
+    },
     versionPlugin: {
         video: "https://www.youtube.com/watch?v=h-vmMGlTGM8&t=79s",
         learnMore: "https://kestra.io/docs/enterprise/instance/versioned-plugins",
@@ -54,7 +58,7 @@ export const links: Record<string, EmptyLinks> = {
     },
     mcpToolFlows: {
         video: "https://www.youtube.com/watch?v=QxaMnGuu0kI",
-        learnMore: "https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger",
+        learnMore: "https://kestra.io/docs/ai-tools/mcp-server",
     },
     concurrency_executions: {
         video: "https://www.youtube.com/watch?v=lDGOqqMyQEo",

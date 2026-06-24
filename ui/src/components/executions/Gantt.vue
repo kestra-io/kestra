@@ -242,7 +242,7 @@
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
-    import emptyIllustration from "../../assets/empty_visuals/assets-illus.svg"
+    import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
 

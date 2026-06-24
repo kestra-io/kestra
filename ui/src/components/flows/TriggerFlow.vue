@@ -29,7 +29,6 @@
             :showClose="true"
             :beforeClose="beforeClose"
             :appendToBody="true"
-            :width="dialogWidth"
         >
             <template #header>
                 <span v-html="t('execute the flow', {id: flowId})" />
@@ -45,7 +44,6 @@
             destroyOnClose
             :beforeClose="beforeSelectFlowClose"
             :appendToBody="true"
-            :width="dialogWidth"
         >
             <KsForm
                 labelPosition="top"
@@ -94,7 +92,6 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -140,7 +137,6 @@
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const localFlow = ref<ExecutableFlow | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
-    const isLargeScreen = useMediaQuery("(min-width: 768px)")
 
     function trackExecutionAction(action: string) {
         apiStore.posthogEvents({
@@ -246,10 +242,6 @@
         playgroundStore.enabled
             ? t("playground.run_all_tasks")
             : t("execute"),
-    )
-
-    const dialogWidth = computed(() =>
-        isLargeScreen.value ? "50%" : "90%",
     )
 
     const computedFlowId = computed(() =>

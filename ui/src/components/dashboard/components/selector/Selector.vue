@@ -7,7 +7,6 @@
             v-model="isOpen"
             destroyOnClose
             appendToBody
-            width="360px"
         >
             <template #header>
                 <h5 class="mb-0">

@@ -1,6 +1,7 @@
 package io.kestra.core.secret;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,6 +118,39 @@ public class SecretFunctionTest {
     }
 
     @Test
+    void shouldGetSecretGivenFull() throws IllegalVariableEvaluationException {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        // structured secret manager: value plus metadata
+        assertThat(variableRenderer.render("{{ secret('credential', full=true).value }}", context)).isEqualTo("my-password");
+        assertThat(variableRenderer.render("{{ secret('credential', full=true).metadata.username }}", context)).isEqualTo("my-user");
+        assertThat(variableRenderer.render("{{ secret('credential', full=true).metadata.domain }}", context)).isEqualTo("kestra-io");
+
+        // single-value secret: only value, no metadata
+        assertThat(variableRenderer.render("{{ secret('string-secret', full=true).value }}", context)).isEqualTo("string-value");
+    }
+
+    @Test
+    void shouldFailedGivenBothSubKeyAndFull() {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            variableRenderer.render("{{ secret('json-secret', subkey='string', full=true) }}", context);
+        }).getCause();
+        assertThat(cause.getMessage())
+            .isEqualTo("The 'secret' function cannot be called with both 'subkey' and 'full' arguments. ({{ secret('json-secret', subkey='string', full=true) }}:1)");
+    }
+
+    @Test
     void getUnknownSecret() {
         var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
         assertThat(exception.getMessage()).isEqualTo("Cannot find secret for key 'unknown_secret_key'.");
@@ -144,6 +178,17 @@ public class SecretFunctionTest {
                 return optional.get();
             }
             return super.findSecret(tenantId, namespace, key);
+        }
+
+        @Override
+        public SecretObject findSecretObject(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
+            if ("credential".equals(key)) {
+                Map<String, String> metadata = new LinkedHashMap<>();
+                metadata.put("username", "my-user");
+                metadata.put("domain", "kestra-io");
+                return new SecretObject("my-password", metadata);
+            }
+            return super.findSecretObject(tenantId, namespace, key);
         }
     }
 }

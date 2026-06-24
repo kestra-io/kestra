@@ -78,6 +78,7 @@
     "automatic refresh": "자동 새로 고침",
     "avg": "평균",
     "avg duration": "평균 실행 시간",
+    "back": "뒤로",
     "back_to_dashboard": "대시보드로 돌아가기",
     "backfill": "Backfill",
     "backfill executions": "backfill 실행",
@@ -261,6 +262,8 @@
         "plural": "대시보드",
         "singular": "대시보드"
       },
+      "no_description": "설명 없음",
+      "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -490,6 +493,7 @@
       "github": "GitHub 이슈 열기"
     },
     "documentationMenu": "문서 메뉴",
+    "done": "완료",
     "down trend": "감소 중",
     "download": "다운로드",
     "download logs": "Logs 다운로드",
@@ -585,6 +589,10 @@
       "mcpToolFlows": {
         "content": "<code>McpToolTrigger</code>를 추가하여 flow를 MCP 도구로 노출합니다. <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
         "title": "이 서버에는 아직 등록된 tool flow가 없습니다."
+      },
+      "namespaceFiles": {
+        "content": "namespace 파일은 이 namespace의 프로젝트 폴더처럼 작동합니다. Python, SQL, dbt 또는 Terraform 코드를 저장한 다음, flow에서 다음을 사용하여 모든 파일을 참조하세요",
+        "title": "이 namespace에 아직 파일이 없습니다"
       },
       "panels": {
         "content": "모든 패널을 닫았습니다.  \n계속하려면 위의 탭을 선택하세요.",
@@ -974,6 +982,7 @@
       "auth_type": "인증",
       "basic_auth": "기본 인증",
       "bearer_token": "베어러 토큰 인증",
+      "client_setup": "클라이언트 설정",
       "connect": "연결",
       "connect_tab": {
         "auth_api_token_hint": "클라이언트를 시작하기 전에 <code>KESTRA_TOKEN</code>을 환경 변수로 설정하세요.",
@@ -1000,6 +1009,7 @@
       "id_placeholder": "예: my-mcp-server",
       "instructions": "지침",
       "main_tenant": "메인",
+      "managed_by_kestra": "Kestra에서 관리",
       "no_oauth_providers": "이 인스턴스에 구성된 OIDC 공급자가 없습니다",
       "no_servers": "MCP 서버를 찾을 수 없습니다. 외부 AI 에이전트에 MCP Tool trigger를 노출하기 위해 첫 번째 서버를 생성하세요.",
       "oauth": "OAuth",
@@ -1009,14 +1019,18 @@
       "oauth_provider_required": "인증 유형이 OAuth인 경우 OAuth 공급자가 필요합니다",
       "page_description": "Kestra flow를 MCP 호환 AI 에이전트의 도구로 노출하십시오.",
       "private": "비공개",
+      "private_server": "프라이빗 서버",
       "public": "공개",
+      "public_hint": "경고: 공개 서버는 인증이 필요하지 않습니다. URL을 아는 누구나 namespace 또는 권한 확인 없이 이 서버에 의해 노출된 모든 도구를 호출할 수 있습니다. 외부에 노출해도 안전한 서버에만 사용하십시오.",
       "save": "변경 사항 저장",
       "scopes_supported": "지원되는 scope",
       "scopes_supported_hint": "이 서버의 Protected Resource Metadata 문서에 공개된 scope. 사양을 준수하는 MCP 클라이언트는 이 목록으로 인증 요청을 제한합니다. 필드를 생략하고 클라이언트가 IdP의 공개 scope로 대체할 수 있도록 비워 두세요.",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP 서버",
+      "server_id": "서버 ID",
       "server_type": "서버 유형",
       "servers": "MCP 서버",
+      "servers_count": "{count} MCP 서버",
       "tab_connect": "연결",
       "tab_edit": "편집",
       "tab_tool_flows": "도구 Flows",
@@ -1039,7 +1053,8 @@
         "view_flow": "flow 열기"
       },
       "url_copied": "URL이 복사되었습니다!",
-      "username_password": "사용자 이름 & 비밀번호"
+      "username_password": "사용자 이름 & 비밀번호",
+      "your_servers": "내 서버"
     },
     "metric": "메트릭",
     "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
@@ -1106,9 +1121,14 @@
         "import": "가져오기",
         "success": "파일이 성공적으로 가져와졌습니다"
       },
+      "new_file": "새 파일",
       "no_items": {
         "heading": "아직 namespace에 파일이 없습니다.",
         "paragraph": "파일을 생성하거나 가져와서 namespace 내의 flow 간에 코드를 공유하세요."
+      },
+      "no_selection": {
+        "description": "내용을 보려면 트리에서 파일을 선택하세요.",
+        "heading": "선택된 파일 없음"
       },
       "path": {
         "copy": "경로 복사",
@@ -1155,12 +1175,15 @@
     "neutral trend": "안정적",
     "new": "새로 만들기",
     "new version": "새 버전 {version} 사용 가능!",
+    "next": "다음",
     "next evaluation date": "다음 평가 날짜",
     "next evaluation date tooltip": "트리거가 다음으로 평가될 시점은 간격을 기준으로 합니다. 조건이 충족되지 않으면 다음 실행 날짜와 항상 같지 않을 수 있습니다.",
     "next execution date": "다음 실행 날짜",
     "next_execution": "다음 실행",
     "no data current task": "현재 task에 대한 데이터가 없습니다.",
     "no inputs": "이 flow에는 입력이 없습니다.",
+    "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
+    "no outputs available": "이 task 실행에 대한 output이 없습니다.",
     "no result": "결과가 없습니다.",
     "no revisions": "리비전 없음",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
@@ -1590,6 +1613,7 @@
     "replay inputs": "입력",
     "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
+    "replay select taskrun": "어떤 task run을 재생할지 선택하십시오:",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "replay using": "사용하여 재실행",
     "replay with inputs": "입력과 함께 재실행",
@@ -1617,6 +1641,7 @@
     "resumed title": "실행 <code>{id}</code> 재개",
     "reuse original inputs": "원래 input 재사용",
     "reuse_original_inputs": "원래 input 재사용",
+    "review your inputs": "입력 내용을 검토하세요",
     "revision": "수정본",
     "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "revisions": "수정본들",
@@ -1768,6 +1793,7 @@
           },
           "descriptions": {
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
+            "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
             "editor_font_family": "YAML 편집기에서 사용되는 모노스페이스 글꼴.",
             "editor_font_size": "YAML 및 no-code 편집기에서 사용되는 글꼴 크기.",
@@ -1822,7 +1848,6 @@
         "username_hint": "유효한 이메일 주소여야 합니다."
       },
       "login": "로그인",
-      "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",
       "login_title": "로그인",
       "logout": "로그아웃",
       "steps": {
@@ -1873,7 +1898,8 @@
         "firstName_required": "이름이 필요합니다",
         "incorrect_creds": "잘못된 사용자 이름 또는 비밀번호입니다. 자격 증명이 올바른지 확인하세요.",
         "lastName_required": "성을 입력해야 합니다",
-        "password_invalid": "잘못된 비밀번호"
+        "password_invalid": "잘못된 비밀번호",
+        "password_required": "비밀번호는 필수입니다"
       }
     },
     "show": "보기",

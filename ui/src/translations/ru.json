@@ -78,6 +78,7 @@
     "automatic refresh": "Автоматическое обновление",
     "avg": "Среднее",
     "avg duration": "Средняя длительность выполнения",
+    "back": "Назад",
     "back_to_dashboard": "Вернуться на панель управления",
     "backfill": "Заполнение",
     "backfill executions": "Выполнения заполнение",
@@ -261,6 +262,8 @@
         "plural": "Панели управления",
         "singular": "Панель управления"
       },
+      "no_description": "Нет описания",
+      "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "preview": "Предварительный просмотр Dashboard",
       "quick_filters": {
         "all": "Все",
@@ -490,6 +493,7 @@
       "github": "Открыть проблему на GitHub"
     },
     "documentationMenu": "Меню документации",
+    "done": "Готово",
     "down trend": "Уменьшается",
     "download": "Скачать",
     "download logs": "Скачать логи",
@@ -585,6 +589,10 @@
       "mcpToolFlows": {
         "content": "Представьте flow как инструмент MCP, добавив в него <code>McpToolTrigger</code>. Подробнее о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> читайте в нашей документации.",
         "title": "На этом сервере еще не зарегистрированы tool flows."
+      },
+      "namespaceFiles": {
+        "content": "Файлы namespace работают как папка проекта для этого namespace. Храните код Python, SQL, dbt или Terraform, а затем ссылайтесь на любой файл в своих flows с помощью",
+        "title": "В этом namespace пока нет файлов"
       },
       "panels": {
         "content": "Вы закрыли все панели.  \nВыберите вкладку выше, чтобы продолжить.",
@@ -974,6 +982,7 @@
       "auth_type": "Аутентификация",
       "basic_auth": "Базовая аутентификация",
       "bearer_token": "Аутентификация с использованием Bearer token",
+      "client_setup": "Настройка клиента",
       "connect": "Подключить",
       "connect_tab": {
         "auth_api_token_hint": "Перед запуском клиента установите <code>KESTRA_TOKEN</code> как переменную окружения.",
@@ -1000,6 +1009,7 @@
       "id_placeholder": "например, my-mcp-server",
       "instructions": "Инструкции",
       "main_tenant": "главная",
+      "managed_by_kestra": "Управляется Kestra",
       "no_oauth_providers": "В этом экземпляре не настроены OIDC-провайдеры",
       "no_servers": "Серверы MCP не найдены. Создайте первый сервер, чтобы предоставить триггеры MCP Tool внешним AI-агентам.",
       "oauth": "OAuth",
@@ -1009,14 +1019,18 @@
       "oauth_provider_required": "Провайдер OAuth обязателен, когда тип аутентификации — OAuth",
       "page_description": "Предоставьте ваши Kestra flows как инструменты для MCP-совместимых AI агентов",
       "private": "Частный",
+      "private_server": "Частный сервер",
       "public": "Публичный",
+      "public_hint": "Внимание: Публичные серверы не требуют аутентификации. Любой, у кого есть URL-адрес, может вызывать любой инструмент, предоставляемый этим сервером, без проверок namespace или разрешений. Используйте только для серверов, которые безопасно предоставлять внешне.",
       "save": "Сохранить изменения",
       "scopes_supported": "Поддерживаемые scopes",
       "scopes_supported_hint": "Scopes, объявленные в документе Protected Resource Metadata этого сервера. MCP-клиенты, соответствующие спецификации, ограничивают запрос авторизации этим списком. Оставьте пустым, чтобы пропустить поле и позволить клиентам использовать scopes, объявленные IdP.",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "Сервер MCP",
+      "server_id": "ID сервера",
       "server_type": "Тип сервера",
       "servers": "Серверы MCP",
+      "servers_count": "{count} MCP Серверов",
       "tab_connect": "Подключиться",
       "tab_edit": "Редактировать",
       "tab_tool_flows": "Инструменты Flow",
@@ -1039,7 +1053,8 @@
         "view_flow": "Открыть flow"
       },
       "url_copied": "URL скопирован!",
-      "username_password": "Имя пользователя и пароль"
+      "username_password": "Имя пользователя и пароль",
+      "your_servers": "Ваши серверы"
     },
     "metric": "Метрика",
     "metric choice": "Для этого flow метрики недоступны",
@@ -1106,9 +1121,14 @@
         "import": "Импортировать",
         "success": "Файл(ы) успешно импортированы"
       },
+      "new_file": "Новый файл",
       "no_items": {
         "heading": "В вашем namespace пока нет файлов.",
         "paragraph": "Создайте или импортируйте файлы для обмена кодом между flows в вашем namespace."
+      },
+      "no_selection": {
+        "description": "Выберите файл из дерева, чтобы просмотреть его содержимое.",
+        "heading": "Файлы не выбраны"
       },
       "path": {
         "copy": "Скопировать путь",
@@ -1155,12 +1175,15 @@
     "neutral trend": "Стабильно",
     "new": "Новый",
     "new version": "Доступна новая версия {version}!",
+    "next": "Далее",
     "next evaluation date": "Следующая дата оценки",
     "next evaluation date tooltip": "Когда trigger будет оцениваться в следующий раз, на основе его интервала. Не всегда совпадает с датой следующей Ausführung, если условия не выполнены.",
     "next execution date": "Дата следующего выполнения",
     "next_execution": "Следующее выполнение",
     "no data current task": "Для текущего task нет доступных данных",
     "no inputs": "Этот flow не имеет входных данных.",
+    "no metrics available": "Для этого выполнения task метрики не записаны.",
+    "no outputs available": "Для этого выполнения task нет доступных outputs.",
     "no result": "Нет результатов для отображения.",
     "no revisions": "Нет ревизий",
     "no revisions found": "Для этого flow существует только одна редакция",
@@ -1590,6 +1613,7 @@
     "replay inputs": "Входные данные",
     "replay inputs new required": "Эта редакция имеет inputs. Вам будет предложено их заполнить.",
     "replay latest revision": "Повтор с использованием последней редакции",
+    "replay select taskrun": "Выберите выполнение task для повторного воспроизведения из:",
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
     "replay using": "Повторное воспроизведение с использованием",
     "replay with inputs": "Воспроизвести с inputами",
@@ -1617,6 +1641,7 @@
     "resumed title": "Возобновить выполнение <code>{id}</code>",
     "reuse original inputs": "Повторное использование оригинальных input",
     "reuse_original_inputs": "Повторно использовать оригинальные inputы",
+    "review your inputs": "Проверьте введённые данные",
     "revision": "Редакция",
     "revision deleted": "Ревизия {revision} была успешно удалена",
     "revisions": "Редакции",
@@ -1768,6 +1793,7 @@
           },
           "descriptions": {
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
+            "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
             "editor_font_family": "Моноширинный шрифт, используемый в редакторе YAML.",
             "editor_font_size": "Размер шрифта, используемый в редакторах YAML и no-code.",
@@ -1822,7 +1848,6 @@
         "username_hint": "Должен быть действительный адрес электронной почты."
       },
       "login": "Войти",
-      "login_subtitle": "Введите свои учетные данные для доступа к вашему экземпляру Kestra",
       "login_title": "Войти",
       "logout": "Выход",
       "steps": {
@@ -1873,7 +1898,8 @@
         "firstName_required": "Имя обязательно",
         "incorrect_creds": "Неверное имя пользователя или пароль. Убедитесь, что ваши учетные данные верны.",
         "lastName_required": "Требуется фамилия",
-        "password_invalid": "Неверный пароль"
+        "password_invalid": "Неверный пароль",
+        "password_required": "Пароль обязателен"
       }
     },
     "show": "Показать",

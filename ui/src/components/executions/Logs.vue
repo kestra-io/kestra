@@ -287,6 +287,13 @@
                     sseFlushTimer = setTimeout(flushSseBuffer, 200)
                 }
             }
+            // Close on error: without this, EventSource auto-reconnects (~every 3s)
+            // and each reconnect opens a fresh server-side log-follow stream whose
+            // Netty direct buffers are not promptly reclaimed, leaking off-heap
+            // memory over time. See kestra-io/kestra#16982.
+            sse.onerror = () => {
+                closeLogsSSE()
+            }
         })
     }
 

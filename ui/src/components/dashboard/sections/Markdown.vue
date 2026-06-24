@@ -3,16 +3,24 @@
         <KsMarkdown :content="data" />
     </section>
 
+    <KsNoData
+        v-else-if="isFlowDescription"
+        :icon="FileDocumentOutline"
+        :title="$t('dashboards.no_description')"
+        :description="$t('dashboards.no_description_hint')"
+    />
+
     <KsNoData v-else />
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref} from "vue"
+    import {PropType, watch, ref, computed} from "vue"
 
     import type {Chart} from "../composables/useDashboards"
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards"
 
     import {KsMarkdown} from "@kestra-io/design-system"
+    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import {FilterObject} from "../../../utils/filters"
 
     const props = defineProps({
@@ -27,10 +35,12 @@
     import {useRoute} from "vue-router"
 
     const route = useRoute()
-    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
+    const {generate} = useChartGenerator(props.dashboardId, props, false)
+
+    const isFlowDescription = computed(() => props.chart.source?.type === "FlowDescription")
 
     const getData = async () => {
-        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(), "description") ?? EMPTY_TEXT
+        if (isFlowDescription.value) data.value = getPropertyValue(await generate(), "description") || null
         else data.value = props.chart.content ?? props.chart.source?.content
     }
 

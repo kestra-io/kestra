@@ -41,7 +41,7 @@
         closeOnClickModal: undefined,
         closeOnPressEscape: undefined,
         showClose: undefined,
-        width: undefined,
+        width: "min(500px, 90vw)",
         top: undefined,
         beforeClose: undefined,
     })

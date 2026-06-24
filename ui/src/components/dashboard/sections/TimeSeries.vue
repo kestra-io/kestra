@@ -18,6 +18,7 @@
             :options="echartsOption"
             :loading="false"
             :tooltipType="TooltipType.EXTERNAL"
+            :stickyTooltip="props.short"
             @echarts-click="onChartClick"
         />
     </div>

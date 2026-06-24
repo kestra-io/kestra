@@ -502,7 +502,7 @@ public class ExecutorService {
         List<TaskRun> running = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
+            .filter(taskRun -> taskRun.getState().getCurrent().onlyRunning())
             .toList();
 
         // Remove functional style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'

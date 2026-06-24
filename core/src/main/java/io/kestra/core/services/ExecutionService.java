@@ -486,8 +486,13 @@ public class ExecutionService {
                             targetState = State.Type.KILLED;
                         }
                     } else {
-                        // we should set the state to RUNNING so that subtasks are executed
-                        targetState = State.Type.RUNNING;
+                        // when killing, terminate immediately without executing subtasks
+                        if (newState == State.Type.KILLING) {
+                            targetState = State.Type.KILLED;
+                        } else {
+                            // we should set the state to RUNNING so that subtasks are executed
+                            targetState = State.Type.RUNNING;
+                        }
                     }
                     newTaskRun = newTaskRun.withState(targetState);
                 } else {

@@ -1643,7 +1643,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/inputs.yaml" })
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "searchexecutions")
     void searchExecutions() {
         String tenantId = "searchexecutions";
         when(tenantService.resolveTenant()).thenReturn(tenantId);

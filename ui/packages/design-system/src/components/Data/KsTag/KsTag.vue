@@ -84,8 +84,8 @@
             text: var(--ks-status-error),
         ),
         info: (
-            bg: var(--ks-log-background-info),
-            border: var(--ks-log-border-info),
+            bg: #718BFE1A,
+            border: transparent,
             text: var(--ks-status-info),
         ),
     );

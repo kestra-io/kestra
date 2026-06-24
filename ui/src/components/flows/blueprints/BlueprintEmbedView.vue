@@ -15,19 +15,6 @@
     </header>
 
     <section class="content" v-ks-loading="!blueprint">
-        <KsCard v-if="blueprint && kind === 'flow' && flowGraph">
-            <div class="topology">
-                <LowCodeEditor
-                    viewType="source-blueprints"
-                    isReadOnly
-                    :flowId="parsedFlow.id"
-                    :namespace="parsedFlow.namespace"
-                    :flowGraph="flowGraph"
-                    :source="blueprint.source"
-                />
-            </div>
-        </KsCard>
-
         <template v-if="blueprint">
             <KsCard>
                 <KsEditor
@@ -54,13 +41,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-
     import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
-    import LowCodeEditor from "../../inputs/LowCodeEditor.vue"
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
     import BlueprintOverview from "./BlueprintOverview.vue"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
@@ -68,13 +51,11 @@
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {shortDescription?: string};
-        flowGraph?: any;
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
         kind?: string;
     }>(), {
         blueprint: undefined,
-        flowGraph: undefined,
         tags: undefined,
         icons: () => ({}),
         kind: "flow",
@@ -83,12 +64,6 @@
     const emit = defineEmits<{back: []}>()
 
     const editorBindings = useEditorBindings()
-
-    const parsedFlow = computed(() =>
-        props.blueprint?.source
-            ? {...YAML_UTILS.parse(props.blueprint.source), source: props.blueprint.source}
-            : {},
-    )
 </script>
 
 <style scoped lang="scss">
@@ -135,11 +110,6 @@
 
         :deep(.kel-card__body) {
             padding: 0;
-        }
-
-        .topology {
-            width: 100%;
-            height: 30vh;
         }
 
         .markdown {

@@ -950,7 +950,9 @@
     width: 20%;
 
     .filter{
-        .kel-input__wrapper {
+        :deep(.kel-select__wrapper) {
+            min-height: 32px;
+            height: 32px;
             padding-right: 0px;
         }
     }

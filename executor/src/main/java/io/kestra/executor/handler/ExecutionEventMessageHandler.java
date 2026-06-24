@@ -28,6 +28,7 @@ import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
@@ -146,10 +147,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                             ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
                             {
-                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                Integer queueSize = flow.getConcurrency().getQueueSize();
+                                int queuedCount = queueSize == null ? 0 : executionQueuedStateStore.count(txContext, flow.getTenantId(), flow.getNamespace(), flow.getId());
+                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), queuedCount, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
                                 if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
                                     return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
-                                } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                }
+                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                     executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
                                 }
                                 return Pair.of(computed, concurrencyLimit);

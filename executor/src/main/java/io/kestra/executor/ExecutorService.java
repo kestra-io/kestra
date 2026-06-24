@@ -92,15 +92,34 @@ public class ExecutorService {
     @Inject
     private TaskOutputService taskOutputService;
 
-    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
+    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, int queuedCount, ExecutionRunning executionRunning) {
         // if concurrency was removed, it can be null as we always get the latest flow definition
         if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
+                    Integer queueSize = flow.getConcurrency().getQueueSize();
+                    if (queueSize != null && queuedCount >= queueSize) {
+                        Logs.logExecution(
+                            executionRunning.getExecution(),
+                            Level.INFO,
+                            "Execution is cancelled because the concurrency queue is full, " + "{} queued execution(s), maximum queue size is {}", queuedCount, queueSize
+                        );
+
+                        yield executionRunning
+                            .withExecution(
+                                executionRunning
+                                    .getExecution()
+                                    .withState(State.Type.CANCELLED)
+                            )
+                            .withConcurrencyState(
+                                ExecutionRunning.ConcurrencyState.CANCELLED
+                            );
+                    }
+
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
-                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
+                        "Execution is queued due to concurrency limit exceeded, " + "{} running(s)",
                         runningCount
                     );
                     var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);

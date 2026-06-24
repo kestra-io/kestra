@@ -20,6 +20,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -46,6 +47,10 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
 
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected String version;
+
+    @PluginProperty(group = "advanced")
+    @Schema(title = "Reference (`ref`) of the `pluginDefaults` to apply to this task runner.")
+    protected String pluginDefaultsRef;
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)

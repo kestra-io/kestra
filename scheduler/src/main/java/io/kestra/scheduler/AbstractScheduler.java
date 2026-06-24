@@ -24,6 +24,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import io.kestra.core.exceptions.PluginDefaultsRefNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.Condition;
@@ -734,6 +735,11 @@ public abstract class AbstractScheduler implements Scheduler {
                             if (this.interval(f.getAbstractTrigger()) != null) {
                                 // If it has an interval, the Worker will execute the trigger.
                                 // Normally, only the Schedule trigger has no interval.
+                                // a surviving 'pluginDefaultsRef' means plugin-default injection could not resolve the
+                                // referenced plugin-defaults: fail the trigger evaluation instead of sending a bad job to the worker
+                                if (f.getAbstractTrigger().getPluginDefaultsRef() != null) {
+                                    throw new PluginDefaultsRefNotFoundException(f.getAbstractTrigger().getPluginDefaultsRef());
+                                }
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
                                 var flowWithTrigger = f.toBuilder().triggerContext(triggerRunning).build();
                                 try {

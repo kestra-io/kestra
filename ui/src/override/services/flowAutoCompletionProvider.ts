@@ -311,10 +311,24 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (parentTask !== undefined && parentTask.namespace !== undefined && parentTask.flowId !== undefined) {
                     return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(yamlElement.value ?? {}));
                 }
+                break;
+            }
+            case "pluginDefaultsRef": {
+                return Promise.resolve(this.flowPluginDefaultsRefs(parsed));
             }
         }
 
         return Promise.resolve([]);
+    }
+
+    /**
+     * Distinct `ref` ids declared in the flow's own `pluginDefaults` block.
+     */
+    protected flowPluginDefaultsRefs(parsed: any | undefined): string[] {
+        const refs = (parsed?.pluginDefaults ?? [])
+            .map((pluginDefault: {ref?: string}) => pluginDefault?.ref)
+            .filter((ref: string | undefined): ref is string => Boolean(ref))
+        return [...new Set<string>(refs)]
     }
 
     private extractArgValue(arg: string | undefined) {

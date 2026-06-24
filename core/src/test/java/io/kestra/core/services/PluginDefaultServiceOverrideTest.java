@@ -146,6 +146,57 @@ class PluginDefaultServiceOverrideTest {
         assertThat(result.getPropBar(), is("namespaceValue"));
     }
 
+    /**
+     * When a {@code forced} (admin-enforced) type default matches a plugin that also declares a
+     * {@code pluginDefaultsRef}, enforcement takes over entirely: the referenced plugin-defaults is ignored —
+     * not stacked. The forced value wins on the enforced property AND the ref's other (non-overlapping)
+     * properties are dropped.
+     */
+    @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
+    @Test
+    void forcedTypeDefaultBeatsForcedRef() throws FlowProcessingException {
+        final DefaultPrecedenceTester task = DefaultPrecedenceTester.builder()
+            .id("test")
+            .type(DefaultPrecedenceTester.class.getName())
+            .pluginDefaultsRef("bypass")
+            .propFoo("taskValue")
+            .build();
+
+        // a forced ref cannot bypass a forced TYPE default: even though flow-level 'forced' is honored on this
+        // release line, the forced type default still takes over entirely and the ref is ignored (no stacking)
+        final PluginDefault flowForcedRef = PluginDefault.builder()
+            .type(DefaultPrecedenceTester.class.getName())
+            .ref("bypass")
+            .forced(true)
+            .values(ImmutableMap.of("propFoo", "refValue", "propBar", "refBar"))
+            .build();
+
+        final PluginDefault globalForcedType = new PluginDefault(
+            DefaultPrecedenceTester.class.getName(), true, ImmutableMap.of("propFoo", "globalValue")
+        );
+
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceOverrideTest.class.getSimpleName());
+        final Flow flow = Flow.builder()
+            .tenantId(tenant)
+            .tasks(Collections.singletonList(task))
+            .pluginDefaults(List.of(flowForcedRef))
+            .build();
+
+        final PluginGlobalDefaultConfiguration config = new PluginGlobalDefaultConfiguration();
+        config.defaults = List.of(globalForcedType);
+
+        var previous = pluginDefaultService.pluginGlobalDefault;
+        pluginDefaultService.pluginGlobalDefault = config;
+        final Flow injected = pluginDefaultService.injectAllDefaults(flow, true);
+        pluginDefaultService.pluginGlobalDefault = previous;
+
+        DefaultPrecedenceTester result = (DefaultPrecedenceTester) injected.getTasks().getFirst();
+        // forced TYPE default wins on the enforced property...
+        assertThat(result.getPropFoo(), is("globalValue"));
+        // ...and the ref is ignored entirely — its non-overlapping property does NOT stack on top
+        assertThat(result.getPropBar(), is((String) null));
+    }
+
     private static Stream<Arguments> flowDefaultsOverrideGlobalDefaults() {
         return Stream.of(
             Arguments.of(false, false, "globalValue", "flowValue", "taskValue"),

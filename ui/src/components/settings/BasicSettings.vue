@@ -124,20 +124,22 @@
             </SettingRow>
 
             <SettingRow
-                :label="$t('settings.blocks.theme.fields.editor_font_family')"
-                :description="$t('settings.blocks.theme.descriptions.editor_font_family')"
-            >
-                <KsSelect fit :modelValue="settings.editorFontFamily" @update:model-value="onFontFamily">
-                    <KsOption v-for="item in fontFamilyOptions" :key="item.value" :label="item.text" :value="item.value" />
-                </KsSelect>
-            </SettingRow>
-
-            <SettingRow
                 :label="$t('settings.blocks.theme.fields.editor_font_size')"
                 :description="$t('settings.blocks.theme.descriptions.editor_font_size')"
             >
                 <KsSelect fit :modelValue="effectiveEditorFontSize" @update:model-value="onFontSize">
                     <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_font_family')"
+                :description="$t('settings.blocks.theme.descriptions.editor_font_family')"
+            >
+                <KsSelect fit :modelValue="settings.editorFontFamily" @update:model-value="onFontFamily">
+                    <KsOption v-for="item in fontFamilyOptions" :key="item.value" :label="item.text" :value="item.value">
+                        <span :style="{fontFamily: item.value}">{{ item.text }}</span>
+                    </KsOption>
                 </KsSelect>
             </SettingRow>
 

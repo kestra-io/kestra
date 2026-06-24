@@ -742,21 +742,29 @@ public class DefaultExecutor extends AbstractService implements Executor {
             }
         } catch (QueueException | FlowNotFoundException | InternalException e) {
             if (!ignoreFailure) {
-                // If we cannot add the new worker task result to the execution, we fail it
-                executionStateStore.lock(executor.getExecution().getId(), execution ->
-                {
-                    try {
+                // If we cannot add the new worker task result to the execution, we fail it.
+                // Persist the FAILED state first, then emit the queue events
+                // only after the transaction commits to avoid potential race conditions inside the follow endpoint.
+                Optional<ExecutorContext> failedExecutorOpt = executionStateStore.lock(
+                    executor.getExecution().getId(), execution ->
+                    {
                         Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
-                        ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);
-                        this.executionEventQueue.emit(event);
-
-                        // update all execution followers
-                        this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(failed, ExecutionEventType.UPDATED));
-                    } catch (QueueException ex) {
-                        log.error("Unable to emit the execution {}", execution.getId(), ex);
+                        return new ExecutorContext(execution).withExecution(failed, "toExecutionFailure");
                     }
-                    return null;
-                });
+                );
+
+                if (failedExecutorOpt.isPresent()) {
+                    Execution failedExecution = failedExecutorOpt.get().getExecution();
+                    try {
+                        this.executionEventQueue.emit(new ExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
+
+                        // update all execution followers — emitted post-commit so the execution
+                        // row is already visible when ExecutionStreamingService looks it up
+                        this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
+                    } catch (QueueException ex) {
+                        log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
+                    }
+                }
             }
         }
     }

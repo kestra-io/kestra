@@ -8,6 +8,8 @@ export const propsSchema = z.object({
     execution: z.custom<Execution>().optional(),
     namespace: z.string().optional(),
     flowId: z.string().optional(),
+    // Current (possibly unsaved) flow source, so plugins can resolve draft expressions for display.
+    source: z.string().optional(),
     metrics: z.custom<MetricEntry>().array(),
 })
 

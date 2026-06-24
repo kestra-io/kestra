@@ -75,16 +75,17 @@ public class ExpressionController {
             return runContextFactory.of(flow, execution, false).getVariables();
         }
 
-        if (request.namespace() != null && request.flowId() != null) {
-            Flow flow = flowRepository
-                .findById(tenantService.resolveTenant(), request.namespace(), request.flowId(), Optional.empty())
-                .orElseThrow(() -> new NoSuchElementException("Unable to find flow '" + request.namespace() + "." + request.flowId() + "'"));
+        // A flow source (e.g. an unsaved editor draft) takes priority over the persisted flow.
+        if (request.flow() != null) {
+            FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), request.flow(), false);
 
             return flowVariables(flow);
         }
 
-        if (request.flow() != null) {
-            FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), request.flow(), false);
+        if (request.namespace() != null && request.flowId() != null) {
+            Flow flow = flowRepository
+                .findById(tenantService.resolveTenant(), request.namespace(), request.flowId(), Optional.empty())
+                .orElseThrow(() -> new NoSuchElementException("Unable to find flow '" + request.namespace() + "." + request.flowId() + "'"));
 
             return flowVariables(flow);
         }

@@ -48,6 +48,7 @@
                         :execution="exec"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
+                        :source="flowStore.flowYaml || props.source"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
                     />
                 </slot>
@@ -677,6 +678,7 @@
                 execution: exec.value,
                 namespace: props.namespace,
                 flowId: props.flowId,
+                source: flowStore.flowYaml || props.source,
                 metrics: taskMetrics(fullTask?.id),
             }
             isTaskModalOpen.value = true

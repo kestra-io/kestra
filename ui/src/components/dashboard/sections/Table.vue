@@ -102,12 +102,13 @@
 
     const resolvedProps = (field: string, key: string, row: Record<string, any>) => {
         const baseProps = {field: key, row, columns: props.chart.data?.columns ?? {}}
+        const hasIdColumn = Object.values(props.chart.data?.columns ?? {}).some((c: any) => c?.field === "ID")
 
         switch (field) {
         case "ID":
             return {...baseProps, execution: true}
         case "FLOW_ID":
-            return {...baseProps, flow: true}
+            return {...baseProps, flow: true, colored: !hasIdColumn}
         case "NAMESPACE":
             return {field: row[key]}
         case "STATE":

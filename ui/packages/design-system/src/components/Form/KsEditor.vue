@@ -90,6 +90,13 @@
         return isOffsetInPebbleBlock(editor.getValue(), absoluteOffset)
     }
 
+    function cursorPebbleBlockKey(editor: monaco.editor.ICodeEditor): number | null {
+        const cursorPos = editor.getPosition()
+        if (!cursorPos) return null
+        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+        return pebbleBlockKeyAtOffset(editor.getValue(), absoluteOffset)
+    }
+
     function uid(): string {
         return Math.random().toString(36).slice(2, 11)
     }
@@ -217,7 +224,7 @@
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import {STATES} from "../../utils/state"
     import {findDuplicateTaskIds} from "../../utils/yamlValidation"
-    import {createPebbleEntryTracker, isPebbleEnabled} from "../../utils/pebbleBlock"
+    import {createPebbleEntryTracker, isPebbleEnabled, pebbleBlockKeyAtOffset} from "../../utils/pebbleBlock"
     import PlaceholderContentWidget from "../../composables/PlaceholderContentWidget"
 
     type ICodeEditor = monacoEditorNs.ICodeEditor
@@ -1004,13 +1011,13 @@
                     localEditor.value.trigger("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {})
                 }
             }, 300)
-            // Track the Pebble latch on every cursor change rather than inside the debounced
-            // callback: a fast move out of and back into a `{{ }}` block would otherwise be
-            // swallowed by the debounce, leaving the latch stale (still "in pebble") so the
-            // re-entry transition is missed and suggestions never reopen.
+            // Track the Pebble block on every cursor change rather than inside the debounced
+            // callback: a fast move out of and back into a block (or straight from one `{{ }}`
+            // block to another) would otherwise be swallowed by the debounce, leaving the latch
+            // stale so the re-entry is missed and suggestions never reopen.
             localEditor.value.onDidChangeCursorPosition(() => {
                 if (!localEditor.value) return
-                pebbleEntryTracker.track(isCursorInPebbleBlock(localEditor.value))
+                pebbleEntryTracker.track(cursorPebbleBlockKey(localEditor.value))
                 triggerSuggestionsOnCursorSettle()
             })
 

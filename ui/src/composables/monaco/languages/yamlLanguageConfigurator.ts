@@ -193,9 +193,24 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             const isTypeValueContext = /^\s*(?:-\s*)?type\s*:\s*$/i.test(
                 beforeWord,
             )
-            // Split plugin class names (`a.b.C`) into lowercase searchable segments.
-            const getLabelSegments = (label: string) =>
-                label.toLowerCase().split(/\.(?=\w)/).filter(Boolean)
+            // Split plugin FQCN (`a.b.C`) into lowercase searchable segments,
+            // plus class name words in the last segment (e.g. `SentryExecution` → `sentry`, `execution`).
+            const getLabelSegments = (label: string) => {
+                const result: string[] = []
+                const dotSegments = label.split(/\.(?=\w)/)
+
+                for (const seg of dotSegments) {
+                    result.push(seg.toLowerCase())
+                }
+
+                const lastSegment = dotSegments[dotSegments.length - 1]
+                const parts = lastSegment.split(/(?=[A-Z])/)
+                if (parts.length > 1) {
+                    result.push(...parts.map((p) => p.toLowerCase()))
+                }
+
+                return result
+            }
             // Match typed input against any segment, while still preferring the last segment.
             const matchesTypeInput = (label: string, input: string) => {
                 if (!input) return true

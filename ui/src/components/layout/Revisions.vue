@@ -371,7 +371,7 @@
     .revision-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        margin-right: 2rem;
+        margin-right: var(--ks-spacing-6);
     }
 
     .revision-grid-col {
@@ -399,9 +399,9 @@
         }
     }
 
-    .revision-crud-info{
-        width:calc(100% - 1rem);
-        margin-right: 1rem;
+    .revision-crud-info {
+        width: calc(100% - var(--ks-spacing-4));
+        margin-right: var(--ks-spacing-4);
         :deep(> div) {
             width: 100%;
             white-space: nowrap;

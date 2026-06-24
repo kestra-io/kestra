@@ -227,7 +227,7 @@ public class SubflowFunction implements KestraFunction {
             });
         }
         // tag the execution as run by the subflow() function (cf. the Subflow task's system.from label)
-        labels.add(new Label(Label.FROM, NAME));
+        labels.add(new Label(Label.FROM, Label.FromLabel.SUBFLOW.value));
         return labels;
     }
 

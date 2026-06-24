@@ -716,7 +716,9 @@
                 dropdowns.value[dd]?.handleClose()
             }
         }
-        dropdowns.value[id]?.handleOpen()
+        if(typeof dropdowns.value[id]?.handleOpen === "function") {
+            dropdowns.value[id].handleOpen()
+        }
     }
 
     async function dialogHandler() {

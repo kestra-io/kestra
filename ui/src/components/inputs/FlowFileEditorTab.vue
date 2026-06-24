@@ -30,7 +30,7 @@
                     diffOverviewBar: false,
                     scrollKey: editorScrollKey,
                     diffSideBySide: false,
-                    editor: flow ? {padding: {top: 16}} : undefined,
+                    editor: {padding: {top: 16}},
                 }"
                 @update:model-value="editorUpdate"
                 @cursor="updatePluginDocumentation"

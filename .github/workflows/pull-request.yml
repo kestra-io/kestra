@@ -157,10 +157,6 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -598,7 +598,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     sendTriggerExecutionTerminated(execution);
-                    this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
+                    this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                 }
 
                 return;
@@ -732,13 +732,15 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 this.executionEventQueue.emit(event);
 
                 // update all execution followers
-                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
+                // Note that we must use 'emit' here and not emitAsync as we need to emit it inside the same transaction to avoid races,
+                // and transactions are bound to a thread. This is true for all emition of the follow execution event inside an execution lock.
+                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
 
                 // update all execution followers
-                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
+                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
             }
         } catch (QueueException | FlowNotFoundException | InternalException e) {
             if (!ignoreFailure) {
@@ -758,9 +760,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     try {
                         this.executionEventQueue.emit(new ExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
 
-                        // update all execution followers — emitted post-commit so the execution
-                        // row is already visible when ExecutionStreamingService looks it up
-                        this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
+                        // update all execution followers
+                        this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
                     }

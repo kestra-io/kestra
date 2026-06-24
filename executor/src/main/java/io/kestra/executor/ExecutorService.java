@@ -128,30 +128,10 @@ public class ExecutorService {
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
-                    Integer queueSize = flow.getConcurrency().getQueueSize();
-                    if (queueSize != null && queuedCount >= queueSize) {
-                        Logs.logExecution(
-                            executionRunning.getExecution(),
-                            Level.INFO,
-                            "Execution is cancelled because the concurrency queue is full, " + "{} queued execution(s), maximum queue size is {}", queuedCount, queueSize
-                        );
-
-                        yield executionRunning
-                            .withExecution(
-                                executionRunning
-                                    .getExecution()
-                                    .withState(State.Type.CANCELLED)
-                            )
-                            .withConcurrencyState(
-                                ExecutionRunning.ConcurrencyState.CANCELLED
-                            );
-                    }
-
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
-                        "Execution is queued due to concurrency limit exceeded, " + "{} running(s)",
-                        "Execution is queued due to " + scopeDescription(limit) + "concurrency limit exceeded, {} running(s)",
+                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
                         runningCount
                     );
                     var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);

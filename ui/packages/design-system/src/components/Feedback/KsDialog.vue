@@ -53,7 +53,7 @@
         beforeClose: undefined,
     })
 
-    const resolvedWidth = computed(() => props.width ?? (props.large ? "min(756px, 90vw)" : "min(500px, 90vw)"))
+    const resolvedWidth = computed(() => props.width ?? (props.large ? "min(750px, 90vw)" : "min(500px, 90vw)"))
 
     const emit = defineEmits<{
         close: []

@@ -115,7 +115,7 @@ public class KVController {
         // Should never throw as the above verifies the KV entry existence
         KVEntry kvEntry = nsKvStore.get(key).orElseThrow();
 
-        return new KvDetail(KVType.from(value), value, kvEntry.version(), kvEntry.updateDate());
+        return new KvDetail(KVType.from(value), value, kvEntry.revision(), kvEntry.updateDate());
     }
 
     @ExecuteOn(TaskExecutors.IO)

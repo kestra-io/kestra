@@ -109,11 +109,13 @@
 
 <style scoped lang="scss">
     .no-secret-manager-block {
-        padding: 0 0 1.5rem;
+        padding: 0 var(--ks-spacing-5) 1.5rem;
 
         *[style*="display: none"] { display: none !important }
 
         .header-block {
+            width: 100%;
+
             p {
                 font-size: var(--ks-font-size-sm);
                 color: var(--ks-text-secondary);
@@ -124,16 +126,19 @@
         .ee-promo-layout {
             display: flex;
             gap: 1.5rem;
-            align-items: center;
+            align-items: stretch;
+            justify-content: space-between;
+            width: 100%;
         }
 
         .ee-promo-content {
-            flex: 1;
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         .video-container {
-            width: 100%;
-            flex: 1;
+            flex: 1 1 0;
+            min-width: 0;
             aspect-ratio: 16 / 9;
             border-radius: 8px;
             border: 1px solid var(--ks-border-default);
@@ -143,12 +148,6 @@
                 width: 100%;
                 height: 100%;
                 border: 0;
-            }
-        }
-
-        @media (max-width: 1200px) {
-            .ee-promo-layout {
-                flex-direction: column;
             }
         }
 

@@ -33,6 +33,7 @@ import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
@@ -210,16 +211,16 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
                                     .build();
 
-                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, concurrencyLimits, (txContext, runningCounts) ->
-                                {
-                                    ExecutionRunning computed = executorService.processExecutionRunning(concurrencyLimits, runningCounts, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
-                                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                                        return Pair.of(computed, true);
-                                    } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                        executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
-                                    }
-                                    return Pair.of(computed, false);
-                                });
+                            ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
+                            {
+                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                                    return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
+                                } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                    executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
+                                }
+                                return Pair.of(computed, concurrencyLimit);
+                            });
 
                                 // if the execution is queued or terminated due to concurrency limit, we stop here
                                 if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {

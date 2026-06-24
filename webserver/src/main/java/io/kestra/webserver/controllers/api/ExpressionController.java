@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.executions.Execution;
@@ -74,23 +75,37 @@ public class ExpressionController {
             return runContextFactory.of(flow, execution, false).getVariables();
         }
 
+        if (request.namespace() != null && request.flowId() != null) {
+            Flow flow = flowRepository
+                .findById(tenantService.resolveTenant(), request.namespace(), request.flowId(), Optional.empty())
+                .orElseThrow(() -> new NoSuchElementException("Unable to find flow '" + request.namespace() + "." + request.flowId() + "'"));
+
+            return flowVariables(flow);
+        }
+
         if (request.flow() != null) {
             FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), request.flow(), false);
 
-            // Without an execution, RunVariables exposes flow.* but not vars.*, so we pass the flow-level
-            // variables explicitly to make {{ vars.* }} resolvable in a pre-execution (draft) context.
-            Map<String, Object> extra = flow.getVariables() == null ? Map.of() : Map.of("vars", flow.getVariables());
-
-            return runContextFactory.of(flow, extra).getVariables();
+            return flowVariables(flow);
         }
 
         return Map.of();
+    }
+
+    private Map<String, Object> flowVariables(Flow flow) {
+        // Without an execution, RunVariables exposes flow.* but not vars.*, so we pass the flow-level
+        // variables explicitly to make {{ vars.* }} resolvable in a pre-execution (draft) context.
+        Map<String, Object> extra = flow.getVariables() == null ? Map.of() : Map.of("vars", flow.getVariables());
+
+        return runContextFactory.of(flow, extra).getVariables();
     }
 
     @Introspected
     public record RenderExpressionRequest(
         @NotEmpty @Schema(description = "The raw Pebble expressions to render") List<String> expressions,
         @Nullable @Schema(description = "Resolve against this execution's context") String executionId,
+        @Nullable @Schema(description = "Resolve against this flow's context (with flowId)") String namespace,
+        @Nullable @Schema(description = "Resolve against this flow's context (with namespace)") String flowId,
         @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow
     ) {}
 

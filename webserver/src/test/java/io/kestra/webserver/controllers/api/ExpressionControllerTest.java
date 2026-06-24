@@ -114,6 +114,23 @@ class ExpressionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/variables.yaml"})
+    void shouldRenderAgainstFlowByNamespaceAndId() {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+
+        var result = render(Map.of(
+            "namespace", TESTS_FLOW_NS,
+            "flowId", "variables",
+            "expressions", List.of("{{ vars.first }}", "{{ flow.id }}", "{{ now() }}")
+        ));
+
+        Map<String, String> rendered = result.rendered();
+        assertThat(rendered).containsEntry("{{ vars.first }}", "1");
+        assertThat(rendered).containsEntry("{{ flow.id }}", "variables");
+        assertThat(rendered).containsEntry("{{ now() }}", "{{ now() }}");
+    }
+
+    @Test
     void shouldReturnEmptyContextWhenNeitherFlowNorExecutionProvided() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 

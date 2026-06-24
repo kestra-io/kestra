@@ -496,6 +496,7 @@
     "done": "Fatto",
     "down trend": "In diminuzione",
     "download": "Scarica",
+    "jsonl": "JSONL",
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

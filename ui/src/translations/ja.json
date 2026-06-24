@@ -496,6 +496,7 @@
     "done": "完了",
     "down trend": "減少",
     "download": "ダウンロード",
+    "jsonl": "JSONL",
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

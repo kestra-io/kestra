@@ -496,6 +496,7 @@
     "done": "Готово",
     "down trend": "Уменьшается",
     "download": "Скачать",
+    "jsonl": "JSONL",
     "download logs": "Скачать логи",
     "download_logos": "Скачать пакет логотипов",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

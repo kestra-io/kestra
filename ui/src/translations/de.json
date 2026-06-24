@@ -496,6 +496,7 @@
     "done": "Fertig",
     "down trend": "Sinkend",
     "download": "Herunterladen",
+    "jsonl": "JSONL",
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

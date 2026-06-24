@@ -496,6 +496,7 @@
     "done": "완료",
     "down trend": "감소 중",
     "download": "다운로드",
+    "jsonl": "JSONL",
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

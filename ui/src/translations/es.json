@@ -496,6 +496,7 @@
     "done": "Hecho",
     "down trend": "Disminuyendo",
     "download": "Descargar",
+    "jsonl": "JSONL",
     "download logs": "Descargar logs",
     "download_logos": "Descargar Paquete de Logos",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

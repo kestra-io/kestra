@@ -496,6 +496,7 @@
     "done": "完成",
     "down trend": "减少",
     "download": "下载",
+    "jsonl": "JSONL",
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

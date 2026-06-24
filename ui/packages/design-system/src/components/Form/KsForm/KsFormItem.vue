@@ -1,5 +1,8 @@
 <template>
-    <ElFormItem v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElFormItem
+        :class="{'is-inline-row': inline}"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -26,6 +29,8 @@
         labelWidth?: string | number
         error?: string
         showMessage?: boolean
+        /** Lay the item out as a single row: label on the left, control pushed to the right. */
+        inline?: boolean
     }>(), {
         label: undefined,
         prop: undefined,
@@ -33,9 +38,10 @@
         labelWidth: undefined,
         error: undefined,
         showMessage: undefined,
+        inline: false,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["inline"])
 
     defineSlots<{
         default?(): unknown
@@ -59,6 +65,23 @@
         .kel-input-group__append, .kel-input-group__prepend {
             background-color: transparent;
             color: var(--ks-text-primary);
+        }
+
+        &.is-inline-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-4);
+
+            .kel-form-item__label {
+                width: auto;
+                margin: 0;
+                padding: 0;
+            }
+
+            .kel-form-item__content {
+                flex: 0 0 auto;
+            }
         }
     }
 </style>

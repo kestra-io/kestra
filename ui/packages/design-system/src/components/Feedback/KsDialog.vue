@@ -1,6 +1,8 @@
 <template>
     <ElDialog
         v-model="model"
+        :width="resolvedWidth"
+        :class="{'is-form-layout': formLayout}"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @close="emit('close')"
     >
@@ -17,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {ElDialog} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -33,18 +36,24 @@
         showClose?: boolean
         appendToBody?: boolean
         width?: string | number
+        large?: boolean
+        formLayout?: boolean
         top?: string
-        beforeClose?: (done: () => void) => void    
+        beforeClose?: (done: () => void) => void
     }>(), {
         title: undefined,
         lockScroll: undefined,
         closeOnClickModal: undefined,
         closeOnPressEscape: undefined,
         showClose: undefined,
-        width: "min(500px, 90vw)",
+        width: undefined,
+        large: false,
+        formLayout: false,
         top: undefined,
         beforeClose: undefined,
     })
+
+    const resolvedWidth = computed(() => props.width ?? (props.large ? "min(750px, 90vw)" : "min(500px, 90vw)"))
 
     const emit = defineEmits<{
         close: []
@@ -56,7 +65,7 @@
         footer?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout"])
 </script>
 
 <style lang="scss">
@@ -67,6 +76,11 @@
         --kel-dialog-bg-color: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-xl);
+
+        .kel-form-item__label {
+            font-size: var(--ks-font-size-md);
+            font-weight: var(--ks-font-weight-semibold);
+        }
 
         .kel-dialog__header {
             font-size: var(--ks-font-size-base);
@@ -101,6 +115,18 @@
             background-color: var(--ks-bg-base);
             border-bottom-left-radius: var(--ks-radius-xl);
             border-bottom-right-radius: var(--ks-radius-xl);
+        }
+
+        &.is-form-layout form {
+            padding: var(--ks-spacing-4);
+            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-4);
+
+            .kel-form-item {
+                margin-bottom: 0;
+            }
         }
     }
 </style>

@@ -496,6 +496,7 @@
     "done": "Gotowe",
     "down trend": "Malejący",
     "download": "Pobierz",
+    "jsonl": "JSONL",
     "download logs": "Pobierz logs",
     "download_logos": "Pobierz Pakiet Logo",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",

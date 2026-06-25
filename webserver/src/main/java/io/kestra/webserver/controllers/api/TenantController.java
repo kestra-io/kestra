@@ -7,11 +7,14 @@ import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.EditionProvider;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +32,8 @@ public class TenantController {
     private DashboardRepositoryInterface dashboardRepository;
     @Inject
     private SettingRepositoryInterface settingRepository;
+    @Inject
+    protected EditionProvider editionProvider;
 
     public record SetTenantDefaultDashboardsRequest(
         String defaultHomeDashboard,
@@ -43,6 +48,10 @@ public class TenantController {
     @Post(uri = "/settings/default-dashboards")
     public HttpResponse<DashboardSettings> setTenantDefaultDashboard(
         @Parameter() @Body @Valid SetTenantDefaultDashboardsRequest request) {
+        // Setting a default dashboard is part of the Enterprise-only custom dashboards feature.
+        if (editionProvider.get() == EditionProvider.Edition.OSS) {
+            throw new HttpStatusException(HttpStatus.FORBIDDEN, "Custom dashboards require Enterprise Edition");
+        }
         var tenantId = tenantService.resolveTenant();
 
         if (request.defaultHomeDashboard() != null) {

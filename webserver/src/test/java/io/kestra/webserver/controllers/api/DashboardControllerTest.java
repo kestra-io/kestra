@@ -775,7 +775,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void shouldRejectCustomDashboardWritesInOss() {
+    void shouldRejectCustomDashboardWritesInOss() throws JsonProcessingException {
         // Given an existing dashboard (seeded directly, bypassing the gated create endpoint) and an OSS edition
         String dashboardYaml = """
             id: oss-rejected
@@ -796,7 +796,7 @@ class DashboardControllerTest {
                     total:
                       agg: COUNT""";
         dashboardRepository.save(
-            Dashboard.builder().id("oss-rejected").tenantId(MAIN_TENANT).build(),
+            JacksonMapper.ofYaml().readValue(dashboardYaml, Dashboard.class).toBuilder().tenantId(MAIN_TENANT).id("oss-rejected").build(),
             dashboardYaml
         );
         when(editionProvider.get()).thenReturn(EditionProvider.Edition.OSS);
@@ -822,6 +822,17 @@ class DashboardControllerTest {
             )
         );
         assertThatObject(delete.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // Setting a default dashboard is part of the same Enterprise-only feature, so it is forbidden too
+        HttpClientResponseException setDefault = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/tenants/main/settings/default-dashboards",
+                    new SetTenantDefaultDashboardsRequest("oss-rejected", null, null)
+                )
+            )
+        );
+        assertThatObject(setDefault.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
 
         // But reads remain available so the bundled default dashboards keep working
         HttpResponse<?> list = client.toBlocking().exchange(GET(DASHBOARD_PATH));

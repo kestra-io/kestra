@@ -13,8 +13,16 @@ import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
 
 // Custom dashboards (create/edit) are Enterprise-only; block deep links in OSS.
-const requireCustomDashboards: NavigationGuardWithThis<undefined> = () => {
-    if (useMiscStore().configs?.isCustomDashboardsEnabled !== true) {
+// This runs as a `beforeEnter` guard, which fires before the global `beforeResolve`
+// that loads configs, so on a hard refresh / deep link `configs` is still undefined.
+// Ensure configs are loaded before reading the flag, otherwise EE deep links would
+// be wrongly redirected to home. `loadConfigs` is cheap once cached.
+const requireCustomDashboards: NavigationGuardWithThis<undefined> = async () => {
+    const miscStore = useMiscStore()
+    if (miscStore.configs === undefined) {
+        await miscStore.loadConfigs()
+    }
+    if (miscStore.configs?.isCustomDashboardsEnabled !== true) {
         return {name: "home"}
     }
     return true

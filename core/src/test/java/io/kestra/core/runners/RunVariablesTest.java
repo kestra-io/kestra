@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.DependsOn;
@@ -158,7 +159,9 @@ class RunVariablesTest {
                 }
             })
             .build(new RunContextLogger(), PropertyContext.create(renderer));
-        Assertions.assertEquals(Map.of("id", "id-value", "type", "type-value"), variables.get("trigger"));
+        assertThat((Map<String, Object>) variables.get("trigger")).containsEntry("id", "id-value");
+        assertThat((Map<String, Object>) variables.get("trigger")).containsEntry("type", "type-value");
+        assertThat((Map<String, Object>) variables.get("trigger")).containsEntry("_context", Map.of("id", "id-value", "type", "type-value"));
     }
 
     @Test
@@ -255,6 +258,84 @@ class RunVariablesTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldBuildTriggerContextGivenExecutionWithTrigger() {
+        // Given
+        ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
+            .id("schedule-trigger")
+            .type("io.kestra.plugin.core.trigger.Schedule")
+            .variables(Map.of("date", "2024-01-01T00:00:00Z"))
+            .build();
+
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .trigger(executionTrigger)
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat((Map<String, Object>) variables.get("trigger")).containsEntry("date", "2024-01-01T00:00:00Z");
+
+        Map<String, Object> triggerContext = (Map<String, Object>)((Map<String, Object>) variables.get("trigger")).get("_context");
+        assertThat(triggerContext).containsEntry("id", "schedule-trigger");
+        assertThat(triggerContext).containsEntry("type", "io.kestra.plugin.core.trigger.Schedule");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldBuildTriggerContextEvenWhenTriggerHasNullVariables() {
+        // Given — trigger with null variables (e.g. Schedule error path)
+        ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
+            .id("schedule-trigger")
+            .type("io.kestra.plugin.core.trigger.Schedule")
+            .build();
+
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .trigger(executionTrigger)
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then — trigger._context must be present even without variables
+        Map<String, Object> triggerContext = (Map<String, Object>)((Map<String, Object>) variables.get("trigger")).get("_context");
+        assertThat(triggerContext).containsEntry("id", "schedule-trigger");
+        assertThat(triggerContext).containsEntry("type", "io.kestra.plugin.core.trigger.Schedule");
+    }
+
+    @Test
+    void shouldNotSetTriggerContextWhenExecutionHasNoTrigger() {
+        // Given
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(variables).doesNotContainKey("triggerContext");
+    }
+
+    @Test
     void allContextPathsShouldContainExpectedStructuralPaths() {
         List<String> paths = RunVariables.allContextPaths();
 
@@ -309,10 +390,18 @@ class RunVariablesTest {
             .parentTaskRunId(parentRunId).value("item-value").iteration(2)
             .state(new State()).build();
 
+        // Execution trigger — trigger vars are dynamic (like inputs), trigger._context is structural
+        ExecutionTrigger executionTrigger = ExecutionTrigger.builder()
+            .id("schedule-trigger")
+            .type("io.kestra.plugin.core.trigger.Schedule")
+            .variables(Map.of("date", "2024-01-01"))
+            .build();
+
         // LoopRun with key set and two parents (last has a non-null key → item.parent.key appears)
         Execution parentExecution = Execution.builder()
             .id("parent-exec-id").namespace("ns").flowId("flow").state(new State())
             .outputs(Map.of())
+            .trigger(executionTrigger)
             .build()
             .withState(State.Type.SUCCESS);
         LoopRun loopRun = new LoopRun(
@@ -343,9 +432,10 @@ class RunVariablesTest {
             .withKestraConfiguration(new RunVariables.KestraConfiguration("test", "http://localhost"))
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
-        // Dynamic top-level keys whose children vary per flow/execution — not walked
+        // Dynamic top-level keys whose children vary per flow/execution — not walked.
+        // "trigger" holds execution-trigger variables (dynamic like inputs/outputs).
         Set<String> dynamicTopLevel = Set.of("envs", "files", "globals", "inputs", "labels",
-            "outputs", "tasks", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
+            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
 
         List<String> foundPaths = new ArrayList<>();
         collectStructuralPaths(variables, "", dynamicTopLevel, foundPaths);

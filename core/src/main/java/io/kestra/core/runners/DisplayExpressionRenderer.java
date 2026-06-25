@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Resolution rules (see architecture decision in issue #16874):
  * <ul>
  *   <li>{@code secret()} → {@code [secret: KEY]} (never invoked)</li>
- *   <li>{@code env()} → {@code [env: NAME]} (never invoked)</li>
- *   <li>Non-deterministic / IO functions ({@code now()}, {@code uuid()}, {@code kv()}, {@code read()}, …) → kept raw</li>
+ *   <li>{@code env()} / {@code envs.*} → kept raw</li>
+ *   <li>Non-deterministic / IO / external functions ({@code now()}, {@code uuid()}, {@code kv()}, {@code read()}, …) → kept raw</li>
  *   <li>{@code vars.*}, {@code flow.*}, {@code globals.*} → resolved</li>
  *   <li>{@code inputs.*}, {@code outputs.*}, {@code execution.*} → resolved when an execution is present; raw otherwise</li>
  * </ul>
@@ -43,7 +43,7 @@ public class DisplayExpressionRenderer {
 
     @Inject
     public DisplayExpressionRenderer(PebbleEngineFactory pebbleEngineFactory) {
-        this.displayEngine = pebbleEngineFactory.createForDisplay();
+        this.displayEngine = pebbleEngineFactory.createRestricted();
     }
 
     /**

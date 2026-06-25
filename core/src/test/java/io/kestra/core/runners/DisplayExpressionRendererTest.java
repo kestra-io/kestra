@@ -109,14 +109,14 @@ class DisplayExpressionRendererTest {
         Mockito.verify(secretService, Mockito.never()).findSecret(any(), any(), any());
     }
 
-    // ---- env() → masked ----
+    // ---- env() → kept raw (issue #16874: env vars are not resolved for display) ----
 
     @Test
-    void shouldMaskEnvFunction() {
+    void shouldKeepEnvFunctionRaw() {
         var flow = Map.of("namespace", "io.kestra.tests", "id", "test");
         var envs = Map.of("HOME", "/home/user");
         var result = renderer.resolveForDisplay("{{ env('HOME') }}", Map.of("flow", flow, "envs", envs));
-        assertThat(result).isEqualTo("[env: HOME]");
+        assertThat(result).isEqualTo("{{ env('HOME') }}");
     }
 
     // ---- non-deterministic functions stay raw ----

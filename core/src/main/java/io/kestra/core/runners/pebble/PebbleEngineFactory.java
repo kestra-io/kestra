@@ -90,13 +90,13 @@ public class PebbleEngineFactory {
      *
      * <ul>
      *   <li>{@code secret(...)} → {@code [secret: KEY]} without invoking the real service.</li>
-     *   <li>{@code env(...)} → {@code [env: NAME]} without reading env variables.</li>
+     *   <li>{@code env(...)} → kept raw (see issue #16874: env vars are not resolved for display).</li>
      *   <li>Functions in {@link #SAFE_DISPLAY_FUNCTIONS} (pure parsing / calendar helpers) work normally.</li>
      *   <li>Every other function throws {@link DisplayUnrenderableException} before invocation,
      *       so the caller keeps the raw segment.</li>
      * </ul>
      */
-    public PebbleEngine createForDisplay() {
+    public PebbleEngine createRestricted() {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
 
         this.applicationContext.getBeansOfType(Extension.class).stream()
@@ -124,9 +124,9 @@ public class PebbleEngineFactory {
                 return Map.entry(name, interceptExecute(entry.getValue(),
                     args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
             } else if (name.equals(EnvFunction.NAME)) {
-                // Returns [env: NAME] without reading environment variables.
+                // env() is kept raw per the display taxonomy (issue #16874).
                 return Map.entry(name, interceptExecute(entry.getValue(),
-                    args -> "[env: " + args.getOrDefault("name", "?") + "]"));
+                    args -> { throw new DisplayUnrenderableException(); }));
             }
             // Everything else signals that the segment should remain raw — never invoked.
             return Map.entry(name, interceptExecute(entry.getValue(),

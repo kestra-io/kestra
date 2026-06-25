@@ -148,7 +148,7 @@
             &.kel-tag--plain {
                 --kel-tag-bg-color: var(--ks-bg-tag);
                 --kel-tag-text-color: var(--ks-text-primary);
-                --kel-tag-border-color: var(--ks-border-strong);
+                --kel-tag-border-color: transparent;
                 --kel-tag-hover-color: var(--ks-text-primary);
 
                 a {

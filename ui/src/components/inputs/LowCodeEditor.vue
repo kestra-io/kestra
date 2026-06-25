@@ -257,7 +257,11 @@
     // burger-menu "Show Details" item work correctly in execution view too.
     const runnerTypeByTaskId = computed((): Record<string, string> => {
         const result: Record<string, string> = {}
-        const parsed = flowStore.flowParsed
+        const flowParsed = flowStore.flowParsed
+        const flowParsedHasRunners = (flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+        // When flowParsed has no runner types, fall back to props.source (has taskRunner intact;
+        // execution view may have stale flowYaml without taskRunner, or forExecution() strips it)
+        const parsed = flowParsedHasRunners ? flowParsed : (props.source ? YAML_UTILS.parse(props.source) : flowParsed)
         for (const task of [...(parsed?.tasks ?? []), ...(parsed?.errors ?? []), ...(parsed?.finally ?? [])]) {
             if (task?.id && task?.taskRunner?.type) {
                 result[task.id] = task.taskRunner.type
@@ -416,10 +420,30 @@
         () => props.flowGraph,
         async (flowGraph) => {
             if (flowStore.flowParsed?.tasks?.length) return
-            const tasks = (flowGraph?.nodes ?? [])
-                .filter((n: any) => n.task?.type)
-                .map((n: any) => ({type: n.task.type, version: n.task.version, taskRunner: n.task.taskRunner}))
+            // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
+            const sourceParsed = props.source ? YAML_UTILS.parse(props.source) : null
+            const tasks = sourceParsed?.tasks?.length
+                ? sourceParsed.tasks
+                : (flowGraph?.nodes ?? [])
+                    .filter((n: any) => n.task?.type)
+                    .map((n: any) => ({type: n.task.type, version: n.task.version, taskRunner: n.task.taskRunner}))
             await resolveTaskTopologyDetails(tasks)
+        },
+        {immediate: true},
+    )
+
+    // When props.source has runner types that flowParsed lacks (e.g. stale/absent flowYaml
+    // in execution view), re-resolve so the pluginUiManifest call includes runner types.
+    watch(
+        () => props.source,
+        async (source) => {
+            if (!source) return
+            const parsed = YAML_UTILS.parse(source)
+            const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            if (sourceHasRunners && !flowParsedHasRunners) {
+                await resolveTaskTopologyDetails(parsed.tasks)
+            }
         },
         {immediate: true},
     )

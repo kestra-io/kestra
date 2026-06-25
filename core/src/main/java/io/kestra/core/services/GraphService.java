@@ -12,9 +12,11 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.runners.DisplayExpressionRenderer;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.PebbleUtil;
 
@@ -37,9 +39,15 @@ public class GraphService {
     private PluginDefaultService pluginDefaultService;
     @Inject
     private RunContextFactory runContextFactory;
+    @Inject
+    private NamespaceVariablesProvider namespaceVariablesProvider;
+    @Inject
+    private DisplayExpressionRenderer displayExpressionRenderer;
 
     public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException, FlowProcessingException {
-        return this.flowGraph(flow, expandedSubflows, null);
+        FlowGraph graph = this.flowGraph(flow, expandedSubflows, null);
+        populateRenderedProperties(flow, graph);
+        return graph;
     }
 
     public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
@@ -151,6 +159,39 @@ public class GraphService {
             .forEach(TaskToClusterReplacer::replace);
 
         return graphCluster;
+    }
+
+    /**
+     * Resolves top-level string task properties for display using namespace + flow variables.
+     * Only called for the pre-execution (no-{@link Execution}) graph variant; per-execution graphs
+     * already carry resolved values through the execution context.
+     */
+    private void populateRenderedProperties(FlowWithSource flow, FlowGraph graph) {
+        Map<String, Object> nsVars = namespaceVariablesProvider.fetchVariables(flow.getTenantId(), flow.getNamespace());
+        Map<String, Object> flowVars = flow.getVariables() != null ? flow.getVariables() : Map.of();
+        if (nsVars.isEmpty() && flowVars.isEmpty()) {
+            return;
+        }
+        // Flow-level variables take precedence over namespace variables.
+        Map<String, Object> merged = new HashMap<>(nsVars);
+        merged.putAll(flowVars);
+        Map<String, Object> context = Map.of("vars", merged);
+
+        for (AbstractGraph node : graph.getNodes()) {
+            if (!(node instanceof AbstractGraphTask taskNode) || taskNode.getTask() == null) {
+                continue;
+            }
+            Map<String, Object> taskMap = JacksonMapper.toMap(taskNode.getTask());
+            Map<String, String> rendered = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> entry : taskMap.entrySet()) {
+                if (entry.getValue() instanceof String strVal) {
+                    rendered.put(entry.getKey(), displayExpressionRenderer.resolveForDisplay(strVal, context));
+                }
+            }
+            if (!rendered.isEmpty()) {
+                taskNode.setRenderedProperties(rendered);
+            }
+        }
     }
 
     private record TaskToClusterReplacer(GraphCluster parentCluster, AbstractGraph taskToReplace,

@@ -2,6 +2,7 @@ package io.kestra.core.models.hierarchies;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.TaskForExecution;
@@ -21,6 +22,9 @@ public abstract class AbstractGraphTask extends AbstractGraph {
     private final TaskRun taskRun;
     private final List<String> values;
     private final RelationType relationType;
+    /** Top-level task properties with Pebble expressions resolved for display (pre-execution). Null when no resolution was attempted. */
+    @Setter
+    private Map<String, String> renderedProperties;
 
     public AbstractGraphTask(String uid, TaskInterface task, TaskRun taskRun, List<String> values, RelationType relationType) {
         super(uid);

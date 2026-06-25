@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DisplayExpressionRenderer;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.services.NamespaceVariablesProvider;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 
@@ -41,6 +43,7 @@ public class ExpressionController {
     private final PluginDefaultService pluginDefaultService;
     private final RunContextFactory runContextFactory;
     private final DisplayExpressionRenderer displayExpressionRenderer;
+    private final NamespaceVariablesProvider namespaceVariablesProvider;
 
     @Inject
     public ExpressionController(
@@ -49,7 +52,8 @@ public class ExpressionController {
         FlowRepositoryInterface flowRepository,
         PluginDefaultService pluginDefaultService,
         RunContextFactory runContextFactory,
-        DisplayExpressionRenderer displayExpressionRenderer
+        DisplayExpressionRenderer displayExpressionRenderer,
+        NamespaceVariablesProvider namespaceVariablesProvider
     ) {
         this.tenantService = tenantService;
         this.executionRepository = executionRepository;
@@ -57,6 +61,7 @@ public class ExpressionController {
         this.pluginDefaultService = pluginDefaultService;
         this.runContextFactory = runContextFactory;
         this.displayExpressionRenderer = displayExpressionRenderer;
+        this.namespaceVariablesProvider = namespaceVariablesProvider;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -104,9 +109,13 @@ public class ExpressionController {
     }
 
     private Map<String, Object> flowVariables(Flow flow) {
-        // Without an execution, RunVariables exposes flow.* but not vars.*, so we pass the flow-level
-        // variables explicitly to make {{ vars.* }} resolvable in a pre-execution (draft) context.
-        Map<String, Object> extra = flow.getVariables() == null ? Map.of() : Map.of("vars", flow.getVariables());
+        // Without an execution, RunVariables exposes flow.* but not vars.*, so we build vars explicitly.
+        // Namespace variables serve as the base; flow-level variables take precedence.
+        Map<String, Object> nsVars = namespaceVariablesProvider.fetchVariables(tenantService.resolveTenant(), flow.getNamespace());
+        Map<String, Object> flowVars = flow.getVariables() != null ? flow.getVariables() : Map.of();
+        Map<String, Object> merged = new HashMap<>(nsVars);
+        merged.putAll(flowVars);
+        Map<String, Object> extra = merged.isEmpty() ? Map.of() : Map.of("vars", merged);
 
         return runContextFactory.of(flow, extra).getVariables();
     }

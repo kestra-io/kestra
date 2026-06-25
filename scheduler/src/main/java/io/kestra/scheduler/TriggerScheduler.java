@@ -283,7 +283,7 @@ public class TriggerScheduler {
         triggerState = triggerState.evaluatedAt(clock, triggerState.getNextEvaluationDate());
 
         try {
-            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionContext().getVariables()))) {
+            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionVariables()))) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
             }

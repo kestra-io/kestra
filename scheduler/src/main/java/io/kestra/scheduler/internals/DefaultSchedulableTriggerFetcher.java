@@ -111,11 +111,14 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                         triggerState = triggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
                     }
 
+                    Map<String, Object> conditionVariables = Map.of("trigger", Map.of("date", getTriggerDateForConditionContext(clock, now, triggerState, trigger)));
+
                     return new TriggerEvaluationContext(
                         flow,
                         trigger,
                         triggerState,
-                        conditionContext.withVariables(Map.of("trigger", Map.of("date", getTriggerDateForConditionContext(clock, now, triggerState, trigger))))
+                        conditionContext,
+                        conditionVariables
                     );
                 } catch (Exception e) {
                     logError(now, conditionContext, flow, trigger, e);

@@ -2,6 +2,7 @@ package io.kestra.scheduler.pubsub;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,7 @@ public class TriggerWorkerJobPublisher {
         WorkerTrigger workerTrigger = WorkerTrigger
             .builder()
             .trigger(trigger)
-            .data(WorkerTriggerData.from(conditionContext, triggerState.context()))
+            .data(WorkerTriggerData.from(conditionContext, triggerState.context(), conditionVariables))
             .build();
         Optional<WorkerQueueRouting> routing;
         try {

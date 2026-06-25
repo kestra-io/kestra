@@ -314,7 +314,7 @@ class RunContextTest {
 
         WorkerTrigger workerTrigger = WorkerTrigger.builder()
             .trigger(trigger)
-            .data(WorkerTriggerData.from(mockedTrigger.getKey(), mockedTrigger.getValue().context()))
+            .data(WorkerTriggerData.from(mockedTrigger.getKey(), mockedTrigger.getValue().context(), Map.of()))
             .build();
 
         trigger.evaluate(runContextInitializer.forWorker(workerTrigger), TriggerContext.of(workerTrigger));

@@ -23,8 +23,4 @@ public class ConditionContext {
     @With
     @NotNull
     private RunContext runContext;
-
-    @With
-    @Builder.Default
-    private final Map<String, Object> variables = new HashMap<>();
 }

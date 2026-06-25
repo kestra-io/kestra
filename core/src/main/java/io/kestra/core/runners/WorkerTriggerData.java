@@ -62,7 +62,7 @@ public record WorkerTriggerData(
      * @param triggerContext the TriggerContext with identity and date
      * @return a new WorkerTriggerData suitable for wire transport
      */
-    public static WorkerTriggerData from(ConditionContext conditionContext, TriggerContext triggerContext) {
+    public static WorkerTriggerData from(ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> conditionVariables) {
         RunContext runContext = conditionContext.getRunContext();
         FlowInterface flow = conditionContext.getFlow();
 
@@ -77,7 +77,7 @@ public record WorkerTriggerData(
             WorkerRunContextData.filterVariables(runContext, WORKER_RECONSTRUCTED_KEYS),
             runContext.getSecretInputs(),
             runContext.getTraceParent(),
-            conditionContext.getVariables()
+            conditionVariables
         );
     }
 }

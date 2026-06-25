@@ -5,8 +5,6 @@ import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.runners.pebble.DisplayUnrenderableException;
@@ -40,9 +38,6 @@ public class DisplayExpressionRenderer {
 
     // Matches a single {{ ... }} expression block.
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\{\\{(.*?)}}");
-
-    // Matches {% raw %} ... {% endraw %} blocks to be preserved verbatim.
-    private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
 
     private final PebbleEngine displayEngine;
 
@@ -85,32 +80,7 @@ public class DisplayExpressionRenderer {
             return template;
         }
 
-        // Preserve {% raw %} blocks by replacing them with stable placeholders.
-        var rawReplacements = new LinkedHashMap<String, String>();
-        var withoutRawBlocks = replaceRawBlocks(template, rawReplacements);
-
-        var result = resolveSegments(withoutRawBlocks, variables);
-
-        // Restore {% raw %} blocks.
-        for (var entry : rawReplacements.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
-        return result;
-    }
-
-    // --- private helpers ---
-
-    private String replaceRawBlocks(String template, Map<String, String> replacements) {
-        var matcher = RAW_PATTERN.matcher(template);
-        return matcher.replaceAll(match ->
-        {
-            // A random token, not a predictable counter, so user content can never collide with it.
-            var placeholder = "__kestra_raw_" + UUID.randomUUID().toString().replace("-", "") + "__";
-            replacements.put(placeholder, match.group(1));
-            // Matcher.replaceAll treats $ and \ in the replacement specially; our token has neither,
-            // but quote defensively in case the format ever changes.
-            return Matcher.quoteReplacement(placeholder);
-        });
+        return resolveSegments(template, variables);
     }
 
     /**

@@ -32,23 +32,30 @@ import jakarta.validation.constraints.NotEmpty;
 
 @Controller("/api/v1/{tenant}/expressions")
 public class ExpressionController {
-    @Inject
-    private TenantService tenantService;
+
+    private final TenantService tenantService;
+    private final ExecutionRepositoryInterface executionRepository;
+    private final FlowRepositoryInterface flowRepository;
+    private final PluginDefaultService pluginDefaultService;
+    private final RunContextFactory runContextFactory;
+    private final DisplayExpressionRenderer displayExpressionRenderer;
 
     @Inject
-    private ExecutionRepositoryInterface executionRepository;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
-    private PluginDefaultService pluginDefaultService;
-
-    @Inject
-    private RunContextFactory runContextFactory;
-
-    @Inject
-    private DisplayExpressionRenderer displayExpressionRenderer;
+    public ExpressionController(
+        TenantService tenantService,
+        ExecutionRepositoryInterface executionRepository,
+        FlowRepositoryInterface flowRepository,
+        PluginDefaultService pluginDefaultService,
+        RunContextFactory runContextFactory,
+        DisplayExpressionRenderer displayExpressionRenderer
+    ) {
+        this.tenantService = tenantService;
+        this.executionRepository = executionRepository;
+        this.flowRepository = flowRepository;
+        this.pluginDefaultService = pluginDefaultService;
+        this.runContextFactory = runContextFactory;
+        this.displayExpressionRenderer = displayExpressionRenderer;
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/render", consumes = MediaType.APPLICATION_JSON)

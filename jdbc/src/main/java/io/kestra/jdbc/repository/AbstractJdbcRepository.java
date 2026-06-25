@@ -358,6 +358,16 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
+    private static String requireStringValue(Object value, String operationName) {
+        if (value == null) {
+            throw new InvalidQueryFiltersException(operationName + " operation requires a non-null string value");
+        }
+        if (value instanceof List<?>) {
+            throw new InvalidQueryFiltersException(operationName + " operation requires a string value, got a List");
+        }
+        return primitiveOrToString(value).toString();
+    }
+    
     private Condition getDateCondition(Object value, Op operation, String dateColumn) {
         OffsetDateTime dateTime = (value instanceof ZonedDateTime)
             ? ((ZonedDateTime) value).toOffsetDateTime()

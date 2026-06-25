@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -211,40 +212,40 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     }
 
     public ArrayList<String> dagCheckCyclicDependencies(List<DagTask> taskDepends) {
+        Map<String, List<String>> depMap = taskDepends.stream()
+            .collect(Collectors.toMap(
+                t -> t.getTask().getId(),
+                t -> t.getDependsOn() != null ? t.getDependsOn() : List.of()
+            ));
+
         ArrayList<String> cyclicDependency = new ArrayList<>();
-        taskDepends.forEach(taskDepend ->
-        {
+        for (DagTask taskDepend : taskDepends) {
             if (taskDepend.getDependsOn() != null) {
-                List<String> nestedDependencies = this.nestedDependencies(taskDepend, taskDepends, new ArrayList<>());
-                if (nestedDependencies.contains(taskDepend.getTask().getId())) {
-                    cyclicDependency.add(taskDepend.getTask().getId());
+                String startId = taskDepend.getTask().getId();
+                if (hasCycle(startId, depMap)) {
+                    cyclicDependency.add(startId);
                 }
             }
-        });
-
+        }
         return cyclicDependency;
     }
 
-    private ArrayList<String> nestedDependencies(DagTask taskDepend, List<DagTask> tasks, List<String> visited) {
-        final ArrayList<String> localVisited = new ArrayList<>(visited);
-        if (taskDepend.getDependsOn() != null) {
-            taskDepend.getDependsOn()
-                .stream()
-                .filter(depend -> !localVisited.contains(depend))
-                .forEach(depend ->
-                {
-                    localVisited.add(depend);
-                    Optional<DagTask> task = tasks
-                        .stream()
-                        .filter(t -> t.getTask().getId().equals(depend))
-                        .findFirst();
-
-                    if (task.isPresent()) {
-                        localVisited.addAll(this.nestedDependencies(task.get(), tasks, localVisited));
-                    }
-                });
+    private boolean hasCycle(String startId, Map<String, List<String>> depMap) {
+        Set<String> visited = new HashSet<>();
+        Deque<String> stack = new ArrayDeque<>();
+        stack.push(startId);
+        while (!stack.isEmpty()) {
+            String current = stack.pop();
+            for (String dep : depMap.getOrDefault(current, List.of())) {
+                if (dep.equals(startId)) {
+                    return true;
+                }
+                if (visited.add(dep)) {
+                    stack.push(dep);
+                }
+            }
         }
-        return localVisited;
+        return false;
     }
 
     @SuperBuilder

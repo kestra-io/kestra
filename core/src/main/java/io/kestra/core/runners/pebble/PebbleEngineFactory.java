@@ -11,7 +11,6 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.functions.DayOfMonthFunction;
 import io.kestra.core.runners.pebble.functions.DayOfWeekFunction;
-import io.kestra.core.runners.pebble.functions.EnvFunction;
 import io.kestra.core.runners.pebble.functions.FromIonFunction;
 import io.kestra.core.runners.pebble.functions.FromJsonFunction;
 import io.kestra.core.runners.pebble.functions.HourOfDayFunction;
@@ -123,12 +122,8 @@ public class PebbleEngineFactory {
                 // Returns [secret: KEY] without touching the real secret service.
                 return Map.entry(name, interceptExecute(entry.getValue(),
                     args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
-            } else if (name.equals(EnvFunction.NAME)) {
-                // env() is kept raw per the display taxonomy (issue #16874).
-                return Map.entry(name, interceptExecute(entry.getValue(),
-                    args -> { throw new DisplayUnrenderableException(); }));
             }
-            // Everything else signals that the segment should remain raw — never invoked.
+            // Everything else (including env(), kv(), now(), uuid(), read(), …) stays raw — never invoked.
             return Map.entry(name, interceptExecute(entry.getValue(),
                 args -> { throw new DisplayUnrenderableException(); }));
         });

@@ -181,6 +181,14 @@ class DisplayExpressionRendererTest {
         assertThat(result).isEqualTo("{% raw %}{{ vars.region }}{% endraw %}");
     }
 
+    @Test
+    void shouldPreserveRawBlocksEvenWhenVariableIsResolvable() {
+        // The variable is in context but the raw block must prevent resolution.
+        var vars = Map.of("region", "us-east-1");
+        var result = renderer.resolveForDisplay("{% raw %}{{ vars.region }}{% endraw %}", Map.of("vars", vars));
+        assertThat(result).isEqualTo("{% raw %}{{ vars.region }}{% endraw %}");
+    }
+
     // ---- malformed expression falls back to raw ----
 
     @Test

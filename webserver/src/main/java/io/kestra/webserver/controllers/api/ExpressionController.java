@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -18,10 +17,12 @@ import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
 @Controller("/api/v1/{tenant}/expressions")
 public class ExpressionController {
@@ -63,9 +65,10 @@ public class ExpressionController {
         tags = {"Expressions"},
         summary = "Render Pebble expressions for display",
         description = "Renders a list of Pebble expressions for display purposes only. Expressions are resolved " +
-            "segment by segment using a restricted engine: secret() and env() are masked, only a safe allowlist of " +
-            "pure functions is invoked, and anything else is kept raw. Provide an executionId to resolve against an " +
-            "execution context, or a flow source to resolve against a flow context; otherwise only globals are available."
+            "segment by segment using a restricted engine: secret() is masked as [secret: KEY], env() is kept raw, " +
+            "only a safe allowlist of pure functions is invoked, and anything else is kept raw. Provide an executionId " +
+            "to resolve against an execution context, or a flow source to resolve against a flow context; otherwise " +
+            "only globals are available."
     )
     public RenderedExpressions render(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
         Map<String, Object> variables = variablesFor(request);
@@ -76,7 +79,7 @@ public class ExpressionController {
         if (request.executionId() != null) {
             Execution execution = executionRepository
                 .findById(tenantService.resolveTenant(), request.executionId())
-                .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + request.executionId() + "'"));
+                .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution '" + request.executionId() + "'"));
             Flow flow = flowRepository.findByExecution(execution);
 
             return runContextFactory.of(flow, execution, false).getVariables();
@@ -92,7 +95,7 @@ public class ExpressionController {
         if (request.namespace() != null && request.flowId() != null) {
             Flow flow = flowRepository
                 .findById(tenantService.resolveTenant(), request.namespace(), request.flowId(), Optional.empty())
-                .orElseThrow(() -> new NoSuchElementException("Unable to find flow '" + request.namespace() + "." + request.flowId() + "'"));
+                .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find flow '" + request.namespace() + "." + request.flowId() + "'"));
 
             return flowVariables(flow);
         }
@@ -110,7 +113,7 @@ public class ExpressionController {
 
     @Introspected
     public record RenderExpressionRequest(
-        @NotEmpty @Schema(description = "The raw Pebble expressions to render") List<String> expressions,
+        @NotEmpty @Size(max = 500) @Schema(description = "The raw Pebble expressions to render") List<String> expressions,
         @Nullable @Schema(description = "Resolve against this execution's context") String executionId,
         @Nullable @Schema(description = "Resolve against this flow's context (with flowId)") String namespace,
         @Nullable @Schema(description = "Resolve against this flow's context (with namespace)") String flowId,

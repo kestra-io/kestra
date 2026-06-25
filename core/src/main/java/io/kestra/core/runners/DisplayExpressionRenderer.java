@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,9 @@ public class DisplayExpressionRenderer {
 
     // Matches a single {{ ... }} expression block.
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\{\\{(.*?)}}");
+
+    private static final String RAW_OPEN = "{% raw %}";
+    private static final String RAW_CLOSE = "{% endraw %}";
 
     private final PebbleEngine displayEngine;
 
@@ -86,8 +90,10 @@ public class DisplayExpressionRenderer {
     /**
      * Splits the template into alternating literal and expression segments,
      * renders each expression independently, and stitches the result.
+     * Expressions inside {@code {% raw %}...{% endraw %}} blocks are never rendered.
      */
     private String resolveSegments(String template, Map<String, Object> variables) {
+        List<int[]> rawRanges = template.contains(RAW_OPEN) ? findRawBlockRanges(template) : List.of();
         var sb = new StringBuilder();
         var matcher = EXPRESSION_PATTERN.matcher(template);
         var lastEnd = 0;
@@ -97,13 +103,38 @@ public class DisplayExpressionRenderer {
             sb.append(template, lastEnd, matcher.start());
 
             var segment = matcher.group(0); // the full {{ ... }} block
-            sb.append(renderSegment(segment, variables));
+            if (isInRawBlock(matcher.start(), rawRanges)) {
+                sb.append(segment);
+            } else {
+                sb.append(renderSegment(segment, variables));
+            }
 
             lastEnd = matcher.end();
         }
         // Append any trailing literal text.
         sb.append(template, lastEnd, template.length());
         return sb.toString();
+    }
+
+    private static List<int[]> findRawBlockRanges(String template) {
+        List<int[]> ranges = new ArrayList<>();
+        int pos = 0;
+        while (true) {
+            int start = template.indexOf(RAW_OPEN, pos);
+            if (start < 0) break;
+            int end = template.indexOf(RAW_CLOSE, start);
+            if (end < 0) break;
+            ranges.add(new int[]{start, end + RAW_CLOSE.length()});
+            pos = end + RAW_CLOSE.length();
+        }
+        return ranges;
+    }
+
+    private static boolean isInRawBlock(int position, List<int[]> rawRanges) {
+        for (int[] range : rawRanges) {
+            if (position >= range[0] && position < range[1]) return true;
+        }
+        return false;
     }
 
     /**

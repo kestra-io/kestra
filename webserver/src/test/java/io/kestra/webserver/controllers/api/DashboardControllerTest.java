@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -26,6 +27,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.controllers.api.TenantController.SetTenantDefaultDashboardsRequest;
@@ -39,12 +41,15 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 class DashboardControllerTest {
@@ -62,6 +67,24 @@ class DashboardControllerTest {
 
     @Inject
     DashboardRepositoryInterface dashboardRepository;
+
+    @Inject
+    EditionProvider editionProvider;
+
+    // Custom dashboards are an Enterprise feature, so the controller rejects writes in OSS.
+    // Default the edition to EE so the CRUD tests below exercise the full behaviour;
+    // shouldRejectCustomDashboardWritesInOss flips it to OSS to assert the gate.
+    @MockBean(EditionProvider.class)
+    EditionProvider editionProvider() {
+        EditionProvider mock = mock(EditionProvider.class);
+        when(mock.get()).thenReturn(EditionProvider.Edition.EE);
+        return mock;
+    }
+
+    @BeforeEach
+    void resetEditionToEnterprise() {
+        when(editionProvider.get()).thenReturn(EditionProvider.Edition.EE);
+    }
 
     @Test
     void full() throws JsonProcessingException {
@@ -749,5 +772,59 @@ class DashboardControllerTest {
         assertThat(chartData).isNotNull();
         assertThat(chartData.getTotal()).isEqualTo(1);
         assertThat(chartData.getResults().get(0).get("execution_id")).isEqualTo(idForLabelAC);
+    }
+
+    @Test
+    void shouldRejectCustomDashboardWritesInOss() {
+        // Given an existing dashboard (seeded directly, bypassing the gated create endpoint) and an OSS edition
+        String dashboardYaml = """
+            id: oss-rejected
+            title: Some Dashboard
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  column: date
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+                    total:
+                      agg: COUNT""";
+        dashboardRepository.save(
+            Dashboard.builder().id("oss-rejected").tenantId(MAIN_TENANT).build(),
+            dashboardYaml
+        );
+        when(editionProvider.get()).thenReturn(EditionProvider.Edition.OSS);
+
+        // When / Then: create, update and delete are all forbidden in OSS
+        HttpClientResponseException create = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+        assertThatObject(create.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        HttpClientResponseException update = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                PUT(DASHBOARD_PATH + "/oss-rejected", dashboardYaml).contentType(MediaType.APPLICATION_YAML)
+            )
+        );
+        assertThatObject(update.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        HttpClientResponseException delete = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                DELETE(DASHBOARD_PATH + "/oss-rejected")
+            )
+        );
+        assertThatObject(delete.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // But reads remain available so the bundled default dashboards keep working
+        HttpResponse<?> list = client.toBlocking().exchange(GET(DASHBOARD_PATH));
+        assertThatObject(list.getStatus()).isEqualTo(HttpStatus.OK);
     }
 }

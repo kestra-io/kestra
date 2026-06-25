@@ -33,6 +33,7 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
 import io.kestra.plugin.core.dashboard.chart.Table;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
@@ -48,6 +49,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -84,6 +86,9 @@ public class DashboardController {
     @Inject
     protected ModelValidator modelValidator;
 
+    @Inject
+    protected EditionProvider editionProvider;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get
     @Operation(tags = { "Dashboards" }, summary = "Search for dashboards")
@@ -114,6 +119,7 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Create a dashboard from yaml source")
     public HttpResponse<DashboardResponse> createDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
+        ensureCustomDashboardsEnabled();
         Dashboard dashboardParsed = parseDashboard(dashboard);
 
         if (dashboardParsed.getId() == null) {
@@ -170,6 +176,7 @@ public class DashboardController {
     public HttpResponse<DashboardResponse> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
+        ensureCustomDashboardsEnabled();
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
         if (existingDashboard.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -193,6 +200,12 @@ public class DashboardController {
         return HttpResponse.ok(new DashboardResponse(this.save(existingDashboard.get(), dashboardToSave, dashboard)));
     }
 
+    private void ensureCustomDashboardsEnabled() {
+        if (editionProvider.get() == EditionProvider.Edition.OSS) {
+            throw new HttpStatusException(HttpStatus.FORBIDDEN, "Custom dashboards require Enterprise Edition");
+        }
+    }
+
     private Dashboard parseDashboard(String dashboard) {
         return YamlParser.parse(dashboard, Dashboard.class).toBuilder()
             .tenantId(tenantService.resolveTenant())
@@ -208,6 +221,7 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Delete a dashboard")
     public HttpResponse<Void> deleteDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id) throws ConstraintViolationException {
+        ensureCustomDashboardsEnabled();
         String tenantId = tenantService.resolveTenant();
         if (dashboardRepository.delete(tenantId, id) != null) {
             removeDefaultDashboardReferences(id);

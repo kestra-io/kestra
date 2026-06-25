@@ -25,8 +25,6 @@ public interface DashboardRepositoryInterface {
      */
     long countAllForAllTenants();
 
-    Boolean isEnabled();
-
     Optional<Dashboard> get(String tenantId, String id);
 
     ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query);

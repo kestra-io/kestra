@@ -15,7 +15,6 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
-import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
@@ -53,9 +52,6 @@ public class MiscController {
 
     @Inject
     VersionProvider versionProvider;
-
-    @Inject
-    DashboardRepositoryInterface dashboardRepository;
 
     @Inject
     InstanceService instanceService;
@@ -129,7 +125,7 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
-            .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
+            .isCustomDashboardsEnabled(editionProvider.get() != EditionProvider.Edition.OSS)
             .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .preview(

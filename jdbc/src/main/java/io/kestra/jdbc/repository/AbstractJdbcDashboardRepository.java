@@ -166,9 +166,4 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
 
         return List.of(Map.of("value", roundDouble(filteredValue, 2)));
     }
-
-    @Override
-    public Boolean isEnabled() {
-        return true;
-    }
 }

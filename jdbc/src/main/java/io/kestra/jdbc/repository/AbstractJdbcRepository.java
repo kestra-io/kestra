@@ -423,15 +423,15 @@ public abstract class AbstractJdbcRepository {
             case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
             case STARTS_WITH -> {
                 String s = requireStringValue(value, "STARTS_WITH");
-                yield DSL.field(columnName).like(s + "%");
+                yield DSL.field(columnName).startsWith(s);
             }
             case ENDS_WITH -> {
                 String s = requireStringValue(value, "ENDS_WITH");
-                yield DSL.field(columnName).like("%" + s);
+                yield DSL.field(columnName).endsWith(s);
             }
             case CONTAINS -> {
                 String s = requireStringValue(value, "CONTAINS");
-                yield DSL.field(columnName).like("%" + s + "%");
+                yield DSL.field(columnName).contains(s);
             }
             case REGEX -> {
                 String s = requireStringValue(value, "REGEX");

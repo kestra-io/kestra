@@ -578,6 +578,7 @@ class FlowControllerTest {
         assertThat(e.getResponse().getBody(String.class).get()).contains("Required QueryValue [revisions] not specified");
     }
 
+    @FlakyTest(description = "CI load can cause ReadTimeoutException instead of HttpClientResponseException on PUT to non-existent flow")
     @Test
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();

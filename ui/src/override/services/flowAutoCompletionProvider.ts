@@ -231,6 +231,15 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     return await this.outputsFor(match[1], source)
                 }
 
+                // progressive autocomplete into a FORM group: `inputs.environment.` -> region, data_center
+                const formMatch = parentField.match(/^inputs\.([^.]+)$/)
+                if (formMatch) {
+                    const form = parsed?.inputs?.find(
+                        (input: {id?: string; type?: string}) => input.id === formMatch[1] && input.type === "FORM",
+                    )
+                    return Promise.resolve(form?.inputs?.map((child: {id?: string}) => child.id) ?? [])
+                }
+
                 return Promise.resolve([])
             }
         }

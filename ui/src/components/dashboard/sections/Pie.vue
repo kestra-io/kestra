@@ -17,7 +17,7 @@
                 <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ t("success") }}</div>
             </div>
         </div>
-        <KsTableEmpty v-else class="empty" />
+        <KsNoData v-else class="empty" />
 
         <ChartLegend
             v-if="legendItems.length"

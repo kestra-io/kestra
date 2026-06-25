@@ -201,17 +201,26 @@ public class FlowService {
     }
 
     private void updateTopology(FlowWithSource flow) {
-        flowTopologyRepository.save(
-            flow,
-            (flow.isDeleted() ? Stream.<FlowTopology> empty()
-                : flowTopologyService
-                    .topology(
-                        flow,
-                        flowRepository.findAllWithSource(flow.getTenantId())
-                    ))
-                .distinct()
-                .toList()
-        );
+        // Runs on a background thread with no HTTP request / user context, so the ACL-aware
+        // findAllWithSource() would return zero flows in EE and produce an empty topology.
+        // Topology is a system-wide computation: bypass ACLs with findAllWithSourceWithNoAcl().
+        try {
+            flowTopologyRepository.save(
+                flow,
+                (flow.isDeleted() ? Stream.<FlowTopology> empty()
+                    : flowTopologyService
+                        .topology(
+                            flow,
+                            flowRepository.findAllWithSourceWithNoAcl(flow.getTenantId())
+                        ))
+                    .distinct()
+                    .toList()
+            );
+        } catch (Exception e) {
+            // The Future returned by executorService.submit(...) is never get()-ed, so without
+            // this log a topology failure would be silently swallowed.
+            log.error("Unable to update the flow topology for flow '{}'", flow.uidWithoutRevision(), e);
+        }
     }
 
     private void recomputeTriggers(FlowWithSource flow) {

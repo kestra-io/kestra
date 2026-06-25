@@ -39,7 +39,7 @@
                 </KsCollapse>
             </template>
 
-            <KsEmpty v-else :description="$t('variable_explorer.empty')" />
+            <KsNoData v-else :title="$t('variable_explorer.empty')" />
         </KsScrollbar>
     </div>
 </template>
@@ -53,7 +53,6 @@
         KsCollapse,
         KsCollapseItem,
         KsTag,
-        KsEmpty,
     } from "@kestra-io/design-system"
 
     export interface ExplorerItem {

@@ -3,6 +3,7 @@ import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {KsForm} from "@kestra-io/design-system";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
+import {flattenInputs, unflattenToForms} from "../../../../src/utils/inputs";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
@@ -143,6 +144,194 @@ export const InputTypes = {
                 displayName: "Boolean field for required",
                 defaults: true  
             }]}
+        />;
+    }
+};
+
+// Wizard harness: the validate mock expands FORM groups to dotted leaves, exactly like the
+// backend, so InputsForm receives the same flat-by-dotted-id metadata it does in production.
+const WizardSut = defineComponent((props) => {
+    const axios = {}
+    axios.post = (uri) => {
+        if (!uri.endsWith("/validate")) {
+            return {data: []}
+        }
+        return Promise.resolve({data: {
+            inputs: flattenInputs(props.inputs).map(x => ({
+                input: x,
+                enabled: true,
+                isDefault: false,
+                errors: [],
+            })),
+        }})
+    }
+    setMockClient(axios)
+
+    const onRecap = ref(false)
+    const values = ref({})
+    return () => (<>
+        <ks-form label-position="top">
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} mode="wizard"
+                        flow={{namespace: "ns1", id: "flowid1"}}
+                        onUpdate:modelValue={(value) => values.value = value}
+                        onUpdate:onRecap={(value) => onRecap.value = value}
+            />
+        </ks-form>
+        <pre data-testid="on-recap">{String(onRecap.value)}</pre>
+    </>);
+}, {
+    props: {"inputs": {type: Array, required: true}}
+});
+
+/**
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const Wizard = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        // Step 1 (plain "name"): Next visible, Back hidden, not on recap yet.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        expect(can.queryByTestId("wizard-back")).toBeNull();
+        expect(can.queryByTestId("inputs-wizard-recap")).toBeNull();
+        expect(can.getByTestId("on-recap")).toHaveTextContent("false");
+
+        // Progress stepper (KsSteps): one step per fillable step ("Inputs", "Environment", "Inputs"),
+        // the current one in the "process" state.
+        const stepper = can.getByTestId("wizard-steps");
+        expect(stepper.querySelectorAll(".kel-step")).toHaveLength(3);
+        expect(stepper).toHaveTextContent("Environment");
+        expect(stepper.querySelectorAll(".kel-step__head")[0].className).toContain("is-process");
+
+        // Next -> step 2 (the FORM "Environment", showing its dotted child region).
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
+        expect(can.getByTestId("wizard-back")).toBeTruthy();
+
+        // Stepper tracks progress: step 0 completed (success), step 1 ("Environment") now in process.
+        expect(stepper.querySelectorAll(".kel-step__head")[0].className).toContain("is-success");
+        expect(stepper.querySelectorAll(".kel-step__head")[1].className).toContain("is-process");
+
+        // Next -> step 3 (plain "team").
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("input-form-team")).toBeTruthy());
+
+        // Next -> recap: every section listed, Execute lives in the footer so onRecap flips true.
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("inputs-wizard-recap")).toBeTruthy());
+        expect(can.getByTestId("on-recap")).toHaveTextContent("true");
+        expect(can.queryByTestId("wizard-next")).toBeNull(); // no Next on recap
+
+        // Edit the FORM section -> jump back to step 2, primary button now reads "Done".
+        await userEvent.click(can.getByTestId("recap-edit-1"));
+        await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
+        expect(can.getByTestId("wizard-next")).toHaveTextContent("Done");
+
+        // Done returns straight to the recap (not the next sequential step).
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("inputs-wizard-recap")).toBeTruthy());
+    },
+    render() {
+        return <WizardSut inputs={[
+            {id: "name", type: "STRING", required: false, displayName: "Name"},
+            {
+                id: "environment",
+                type: "FORM",
+                displayName: "Environment",
+                inputs: [{id: "region", type: "STRING", required: false, displayName: "Region"}],
+            },
+            {id: "team", type: "STRING", required: false, displayName: "Team"},
+        ]}
+        />;
+    }
+};
+
+// Apps-shaped wizard harness: Apps has no `flow` prop, so InputsForm takes the emit("validation")
+// branch. The parent (BlockForm in EE) owns the validate round-trip and reconstructs the FORM tree
+// from flat dotted leaves + formGroups before handing it to InputsForm — we mirror both here. The
+// validate callback is DEFERRED into a queue the play function releases manually, so we can observe
+// the Next button reading "Loading…" mid-round-trip and prove goNext awaits it.
+const AppsWizardSut = defineComponent((props) => {
+    const initial = unflattenToForms(props.inputs, props.formGroups)
+
+    const queue = []
+    function onValidation(event) {
+        // hold the callback; the play function releases it via window.__appsWizardFlush()
+        queue.push(() => event.callback({
+            inputs: props.inputs.map(x => ({input: x, enabled: true, isDefault: false, errors: []})),
+        }))
+    }
+    window.__appsWizardPending = () => queue.length
+    window.__appsWizardFlush = () => queue.splice(0).forEach(fn => fn())
+
+    const onRecap = ref(false)
+    const values = ref({})
+    return () => (<>
+        <ks-form label-position="top">
+            <InputsForm initialInputs={initial} modelValue={values.value} mode="wizard"
+                        formGroups={props.formGroups}
+                        onValidation={onValidation}
+                        onUpdate:modelValue={(value) => values.value = value}
+                        onUpdate:onRecap={(value) => onRecap.value = value}
+            />
+        </ks-form>
+        <pre data-testid="on-recap">{String(onRecap.value)}</pre>
+        <pre data-testid="apps-values">{JSON.stringify(values.value)}</pre>
+    </>);
+}, {
+    props: {inputs: {type: Array, required: true}, formGroups: {type: Object, required: true}},
+});
+
+/**
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const AppsWizard = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        // Step 1 (plain "name") renders from the seeded skeleton before any validate resolves.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        // Drain the initial mount validate so metadata is populated and its signature recorded.
+        await waitFor(() => expect(window.__appsWizardPending()).toBeGreaterThan(0));
+        window.__appsWizardFlush();
+
+        // DEDUP: clicking Next without editing anything must NOT re-validate — the current metadata
+        // already covers this exact payload. It advances instantly, with no round-trip queued and no
+        // loading label (this is the timing-free proof of the skip).
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
+        expect(window.__appsWizardPending()).toBe(0);
+        expect(can.getByTestId("wizard-next")).not.toHaveTextContent("Loading");
+
+        // CHANGE: editing an input makes a validate necessary. goNext fires it and AWAITS the
+        // promisified emit; held open past the 500ms threshold, the Next button shows the loading
+        // label and the step does NOT advance until the round-trip is released.
+        const editor = await waitFor(() => {
+            const e = can.getByTestId("input-form-environment.region").querySelector(".ks-monaco-editor");
+            expect(e).toBeTruthy();
+            return e;
+        }, {timeout: 5000, interval: 100});
+        await waitFor(() => expect(typeof editor.__setValueInTests).toBe("function"));
+        editor.__setValueInTests("eu-west");
+        await waitFor(() => expect(can.getByTestId("apps-values")).toHaveTextContent("eu-west"));
+
+        await userEvent.click(can.getByTestId("wizard-next"));
+        await waitFor(() => expect(window.__appsWizardPending()).toBeGreaterThan(0)); // validate fired
+        await waitFor(() => expect(can.getByTestId("wizard-next")).toHaveTextContent("Loading"), {timeout: 3000});
+        expect(can.queryByTestId("inputs-wizard-recap")).toBeNull(); // parked on the await
+
+        // Release the held round-trip -> goNext resumes, clears the loading label, advances to recap.
+        window.__appsWizardFlush();
+        await waitFor(() => expect(can.getByTestId("inputs-wizard-recap")).toBeTruthy());
+        expect(can.getByTestId("on-recap")).toHaveTextContent("true");
+    },
+    render() {
+        return <AppsWizardSut
+            inputs={[
+                {id: "name", type: "STRING", required: false, displayName: "Name"},
+                {id: "environment.region", type: "STRING", required: false, displayName: "Region"},
+            ]}
+            formGroups={{environment: {displayName: "Environment"}}}
         />;
     }
 };

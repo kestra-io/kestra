@@ -1,7 +1,7 @@
 <template>
     <div class="source-search-preview" data-test="source-search-preview">
         <div v-if="!props.selected" class="source-search-preview__empty">
-            <KsEmpty :background="false" :description="t('source_search.preview_empty')" />
+            <KsNoData :title="t('source_search.preview_empty')" />
         </div>
 
         <div v-else-if="isLoading" class="source-search-preview__loading" v-ks-loading="true" />

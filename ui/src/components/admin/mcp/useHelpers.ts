@@ -23,7 +23,14 @@ export function useHelpers() {
     const details: Ref<Details> = computed(() => ({
         title: isCreate.value ? t("mcp.create") : (serverId.value ?? t("mcp.servers")),
         breadcrumb: [
-            {label: t("mcp.servers"), link: {name: "admin/mcp-servers"}},
+            {
+                label: t("mcp.servers"),
+                link: {
+                    name: String(route.name ?? "").startsWith("admin/instance/")
+                        ? "admin/instance/mcp-servers"
+                        : "admin/mcp-servers",
+                },
+            },
         ],
     }))
 

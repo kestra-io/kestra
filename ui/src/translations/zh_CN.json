@@ -78,6 +78,7 @@
     "automatic refresh": "自动刷新",
     "avg": "平均",
     "avg duration": "平均执行时间",
+    "back": "返回",
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
@@ -93,6 +94,11 @@
       "create": "创建一个blueprint",
       "custom": "自定义blueprints",
       "dashboards": "仪表板 Blueprints",
+      "detail": {
+        "category": "类别类型",
+        "links": "链接与资源",
+        "openInEditor": "在编辑 Flow 中打开"
+      },
       "edit": "编辑蓝图",
       "empty": "没有可显示的blueprints。",
       "flows": "流程蓝图",
@@ -256,6 +262,8 @@
         "plural": "仪表板",
         "singular": "仪表板"
       },
+      "no_description": "无描述",
+      "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "preview": "预览仪表板",
       "quick_filters": {
         "all": "全部",
@@ -485,6 +493,7 @@
       "github": "打开一个GitHub问题"
     },
     "documentationMenu": "文档菜单",
+    "done": "完成",
     "down trend": "减少",
     "download": "下载",
     "download logs": "下载日志",
@@ -581,6 +590,10 @@
         "content": "通过向flow添加<code>McpToolTrigger</code>，将flow公开为MCP工具。请在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>的信息。",
         "title": "此服务器上尚未注册任何工具flow。"
       },
+      "namespaceFiles": {
+        "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用",
+        "title": "此命名空间中尚无文件"
+      },
       "panels": {
         "content": "您已关闭所有面板。  \n请选择上面的选项卡以继续。",
         "title": "没有面板打开"
@@ -600,6 +613,10 @@
       "triggers": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
+      },
+      "variables": {
+        "content": "添加kv store以在不同的flow之间共享配置。子namespace会自动继承这些配置，您可以引用任何value。",
+        "title": "尚无变量"
       },
       "versionPlugin": {
         "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
@@ -656,7 +673,7 @@
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "execution id": "执行 Id",
     "execution labels": "执行标签",
-    "execution not found": "执行 <code>{executionId}</code> 未找到。",
+    "execution not found": "执行 {executionId} 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
     "execution replay": "此执行是以下内容的重放",
@@ -867,6 +884,9 @@
     "form error": "表单错误",
     "from": "从",
     "gantt": "甘特图",
+    "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
+    "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
+    "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
@@ -897,6 +917,7 @@
     "items": "项目",
     "join community": "加入社区",
     "join_slack": "加入 Slack",
+    "jsonl": "JSONL",
     "jump to...": "跳转到...",
     "kestra": "Kestra",
     "key": "键",
@@ -935,6 +956,7 @@
     "launch execution": "执行",
     "learn_more": "了解更多",
     "leave page": "离开页面",
+    "license": "许可证",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line": "行",
@@ -961,6 +983,7 @@
       "auth_type": "身份验证",
       "basic_auth": "基本认证",
       "bearer_token": "Bearer token 身份验证",
+      "client_setup": "客户端设置",
       "connect": "连接",
       "connect_tab": {
         "auth_api_token_hint": "在启动客户端之前，将 <code>KESTRA_TOKEN</code> 设置为环境变量。",
@@ -987,6 +1010,7 @@
       "id_placeholder": "例如 my-mcp-server",
       "instructions": "说明",
       "main_tenant": "main",
+      "managed_by_kestra": "由 Kestra 管理",
       "no_oauth_providers": "此实例中未配置 OIDC 提供商",
       "no_servers": "未找到MCP服务器。创建您的第一个服务器以向外部AI代理公开MCP Tool triggers。",
       "oauth": "OAuth",
@@ -996,14 +1020,18 @@
       "oauth_provider_required": "当认证类型为 OAuth 时，OAuth 提供商为必填项",
       "page_description": "将您的Kestra flow公开为MCP兼容AI代理的工具",
       "private": "私有",
+      "private_server": "私有服务器",
       "public": "公开",
+      "public_hint": "警告：公共服务器无需身份验证。任何拥有此 URL 的人都可以调用此服务器公开的所有工具，无需 namespace 或权限检查。仅用于可以安全地对外公开的服务器。",
       "save": "保存更改",
       "scopes_supported": "支持的 scope",
       "scopes_supported_hint": "此服务器 Protected Resource Metadata 文档中公告的 scope。符合规范的 MCP 客户端将其授权请求限制为此列表。留空以省略该字段，让客户端回退到 IdP 公告的 scope。",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP 服务器",
+      "server_id": "服务器 ID",
       "server_type": "服务器类型",
       "servers": "MCP 服务器",
+      "servers_count": "{count} MCP 服务器",
       "tab_connect": "连接",
       "tab_edit": "编辑",
       "tab_tool_flows": "工具Flows",
@@ -1026,7 +1054,8 @@
         "view_flow": "打开 flow"
       },
       "url_copied": "URL 已复制！",
-      "username_password": "用户名和密码"
+      "username_password": "用户名和密码",
+      "your_servers": "您的服务器"
     },
     "metric": "指标",
     "metric choice": "此flow没有可用的指标",
@@ -1093,9 +1122,14 @@
         "import": "导入",
         "success": "文件成功导入"
       },
+      "new_file": "新建文件",
       "no_items": {
         "heading": "尚未在您的namespace中找到文件。",
         "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"
+      },
+      "no_selection": {
+        "description": "从树中选择一个文件以查看其内容。",
+        "heading": "未选择文件"
       },
       "path": {
         "copy": "复制路径",
@@ -1142,13 +1176,17 @@
     "neutral trend": "稳定",
     "new": "新建",
     "new version": "新版本 {version} 可用！",
+    "next": "下一步",
     "next evaluation date": "下次评估日期",
     "next evaluation date tooltip": "根据其间隔，下一次评估trigger的时间。如果条件不满足，可能与下一次执行日期不同。",
     "next execution date": "下次执行日期",
     "next_execution": "下一次执行",
     "no data current task": "当前task没有可用数据",
     "no inputs": "此流程没有输入。",
+    "no metrics available": "此task运行没有记录任何指标。",
+    "no outputs available": "此任务运行没有可用的输出。",
     "no result": "没有结果显示。",
+    "no revisions": "无修订",
     "no revisions found": "此流程只有一个修订版",
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
@@ -1244,7 +1282,8 @@
     "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
-    "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
+    "no_logs_data_title": "未找到所选过滤器的日志。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
       "assets": "未找到资产",
@@ -1393,6 +1432,7 @@
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
     "open sidebar": "打开侧边栏",
+    "open source": "开源",
     "open_page": "Open page",
     "optional": "可选",
     "original execution": "原始执行",
@@ -1544,6 +1584,7 @@
       "showing_rows": "显示第 {start}-{end} 行，共 {total} 行",
       "view": "查看"
     },
+    "pricing": "定价",
     "product_tour": "产品导览",
     "properties": {
       "hidden": "隐藏在表格中",
@@ -1573,6 +1614,7 @@
     "replay inputs": "输入",
     "replay inputs new required": "此修订版有inputs。系统将提示您填写它们。",
     "replay latest revision": "使用最新修订版重放",
+    "replay select taskrun": "选择要重放的task运行：",
     "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
     "replay using": "使用重播",
     "replay with inputs": "使用输入重放",
@@ -1600,6 +1642,7 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "reuse original inputs": "重用原始input",
     "reuse_original_inputs": "重用原始input",
+    "review your inputs": "检查您的输入",
     "revision": "修订版",
     "revision deleted": "修订版 {revision} 已成功删除",
     "revisions": "修订版",
@@ -1684,7 +1727,8 @@
             "flow_default_tab": "导航到flow时选择的选项卡。",
             "log_display": "打开执行时日志的呈现方式。",
             "log_level": "执行日志中显示的最低日志级别。",
-            "playground": "在编辑器游乐场中单独运行任务。"
+            "playground": "在编辑器游乐场中单独运行任务。",
+            "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。"
           },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
@@ -1697,7 +1741,8 @@
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
             "multi_panel_editor": "多面板编辑器",
-            "playground": "游乐场"
+            "playground": "游乐场",
+            "triggers_default_tab": "默认 Trigger 标签页"
           },
           "label": "主要配置"
         },
@@ -1749,6 +1794,7 @@
           },
           "descriptions": {
             "color_mode": "选择您偏好的界面主题。",
+            "color_mode_shortcut": "提示：在任意位置按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 即可循环切换主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
             "editor_font_family": "YAML编辑器中使用的等宽字体。",
             "editor_font_size": "YAML和无代码编辑器中使用的字体大小。",
@@ -1803,7 +1849,6 @@
         "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
-      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
       "login_title": "登录",
       "logout": "注销",
       "steps": {
@@ -1854,7 +1899,8 @@
         "firstName_required": "名字为必填项",
         "incorrect_creds": "用户名或密码无效。请确保您的凭据正确。",
         "lastName_required": "姓氏为必填项",
-        "password_invalid": "密码无效"
+        "password_invalid": "密码无效",
+        "password_required": "密码为必填项"
       }
     },
     "show": "显示",

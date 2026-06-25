@@ -58,7 +58,7 @@
     min-height: 26px;
     border-radius: var(--ks-radius-base);
     text-decoration: none;
-    color: var(--ks-text-secondary);
+    color: var(--ks-text-primary);
     font-size: var(--ks-font-size-sm);
     font-weight: var(--ks-font-weight-medium);
     transition: background-color 0.15s ease, color 0.15s ease;

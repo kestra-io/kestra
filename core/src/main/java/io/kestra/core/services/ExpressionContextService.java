@@ -414,7 +414,8 @@ public class ExpressionContextService {
         if (flow.getInputs() == null || flow.getInputs().isEmpty()) {
             return List.of();
         }
-        return flow.getInputs().stream()
+        // Expand FORM inputs so suggestions are the resolvable nested paths (e.g. inputs.environment.region).
+        return flow.resolvableInputs().stream()
             .map(input -> "inputs." + input.getId())
             .sorted()
             .toList();

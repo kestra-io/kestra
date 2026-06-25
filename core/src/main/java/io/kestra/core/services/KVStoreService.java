@@ -135,7 +135,7 @@ public class KVStoreService {
         Integer purgedMetadataCount = getKvMetadataRepository().purge(kvEntries.stream().map(kv -> PersistedKvMetadata.from(tenant, kv)).toList());
 
         long actualDeletedEntries = kvEntries.stream()
-            .map(entry -> KVStore.storageUri(entry.key(), namespace, entry.version()))
+            .map(entry -> KVStore.storageUri(entry.key(), namespace, entry.revision()))
             .map(throwFunction(uri ->
             {
                 boolean deleted = this.storage.delete(tenant, namespace, uri);

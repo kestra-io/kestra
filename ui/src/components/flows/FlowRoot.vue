@@ -277,7 +277,7 @@
 
         // created logic
         if (!route.params.tab) {
-            const tab = localStorage.getItem("flowDefaultTab") || "overview"
+            const tab = localStorage.getItem("flowDefaultTab") || "edit"
             router.replace({
                 name: "flows/update",
                 params: {...route.params, tab},

@@ -10,6 +10,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.docs.Plugin;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.runners.FollowLogEvent;
@@ -147,7 +148,30 @@ public class SearchableFactory {
 
             .searchableQueryFilterExtractor(QueryFilter.Field.ATTEMPT_NUMBER, FollowLogEvent::attemptNumber,
                 QueryFilter.Op.EQUALS, QueryFilter.Op.NOT_EQUALS, QueryFilter.Op.IN, QueryFilter.Op.NOT_IN)
+            .searchableQueryFilterExtractor(QueryFilter.Field.KIND, QueryFilter.Op.EQUALS,
+                (event, v) -> kindMatches(event, v))
+            .searchableQueryFilterExtractor(QueryFilter.Field.KIND, QueryFilter.Op.NOT_EQUALS,
+                (event, v) -> !kindMatches(event, v))
+            .searchableQueryFilterExtractor(QueryFilter.Field.KIND, QueryFilter.Op.IN,
+                (event, v) -> asKindList(v).stream().anyMatch(item -> kindMatches(event, item)))
+            .searchableQueryFilterExtractor(QueryFilter.Field.KIND, QueryFilter.Op.NOT_IN,
+                (event, v) -> asKindList(v).stream().noneMatch(item -> kindMatches(event, item)))
             .build();
+    }
+
+    private static boolean kindMatches(FollowLogEvent event, Object value) {
+        String actual = event.executionKind() == null
+            ? ExecutionKind.NORMAL.name()
+            : event.executionKind().name();
+        String desired = value instanceof ExecutionKind kind ? kind.name() : value.toString();
+        return actual.equalsIgnoreCase(desired);
+    }
+
+    private static List<String> asKindList(Object value) {
+        if (value instanceof List<?> list) {
+            return list.stream().map(Object::toString).toList();
+        }
+        return List.of(value.toString().split(","));
     }
 
     private static boolean scopeMatches(FollowLogEvent event, Object value, String systemNamespace) {

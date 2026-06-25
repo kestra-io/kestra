@@ -215,6 +215,7 @@
                     : $t('namespace files.create.folder')
             "
             width="500"
+            appendToBody
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
@@ -268,7 +269,6 @@
         <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
-            width="500"
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
@@ -302,7 +302,6 @@
         <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
-            width="500"
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3" v-html="confirmationLabels.message" />
@@ -321,8 +320,9 @@
         <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
-            width="75%"
             top="10vh"
+            width="min(1200px, 90vw)"
+            appendToBody
         >
             <Revisions
                 v-if="revisionsHistory.visible"
@@ -411,6 +411,12 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+
+    // exposed so parents (e.g. the dedicated empty state) can reuse the
+    // create dialog instead of duplicating file-creation logic
+    defineExpose({
+        openCreationDialog: (type: "file" | "folder" = "file") => toggleDialog(true, type),
+    })
 
     const route = useRoute()
     const namespacesStore = useNamespacesStore()
@@ -710,7 +716,9 @@
                 dropdowns.value[dd]?.handleClose()
             }
         }
-        dropdowns.value[id]?.handleOpen()
+        if(typeof dropdowns.value[id]?.handleOpen === "function") {
+            dropdowns.value[id].handleOpen()
+        }
     }
 
     async function dialogHandler() {
@@ -729,9 +737,9 @@
             } else {
                 const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
                 const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
-                if (selectedNode?.leaf === false) {
-                    node = selectedNode.id
-                    folder = filesStore.getPath(selectedNode.id)
+                if (selectedNode?.data?.leaf === false) {
+                    node = selectedNode.data.id
+                    folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
             if(!type) return
@@ -931,6 +939,11 @@
 
 <style scoped lang="scss">
 
+.revision-history-dialog-body {
+    // We subtract the dialog margins and title height (78px)
+    height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
+}
+
 .sidebar {
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
@@ -938,13 +951,10 @@
     min-width: calc(20% - 11px);
     width: 20%;
 
-    :deep(.revision-history-dialog-body) {
-        // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
-    }
-
     .filter{
-        .kel-input__wrapper {
+        :deep(.kel-select__wrapper) {
+            min-height: 32px;
+            height: 32px;
             padding-right: 0px;
         }
     }

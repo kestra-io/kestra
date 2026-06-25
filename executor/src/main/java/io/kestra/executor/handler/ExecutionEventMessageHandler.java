@@ -157,6 +157,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                             // if the execution is queued or terminated due to concurrency limit, we stop here
                             if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                if (processed.getExecution().getState().getCurrent().isTerminatedInError()) {
+                                    Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + processed.getExecution().getState().getCurrent().name());
+                                }
                                 return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
                             }
                         }
@@ -296,6 +299,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             executor.getLoopExecutions().forEach(throwConsumer(loopExecution -> executionQueue.emit(loopExecution)));
                         }
 
+                        if (executor.getExecution().getState().getCurrent().isTerminatedInError()) {
+                            Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + executor.getExecution().getState().getCurrent().name());
+                        }
                         return executor;
                     } catch (QueueException e) {
                         Span.current().recordException(e).setStatus(StatusCode.ERROR);
@@ -305,6 +311,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                     } catch (FlowNotFoundException e) {
                         // avoid infinite for FlowNotFoundException
                         if (!execution.getState().getCurrent().isFailed()) {
+                            Span.current().recordException(e).setStatus(StatusCode.ERROR);
                             Execution failedExecution = fail(execution, e);
                             return new ExecutorContext(execution).withExecution(failedExecution, "flowNotFound");
                         }

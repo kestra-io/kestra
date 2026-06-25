@@ -14,6 +14,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -181,7 +182,7 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
         List<Label> additionalLabels
     ) {
         Execution execution = Execution.builder()
-            .inputs(input)
+            .inputs(MapUtils.flattenToNestedMap(input))
             .flowId(flow.getId())
             .state(new State())
             .id(IdUtils.create())

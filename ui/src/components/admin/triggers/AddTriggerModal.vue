@@ -1,9 +1,9 @@
 <template>
     <KsDialog
         v-model="visible"
-        width="40%"
         destroyOnClose
         appendToBody
+        :large="activeTab === 'documentation'"
     >
         <template #header>
             <div class="header">

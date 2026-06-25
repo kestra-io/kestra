@@ -18,7 +18,9 @@ import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
 
-public class H2Functions {
+public final class H2Functions {
+
+    private H2Functions() {}
     private static final Scope scope = Scope.newEmptyScope();
     private static final ConcurrentHashMap<String, JsonQuery> QUERY_CACHE = new ConcurrentHashMap<>();
 
@@ -28,8 +30,9 @@ public class H2Functions {
 
     /**
      * Escapes a value for safe embedding inside a jq string literal ({@code "..."}).
-     * Escapes backslashes first, then double-quotes, so the resulting string can be
-     * safely concatenated into a jq filter without altering the program structure.
+     * Follows JSON string escaping rules: backslash, double-quote, and all control
+     * characters (U+0000–U+001F) are escaped so the resulting string can be safely
+     * concatenated into a jq filter without altering the program structure.
      *
      * @param value the raw user-supplied key or value to embed in a jq string literal
      * @return the escaped string, or {@code null} if {@code value} is {@code null}
@@ -38,8 +41,28 @@ public class H2Functions {
         if (value == null) {
             return null;
         }
-        // Backslash must be escaped before double-quote to avoid double-escaping
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+        StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            // Backslash must be handled before double-quote to avoid double-escaping
+            switch (c) {
+                case '\\' -> sb.append("\\\\");
+                case '"' -> sb.append("\\\"");
+                case '\b' -> sb.append("\\b");
+                case '\f' -> sb.append("\\f");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+            }
+        }
+        return sb.toString();
     }
 
     public static Boolean jqBoolean(String value, String expression) {

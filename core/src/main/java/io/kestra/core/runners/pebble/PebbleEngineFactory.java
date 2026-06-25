@@ -106,106 +106,32 @@ public class PebbleEngineFactory {
         return builder.build();
     }
 
-    private Extension extensionForDisplay(Extension initialExtension) {
+    private Extension extensionForDisplay(Extension initial) {
         // Any function that is not in the safe allowlist must be wrapped (masked or raw-signalled).
-        boolean needsProxy = initialExtension.getFunctions().keySet().stream()
+        boolean needsProxy = initial.getFunctions().keySet().stream()
             .anyMatch(name -> !SAFE_DISPLAY_FUNCTIONS.contains(name));
 
         if (!needsProxy) {
-            return initialExtension;
+            return initial;
         }
 
-        return (Extension) Proxy.newProxyInstance(
-            initialExtension.getClass().getClassLoader(),
-            new Class<?>[] {Extension.class},
-            (proxy, method, methodArgs) ->
-            {
-                if (method.getName().equals("getFunctions")) {
-                    return initialExtension.getFunctions().entrySet().stream()
-                        .map(entry ->
-                        {
-                            String name = entry.getKey();
-                            if (SAFE_DISPLAY_FUNCTIONS.contains(name)) {
-                                return entry;
-                            } else if (name.equals(SecretFunction.NAME)) {
-                                return Map.entry(name, secretMaskProxy(entry.getValue()));
-                            } else if (name.equals(EnvFunction.NAME)) {
-                                return Map.entry(name, envMaskProxy(entry.getValue()));
-                            }
-                            // Everything else is kept raw — never invoked.
-                            return Map.entry(name, rawSignalProxy(entry.getValue()));
-                        })
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                }
-                return method.invoke(initialExtension, methodArgs);
+        return wrapExtension(initial, entry -> {
+            String name = entry.getKey();
+            if (SAFE_DISPLAY_FUNCTIONS.contains(name)) {
+                return entry;
+            } else if (name.equals(SecretFunction.NAME)) {
+                // Returns [secret: KEY] without touching the real secret service.
+                return Map.entry(name, interceptExecute(entry.getValue(),
+                    args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
+            } else if (name.equals(EnvFunction.NAME)) {
+                // Returns [env: NAME] without reading environment variables.
+                return Map.entry(name, interceptExecute(entry.getValue(),
+                    args -> "[env: " + args.getOrDefault("name", "?") + "]"));
             }
-        );
-    }
-
-    /** Returns {@code [secret: KEY]} without touching the real secret service. */
-    private Function secretMaskProxy(Function initial) {
-        return (Function) Proxy.newProxyInstance(
-            initial.getClass().getClassLoader(),
-            new Class<?>[] {Function.class},
-            (proxy, method, methodArgs) ->
-            {
-                if (method.getName().equals("execute")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> args = (Map<String, Object>) methodArgs[0];
-                    Object key = args.getOrDefault("key", "?");
-                    return "[secret: " + key + "]";
-                }
-                try {
-                    return method.invoke(initial, methodArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-            }
-        );
-    }
-
-    /** Returns {@code [env: NAME]} without reading environment variables. */
-    private Function envMaskProxy(Function initial) {
-        return (Function) Proxy.newProxyInstance(
-            initial.getClass().getClassLoader(),
-            new Class<?>[] {Function.class},
-            (proxy, method, methodArgs) ->
-            {
-                if (method.getName().equals("execute")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> args = (Map<String, Object>) methodArgs[0];
-                    Object name = args.getOrDefault("name", "?");
-                    return "[env: " + name + "]";
-                }
-                try {
-                    return method.invoke(initial, methodArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-            }
-        );
-    }
-
-    /**
-     * Signals that this segment should remain raw by throwing {@link DisplayUnrenderableException}
-     * before the underlying function is ever invoked.
-     */
-    private Function rawSignalProxy(Function initial) {
-        return (Function) Proxy.newProxyInstance(
-            initial.getClass().getClassLoader(),
-            new Class<?>[] {Function.class},
-            (proxy, method, methodArgs) ->
-            {
-                if (method.getName().equals("execute")) {
-                    throw new DisplayUnrenderableException();
-                }
-                try {
-                    return method.invoke(initial, methodArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-            }
-        );
+            // Everything else signals that the segment should remain raw — never invoked.
+            return Map.entry(name, interceptExecute(entry.getValue(),
+                args -> { throw new DisplayUnrenderableException(); }));
+        });
     }
 
     public PebbleEngine createWithMaskedFunctions(VariableRenderer renderer, final List<String> functionsToMask) {
@@ -213,14 +139,23 @@ public class PebbleEngineFactory {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
 
         this.applicationContext.getBeansOfType(Extension.class).stream()
-            .map(
-                e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
-                    ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
-                    : e
-            )
+            .map(e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
+                ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
+                : e)
             .forEach(builder::extension);
 
         return builder.build();
+    }
+
+    private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initial, List<String> maskedFunctions) {
+        return wrapExtension(initial, entry -> {
+            if (maskedFunctions.contains(entry.getKey())) {
+                return Map.entry(entry.getKey(), interceptExecute(entry.getValue(), args -> "******"));
+            } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
+                return Map.entry(entry.getKey(), variableRendererProxy(renderer, entry.getValue()));
+            }
+            return entry;
+        });
     }
 
     private PebbleEngine.Builder newPebbleEngineBuilder() {
@@ -240,27 +175,61 @@ public class PebbleEngineFactory {
         return builder;
     }
 
-    private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initialExtension, List<String> maskedFunctions) {
-        return (Extension) Proxy.newProxyInstance(
-            initialExtension.getClass().getClassLoader(),
-            new Class<?>[] { Extension.class },
-            (proxy, method, methodArgs) ->
-            {
-                if (method.getName().equals("getFunctions")) {
-                    return initialExtension.getFunctions().entrySet().stream()
-                        .map(entry ->
-                        {
-                            if (maskedFunctions.contains(entry.getKey())) {
-                                return Map.entry(entry.getKey(), this.maskedFunctionProxy(entry.getValue()));
-                            } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
-                                return Map.entry(entry.getKey(), this.variableRendererProxy(renderer, entry.getValue()));
-                            }
+    // -------------------------------------------------------------------------
+    // Proxy helpers
+    // -------------------------------------------------------------------------
 
-                            return entry;
-                        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    /** Intercepts a single {@link Function#execute} call; all other methods delegate to {@code initial}. */
+    @FunctionalInterface
+    private interface ExecuteInterceptor {
+        Object intercept(Map<String, Object> args) throws Throwable;
+    }
+
+    /**
+     * Returns a proxy for {@code initial} that replaces its {@code execute} method with {@code handler}.
+     * All other {@link Function} methods delegate to the original.
+     */
+    private static Function interceptExecute(Function initial, ExecuteInterceptor handler) {
+        return (Function) Proxy.newProxyInstance(
+            initial.getClass().getClassLoader(),
+            new Class<?>[] {Function.class},
+            (proxy, method, methodArgs) -> {
+                if (method.getName().equals("execute")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> args = (Map<String, Object>) methodArgs[0];
+                    return handler.intercept(args);
                 }
+                try {
+                    return method.invoke(initial, methodArgs);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            }
+        );
+    }
 
-                return method.invoke(initialExtension, methodArgs);
+    /** Maps each {@link Function} entry in an {@link Extension}'s function map. */
+    @FunctionalInterface
+    private interface FunctionEntryMapper {
+        Map.Entry<String, Function> apply(Map.Entry<String, Function> entry);
+    }
+
+    /**
+     * Returns a proxy for {@code initial} that intercepts {@link Extension#getFunctions()} and
+     * passes each entry through {@code entryMapper}. All other {@link Extension} methods delegate
+     * to the original.
+     */
+    private static Extension wrapExtension(Extension initial, FunctionEntryMapper entryMapper) {
+        return (Extension) Proxy.newProxyInstance(
+            initial.getClass().getClassLoader(),
+            new Class<?>[] {Extension.class},
+            (proxy, method, methodArgs) -> {
+                if (method.getName().equals("getFunctions")) {
+                    return initial.getFunctions().entrySet().stream()
+                        .map(entryMapper::apply)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                }
+                return method.invoke(initial, methodArgs);
             }
         );
     }
@@ -275,26 +244,6 @@ public class PebbleEngineFactory {
                     return renderer;
                 }
                 return functionMethod.invoke(initialFunction, functionArgs);
-            }
-        );
-    }
-
-    private Function maskedFunctionProxy(Function initialFunction) {
-        return (Function) Proxy.newProxyInstance(
-            initialFunction.getClass().getClassLoader(),
-            new Class<?>[] { Function.class },
-            (functionProxy, functionMethod, functionArgs) ->
-            {
-                Object result;
-                try {
-                    result = functionMethod.invoke(initialFunction, functionArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-                if (functionMethod.getName().equals("execute")) {
-                    return "******";
-                }
-                return result;
             }
         );
     }

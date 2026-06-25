@@ -355,7 +355,6 @@ export function useLeftMenu() {
                         icon: {
                             element: Battery40,
                         },
-                        hidden: !configs?.isConcurrencyViewEnabled,
                     },
                     {
                         id: "iam",

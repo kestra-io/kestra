@@ -1,6 +1,6 @@
 <template>
     <Dashboards
-        v-if="tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(String(route.name))"
+        v-if="isCustomDashboardsEnabled && tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(String(route.name))"
         @dashboard="onSelectDashboard"
     />
 
@@ -29,6 +29,7 @@
     import {computed, Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useMiscStore} from "override/stores/misc"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
@@ -37,6 +38,9 @@
     const route = useRoute()
     const router = useRouter()
     const namespacesStore = useNamespacesStore()
+
+    // Custom dashboards (including selection) are Enterprise-only.
+    const isCustomDashboardsEnabled = computed(() => useMiscStore().configs?.isCustomDashboardsEnabled === true)
 
     const onSelectDashboard = (value: any) => {
         router.replace({

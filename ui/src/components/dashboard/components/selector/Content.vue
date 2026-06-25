@@ -21,23 +21,26 @@
         </span>
     </div>
 
-    <KsDivider class="divider" />
+    <template v-if="isCustomDashboardsEnabled">
+        <KsDivider class="divider" />
 
-    <KsButton
-        type="primary"
-        :icon="Plus"
-        tag="router-link"
-        :to="{name: 'dashboards/create', query}"
-        class="w-100"
-    >
-        {{ $t("dashboards.creation.label") }}
-    </KsButton>
+        <KsButton
+            type="primary"
+            :icon="Plus"
+            tag="router-link"
+            :to="{name: 'dashboards/create', query}"
+            class="w-100"
+        >
+            {{ $t("dashboards.creation.label") }}
+        </KsButton>
+    </template>
 </template>
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
     import Item from "./Item.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
+    import {useMiscStore} from "override/stores/misc"
 
     type Dashboard = {id: string; title: string; isDefault: boolean};
 
@@ -58,6 +61,9 @@
     const filtered = computed(() =>
         props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase())),
     )
+
+    // Custom dashboard creation is Enterprise-only.
+    const isCustomDashboardsEnabled = computed(() => useMiscStore().configs?.isCustomDashboardsEnabled === true)
 </script>
 
 <style scoped lang="scss">

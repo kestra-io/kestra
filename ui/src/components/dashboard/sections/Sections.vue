@@ -38,7 +38,7 @@
                             </KsIcon>
 
                             <KsIcon
-                                v-if="props.dashboard?.id !== 'default'"
+                                v-if="isCustomDashboardsEnabled && props.dashboard?.id !== 'default'"
                                 :tooltip="$t('dashboards.edition.chart')"
                             >
                                 <KsButton
@@ -83,6 +83,10 @@
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
+
+    import {useMiscStore} from "override/stores/misc"
+    // Editing dashboard charts is part of the Enterprise-only custom dashboards feature.
+    const isCustomDashboardsEnabled = computed(() => useMiscStore().configs?.isCustomDashboardsEnabled === true)
 
     import Download from "vue-material-design-icons/Download.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"

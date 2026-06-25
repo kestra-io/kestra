@@ -95,6 +95,7 @@
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     import {useDashboardStore} from "../../../stores/dashboard.ts"
     import {useLogsStore} from "../../../stores/logs"
@@ -140,8 +141,11 @@
         })
     }
 
+    // Custom dashboards (including selection) are Enterprise-only.
+    const isCustomDashboardsEnabled = computed(() => useMiscStore().configs?.isCustomDashboardsEnabled === true)
+
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name)),
+        isCustomDashboardsEnabled.value && tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name)),
     )
 
     const canExecute = computed(() =>

@@ -1,4 +1,5 @@
-import type {RouteRecordRaw} from "vue-router"
+import type {NavigationGuardWithThis, RouteRecordRaw} from "vue-router"
+import {useMiscStore} from "override/stores/misc"
 // @ts-ignore - no type declarations available for this component
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
@@ -10,6 +11,14 @@ import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
+
+// Custom dashboards (create/edit) are Enterprise-only; block deep links in OSS.
+const requireCustomDashboards: NavigationGuardWithThis<undefined> = () => {
+    if (useMiscStore().configs?.isCustomDashboardsEnabled !== true) {
+        return {name: "home"}
+    }
+    return true
+}
 
 const routes: RouteRecordRaw[] = [
     //Initial
@@ -25,8 +34,8 @@ const routes: RouteRecordRaw[] = [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
     },
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue"), beforeEnter: requireCustomDashboards},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue"), beforeEnter: requireCustomDashboards},
 
     //Flows
     {

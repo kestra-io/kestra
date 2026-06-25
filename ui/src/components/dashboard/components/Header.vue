@@ -27,7 +27,7 @@
         <template v-if="isAllowedDashboard || isAllowedFlow" #actions>
             <NavBarActions>
                 <NavBarAction
-                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
+                    v-if="isCustomDashboardsEnabled && props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
                     :icon="Pencil"
                     :label="$t('dashboards.edition.label')"
                     :to="{name: 'dashboards/update', params: {dashboard: props.dashboard.id}}"
@@ -52,10 +52,12 @@
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
 
     const {t} = useI18n()
     const route = useRoute()
     const authStore = useAuthStore()
+    const miscStore = useMiscStore()
 
     import TopNavBar from "../../layout/TopNavBar.vue"
     import Dashboards from "./selector/Selector.vue"
@@ -81,8 +83,11 @@
 
     const isAllowedDashboard = computed(() => authStore.user?.isAllowed(resource.DASHBOARD, action.CREATE, "*"))
 
+    // Custom dashboards (selection/creation/edition) are Enterprise-only.
+    const isCustomDashboardsEnabled = computed(() => miscStore.configs?.isCustomDashboardsEnabled === true)
+
     const showSelector = computed(() =>
-        ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard.value,
+        isCustomDashboardsEnabled.value && ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard.value,
     )
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}))

@@ -9,7 +9,7 @@
 
             <span class="label">{{ dashboard.title }}</span>
 
-            <span v-if="dashboard.id !== 'default'" class="actions">
+            <span v-if="isCustomDashboardsEnabled && dashboard.id !== 'default'" class="actions">
                 <span class="action">
                     <KsIconButton
                         :tooltip="$t('default')"
@@ -43,11 +43,16 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import Bookmark from "vue-material-design-icons/Bookmark.vue"
     import BookmarkOutline from "vue-material-design-icons/BookmarkOutline.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
+    import {useMiscStore} from "override/stores/misc"
+
+    // Set-default / edit / delete of custom dashboards are Enterprise-only.
+    const isCustomDashboardsEnabled = computed(() => useMiscStore().configs?.isCustomDashboardsEnabled === true)
 
     defineProps<{
         dashboard: {id: string, title: string, isDefault: boolean},

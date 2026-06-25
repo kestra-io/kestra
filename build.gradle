@@ -438,6 +438,17 @@ tasks.register('generateTestMetadata') {
     }
 }
 
+// Finalize every Test task (not just `check`) with generateTestMetadata. When a module's
+// test task exceeds its timeout, Gradle aborts the build before `check` runs, so a finalizer
+// of `check` is skipped and the metadata file is never written — leaving kestra-devtools to
+// silently report success for the timed-out module. A finalizer of the Test task itself still
+// runs on timeout (same as jacocoTestReport above), guaranteeing test-metadata.json is written.
+subprojects {
+    tasks.withType(Test).configureEach {
+        finalizedBy rootProject.tasks.named('generateTestMetadata')
+    }
+}
+
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
     dependsOn(tasks.named('flakyTest'))

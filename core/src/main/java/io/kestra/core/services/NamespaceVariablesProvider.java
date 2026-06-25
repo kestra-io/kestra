@@ -14,8 +14,7 @@ import jakarta.inject.Singleton;
  * inherited from parent namespaces and making them available in the topology "Show details"
  * view before any execution exists.
  *
- * <p>Flow-level variables take precedence over namespace variables; the merge is performed
- * by the expression controller.
+ * <p>Flow-level variables take precedence over namespace variables.
  */
 @Singleton
 public class NamespaceVariablesProvider {

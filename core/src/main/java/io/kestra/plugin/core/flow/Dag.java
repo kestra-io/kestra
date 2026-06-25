@@ -215,7 +215,8 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
         Map<String, List<String>> depMap = taskDepends.stream()
             .collect(Collectors.toMap(
                 t -> t.getTask().getId(),
-                t -> t.getDependsOn() != null ? t.getDependsOn() : List.of()
+                t -> t.getDependsOn() != null ? t.getDependsOn() : List.of(),
+                (first, second) -> first
             ));
 
         ArrayList<String> cyclicDependency = new ArrayList<>();

@@ -90,6 +90,13 @@
 
     function loadData() {
         loadGraph()
+        loadFlowSource()
+    }
+
+    function loadFlowSource() {
+        const exec = execution.value
+        if (!exec || flowStore.flow?.id === exec.flowId && flowStore.flow?.namespace === exec.namespace) return
+        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId})
     }
 
     function loadGraph(force?: boolean) {

@@ -333,12 +333,27 @@ public abstract class AbstractJdbcRepository {
             case LESS_THAN -> DSL.field(columnName).lessThan(value);
             case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
             case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
-            case STARTS_WITH -> DSL.field(columnName).like(value + "%");
-            case ENDS_WITH -> DSL.field(columnName).like("%" + value);
-            case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
-            case REGEX -> DSL.field(columnName).likeRegex((String) value);
-            case PREFIX -> DSL.field(columnName).eq(value)
-                .or(DSL.field(columnName).startsWith(value + "."));
+            case STARTS_WITH -> {
+                String s = requireStringValue(value, "STARTS_WITH");
+                yield DSL.field(columnName).startsWith(s);
+            }
+            case ENDS_WITH -> {
+                String s = requireStringValue(value, "ENDS_WITH");
+                yield DSL.field(columnName).endsWith(s);
+            }
+            case CONTAINS -> {
+                String s = requireStringValue(value, "CONTAINS");
+                yield DSL.field(columnName).contains(s);
+            }
+            case REGEX -> {
+                String s = requireStringValue(value, "REGEX");
+                yield DSL.field(columnName).likeRegex(s);
+            }
+            case PREFIX -> {
+                String s = requireStringValue(value, "PREFIX");
+                yield DSL.field(columnName).eq(s)
+                    .or(DSL.field(columnName).startsWith(s + "."));
+            }
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
     }

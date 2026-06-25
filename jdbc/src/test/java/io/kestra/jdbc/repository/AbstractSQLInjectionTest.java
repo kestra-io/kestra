@@ -84,4 +84,119 @@ public abstract class AbstractSQLInjectionTest {
                 .collectList().block()
         ).as("Old API: SQL injection in label value should return no results").isEmpty();
     }
+
+    @Test
+    void flowLabelFilterShouldResistSqlInjection() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow = FlowWithSource.builder()
+            .id("sql-injection-test")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(tenant)
+            .labels(Label.from(Map.of("mykey", "myvalue")))
+            .build();
+        flow = flowRepository.create(GenericFlow.of(flow));
+
+        try {
+            // EQUALS: injection in label key — payload must be treated as a literal string, returning no results
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(Map.of("' OR '1'='1", "anything"))
+                        .build()
+                ))
+            ).as("EQUALS with SQL injection in label key should return no results").isEmpty();
+
+            // EQUALS: injection in label value — payload must be treated as a literal string, returning no results
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(Map.of("mykey", "' OR '1'='1"))
+                        .build()
+                ))
+            ).as("EQUALS with SQL injection in label value should return no results").isEmpty();
+
+            // NOT_EQUALS: injection in label key — no flow has the injected key, so NOT_EQUALS must return the flow
+            // (tests the Postgres jsonb_path_query_first path and MySQL JSON_SEARCH path)
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(QueryFilter.Op.NOT_EQUALS)
+                        .value(Map.of("' OR '1'='1", "anything"))
+                        .build()
+                ))
+            ).as("NOT_EQUALS with SQL injection in label key should return the flow (literal comparison, key absent)")
+                .hasSize(1)
+                .extracting(Flow::getId)
+                .containsExactly("sql-injection-test");
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void flowFullTextShouldNotReturnAllResultsWithWildcardQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow = FlowWithSource.builder()
+            .id("wildcard-test-flow")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(tenant)
+            .build();
+        flow = flowRepository.create(GenericFlow.of(flow));
+
+        try {
+            // A bare '%' must not act as a match-all wildcard
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("%")
+                        .build()
+                ))
+            ).as("Querying with '%' should return no results, not all flows").isEmpty();
+
+            // A bare '_' must not act as a single-char wildcard
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("_")
+                        .build()
+                ))
+            ).as("Querying with '_' should return no results, not all flows").isEmpty();
+
+            // Searching with the real id must still find the flow
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("wildcard")
+                        .build()
+                ))
+            ).as("Querying with the flow id should return the flow")
+                .hasSize(1)
+                .extracting(Flow::getId)
+                .containsExactly("wildcard-test-flow");
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    private void deleteFlow(Flow flow) {
+        if (flow == null) {
+            return;
+        }
+        flowRepository
+            .findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId())
+            .ifPresent(delete -> flowRepository.delete(flow.toBuilder().revision(null).build()));
+    }
 }

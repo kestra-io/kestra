@@ -415,12 +415,38 @@ public abstract class AbstractJdbcRepository {
 
         // Default handling for other fields
         return switch (operation) {
-            case EQUALS -> DSL.field(columnName).eq(primitiveOrToString(value));
-            case NOT_EQUALS -> DSL.field(columnName).ne(primitiveOrToString(value));
-            case GREATER_THAN -> DSL.field(columnName).greaterThan(value);
-            case LESS_THAN -> DSL.field(columnName).lessThan(value);
-            case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
-            case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
+            case EQUALS -> {
+                Object v = primitiveOrToString(value);
+                yield v == null ? DSL.field(columnName).isNull() : DSL.field(columnName).eq(v);
+            }
+            case NOT_EQUALS -> {
+                Object v = primitiveOrToString(value);
+                yield v == null ? DSL.field(columnName).isNotNull() : DSL.field(columnName).ne(v);
+            }
+            case GREATER_THAN -> {
+                if (value == null) {
+                    throw new InvalidQueryFiltersException("GREATER_THAN operation requires a non-null value");
+                }
+                yield DSL.field(columnName).greaterThan(value);
+            }
+            case LESS_THAN -> {
+                if (value == null) {
+                    throw new InvalidQueryFiltersException("LESS_THAN operation requires a non-null value");
+                }
+                yield DSL.field(columnName).lessThan(value);
+            }
+            case IN -> {
+                if (value == null) {
+                    throw new InvalidQueryFiltersException("IN operation requires a non-null value");
+                }
+                yield DSL.field(columnName).in(ListUtils.convertToListString(value));
+            }
+            case NOT_IN -> {
+                if (value == null) {
+                    throw new InvalidQueryFiltersException("NOT_IN operation requires a non-null value");
+                }
+                yield DSL.field(columnName).notIn(ListUtils.convertToListString(value));
+            }
             case STARTS_WITH -> {
                 String s = requireStringValue(value, "STARTS_WITH");
                 yield DSL.field(columnName).startsWith(s);
@@ -453,8 +479,7 @@ public abstract class AbstractJdbcRepository {
         if (value instanceof List<?>) {
             throw new InvalidQueryFiltersException(operationName + " operation requires a string value, got a List");
         }
-        Object converted = primitiveOrToString(value);
-        return converted == null ? null : converted.toString();
+        return primitiveOrToString(value).toString();
     }
 
     private Condition getDateCondition(Object value, Op operation, String dateColumn) {

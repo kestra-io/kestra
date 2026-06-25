@@ -82,6 +82,44 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     }
 
     @Test
+    void shouldUseIsNullWhenEqualsValueIsNull() {
+        // Given
+        Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
+
+        // When / Then — EQUALS null must generate IS NULL, not col = NULL
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.EQUALS, null))
+            .isEqualTo(DSL.field(columnName).isNull());
+
+        // When / Then — NOT_EQUALS null must generate IS NOT NULL
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_EQUALS, null))
+            .isEqualTo(DSL.field(columnName).isNotNull());
+    }
+
+    @Test
+    void shouldThrowWhenNullValueIsUsedWithGreaterThanOrLessThan() {
+        // Given / When / Then
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.GREATER_THAN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("GREATER_THAN operation requires a non-null value");
+
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.LESS_THAN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("LESS_THAN operation requires a non-null value");
+    }
+
+    @Test
+    void shouldThrowWhenNullValueIsUsedWithInOrNotIn() {
+        // Given / When / Then
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.IN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("IN operation requires a non-null value");
+
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_IN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("NOT_IN operation requires a non-null value");
+    }
+
+    @Test
     void shouldThrowWhenListValueIsUsedWithStartsWith() {
         List<String> invalidValue = List.of("val1", "val2");
 

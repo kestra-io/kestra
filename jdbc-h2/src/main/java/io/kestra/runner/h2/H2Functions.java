@@ -26,6 +26,22 @@ public class H2Functions {
         BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
     }
 
+    /**
+     * Escapes a value for safe embedding inside a jq string literal ({@code "..."}).
+     * Escapes backslashes first, then double-quotes, so the resulting string can be
+     * safely concatenated into a jq filter without altering the program structure.
+     *
+     * @param value the raw user-supplied key or value to embed in a jq string literal
+     * @return the escaped string, or {@code null} if {@code value} is {@code null}
+     */
+    public static String escapeJqString(String value) {
+        if (value == null) {
+            return null;
+        }
+        // Backslash must be escaped before double-quote to avoid double-escaping
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
     public static Boolean jqBoolean(String value, String expression) {
         return H2Functions.jq(value, expression, JsonNode::asBoolean);
     }

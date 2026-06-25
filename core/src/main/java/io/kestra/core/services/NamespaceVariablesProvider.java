@@ -15,7 +15,7 @@ import jakarta.inject.Singleton;
  * view before any execution exists.
  *
  * <p>Flow-level variables take precedence over namespace variables; the merge is performed
- * by {@link GraphService}.
+ * by the expression controller.
  */
 @Singleton
 public class NamespaceVariablesProvider {

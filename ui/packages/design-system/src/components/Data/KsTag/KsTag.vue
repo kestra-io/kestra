@@ -104,6 +104,10 @@
             line-height: 0;
         }
 
+        &.kel-tag--default .material-design-icon {
+            color: var(--ks-icon-muted);
+        }
+
         &.kel-tag--plain {
             --kel-tag-bg-color: var(--ks-bg-tag);
             --kel-tag-text-color: var(--ks-bg-tag);

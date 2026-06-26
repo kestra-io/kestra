@@ -34,6 +34,7 @@
                 :iconComponent="iconComponent"
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
+                :replayEnabled="replayEnabled"
                 :customActions="customActions"
                 :showDetails="showDetails"
                 @edit="emit(EVENTS.EDIT, $event)"
@@ -42,6 +43,8 @@
                 @expand="expand($event)"
                 @open-link="emit(EVENTS.OPEN_LINK, $event)"
                 @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                 @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
                 @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
                 @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
@@ -185,6 +188,7 @@
         subflowsExecutions?: Record<string, any[]>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
+        replayEnabled?: boolean;
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
@@ -203,6 +207,7 @@
         enableSubflowInteraction: true,
         playgroundEnabled: false,
         playgroundReadyToStart: false,
+        replayEnabled: false,
         subflowsExecutions: () => ({}),
         getNodeDimensions: undefined,
         customActions: () => ({}),
@@ -253,6 +258,8 @@
             EVENTS.RUN_TASK,
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,
+            EVENTS.SHOW_OUTPUTS,
+            EVENTS.REPLAY_TASK,
             EVENTS.SHOW_DESCRIPTION,
             "on-add-flowable-error",
             EVENTS.ADD_TASK,

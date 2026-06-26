@@ -122,6 +122,22 @@ public abstract class RunContext implements PropertyContext {
     public abstract List<WorkerTaskResult> dynamicWorkerResults();
 
     /**
+     * Registers a dynamically-generated taskrun together with the log lines to attach to it, in a
+     * single call — the way plugins surface logs under the sub-taskruns they create at runtime
+     * (these taskruns are synthesized after their underlying work has finished, so their logs are
+     * already available at registration time).
+     * <p>
+     * The logs ride with the taskrun being registered, so they can only ever target that taskrun;
+     * their execution, tenant, namespace, flow and attempt are taken from this context (a plugin
+     * cannot target another execution or tenant) and secrets are masked. The default registers the
+     * taskrun and drops the logs, so runtimes that don't support per-taskrun logs (and older ones)
+     * still show the taskrun rather than failing the task.
+     */
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerResult(List.of(workerTaskResult));
+    }
+
+    /**
      * Gets access to the working directory.
      *
      * @return The {@link WorkingDir}.

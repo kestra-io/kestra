@@ -15,6 +15,7 @@ import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -42,6 +43,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private Level loglevel;
     private final List<String> useSecrets = new ArrayList<>();
     private final boolean logToFile;
+    private final Map<String, String> mdcLabels;
 
     @Getter
     private File logFile;
@@ -51,9 +53,14 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     public RunContextLogger() {
         this.loggerName = "unit-test";
         this.logToFile = false;
+        this.mdcLabels = Map.of();
     }
 
     public RunContextLogger(LogEntryEmitter logEmitter, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
+        this(logEmitter, logEntry, loglevel, logToFile, Map.of());
+    }
+
+    public RunContextLogger(LogEntryEmitter logEmitter, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile, Map<String, String> mdcLabels) {
         if (logEntry.getTaskId() != null) {
             this.loggerName = baseLoggerName(logEntry) + "." + logEntry.getTaskId();
         } else if (logEntry.getTriggerId() != null) {
@@ -66,6 +73,24 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
         this.logToFile = logToFile;
+        this.mdcLabels = mdcLabels == null ? Map.of() : mdcLabels;
+    }
+
+    /**
+     * Merges the configured execution labels with the {@link LogEntry} context for the MDC;
+     * {@link LogEntry} keys win over labels sharing the same name.
+     */
+    private Map<String, String> mdcContext() {
+        if (this.logEntry == null) {
+            return this.mdcLabels;
+        }
+        if (this.mdcLabels.isEmpty()) {
+            return this.logEntry.toMap();
+        }
+
+        Map<String, String> context = new HashMap<>(this.mdcLabels);
+        context.putAll(this.logEntry.toMap());
+        return context;
     }
 
     private String baseLoggerName(LogEntry logEntry) {
@@ -189,6 +214,59 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.logEmitter.emits(logEntries);
     }
 
+    /**
+     * Emit the log lines attached to a dynamically-generated taskrun through the regular logging
+     * pipeline, so the standard appender behaviour (secret masking, long-message splitting, level
+     * filtering, forwarding to the server log, file vs queue routing) applies natively — the only
+     * thing that changes is the taskrun the lines are attributed to.
+     * <p>
+     * When this context logs to a file ({@code logToFile}), its logs are file-only (no inline/queue
+     * display): the lines are routed through this context's own logger so they land in the same
+     * downloadable file. A flat file has no taskrun, so there is nothing to link there.
+     * <p>
+     * Otherwise the lines go through a child logger bound to a {@link LogEntry} whose execution,
+     * tenant, namespace and flow are taken from this context's bound entry — a caller cannot target
+     * another execution or tenant — with the dynamic taskrun's id and a fixed attempt 0 (these
+     * taskruns have a single attempt and the log view groups by the 0-based attempt). The level
+     * filter and the secrets known to this context are inherited so nothing else is lost.
+     */
+    public void emitDynamicTaskRunLogs(TaskRun dynamicTaskRun, List<DynamicTaskRunLog> logs) {
+        // A logToFile task logs to a file only (no inline display): route the lines through this
+        // context's own logger so they join the same downloadable file (a flat file has no taskrun
+        // to link to). Otherwise emit through a logger bound to the dynamic taskrun, so the lines
+        // are attributed to it while still passing through the regular appender pipeline.
+        org.slf4j.Logger logger = this.logToFile ? this.logger() : deriveLoggerFor(dynamicTaskRun).logger();
+
+        for (DynamicTaskRunLog log : logs) {
+            logger.atLevel(log.level()).log(log.message());
+        }
+    }
+
+    /**
+     * Derive a logger bound to a dynamically-generated taskrun: a child of this context that shares
+     * its log emitter, level filter and known secrets, but emits under the taskrun's id with a fixed
+     * attempt 0 (these taskruns have a single attempt and the log view groups by the 0-based
+     * attempt). Execution, tenant, namespace and flow are taken from this context, so a caller can
+     * only ever target this execution's taskrun — never forge a log for another execution or tenant.
+     */
+    private RunContextLogger deriveLoggerFor(TaskRun dynamicTaskRun) {
+        LogEntry boundLogEntry = LogEntry.builder()
+            .tenantId(this.logEntry.getTenantId())
+            .executionId(this.logEntry.getExecutionId())
+            .namespace(this.logEntry.getNamespace())
+            .flowId(this.logEntry.getFlowId())
+            .executionKind(this.logEntry.getExecutionKind())
+            .taskId(dynamicTaskRun.getTaskId())
+            .taskRunId(dynamicTaskRun.getId())
+            .attemptNumber(0)
+            .build();
+
+        RunContextLogger taskRunLogger = new RunContextLogger(this.logEmitter, boundLogEntry, null, false);
+        taskRunLogger.loglevel = this.loglevel; // inherit this context's level filter as-is (logback Level)
+        taskRunLogger.useSecrets.addAll(this.useSecrets);
+        return taskRunLogger;
+    }
+
     private Logger initializeLogger() {
         LoggerContext loggerContext = new LoggerContext();
         LogbackMDCAdapter mdcAdapter = new LogbackMDCAdapter();
@@ -204,7 +282,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             // set in BaseAppender.transform()) still sees the execution context. Paired with
             // resetMDC() below on cleanup. Today both are effectively no-ops because the
             // snapshot in transform() short-circuits event.getMDCPropertyMap().
-            loggerContext.getMDCAdapter().setContextMap(this.logEntry.toMap());
+            loggerContext.getMDCAdapter().setContextMap(this.mdcContext());
         }
 
         // unit tests don't always have the log queue as we construct a logger directly without it
@@ -340,10 +418,10 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
-                // The new LoggingEvent has no MDC by default; pull it from the LogEntry so
-                // forwarded events carry it
+                // The new LoggingEvent has no MDC by default; pull it from the LogEntry (and
+                // configured labels) so forwarded events carry it
                 if (this.runContextLogger.logEntry != null) {
-                    lle.setMDCPropertyMap(this.runContextLogger.logEntry.toMap());
+                    lle.setMDCPropertyMap(this.runContextLogger.mdcContext());
                 }
                 if (customTimestamp != null) {
                     lle.setTimeStamp(customTimestamp.toEpochMilli());

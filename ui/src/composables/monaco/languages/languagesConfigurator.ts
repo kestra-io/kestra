@@ -1,5 +1,6 @@
 import {computed} from "vue"
 import {useI18n} from "vue-i18n"
+import type {Router} from "vue-router"
 import {editor} from "monaco-editor/esm/vs/editor/editor.api"
 import {YamlLanguageConfigurator} from "./yamlLanguageConfigurator"
 import {PebbleLanguageConfigurator} from "./pebbleLanguageConfigurator"
@@ -17,6 +18,7 @@ export default async function configure(
     editorInstance: editor.ICodeEditor | undefined,
     language: string,
     domain?: string,
+    router?: Router,
 ): Promise<void> {
     const namespacesStore = useNamespacesStore()
     const mcpStore = useMcpStore()
@@ -28,7 +30,7 @@ export default async function configure(
         } else {
             yamlAutocompletion = new YamlAutoCompletion()
         }
-        await new YamlLanguageConfigurator(yamlAutocompletion).configure(pluginsStore, t, editorInstance)
+        await new YamlLanguageConfigurator(yamlAutocompletion, router, flowStore).configure(pluginsStore, t, editorInstance)
     } else if(language.endsWith("-pebble")) {
         const autoCompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, computed(() => flowStore.flowYaml))
         await new PebbleLanguageConfigurator(language, autoCompletion, computed(() => flowStore.flowYaml))

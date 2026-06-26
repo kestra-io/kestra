@@ -3,6 +3,7 @@ import {useExecutionsStore, type Execution} from "../stores/executions"
 import {useOnboardingV2Store} from "../stores/onboardingV2"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
+import {flattenInputs} from "./inputs"
 
 export const inputsToFormData = (
     submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } }, 
@@ -55,7 +56,7 @@ export const executeTask = (
     values: Record<string, any>,
     options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
 ): Promise<Execution> => {
-    const formData = inputsToFormData(submitor, flow.inputs, values)
+    const formData = inputsToFormData(submitor, flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()
     const onboardingV2Store = useOnboardingV2Store()
 

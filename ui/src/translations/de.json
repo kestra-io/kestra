@@ -78,6 +78,7 @@
     "automatic refresh": "Automatische Aktualisierung",
     "avg": "Durchschnitt",
     "avg duration": "Durchschnittliche Ausführungsdauer",
+    "back": "Zurück",
     "back_to_dashboard": "Zurück zum Dashboard",
     "backfill": "Backfill",
     "backfill executions": "Backfill-Ausführungen",
@@ -93,6 +94,11 @@
       "create": "Erstellen Sie ein Blueprint",
       "custom": "Benutzerdefinierte Blueprints",
       "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Kategorietyp",
+        "links": "Link & Ressourcen",
+        "openInEditor": "In Flow bearbeiten öffnen"
+      },
       "edit": "Bearbeiten Sie ein Blueprint",
       "empty": "Keine Blueprints zum Anzeigen.",
       "flows": "Flow-Blueprints",
@@ -256,6 +262,8 @@
         "plural": "Dashboards",
         "singular": "Dashboard"
       },
+      "no_description": "Keine Beschreibung",
+      "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "preview": "Vorschau-Dashboard",
       "quick_filters": {
         "all": "Alle",
@@ -485,6 +493,7 @@
       "github": "GitHub-Issue öffnen"
     },
     "documentationMenu": "Dokumentationsmenü",
+    "done": "Fertig",
     "down trend": "Sinkend",
     "download": "Herunterladen",
     "download logs": "Logs herunterladen",
@@ -581,6 +590,10 @@
         "content": "Expose einen flow als MCP-Tool, indem Sie einen <code>McpToolTrigger</code> hinzufügen. Lesen Sie mehr über den <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in unserer Dokumentation.",
         "title": "Auf diesem Server sind noch keine Tool flows registriert."
       },
+      "namespaceFiles": {
+        "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit",
+        "title": "Noch keine Dateien in diesem Namespace"
+      },
       "panels": {
         "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren.",
         "title": "Kein Panel geöffnet"
@@ -600,6 +613,10 @@
       "triggers": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
         "title": "Ihr flow hat keine Trigger."
+      },
+      "variables": {
+        "content": "Fügen Sie kv store-Paare hinzu, um Konfigurationen über flows hinweg zu teilen. Untergeordnete namespaces erben sie automatisch, und Sie können jeden Wert mit referenzieren.",
+        "title": "Noch keine Variablen vorhanden"
       },
       "versionPlugin": {
         "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
@@ -656,7 +673,7 @@
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
     "execution id": "Ausführungs-ID",
     "execution labels": "Ausführungs-Labels",
-    "execution not found": "Ausführung <code>{executionId}</code> wurde nicht gefunden.",
+    "execution not found": "Ausführung {executionId} wurde nicht gefunden.",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Zustand FAILED",
     "execution not in state PAUSED": "Ausführung <code>{executionId}</code> nicht im Zustand PAUSED",
     "execution replay": "Diese Ausführung ist eine Wiederholung von",
@@ -867,6 +884,9 @@
     "form error": "Formularfehler",
     "from": "Von",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Diese Ausführung endete, ohne dass eine Task ausgeführt wurde. Überprüfen Sie die Übersicht und die Logs, um den Grund zu erfahren.",
+    "gantt_no_tasks_match_filters": "Versuchen Sie, die Such-, Zustands- oder Log-Ebenen-Filter anzupassen.",
+    "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "healthcheck date": "HealthCheck-Datum",
     "hide task documentation": "Task-Dokumentation ausblenden",
     "home": "Startseite",
@@ -897,6 +917,7 @@
     "items": "Elemente",
     "join community": "Community beitreten",
     "join_slack": "Slack beitreten",
+    "jsonl": "JSONL",
     "jump to...": "Springe zu...",
     "kestra": "Kestra",
     "key": "Key",
@@ -935,6 +956,7 @@
     "launch execution": "Ausführen",
     "learn_more": "Erfahren Sie mehr",
     "leave page": "Seite verlassen",
+    "license": "Lizenz",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
     "light_version": "Helle Version",
     "line": "Linie",
@@ -961,6 +983,7 @@
       "auth_type": "Authentifizierung",
       "basic_auth": "Basis-Authentifizierung",
       "bearer_token": "Authentifizierung mit Bearer-Token",
+      "client_setup": "Client-Einrichtung",
       "connect": "Verbinden",
       "connect_tab": {
         "auth_api_token_hint": "Setzen Sie <code>KESTRA_TOKEN</code> als Umgebungsvariable, bevor Sie den Client starten.",
@@ -987,6 +1010,7 @@
       "id_placeholder": "z.B. mein-mcp-server",
       "instructions": "Anweisungen",
       "main_tenant": "Haupt",
+      "managed_by_kestra": "Verwaltet von Kestra",
       "no_oauth_providers": "Keine OIDC-Anbieter in dieser Instanz konfiguriert",
       "no_servers": "Keine MCP-Server gefunden. Erstellen Sie Ihren ersten Server, um MCP Tool Trigger für externe KI-Agenten bereitzustellen.",
       "oauth": "OAuth",
@@ -996,14 +1020,18 @@
       "oauth_provider_required": "OAuth-Anbieter ist erforderlich, wenn der Authentifizierungstyp OAuth ist",
       "page_description": "Stellen Sie Ihre Kestra flows als Werkzeuge für MCP-kompatible KI-Agenten bereit",
       "private": "Privat",
+      "private_server": "Privater Server",
       "public": "Öffentlich",
+      "public_hint": "Warnung: Öffentliche Server erfordern keine Authentifizierung. Jeder mit der URL kann jedes Tool aufrufen, das von diesem Server bereitgestellt wird, ohne namespace- oder Berechtigungsprüfungen. Nur für Server verwenden, die sicher extern zugänglich gemacht werden können.",
       "save": "Änderungen speichern",
       "scopes_supported": "Unterstützte Scopes",
       "scopes_supported_hint": "Scopes, die im Protected Resource Metadata-Dokument dieses Servers angekündigt werden. Spezifikationskonforme MCP-Clients beschränken ihre Autorisierungsanfragen auf diese Liste. Leer lassen, um das Feld auszulassen und den Clients die vom IdP angekündigten Scopes zu verwenden.",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP-Server",
+      "server_id": "Server-ID",
       "server_type": "Servertyp",
       "servers": "MCP-Server",
+      "servers_count": "{count} MCP-Server",
       "tab_connect": "Verbinden",
       "tab_edit": "Bearbeiten",
       "tab_tool_flows": "Tool-Flows",
@@ -1026,7 +1054,8 @@
         "view_flow": "flow öffnen"
       },
       "url_copied": "URL kopiert!",
-      "username_password": "Benutzername & Passwort"
+      "username_password": "Benutzername & Passwort",
+      "your_servers": "Ihre Server"
     },
     "metric": "Metrik",
     "metric choice": "Keine Metriken für diesen flow verfügbar",
@@ -1093,9 +1122,14 @@
         "import": "Importieren",
         "success": "Datei(en) erfolgreich importiert"
       },
+      "new_file": "Neue Datei",
       "no_items": {
         "heading": "Noch keine Dateien in Ihrem Namespace gefunden.",
         "paragraph": "Erstellen oder importieren Sie Dateien, um Code zwischen Flows in Ihrem Namespace zu teilen."
+      },
+      "no_selection": {
+        "description": "Wählen Sie eine Datei aus dem Baum aus, um ihren Inhalt anzuzeigen.",
+        "heading": "Keine Dateien ausgewählt"
       },
       "path": {
         "copy": "Pfad kopieren",
@@ -1142,13 +1176,17 @@
     "neutral trend": "Stabil",
     "new": "Neu",
     "new version": "Neue Version {version} verfügbar!",
+    "next": "Weiter",
     "next evaluation date": "Nächstes Bewertungsdatum",
     "next evaluation date tooltip": "Wann der Trigger das nächste Mal basierend auf seinem Intervall ausgewertet wird. Nicht immer dasselbe wie das nächste Ausführungsdatum, wenn Bedingungen nicht erfüllt sind.",
     "next execution date": "Nächstes Ausführungsdatum",
     "next_execution": "Nächste Ausführung",
     "no data current task": "Für die aktuelle Task sind keine Daten verfügbar.",
     "no inputs": "Dieser Flow hat keine Inputs.",
+    "no metrics available": "Für diesen Task-Lauf wurden keine Metriken aufgezeichnet.",
+    "no outputs available": "Keine Outputs für diesen Task Run verfügbar.",
     "no result": "Es gibt keine Ergebnisse anzuzeigen.",
+    "no revisions": "Keine Revisionen",
     "no revisions found": "Es existiert nur eine Revision für diesen Flow",
     "no-executions-view": {
       "guidance_desc": "Benötigen Sie Unterstützung, um Ihren Flow auszuführen?",
@@ -1244,7 +1282,8 @@
     "no_history": "Keine Historie verfügbar",
     "no_inputs": "Keine Inputs verfügbar.",
     "no_logs_data": "Keine Daten",
-    "no_logs_data_description": "Keine Logs für die ausgewählten Filter gefunden. <br> Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
+    "no_logs_data_description": "Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
+    "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
     "no_results": {
       "assets": "Keine Assets gefunden",
@@ -1393,6 +1432,7 @@
     "open in new tab": "In einem neuen Tab",
     "open in same tab": "Im selben Tab",
     "open sidebar": "Seitenleiste öffnen",
+    "open source": "Open Source",
     "open_page": "Open page",
     "optional": "Optional",
     "original execution": "Originalausführung",
@@ -1544,6 +1584,7 @@
       "showing_rows": "Zeige Zeilen {start}-{end} von {total}",
       "view": "Anzeigen"
     },
+    "pricing": "Preise",
     "product_tour": "Produkteinführung",
     "properties": {
       "hidden": "In Tabelle versteckt",
@@ -1573,6 +1614,7 @@
     "replay inputs": "Eingaben",
     "replay inputs new required": "Diese Revision hat Inputs. Sie werden aufgefordert, diese auszufüllen.",
     "replay latest revision": "Wiederholen mit neuester Revision",
+    "replay select taskrun": "Wählen Sie den Task-Lauf aus, von dem aus Sie die Wiedergabe starten möchten:",
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
     "replay using": "Wiederholen mit",
     "replay with inputs": "Wiedergabe mit Inputs",
@@ -1600,6 +1642,7 @@
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
     "reuse original inputs": "Original-Inputs wiederverwenden",
     "reuse_original_inputs": "Ursprüngliche Inputs wiederverwenden",
+    "review your inputs": "Überprüfen Sie Ihre Eingaben",
     "revision": "Revision",
     "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "revisions": "Revisionen",
@@ -1684,7 +1727,8 @@
             "flow_default_tab": "Registerkarte ausgewählt beim Navigieren zu einem flow.",
             "log_display": "Wie Logs bei der Öffnung einer Ausführung dargestellt werden.",
             "log_level": "Minimale Log-Ebene, die in den Ausführungs-Logs angezeigt wird.",
-            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus."
+            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus.",
+            "triggers_default_tab": "Registerkarte ausgewählt beim Navigieren zur Trigger-Seite."
           },
           "fields": {
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
@@ -1697,7 +1741,8 @@
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene",
             "multi_panel_editor": "Multi-Panel-Editor",
-            "playground": "Spielplatz"
+            "playground": "Spielplatz",
+            "triggers_default_tab": "Standard-Trigger-Registerkarte"
           },
           "label": "Hauptkonfiguration"
         },
@@ -1749,6 +1794,7 @@
           },
           "descriptions": {
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
+            "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
             "editor_font_family": "Monospace-Schriftart, die im YAML-Editor verwendet wird.",
             "editor_font_size": "Schriftgröße, die in den YAML- und No-Code-Editoren verwendet wird.",
@@ -1803,7 +1849,6 @@
         "username_hint": "Muss eine gültige E-Mail-Adresse sein."
       },
       "login": "Anmelden",
-      "login_subtitle": "Geben Sie Ihre Anmeldedaten ein, um auf Ihre Kestra-Instanz zuzugreifen.",
       "login_title": "Anmelden",
       "logout": "Abmelden",
       "steps": {
@@ -1854,7 +1899,8 @@
         "firstName_required": "Vorname erforderlich",
         "incorrect_creds": "Ungültiger Benutzername oder Passwort. Stellen Sie sicher, dass Ihre Anmeldedaten korrekt sind.",
         "lastName_required": "Nachname erforderlich",
-        "password_invalid": "Ungültiges Passwort"
+        "password_invalid": "Ungültiges Passwort",
+        "password_required": "Passwort ist erforderlich"
       }
     },
     "show": "Anzeigen",

@@ -2,8 +2,8 @@
     <div class="setting-row" :class="{'setting-row--stacked': stacked}">
         <div class="setting-row__info">
             <KsText tag="div" class="setting-row__label">{{ label }}</KsText>
-            <KsText v-if="description" tag="div" size="small" class="setting-row__description">
-                {{ description }}
+            <KsText v-if="description || $slots.description" tag="div" size="small" class="setting-row__description">
+                <slot name="description">{{ description }}</slot>
             </KsText>
         </div>
         <div class="setting-row__control">

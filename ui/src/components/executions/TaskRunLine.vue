@@ -1,5 +1,9 @@
 <template>
-    <div v-if="!hideHeader" class="taskrun-header">
+    <div
+        v-if="!hideHeader"
+        class="taskrun-header"
+        :style="{'--depth': depth}"
+    >
         <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
@@ -135,6 +139,7 @@
         logs?: any[]
         filter?: string
         hideHeader?: boolean
+        depth?: number
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -146,6 +151,7 @@
         logs: () => [],
         filter: "",
         hideHeader: false,
+        depth: 0,
     })
 
     const emit = defineEmits<{
@@ -247,6 +253,7 @@
 
     .taskrun-header {
         background-color: var(--ks-bg-surface);
+        padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
             width: 36px;

@@ -201,7 +201,8 @@ $fill-color-base: #fafcff;
     /* disabled */
     #{--kel-disabled-bg-color}: var(--ks-bg-inactive);
     #{--kel-disabled-text-color}: var(--ks-text-inactive);
-    #{--kel-disabled-border-color}: var(--ks-border-subtle);
+    #{--kel-disabled-border-color}: var(--ks-border-strong);
+    #{--kel-input-border-color}: var(--ks-border-strong);
 
     /* shadow */
     #{--kel-box-shadow}: 0px 12px 32px 4px var(--ks-shadow-element), 0px 8px 20px var(--ks-shadow-surface);

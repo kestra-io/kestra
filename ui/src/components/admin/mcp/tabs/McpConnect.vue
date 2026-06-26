@@ -1,48 +1,104 @@
 <template>
     <div class="mcp-connect">
-        <section class="mcp-connect__section">
-            <h3 class="mcp-connect__heading">
+        <section class="section">
+            <h3 class="heading">
+                <LinkVariant class="heading-icon" />
                 {{ t("mcp.connect_tab.server_url") }}
             </h3>
-            <KsMarkdown class="mcp-connect__code" :content="serverUrlMarkdown" />
+            <KsInput
+                :modelValue="serverUrl"
+                readonly
+                class="url"
+            >
+                <template #suffix>
+                    <KsTooltip
+                        trigger="click"
+                        :content="t('copied')"
+                        :autoClose="2000"
+                        placement="top"
+                    >
+                        <ContentCopy
+                            class="copy"
+                            :aria-label="t('copy_to_clipboard')"
+                            @click="copyUrl"
+                        />
+                    </KsTooltip>
+                </template>
+            </KsInput>
         </section>
+    </div>
 
-        <section class="mcp-connect__section">
-            <KsSegmented
-                :modelValue="selectedClient"
-                :options="clientOptions"
-                @change="onClientChange"
+    <div class="mcp-connect">
+        <h3 class="heading">
+            <Connection class="heading-icon" />
+            {{ t("mcp.client_setup") }}
+        </h3>
+
+        <KsTabs
+            v-model="selectedClient"
+            type="segmented"
+        >
+            <KsTabPane
+                v-for="opt in clientOptions"
+                :key="opt.value"
+                :name="opt.value"
+                :label="opt.label"
             />
-        </section>
+        </KsTabs>
 
-        <section class="mcp-connect__section">
-            <header class="mcp-connect__client-header">
-                <img
-                    class="mcp-connect__brand-icon"
-                    :src="brandLogo(selectedClient)"
-                    :alt="t(`mcp.connect_tab.${selectedClient}`)"
+        <section class="section">
+            <div class="hints">
+                <p
+                    v-if="authHintKey"
+                    class="hint"
+                    v-html="t(authHintKey)"
+                />
+                <p class="hint">
+                    {{ clientHint }}
+                </p>
+            </div>
+
+            <div class="source">
+                <KsIconButton
+                    class="copy-btn"
+                    :aria-label="copyLabel"
+                    @click="copySnippet"
                 >
-                <h3 class="mcp-connect__heading">
-                    {{ t(`mcp.connect_tab.${selectedClient}`) }}
-                </h3>
-            </header>
+                    <CheckIcon
+                        v-if="copied"
+                        class="text-success"
+                    />
+                    <ContentCopy v-else />
+                </KsIconButton>
+                <KsEditor
+                    v-bind="editorBindings"
+                    :modelValue="snippetCode"
+                    :lang="snippetLang"
+                    inline
+                    :navbar="false"
+                    readOnly
+                    :options="{
+                        fullHeight: false,
+                        customHeight: 24,
+                        editor: {
+                            padding: {top: 6, bottom: 6},
+                            guides: {indentation: false},
+                        },
+                    }"
+                />
+            </div>
 
-            <p v-if="authHintKey" class="mcp-connect__hint" v-html="t(authHintKey)" />
-
-            <p class="mcp-connect__hint">
-                {{ t(`mcp.connect_tab.${selectedClient}_hint`) }}
-            </p>
-
-            <KsMarkdown class="mcp-connect__code" :content="snippetMarkdown" />
-
-            <template v-if="selectedClient === 'claude_desktop'">
-                <p class="mcp-connect__path-hint">
+            <div
+                v-if="isClaudeDesktop"
+                class="paths"
+            >
+                <p class="path-hint">
                     {{ t("mcp.connect_tab.claude_desktop_mac") }}
                 </p>
-                <p class="mcp-connect__path-hint">
+                <p class="path-hint">
                     {{ t("mcp.connect_tab.claude_desktop_win") }}
                 </p>
-            </template>
+            </div>
         </section>
     </div>
 </template>
@@ -51,46 +107,57 @@
     import {computed, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsMarkdown, KsSegmented} from "@kestra-io/design-system"
-    import {useMcpStore} from "../../../../stores/mcp"
-    import {useMiscStore} from "override/stores/misc"
-    import {baseUrl} from "override/utils/route"
-    import claudeDesktopLogo from "../../../../assets/icons/mcp-clients/claude-desktop.svg"
-    import claudeCodeLogo from "../../../../assets/icons/mcp-clients/claude-code.svg"
-    import cursorLogo from "../../../../assets/icons/mcp-clients/cursor.svg"
-    import codexLogo from "../../../../assets/icons/mcp-clients/codex.svg"
 
-    type ClientId = "claude_desktop" | "claude_code" | "cursor" | "codex"
-    type AuthType = "BASIC" | "API_TOKEN" | "OAUTH"
-    type ServerType = "PRIVATE" | "PUBLIC"
+    import {useMcpStore, type McpAuthType, type McpServer} from "../../../../stores/mcp"
+    import {useMiscStore} from "override/stores/misc"
+
+    import {useEditorBindings} from "../../../../composables/useEditorBindings"
+
+    import {KsEditor} from "@kestra-io/design-system"
+    import LinkVariant from "vue-material-design-icons/LinkVariant.vue"
+    import Connection from "vue-material-design-icons/Connection.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import CheckIcon from "vue-material-design-icons/Check.vue"
+
+    import {baseUrl} from "override/utils/route"
+    import {copy} from "../../../../utils/utils"
+
+    defineOptions({inheritAttrs: false})
+
+    type ClientId = "claude_desktop" | "claude_code" | "cursor" | "codex";
+
+    const OAUTH_CLIENT_ID_PLACEHOLDER = "<client-id>"
+    const OAUTH_CALLBACK_PORT = "7777"
+    const COPY_FEEDBACK_MS = 2000
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const mcpStore = useMcpStore()
     const miscStore = useMiscStore()
+    const editorBindings = useEditorBindings()
+
+    const selectedClient = ref<ClientId>("claude_desktop")
+    const copied = ref(false)
 
     const tenant = computed(() => (route.params.tenant as string) ?? "main")
     const serverId = computed(() => route.params.id as string)
 
     const serverUrl = computed(() => {
-        const configured = (miscStore.configs?.url as string | undefined)?.replace(/\/$/, "")
+        const configured = (miscStore.configs?.url as string | undefined)
+            ?.replace(/\/$/, "")
         const path = `${baseUrl}/api/v1/${tenant.value}/mcp/${serverId.value}`
         const base = configured || window.location.origin
         return new URL(path, base).toString()
     })
 
-    // Falls back to BASIC / PRIVATE while the server is loading or if absent.
-    const authType = computed<AuthType>(() => mcpStore.server?.authType ?? "BASIC")
-    const serverType = computed<ServerType>(() => (mcpStore.server?.serverType as ServerType | undefined) ?? "PRIVATE")
+    const authType = computed<McpAuthType>(
+        () => mcpStore.server?.authType ?? "BASIC",
+    )
+    const serverType = computed<McpServer["serverType"]>(
+        () => mcpStore.server?.serverType ?? "PRIVATE",
+    )
     const isPublic = computed(() => serverType.value === "PUBLIC")
-    const oauthClientIdPlaceholder = "<client-id>"
-    const oauthCallbackPort = "7777"
-
-    const selectedClient = ref<ClientId>("claude_desktop")
-
-    function onClientChange(value: string | number | boolean) {
-        selectedClient.value = value as ClientId
-    }
+    const isClaudeDesktop = computed(() => selectedClient.value === "claude_desktop")
 
     const clientOptions = computed(() => [
         {label: t("mcp.connect_tab.claude_desktop"), value: "claude_desktop"},
@@ -99,20 +166,25 @@
         {label: t("mcp.connect_tab.codex"), value: "codex"},
     ])
 
+    /**
+     * Authorization header for private servers. OAUTH returns null because PKCE
+     * is handled by mcp-remote / Cursor / Codex via the PRM challenge.
+     */
     const authHeaderValue = computed<string | null>(() => {
-        if (isPublic.value) return null
+        if (isPublic.value) {
+            return null
+        }
         switch (authType.value) {
         case "API_TOKEN":
             return "Bearer ${KESTRA_TOKEN}"
         case "BASIC":
             return "Basic ${KESTRA_BASIC_AUTH}"
-        case "OAUTH": // PKCE handled by mcp-remote / Cursor / Codex via PRM challenge
+        case "OAUTH":
             return null
         }
         return null
     })
 
-    // ── Per-client snippet builders ──────────────────────────────────────────
     const claudeDesktopConfig = computed(() => {
         const args: string[] = ["-y", "mcp-remote", serverUrl.value]
         if (authHeaderValue.value) {
@@ -126,17 +198,19 @@
     })
 
     const claudeCodeCommand = computed(() => {
-        const lines: string[] = [`claude mcp add ${serverId.value} ${serverUrl.value}`, "--transport http"]
+        const lines: string[] = [
+            `claude mcp add ${serverId.value} ${serverUrl.value}`,
+            "--transport http",
+        ]
         if (!isPublic.value && authType.value === "OAUTH") {
-            lines.push(`--client-id ${oauthClientIdPlaceholder}`)
-            lines.push(`--callback-port ${oauthCallbackPort}`)
+            lines.push(`--client-id ${OAUTH_CLIENT_ID_PLACEHOLDER}`)
+            lines.push(`--callback-port ${OAUTH_CALLBACK_PORT}`)
         } else if (authHeaderValue.value) {
             lines.push(`--header "Authorization: ${authHeaderValue.value}"`)
         }
         return lines.join(" \\\n  ")
     })
 
-    // Cursor (~/.cursor/mcp.json) — JSON
     const cursorConfig = computed(() => {
         const config: Record<string, unknown> = {url: serverUrl.value}
         if (authHeaderValue.value) {
@@ -149,7 +223,6 @@
         }, null, 2)
     })
 
-    // Codex (~/.codex/config.toml) — TOML
     const codexConfig = computed(() => {
         const lines: string[] = [
             "[[mcp_servers]]",
@@ -163,96 +236,143 @@
         return lines.join("\n")
     })
 
-    function fence(lang: string, code: string) {
-        return `\`\`\`${lang}\n${code}\n\`\`\``
-    }
-
-    const serverUrlMarkdown = computed(() => fence("text", serverUrl.value))
-
-    const snippetMarkdown = computed<string>(() => {
+    const snippetCode = computed<string>(() => {
         switch (selectedClient.value) {
-        case "claude_desktop": return fence("json", claudeDesktopConfig.value)
-        case "claude_code": return fence("bash", claudeCodeCommand.value)
-        case "cursor": return fence("json", cursorConfig.value)
-        case "codex": return fence("toml", codexConfig.value)
+        case "claude_desktop": return claudeDesktopConfig.value
+        case "claude_code": return claudeCodeCommand.value
+        case "cursor": return cursorConfig.value
+        case "codex": return codexConfig.value
         default: return ""
         }
     })
 
-    // ── Auth-specific hint shown under the snippet ───────────────────────────
+    /** Monaco has no TOML grammar, so codex falls back to INI and bash to shell. */
+    const snippetLang = computed<string>(() => {
+        switch (selectedClient.value) {
+        case "claude_code": return "shell"
+        case "codex": return "ini"
+        default: return "json"
+        }
+    })
+
+    const clientHint = computed(() => t(`mcp.connect_tab.${selectedClient.value}_hint`))
+    const copyLabel = computed(() => (copied.value ? t("copied") : t("copy")))
+
+    /**
+     * For OAUTH, only Claude Code's command exposes a client-id placeholder;
+     * other clients get the generic "browser will open" hint instead.
+     */
     const authHintKey = computed<string | null>(() => {
-        if (isPublic.value) return null
+        if (isPublic.value) {
+            return null
+        }
         if (authType.value === "BASIC") {
             return "mcp.connect_tab.auth_basic_hint"
         }
         if (authType.value === "API_TOKEN") {
             return "mcp.connect_tab.auth_api_token_hint"
         }
-        // OAUTH: only Claude Code's command exposes a client-id placeholder; other clients
-        // get the generic "your browser will open" hint instead.
         if (selectedClient.value === "claude_code") {
             return "mcp.connect_tab.auth_oauth_client_id_hint"
         }
         return "mcp.connect_tab.auth_oauth_browser_hint"
     })
 
-    function brandLogo(client: ClientId): string {
-        switch (client) {
-        case "claude_desktop": return claudeDesktopLogo
-        case "claude_code": return claudeCodeLogo
-        case "cursor": return cursorLogo
-        case "codex": return codexLogo
-        }
+    function copyUrl() {
+        copy(serverUrl.value)
+    }
+
+    async function copySnippet() {
+        await copy(snippetCode.value)
+        copied.value = true
+        setTimeout(() => (copied.value = false), COPY_FEEDBACK_MS)
     }
 </script>
 
 <style lang="scss" scoped>
     .mcp-connect {
+        max-width: 653px;
+        border: 1px solid var(--ks-border-default);
+        border-radius: 8px;
+        box-shadow: 0px 2px 8px 0px var(--ks-shadow-surface);
+        background: var(--ks-bg-surface);
+        padding: var(--ks-spacing-4);
+        margin-block-start: var(--ks-spacing-7);
+        margin-inline: auto;
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 0.5rem;
+    }
 
-        &__section {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+    .section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .hints {
+            margin: 0.5rem 0;
+        }
+    }
+
+    .heading {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-md);
+        font-weight: var(--ks-font-weight-semibold);
+        color: var(--ks-text-primary);
+    }
+
+    .heading-icon {
+        color: var(--ks-icon-muted);
+    }
+
+    .hint {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        font-weight: var(--ks-font-weight-regular);
+        line-height: 1.125rem;
+        color: var(--ks-text-primary);
+    }
+
+    .path-hint {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        font-weight: var(--ks-font-weight-semibold);
+        line-height: 1.125rem;
+        color: var(--ks-text-secondary);
+        font-family: var(--ks-font-family-mono);
+    }
+
+    .source {
+        position: relative;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: var(--ks-spacing-2);
+        right: var(--ks-spacing-2);
+        z-index: 2;
+    }
+
+    .url {
+        :deep(.kel-input__wrapper) {
+            height: 42px;
         }
 
-        &__heading {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            margin: 0;
-        }
-
-        &__client-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        &__hint {
-            font-size: 0.875rem;
-            color: var(--ks-text-secondary);
-            margin: 0;
-        }
-
-        &__path-hint {
-            font-size: 0.8125rem;
-            color: var(--ks-text-secondary);
-            margin: 0;
+        :deep(.kel-input__inner) {
             font-family: var(--ks-font-family-mono);
+            font-size: var(--ks-font-size-sm);
         }
+    }
 
-        &__code {
-            width: 100%;
+    .copy {
+        display: inline-flex;
+        color: var(--ks-icon-muted);
+        cursor: pointer;
+
+        &:hover {
+            color: var(--ks-text-primary);
         }
-
-        &__brand-icon {
-            display: inline-block;
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
     }
 </style>

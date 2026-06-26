@@ -18,10 +18,11 @@
             :options="echartsOption"
             :loading="false"
             :tooltipType="TooltipType.EXTERNAL"
+            :stickyTooltip="props.short"
             @echarts-click="onChartClick"
         />
     </div>
-    <KsTableEmpty
+    <KsNoData
         v-else-if="!props.short || (props.execution && generated?.total === 0)"
         :class="{empty: !props.short && !props.execution}"
     />

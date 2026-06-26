@@ -23,9 +23,11 @@ import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
+import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.URIInput;
 import io.kestra.core.models.property.Property;
@@ -440,6 +442,46 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldFlagRenderFailuresAsRenderErrorsButNotValueErrors() {
+        // A dynamic-values input whose expression fails to render -> the field is broken (render error)
+        MultiselectInput brokenExpression = MultiselectInput.builder()
+            .id("brokenExpression")
+            .type(Type.MULTISELECT)
+            .expression("{{ thisFunctionDoesNotExist() }}")
+            .required(false)
+            .build();
+        // An input whose `defaults` Pebble expression fails to render -> also a render error
+        StringInput brokenDefault = StringInput.builder()
+            .id("brokenDefault")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ thisFunctionDoesNotExist() }}"))
+            .required(false)
+            .build();
+        // A required input left empty -> a value error, NOT a render error
+        StringInput requiredMissing = StringInput.builder()
+            .id("requiredMissing")
+            .type(Type.STRING)
+            .required(true)
+            .build();
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(brokenExpression, brokenDefault, requiredMissing), null, DEFAULT_TEST_EXECUTION, Map.of());
+
+        assertThat(values.get(0).exceptions())
+            .as("expression render failure is a render error")
+            .isNotEmpty()
+            .allMatch(InputOutputValidationException::isRenderError);
+        assertThat(values.get(1).exceptions())
+            .as("defaults render failure is a render error")
+            .isNotEmpty()
+            .allMatch(InputOutputValidationException::isRenderError);
+        assertThat(values.get(2).exceptions())
+            .as("a required-but-empty input is a value error, not a render error")
+            .isNotEmpty()
+            .noneMatch(InputOutputValidationException::isRenderError);
+    }
+
+    @Test
     void shouldResolveZeroByteFileUpload() throws java.io.IOException {
         File tempFile = File.createTempFile("empty", ".txt");
         tempFile.deleteOnExit();
@@ -637,6 +679,151 @@ class FlowInputOutputTest {
         // Then
         assertThat(result.get("upload")).isInstanceOf(URI.class);
         assertThat(result.get("upload").toString()).contains(executionId);
+    }
+
+    @Test
+    void shouldExpandFormInputsToConcreteDottedLeaves() {
+        // Given a FORM grouping a STRING child
+        FormInput form = FormInput.builder()
+            .id("environment")
+            .type(Type.FORM)
+            .inputs(List.of(
+                StringInput.builder().id("region").type(Type.STRING).build()
+            ))
+            .build();
+
+        // When expanded
+        List<Input<?>> leaves = Input.expandToLeaves(List.of(form));
+
+        // Then the FORM is gone and the leaf is a real StringInput carrying the dotted id (make-or-break:
+        // the Jackson round-trip in copyWithId must preserve the concrete subtype, or downstream casts blow up).
+        assertThat(leaves).hasSize(1);
+        assertThat(leaves.getFirst()).isInstanceOf(StringInput.class);
+        assertThat(leaves.getFirst().getId()).isEqualTo("environment.region");
+    }
+
+    @Test
+    void shouldResolveFormGroupedInputsAsNestedMap() {
+        // Given a flow whose FORM 'environment' groups 'region', plus an ungrouped top-level input
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("environment")
+                    .type(Type.FORM)
+                    .inputs(List.of(
+                        StringInput.builder().id("region").type(Type.STRING).required(true).build()
+                    ))
+                    .build(),
+                StringInput.builder().id("api_key").type(Type.STRING).required(true).build()
+            ))
+            .build();
+
+        // When submitting dotted part names
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("environment.region", "EU", "api_key", "secret")
+        );
+
+        // Then the grouped input nests under the form key, the ungrouped one stays flat
+        assertThat(result.get("environment")).isInstanceOf(Map.class);
+        assertThat(((Map<?, ?>) result.get("environment")).get("region")).isEqualTo("EU");
+        assertThat(result.get("api_key")).isEqualTo("secret");
+    }
+
+    @Test
+    void shouldInjectFormChildDefaultAsNestedValue() {
+        // Given a FORM child carrying a default and no submitted value
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("environment")
+                    .type(Type.FORM)
+                    .inputs(List.of(
+                        StringInput.builder().id("region").type(Type.STRING).defaults(Property.ofValue("EU")).build()
+                    ))
+                    .build()
+            ))
+            .build();
+
+        // When submitting nothing
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of());
+
+        // Then the default lands nested under the form key
+        assertThat(result.get("environment")).isInstanceOf(Map.class);
+        assertThat(((Map<?, ?>) result.get("environment")).get("region")).isEqualTo("EU");
+    }
+
+    @Test
+    void shouldResolveSecretFormChildAsNestedValue() throws GeneralSecurityException {
+        // Given a SECRET child inside a FORM, resolved from a secret() expression default
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("credentials")
+                    .type(Type.FORM)
+                    .inputs(List.of(
+                        SecretInput.builder()
+                            .id("api_key")
+                            .type(Type.SECRET)
+                            .defaults(Property.ofExpression("{{ secret('???') }}"))
+                            .required(false)
+                            .build()
+                    ))
+                    .build()
+            ))
+            .build();
+
+        // When reading inputs (read path does not obfuscate)
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of());
+
+        // Then the SECRET child survives expansion as a concrete SecretInput and resolves nested,
+        // encrypted (proving the SECRET type was preserved through the dotted-leaf round-trip).
+        assertThat(result.get("credentials")).isInstanceOf(Map.class);
+        Object apiKey = ((Map<?, ?>) result.get("credentials")).get("api_key");
+        assertThat(apiKey).isInstanceOf(EncryptedString.class);
+        assertThat(EncryptionService.decrypt(secretKey, ((EncryptedString) apiKey).getValue())).isEqualTo(TEST_SECRET_VALUE);
+    }
+
+    @Test
+    void shouldResolveFormInputsAsFlatDottedLeafList() {
+        // Given a flow whose FORM 'environment' groups 'region', plus an ungrouped top-level input.
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("environment")
+                    .type(Type.FORM)
+                    .inputs(List.of(
+                        StringInput.builder().id("region").type(Type.STRING).required(true).build()
+                    ))
+                    .build(),
+                StringInput.builder().id("api_key").type(Type.STRING).required(true).build()
+            ))
+            .build();
+
+        // When resolving submitted dotted part names. resolveInputs is the synchronous core of
+        // validateExecutionInputs — i.e. the /validate response the Flow Execute wizard (Part B) consumes.
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            flow.getInputs(), flow, DEFAULT_TEST_EXECUTION,
+            Map.of("environment.region", "EU", "api_key", "secret"), true
+        );
+
+        // Then the contract is a FLAT list keyed by dotted leaf id: no raw FORM node, no bare child id.
+        // Frontend Part B merges the /validate response by these dotted ids, so this keying is load-bearing.
+        assertThat(values).extracting(v -> v.input().getId())
+            .containsExactlyInAnyOrder("environment.region", "api_key");
+        assertThat(values).noneMatch(v -> v.input() instanceof FormInput);
+        InputAndValue region = values.stream()
+            .filter(v -> v.input().getId().equals("environment.region")).findFirst().orElseThrow();
+        assertThat(region.value()).isEqualTo("EU");
     }
 
     private static class MemoryCompletedPart implements CompletedPart {

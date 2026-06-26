@@ -27,20 +27,17 @@ plugins {
     // helper
     id "com.github.ben-manes.versions" version "0.54.0"
 
-    // front
-    id 'com.github.node-gradle.node' version '7.1.0'
-
     // release
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.36.0"
+    id "com.vanniktech.maven.publish" version "0.37.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.1.0"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.2"
 }
 
 idea {
@@ -441,6 +438,17 @@ tasks.register('generateTestMetadata') {
     }
 }
 
+// Finalize every Test task (not just `check`) with generateTestMetadata. When a module's
+// test task exceeds its timeout, Gradle aborts the build before `check` runs, so a finalizer
+// of `check` is skipped and the metadata file is never written — leaving kestra-devtools to
+// silently report success for the timed-out module. A finalizer of the Test task itself still
+// runs on timeout (same as jacocoTestReport above), guaranteeing test-metadata.json is written.
+subprojects {
+    tasks.withType(Test).configureEach {
+        finalizedBy rootProject.tasks.named('generateTestMetadata')
+    }
+}
+
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
     dependsOn(tasks.named('flakyTest'))
@@ -568,7 +576,6 @@ distZip.dependsOn shadowJar
 distTar.dependsOn shadowJar
 startScripts.dependsOn shadowJar
 startShadowScripts.dependsOn jar
-shadowJar.dependsOn 'ui:assembleFrontend'
 shadowJar.dependsOn jar
 
 /**********************************************************************************************************************\
@@ -622,13 +629,13 @@ tasks.register('executableJar', Zip) {
 tasks.register('runLocal') {
     group = "application"
     description = "Run Kestra as server local"
-    dependsOn ':ui:assembleFrontend', ':cli:runLocal'
+    dependsOn ':cli:runLocal'
 }
 
 tasks.register('runStandalone') {
     group = "application"
     description = "Run Kestra as server standalone"
-    dependsOn ':ui:assembleFrontend', ':cli:runStandalone'
+    dependsOn ':cli:runStandalone'
 }
 
 /**********************************************************************************************************************\
@@ -650,12 +657,10 @@ subprojects {subProject ->
 
         tasks.register('sourcesJar', Jar) {
             dependsOn = [':core:copyGradleProperties']
-            dependsOn = [':ui:assembleFrontend']
             archiveClassifier.set('sources')
             from sourceSets.main.allSource
         }
         sourcesJar.dependsOn ':core:copyGradleProperties'
-        sourcesJar.dependsOn ':ui:assembleFrontend'
 
         tasks.register('javadocJar', Jar) {
             archiveClassifier.set('javadoc')

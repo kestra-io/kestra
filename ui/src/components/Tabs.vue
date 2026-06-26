@@ -164,6 +164,7 @@
                         combinedView: true,
                         kind: tab?.props?.blueprintKind,
                         embed: tab?.props?.embed ?? true,
+                        system: tab?.props?.system ?? false,
                     })
                 }
                 if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null

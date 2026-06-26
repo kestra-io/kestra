@@ -44,7 +44,7 @@
                 </KsDataTable>
             </section>
 
-            <KsTableEmpty v-else :title="EMPTY_TEXT" class="empty" />
+            <KsNoData v-else :title="EMPTY_TEXT" class="empty" />
         </Motion>
     </div>
 </template>

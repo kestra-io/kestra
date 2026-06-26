@@ -52,7 +52,7 @@
                         <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
                         <slot />
                         <template #empty>
-                            <KsTableEmpty :title="noDataText" />
+                            <KsNoData :title="noDataText" />
                         </template>
                     </KsTable>
                 </div>
@@ -82,7 +82,7 @@
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
-    import KsTableEmpty from "../KsTableEmpty.vue"
+    import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -427,6 +427,10 @@
         > .ks-data-table-navbar,
         .ks-data-table-top {
             padding-inline: var(--ks-data-table-gutter);
+        }
+
+        > .ks-data-table-navbar {
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
         }
 
         .kel-pagination {

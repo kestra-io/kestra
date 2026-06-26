@@ -34,7 +34,7 @@
                             </div>
 
                             <template v-if="selectedValue === undefined">
-                                <KsEmpty :description="$t('variable_explorer.select_prompt')" />
+                                <KsNoData :title="$t('variable_explorer.select_prompt')" />
                             </template>
 
                             <KsEditor
@@ -93,7 +93,6 @@
     import {
         KsSplitter,
         KsSplitterPanel,
-        KsEmpty,
         KsSegmented,
         KsIconButton,
         KsEditor,

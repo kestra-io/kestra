@@ -19,7 +19,7 @@ dependencies {
     annotationProcessor project(':processor')
 
     // serializers
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion'
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-ion"
 
     // reactor
     api "io.projectreactor:reactor-core"
@@ -34,11 +34,11 @@ dependencies {
     // utils
     implementation 'com.github.oshi:oshi-core'
     implementation 'io.pebbletemplates:pebble'
-    implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder'
-    implementation group: 'de.focus-shift', name: 'jollyday-core'
-    implementation group: 'de.focus-shift', name: 'jollyday-jaxb'
+    implementation "co.elastic.logging:logback-ecs-encoder"
+    implementation "de.focus-shift:jollyday-core"
+    implementation "de.focus-shift:jollyday-jaxb"
     implementation 'nl.basjes.gitignore:gitignore-reader'
-    implementation group: 'dev.failsafe', name: 'failsafe'
+    implementation "dev.failsafe:failsafe"
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.bouncycastle:bcprov-jdk18on'
     implementation 'com.github.ksuid:ksuid:1.1.4'
@@ -52,15 +52,15 @@ dependencies {
     implementation 'org.apache.maven.resolver:maven-resolver-transport-apache'
 
     // scheduler
-    implementation group: 'com.cronutils', name: 'cron-utils'
+    implementation "com.cronutils:cron-utils"
 
     // schema
     implementation ("com.github.victools:jsonschema-generator") {
         exclude group: 'com.fasterxml.jackson.core'
     }
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2'
+    implementation "com.github.victools:jsonschema-module-jakarta-validation"
+    implementation "com.github.victools:jsonschema-module-jackson"
+    implementation "com.github.victools:jsonschema-module-swagger-2"
 
     // Json Diff
     implementation ('com.github.java-json-tools:json-patch') {

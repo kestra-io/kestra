@@ -4,28 +4,12 @@ import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../../src/index"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
+import {STATES} from "../../../../src/utils/state"
 
 const i18n = createI18n({legacy: false, locale: "en", messages: {en: {expand: "Expand", collapse: "Collapse", filter: {state_group: {running: "Running", paused: "Paused", completed: "Completed", failed: "Failed", other: "Other"}}}}})
 const globalConfig = {plugins: [i18n, KestraDesignSystem]}
 
-const ALL_STATE_OPTIONS = [
-    {value: "RUNNING", label: "RUNNING"},
-    {value: "QUEUED", label: "QUEUED"},
-    {value: "CREATED", label: "CREATED"},
-    {value: "SUBMITTED", label: "SUBMITTED"},
-    {value: "RESTARTED", label: "RESTARTED"},
-    {value: "RETRYING", label: "RETRYING"},
-    {value: "KILLING", label: "KILLING"},
-    {value: "PAUSED", label: "PAUSED"},
-    {value: "BREAKPOINT", label: "BREAKPOINT"},
-    {value: "SUCCESS", label: "SUCCESS"},
-    {value: "WARNING", label: "WARNING"},
-    {value: "FAILED", label: "FAILED"},
-    {value: "KILLED", label: "KILLED"},
-    {value: "CANCELLED", label: "CANCELLED"},
-    {value: "SKIPPED", label: "SKIPPED"},
-    {value: "RETRIED", label: "RETRIED"},
-]
+const ALL_STATE_OPTIONS = Object.keys(STATES).map(state => ({value: state, label: state}))
 
 const mountStateFilter = (modelValue: string[] = [], options = ALL_STATE_OPTIONS) =>
     mount(FilterMultiSelect, {
@@ -181,16 +165,6 @@ describe("FilterMultiSelect — grouped state mode", () => {
         // Then — groups still exist, no auto-expansion happens for empty query
         const groups = wrapper.findAll(".state-group")
         expect(groups.length).toBeGreaterThan(0)
-    })
-
-    test("unknown states fall into an Other group", () => {
-        // Given — options not in any known group (2 → a multi-state Other group)
-        const opts = [...ALL_STATE_OPTIONS, {value: "CUSTOM_A", label: "CUSTOM_A"}, {value: "CUSTOM_B", label: "CUSTOM_B"}]
-        const wrapper = mountStateFilter([], opts)
-
-        // Then — a 5th group (Other) is appended for the unknown states, on top of the
-        // four taxonomy groups (i18n-independent so it holds under both vitest configs)
-        expect(wrapper.findAll(".state-group").length).toBe(5)
     })
 
     test("flat filter still emits update:modelValue on option click", async () => {

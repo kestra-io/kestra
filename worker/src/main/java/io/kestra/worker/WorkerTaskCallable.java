@@ -2,6 +2,8 @@ package io.kestra.worker;
 
 import java.time.Duration;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.flows.State;
@@ -93,9 +95,20 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
             // to the caller (e.g., queue emission after timeout).
             Thread.interrupted();
             return this.exceptionHandler(new TimeoutExceededException(workerTaskTimeout));
-        } catch (RunnableTaskException e) {
-            taskOutput = e.getOutput();
+        } catch (dev.failsafe.FailsafeException e) {
+            // Failsafe wraps non-timeout exceptions; unwrap to preserve task output.
+            final RunnableTaskException originalException = ExceptionUtils.throwableOfType(e, RunnableTaskException.class);
+            if (originalException != null) {
+                return this.handleRunnableTaskException(originalException);
+            }
             return this.exceptionHandler(e);
+        } catch (RunnableTaskException e) {
+            return this.handleRunnableTaskException(e);
         }
+    }
+
+    private State.Type handleRunnableTaskException(RunnableTaskException exception) {
+        taskOutput = exception.getOutput();
+        return this.exceptionHandler(exception);
     }
 }

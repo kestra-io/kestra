@@ -104,7 +104,7 @@
             line-height: 0;
         }
 
-        &.kel-tag--default .material-design-icon {
+        &.kel-tag--default.kel-tag--plain [class*="kel-icon"] .material-design-icon {
             color: var(--ks-icon-muted);
         }
 

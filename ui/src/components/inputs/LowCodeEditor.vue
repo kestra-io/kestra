@@ -45,7 +45,7 @@
                     <TopologyDetailsRemote
                         :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
-                        :execution="execution"
+                        :execution="exec"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"

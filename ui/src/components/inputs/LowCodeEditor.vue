@@ -674,7 +674,7 @@
                 taskType: runnerType ?? fullTask?.type,
                 title: event.customAction.label,
                 task: fullTask,
-                execution: execution.value,
+                execution: exec.value,
                 namespace: props.namespace,
                 flowId: props.flowId,
                 metrics: taskMetrics(fullTask?.id),

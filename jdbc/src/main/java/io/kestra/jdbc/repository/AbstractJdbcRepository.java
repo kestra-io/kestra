@@ -347,6 +347,32 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
+    private static String requireStringValue(Object value, String operationName) {
+        if (value == null) {
+            throw new InvalidQueryFiltersException(operationName + " operation requires a non-null string value");
+        }
+        if (value instanceof List<?>) {
+            throw new InvalidQueryFiltersException(operationName + " operation requires a string value, got a List");
+        }
+        return primitiveOrToString(value).toString();
+    }
+
+    private static Object primitiveOrToString(Object o) {
+        if (o == null)
+            return null;
+
+        if (
+            o instanceof Boolean
+                || o instanceof Number
+                || o instanceof Character
+                || o instanceof String
+        ) {
+            return o;
+        }
+
+        return o.toString();
+    }
+
     protected Condition findQueryCondition(String query) {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }

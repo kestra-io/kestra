@@ -1,5 +1,5 @@
 <template>
-    <div class="taskrun-header">
+    <div class="taskrun-header" :style="{'--depth': depth}">
         <div>
             <el-icon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
@@ -221,6 +221,10 @@
             AiIcon
         },
         props: {
+            depth: {
+                type: Number,
+                default: 0,
+            },
             currentTaskRun: {
                 type: Object,
                 required: true
@@ -438,6 +442,8 @@
 
     .taskrun-header {
         background-color: var(--ks-background-table-header);
+        // indent dynamically-generated child taskruns under their parent
+        padding-left: calc(1rem + (var(--depth, 0) * 1.5rem));
         .task-icon {
             width: 36px;
             padding: 6px 6px 6px 0;

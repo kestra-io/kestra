@@ -1,16 +1,17 @@
-package io.kestra.webserver.utils.filepreview;
+package io.kestra.plugin.core.preview;
 
-import java.io.*;
-import java.util.Map;
-
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.serializers.FileSerde;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import io.kestra.core.serializers.FileSerde;
+import java.io.*;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class IonFileRenderTest {
+class IonFileRendererTest {
     @ParameterizedTest
     @CsvSource({ "0, false", "100, false", "101, true" })
     void testTruncatedByLineCount(int lineCount, boolean truncated) throws IOException {
@@ -23,8 +24,9 @@ class IonFileRenderTest {
         }
 
         final InputStream is = new DataInputStream(new FileInputStream(tempFile));
-        IonFileRender render = new IonFileRender("ion", is, 100);
+        IonFileRenderer renderer = new IonFileRenderer();
+        FilePreview rendered = renderer.render("ion", is, Optional.empty(), 100);
 
-        assertThat(render.truncated).isEqualTo(truncated);
+        assertThat(rendered.isTruncated()).isEqualTo(truncated);
     }
 }

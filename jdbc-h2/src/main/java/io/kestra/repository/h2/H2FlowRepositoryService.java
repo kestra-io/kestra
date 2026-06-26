@@ -49,7 +49,7 @@ public abstract class H2FlowRepositoryService {
                 Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString((String) key), String.class));
                 Condition condition = switch (operation) {
                     case EQUALS -> value == null ? valueField.isNull() : valueField.eq((String) value);
-                    case NOT_EQUALS -> value == null ? valueField.isNotNull() : valueField.ne((String) value);
+                    case NOT_EQUALS -> value == null ? valueField.isNotNull() : valueField.isNull().or(valueField.ne((String) value));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 };
 

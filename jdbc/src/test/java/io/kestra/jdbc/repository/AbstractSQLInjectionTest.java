@@ -2,8 +2,12 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -22,6 +26,9 @@ public abstract class AbstractSQLInjectionTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Test
     void executionLabelFilterShouldResistSqlInjection() {

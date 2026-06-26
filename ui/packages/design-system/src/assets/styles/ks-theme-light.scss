@@ -12,16 +12,16 @@
 
     /* bg */
     #{--ks-bg-base}: $base-gray-neutral-50;
-    #{--ks-bg-sidebar}: $base-gray-cool-white;
-    #{--ks-bg-overlay}: $base-gray-cool-white;
+    #{--ks-bg-sidebar}: $base-gray-neutral-white;
+    #{--ks-bg-overlay}: $base-gray-neutral-white;
     #{--ks-bg-scrim}: rgba($base-gray-cool-white, 0.7);
-    #{--ks-bg-surface}: $base-gray-cool-white;
-    #{--ks-bg-input}: $base-gray-cool-white;
+    #{--ks-bg-surface}: $base-gray-neutral-white;
+    #{--ks-bg-input}: $base-gray-neutral-white;
     #{--ks-bg-hover}: $base-gray-neutral-50;
-    #{--ks-bg-elevated}: $base-gray-cool-white;
+    #{--ks-bg-elevated}: $base-gray-neutral-white;
     #{--ks-bg-hover-elevated}: $base-gray-neutral-50;
     #{--ks-bg-active}: $base-gray-neutral-50;
-    #{--ks-bg-badge}: $base-gray-cool-white;
+    #{--ks-bg-badge}: $base-gray-neutral-white;
     #{--ks-bg-tabs-default}: $base-gray-neutral-50;
 
     /* border */
@@ -31,7 +31,7 @@
     #{--ks-border-focus}: $base-primary-500;
 
     /* text */
-    #{--ks-text-primary}: $base-gray-neutral-1000;
+    #{--ks-text-primary}: $base-gray-neutral-black;
     #{--ks-text-secondary}: $base-gray-neutral-500;
     #{--ks-text-muted}: $base-gray-neutral-400;
     #{--ks-text-blue}: $base-blue-400;
@@ -57,7 +57,7 @@
 
     /* btn */
     #{--ks-btn-bg-success}: $base-green-50;
-    #{--ks-btn-primary-text}: $base-gray-cool-white;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
     #{--ks-btn-bg-success-hover}: $base-green-100;
     #{--ks-btn-bg-run}: $base-blue-100;
     #{--ks-btn-bg-run-hover}: $base-blue-200;
@@ -111,7 +111,7 @@
     #{--ks-Artwork-border}: $base-blue-400;
 
     /* btn */
-    #{--ks-btn-secondary-bg-default}: $base-gray-cool-white;
+    #{--ks-btn-secondary-bg-default}: $base-gray-neutral-white;
     #{--ks-btn-secondary-bg-hover}: $base-gray-neutral-50;
     #{--ks-btn-secondary-bg-active}: $base-gray-neutral-50;
     #{--ks-btn-secondary-bg-inactive}: $base-gray-neutral-50;
@@ -148,7 +148,7 @@
 
     /* editor */
     #{--ks-editor-property}: $base-primary-500;
-    #{--ks-editor-value}: $base-gray-neutral-1000;
+    #{--ks-editor-value}: $base-gray-neutral-black;
     #{--ks-editor-pabble}: $base-orange-500;
 
     /* status */
@@ -175,9 +175,9 @@
     #{--ks-dependencies-edge-hovered}: $base-gray-neutral-400;
     #{--ks-dependencies-edge-selected}: $base-primary-400;
     #{--ks-dependencies-node-background-assets}: $base-blue-300;
-    #{--ks-dependencies-node-background-default}: $base-gray-cool-white;
+    #{--ks-dependencies-node-background-default}: $base-gray-neutral-white;
     #{--ks-dependencies-node-background-faded}: $base-gray-neutral-100;
-    #{--ks-dependencies-node-background-hovered}: $base-gray-cool-white;
+    #{--ks-dependencies-node-background-hovered}: $base-gray-neutral-white;
     #{--ks-dependencies-node-background-selected}: $base-primary-200;
     #{--ks-dependencies-node-border-assets}: $base-blue-400;
     #{--ks-dependencies-node-border-default}: $base-gray-neutral-200;

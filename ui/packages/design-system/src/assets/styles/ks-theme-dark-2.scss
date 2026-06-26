@@ -31,7 +31,7 @@ html.dark-2 {
     #{--ks-border-focus}: $base-primary-300;
 
     /* text */
-    #{--ks-text-primary}: $base-gray-cool-white;
+    #{--ks-text-primary}: $base-gray-neutral-white;
     #{--ks-text-secondary}: $base-gray-neutral-300;
     #{--ks-text-muted}: $base-gray-neutral-200;
     #{--ks-text-blue}: $base-blue-200;
@@ -57,7 +57,7 @@ html.dark-2 {
 
     /* btn */
     #{--ks-btn-bg-success}: $base-green-900;
-    #{--ks-btn-primary-text}: $base-gray-cool-white;
+    #{--ks-btn-primary-text}: $base-gray-neutral-white;
     #{--ks-btn-bg-success-hover}: $base-green-800;
     #{--ks-btn-bg-run}: $base-blue-700;
     #{--ks-btn-bg-run-hover}: $base-blue-600;
@@ -94,7 +94,7 @@ html.dark-2 {
 
     /* icon */
     #{--ks-icon-error}: $base-red-200;
-    #{--ks-icon-default}: $base-gray-cool-white;
+    #{--ks-icon-default}: $base-gray-neutral-white;
     #{--ks-icon-hover}: $base-primary-300;
     #{--ks-icon-active}: $base-primary-200;
     #{--ks-icon-inactive}: $base-gray-neutral-400;
@@ -172,7 +172,7 @@ html.dark-2 {
     /* dependencies */
     #{--ks-dependencies-edge-default}: $base-gray-neutral-300;
     #{--ks-dependencies-edge-faded}: $base-gray-neutral-600;
-    #{--ks-dependencies-edge-hovered}: $base-gray-cool-white;
+    #{--ks-dependencies-edge-hovered}: $base-gray-neutral-white;
     #{--ks-dependencies-edge-selected}: $base-primary-300;
     #{--ks-dependencies-node-background-assets}: $base-blue-300;
     #{--ks-dependencies-node-background-default}: $base-gray-neutral-600;

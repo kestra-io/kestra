@@ -506,6 +506,15 @@ public class DefaultRunContext extends RunContext {
         return dynamicWorkerTaskResult;
     }
 
+    @Override
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerTaskResult.add(workerTaskResult);
+
+        if (logs != null && !logs.isEmpty() && workerTaskResult.getTaskRun() != null) {
+            this.logger.emitDynamicTaskRunLogs(workerTaskResult.getTaskRun(), logs);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */

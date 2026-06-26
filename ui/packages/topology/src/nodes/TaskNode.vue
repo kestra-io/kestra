@@ -119,6 +119,7 @@
     interface TaskRun {
         id: string
         taskId: string;
+        parentTaskRunId?: string;
         state: {
             current: [string, string];
             duration?: string;
@@ -225,6 +226,16 @@
         return taskRunList.value.filter(
             (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
+    })
+
+    // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
+    // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
+    const taskRunsWithDynamicChildren = computed(() => {
+        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const children = taskRunList.value.filter(
+            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+        )
+        return [...taskRuns.value, ...children]
     })
 
     const state = computed(() => {
@@ -341,7 +352,7 @@
                 key: "logs",
                 label: t("show task logs"),
                 icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
             })
         }
         if (taskExecution.value) {

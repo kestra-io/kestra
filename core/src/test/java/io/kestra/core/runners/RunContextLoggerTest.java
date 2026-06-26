@@ -15,6 +15,8 @@ import org.slf4j.event.Level;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -193,6 +195,155 @@ class RunContextLoggerTest {
         runContextLogger.resetMDC();
 
         assertThat(adapter.getCopyOfContextMap()).isNullOrEmpty();
+    }
+
+    @Test
+    void emitDynamicTaskRunLogs_forcesContextAndAttemptZeroAndMasks() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logQueue,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+        runContextLogger.usedSecret("super-secret-value");
+
+        // a dynamic taskrun that (deliberately) carries a foreign execution/tenant and one attempt:
+        // the emitted entry must NOT inherit those — execution/tenant/namespace/flow come from the context.
+        TaskRun dynamicTaskRun = TaskRun.builder()
+            .id("dyn-taskrun-id")
+            .taskId("Play | Task 1")
+            .tenantId("other-tenant")
+            .executionId("other-execution")
+            .namespace("other.namespace")
+            .flowId("other-flow")
+            .attempts(List.of(TaskRunAttempt.builder().build()))
+            .build();
+
+        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(new DynamicTaskRunLog(Level.ERROR, "leak super-secret-value here")));
+
+        List<LogEntry> queueLogs = TestsUtils.awaitLogs(logs, 1);
+        receive.blockLast();
+        assertThat(queueLogs).hasSize(1);
+        LogEntry emitted = queueLogs.getFirst();
+        assertThat(emitted.getTaskRunId()).isEqualTo("dyn-taskrun-id");
+        assertThat(emitted.getTaskId()).isEqualTo("Play | Task 1");
+        assertThat(emitted.getAttemptNumber()).isEqualTo(0);
+        assertThat(emitted.getExecutionId()).isEqualTo(execution.getId());
+        assertThat(emitted.getExecutionId()).isNotEqualTo("other-execution");
+        assertThat(emitted.getTenantId()).isEqualTo(execution.getTenantId());
+        assertThat(emitted.getNamespace()).isEqualTo(execution.getNamespace());
+        assertThat(emitted.getFlowId()).isEqualTo(execution.getFlowId());
+        assertThat(emitted.getLevel()).isEqualTo(Level.ERROR);
+        assertThat(emitted.getMessage()).isEqualTo("leak ****** here");
+    }
+
+    @Test
+    void emitDynamicTaskRunLogs_inheritsLevelFilter() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        // the context filters at WARN: an INFO dynamic line must be dropped, like any task log
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logQueue,
+            LogEntry.of(execution),
+            Level.WARN,
+            false
+        );
+
+        TaskRun dynamicTaskRun = TaskRun.builder()
+            .id("dyn-taskrun-id")
+            .taskId("Play | Task 1")
+            .attempts(List.of(TaskRunAttempt.builder().build()))
+            .build();
+
+        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(
+            new DynamicTaskRunLog(Level.INFO, "info dropped by filter"),
+            new DynamicTaskRunLog(Level.ERROR, "error kept")
+        ));
+
+        List<LogEntry> queueLogs = TestsUtils.awaitLogs(logs, 1);
+        receive.blockLast();
+        assertThat(queueLogs).hasSize(1);
+        assertThat(queueLogs.getFirst().getLevel()).isEqualTo(Level.ERROR);
+        assertThat(queueLogs.getFirst().getMessage()).isEqualTo("error kept");
+        assertThat(queueLogs).noneMatch(l -> l.getLevel().equals(Level.INFO));
+    }
+
+    @Test
+    void emitDynamicTaskRunLogs_underLogToFileGoesToFileNotQueue() throws Exception {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        // logToFile=true: task logs are file-only, so the dynamic lines must land in the file
+        // (with masking) and never reach the inline log queue
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logQueue,
+            LogEntry.of(execution),
+            Level.TRACE,
+            true
+        );
+        runContextLogger.usedSecret("super-secret-value");
+
+        TaskRun dynamicTaskRun = TaskRun.builder()
+            .id("dyn-taskrun-id")
+            .taskId("Play | Task 1")
+            .attempts(List.of(TaskRunAttempt.builder().build()))
+            .build();
+
+        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(
+            new DynamicTaskRunLog(Level.INFO, "to file super-secret-value")
+        ));
+
+        runContextLogger.closeLogFile();
+        String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
+        receive.blockLast();
+        assertThat(fileContent).contains("to file ******");
+        // file-only: ContextAppender is not attached, so nothing reaches the inline queue
+        assertThat(logs).isEmpty();
+    }
+
+    @Test
+    void emitDynamicTaskRunLogs_seedsMDCWithDynamicTaskRunIdentity() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        // mirror exactly how emitDynamicTaskRunLogs binds the child logger for a dynamic taskrun:
+        // execution context + the dynamic taskrun's id/taskId, attempt 0
+        LogEntry boundLogEntry = LogEntry.of(execution).toBuilder()
+            .taskId("Play | Task 1")
+            .taskRunId("dyn-taskrun-id")
+            .attemptNumber(0)
+            .build();
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logQueue,
+            boundLogEntry,
+            Level.TRACE,
+            false
+        );
+        ch.qos.logback.classic.Logger perRunLogger =
+            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+
+        // the per-run MDC carries the dynamic taskrun identity (taskRunId/taskId), not just the
+        // execution context — so forwarded server logs are attributed to the dynamic taskrun too
+        assertThat(perRunLogger.getLoggerContext().getMDCAdapter().getCopyOfContextMap())
+            .containsEntry("taskRunId", "dyn-taskrun-id")
+            .containsEntry("taskId", "Play | Task 1")
+            .containsEntry("executionId", execution.getId())
+            .containsEntry("namespace", execution.getNamespace())
+            .containsEntry("flowId", execution.getFlowId());
     }
 
     /**

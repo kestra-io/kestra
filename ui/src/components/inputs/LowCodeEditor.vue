@@ -330,8 +330,15 @@
         }
     };
 
-    const showLogs = (event: string) => {
-        selectedTask.value = event;
+    const showLogs = (event: any) => {
+        // include the task's dynamically-generated child taskruns (e.g. Ansible plays/tasks,
+        // dbt models) so their logs show alongside the task's own, not just the root taskrun
+        const taskRuns = event?.taskRuns ?? [];
+        const ids = new Set(taskRuns.map((t: any) => t.id));
+        const children = (executionsStore.execution?.taskRunList ?? []).filter(
+            (t: any) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+        );
+        selectedTask.value = {...event, taskRuns: [...taskRuns, ...children]};
         isShowLogsOpen.value = true;
         isDrawerOpen.value = true;
     };

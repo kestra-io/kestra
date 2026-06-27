@@ -5,7 +5,7 @@
     <KsForm class="ks-horizontal max-size mt-3">
         <KsFormItem :label="$t('row count')">
             <KsSelect
-                v-model="maxPreview"
+                v-model="maxRows"
                 filterable
                 clearable
                 :required="true"
@@ -73,7 +73,7 @@
     })
 
     const encoding = defineModel<typeof encodingOptions[number]["value"]>("encoding")
-    const maxPreview = defineModel<number | undefined>("maxPreview")
+    const maxRows = defineModel<number | undefined>("maxRows")
     const forceEditor = defineModel<boolean>("forceEditor")
 
     defineProps<{

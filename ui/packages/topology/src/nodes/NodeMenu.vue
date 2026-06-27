@@ -24,6 +24,8 @@
                     v-for="action in actions"
                     :key="action.key"
                     :divided="action.divided"
+                    :icon="action.icon"
+                    :class="{'node-action--danger': action.danger}"
                     @click="action.onClick()"
                 >
                     {{ action.label }}
@@ -54,4 +56,10 @@
 
     const {t} = useI18n()
 </script>
+
+<style scoped lang="scss">
+.node-action--danger {
+    color: var(--ks-text-error);
+}
+</style>
 

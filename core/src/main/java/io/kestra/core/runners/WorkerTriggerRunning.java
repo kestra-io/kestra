@@ -26,6 +26,8 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
     @NotNull
     private WorkerTriggerData data;
 
+    private long dispatchEpoch;
+
     /**
      * {@inheritDoc}
      */
@@ -43,6 +45,7 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
         return WorkerTriggerRunning.builder()
             .trigger(workerTrigger.getTrigger())
             .data(workerTrigger.getData())
+            .dispatchEpoch(workerTrigger.getDispatchEpoch())
             .workerInstance(workerInstance)
             .build();
     }

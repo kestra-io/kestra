@@ -1,6 +1,6 @@
 <template>
     <NavBarAction
-        v-if="asItem && (isReplay || enabled)"
+        v-if="trigger && asItem && (isReplay || enabled)"
         :icon="icon"
         :disabled="!enabled"
         @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
         {{ $t(replayOrRestart) }}
     </NavBarAction>
     <KsTooltip
-        v-else-if="isReplay || enabled"
+        v-else-if="trigger && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -45,7 +45,6 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="500px"
     >
         <template #header>
             <div class="modal-header m-0">
@@ -75,7 +74,6 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="600px"
     >
         <template #header>
             <div class="modal-header m-0">
@@ -160,7 +158,6 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
-        width="60%"
     >
         <template #header>
             <span
@@ -210,6 +207,7 @@
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
         tooltipPosition: {type: String, default: "bottom"},
+        trigger: {type: Boolean, default: true},
     })
 
     const {t} = useI18n()
@@ -264,7 +262,7 @@
         if (!props.execution?.state) return false
 
         const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
+            ? authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
             : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
 
         if (!hasPermission) return false
@@ -399,6 +397,12 @@
 
     watch(canReuseInputs, (canReuse) => {
         inputMode.value = canReuse ? "reuse" : "modify"
+    })
+
+    defineExpose({
+        open: () => {
+            isOpen.value = true
+        },
     })
 </script>
 

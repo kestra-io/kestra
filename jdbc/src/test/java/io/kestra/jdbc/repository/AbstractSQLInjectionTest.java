@@ -145,6 +145,58 @@ public abstract class AbstractSQLInjectionTest {
         }
     }
 
+    @Test
+    void flowFullTextShouldNotReturnAllResultsWithWildcardQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow = FlowWithSource.builder()
+            .id("wildcard-test-flow")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(tenant)
+            .build();
+        flow = flowRepository.create(GenericFlow.of(flow));
+
+        try {
+            // A bare '%' must not act as a match-all wildcard
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("%")
+                        .build()
+                ))
+            ).as("Querying with '%' should return no results, not all flows").isEmpty();
+
+            // A bare '_' must not act as a single-char wildcard
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("_")
+                        .build()
+                ))
+            ).as("Querying with '_' should return no results, not all flows").isEmpty();
+
+            // Searching with the real id must still find the flow
+            assertThat(
+                flowRepository.find(Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.QUERY)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("wildcard")
+                        .build()
+                ))
+            ).as("Querying with the flow id should return the flow")
+                .hasSize(1)
+                .extracting(Flow::getId)
+                .containsExactly("wildcard-test-flow");
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
     private void deleteFlow(Flow flow) {
         if (flow == null) {
             return;

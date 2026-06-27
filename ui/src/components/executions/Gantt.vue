@@ -99,7 +99,10 @@
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
-                                            <div class="task-label">
+                                            <div
+                                                class="task-label"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
                                                     <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
                                                 </div>
@@ -177,8 +180,9 @@
                             </template>
                         </DynamicScroller>
                         <!-- Task runs exist but the active filters/search hid them all. -->
-                        <KsEmpty
+                        <KsNoData
                             v-else
+                            :title="t('gantt_no_tasks_match_filters_title')"
                             :description="t('gantt_no_tasks_match_filters')"
                         />
                     </template>
@@ -225,7 +229,6 @@
         KsTaskIcon,
         KsFilter as KSFilter,
         KsEmptyState,
-        KsEmpty,
         type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
@@ -242,7 +245,7 @@
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
-    import emptyIllustration from "../../assets/empty_visuals/assets-illus.svg"
+    import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
 
@@ -858,6 +861,7 @@
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
+                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
 
                     code {
                         color: var(--ks-text-primary);

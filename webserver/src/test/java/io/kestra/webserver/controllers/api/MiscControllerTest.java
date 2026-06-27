@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
+@Property(name = "kestra.flowTemplate", value = "tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured")
 class MiscControllerTest {
     @Inject
     @Client("/")
@@ -92,6 +93,7 @@ class MiscControllerTest {
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
         assertThat(response.getIsAiEnabled()).isTrue();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
+        assertThat(response.getFlowTemplate()).isEqualTo("tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured");
         assertThat(response.getIsConcurrencyViewEnabled()).isTrue();
         assertThat(response.getIsAiApiKeyConfigured()).isNotNull();
     }

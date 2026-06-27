@@ -1,5 +1,5 @@
 /**
- * Generates UI translations from en.json using OpenAI.
+ * Generates UI translations from en.json using Gemini.
  *
  * Two sources are translated:
  *   1. `ui/src/translations/en.json` -> one JSON file per language (de.json, fr.json, ...).
@@ -7,18 +7,19 @@
  *      each of which holds every language in a single `export default { en: {...}, de: {...}, ... }`.
  *
  * Run from the repository root so the relative paths below resolve correctly:
- *   OPENAI_API_KEY=... node --experimental-strip-types ui/scripts/generate_translations.ts [true|false]
+ *   GEMINI_API_KEY=... node --experimental-strip-types ui/scripts/generate_translations.ts [true|false]
  *
  * The single positional argument mirrors `retranslate_modified_keys`: pass "true"
  * to re-translate keys that already have a non-empty translation.
  *
- * Requires the `openai` package and Node 22+ (for native TypeScript type stripping and fs.globSync).
+ * Requires the `@google/genai` package and Node 22+ (for native TypeScript type stripping and fs.globSync).
  */
 import {execFileSync} from "node:child_process"
 import {globSync, readFileSync, writeFileSync} from "node:fs"
-import OpenAI from "openai"
+import {GoogleGenAI} from "@google/genai"
 
-const client = new OpenAI()
+const MODEL = "gemini-2.5-flash"
+const client = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
 
 type NestedValue = string | NestedValue[] | NestedDict;
 type NestedDict = {[key: string]: NestedValue};
@@ -50,21 +51,15 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         `
 
     try {
-        const response = await client.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "system",
-                    content: `You are a software engineer translating textual UI elements into ${targetLanguage} while keeping technical terms in English.`,
-                },
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
-            temperature: 0.1,
+        const response = await client.models.generateContent({
+            model: MODEL,
+            contents: prompt,
+            config: {
+                systemInstruction: `You are a software engineer translating textual UI elements into ${targetLanguage} while keeping technical terms in English.`,
+                temperature: 0.1,
+            },
         })
-        return (response.choices[0].message.content ?? "").trim()
+        return (response.text ?? "").trim()
     } catch (e) {
         console.log(`Error during translation: ${e}`)
         return text // Return original if translation fails

@@ -12,6 +12,10 @@
             <slot name="navbar" />
         </template>
 
+        <template v-if="$slots.empty" #empty>
+            <slot name="empty" />
+        </template>
+
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">

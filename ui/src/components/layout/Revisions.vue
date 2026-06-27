@@ -10,8 +10,8 @@
                 />
             </KsSelect>
         </div>
-        <KsRow :gutter="15" class="mb-2">
-            <KsCol :span="12" v-if="revisionLeftIndex !== undefined">
+        <div class="revision-grid mb-2">
+            <div class="revision-grid-col" v-if="revisionLeftIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <KsSelect v-model="revisionLeftIndex" @change="addQuery">
@@ -48,8 +48,8 @@
                         <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
                     </div>
                 </div>
-            </KsCol>
-            <KsCol :span="12" v-if="revisionRightIndex !== undefined">
+            </div>
+            <div class="revision-grid-col" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <KsSelect v-model="revisionRightIndex" @change="addQuery">
@@ -86,8 +86,8 @@
                         <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
                     </div>
                 </div>
-            </KsCol>
-        </KsRow>
+            </div>
+        </div>
 
         <KsEditor
             v-bind="editorBindings"
@@ -105,15 +105,12 @@
             <span class="ml-2">Loading revisions...</span>
         </div>
     </div>
-    <div v-else class="no-revisions">
-        <div class="no-revisions-content">
-            <History class="no-revisions-icon" />
-            <div class="no-revisions-text">
-                <p class="no-revisions-title">{{ $t("no revisions") }}</p>
-                <p class="no-revisions-subtitle">{{ $t("no revisions found") }}</p>
-            </div>
-        </div>
-    </div>
+    <KsNoData
+        v-else
+        :icon="History"
+        :title="$t('no revisions')"
+        :description="$t('no revisions found')"
+    />
 </template>
 
 <script setup lang="ts">
@@ -371,6 +368,16 @@
         padding-bottom: 1rem;
     }
 
+    .revision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-right: var(--ks-spacing-6);
+    }
+
+    .revision-grid-col {
+        min-width: 0;
+    }
+
     .revision-select-row {
         display: flex;
         align-items: center;
@@ -393,9 +400,10 @@
     }
 
     .revision-crud-info {
-        flex-shrink: 0;
-        white-space: nowrap;
+        width: calc(100% - var(--ks-spacing-4));
+        margin-right: var(--ks-spacing-4);
     }
+
 
     .revision-option {
         min-width: 350px;
@@ -427,46 +435,5 @@
         font-size: 0.85em;
         text-align: right;
         flex-shrink: 0;
-    }
-
-    .no-revisions {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: calc(100vh - 190px);
-    }
-
-    .no-revisions-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-    }
-
-    .no-revisions-text {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-    }
-
-    .no-revisions-icon {
-        color: var(--ks-icon-muted);
-
-        :deep(svg) {
-            width: 28px;
-            height: 28px;
-        }
-    }
-
-    .no-revisions-title {
-        font-weight: var(--ks-font-weight-semibold);
-        color: var(--ks-text-primary);
-        margin: 0;
-    }
-
-    .no-revisions-subtitle {
-        color: var(--ks-text-secondary);
-        margin: 0;
     }
 </style>

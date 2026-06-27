@@ -1,248 +1,293 @@
 <template>
     <template v-if="initialInputs">
-        <KsFormItem
-            v-for="input in inputsMetaData"
-            :key="input.id"
-            :required="input.required !== false"
-            :rules="requiredRules(input)"
-            :prop="input.id"
-            :error="inputError(input.id)"
-            :inlineMessage="true"
-        >
-            <template #label>
-                <KsMarkdown :content="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
-            </template>
-            <KsEditor
-                v-bind="editorBindings"
-                :options="{fullHeight: false}"
-                :inline="true"
-                :navbar="false"
-                v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
-                :data-testid="`input-form-${input.id}`"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                @confirm="onSubmit"
-            />
-            <KsSelect
-                :fullHeight="false"
-                :input="true"
-                :navbar="false"
-                v-if="input.type === 'SELECT' && !input.isRadio"
-                :data-testid="`input-form-${input.id}`"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                :allowCreate="input.allowCustomValue"
-                :disabled="isComputingInput(input.id)"
-                :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
-                :loading="isLoadingInput(input.id)"
-                filterable
-                clearable
+        <!-- Wizard progress: one KsStep per fillable step (FORM titles, "Inputs" for ungrouped runs).
+             active = currentStep, so earlier steps render as finished and the recap marks them all done. -->
+        <KsSteps v-if="isWizard" :active="currentStep" finishStatus="success" class="wizard-steps" data-testid="wizard-steps">
+            <KsStep v-for="section in recapSections" :key="section.index" :title="section.title" />
+        </KsSteps>
+        <!-- The section name lives in the stepper (bold when active); only the optional description
+             is shown above the fields. -->
+        <div v-if="isWizard && current?.kind === 'form' && current.description" class="wizard-step-header">
+            <KsMarkdown :content="current.description" class="text-description" />
+        </div>
+
+        <template v-for="input in visibleInputs" :key="input.id">
+            <KsFormItem
+                :required="input.required !== false"
+                :rules="requiredRules(input)"
+                :prop="input.id.includes('.') ? [input.id] : input.id"
+                :error="inputError(input.id)"
+                :inlineMessage="true"
             >
-                <KsOption
-                    v-for="item in (input.values ?? []).map(toOption)"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                <template #label>
+                    <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                </template>
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false}"
+                    :inline="true"
+                    :navbar="false"
+                    v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
+                    :data-testid="`input-form-${input.id}`"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    @confirm="onSubmit"
+                />
+                <KsSelect
+                    :fullHeight="false"
+                    :input="true"
+                    :navbar="false"
+                    v-if="input.type === 'SELECT' && !input.isRadio"
+                    :data-testid="`input-form-${input.id}`"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    :allowCreate="input.allowCustomValue"
+                    :disabled="isComputingInput(input.id)"
+                    :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                    :loading="isLoadingInput(input.id)"
+                    filterable
+                    clearable
                 >
-                    <KsMarkdown :content="item.label" />
-                </KsOption>
-            </KsSelect>
-            <KsRadioGroup
-                v-if="input.type === 'SELECT' && input.isRadio"
-                :data-testid="`input-form-${input.id}`"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-            >
-                <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
+                    <KsOption
+                        v-for="item in (input.values ?? []).map(toOption)"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                    >
+                        <KsMarkdown :content="item.label" />
+                    </KsOption>
+                </KsSelect>
+                <KsRadioGroup
+                    v-if="input.type === 'SELECT' && input.isRadio"
+                    :data-testid="`input-form-${input.id}`"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                >
+                    <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
+                    <KsInput
+                        v-if="input.allowCustomValue"
+                        v-model="inputsValues[input.id]"
+                        @update:model-value="onChange(input)"
+                        :placeholder="$t('custom value')"
+                    />
+                </KsRadioGroup>
+                <KsSelect
+                    :fullHeight="false"
+                    :input="true"
+                    :navbar="false"
+                    v-if="input.type === 'MULTISELECT'"
+                    :data-testid="`input-form-${input.id}`"
+                    v-model="multiSelectInputs[input.id]"
+                    @update:model-value="onMultiSelectChange(input, $event)"
+                    multiple
+                    filterable
+                    clearable
+                    :allowCreate="input.allowCustomValue"
+                    :disabled="isComputingInput(input.id)"
+                    :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                    :loading="isLoadingInput(input.id)"
+                >
+                    <KsOption
+                        v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                    >
+                        <KsMarkdown :content="item.label" />
+                    </KsOption>
+                </KsSelect>
                 <KsInput
-                    v-if="input.allowCustomValue"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
-                    :placeholder="$t('custom value')"
-                />
-            </KsRadioGroup>
-            <KsSelect
-                :fullHeight="false"
-                :input="true"
-                :navbar="false"
-                v-if="input.type === 'MULTISELECT'"
-                :data-testid="`input-form-${input.id}`"
-                v-model="multiSelectInputs[input.id]"
-                @update:model-value="onMultiSelectChange(input, $event)"
-                multiple
-                filterable
-                clearable
-                :allowCreate="input.allowCustomValue"
-                :disabled="isComputingInput(input.id)"
-                :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
-                :loading="isLoadingInput(input.id)"
-            >
-                <KsOption
-                    v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                >
-                    <KsMarkdown :content="item.label" />
-                </KsOption>
-            </KsSelect>
-            <KsInput
-                type="password"
-                v-if="input.type === 'SECRET'"
-                :data-testid="`input-form-${input.id}`"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                showPassword
-            />
-            <span v-if="input.type === 'INT'">
-                <KsInputNumber
+                    type="password"
+                    v-if="input.type === 'SECRET'"
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
-                    :min="input.min"
-                    :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
-                    :step="1"
+                    showPassword
                 />
-                <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
-            </span>
-            <span v-if="input.type === 'FLOAT'">
-                <KsInputNumber
-                    :data-testid="`input-form-${input.id}`"
-                    v-model="inputsValues[input.id]"
-                    @update:model-value="onChange(input)"
-                    :min="input.min"
-                    :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
-                    :step="0.001"
-                />
-                <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
-            </span>
-            <KsSwitch
-                :data-testid="`input-form-${input.id}`"
-                v-if="input.type === 'BOOL'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChangeBool(input)"
-                class="w-100 boolean-inputs"
-            />
-            <KsDatePicker
-                :data-testid="`input-form-${input.id}`"
-                v-if="input.type === 'DATETIME'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                type="datetime"
-            />
-            <KsDatePicker
-                :data-testid="`input-form-${input.id}`"
-                v-if="input.type === 'DATE'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                type="date"
-            />
-            <KsTimePicker
-                :data-testid="`input-form-${input.id}`"
-                v-if="input.type === 'TIME'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                type="time"
-            />
-            <div class="kel-input kel-input-file" v-if="input.type === 'FILE'">
-                <div class="kel-input__wrapper">
-                    <input
+                <span v-if="input.type === 'INT'">
+                    <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
-                        :id="input.id+'-file'"
-                        class="kel-input__inner custom-file-input"
-                        type="file"
-                        :accept="getAcceptedFileTypes(input)"
-                        @change="onFileChange(input, $event)"
-                        autocomplete="off"
-                    >
-                    <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
-                </div>
-            </div>
-            <div
-                v-if="input.type === 'ARRAY'"
-                :data-testid="`input-form-${input.id}`"
-                class="w-100"
-            >
-                <div v-if="editingArrayId !== input.id" class="preview">
-                    <div class="tags">
-                        <KsTag
-                            v-for="(item, index) in parseArrayValue(input.id)"
-                            :key="index"
+                        v-model="inputsValues[input.id]"
+                        @update:model-value="onChange(input)"
+                        :min="input.min"
+                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :step="1"
+                    />
+                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                </span>
+                <span v-if="input.type === 'FLOAT'">
+                    <KsInputNumber
+                        :data-testid="`input-form-${input.id}`"
+                        v-model="inputsValues[input.id]"
+                        @update:model-value="onChange(input)"
+                        :min="input.min"
+                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :step="0.001"
+                    />
+                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                </span>
+                <KsSwitch
+                    :data-testid="`input-form-${input.id}`"
+                    v-if="input.type === 'BOOL'"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChangeBool(input)"
+                    class="w-100 boolean-inputs"
+                />
+                <KsDatePicker
+                    :data-testid="`input-form-${input.id}`"
+                    v-if="input.type === 'DATETIME'"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    type="datetime"
+                />
+                <KsDatePicker
+                    :data-testid="`input-form-${input.id}`"
+                    v-if="input.type === 'DATE'"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    type="date"
+                />
+                <KsTimePicker
+                    :data-testid="`input-form-${input.id}`"
+                    v-if="input.type === 'TIME'"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    type="time"
+                />
+                <div class="kel-input kel-input-file" v-if="input.type === 'FILE'">
+                    <div class="kel-input__wrapper">
+                        <input
+                            :data-testid="`input-form-${input.id}`"
+                            :id="input.id+'-file'"
+                            class="kel-input__inner custom-file-input"
+                            type="file"
+                            :accept="getAcceptedFileTypes(input)"
+                            @change="onFileChange(input, $event)"
+                            autocomplete="off"
                         >
-                            {{ item }}
-                        </KsTag>
+                        <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
                     </div>
-                    <KsButton
-                        class="p-3"
-                        @click="toggleArrayEdit(input.id)"
-                        :icon="Pencil"
-                    >
+                </div>
+                <div
+                    v-if="input.type === 'ARRAY'"
+                    :data-testid="`input-form-${input.id}`"
+                    class="w-100"
+                >
+                    <div v-if="editingArrayId !== input.id" class="preview">
+                        <div class="tags">
+                            <KsTag
+                                v-for="(item, index) in parseArrayValue(input.id)"
+                                :key="index"
+                            >
+                                {{ item }}
+                            </KsTag>
+                        </div>
+                        <KsButton
+                            class="p-3"
+                            @click="toggleArrayEdit(input.id)"
+                            :icon="Pencil"
+                        >
+                            {{ $t('edit') }}
+                        </KsButton>
+                    </div>
+
+                    <div v-else class="edit_input">
+                        <div>
+                            <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
+                                <KsInput
+                                    v-model="editableItems[input.id][index]"
+                                    class="array-cell"
+                                />
+                                <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" :tooltip="$t('remove this item')" />
+                                <div class="d-flex flex-column controls-input">
+                                    <ChevronUp @click="moveArrayItem(input, 'up', index)" />
+                                    <ChevronDown @click="moveArrayItem(input, 'down', index)" />
+                                </div>
+                            </div>
+                        </div>
+                        <KsButton
+                            class="add-new mt-1 border-0"
+                            @click="addNewArrayItem(input)"
+                            :icon="Plus"
+                        >
+                            {{ $t('add_new_item') }}
+                        </KsButton>
+                        <div class="d-flex justify-content-end mt-2">
+                            <KsButton
+                                @click="toggleArrayEdit(input.id)"
+                                type="primary"
+                                :icon="ContentSave"
+                            >
+                                {{ $t('save') }}
+                            </KsButton>
+                        </div>
+                    </div>
+                </div>
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
+                    :inline="true"
+                    :navbar="false"
+                    v-if="input.type === 'JSON'"
+                    :data-testid="`input-form-${input.id}`"
+                    lang="json"
+                    v-model="inputsValues[input.id]"
+                />
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false}"
+                    :inline="true"
+                    :navbar="false"
+                    v-if="input.type === 'YAML'"
+                    :data-testid="`input-form-${input.id}`"
+                    lang="yaml"
+                    :modelValue="inputsValues[input.id]"
+                    @change="onYamlChange(input, $event)"
+                />
+                <KsDurationPicker
+                    v-if="input.type === 'DURATION'"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                />
+                <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
+            </KsFormItem>
+        </template>
+
+        <div v-if="isOnRecap" class="wizard-recap" data-testid="inputs-wizard-recap">
+            <h5 class="wizard-step-title">{{ $t('review your inputs') }}</h5>
+            <div v-for="section in recapSections" :key="section.index" class="wizard-recap-section">
+                <div class="wizard-recap-section-header">
+                    <span class="wizard-recap-section-title">{{ section.title }}</span>
+                    <KsButton :icon="Pencil" @click="editStep(section.index)" :data-testid="`recap-edit-${section.index}`">
                         {{ $t('edit') }}
                     </KsButton>
                 </div>
-
-                <div v-else class="edit_input">
-                    <div>
-                        <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
-                            <KsInput
-                                v-model="editableItems[input.id][index]"
-                                class="array-cell"
-                            />
-                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" :tooltip="$t('remove this item')" />
-                            <div class="d-flex flex-column controls-input">
-                                <ChevronUp @click="moveArrayItem(input, 'up', index)" />
-                                <ChevronDown @click="moveArrayItem(input, 'down', index)" />
-                            </div>
-                        </div>
-                    </div>
-                    <KsButton
-                        class="add-new mt-1 border-0"
-                        @click="addNewArrayItem(input)"
-                        :icon="Plus"
-                    >
-                        {{ $t('add_new_item') }}
-                    </KsButton>
-                    <div class="d-flex justify-content-end mt-2">
-                        <KsButton
-                            @click="toggleArrayEdit(input.id)"
-                            type="primary"
-                            :icon="ContentSave"
-                        >
-                            {{ $t('save') }}
-                        </KsButton>
-                    </div>
+                <div v-for="field in section.fields" :key="field.id" class="wizard-recap-field">
+                    <span class="wizard-recap-field-label">{{ inputLabel(field) }}</span>
+                    <span class="wizard-recap-field-value">{{ recapDisplayValue(field) }}</span>
                 </div>
             </div>
-            <KsEditor
-                v-bind="editorBindings"
-                :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
-                :inline="true"
-                :navbar="false"
-                v-if="input.type === 'JSON'"
-                :data-testid="`input-form-${input.id}`"
-                lang="json"
-                v-model="inputsValues[input.id]"
-            />
-            <KsEditor
-                v-bind="editorBindings"
-                :options="{fullHeight: false}"
-                :inline="true"
-                :navbar="false"
-                v-if="input.type === 'YAML'"
-                :data-testid="`input-form-${input.id}`"
-                lang="yaml"
-                :modelValue="inputsValues[input.id]"
-                @change="onYamlChange(input, $event)"
-            />
-            <KsDurationPicker
-                v-if="input.type === 'DURATION'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-            />
-            <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
-        </KsFormItem>
+        </div>
+
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
+        </div>
+
+        <div v-if="isWizard" class="wizard-nav">
+            <KsButton v-if="currentStep > 0" :icon="ChevronLeft" @click="goBack" data-testid="wizard-back">
+                {{ $t('back') }}
+            </KsButton>
+            <span class="wizard-nav-spacer" />
+            <KsButton
+                v-if="current?.kind !== 'recap'"
+                type="primary"
+                :icon="returnToRecap ? Check : ChevronRight"
+                :loading="navLoading"
+                @click="goNext"
+                data-testid="wizard-next"
+            >
+                {{ showComputingLabel ? $t('loading') : $t(returnToRecap ? 'done' : 'next') }}
+            </KsButton>
         </div>
     </template>
 
@@ -257,11 +302,12 @@
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
-    import {Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
+    import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {normalize, type InputType} from "../../utils/inputs"
+    import {useInputsWizard} from "../../composables/useInputsWizard"
+    import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
     import PencilIcon from "vue-material-design-icons/Pencil.vue"
@@ -269,6 +315,9 @@
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue"
+    import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue"
+    import CheckIcon from "vue-material-design-icons/Check.vue"
     import {Flow} from "../../stores/flow"
     import {InputMetaData} from "../../stores/executions"
 
@@ -289,12 +338,16 @@
         flow?: Flow;
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
+        mode?: "flat" | "wizard";
+        formGroups?: Record<string, {displayName?: string; description?: string}>;
     }>(), {
         executeClicked: false,
         initialInputs: () => [],
         flow: undefined,
         execution: undefined,
         selectedTrigger: undefined,
+        mode: "flat",
+        formGroups: undefined,
     })
 
     // Emits
@@ -303,6 +356,7 @@
         "update:checks": [checks: Check[]];
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
+        "update:onRecap": [value: boolean];
     }>()
 
     // Stores and composables
@@ -332,6 +386,9 @@
     const Pencil = markRaw(PencilIcon) as Component
     const Plus = markRaw(PlusIcon) as Component
     const ContentSave = markRaw(ContentSaveIcon) as Component
+    const ChevronLeft = markRaw(ChevronLeftIcon) as Component
+    const ChevronRight = markRaw(ChevronRightIcon) as Component
+    const Check = markRaw(CheckIcon) as Component
 
     // Computed
     const inputErrors = computed<string[] | null>(() => {
@@ -346,10 +403,44 @@
             : null
     })
 
+    // ---- FORM wizard ----
+    // A flow whose inputs contain a FORM renders as a multi-step Next/Back wizard; otherwise this
+    // degrades to flat mode. The composable owns the nav/recap/persistence as well as
+    // visibleInputs/inputLabel (which also drive the flat form). Destructured with identical names so
+    // the template needs no changes; the refs/computeds keep their reactivity through the destructure.
+    const {
+        isWizard,
+        current,
+        currentStep,
+        returnToRecap,
+        navLoading,
+        showComputingLabel,
+        isOnRecap,
+        visibleInputs,
+        inputLabel,
+        recapSections,
+        recapDisplayValue,
+        goNext,
+        goBack,
+        editStep,
+        restorePersistedValues,
+        persistValues,
+    } = useInputsWizard({
+        props,
+        inputsMetaData,
+        inputsValues,
+        multiSelectInputs,
+        inputsValidated,
+        validateInputs,
+        onRecapChange: (val) => emit("update:onRecap", val),
+    })
+
     // Inputs whose `values` are rendered dynamically (e.g. via the subflow() function).
     // Derived from the raw flow inputs because the validate response strips `expression`.
+    // FORM groups are expanded to dotted leaves so a dynamic input nested in a FORM (wizard mode)
+    // is matched by its dotted id (e.g. `setup.region`), same as inputsMetaData/template ids.
     const dynamicInputIds = computed(() =>
-        new Set((props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
+        new Set(flattenInputs(props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
     )
 
     // True while a dynamic input's values are being (re)computed. Drives the loading spinner so the
@@ -389,22 +480,44 @@
     }
 
     function inputError(id: string): string | undefined {
-        // if this input has not been edited yet
-        // showing any error is annoying
-        if (!inputsValidated.value.has(id)) {
+        // While a dynamic input's values are being (re)computed its metadata is stale — an error from
+        // an earlier validate (e.g. "Missing required" computed when it was still empty) would otherwise
+        // flash even though the field is now filled, until the in-flight validate's clean response lands.
+        // Suppress it until the recompute settles.
+        if (isLoadingInput(id)) {
+            return undefined
+        }
+        const meta = inputsMetaData.value.find((it) => it.id === id && it.errors && it.errors.length > 0)
+        if (!meta) {
+            return undefined
+        }
+        const message = meta.errors!.map(err => err.message).join("\n")
+
+        // A render/resolution failure (a SELECT whose expression/subflow() can't resolve, or an input
+        // whose `defaults` Pebble expression throws) means the field itself is broken — the backend flags
+        // these with `renderError`. Surface them as soon as the input is shown (initial load / wizard step
+        // arrival), without waiting for an edit or a Next click. Plain value errors (e.g. a required input
+        // left empty) are not flagged and stay gated until interaction.
+        const isRenderError = meta.errors!.some(err => err.renderError)
+
+        // if this input has not been edited yet showing a value error is annoying
+        if (!isRenderError && !inputsValidated.value.has(id)) {
             return undefined
         }
 
-        const errors = inputsMetaData.value
-            .filter((it) => it.id === id && it.errors && it.errors.length > 0)
-            .map(it => it.errors!.map(err => err.message).join("\n"))
-
-        return errors.length > 0 ? errors[0] : undefined
+        return message
     }
 
     function updateDefaults(): void {
         for (const input of inputsMetaData.value) {
             const {type, id, value, defaults} = input
+            // An unrendered Pebble-expression default must be rendered server-side, not pre-filled as a
+            // raw template string. Until there's a concrete rendered `value`, leave the field empty: a
+            // successful render returns a value (filled on the next validate); a failed render then
+            // surfaces its renderError instead of being masked by re-submitting the raw `{{ ... }}`.
+            if (value == null && typeof defaults === "string" && defaults.includes("{{")) {
+                continue
+            }
             const valueOrDefault = value ?? defaults
             if (inputsValues[id] === undefined || inputsValues[id] === null || input.isDefault) {
                 if (type === "MULTISELECT") {
@@ -440,6 +553,11 @@
     }
 
     function onSubmit(): void {
+        // In the wizard, Enter / Ctrl+Enter advances steps until the recap, then confirms.
+        if (isWizard.value && current.value && current.value.kind !== "recap") {
+            goNext()
+            return
+        }
         emit("confirm")
     }
 
@@ -526,12 +644,44 @@
         return false
     }
 
+    // Signature of the last completed validate payload, and the one currently in flight. Used to skip
+    // redundant round-trips: clicking Next without editing anything would otherwise re-validate the
+    // identical form data on every step.
+    let lastValidatedSignature: string | undefined
+    let pendingValidation: {signature: string, promise: Promise<void>} | undefined
+
+    // Stable signature of a validate payload. Sorted so FormData iteration order can't change it;
+    // files are keyed by name/size/lastModified since their contents aren't cheaply hashable.
+    function formDataSignature(formData: FormData): string {
+        const parts: string[] = []
+        for (const [key, value] of formData.entries()) {
+            parts.push(value instanceof File
+                ? `${key}=file:${value.name}:${value.size}:${value.lastModified}`
+                : `${key}=${value}`)
+        }
+        return parts.sort().join(" ")
+    }
+
     async function validateInputs(): Promise<void> {
         if (inputsMetaData.value === undefined || inputsMetaData.value.length === 0) {
             return
         }
 
         const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
+
+        // inputsToFormData returns undefined when no value is set; treat that as a stable empty
+        // signature so an all-defaults form still dedups (and we never deref undefined).
+        const signature = formData ? formDataSignature(formData) : ""
+
+        // Nothing changed since the last validate — the current metadata already reflects this exact
+        // payload, so the round-trip would be redundant. Mirrors the change-watcher's same-values skip.
+        if (signature === lastValidatedSignature) {
+            return
+        }
+        // An identical validate is already in flight — await it instead of firing a second one.
+        if (pendingValidation?.signature === signature) {
+            return pendingValidation.promise
+        }
 
         // generation this request was built at; if the user changes an input before the response
         // lands, the response is stale and applying it would clobber the user's new value
@@ -558,11 +708,7 @@
             updateDefaults()
         }
 
-        // Dynamic inputs (e.g. values rendered via the subflow() function) are disabled and show a
-        // "computing" placeholder while this render call is in flight — regardless of its duration.
-        isComputingValues.value = true
-
-        try {
+        const run = async (): Promise<void> => {
             if (props.flow !== undefined) {
                 const options = {namespace: props.flow.namespace, id: props.flow.id}
                 const {data} = await executionsStore.validateExecution({...options, formData})
@@ -574,16 +720,53 @@
 
                 metadataCallback(data)
             } else {
-                emit("validation", {
-                    formData: formData,
-                    inputsMetaData: inputsMetaData.value,
-                    callback: (response: ValidationResponse) => {
-                        metadataCallback(response)
-                    },
+                // Apps-only branch: the validate round-trip is owned by the parent (BlockForm). Await it
+                // so the wizard's per-step gating reads fresh metadata — the parent MUST invoke the
+                // callback on every path or this never resolves and goNext hangs (see BlockForm.validation).
+                await new Promise<void>((resolve) => {
+                    emit("validation", {
+                        formData: formData,
+                        inputsMetaData: inputsMetaData.value,
+                        callback: (response: ValidationResponse) => {
+                            metadataCallback(response)
+                            resolve()
+                        },
+                    })
                 })
             }
+        }
+
+        // Dynamic inputs (e.g. values rendered via the subflow() function) are disabled and show a
+        // "computing" placeholder while this render call is in flight — regardless of its duration.
+        isComputingValues.value = true
+
+        const promise = run()
+        pendingValidation = {signature, promise}
+        let validated = false
+        try {
+            await promise
+            // record only after success, so a thrown validate retries on the next call
+            lastValidatedSignature = signature
+            validated = true
         } finally {
             isComputingValues.value = false
+            if (pendingValidation?.signature === signature) {
+                pendingValidation = undefined
+            }
+        }
+
+        // A change made while this validate was in flight leaves the response stale. Re-validate so a
+        // change during ANY in-flight round-trip is never swallowed — including changes made during the
+        // initial validate, before the change-watcher below is attached. This matters now that a
+        // subflow()-backed input can make a single validate take seconds. Bounded: it stops as soon as
+        // the payload signature stops changing (inputsValuesWithNoDefault excludes defaults, so a
+        // settled form re-computes the same signature and this no-ops).
+        if (validated) {
+            const latest = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
+            const latestSignature = latest ? formDataSignature(latest) : ""
+            if (latestSignature !== lastValidatedSignature) {
+                return validateInputs()
+            }
         }
     }
 
@@ -596,7 +779,7 @@
             return [{
                 validator: (_rule, val: unknown, callback: (error?: Error) => void) => {
                     if (typeof val === "undefined") {
-                        return callback(new Error(t("is required", {field: input.displayName || input.id})))
+                        return callback(new Error(t("is required", {field: inputLabel(input)})))
                     }
                     callback()
                 },
@@ -611,7 +794,7 @@
                         ? multiSelectInputs[input.id] as unknown[] | undefined
                         : inputsValues[input.id] as unknown[] | string | undefined
                     if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
-                        return callback(new Error(t("is required", {field: input.displayName || input.id})))
+                        return callback(new Error(t("is required", {field: inputLabel(input)})))
                     }
                     callback()
                 },
@@ -708,11 +891,14 @@
     let keyListener: ((e: KeyboardEvent) => void) | null = null
 
     // Initialization
-    inputsMetaData.value = JSON.parse(JSON.stringify(props.initialInputs))
+    inputsMetaData.value = JSON.parse(JSON.stringify(flattenInputs(props.initialInputs)))
 
     if (props.selectedTrigger?.inputs) {
         Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs))
     }
+
+    // Wizard: restore in-progress values (e.g. after a page reload) before the first validate.
+    restorePersistedValues()
 
     // Apply defaults from the raw inputs immediately so static inputs show their default value
     // without waiting for the initial validate call (which may be slow, e.g. a subflow() render).
@@ -737,6 +923,7 @@
                     debouncedValidation()
                     modelValue.value = {...inputsValues}
                     emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
+                    persistValues()
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val))
             },
@@ -775,12 +962,22 @@
         }
     })
 
+    // A different flow/execution invalidates the dedup cache: the same InputsForm instance can be
+    // reused for another flow (no :key remount), so force a fresh validate even when the new payload
+    // signature collides with the previous one (e.g. both empty).
+    function invalidateValidationCache(): void {
+        lastValidatedSignature = undefined
+        pendingValidation = undefined
+    }
+
     // Watchers
     watch(() => props.flow, () => {
+        invalidateValidationCache()
         validateInputs()
     })
 
     watch(() => props.execution, () => {
+        invalidateValidationCache()
         validateInputs()
     })
 
@@ -789,9 +986,11 @@
         validateInputs,
         inputsValues,
         inputsMetaData,
+        inputsValidated,
         isComputingValues,
         isComputingInput,
         isLoadingInput,
+        inputError,
         onChange,
     })
 </script>
@@ -799,6 +998,94 @@
 <style scoped lang="scss">
 .md-label {
     height: var(--ks-font-size-lg);
+}
+
+.wizard-steps {
+    margin-bottom: 1.5rem;
+
+    // The design system marks the active ("process") step with white text + a white-bordered icon
+    // and a heavy glow, built for a dark surface; on the light execution form that hides the
+    // title/number and the glow looks out of place. Restore a visible palette and drop the glow.
+    // (These per-state selectors must match the design system's own specificity to win.)
+    :deep(.kel-step__head.is-process) {
+        color: var(--ks-text-primary);
+
+        .kel-step__icon {
+            border-color: var(--ks-border-focus, #631bf3);
+            box-shadow: none;
+        }
+    }
+
+    :deep(.kel-step__title.is-process) {
+        color: var(--ks-text-primary);
+        font-weight: 600;
+    }
+
+    // Completed steps: drop the green glow too — a plain green check reads cleaner.
+    :deep(.kel-step__head.is-success .kel-step__icon) {
+        box-shadow: none;
+    }
+}
+
+.wizard-step-header {
+    margin-bottom: 1rem;
+}
+
+.wizard-step-title {
+    font-size: var(--ks-font-size-lg);
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+}
+
+.wizard-recap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.wizard-recap-section {
+    border: 1px solid var(--ks-border-default);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    background: var(--ks-bg-tag);
+
+    .wizard-recap-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+
+        .wizard-recap-section-title {
+            font-weight: 600;
+        }
+    }
+
+    .wizard-recap-field {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.2rem 0;
+        font-size: var(--ks-font-size-sm);
+
+        .wizard-recap-field-label {
+            color: var(--ks-text-secondary);
+        }
+
+        .wizard-recap-field-value {
+            text-align: right;
+            word-break: break-word;
+        }
+    }
+}
+
+.wizard-nav {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+
+    .wizard-nav-spacer {
+        flex: 1;
+    }
 }
 
 .hint {

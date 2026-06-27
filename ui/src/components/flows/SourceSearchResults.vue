@@ -1,6 +1,6 @@
 <template>
     <div class="source-search-results" data-test="source-search-results">
-        <KsEmpty v-if="!results || results.length === 0" />
+        <KsNoData v-if="!results || results.length === 0" />
         <KsCollapse
             v-else
             v-model="expanded"

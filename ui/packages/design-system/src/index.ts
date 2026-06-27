@@ -94,7 +94,7 @@ import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
 import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
-import KsTableEmpty from "./components/Data/KsTableEmpty.vue"
+import KsNoData from "./components/Data/KsNoData.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
@@ -291,7 +291,7 @@ const components: Record<string, Component> = {
     KsRouterTab,
     KsTable,
     KsTableColumn,
-    KsTableEmpty,
+    KsNoData,
     KsTag,
     KsLogoBadge,
     KsTaskIcon,
@@ -401,7 +401,7 @@ export {
     KsRouterTab,
     KsTable,
     KsTableColumn,
-    KsTableEmpty,
+    KsNoData,
     KsTag,
     KsLogoBadge,
     KsTaskIcon,
@@ -530,7 +530,7 @@ declare module "vue" {
         KsRouterTab: typeof KsRouterTab
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
-        KsTableEmpty: typeof KsTableEmpty
+        KsNoData: typeof KsNoData
         KsTag: typeof KsTag
         KsLogoBadge: typeof KsLogoBadge
         KsTaskIcon: typeof KsTaskIcon

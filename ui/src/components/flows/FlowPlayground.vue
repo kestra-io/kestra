@@ -51,6 +51,7 @@
                     <component
                         :is="activeTab.component"
                         :key="activeTab.name"
+                        v-bind="activeTab.props"
                     />
                 </div>
                 <div v-else class="empty-state">
@@ -96,6 +97,7 @@
             name: "logs",
             title: t("logs"),
             component: markRaw(Logs),
+            props: {playground: true},
         },
         {
             name: "gantt",

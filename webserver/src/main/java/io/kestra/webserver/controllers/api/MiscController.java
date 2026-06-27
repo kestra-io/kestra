@@ -75,6 +75,9 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
 
+    @io.micronaut.context.annotation.Value("${kestra.flowTemplate:}")
+    private String flowTemplate;
+
     @Inject
     private UsageReportConfig usageReportConfig;
 
@@ -143,6 +146,7 @@ public class MiscController {
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
+            .flowTemplate(this.flowTemplate)
             .isConcurrencyViewEnabled(!this.queueType.equals("kafka"));
 
         if (this.environmentName != null || this.environmentColor != null) {
@@ -217,6 +221,8 @@ public class MiscController {
         String commitId;
 
         String chartDefaultDuration;
+
+        String flowTemplate;
 
         ZonedDateTime commitDate;
 

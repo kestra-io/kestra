@@ -1,10 +1,13 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
 
-const globalConfig = {plugins: [KestraDesignSystem]}
+const globalConfig = {
+    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
+}
 
 describe("KsTable", () => {
     test("renders table element", () => {

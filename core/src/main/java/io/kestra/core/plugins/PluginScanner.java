@@ -15,6 +15,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
+import io.kestra.core.preview.FileRenderer;
 import org.apache.commons.io.IOUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -130,6 +131,7 @@ public class PluginScanner {
         List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI = new ArrayList<>();
         List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
         List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
+        List<Class<? extends FileRenderer>> fileRenderers = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
         Map<String, List<PluginUiModule>> pluginUiManifest = new HashMap<>();
@@ -207,6 +209,10 @@ public class PluginScanner {
                         log.debug("Loading additional plugin: '{}'", plugin.getClass());
                         additionalPlugins.add(additionalPlugin.getClass());
                     }
+                    case FileRenderer fileRenderer -> {
+                        log.debug("Loading fileRenderer plugin: '{}'", plugin.getClass());
+                        fileRenderers.add(fileRenderer.getClass());
+                    }
                     default -> {
                     }
                 }
@@ -275,6 +281,7 @@ public class PluginScanner {
             .guides(guides)
             .logExporters(logExporter)
             .additionalPlugins(additionalPlugins)
+            .fileRenderers(fileRenderers)
             .aliases(
                 aliases.entrySet().stream().collect(
                     Collectors.toMap(

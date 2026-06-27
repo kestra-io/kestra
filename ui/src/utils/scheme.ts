@@ -12,7 +12,7 @@ export const getSchemes = () => {
 
     const logs = {} as Record<string, string>
     for (const level of LOG_LEVELS) {
-        logs[level] = cssVar(`--ks-status-${level.toLowerCase()}`) ?? "transparent"
+        logs[level] = cssVar(`--ks-log-${level.toLowerCase()}`) ?? "transparent"
     }
 
     return {

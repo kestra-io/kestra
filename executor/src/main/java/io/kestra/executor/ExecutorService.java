@@ -345,7 +345,13 @@ public class ExecutorService {
                 );
 
                 if (!nexts.isEmpty()) {
-                    return saveFlowableOutput(nexts, executor);
+                    List<TaskRun> taskRuns = saveFlowableOutput(nexts, executor);
+                    if (Boolean.TRUE.equals(parentTaskRun.getForceExecution())) {
+                        return taskRuns.stream()
+                            .map(taskRun -> taskRun.withForceExecution(true))
+                            .toList();
+                    }
+                    return taskRuns;
                 }
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);
@@ -505,6 +511,12 @@ public class ExecutorService {
             if (taskRun.getState().isRunning() && task instanceof FlowableTask<?>) {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                 nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
+                this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext).ifPresent(list::add);
+            }
+
+            // For KILLING flowable tasks: only compute worker task result (kill-path) — no new child tasks
+            if (taskRun.getState().getCurrent() == State.Type.KILLING && task instanceof FlowableTask<?>) {
+                RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                 this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext).ifPresent(list::add);
             }
 
@@ -927,6 +939,13 @@ public class ExecutorService {
 
     private ExecutorContext handleKilling(ExecutorContext executor) {
         if (executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
+            return executor;
+        }
+
+        // Only transition to KILLED once all task runs are in a terminal state;
+        // flowable parents may still be in KILLING while their children finish.
+        if (executor.getExecution().getTaskRunList() != null &&
+            !executor.getExecution().getTaskRunList().stream().allMatch(t -> t.getState().isTerminated())) {
             return executor;
         }
 

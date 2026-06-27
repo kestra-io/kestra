@@ -53,7 +53,7 @@
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         size?: "small" | "default" | "large" | ""
         disabled?: boolean
-        icon?: string | Component
+        icon?: string | object
         nativeType?: "button" | "submit" | "reset"
         loading?: boolean
         text?: boolean
@@ -118,6 +118,10 @@
         --kel-button-font-weight: 600;
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
         --kel-button-disabled-text-color: var(--ks-text-inactive);
+
+        [class*="kel-icon"] + span {
+            margin-left: var(--ks-spacing-2);
+        }
 
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);

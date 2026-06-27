@@ -524,7 +524,7 @@
                 }
 
                 .ks-markdown__copy-btn {
-                    padding-right: 0;
+                    padding: var(--ks-spacing-1);
                     right: -2px;
                     top: 2px;
                     position: relative;
@@ -532,14 +532,20 @@
                     background: var(--ks-bg-base);
                     cursor: pointer;
                     color: var(--kel-text-color-placeholder);
+                    display: grid;
+                    place-items: center;
 
                     &:hover {
                         color: var(--kel-text-color-primary);
                     }
 
+                    > * {
+                        grid-area: 1 / 1;
+                    }
+
                     .ks-markdown__copy-btn-ok {
                         transition: opacity 0.15s ease;
-                        margin-right: 0.25rem;
+                        background: var(--ks-bg-base);
                         color: var(--ks-text-success);
                         opacity: 0;
                     }

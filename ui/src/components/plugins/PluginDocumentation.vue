@@ -24,7 +24,7 @@
             <Suspense>
                 <SchemaToHtml
                     class="plugin-schema"
-                    :darkMode="miscStore.theme === 'dark'"
+                    :darkMode="isDarkTheme"
                     :schema="currentPlugin?.schema"
                     :pluginType="currentPlugin?.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
@@ -54,6 +54,7 @@
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
+    import {getTheme} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
     import GitHub from "vue-material-design-icons/Github.vue"
@@ -73,6 +74,11 @@
 
     const miscStore = useMiscStore()
     const pluginsStore = usePluginsStore()
+
+    const isDarkTheme = computed(() => {
+        void miscStore.theme
+        return getTheme() === "dark"
+    })
 
     const currentPlugin = computed(() => {
         return props.plugin ?? pluginsStore.editorPlugin

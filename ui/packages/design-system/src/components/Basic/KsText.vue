@@ -30,4 +30,18 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/text';
+
+    $variants: (
+        "primary": "link",
+        "success": "success",
+        "warning": "warning",
+        "danger": "error",
+        "info": "info",
+    );
+
+    @each $variant, $token in $variants {
+        .kel-text.kel-text--#{$variant} {
+            --kel-text-color: var(--ks-text-#{$token});
+        }
+    }
 </style>

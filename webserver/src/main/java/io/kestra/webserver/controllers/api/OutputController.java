@@ -14,6 +14,9 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 
 import java.util.List;
@@ -38,6 +41,8 @@ public class OutputController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{executionId}/{taskRunId}")
     @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
+    @ApiResponse(responseCode = "200", description = "The task run outputs as a map of output names to their values",
+        content = { @Content(schema = @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.TRUE)) })
     public Map<String, Object> getTaskRunOutputs(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The task run id") @PathVariable String taskRunId) throws InternalException {

@@ -73,10 +73,27 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             )
             .forEach(task -> violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]"));
 
-        // input unique name
+        // input unique name (top-level): catches two top-level entries sharing an id even when their
+        // expanded child paths are disjoint (e.g. two FORMs both named 'environment').
         duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getInputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate input with name [" + String.join(", ", duplicateIds) + "]");
+        }
+        // FORM expansion guards: MapUtils.flattenToNestedMap silently drops conflicting dotted keys, so
+        // duplicate expanded leaf paths and prefix conflicts (one path nested under another) must be rejected here.
+        List<String> expandedPaths = Input.collectExpandedPaths(value.getInputs());
+        // Only dotted paths are form-relevant: a duplicate bare path can only be two top-level non-FORM inputs,
+        // already reported by the top-level "Duplicate input with name" check above.
+        List<String> duplicatePaths = getDuplicates(expandedPaths).stream().filter(path -> path.contains(".")).toList();
+        if (!duplicatePaths.isEmpty()) {
+            violations.add("Duplicate input path [" + String.join(", ", duplicatePaths) + "]");
+        }
+        for (String ancestor : expandedPaths) {
+            for (String descendant : expandedPaths) {
+                if (!ancestor.equals(descendant) && descendant.startsWith(ancestor + ".")) {
+                    violations.add(String.format("Input path '%s' conflicts with '%s'; one cannot be nested under the other.", ancestor, descendant));
+                }
+            }
         }
         checkFlowInputsDependencyGraph(value, violations);
 
@@ -190,7 +207,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             return;
 
         Map<String, List<String>> graph = new HashMap<>();
-        for (Input<?> input : flow.getInputs()) {
+        // Expand FORMs so children enter the graph keyed by their dotted path. A child referencing a sibling
+        // must write the full dotted path (e.g. 'environment.data_center'); a bare ref resolves to no node and
+        // is rejected below ("depends on a non-existent input"), so the no-auto-rewrite contract fails loudly.
+        for (Input<?> input : flow.resolvableInputs()) {
             graph.putIfAbsent(input.getId(), new ArrayList<>());
             if (input.getDependsOn() != null && !ListUtils.isEmpty(input.getDependsOn().inputs())) {
                 graph.get(input.getId()).addAll(input.getDependsOn().inputs());
@@ -228,8 +248,9 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     private Stream<String> findMissingInputsForScheduleTriggers(Flow value) {
         if (!ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
             && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()) {
-            // Find inputs without defaults
-            Set<String> inputsWithoutDefaults = value.getInputs().stream()
+            // Find inputs without defaults (expanded to dotted leaf paths; schedules provide values keyed by
+            // the same dotted path, matching how FlowInputOutput resolves them).
+            Set<String> inputsWithoutDefaults = value.resolvableInputs().stream()
                 .filter(input -> input.getDefaults() == null)
                 .map(Data::getId)
                 .collect(Collectors.toSet());

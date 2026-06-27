@@ -1448,3 +1448,91 @@ describe("stringify with preserveCronQuotes", () => {
         expect(result).toContain("cron: \"0 0 * * *\"")
     })
 })
+describe("extractTypedBlocks", () => {
+    test("returns every block carrying a type with its range", () => {
+        const source = `id: my-flow
+namespace: company.team
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: admin1234
+`
+
+        const blocks = YamlUtils.extractTypedBlocks(source)
+
+        const types = blocks.map((block) => block.type)
+        expect(types).toContain("io.kestra.plugin.core.log.Log")
+        expect(types).toContain("io.kestra.plugin.core.trigger.Webhook")
+
+        const webhook = blocks.find((block) => block.type === "io.kestra.plugin.core.trigger.Webhook")
+        expect(webhook?.value.id).toBe("webhook")
+        expect(webhook?.value.key).toBe("admin1234")
+        expect(webhook?.range[0]).toBeTypeOf("number")
+        expect(webhook?.path).toBe("triggers")
+
+        const log = blocks.find((block) => block.type === "io.kestra.plugin.core.log.Log")
+        expect(log?.path).toBe("tasks")
+    })
+
+    test("captures the parent section path so artifacts can scope to it", () => {
+        const source = `id: my-flow
+namespace: company.team
+pluginDefaults:
+  - type: io.kestra.plugin.core.trigger.Webhook
+    values:
+      key: shared
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: admin1234
+`
+
+        const webhookBlocks = YamlUtils.extractTypedBlocks(source)
+            .filter((block) => block.type === "io.kestra.plugin.core.trigger.Webhook")
+
+        expect(webhookBlocks.map((block) => block.path).sort()).toEqual(["pluginDefaults", "triggers"])
+    })
+
+    test("ignores blocks without a type", () => {
+        const source = `id: my-flow
+namespace: company.team
+`
+        expect(YamlUtils.extractTypedBlocks(source)).toEqual([])
+    })
+})
+
+describe("extractTypedBlocksWithMeta", () => {
+    test("returns blocks alongside top-level namespace and id in a single parse", () => {
+        const source = `id: my-flow
+namespace: company.team
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: admin1234
+`
+
+        const {blocks, namespace, id} = YamlUtils.extractTypedBlocksWithMeta(source)
+
+        expect(namespace).toBe("company.team")
+        expect(id).toBe("my-flow")
+        expect(blocks).toHaveLength(1)
+        expect(blocks[0].type).toBe("io.kestra.plugin.core.trigger.Webhook")
+    })
+
+    test("returns undefined namespace and id when not present in the source", () => {
+        const source = `triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: admin1234
+`
+
+        const {namespace, id} = YamlUtils.extractTypedBlocksWithMeta(source)
+
+        expect(namespace).toBeUndefined()
+        expect(id).toBeUndefined()
+    })
+})

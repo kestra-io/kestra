@@ -1,5 +1,5 @@
 <template>
-    <ElEmpty v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElEmpty :class="{'kel-empty--no-background': !background}" v-bind="({...filteredProps(), ...$attrs} as any)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -27,10 +27,12 @@
         image?: string
         imageSize?: number
         description?: string
+        background?: boolean
     }>(), {
         image: noDataImage,
         imageSize: 180,
         description: undefined,
+        background: true,
     })
 
     const slots = defineSlots<{
@@ -39,7 +41,7 @@
         image?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, slots.image ? ["image", "description"] : ["description"])
+    const filteredProps = useFilteredProps(props, slots.image ? ["image", "description", "background"] : ["description", "background"])
 
     const {t} = useI18n({useScope: "global"})
 </script>
@@ -50,6 +52,10 @@
 
     .kel-empty {
         background-color: var(--ks-bg-surface);
+
+        &--no-background {
+            background-color: transparent;
+        }
     }
 
     .kel-empty__description {

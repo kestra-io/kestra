@@ -27,6 +27,7 @@
     "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
     "active": "सक्रिय",
     "active-slots": "सक्रिय स्लॉट्स",
+    "actual state": "वास्तविक स्थिति",
     "add": "जोड़ें",
     "add at position": "{position} <code>{task}</code> जोड़ें",
     "add error handler": "एक त्रुटि हैंडलर जोड़ें",
@@ -67,6 +68,7 @@
     "api": "API",
     "appBlocks": "ऐप ब्लॉक्स",
     "apps": "ऐप्स",
+    "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "assets": {
       "title": "संपत्तियाँ"
     },
@@ -76,6 +78,7 @@
     "automatic refresh": "स्वचालित ताज़ा",
     "avg": "औसत",
     "avg duration": "औसत निष्पादन अवधि",
+    "back": "वापस",
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
     "backfill": "Backfill",
     "backfill executions": "Backfill निष्पादन",
@@ -91,6 +94,11 @@
       "create": "ब्लूप्रिंट बनाएं",
       "custom": "कस्टम blueprints",
       "dashboards": "डैशबोर्ड Blueprints",
+      "detail": {
+        "category": "श्रेणी प्रकार",
+        "links": "लिंक और संसाधन",
+        "openInEditor": "एडिट Flow में खोलें"
+      },
       "edit": "ब्लूप्रिंट संपादित करें",
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "flows": "फ्लो Blueprints",
@@ -103,6 +111,7 @@
       },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "बुकमार्क्स",
     "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk actions": "सामूहिक क्रियाएँ",
@@ -210,10 +219,12 @@
     "copied": "कॉपी किया गया",
     "copied_logs_to_clipboard": "लॉग्स को क्लिपबोर्ड पर कॉपी किया गया।",
     "copy": "कॉपी करें",
+    "copy all logs": "सभी Logs कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "copy url": "URL कॉपी करें",
     "copy_and_close": "कॉपी करें और बंद करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copy_value": "Copy value",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
     "create_flow": "फ़्लो बनाएं",
@@ -227,6 +238,7 @@
     "current": "वर्तमान",
     "current execution": "वर्तमान निष्पादन",
     "custom value": "कस्टम value",
+    "customize sidebar": "साइडबार को अनुकूलित करें",
     "dark_version": "डार्क संस्करण",
     "dashboards": {
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
@@ -250,7 +262,17 @@
         "plural": "डैशबोर्ड्स",
         "singular": "डैशबोर्ड"
       },
+      "no_description": "कोई विवरण नहीं",
+      "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "preview": "पूर्वावलोकन डैशबोर्ड",
+      "quick_filters": {
+        "all": "सभी",
+        "failed": "विफल",
+        "paused": "रुका हुआ",
+        "running": "चल रहा है",
+        "success": "सफलता",
+        "warning": "चेतावनी"
+      },
       "switch": "डैशबोर्ड स्विच करें"
     },
     "data": "डेटा",
@@ -420,6 +442,10 @@
       },
       "watch_the_video": "वीडियो देखें"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "निर्भरताएँ",
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
     "dependencies loaded": "निर्भरताएँ लोड की गईं",
@@ -453,22 +479,28 @@
     "disabled": "अक्षम",
     "disabled flow desc": "यह flow अक्षम है, कृपया इसे निष्पादित करने के लिए सक्षम करें।",
     "disabled flow title": "यह flow अक्षम है",
+    "discard changes confirmation": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप वाकई उन्हें छोड़ना चाहते हैं?",
+    "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "display direct sub tasks count": "प्रत्यक्ष उप-कार्य गणना प्रदर्शित करें",
     "display flow {id} executions": "Flow {id} निष्पादन प्रदर्शित करें",
     "display metric for specific task": "विशिष्ट task के लिए मेट्रिक प्रदर्शित करें",
     "display output for specific task": "विशिष्ट task के लिए आउटपुट प्रदर्शित करें",
     "display topology for flow": "Flow के लिए टोपोलॉजी प्रदर्शित करें",
+    "display_settings": "Display settings",
     "docs": "डॉक्स",
     "documentation": {
       "documentation": "दस्तावेज़ीकरण",
       "github": "एक GitHub समस्या खोलें"
     },
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "done": "पूर्ण",
     "down trend": "घट रहा है",
     "download": "डाउनलोड करें",
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
+    "drop items here": "यहाँ आइटम्स ड्रॉप करें",
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "duration": "अवधि",
     "dynamic": "डायनामिक",
@@ -558,9 +590,13 @@
         "content": "<code>McpToolTrigger</code> जोड़कर एक flow को MCP टूल के रूप में प्रदर्शित करें। हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> के बारे में और पढ़ें।",
         "title": "इस सर्वर पर अभी तक कोई टूल flows पंजीकृत नहीं हैं।"
       },
+      "namespaceFiles": {
+        "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें",
+        "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है"
+      },
       "panels": {
-        "content": "Flow कोड या नो-कोड खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए दूसरा पैनल चुनें (Topology, Documentation, Namespace Files, Blueprints, Context)।",
-        "title": "कोई पैनल वर्तमान में खुला नहीं है।"
+        "content": "आपने सभी पैनल बंद कर दिए हैं।  \nजारी रखने के लिए ऊपर एक टैब चुनें।",
+        "title": "कोई पैनल खुला नहीं है"
       },
       "pluginDefaults": {
         "content": "प्लगइन डिफॉल्ट्स आपको अपने प्लगइन कॉन्फ़िगरेशन को केंद्रीय रूप से प्रबंधित करने और इसे आपके namespace के सभी flows के साथ साझा करने की अनुमति देते हैं।",
@@ -578,6 +614,10 @@
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।",
         "title": "आपके flow में कोई Triggers नहीं हैं।"
       },
+      "variables": {
+        "content": "फ्लो के बीच कॉन्फ़िगरेशन साझा करने के लिए key-value जोड़े जोड़ें। चाइल्ड namespaces उन्हें स्वचालित रूप से विरासत में ले लेते हैं, और आप किसी भी value को संदर्भित कर सकते हैं",
+        "title": "अभी तक कोई वेरिएबल नहीं है"
+      },
       "versionPlugin": {
         "content": "यहां आप अपने Kestra instance पर इंस्टॉल किए गए सभी प्लगइन्स का प्रबंधन कर सकते हैं। नए इंस्टॉल किए गए प्लगइन्स आपके instance की कॉन्फ़िगरेशन के आधार पर सभी Kestra सेवाओं में तुरंत उपलब्ध नहीं हो सकते हैं।",
         "title": "आपके पास अभी तक कोई संस्करणित प्लगइन नहीं है!"
@@ -594,6 +634,7 @@
     "encoding": "एन्कोडिंग",
     "end date": "समाप्ति तिथि",
     "end datetime": "समाप्ति दिनांक और समय",
+    "environment": "पर्यावरण",
     "environment color setting": "पर्यावरण रंग",
     "environment name setting": "पर्यावरण नाम",
     "error": "त्रुटि",
@@ -616,6 +657,8 @@
       }
     },
     "eval": {
+      "expression": "अभिव्यक्ति",
+      "preview": "पूर्वावलोकन",
       "render": "एक्सप्रेशन रेंडर करें",
       "title": "डिबग अभिव्यक्ति",
       "tooltip": "किसी भी Pebble अभिव्यक्ति को प्रस्तुत करें और निष्पादन संदर्भ का निरीक्षण करें।"
@@ -630,7 +673,7 @@
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
     "execution id": "निष्पादन Id",
     "execution labels": "निष्पादन labels",
-    "execution not found": "<code>{executionId}</code> निष्पादन नहीं मिला।",
+    "execution not found": "{executionId} निष्पादन नहीं मिला।",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
     "execution not in state PAUSED": "निष्पादन <code>{executionId}</code> PAUSED स्थिति में नहीं है",
     "execution replay": "यह निष्पादन का पुनरावृत्ति है",
@@ -682,6 +725,7 @@
     "expand all": "सभी विस्तारित करें",
     "expand dependencies": "निर्भरताएँ विस्तारित करें",
     "expand error": "केवल असफल Tasks विस्तारित करें",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "समाप्ति",
     "expiration date": "समाप्ति तिथि",
     "export": "निर्यात करें",
@@ -703,8 +747,16 @@
     "file unavailable": "फ़ाइल उपलब्ध नहीं है",
     "file unavailable description": "यह फ़ाइल अब उपलब्ध नहीं है — इसे हटाया जा सकता है या इसकी समय सीमा समाप्त हो गई है।",
     "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
+    "file_preview": {
+      "big_file_warning": "यह फ़ाइल {size} है। इसे लोड करने में कुछ समय लग सकता है जिससे आपका ब्राउज़र ब्लॉक हो सकता है। क्या आप इसे फिर भी लोड करना चाहते हैं?",
+      "load_anyway": "फिर भी लोड करें"
+    },
     "files": "फ़ाइलें",
     "filter by log level": "Log स्तर द्वारा फ़िल्टर करें",
+    "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "के बीच",
@@ -820,7 +872,9 @@
     "flows imported": "फ़्लोज़ आयात किए गए",
     "focus task": "किसी भी तत्व पर क्लिक करें ताकि उसका दस्तावेज़ देखा जा सके।",
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
+    "font size": "Font size",
     "for flow": "फ्लो के लिए",
+    "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "force run": "फोर्स रन",
     "force run confirm": "क्या आप सुनिश्चित हैं कि आप निष्पादन <code>{id}</code> को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: निष्पादन को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task निष्पादन बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को पुनः शुरू किया जाएगा।</li></ul>",
     "force run done": "निष्पादन को मजबूरन चलाया गया है",
@@ -830,6 +884,9 @@
     "form error": "फ़ॉर्म त्रुटि",
     "from": "से",
     "gantt": "गैंट",
+    "gantt_no_tasks_executed": "यह execution बिना किसी task के चलाए समाप्त हो गया।  \nकारण के लिए इसका अवलोकन और logs जांचें।",
+    "gantt_no_tasks_match_filters": "खोज, स्थिति, या log-level फ़िल्टर को समायोजित करने का प्रयास करें।",
+    "gantt_no_tasks_match_filters_title": "कोई task चयनित फ़िल्टर से मेल नहीं खाता।",
     "healthcheck date": "HealthCheck तिथि",
     "hide task documentation": "Task दस्तावेज़ छिपाएं",
     "home": "होम",
@@ -860,6 +917,7 @@
     "items": "आइटम्स",
     "join community": "समुदाय में शामिल हों",
     "join_slack": "Slack से जुड़ें",
+    "jsonl": "JSONL",
     "jump to...": "कूदें...",
     "kestra": "केस्ट्रा",
     "key": "Key",
@@ -885,6 +943,7 @@
     "labels": "labels",
     "last 48 hours": "पिछले 48 घंटे",
     "last X days count": "{दिनों} दिनों में {गिनती}",
+    "last error was": "अंतिम त्रुटि थी",
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -897,14 +956,17 @@
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "leave page": "पृष्ठ छोड़ें",
+    "license": "लाइसेंस",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
     "light_version": "लाइट संस्करण",
     "line": "रेखा",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
+    "loading": "लोड हो रहा है...",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "पूर्व-निर्धारित दृश्य",
       "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं",
@@ -912,6 +974,7 @@
       "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं"
     },
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
+    "manage labels": "labels प्रबंधित करें",
     "management port": "प्रबंधन पोर्ट",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "max": "अधिकतम",
@@ -920,6 +983,7 @@
       "auth_type": "प्रमाणीकरण",
       "basic_auth": "बेसिक ऑथ",
       "bearer_token": "बेयर टोकन प्रमाणीकरण",
+      "client_setup": "क्लाइंट सेटअप",
       "connect": "कनेक्ट करें",
       "connect_tab": {
         "auth_api_token_hint": "क्लाइंट शुरू करने से पहले <code>KESTRA_TOKEN</code> को एक पर्यावरण चर के रूप में सेट करें।",
@@ -946,6 +1010,7 @@
       "id_placeholder": "उदा. my-mcp-server",
       "instructions": "निर्देश",
       "main_tenant": "मुख्य",
+      "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "no_oauth_providers": "इस इंस्टेंस में कोई OIDC प्रदाता कॉन्फ़िगर नहीं है",
       "no_servers": "कोई MCP सर्वर नहीं मिला। बाहरी AI एजेंट्स के लिए MCP Tool triggers को एक्सपोज़ करने के लिए अपना पहला सर्वर बनाएं।",
       "oauth": "OAuth",
@@ -955,14 +1020,18 @@
       "oauth_provider_required": "जब प्रमाणीकरण प्रकार OAuth हो तो OAuth प्रदाता आवश्यक है",
       "page_description": "अपने Kestra flows को MCP-संगत AI एजेंट्स के लिए उपकरण के रूप में प्रस्तुत करें",
       "private": "निजी",
+      "private_server": "निजी सर्वर",
       "public": "सार्वजनिक",
+      "public_hint": "चेतावनी: सार्वजनिक सर्वर को किसी प्रमाणीकरण की आवश्यकता नहीं होती है। URL वाला कोई भी व्यक्ति इस सर्वर द्वारा उजागर किए गए हर टूल को बिना किसी namespace या अनुमति जाँच के कॉल कर सकता है। इसका उपयोग केवल उन सर्वर के लिए करें जिन्हें बाहरी रूप से उजागर करना सुरक्षित हो।",
       "save": "परिवर्तनों को सहेजें",
       "scopes_supported": "समर्थित scopes",
       "scopes_supported_hint": "इस सर्वर के Protected Resource Metadata दस्तावेज़ में विज्ञापित scopes। स्पेक-अनुपालक MCP क्लाइंट अपनी प्राधिकरण अनुरोध को इस सूची तक सीमित करते हैं। फ़ील्ड को छोड़ने और क्लाइंट को IdP के विज्ञापित scopes पर वापस जाने देने के लिए खाली छोड़ें।",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP सर्वर",
+      "server_id": "सर्वर ID",
       "server_type": "सर्वर प्रकार",
       "servers": "MCP सर्वर",
+      "servers_count": "{{count}} MCP Servers",
       "tab_connect": "कनेक्ट करें",
       "tab_edit": "संपादित करें",
       "tab_tool_flows": "टूल Flows",
@@ -985,7 +1054,8 @@
         "view_flow": "flow खोलें"
       },
       "url_copied": "URL कॉपी हो गया!",
-      "username_password": "यूज़रनेम और पासवर्ड"
+      "username_password": "यूज़रनेम और पासवर्ड",
+      "your_servers": "आपके सर्वर"
     },
     "metric": "मेट्रिक",
     "metric choice": "इस flow के लिए कोई मेट्रिक्स उपलब्ध नहीं है",
@@ -1011,9 +1081,11 @@
       "create": {
         "file": "फ़ाइल बनाएँ",
         "file_already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है",
+        "file_conflicts_with_folder": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
         "file_error": "फ़ाइल बनाते समय त्रुटि हुई",
         "folder": "फ़ोल्डर बनाएँ",
         "folder_already_exists": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
+        "folder_conflicts_with_file": "इस नाम की एक फ़ाइल पहले से मौजूद है",
         "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई",
         "label": "बनाएँ"
       },
@@ -1050,9 +1122,14 @@
         "import": "आयात करें",
         "success": "फ़ाइलें सफलतापूर्वक आयात की गईं"
       },
+      "new_file": "नई फ़ाइल",
       "no_items": {
         "heading": "आपके namespace में अभी तक कोई फ़ाइलें नहीं मिली हैं।",
         "paragraph": "फाइलें बनाने या आयात करने के लिए, अपने namespace में flows के बीच कोड साझा करें।"
+      },
+      "no_selection": {
+        "description": "इसकी सामग्री देखने के लिए ट्री से एक फ़ाइल चुनें।",
+        "heading": "कोई फ़ाइल चयनित नहीं"
       },
       "path": {
         "copy": "पथ कॉपी करें",
@@ -1099,13 +1176,17 @@
     "neutral trend": "स्थिर",
     "new": "नया",
     "new version": "नया संस्करण {version} उपलब्ध है!",
+    "next": "अगला",
     "next evaluation date": "अगली मूल्यांकन तिथि",
     "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
     "next execution date": "अगली निष्पादन तिथि",
     "next_execution": "अगली निष्पादन",
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
+    "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
+    "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
     "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "no revisions": "कोई संशोधन नहीं",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
     "no-executions-view": {
       "guidance_desc": "क्या आपको अपने flow को निष्पादित करने के लिए मार्गदर्शन चाहिए?",
@@ -1116,6 +1197,7 @@
       "title": "स्वचालन शुरू करें साथ में"
     },
     "no_code": {
+      "add_field": "{field} जोड़ें",
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "clearSelection": "चयन साफ़ करें",
@@ -1146,7 +1228,8 @@
           "taskDefaults": "डिफ़ॉल्ट Task",
           "updated": "अपडेट किया गया",
           "variables": "वेरिएबल्स",
-          "workerGroup": "वर्कर ग्रुप"
+          "workerGroup": "वर्कर ग्रुप",
+          "workerSelector": "वर्कर सेलेक्टर"
         },
         "main": {
           "description": "विवरण",
@@ -1199,7 +1282,8 @@
     "no_history": "कोई इतिहास उपलब्ध नहीं है",
     "no_inputs": "कोई input उपलब्ध नहीं है।",
     "no_logs_data": "कोई डेटा नहीं",
-    "no_logs_data_description": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले। <br> कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
+    "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
+    "no_logs_data_title": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
     "no_results": {
       "assets": "कोई Assets नहीं मिले",
@@ -1348,6 +1432,8 @@
     "open in new tab": "एक नए टैब में",
     "open in same tab": "उसी टैब में",
     "open sidebar": "साइडबार खोलें",
+    "open source": "ओपन सोर्स",
+    "open_page": "Open page",
     "optional": "वैकल्पिक",
     "original execution": "मूल निष्पादन",
     "originalCreatedDate": "मूल निर्माण तिथि",
@@ -1482,6 +1568,7 @@
     },
     "port": "पोर्ट",
     "prefill inputs": "पूर्व-भरण",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "पिछला निष्पादन",
     "preview": {
       "auto-view": "स्वचालित दृश्य",
@@ -1497,6 +1584,7 @@
       "showing_rows": "पंक्तियाँ {start}-{end} में से {total} दिखा रहा है",
       "view": "देखें"
     },
+    "pricing": "मूल्य निर्धारण",
     "product_tour": "उत्पाद यात्रा",
     "properties": {
       "hidden": "टेबल में छिपा हुआ",
@@ -1526,12 +1614,14 @@
     "replay inputs": "इनपुट्स",
     "replay inputs new required": "इस संशोधन में inputs हैं। आपको इन्हें भरने के लिए कहा जाएगा।",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
+    "replay select taskrun": "जिस task रन को पुनः चलाना है, उसे चुनें:",
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "replay using": "पुनः चलाएं उपयोग करते हुए",
     "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
-    "replayed": "निष्पादन पुनः चलाया गया है",
+    "replayed": "निष्पादन को पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",
+    "reset to defaults": "डिफ़ॉल्ट पर रीसेट करें",
     "restart": "पुनः प्रारंभ करें",
     "restart change revision": "आप उस पुनरीक्षण को बदल सकते हैं जिसका उपयोग नए निष्पादन के लिए किया जाएगा।",
     "restart confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः प्रारंभ करना चाहते हैं?",
@@ -1542,7 +1632,7 @@
       "button": "Trigger पुनः प्रारंभ करें",
       "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
-    "restarted": "निष्पादन पुनः प्रारंभ किया गया है",
+    "restarted": "निष्पादन पुनः आरंभ किया गया है",
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "restore revision": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
@@ -1552,11 +1642,13 @@
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
     "reuse original inputs": "मूल inputs का पुनः उपयोग करें",
     "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
+    "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "revision": "संशोधन",
     "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
+    "run timeline": "रन टाइमलाइन",
     "runners": "धावक",
     "running": "RUNNING",
     "running duration": "चलने की अवधि",
@@ -1608,9 +1700,11 @@
     },
     "see dependencies": "निर्भरताएँ देखें",
     "see full revision": "पूर्ण पुनरीक्षण देखें",
+    "see timeline": "समयरेखा देखें",
     "see_all_states": "सभी अवस्थाएँ देखें",
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
+    "select a state": "एक स्थिति चुनें",
     "select datetime": "एक तिथि चुनें",
     "select view": "दृश्य चुनें",
     "selected": "चयनित",
@@ -1621,10 +1715,21 @@
     "sequential": "अनुक्रमिक",
     "server type": "सर्वर प्रकार",
     "services": "सेवाएँ",
-    "set_extra_labels": "अतिरिक्त labels सेट करें",
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
+            "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
+            "editor_type": "जब पहली बार किसी flow को खोलते हैं तो दिखाया गया संपादक।",
+            "execute_default_tab": "नेविगेशन के दौरान एक execution पर जाने पर चयनित Tab।",
+            "execute_flow": "ट्रिगर करने के बाद निष्पादन परिणाम कहाँ खुलते हैं।",
+            "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
+            "log_display": "जब एक execution खोला जाता है तो logs कैसे प्रस्तुत किए जाते हैं।",
+            "log_level": "न्यूनतम log स्तर जो execution logs में दिखाया गया है।",
+            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।"
+          },
           "fields": {
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
             "default_namespace": "पूर्व-निर्धारित Namespace",
@@ -1636,7 +1741,8 @@
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर",
             "multi_panel_editor": "मल्टी पैनल एडिटर",
-            "playground": "प्लेग्राउंड"
+            "playground": "प्लेग्राउंड",
+            "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },
@@ -1648,6 +1754,11 @@
           "label": "निर्यात करें"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "डैशबोर्ड में तारीखें प्रदर्शित करने के लिए उपयोग किया जाने वाला प्रारूप।",
+            "language": "मेनू और लेबल के लिए इंटरफ़ेस भाषा।",
+            "time_zone": "निष्पादन तिथियों और अनुसूचित triggers को प्रदर्शित करने के लिए उपयोग किया जाता है।"
+          },
           "fields": {
             "date_format": "दिनांक प्रारूप",
             "time_zone": "समय क्षेत्र"
@@ -1662,13 +1773,43 @@
           "unsaved_title": "असहेजित परिवर्तन",
           "unsaved_warning": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप उन्हें छोड़ने से पहले सहेजना चाहते हैं?"
         },
+        "sidebar": {
+          "descriptions": {
+            "items": "साइडबार में आइटम दिखाएं, छुपाएं, और पुनः क्रमबद्ध करें।"
+          },
+          "fields": {
+            "items": "नेविगेशन आइटम्स"
+          },
+          "label": "साइडबार"
+        },
         "theme": {
+          "color_modes": {
+            "dark_1": "डार्क 1.0",
+            "dark_2": "डार्क 2.0",
+            "light": "लाइट",
+            "sync": "सिस्टम के साथ सिंक करें"
+          },
+          "confirmations": {
+            "color_mode": "आपका इंटरफेस अब `{mode}` थीम का उपयोग कर रहा है।"
+          },
+          "descriptions": {
+            "color_mode": "अपना पसंदीदा इंटरफेस थीम चुनें।",
+            "color_mode_shortcut": "सुझाव: कहीं से भी थीम बदलने के लिए <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> दबाएं।",
+            "editor_folding_stratgy": "फ्लो खोलते समय लंबे YAML ब्लॉक्स को डिफ़ॉल्ट रूप से संक्षिप्त करें।",
+            "editor_font_family": "YAML संपादक में प्रयुक्त मोनोस्पेस फ़ॉन्ट।",
+            "editor_font_size": "YAML और no-code संपादकों में उपयोग किया गया फ़ॉन्ट आकार।",
+            "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
+            "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
+            "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
+            "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।"
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "क्लासिक",
               "kestra": "Kestra",
               "label": "चार्ट रंग योजना"
             },
+            "color_mode": "रंग मोड",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
@@ -1682,7 +1823,8 @@
           "label": "थीम प्राथमिकताएँ"
         }
       },
-      "label": "सेटिंग्स"
+      "label": "सेटिंग्स",
+      "updated": "{name} अपडेट किया गया"
     },
     "setup": {
       "config": {
@@ -1702,9 +1844,12 @@
         "firstName": "पहला नाम",
         "lastName": "अंतिम नाम",
         "password": "पासवर्ड",
-        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।"
+        "password_requirements": "कम से कम 8 अक्षर जिनमें 1 बड़ा अक्षर और 1 संख्या हो।",
+        "username": "उपयोगकर्ता नाम",
+        "username_hint": "मान्य ईमेल पता होना चाहिए।"
       },
       "login": "लॉगिन",
+      "login_title": "साइन इन करें",
       "logout": "लॉगआउट",
       "steps": {
         "complete": "Kestra UI शुरू करें",
@@ -1754,13 +1899,17 @@
         "firstName_required": "पहला नाम आवश्यक है",
         "incorrect_creds": "अमान्य उपयोगकर्ता नाम या पासवर्ड। सुनिश्चित करें कि आपके प्रमाण-पत्र सही हैं।",
         "lastName_required": "अंतिम नाम आवश्यक है",
-        "password_invalid": "अमान्य पासवर्ड"
+        "password_invalid": "अमान्य पासवर्ड",
+        "password_required": "पासवर्ड आवश्यक है"
       }
     },
     "show": "दिखाएं",
     "show chart": "चार्ट दिखाएं",
     "show description": "विवरण दिखाएं",
+    "show details": "विवरण दिखाएं",
     "show documentation": "दस्तावेज़ दिखाएं",
+    "show more details": "अधिक विवरण दिखाएं",
+    "show raw": "Show raw",
     "show task condition": "कार्य की स्थिति दिखाएं",
     "show task documentation": "Task दस्तावेज़ दिखाएं",
     "show task documentation in editor": "संपादक में Task दस्तावेज़ दिखाएं",
@@ -1770,6 +1919,8 @@
     "showLess": "कम दिखाएं",
     "showMore": "और दिखाएँ",
     "side-by-side": "साइड-बाय-साइड",
+    "similar lines": "similar lines",
+    "skipped": "छोड़ा गया",
     "slack support": "किसी भी प्रश्न को Slack के माध्यम से पूछें",
     "something_went_wrong": {
       "connection_lost": {
@@ -1784,6 +1935,12 @@
     "source and topology": "स्रोत और टोपोलॉजी",
     "source only": "केवल स्रोत",
     "source search": "स्रोत खोज",
+    "source_search": {
+      "match_count": "{count} मिलान | {count} मिलान",
+      "open_flow": "flow खोलें",
+      "preview_empty": "पूर्वावलोकन के लिए एक परिणाम चुनें। स्रोत देखने के लिए परिणाम सूची में किसी flow पर क्लिक करें।",
+      "preview_error": "flow स्रोत लोड करने में विफल"
+    },
     "specific task": "विशिष्ट task",
     "start date": "प्रारंभ तिथि",
     "start datetime": "प्रारंभ दिनांक और समय",
@@ -1882,15 +2039,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "जोड़ें",
     "triggers_add_card_add_to_flow": "flow में जोड़ें",
-    "triggers_add_category_app_description": "बाहरी संसाधनों में परिवर्तनों के लिए समय-समय पर जाँच करें।",
-    "triggers_add_category_app_title": "ऐप Triggers",
-    "triggers_add_category_core_description": "अधिकांश workflows के लिए आवश्यक Built-in triggers।",
-    "triggers_add_category_core_title": "कोर Triggers",
     "triggers_add_category_empty": "इस श्रेणी में कोई triggers नहीं हैं।",
-    "triggers_add_category_realtime_description": "मैसेजिंग सिस्टम से घटनाओं पर तुरंत प्रतिक्रिया दें।",
-    "triggers_add_category_realtime_title": "रीयलटाइम Triggers",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
-    "triggers_add_empty_hint": "कोई अन्य खोज शब्द आज़माएं या सभी श्रेणियों को ब्राउज़ करें।",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_filter_all": "सभी",
     "triggers_add_filter_app": "ऐप",
@@ -1908,8 +2058,6 @@
     "triggers_add_modal_trigger_id": "ट्रिगर ID",
     "triggers_add_modal_trigger_id_placeholder": "इस trigger के लिए अद्वितीय पहचानकर्ता",
     "triggers_add_search_placeholder": "ट्रिगर्स खोजें...",
-    "triggers_add_see_less": "कम देखें",
-    "triggers_add_see_more": "और देखें ({count} और)",
     "triggers_header_description": "अपने flows को स्वचालित करने के लिए triggers को ब्राउज़ करें, जोड़ें और प्रबंधित करें। अपने flow को एक AI टूल के रूप में एक्सपोज़ करने, शेड्यूलिंग, एक webhook trigger जोड़ने, बाहरी ऐप्स में परिवर्तनों के लिए polling करने, या रीयलटाइम इवेंट listeners में से चुनें।",
     "triggers_state": {
       "options": {
@@ -1955,6 +2103,19 @@
     "valid": "मान्य",
     "validate": "मान्य करें",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "इस निष्पादन के लिए कोई वेरिएबल उपलब्ध नहीं है।",
+      "n_items": "[ {count} आइटम ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 आइटम ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Key या value खोजें...",
+      "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
+      "tasks_outputs": "Tasks outputs",
+      "title": "इनपुट/आउटपुट",
+      "tree": "ट्री"
+    },
     "variables": "वेरिएबल्स",
     "version": "संस्करण",
     "view metrics": "मेट्रिक्स देखें",
@@ -1964,6 +2125,7 @@
     "watch": "देखें",
     "watch_video": "वीडियो देखें",
     "webhook": {
+      "copy_url": "वेबहुक URL कॉपी करें",
       "curl_command": "Webhook cURL कमांड",
       "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
       "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",
@@ -2106,6 +2268,7 @@
     "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "labels में खाली key या value की अनुमति नहीं है"
+    "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
+    "yes": "हाँ"
   }
 }

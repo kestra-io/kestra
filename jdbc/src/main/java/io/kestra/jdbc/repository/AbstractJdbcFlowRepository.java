@@ -787,11 +787,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, Collections.singletonList(field("source_code")));
 
                 if (query != null) {
-                    select.and(this.findSourceCodeCondition(query));
+                    select = select.and(this.findSourceCodeCondition(query));
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
+                    select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
                 }
 
                 return (ArrayListTotal) this.jdbcRepository.fetchPage(
@@ -1016,11 +1016,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         select = select.and(condition);
                     }
 
-                    if (orderByFields != null) {
-                        select.orderBy(orderByFields);
-                    }
+                    var fetchQuery = orderByFields != null
+                        ? select.orderBy(orderByFields).fetchSize(FETCH_SIZE)
+                        : select.fetchSize(FETCH_SIZE);
 
-                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
+                    try (var stream = fetchQuery.stream()) {
                         stream
                             .map(record -> (Flow) jdbcRepository.map(record))
                             .forEach(emitter::next);

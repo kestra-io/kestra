@@ -26,6 +26,7 @@
                 </KsTooltip>
                 <KsTag v-if="beta" type="primary" size="small" class="beta-tag">Beta</KsTag>
                 <KsIconButton
+                    v-if="!hideBookmark"
                     class="icon-btn star"
                     :class="{active: isBookmarked}"
                     :ariaLabel="t('topnav_bookmark')"
@@ -98,6 +99,7 @@
         mainIcon?: Component
         beta?: boolean
         isBookmarked?: boolean
+        hideBookmark?: boolean
         sidebarCollapsed?: boolean
         tabs?: KsTopNavBarTab[]
         activeTab?: string
@@ -127,7 +129,7 @@
     .ks-topnavbar {
         height: 60px;
         flex-shrink: 0;
-        padding: 0 var(--ks-spacing-6);
+        padding: 0 var(--ks-spacing-4);
         gap: var(--ks-spacing-4);
         border-bottom: var(--ks-border-block-primary);
         background: var(--ks-bg-surface);
@@ -174,7 +176,7 @@
 
     .icon-btn {
         border: none;
-        color: var(--ks-text-dim);
+        color: var(--ks-icon-muted);
 
         &:deep(svg) {
             fill: currentColor;
@@ -187,10 +189,10 @@
     }
 
     .dock-toggle {
-        &.is-open {
+         &.is-open {
             color: var(--ks-icon-default);
         }
-
+        
         @media (max-width: 767px) {
             display: none;
         }

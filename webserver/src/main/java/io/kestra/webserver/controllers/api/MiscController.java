@@ -13,6 +13,7 @@ import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
+import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
@@ -74,8 +75,11 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
 
-    @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
-    protected Boolean isAnonymousUsageEnabled;
+    @io.micronaut.context.annotation.Value("${kestra.flowTemplate:}")
+    private String flowTemplate;
+
+    @Inject
+    private UsageReportConfig usageReportConfig;
 
     @io.micronaut.context.annotation.Value("${kestra.ui-anonymous-usage-report.enabled:false}")
     protected Boolean isUiAnonymousUsageEnabled;
@@ -126,7 +130,7 @@ public class MiscController {
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
-            .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
+            .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .preview(
                 Preview.builder()
@@ -142,6 +146,7 @@ public class MiscController {
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
+            .flowTemplate(this.flowTemplate)
             .isConcurrencyViewEnabled(!this.queueType.equals("kafka"));
 
         if (this.environmentName != null || this.environmentColor != null) {
@@ -216,6 +221,8 @@ public class MiscController {
         String commitId;
 
         String chartDefaultDuration;
+
+        String flowTemplate;
 
         ZonedDateTime commitDate;
 

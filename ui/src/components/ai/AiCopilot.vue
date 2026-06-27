@@ -75,9 +75,9 @@
                             class="ai-custom-textarea ai-custom-textarea-onboarding"
                         />
                         <template v-else>
-                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                            <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
                             <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
-                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
+                            <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
                         <KsText v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
                             {{ error }}
@@ -188,9 +188,9 @@
                     class="ai-custom-textarea"
                 />
                 <template v-else>
-                    <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                    <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
                     <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
-                    <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
+                    <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>
                 <KsText v-if="error" type="danger" size="small" class="error-msg">
                     {{ error }}
@@ -266,14 +266,14 @@
 
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
-    import {Loading} from "@element-plus/icons-vue"
+    import Loading from "vue-material-design-icons/Loading.vue"
     import AlertBox from "vue-material-design-icons/AlertBox.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
     import Microphone from "vue-material-design-icons/Microphone.vue"
-    import kestraIcon from "../../assets/icon.svg"
+    import kestraIcon from "../../assets/ks-icon.svg"
     import AiIcon from "./AiIcon.vue"
     import {useAiStore} from "../../stores/ai"
     import {useApiStore} from "../../stores/api"
@@ -690,8 +690,7 @@
 
 .ai-body-onboarding {
     align-items: center;
-    gap: 32px;
-    padding: 40px 24px 10px;
+    padding: 64px 24px 10px;
 }
 
 .ai-onboarding-hero {
@@ -703,17 +702,22 @@
 }
 
 .ai-onboarding-icon {
-    width: 69px;
-    height: 69px;
+    width: 104px;
+    height: 104px;
+    padding: 12px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--ks-bg-surface) 25%, transparent);
+    box-shadow: 0 4px 16px var(--ks-shadow-surface);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     display: grid;
     place-items: center;
 }
 
 .ai-onboarding-logo {
-    width: 69px;
-    height: 69px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    border-radius: var(--ks-font-size-lg);
 }
 
 .ai-onboarding-title {
@@ -722,8 +726,8 @@
     color: var(--ks-text-primary);
     font-size: var(--ks-font-size-2xl);
     line-height: 1.08;
-    font-weight: 600;
-    margin-bottom: 3rem;
+    font-weight: var(--ks-font-weight-medium);
+    margin-bottom: 2rem;
 }
 
 .ai-onboarding-info {
@@ -765,13 +769,11 @@
 
 .ai-onboarding-composer {
     width: 100%;
-    height: 152px;
-    border: 1px solid transparent;
+    height: 129px;
+    border: 1px solid var(--ks-border-strong);
     border-radius: var(--ks-font-size-lg);
     background: var(--ks-bg-input);
-    box-shadow:
-        0 8px 20px rgba(15, 23, 42, 0.035),
-        0 22px 44px rgba(15, 23, 42, 0.05);
+    box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -900,7 +902,6 @@
     :deep(.kel-textarea__inner) {
         min-height: 100% !important;
         height: 100% !important;
-        padding: 16px 14px 8px;
         border: none !important;
         border-radius: 0;
         background: transparent !important;
@@ -911,7 +912,9 @@
 
         &::placeholder {
             font-style: normal;
-            font-size: var(--ks-font-size-base);
+            color: var(--ks-text-secondary);
+            font-weight: var(--ks-font-weight-regular);
+            font-size: var(--ks-font-size-md);
         }
 
         &:disabled {
@@ -1010,11 +1013,11 @@
 }
 
 .send-btn-onboarding {
-    width: 42px !important;
-    height: 42px !important;
+    width: 22px !important;
+    height: 22px !important;
     border-radius: 999px !important;
     color: var(--ks-white) !important;
-    margin-left: calc(1rem / 2) !important;
+    margin-left: calc(1rem / 6) !important;
 
     &:hover,
     &:focus-visible {
@@ -1046,14 +1049,8 @@
     }
 
     .ai-onboarding-icon {
-        width: 69px;
-        height: 69px;
-    }
-
-    .ai-onboarding-logo {
-        width: 69px;
-        height: 69px;
-        border-radius: 22px;
+        width: 104px;
+        height: 104px;
     }
 
     .ai-onboarding-composer {

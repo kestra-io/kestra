@@ -10,14 +10,18 @@
   height: 100%;
   z-index: 1000;
   opacity: 1.0;
-  background: #f8f8fc;
+  background: #f7f7f8;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 html.dark #loader-wrapper {
-  background-color: #21242E;
+  background-color: #14181f;
+}
+
+html.dark-2 #loader-wrapper {
+  background-color: #111115;
 }
 
 #loader svg {

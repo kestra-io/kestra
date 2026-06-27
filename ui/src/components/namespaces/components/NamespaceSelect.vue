@@ -1,20 +1,21 @@
 <template>
     <KsSelect
-        class="fit-text"
+        :class="{'fit-text': !fit}"
         v-model="modelValue"
         :multiple
-        collapseTags
+
         :disabled="readOnly"
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
+        :fit="fit"
         :placeholder="placeholder ?? $t('namespaces')"
         :suffixIcon="suffixIcon"
     >
         <template #tag>
             <KsTag
-                v-for="(value, index) in validValues"
-                :key="index"
+                v-for="value in visibleTags"
+                :key="value"
                 class="namespace-tag"
                 closable
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
@@ -22,6 +23,14 @@
                 <FolderOpenOutline class="tag-icon" />
                 {{ value }}
             </KsTag>
+            <KsTooltip v-if="hiddenTags.length > 0" placement="top">
+                <template #content>
+                    <div v-for="value in hiddenTags" :key="value">{{ value }}</div>
+                </template>
+                <KsTag class="namespace-tag namespace-tag--overflow">
+                    +{{ hiddenTags.length }}
+                </KsTag>
+            </KsTooltip>
         </template>
         <KsOption
             v-for="item in options"
@@ -45,6 +54,7 @@
         clearable?: boolean,
         taggable?: boolean
         placeholder?: string | undefined
+        fit?: boolean
         autoDefault?: boolean
     }>(), {
         multiple: false,
@@ -64,8 +74,12 @@
     const namespacesStore = useNamespacesStore()
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean),
+        [modelValue.value].flat().filter(Boolean) as string[],
     )
+
+    const visibleTags = computed(() => validValues.value.slice(0, 3))
+
+    const hiddenTags = computed(() => validValues.value.slice(3))
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
@@ -111,5 +125,9 @@
                 background-color: transparent;
             }
         }
+    }
+
+    .namespace-tag--overflow {
+        cursor: default;
     }
 </style>

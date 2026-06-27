@@ -273,6 +273,21 @@ describe("KsDataTable", () => {
         expect(loadCallCount).toBe(2)
     })
 
+    test("emits loaded after every load, not only the first", async () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => {}},
+            global: globalConfig,
+        })
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(wrapper.emitted("loaded")).toHaveLength(1)
+        expect(wrapper.emitted("ready")).toHaveLength(1)
+
+        await wrapper.setProps({currentPage: 2})
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(wrapper.emitted("loaded")).toHaveLength(2)
+        expect(wrapper.emitted("ready")).toHaveLength(1)
+    })
+
     type Load = {page: number; size: number; sort?: string}
     const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
     const lastLoad = (loads: Load[]): Load => loads[loads.length - 1]
@@ -366,5 +381,21 @@ describe("KsDataTable", () => {
         const loads = mountWithSpy({currentPage: 3, pageSize: 50})
         await tick()
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
+    })
+
+    test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, fitHeight: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(true)
+    })
+
+    test("does not apply ks-data-table-body--fit modifier class when fitHeight is false (default)", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(false)
     })
 })

@@ -1,6 +1,5 @@
 package io.kestra.core.runners.pebble;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,8 @@ import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.extension.Extension;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.lexer.Syntax;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -120,11 +121,11 @@ public class PebbleEngineFactory {
                 return entry;
             } else if (name.equals(SecretFunction.NAME)) {
                 // Returns [secret: KEY] without touching the real secret service.
-                return Map.entry(name, interceptExecute(entry.getValue(),
+                return Map.entry(name, new InterceptingFunction(entry.getValue(),
                     args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
             }
             // Everything else (including env(), kv(), now(), uuid(), read(), …) stays raw — never invoked.
-            return Map.entry(name, interceptExecute(entry.getValue(),
+            return Map.entry(name, new InterceptingFunction(entry.getValue(),
                 args -> { throw new DisplayUnrenderableException(); }));
         });
     }
@@ -145,7 +146,7 @@ public class PebbleEngineFactory {
     private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initial, List<String> maskedFunctions) {
         return wrapExtension(initial, entry -> {
             if (maskedFunctions.contains(entry.getKey())) {
-                return Map.entry(entry.getKey(), interceptExecute(entry.getValue(), args -> "******"));
+                return Map.entry(entry.getKey(), new MaskingFunction(entry.getValue(), "******"));
             } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
                 return Map.entry(entry.getKey(), variableRendererProxy(renderer, entry.getValue()));
             }
@@ -171,36 +172,49 @@ public class PebbleEngineFactory {
     }
 
     // -------------------------------------------------------------------------
-    // Proxy helpers
+    // Function / extension wrappers
     // -------------------------------------------------------------------------
 
-    /** Intercepts a single {@link Function#execute} call; all other methods delegate to {@code initial}. */
+    /** Computes the replacement value for an intercepted {@link Function#execute} call. */
     @FunctionalInterface
     private interface ExecuteInterceptor {
-        Object intercept(Map<String, Object> args) throws Throwable;
+        Object intercept(Map<String, Object> args);
     }
 
     /**
-     * Returns a proxy for {@code initial} that replaces its {@code execute} method with {@code handler}.
-     * All other {@link Function} methods delegate to the original.
+     * A {@link Function} that keeps the {@code delegate}'s argument metadata (so call-site argument
+     * binding is unchanged) but replaces its {@code execute} with {@code handler}. Used at
+     * display/render time to mask or block a function's real invocation.
      */
-    private static Function interceptExecute(Function initial, ExecuteInterceptor handler) {
-        return (Function) Proxy.newProxyInstance(
-            initial.getClass().getClassLoader(),
-            new Class<?>[] {Function.class},
-            (proxy, method, methodArgs) -> {
-                if (method.getName().equals("execute")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> args = (Map<String, Object>) methodArgs[0];
-                    return handler.intercept(args);
-                }
-                try {
-                    return method.invoke(initial, methodArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-            }
-        );
+    private record InterceptingFunction(Function delegate, ExecuteInterceptor handler) implements Function {
+        @Override
+        public List<String> getArgumentNames() {
+            return delegate.getArgumentNames();
+        }
+
+        @Override
+        public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
+            return handler.intercept(args);
+        }
+    }
+
+    /**
+     * A {@link Function} that still invokes the {@code delegate} — so its validation and errors are
+     * preserved (e.g. {@code secret()} for a missing key still throws) — but replaces a
+     * <em>successful</em> result with {@code mask}. Used by the secure renderer to mask secret values
+     * without hiding evaluation failures.
+     */
+    private record MaskingFunction(Function delegate, Object mask) implements Function {
+        @Override
+        public List<String> getArgumentNames() {
+            return delegate.getArgumentNames();
+        }
+
+        @Override
+        public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
+            delegate.execute(args, self, context, lineNumber);
+            return mask;
+        }
     }
 
     /** Maps each {@link Function} entry in an {@link Extension}'s function map. */

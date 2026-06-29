@@ -94,7 +94,7 @@ public class PebbleEngineFactory {
      *   <li>{@code env(...)} → kept raw (see issue #16874: env vars are not resolved for display).</li>
      *   <li>Functions in {@link #SAFE_DISPLAY_FUNCTIONS} (pure parsing / calendar helpers) work normally.</li>
      *   <li>Every other function is removed from the engine, so any expression that calls one fails
-     *       to evaluate and the caller keeps the raw segment.</li>
+     *       to evaluate and the caller keeps the raw expression.</li>
      * </ul>
      */
     public PebbleEngine createRestricted() {
@@ -126,7 +126,7 @@ public class PebbleEngineFactory {
                     args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
             }
             // Everything else (including env(), kv(), now(), uuid(), read(), …) is removed: Pebble cannot
-            // invoke it, the expression fails to evaluate, and the caller keeps the segment raw.
+            // invoke it, the expression fails to evaluate, and the caller keeps it raw.
             return null;
         });
     }

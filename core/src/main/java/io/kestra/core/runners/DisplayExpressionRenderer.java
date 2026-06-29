@@ -2,11 +2,9 @@ package io.kestra.core.runners;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 
@@ -28,19 +26,13 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>{@code inputs.*}, {@code outputs.*}, {@code execution.*} → resolved when an execution is present; raw otherwise</li>
  * </ul>
  *
- * <p>Segment-level resolution: mixed strings like {@code "{{ vars.region }}-{{ now() }}"}
- * produce {@code "us-east-1-{{ now() }}"} — each {@code {{ }}} block is rendered independently and
- * unresolvable blocks keep their raw text.
+ * <p>Resolution is all-or-nothing: Pebble renders the whole template in a single pass, so a template
+ * that contains any unresolvable expression (a function removed from the display engine, or a missing
+ * variable under {@code strictVariables}) is kept entirely raw.
  */
 @Singleton
 @Slf4j
 public class DisplayExpressionRenderer {
-
-    // Matches a single {{ ... }} expression block.
-    private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\{\\{(.*?)}}");
-
-    private static final String RAW_OPEN = "{% raw %}";
-    private static final String RAW_CLOSE = "{% endraw %}";
 
     private final PebbleEngine displayEngine;
 
@@ -72,84 +64,28 @@ public class DisplayExpressionRenderer {
 
     /**
      * Resolves a single template string for display.
-     * Each {@code {{ }}} segment is tried independently; unresolvable segments fall back to their raw text.
+     *
+     * <p>Rendering is all-or-nothing: if any expression in the template cannot be resolved, Pebble
+     * aborts the render and the original template is returned unchanged.
      *
      * @param template  the raw Pebble template (may be null or contain no expressions)
      * @param variables the variable context (flow-level, or execution-level)
-     * @return the display string with as many expressions resolved as possible
+     * @return the resolved display string, or the original template if it cannot be fully resolved
      */
     public String resolveForDisplay(String template, Map<String, Object> variables) {
         if (template == null || !template.contains("{{")) {
             return template;
         }
 
-        return resolveSegments(template, variables);
-    }
-
-    /**
-     * Splits the template into alternating literal and expression segments,
-     * renders each expression independently, and stitches the result.
-     * Expressions inside {@code {% raw %}...{% endraw %}} blocks are never rendered.
-     */
-    private String resolveSegments(String template, Map<String, Object> variables) {
-        List<int[]> rawRanges = template.contains(RAW_OPEN) ? findRawBlockRanges(template) : List.of();
-        var sb = new StringBuilder();
-        var matcher = EXPRESSION_PATTERN.matcher(template);
-        var lastEnd = 0;
-
-        while (matcher.find()) {
-            // Append the literal text before this expression.
-            sb.append(template, lastEnd, matcher.start());
-
-            var segment = matcher.group(0); // the full {{ ... }} block
-            if (isInRawBlock(matcher.start(), rawRanges)) {
-                sb.append(segment);
-            } else {
-                sb.append(renderSegment(segment, variables));
-            }
-
-            lastEnd = matcher.end();
-        }
-        // Append any trailing literal text.
-        sb.append(template, lastEnd, template.length());
-        return sb.toString();
-    }
-
-    private static List<int[]> findRawBlockRanges(String template) {
-        List<int[]> ranges = new ArrayList<>();
-        int pos = 0;
-        while (true) {
-            int start = template.indexOf(RAW_OPEN, pos);
-            if (start < 0) break;
-            int end = template.indexOf(RAW_CLOSE, start);
-            if (end < 0) break;
-            ranges.add(new int[]{start, end + RAW_CLOSE.length()});
-            pos = end + RAW_CLOSE.length();
-        }
-        return ranges;
-    }
-
-    private static boolean isInRawBlock(int position, List<int[]> rawRanges) {
-        for (int[] range : rawRanges) {
-            if (position >= range[0] && position < range[1]) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Renders a single {@code {{ expr }}} segment using the display engine.
-     * Returns the original {@code segment} text on any failure so unresolvable expressions stay raw.
-     */
-    private String renderSegment(String segment, Map<String, Object> variables) {
         try {
-            var template = displayEngine.getLiteralTemplate(segment);
+            var compiled = displayEngine.getLiteralTemplate(template);
             var writer = new StringWriter();
-            template.evaluate(writer, variables);
+            compiled.evaluate(writer, variables);
             return writer.toString();
         } catch (PebbleException | IOException e) {
             // Missing variable, bad syntax, or a non-allowlisted function (removed from the display
-            // engine, so Pebble reports it as unknown) — keep raw.
-            return segment;
+            // engine, so Pebble reports it as unknown) — keep the template raw.
+            return template;
         }
     }
 }

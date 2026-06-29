@@ -151,29 +151,41 @@ class DisplayExpressionRendererTest {
         assertThat(result).isEqualTo("{{ fetchContext() }}");
     }
 
-    // ---- mixed-string segment resolution ----
+    // ---- mixed strings: all-or-nothing ----
 
     @Test
-    void shouldResolveResolvableSegmentsAndKeepRawOthers() {
+    void shouldResolveWholeTemplateWhenEveryExpressionResolves() {
+        var vars = Map.of("region", "us-east-1", "env", "prod");
+        var variables = Map.of("vars", (Object) vars);
+
+        var result = renderer.resolveForDisplay("{{ vars.region }}-{{ vars.env }}", variables);
+
+        assertThat(result).isEqualTo("us-east-1-prod");
+    }
+
+    @Test
+    void shouldKeepWholeTemplateRawWhenAFunctionIsUnresolvable() {
         var vars = Map.of("region", "us-east-1");
         var variables = Map.of("vars", (Object) vars);
 
+        // now() is removed from the display engine, so the whole render aborts.
         var result = renderer.resolveForDisplay("{{ vars.region }}-{{ now() }}", variables);
 
-        assertThat(result).isEqualTo("us-east-1-{{ now() }}");
+        assertThat(result).isEqualTo("{{ vars.region }}-{{ now() }}");
     }
 
     @Test
-    void shouldResolveResolvableAndKeepUnresolvableRaw() {
+    void shouldKeepWholeTemplateRawWhenAVariableIsMissing() {
         var vars = Map.of("env", "prod");
         var variables = Map.of("vars", (Object) vars);
 
+        // inputs.missing is unresolvable under strictVariables, so the whole render aborts.
         var result = renderer.resolveForDisplay("{{ vars.env }}-{{ inputs.missing }}", variables);
 
-        assertThat(result).isEqualTo("prod-{{ inputs.missing }}");
+        assertThat(result).isEqualTo("{{ vars.env }}-{{ inputs.missing }}");
     }
 
-    // ---- {% raw %} passthrough ----
+    // ---- {% raw %} blocks are handled natively by Pebble (preserved verbatim, not resolved) ----
 
     @Test
     void shouldPreserveRawBlocks() {

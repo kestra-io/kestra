@@ -29,7 +29,7 @@
                                 :tooltip="t('dashboards.export')"
                             >
                                 <el-button
-                                    @click="dashboardStore.export(dashboard, chart, {filters})"
+                                    @click="exportChart(chart)"
                                     :icon="Download"
                                     link
                                     class="ms-2"
@@ -78,6 +78,8 @@
     import {useRoute} from "vue-router";
     const route = useRoute();
 
+    import {decodeSearchParams} from "../../filter/utils/helpers";
+
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
 
@@ -124,6 +126,12 @@
             filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.id});
         }
     });
+
+    function exportChart(chart: Chart) {
+        dashboardStore.export(props.dashboard, chart, {
+            filters: filters.value.concat(decodeSearchParams(route.query, undefined, []) ?? []),
+        });
+    }
 </script>
 
 <style scoped lang="scss">

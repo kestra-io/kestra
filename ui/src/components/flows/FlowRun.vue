@@ -52,6 +52,23 @@
                             type="datetime"
                         />
                     </KsFormItem>
+                    <KsFormItem
+                        :label="$t('breakpoints')"
+                    >
+                        <KsSelect
+                            v-model="breakpoints"
+                            multiple
+                            filterable
+                            :placeholder="$t('breakpoints')"
+                        >
+                            <KsOption
+                                v-for="taskId in taskIds"
+                                :key="taskId"
+                                :label="taskId"
+                                :value="taskId"
+                            />
+                        </KsSelect>
+                    </KsFormItem>
                 </KsTabPane>
                 <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
                     <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
@@ -106,6 +123,7 @@
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
     import {executeTask} from "../../utils/submitTask"
+    import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {normalize, flattenInputs} from "../../utils/inputs"
@@ -132,6 +150,7 @@
         inputs: Record<string, unknown>
         labels: string[]
         scheduleDate: string | undefined
+        breakpoints?: string[]
     }
 
     export interface SelectedTrigger {
@@ -177,6 +196,10 @@
     const inputsNoDefaults = ref<Record<string, unknown>>({})
     const executionLabels = ref<Label[]>([])
     const scheduleDate = ref<string | undefined>(undefined)
+    const breakpoints = ref<string[]>([])
+    const taskIds = computed(() => {
+        return getAllTaskIds(flow.value)
+    })
     const newTab = ref(localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB)
     const executeClicked = ref(false)
     const checks = ref<Check[]>([])
@@ -332,6 +355,7 @@
                             inputs: mergedInputs,
                             labels: labelStrings,
                             scheduleDate: scheduleDate.value,
+                            breakpoints: breakpoints.value,
                         })
                     } else {
                         const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
@@ -350,6 +374,7 @@
                                     autoExpandGantt: "true",
                                     onboardingSuccess: "true",
                                 } : undefined,
+                                breakpoints: breakpoints.value,
                             })
                         }
                     }

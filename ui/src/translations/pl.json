@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Zakładki",
+    "breakpoints": "Punkty przerwania",
     "bulk action async warning": "To może zająć kilka chwil.",
     "bulk actions": "Akcje zbiorcze",
     "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?",
@@ -264,6 +265,7 @@
       },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
+      "others": "Inne",
       "preview": "Podgląd Dashboardu",
       "quick_filters": {
         "all": "Wszystkie",
@@ -273,7 +275,8 @@
         "success": "Sukces",
         "warning": "Ostrzeżenie"
       },
-      "switch": "Przełącz Dashboard"
+      "switch": "Przełącz Dashboard",
+      "viewAll": "Pokaż wszystko"
     },
     "data": "Dane",
     "dataFilters": "Filtry Danych",
@@ -1637,6 +1640,8 @@
     "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "restore revision": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "resume": "Wznów",
+    "resume from breakpoint done": "Wykonanie zostało wznowione od punktu przerwania",
+    "resume from breakpoint title": "Wznów wykonanie <code>{id}</code> z punktu przerwania",
     "resumed confirm": "Czy na pewno chcesz wznowić wykonanie <code>{id}</code>?",
     "resumed done": "Wykonanie zostało wznowione",
     "resumed title": "Wznów wykonanie <code>{id}</code>",

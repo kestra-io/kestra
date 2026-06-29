@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Marcadores",
+    "breakpoints": "Puntos de interrupción",
     "bulk action async warning": "Esto podría tardar unos momentos.",
     "bulk actions": "Acciones masivas",
     "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
@@ -264,6 +265,7 @@
       },
       "no_description": "Sin descripción",
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
+      "others": "Otros",
       "preview": "Vista previa del Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -273,7 +275,8 @@
         "success": "Éxito",
         "warning": "Advertencia"
       },
-      "switch": "Cambiar Dashboard"
+      "switch": "Cambiar Dashboard",
+      "viewAll": "Ver todo"
     },
     "data": "Datos",
     "dataFilters": "Filtros de Datos",
@@ -1637,6 +1640,8 @@
     "restore confirm": "¿Estás seguro de restaurar la revisión <code>{revision}</code>?",
     "restore revision": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",
     "resume": "Reanudar",
+    "resume from breakpoint done": "Ejecución reanudada desde el punto de interrupción",
+    "resume from breakpoint title": "Reanudar ejecución `<code>{id}</code>` desde el punto de interrupción",
     "resumed confirm": "¿Estás seguro de reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
     "resumed title": "Reanudar ejecución <code>{id}</code>",

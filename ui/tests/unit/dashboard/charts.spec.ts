@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {chartSegmentDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
+import {DEFAULT_BAR_CATEGORY_LIMIT, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
@@ -99,5 +100,137 @@ describe("chartSegmentDrillDown", () => {
         const chart = {data: {type: EXEC, where: [{field: "NAMESPACE", type: "CONTAINS", value: "kestra"}]}}
         const result = chartSegmentDrillDown(chart, undefined, "x")
         expect(result?.query).toEqual({"filters[namespace][CONTAINS]": "kestra"})
+    })
+})
+
+describe("rankStackedBars", () => {
+    const opts = {categoryKey: "namespace", stackKeys: ["state"], valueKey: "count"}
+
+    it("groups by category and produces one series per distinct stack key", () => {
+        const rows = [
+            {namespace: "a", state: "SUCCESS", count: 10},
+            {namespace: "a", state: "FAILED", count: 2},
+            {namespace: "b", state: "SUCCESS", count: 5},
+        ]
+        const result = rankStackedBars(rows, opts)
+        expect(result.series.map((s) => s.name)).toEqual(expect.arrayContaining(["SUCCESS", "FAILED"]))
+        expect(result.series.length).toBe(2)
+    })
+
+    it("ranks categories by total descending", () => {
+        const rows = [
+            {namespace: "low", state: "SUCCESS", count: 1},
+            {namespace: "high", state: "SUCCESS", count: 100},
+            {namespace: "mid", state: "SUCCESS", count: 50},
+        ]
+        const result = rankStackedBars(rows, opts)
+        expect(result.categories).toEqual(["high", "mid", "low"])
+        expect(result.totals).toEqual([100, 50, 1])
+    })
+
+    it("folds categories beyond the limit into Others, sets othersCount and othersNames", () => {
+        const rows = Array.from({length: 10}, (_, i) => ({
+            namespace: `ns-${i}`,
+            state: "SUCCESS",
+            count: 10 - i,
+        }))
+        const result = rankStackedBars(rows, {...opts, limit: 3})
+        expect(result.categories.length).toBe(3)
+        expect(result.othersCount).toBe(7)
+        expect(result.othersNames.length).toBe(7)
+        expect(result.othersNames).toEqual(expect.arrayContaining(["ns-3", "ns-4", "ns-5", "ns-6", "ns-7", "ns-8", "ns-9"]))
+    })
+
+    it("adds a trailing Others column on every series when folding", () => {
+        const rows = Array.from({length: 5}, (_, i) => ({
+            namespace: `ns-${i}`,
+            state: "SUCCESS",
+            count: 5 - i,
+        }))
+        const result = rankStackedBars(rows, {...opts, limit: 3})
+        expect(result.series[0].data.length).toBe(4)
+        const othersTotal = result.totals[result.totals.length - 1]
+        expect(othersTotal).toBe(3) // ns-0=5,ns-1=4,ns-2=3 in top; ns-3=2,ns-4=1 folded -> 2+1=3
+    })
+
+    it("Others column totals reconcile with the sum of folded buckets", () => {
+        const rows = [
+            {namespace: "a", state: "SUCCESS", count: 10},
+            {namespace: "a", state: "FAILED", count: 5},
+            {namespace: "b", state: "SUCCESS", count: 8},
+            {namespace: "c", state: "SUCCESS", count: 3},
+            {namespace: "c", state: "FAILED", count: 2},
+        ]
+        const result = rankStackedBars(rows, {...opts, limit: 2})
+        expect(result.othersCount).toBe(1)
+        expect(result.othersNames).toEqual(["c"])
+        const successSeries = result.series.find((s) => s.name === "SUCCESS")!
+        const failedSeries = result.series.find((s) => s.name === "FAILED")!
+        const othersIdx = result.categories.length
+        expect(successSeries.data[othersIdx]).toBe(3)
+        expect(failedSeries.data[othersIdx]).toBe(2)
+        expect(result.totals[othersIdx]).toBe(5)
+    })
+
+    it("does not fold when categories are within the limit, othersCount is 0", () => {
+        const rows = [
+            {namespace: "a", state: "SUCCESS", count: 10},
+            {namespace: "b", state: "SUCCESS", count: 5},
+        ]
+        const result = rankStackedBars(rows, opts)
+        expect(result.othersCount).toBe(0)
+        expect(result.othersNames).toEqual([])
+        expect(result.series[0].data.length).toBe(2)
+        expect(result.totals.length).toBe(2)
+    })
+
+    it("limit 0 disables folding and shows all categories", () => {
+        const rows = Array.from({length: DEFAULT_BAR_CATEGORY_LIMIT + 5}, (_, i) => ({
+            namespace: `ns-${i}`,
+            state: "SUCCESS",
+            count: 1,
+        }))
+        const result = rankStackedBars(rows, {...opts, limit: 0})
+        expect(result.othersCount).toBe(0)
+        expect(result.categories.length).toBe(DEFAULT_BAR_CATEGORY_LIMIT + 5)
+    })
+
+    it("negative limit disables folding", () => {
+        const rows = Array.from({length: 5}, (_, i) => ({namespace: `ns-${i}`, state: "SUCCESS", count: 1}))
+        const result = rankStackedBars(rows, {...opts, limit: -1})
+        expect(result.othersCount).toBe(0)
+        expect(result.categories.length).toBe(5)
+    })
+
+    it("returns empty categories and series for empty rows", () => {
+        const result = rankStackedBars([], opts)
+        expect(result.categories).toEqual([])
+        expect(result.series).toEqual([])
+        expect(result.totals).toEqual([])
+        expect(result.othersCount).toBe(0)
+        expect(result.othersNames).toEqual([])
+    })
+
+    it("sums multiple rows with the same category and stack key", () => {
+        const rows = [
+            {namespace: "a", state: "SUCCESS", count: 4},
+            {namespace: "a", state: "SUCCESS", count: 6},
+        ]
+        const result = rankStackedBars(rows, opts)
+        expect(result.categories).toEqual(["a"])
+        expect(result.totals).toEqual([10])
+        expect(result.series[0].data[0]).toBe(10)
+    })
+
+    it("aligns series data to categories order", () => {
+        const rows = [
+            {namespace: "low", state: "SUCCESS", count: 1},
+            {namespace: "high", state: "SUCCESS", count: 100},
+        ]
+        const result = rankStackedBars(rows, opts)
+        expect(result.categories[0]).toBe("high")
+        const successSeries = result.series.find((s) => s.name === "SUCCESS")!
+        expect(successSeries.data[0]).toBe(100)
+        expect(successSeries.data[1]).toBe(1)
     })
 })

@@ -26,14 +26,6 @@
                 @search="search = $event"
                 @filter="onFilterChange"
             />
-            <QuickFilters
-                v-if="!hasComplexFilters"
-                :levels="VALUES.LEVELS"
-                :level="effectiveSelectedLogLevel?.value"
-                :showInterval="false"
-                :levelLabel="t('filter.level_log_executions.label')"
-                @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
-            />
             <div class="gantt-stage">
                 <KsCard
                     id="gantt"
@@ -99,7 +91,10 @@
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
-                                            <div class="task-label">
+                                            <div
+                                                class="task-label"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
                                                     <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
                                                 </div>
@@ -236,9 +231,6 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations"
-    import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
-    import QuickFilters from "../filter/QuickFilters.vue"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
@@ -338,7 +330,6 @@
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
     const {
         effectiveValue: effectiveSelectedLogLevel,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
@@ -347,9 +338,6 @@
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
-    const {VALUES} = useValues("logs")
-    const {hasComplexFilters} = useComplexFilters()
-
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
@@ -858,6 +846,7 @@
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
+                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
 
                     code {
                         color: var(--ks-text-primary);

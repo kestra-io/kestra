@@ -70,7 +70,7 @@
         "@types/node": "^25.9.1",
         "@vitejs/plugin-vue": "^6.0.7",
         "sass-embedded": "^1.99.0",
-        "tsdown": "^0.22.1",
+        "tsdown": "^0.22.3",
         "typescript": "^6.0.3",
         "vite": "^8.0.14",
         "vitest": "^4.1.0",

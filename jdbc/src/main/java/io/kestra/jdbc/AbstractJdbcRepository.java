@@ -398,7 +398,11 @@ public abstract class AbstractJdbcRepository<T> {
                 .getOrderBy()
                 .forEach(order ->
                 {
-                    String column = camelToSnake(order.getProperty());
+                    String property = order.getProperty();
+                    if (property == null || property.isBlank()) {
+                        throw new IllegalArgumentException("Invalid sort field");
+                    }
+                    String column = camelToSnake(property);
                     Field<Object> field = DSL.field(DSL.name(column));
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());

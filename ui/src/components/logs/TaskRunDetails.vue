@@ -23,6 +23,7 @@
                 <KsCard class="attempt-wrapper" shadow="never" :class="{'attempt-wrapper--transparent': hideTaskHeader}">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
+                        :depth="asTaskRun(currentTaskRun).depth"
                         :followedExecution="followedExecution"
                         :flow="flow"
                         :forcedAttemptNumber="forcedAttemptNumber"
@@ -216,7 +217,7 @@
                                         :filter="filter"
                                         :allowAutoExpandSubflows="false"
                                         :targetExecutionId="
-                                            asTaskRun(currentTaskRun).outputs.executionId
+                                            asTaskRun(currentTaskRun).outputs?.executionId
                                         "
                                         :class="
                                             $el.classList.contains('even')
@@ -287,7 +288,7 @@
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -296,9 +297,13 @@
 
     const $http = useClient()
 
+    // The UI taskrun carries a computed `depth` (for nesting) and subflow `outputs`,
+    // neither of which the SDK TaskRun type models.
+    type TaskRunWithDepth = TaskRun & { depth: number; outputs?: Record<string, any> }
+
     // Cast helper for DynamicScroller slot items which lose type info
-    function asTaskRun(item: unknown): any { // FIXME: any
-        return item
+    function asTaskRun(item: unknown): TaskRunWithDepth {
+        return item as TaskRunWithDepth
     }
 
     const coreStore = useCoreStore()
@@ -376,23 +381,53 @@
             : targetExecution.value,
     )
 
-    const currentTaskRuns = computed(() =>
-        (followedExecution.value?.taskRunList?.filter((tr: any) => // FIXME: any
-            props.taskRunId ? tr.id === props.taskRunId : true,
-        ) ?? []),
-    )
+    const currentTaskRuns = computed<TaskRunWithDepth[]>(() => {
+        const taskRunList: TaskRun[] = followedExecution.value?.taskRunList ?? []
+
+        if (props.taskRunId) {
+            return taskRunList
+                .filter((tr) => tr.id === props.taskRunId)
+                .map((tr) => ({...tr, depth: 0}))
+        }
+
+        // Order taskruns parent → child and annotate depth, so dynamically-generated taskruns
+        // (e.g. each Ansible play/task) render indented under their parent taskrun.
+        const byId: Record<string, TaskRun> = Object.fromEntries(taskRunList.map((tr) => [tr.id, tr]))
+        const childrenByParent: Record<string, TaskRun[]> = {}
+        const roots: TaskRun[] = []
+        for (const tr of taskRunList) {
+            if (tr.parentTaskRunId && byId[tr.parentTaskRunId]) {
+                (childrenByParent[tr.parentTaskRunId] ??= []).push(tr)
+            } else {
+                roots.push(tr)
+            }
+        }
+
+        const ordered: TaskRunWithDepth[] = []
+        const walk = (nodes: TaskRun[], depth: number) => {
+            for (const node of nodes) {
+                ordered.push({...node, depth})
+                const children = childrenByParent[node.id]
+                if (children) {
+                    walk(children, depth + 1)
+                }
+            }
+        }
+        walk(roots, 0)
+        return ordered
+    })
 
     const taskRunById = computed(() =>
         Object.fromEntries(
-            currentTaskRuns.value.map((taskRun: any) => [taskRun.id, taskRun]), // FIXME: any
+            currentTaskRuns.value.map((taskRun) => [taskRun.id, taskRun]),
         ),
     )
 
     const logsWithIndexByAttemptUid = computed(() => {
-        const logFilesWrappers = currentTaskRuns.value.flatMap((taskRun: any) => // FIXME: any
+        const logFilesWrappers = currentTaskRuns.value.flatMap((taskRun) =>
             attempts(taskRun)
-                .filter((attempt: any) => attempt.logFile !== undefined) // FIXME: any
-                .map((attempt: any, attemptNumber: number) => ({ // FIXME: any
+                .filter((attempt) => attempt.logFile !== undefined)
+                .map((attempt, attemptNumber: number) => ({
                     logFile: attempt.logFile,
                     taskRunId: taskRun.id,
                     attemptNumber,
@@ -512,7 +547,7 @@
 
     const currentTaskRunsLogIndicesByLevel = computed(() =>
         currentTaskRuns.value.reduce(
-            (indicesByLevel: Record<string, string[]>, taskRun: any, taskRunIndex: number) => { // FIXME: any
+            (indicesByLevel: Record<string, string[]>, taskRun, taskRunIndex: number) => {
                 if (shouldDisplayLogs(taskRun)) {
                     const currentTaskRunLogs =
                         logsWithIndexByAttemptUid.value[
@@ -592,7 +627,7 @@
         (taskRuns) => {
             // by default we preselect the last attempt for each task run
             selectedAttemptNumberByTaskRunId.value = Object.fromEntries(
-                taskRuns.map((taskRun: any) => [ // FIXME: any
+                taskRuns.map((taskRun) => [
                     taskRun.id,
                     props.forcedAttemptNumber ??
                         attempts(taskRun).length - 1,
@@ -770,7 +805,7 @@
             setTimeout(() => autoExpandBasedOnSettings(), 50)
             return
         }
-        currentTaskRuns.value.forEach((taskRun: any) => { // FIXME: any
+        currentTaskRuns.value.forEach((taskRun) => {
             if (isSubflow(taskRun) && !props.allowAutoExpandSubflows) {
                 return
             }
@@ -789,7 +824,7 @@
         })
     }
 
-    function shouldDisplayLogs(taskRun: any): boolean { // FIXME: any
+    function shouldDisplayLogs(taskRun: TaskRun): boolean {
         const uid = attemptUid(
             taskRun.id,
             selectedAttemptNumberByTaskRunId.value[taskRun.id],
@@ -872,12 +907,12 @@
         })
     }
 
-    function isSubflow(taskRun: any): boolean { // FIXME: any
+    function isSubflow(taskRun: TaskRunWithDepth): boolean {
         return taskRun?.outputs?.executionId
     }
 
-    function shouldDisplaySubflow(taskRunIndex: number, taskRun: any): boolean { // FIXME: any
-        const subflowExecutionId = taskRun.outputs.executionId
+    function shouldDisplaySubflow(taskRunIndex: number, taskRun: TaskRunWithDepth): boolean {
+        const subflowExecutionId = taskRun.outputs?.executionId
         const index = shownSubflowsIds.value.findIndex(
             (item) => item.subflowExecutionId === subflowExecutionId,
         )
@@ -900,7 +935,7 @@
             return
         }
 
-        shownAttemptsUid.value = currentTaskRuns.value.map((taskRun: any) => // FIXME: any
+        shownAttemptsUid.value = currentTaskRuns.value.map((taskRun) =>
             attemptUid(
                 taskRun.id,
                 selectedAttemptNumberByTaskRunId.value[taskRun.id] ?? 0,
@@ -915,7 +950,7 @@
 
     function expandSubflows() {
         if (
-            currentTaskRuns.value.some((taskRun: any) => isSubflow(taskRun)) // FIXME: any
+            currentTaskRuns.value.some((taskRun) => isSubflow(taskRun))
         ) {
             const subflowLogsElements = Object.values(
                 subflowTaskRunDetailsRefs.value,
@@ -944,7 +979,7 @@
                 followedExecution.value?.state?.current,
             )
         ) {
-            currentTaskRuns.value.forEach((taskRun: any) => { // FIXME: any
+            currentTaskRuns.value.forEach((taskRun) => {
                 if (
                     taskRun.state.current === State.FAILED ||
                     taskRun.state.current === State.RUNNING
@@ -966,7 +1001,7 @@
         }
     }
 
-    function uniqueTaskRunDisplayFilter(currentTaskRun: any): boolean { // FIXME: any
+    function uniqueTaskRunDisplayFilter(currentTaskRun: TaskRun): boolean {
         return !(props.taskRunId && props.taskRunId !== currentTaskRun.id)
     }
 
@@ -1000,7 +1035,7 @@
             })
     }
 
-    function attempts(taskRun: any): any[] { // FIXME: any
+    function attempts(taskRun: TaskRun): TaskRunAttempt[] {
         if (
             followedExecution.value.state.current === State.RUNNING ||
             props.forcedAttemptNumber === undefined
@@ -1035,7 +1070,7 @@
             newDisplayedAttemptNumber
     }
 
-    function taskType(taskRun: any): string | undefined { // FIXME: any
+    function taskType(taskRun: TaskRun | undefined): string | undefined {
         if (!taskRun) return undefined
 
         const task = FlowUtils.findTaskById(flow.value, taskRun?.taskId)

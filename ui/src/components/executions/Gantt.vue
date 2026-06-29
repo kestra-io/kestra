@@ -99,7 +99,10 @@
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
-                                            <div class="task-label">
+                                            <div
+                                                class="task-label"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
                                                     <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
                                                 </div>
@@ -858,6 +861,7 @@
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
+                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
 
                     code {
                         color: var(--ks-text-primary);

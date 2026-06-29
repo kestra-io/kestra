@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -23,6 +24,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
+import io.kestra.plugin.core.preview.TextFileRenderer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
@@ -97,8 +102,6 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.filepreview.FileRender;
-import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -238,6 +241,8 @@ public class ExecutionController {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -1925,14 +1930,20 @@ public class ExecutionController {
             return validateResponse;
         }
 
-        String extension = FilenameUtils.getExtension(path.toString());
         Optional<Charset> charset;
-
         try {
             charset = Optional.ofNullable(encoding).map(Charset::forName);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
+
+        String extension = FilenameUtils.getExtension(path.toString());
+        FileRenderer renderer = pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
+            .map(this::instantiate)
+            .filter(fileRenderer -> fileRenderer.supports(extension))
+            .findFirst()
+            .orElseGet(TextFileRenderer::new);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -1946,14 +1957,21 @@ public class ExecutionController {
         };
 
         try (fileStream) {
-            FileRender fileRender = FileRenderBuilder.of(
+            FilePreview preview = renderer.render(
                 extension,
                 fileStream,
                 charset,
-                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows)
-            );
+                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows));
 
-            return HttpResponse.ok(fileRender);
+            return HttpResponse.ok(preview);
+        }
+    }
+
+    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
+        try {
+            return fileRenderer.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
     }
 

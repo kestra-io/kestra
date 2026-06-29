@@ -733,7 +733,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
                 // update all execution followers
                 // Note that we must use 'emit' here and not emitAsync as we need to emit it inside the same transaction to avoid races,
-                // and transactions are bound to a thread. This is true for all emition of the follow execution event inside an execution lock.
+                // and transactions are bound to a thread. This is true for all emission of the follow execution event inside an execution lock.
                 this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);

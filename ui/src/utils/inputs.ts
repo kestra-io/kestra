@@ -164,8 +164,11 @@ export function normalize(type: InputType | undefined, value: any) {
 
     if (type === "BOOLEAN" && value === undefined) {
         res = "undefined";
-    } else if (type === "BOOL" && value === undefined) {
-        res = false
+    } else if (type === "BOOL") {
+        // Property defaults serialize as their expression string, so a `defaults: true` arrives as the
+        // string "true". el-switch only accepts a real boolean (it forces anything else back to false),
+        // so coerce here.
+        res = value === true || value === "true";
     } else if (value === null || value === undefined) {
         res = undefined;
     } else if (type === "DATE" || type === "DATETIME") {
@@ -199,8 +202,10 @@ export function normalizeForComponents(type: InputType | undefined, value: any) 
         res = JSON.stringify(res).toString();
     } else if (type === "BOOLEAN" && value === undefined) {
         res = "undefined";
-    } else if (type === "BOOL" && value === undefined) {
-        res = false
+    } else if (type === "BOOL") {
+        // See normalize(): Property defaults arrive as the string "true"/"false"; el-switch needs a
+        // real boolean or it resets to false.
+        res = value === true || value === "true";
     } else if (type === "STRING" && Array.isArray(res)) {
         res = res.toString();
     }

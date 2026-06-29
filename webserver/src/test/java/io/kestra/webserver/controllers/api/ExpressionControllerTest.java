@@ -93,8 +93,8 @@ class ExpressionControllerTest {
         assertThat(rendered).containsEntry("{{ secret('MY_KEY') }}", "[secret: MY_KEY]");
         // non-deterministic stays raw
         assertThat(rendered).containsEntry("{{ now() }}", "{{ now() }}");
-        // mixed value: resolvable segments rendered, raw segment preserved
-        assertThat(rendered).containsEntry("prefix-{{ vars.region }}-{{ now() }}", "prefix-us-east-1-{{ now() }}");
+        // mixed value is all-or-nothing: one unresolvable expression keeps the whole string raw
+        assertThat(rendered).containsEntry("prefix-{{ vars.region }}-{{ now() }}", "prefix-{{ vars.region }}-{{ now() }}");
     }
 
     @Test

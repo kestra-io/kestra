@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,7 +12,6 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DisplayExpressionRenderer;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.NamespaceVariablesProvider;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 
@@ -43,7 +41,6 @@ public class ExpressionController {
     private final PluginDefaultService pluginDefaultService;
     private final RunContextFactory runContextFactory;
     private final DisplayExpressionRenderer displayExpressionRenderer;
-    private final NamespaceVariablesProvider namespaceVariablesProvider;
 
     @Inject
     public ExpressionController(
@@ -52,8 +49,7 @@ public class ExpressionController {
         FlowRepositoryInterface flowRepository,
         PluginDefaultService pluginDefaultService,
         RunContextFactory runContextFactory,
-        DisplayExpressionRenderer displayExpressionRenderer,
-        NamespaceVariablesProvider namespaceVariablesProvider
+        DisplayExpressionRenderer displayExpressionRenderer
     ) {
         this.tenantService = tenantService;
         this.executionRepository = executionRepository;
@@ -61,7 +57,6 @@ public class ExpressionController {
         this.pluginDefaultService = pluginDefaultService;
         this.runContextFactory = runContextFactory;
         this.displayExpressionRenderer = displayExpressionRenderer;
-        this.namespaceVariablesProvider = namespaceVariablesProvider;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -69,11 +64,11 @@ public class ExpressionController {
     @Operation(
         tags = {"Expressions"},
         summary = "Render Pebble expressions for display",
-        description = "Renders a list of Pebble expressions for display purposes only. Expressions are resolved " +
-            "segment by segment using a restricted engine: secret() is masked as [secret: KEY], env() is kept raw, " +
-            "only a safe allowlist of pure functions is invoked, and anything else is kept raw. Provide an executionId " +
-            "to resolve against an execution context, or a flow source to resolve against a flow context; otherwise " +
-            "only globals are available."
+        description = "Renders a list of Pebble expressions for display purposes only, using a restricted engine: " +
+            "secret() is masked as [secret: KEY], env() is kept raw, only a safe allowlist of pure functions is " +
+            "invoked, and anything else is kept raw. Resolution is all-or-nothing per expression: an expression that " +
+            "references anything unresolvable is returned unchanged. Provide an executionId to resolve against an " +
+            "execution context, or a flow source to resolve against a flow context; otherwise only globals are available."
     )
     public RenderedExpressions render(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
         Map<String, Object> variables = variablesFor(request);
@@ -109,15 +104,8 @@ public class ExpressionController {
     }
 
     private Map<String, Object> flowVariables(Flow flow) {
-        // Without an execution, RunVariables exposes flow.* but not vars.*, so we build vars explicitly.
-        // Namespace variables serve as the base; flow-level variables take precedence.
-        Map<String, Object> nsVars = namespaceVariablesProvider.fetchVariables(tenantService.resolveTenant(), flow.getNamespace());
-        Map<String, Object> flowVars = flow.getVariables() != null ? flow.getVariables() : Map.of();
-        Map<String, Object> merged = new HashMap<>(nsVars);
-        merged.putAll(flowVars);
-        Map<String, Object> extra = merged.isEmpty() ? Map.of() : Map.of("vars", merged);
-
-        return runContextFactory.of(flow, extra).getVariables();
+        // RunVariables exposes flow.* and flow-level vars.* even without an execution.
+        return runContextFactory.of(flow, Map.of()).getVariables();
     }
 
     @Introspected

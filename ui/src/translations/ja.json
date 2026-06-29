@@ -266,7 +266,6 @@
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
-      "viewAll": "すべて表示",
       "preview": "プレビュー ダッシュボード",
       "quick_filters": {
         "all": "すべて",
@@ -276,7 +275,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "ダッシュボードを切り替える"
+      "switch": "ダッシュボードを切り替える",
+      "viewAll": "すべて表示"
     },
     "data": "データ",
     "dataFilters": "データフィルター",

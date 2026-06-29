@@ -49,6 +49,7 @@
                         :namespace="props.namespace"
                         :flowId="props.flowId"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
+                        :logs="taskLogs(taskProps.data.node?.task?.id)"
                     />
                 </slot>
             </template>
@@ -305,6 +306,9 @@
     const taskMetrics = (taskId: string | undefined) =>
         executionsStore.metrics.filter((m) => m.taskId === taskId)
 
+    const taskLogs = (taskId: string | undefined) =>
+        (props.executionLogs ?? []).filter((l: any) => l.taskId === taskId)
+
     const isTaskModalOpen = ref(false)
     const taskModalCtx = ref<Record<string, any> | null>(null)
 
@@ -385,6 +389,7 @@
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
             expandedSubflows?: string[];
+            executionLogs?: Record<string, any>[];
         }>(),
         {
             flowId: undefined,
@@ -396,6 +401,7 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
+            executionLogs: () => [],
         })
 
     watch(

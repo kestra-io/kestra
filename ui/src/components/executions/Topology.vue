@@ -9,6 +9,7 @@
                 :flowGraph="flowGraph"
                 :source="flowStore.flow?.source"
                 :execution="execution"
+                :executionLogs="executionLogs"
                 :expandedSubflows="expandedSubflows"
                 :horizontalDefault="horizontalDefault"
                 isReadOnly
@@ -27,7 +28,7 @@
     import {ref, computed, watch, onMounted, onUnmounted} from "vue"
     import {useI18n} from "vue-i18n"
     import throttle from "lodash/throttle"
-    import {stringUtils, State} from "@kestra-io/design-system"
+    import {stringUtils, State, levelToRequestParams} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
@@ -57,6 +58,65 @@
     // FIXME: any - SSE objects don't have a consistent type in this codebase
     const sseBySubflow = ref<Record<string, any>>({}) // FIXME: any
 
+    // Live task logs, streamed only while the execution is running, so plugin
+    // topology-details slots can follow per-step progress in real time (metrics
+    // and outputs only materialise once the task run completes).
+    const executionLogs = ref<any[]>([]) // FIXME: any
+    let logsSSE: EventSource | undefined
+    let logsBuffer: any[] = []
+    let logsFlushTimer: ReturnType<typeof setTimeout> | undefined
+
+    function closeLogsSSE() {
+        logsSSE?.close()
+        logsSSE = undefined
+        if (logsFlushTimer) {
+            clearTimeout(logsFlushTimer)
+            logsFlushTimer = undefined
+        }
+        logsBuffer = []
+    }
+
+    function flushLogsBuffer() {
+        logsFlushTimer = undefined
+        if (!logsBuffer.length) return
+        executionLogs.value = executionLogs.value.concat(logsBuffer)
+        logsBuffer = []
+    }
+
+    function streamExecutionLogs() {
+        closeLogsSSE()
+        executionLogs.value = []
+        const id = execution.value?.id
+        if (!id) return
+        // INFO floor: the lifecycle step markers plugins emit are INFO, so this is
+        // enough to drive live progress while filtering out DEBUG/TRACE log volume.
+        executionsStore.followLogs({id, params: levelToRequestParams("INFO")}).then((sse: EventSource) => {
+            logsSSE = sse
+            sse.onmessage = (event: MessageEvent) => {
+                if (event.lastEventId === "start") return
+                logsBuffer.push(JSON.parse(event.data))
+                if (!logsFlushTimer) logsFlushTimer = setTimeout(flushLogsBuffer, 200)
+            }
+            // Close on error: EventSource otherwise auto-reconnects every ~3s, each
+            // reconnect leaking a server-side log-follow stream. See kestra-io/kestra#16982.
+            sse.onerror = () => closeLogsSSE()
+        })
+    }
+
+    const isExecutionRunning = computed(() => {
+        const current = execution.value?.state?.current
+        return !!current && State.isRunning(current)
+    })
+
+    watch(
+        [() => execution.value?.id, isExecutionRunning],
+        ([id, running]) => {
+            if (id && running) streamExecutionLogs()
+            else closeLogsSSE()
+        },
+        {immediate: true},
+    )
+
     const throttledExecutionUpdate = throttle(function(subflow: string, executionEvent: MessageEvent) {
         const previousExecution = executionsStore.subflowsExecutions[subflow]
         executionsStore.addSubflowExecution({
@@ -80,6 +140,7 @@
 
     onUnmounted(() => {
         Object.keys(sseBySubflow.value).forEach(closeSSE)
+        closeLogsSSE()
     })
 
     function closeSSE(subflow: string) {

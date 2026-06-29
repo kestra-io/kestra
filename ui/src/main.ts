@@ -29,7 +29,6 @@ import {getCsrfToken} from "./utils/csrf"
 import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
-import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 
 
@@ -48,7 +47,6 @@ let axiosInstance: ReturnType<typeof setupKestraAxios> | undefined
 
 function setupAxios(router: Router) {
     const coreStore = useCoreStore()
-    const authStore = useAuthStore()
     const unsavedChangesStore = useUnsavedChangesStore()
     const layoutStore = useLayoutStore()
 
@@ -61,14 +59,10 @@ function setupAxios(router: Router) {
 
 
     axiosInstance = setupKestraAxios({}, {
-        authStore,
         coreStore,
-        oss: true,
         router,
         beforeLogout,
         isLoggedIn: () => !!BasicAuth.isLoggedIn(),
-        onAuthTimeout: beforeLogout,
-        isImpersonating: () => !!window.sessionStorage.getItem("impersonate"),
     })
 
     // Add CSRF token to every request. setupKestraAxios calls configureClient internally,

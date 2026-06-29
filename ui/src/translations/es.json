@@ -266,7 +266,6 @@
       "no_description": "Sin descripción",
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
       "others": "Otros",
-      "viewAll": "Ver todo",
       "preview": "Vista previa del Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -276,7 +275,8 @@
         "success": "Éxito",
         "warning": "Advertencia"
       },
-      "switch": "Cambiar Dashboard"
+      "switch": "Cambiar Dashboard",
+      "viewAll": "Ver todo"
     },
     "data": "Datos",
     "dataFilters": "Filtros de Datos",

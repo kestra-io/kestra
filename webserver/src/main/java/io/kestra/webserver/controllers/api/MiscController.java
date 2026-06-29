@@ -119,7 +119,7 @@ public class MiscController {
     protected EditionProvider editionProvider;
 
     @Inject
-    PebbleExpressionService pebbleExpressionService;
+    protected PebbleExpressionService pebbleExpressionService;
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)

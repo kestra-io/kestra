@@ -45,7 +45,7 @@
                     <TopologyDetailsRemote
                         :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
-                        :execution="execution"
+                        :execution="exec"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
@@ -174,7 +174,7 @@
                 <TaskDrawerRemote
                     :taskType="selectedTask.type"
                     :task="selectedTask"
-                    :execution="execution"
+                    :execution="exec"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
                     :metrics="taskMetrics(selectedTask?.id)"
@@ -226,12 +226,12 @@
     import {useCoreStore} from "../../stores/core"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
-    import {usePlaygroundStore} from "../../stores/playground"    
+    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
-    
+
     const router = useRouter()
 
     const vueflowId = ref(Math.random().toString())
@@ -243,7 +243,7 @@
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
 
-    const execution = computed(() => executionsStore.execution as any as Execution)
+    const exec = computed(() => executionsStore.execution as any as Execution)
 
     const effectiveFlowGraph = computed(() =>
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
@@ -278,9 +278,9 @@
         }
     })
 
-    const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
-    const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
+    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
+    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
@@ -674,7 +674,7 @@
                 taskType: runnerType ?? fullTask?.type,
                 title: event.customAction.label,
                 task: fullTask,
-                execution: execution.value,
+                execution: exec.value,
                 namespace: props.namespace,
                 flowId: props.flowId,
                 metrics: taskMetrics(fullTask?.id),

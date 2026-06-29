@@ -1,0 +1,13 @@
+id: flow-concurrency-sla-fail-child
+namespace: io.kestra.tests
+
+sla:
+  - id: maxDuration
+    type: MAX_DURATION
+    duration: PT3S
+    behavior: FAIL
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT10M

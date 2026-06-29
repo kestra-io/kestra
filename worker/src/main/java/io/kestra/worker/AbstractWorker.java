@@ -184,6 +184,7 @@ public abstract class AbstractWorker extends AbstractService {
 
     private void enterMaintenance() {
         this.jobFetcher.pause();
+        this.workerJobExecutor.stopRealtimeTriggers();
         this.setState(ServiceState.MAINTENANCE);
     }
 

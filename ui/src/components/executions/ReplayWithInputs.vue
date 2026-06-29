@@ -42,13 +42,14 @@
 
     const axios = useClient()
 
-    const handleReplaySubmit = async ({inputs}: any) => {
+    const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
 
         const formData = inputsToFormData({$moment: moment}, flow.value.inputs, inputs)
         let response = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,
             revision: props.revision,
+            breakpoints,
             formData,
         })
 

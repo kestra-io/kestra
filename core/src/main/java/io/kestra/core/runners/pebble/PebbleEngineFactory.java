@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -92,8 +93,8 @@ public class PebbleEngineFactory {
      *   <li>{@code secret(...)} → {@code [secret: KEY]} without invoking the real service.</li>
      *   <li>{@code env(...)} → kept raw (see issue #16874: env vars are not resolved for display).</li>
      *   <li>Functions in {@link #SAFE_DISPLAY_FUNCTIONS} (pure parsing / calendar helpers) work normally.</li>
-     *   <li>Every other function throws {@link DisplayUnrenderableException} before invocation,
-     *       so the caller keeps the raw segment.</li>
+     *   <li>Every other function is removed from the engine, so any expression that calls one fails
+     *       to evaluate and the caller keeps the raw segment.</li>
      * </ul>
      */
     public PebbleEngine createRestricted() {
@@ -107,11 +108,11 @@ public class PebbleEngineFactory {
     }
 
     private Extension extensionForDisplay(Extension initial) {
-        // Any function that is not in the safe allowlist must be wrapped (masked or raw-signalled).
-        boolean needsProxy = initial.getFunctions().keySet().stream()
+        // Any function that is not in the safe allowlist must be masked or removed.
+        boolean needsWrapping = initial.getFunctions().keySet().stream()
             .anyMatch(name -> !SAFE_DISPLAY_FUNCTIONS.contains(name));
 
-        if (!needsProxy) {
+        if (!needsWrapping) {
             return initial;
         }
 
@@ -124,9 +125,9 @@ public class PebbleEngineFactory {
                 return Map.entry(name, new InterceptingFunction(entry.getValue(),
                     args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
             }
-            // Everything else (including env(), kv(), now(), uuid(), read(), …) stays raw — never invoked.
-            return Map.entry(name, new InterceptingFunction(entry.getValue(),
-                args -> { throw new DisplayUnrenderableException(); }));
+            // Everything else (including env(), kv(), now(), uuid(), read(), …) is removed: Pebble cannot
+            // invoke it, the expression fails to evaluate, and the caller keeps the segment raw.
+            return null;
         });
     }
 
@@ -217,7 +218,7 @@ public class PebbleEngineFactory {
         }
     }
 
-    /** Maps each {@link Function} entry in an {@link Extension}'s function map. */
+    /** Maps each {@link Function} entry in an {@link Extension}'s function map; returning {@code null} removes it. */
     @FunctionalInterface
     private interface FunctionEntryMapper {
         Map.Entry<String, Function> apply(Map.Entry<String, Function> entry);
@@ -225,8 +226,8 @@ public class PebbleEngineFactory {
 
     /**
      * Returns a proxy for {@code initial} that intercepts {@link Extension#getFunctions()} and
-     * passes each entry through {@code entryMapper}. All other {@link Extension} methods delegate
-     * to the original.
+     * passes each entry through {@code entryMapper} (a {@code null} result drops the function).
+     * All other {@link Extension} methods delegate to the original.
      */
     private static Extension wrapExtension(Extension initial, FunctionEntryMapper entryMapper) {
         return (Extension) Proxy.newProxyInstance(
@@ -236,6 +237,7 @@ public class PebbleEngineFactory {
                 if (method.getName().equals("getFunctions")) {
                     return initial.getFunctions().entrySet().stream()
                         .map(entryMapper::apply)
+                        .filter(Objects::nonNull)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
                 return method.invoke(initial, methodArgs);

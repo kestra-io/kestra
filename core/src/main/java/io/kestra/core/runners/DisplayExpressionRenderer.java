@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import io.kestra.core.runners.pebble.DisplayUnrenderableException;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -147,11 +146,9 @@ public class DisplayExpressionRenderer {
             var writer = new StringWriter();
             template.evaluate(writer, variables);
             return writer.toString();
-        } catch (DisplayUnrenderableException e) {
-            // Non-deterministic / IO / non-allowlisted function — keep raw.
-            return segment;
         } catch (PebbleException | IOException e) {
-            // Missing variable, bad syntax, or other rendering failure — keep raw.
+            // Missing variable, bad syntax, or a non-allowlisted function (removed from the display
+            // engine, so Pebble reports it as unknown) — keep raw.
             return segment;
         }
     }

@@ -28,7 +28,7 @@
     import {ref, computed, watch, onMounted, onUnmounted} from "vue"
     import {useI18n} from "vue-i18n"
     import throttle from "lodash/throttle"
-    import {stringUtils, State, levelToRequestParams} from "@kestra-io/design-system"
+    import {stringUtils, State} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
@@ -90,16 +90,19 @@
         if (!id) return
         // INFO floor: the lifecycle step markers plugins emit are INFO, so this is
         // enough to drive live progress while filtering out DEBUG/TRACE log volume.
-        executionsStore.followLogs({id, params: levelToRequestParams("INFO")}).then((sse: EventSource) => {
+        executionsStore.followLogs({id, params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO"}}).then((sse: EventSource) => {
             logsSSE = sse
             sse.onmessage = (event: MessageEvent) => {
                 if (event.lastEventId === "start") return
                 logsBuffer.push(JSON.parse(event.data))
                 if (!logsFlushTimer) logsFlushTimer = setTimeout(flushLogsBuffer, 200)
             }
-            // Close on error: EventSource otherwise auto-reconnects every ~3s, each
-            // reconnect leaking a server-side log-follow stream. See kestra-io/kestra#16982.
-            sse.onerror = () => closeLogsSSE()
+            // No onerror handler: let EventSource auto-reconnect if the stream drops
+            // mid-execution. On reconnect the server replays all historical logs, so the
+            // stepper catches up without missing any lifecycle marker.
+            // The isExecutionRunning watch calls closeLogsSSE() when the execution
+            // terminates, which calls logsSSE.close() and prevents the reconnect loop
+            // that previously caused the kestra-io/kestra#16982 off-heap leak.
         })
     }
 

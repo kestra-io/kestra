@@ -1869,6 +1869,8 @@
       },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
+      "others": "Others",
+      "viewAll": "View all",
       "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export to CSV",
       "quick_filters": {

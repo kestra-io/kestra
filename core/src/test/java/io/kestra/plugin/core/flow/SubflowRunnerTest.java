@@ -143,8 +143,7 @@ class SubflowRunnerTest {
         // Then — parent reaches SUCCESS
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        String childExecutionId = (String) taskOutputService.getOutputs(
-            parentExecution.findTaskRunsByTaskId("subflow").getFirst()).get("executionId");
+        String childExecutionId = (String) parentExecution.findTaskRunsByTaskId("subflow").getFirst().getOutputs().get("executionId");
         assertThat(childExecutionId).isNotBlank();
 
         Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();

@@ -722,6 +722,42 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotExecuteBackfillWhenFlowIsDraft() {
+        // A draft revision is never picked up implicitly. Even with an in-progress backfill, once the
+        // trigger's flow resolves to a draft the scheduler must skip it (DefaultSchedulableTriggerFetcher
+        // flow.isDraft() guard) instead of emitting a backfill execution. Guards the backfill path of
+        // the draft feature.
+        // region [GIVEN] a published scheduled flow with an in-progress backfill
+        FlowWithSource publishedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ);
+        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, List.of(publishedFlow));
+        TriggerScheduler scheduler = newTriggerScheduler(flowMetaStore, triggerWorkerJobPublisher);
+
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        assertThat(triggerStateStore.findById(Fixtures.triggerId())).isPresent();
+        completeExecution();
+        triggerExecutionPublisher.executions().clear();
+
+        ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(1));
+        triggerStateStore.save(
+            triggerStateStore.findById(Fixtures.triggerId()).orElseThrow()
+                .locked(SchedulerClock.getClock(), false)
+                .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
+        );
+        // endregion
+
+        // [WHEN] the flow's resolved revision becomes a draft, then the backfill ticks
+        flowMetaStore.add(publishedFlow.toBuilder().draft(true).build());
+        SchedulerClock.offset(Duration.ofSeconds(1));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // [THEN] no execution is emitted even though a backfill is active
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
     void shouldFailInitMissingScheduleTriggerGivenInvalidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M("Asia/Delhi");
@@ -751,7 +787,10 @@ class TriggerSchedulerTest {
     }
 
     private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows, TriggerWorkerJobPublisher workerJobPublisher) {
-        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, flows);
+        return newTriggerScheduler(new InMemoryFlowMetaStore(1, flows), workerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(InMemoryFlowMetaStore flowMetaStore, TriggerWorkerJobPublisher workerJobPublisher) {
         return new TriggerScheduler(
             triggerStateStore,
             flowMetaStore,

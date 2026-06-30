@@ -333,7 +333,7 @@
         border-radius: 999px;
         background-color: var(--ks-btn-primary-bg-default);
         color: var(--ks-btn-primary-text);
-        font-size: 10px;
+        font-size: var(--ks-font-size-2xs);
         font-weight: 600;
         line-height: 1;
     }

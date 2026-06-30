@@ -146,7 +146,7 @@
     }
 
     .small-text {
-        font-size: .8rem;
+        font-size: var(--ks-font-size-sm);
     }
 
     .playground {
@@ -175,7 +175,7 @@
     .title-section {
         display: flex;
         align-items: center;
-        font-size: .8rem;
+        font-size: var(--ks-font-size-sm);
         font-weight: normal;
         line-height: 1.2rem;
         .tab-icon {

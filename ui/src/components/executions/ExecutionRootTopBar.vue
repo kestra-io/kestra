@@ -89,6 +89,7 @@
     import Pause from "./overview/components/actions/Pause.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import Resume from "./overview/components/actions/Resume.vue"
+    import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
     import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
     import resource from "../../models/resource"
@@ -119,6 +120,10 @@
     const primaryAction = computed(() => {
         if (!execution.value?.state) {
             return null
+        }
+
+        if (execution.value.state.current === "BREAKPOINT") {
+            return {component: ResumeFromBreakpoint, props: {}}
         }
 
         if (State.isPaused(execution.value.state.current)) {
@@ -157,6 +162,7 @@
             execution.value.state.current !== "PAUSED"
                 ? {component: Pause}
                 : {component: Resume},
+            {component: ResumeFromBreakpoint},
             {component: Unqueue},
             {component: ForceRun},
             {component: Api},

@@ -47,7 +47,7 @@
                         :opened="aiCopilotOpened"
                         @click="() => { draftSource = undefined; openAiCopilot(); }"
                     />
-                    <ContentSave v-if="!flow" @click="saveFileContent" />
+                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -369,7 +369,7 @@
             event.preventDefault()
             if (props.flow) {
                 saveFlowYaml()
-            } else {
+            } else if (isDirty.value) {
                 saveFileContent()
             }
         }
@@ -413,5 +413,11 @@
 <style scoped lang="scss">
     .image-preview {
         margin: 2rem;
+    }
+
+    .save-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
     }
 </style>

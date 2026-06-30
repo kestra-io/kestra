@@ -49,7 +49,7 @@
         if (!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)) {
             return false
         }
-        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current)
+        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current) && props.execution.state.current !== "BREAKPOINT"
     })
 
     const click = () => {

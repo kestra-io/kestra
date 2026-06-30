@@ -23,14 +23,6 @@
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
-                    <QuickFilters
-                        v-if="!hasComplexFilters"
-                        :levels="VALUES.LEVELS"
-                        :level="effectiveLogLevel?.value"
-                        :levelLabel="t('filter.level_log_executions.label')"
-                        :showInterval="false"
-                        @update:level="selectLevel"
-                    />
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
@@ -113,7 +105,6 @@
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
@@ -177,7 +168,6 @@
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
-    const {hasComplexFilters} = useComplexFilters()
     const quickIntervals = computed(() => [
         {label: t("datepicker.short.15m"), value: "PT15M"},
         {label: t("datepicker.short.1h"), value: "PT1H"},

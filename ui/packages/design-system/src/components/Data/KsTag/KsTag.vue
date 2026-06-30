@@ -114,6 +114,10 @@
             }
         }
 
+        &.kel-tag--default.kel-tag--plain [class*="kel-icon"] .material-design-icon {
+            color: var(--ks-icon-muted);
+        }
+
         &.kel-tag--plain {
             --kel-tag-bg-color: var(--ks-bg-tag);
             --kel-tag-text-color: var(--ks-bg-tag);
@@ -158,7 +162,7 @@
             &.kel-tag--plain {
                 --kel-tag-bg-color: var(--ks-bg-tag);
                 --kel-tag-text-color: var(--ks-text-primary);
-                --kel-tag-border-color: var(--ks-border-strong);
+                --kel-tag-border-color: transparent;
                 --kel-tag-hover-color: var(--ks-text-primary);
 
                 a {

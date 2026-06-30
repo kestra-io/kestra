@@ -242,7 +242,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
             })
     }
@@ -255,7 +255,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -316,6 +316,18 @@ export const useExecutionsStore = defineStore("executions", () => {
                 "content-type": "multipart/form-data",
             },
         })
+    }
+
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
+        return axios.post<Execution>(
+            `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
+            null,
+            {
+                params: {
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+                },
+            },
+        )
     }
 
     const pause = (options: { id: string }) => {
@@ -891,6 +903,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkKill,
         queryKill,
         resume,
+        resumeFromBreakpoint,
         validateResume,
         pause,
         bulkPauseExecution,

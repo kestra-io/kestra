@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Lesezeichen",
+    "breakpoints": "Haltepunkte",
     "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk actions": "Massenaktionen",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
@@ -264,6 +265,7 @@
       },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
+      "others": "Andere",
       "preview": "Vorschau-Dashboard",
       "quick_filters": {
         "all": "Alle",
@@ -273,7 +275,8 @@
         "success": "Erfolg",
         "warning": "Warnung"
       },
-      "switch": "Dashboard wechseln"
+      "switch": "Dashboard wechseln",
+      "viewAll": "Alle anzeigen"
     },
     "data": "Daten",
     "dataFilters": "Datenfilter",
@@ -1637,6 +1640,8 @@
     "restore confirm": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "restore revision": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "resume": "Fortsetzen",
+    "resume from breakpoint done": "Ausführung wird vom Breakpoint fortgesetzt",
+    "resume from breakpoint title": "Ausführung `<code>{id}</code>` vom Haltepunkt fortsetzen",
     "resumed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> fortsetzen möchten?",
     "resumed done": "Ausführung ist fortgesetzt",
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
@@ -1801,9 +1806,11 @@
             "editor_hover_description": "Eigenschaftsbeschreibungen beim Hover im Editor anzeigen.",
             "environment_color": "Auffälligkeitsfarbe, die für die aktuelle Umgebung in der Navigation verwendet wird.",
             "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
-            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
+            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird.",
+            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche."
           },
           "fields": {
+            "app_font_size": "App-Schriftgröße",
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",
@@ -1820,7 +1827,12 @@
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
-          "label": "Modus-Einstellungen"
+          "label": "Modus-Einstellungen",
+          "app_font_size_options": {
+            "small": "Klein",
+            "medium": "Mittel",
+            "large": "Groß"
+          }
         }
       },
       "label": "Einstellungen",

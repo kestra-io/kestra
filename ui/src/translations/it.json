@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Segnalibri",
+    "breakpoints": "Punti di interruzione",
     "bulk action async warning": "Questo potrebbe richiedere alcuni istanti.",
     "bulk actions": "Azioni collettive",
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
@@ -264,6 +265,7 @@
       },
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
+      "others": "Altri",
       "preview": "Anteprima Dashboard",
       "quick_filters": {
         "all": "Tutti",
@@ -273,7 +275,8 @@
         "success": "Successo",
         "warning": "Avviso"
       },
-      "switch": "Dashboard Switch"
+      "switch": "Dashboard Switch",
+      "viewAll": "Vedi tutti"
     },
     "data": "Dati",
     "dataFilters": "Filtri Dati",
@@ -1637,6 +1640,8 @@
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "restore revision": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "resume": "Riprendi",
+    "resume from breakpoint done": "L'esecuzione è ripresa dal breakpoint",
+    "resume from breakpoint title": "Riprendi l'esecuzione <code>{id}</code> dal punto di interruzione",
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
@@ -1801,9 +1806,11 @@
             "editor_hover_description": "Mostra le descrizioni delle proprietà al passaggio del mouse nell'editor.",
             "environment_color": "Colore di accento utilizzato per l'ambiente corrente nella navigazione.",
             "environment_name": "Nome visualizzato per l'ambiente corrente, mostrato nella navigazione.",
-            "logs_font_size": "Dimensione del carattere utilizzata nei visualizzatori di log e nei terminali."
+            "logs_font_size": "Dimensione del carattere utilizzata nei visualizzatori di log e nei terminali.",
+            "app_font_size": "Fattore di scala applicato a tutte le dimensioni dei caratteri dell'interfaccia."
           },
           "fields": {
+            "app_font_size": "Dimensione carattere applicazione",
             "chart_color_scheme": {
               "classic": "Classico",
               "kestra": "Kestra",
@@ -1820,7 +1827,12 @@
             "logs_font_size": "Dimensione Font dei Log",
             "theme": "Modello"
           },
-          "label": "Preferenze del Tema"
+          "label": "Preferenze del Tema",
+          "app_font_size_options": {
+            "small": "Piccolo",
+            "medium": "Medio",
+            "large": "Grande"
+          }
         }
       },
       "label": "Impostazioni",

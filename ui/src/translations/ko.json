@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "북마크",
+    "breakpoints": "중단점",
     "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
     "bulk actions": "일괄 작업",
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
@@ -264,6 +265,7 @@
       },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
+      "others": "기타",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -273,7 +275,8 @@
         "success": "성공",
         "warning": "경고"
       },
-      "switch": "대시보드 전환"
+      "switch": "대시보드 전환",
+      "viewAll": "전체 보기"
     },
     "data": "데이터",
     "dataFilters": "데이터 필터",
@@ -1637,6 +1640,8 @@
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "restore revision": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "resume": "재개",
+    "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
+    "resume from breakpoint title": "`{{id}}` 실행을 중단점에서 재개",
     "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resumed title": "실행 <code>{id}</code> 재개",
@@ -1801,9 +1806,11 @@
             "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
             "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
             "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
-            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
+            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
+            "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다."
           },
           "fields": {
+            "app_font_size": "앱 글꼴 크기",
             "chart_color_scheme": {
               "classic": "클래식",
               "kestra": "Kestra",
@@ -1820,7 +1827,12 @@
             "logs_font_size": "로그 글꼴 크기",
             "theme": "테마"
           },
-          "label": "테마 설정"
+          "label": "테마 설정",
+          "app_font_size_options": {
+            "small": "작게",
+            "medium": "보통",
+            "large": "크게"
+          }
         }
       },
       "label": "설정",

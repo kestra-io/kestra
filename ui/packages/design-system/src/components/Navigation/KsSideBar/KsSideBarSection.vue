@@ -86,7 +86,7 @@
     gap: var(--ks-spacing-2);
     padding: var(--ks-spacing-3) 0 0;
     margin-bottom: var(--ks-spacing-2);
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     font-weight: 400;
     color: var(--ks-text-dim);
     background: none;

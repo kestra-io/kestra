@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex full-height docs-layout-container">
+    <div class="d-flex docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
         <div
             v-if="mobileMenuOpen && $slots.menu"
             class="mobile-backdrop"
@@ -41,8 +41,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, useSlots} from "vue"
     import {useRoute} from "vue-router"
+
+    const slots = useSlots()
+    const hasMenu = computed(() => !!slots.menu)
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import Menu from "vue-material-design-icons/Menu.vue"
     import Close from "vue-material-design-icons/Close.vue"
@@ -129,6 +132,17 @@
         position: relative;
         min-height: 0;
         overflow-y: auto;
+    }
+
+    .embedded {
+        height: auto;
+
+        .main-content-wrapper,
+        .main-container {
+            height: auto;
+            min-height: 0;
+            overflow: visible;
+        }
     }
 
     .content {

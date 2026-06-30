@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -133,6 +134,32 @@ class SubflowRunnerTest {
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.SUCCESS).count()).isEqualTo(2);
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.FAILED).count()).isEqualTo(2);
         closing.close();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/subflow-nullable-input-parent.yaml", "flows/valids/subflow-nullable-input-child.yaml" })
+    void shouldPassNullableInputFromParentToSubflow() throws QueueException, TimeoutException, io.kestra.core.exceptions.InternalException {
+        // Given — the parent flow has an optional INT input provided as an empty string, reproducing
+        // the case where a user leaves an optional input blank in the UI (or the API sends "").
+        // The Subflow task forwards it via "{{ inputs.integerValue }}", which Pebble renders to "".
+        // Without the fix this fails with "Invalid input for integerValue, For input string: \"\"";
+        // with the fix both parent and child should reach SUCCESS.
+
+        // When
+        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-nullable-input-parent",
+            null, (f, e) -> Map.of("integerValue", ""));
+
+        // Then — parent reaches SUCCESS
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        String childExecutionId = (String) taskOutputService.getOutputs(
+            parentExecution.findTaskRunsByTaskId("subflow").getFirst()).get("executionId");
+        assertThat(childExecutionId).isNotBlank();
+
+        Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();
+
+        // Then — child also reaches SUCCESS with null input
+        assertThat(childExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test

@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "बुकमार्क्स",
+    "breakpoints": "ब्रेकपॉइंट्स",
     "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk actions": "सामूहिक क्रियाएँ",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
@@ -264,6 +265,7 @@
       },
       "no_description": "कोई विवरण नहीं",
       "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
+      "others": "अन्य",
       "preview": "पूर्वावलोकन डैशबोर्ड",
       "quick_filters": {
         "all": "सभी",
@@ -273,7 +275,8 @@
         "success": "सफलता",
         "warning": "चेतावनी"
       },
-      "switch": "डैशबोर्ड स्विच करें"
+      "switch": "डैशबोर्ड स्विच करें",
+      "viewAll": "सभी देखें"
     },
     "data": "डेटा",
     "dataFilters": "डेटा फ़िल्टर",
@@ -1637,6 +1640,8 @@
     "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "restore revision": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "resume": "पुनः आरंभ करें",
+    "resume from breakpoint done": "निष्पादन विराम बिंदु से फिर से शुरू किया गया है",
+    "resume from breakpoint title": "ब्रेकपॉइंट से निष्पादन `<code>{id}</code>` को पुनः शुरू करें",
     "resumed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः आरंभ करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
@@ -1801,9 +1806,11 @@
             "editor_hover_description": "संपादक में होवर पर प्रॉपर्टी विवरण दिखाएं।",
             "environment_color": "नेविगेशन में वर्तमान वातावरण के लिए उपयोग किया गया एक्सेंट रंग।",
             "environment_name": "वर्तमान वातावरण के लिए प्रदर्शन नाम, जो नेविगेशन में दिखाया जाता है।",
-            "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।"
+            "logs_font_size": "लॉग व्यूअर्स और टर्मिनल्स में उपयोग किया जाने वाला फ़ॉन्ट आकार।",
+            "app_font_size": "इंटरफ़ेस के सभी फ़ॉन्ट आकारों पर लागू स्केल कारक।"
           },
           "fields": {
+            "app_font_size": "ऐप फ़ॉन्ट आकार",
             "chart_color_scheme": {
               "classic": "क्लासिक",
               "kestra": "Kestra",
@@ -1820,7 +1827,12 @@
             "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
             "theme": "मोडस"
           },
-          "label": "थीम प्राथमिकताएँ"
+          "label": "थीम प्राथमिकताएँ",
+          "app_font_size_options": {
+            "small": "छोटा",
+            "medium": "मध्यम",
+            "large": "बड़ा"
+          }
         }
       },
       "label": "सेटिंग्स",

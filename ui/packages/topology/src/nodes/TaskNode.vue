@@ -450,7 +450,7 @@
     width: 1rem;
     padding: .1rem;
     margin: 6px;
-    font-size: .8rem;
+    font-size: var(--ks-font-size-sm);
 }
 
 button.playground-button {

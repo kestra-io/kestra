@@ -266,7 +266,6 @@
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "others": "Altri",
-      "viewAll": "Vedi tutti",
       "preview": "Anteprima Dashboard",
       "quick_filters": {
         "all": "Tutti",
@@ -276,7 +275,8 @@
         "success": "Successo",
         "warning": "Avviso"
       },
-      "switch": "Dashboard Switch"
+      "switch": "Dashboard Switch",
+      "viewAll": "Vedi tutti"
     },
     "data": "Dati",
     "dataFilters": "Filtri Dati",

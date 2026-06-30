@@ -365,7 +365,7 @@
 
     const dimensionColumn = computed(() => {
         const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onChartClick(params: any) {

@@ -25,6 +25,8 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
+import io.kestra.core.models.flows.input.EmailInput;
+import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.SecretInput;
@@ -107,7 +109,6 @@ class FlowInputOutputTest {
     @Test
     void shouldResolveEnabledInputsGivenInputWithConditionalExpressionMatchingTrue() {
         // Given
-
         StringInput input1 = StringInput.builder()
             .id("input1")
             .build();
@@ -141,7 +142,6 @@ class FlowInputOutputTest {
     @Test
     void shouldResolveEnabledInputsGivenInputWithConditionalInputTrue() {
         // Given
-
         StringInput input1 = StringInput.builder()
             .id("input1")
             .build();
@@ -176,7 +176,6 @@ class FlowInputOutputTest {
     @Test
     void shouldResolveDisabledInputsGivenInputWithConditionalInputFalse() {
         // Given
-
         StringInput input1 = StringInput.builder()
             .id("input1")
             .build();
@@ -824,6 +823,125 @@ class FlowInputOutputTest {
         InputAndValue region = values.stream()
             .filter(v -> v.input().getId().equals("environment.region")).findFirst().orElseThrow();
         assertThat(region.value()).isEqualTo("EU");
+    }
+
+    @Test
+    void shouldResolveEmptyStringAsNullForOptionalIntInput() {
+        // Given — an optional INT input receiving "" (Pebble renders a null reference as "")
+        IntInput input = IntInput.builder()
+            .id("integerValue")
+            .type(Type.INT)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", ""));
+
+        // Then — resolves to null without throwing
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().value()).isNull();
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @Test
+    void shouldApplyDefaultWhenOptionalIntInputIsEmptyString() {
+        // Given — an optional INT input with a default, receiving "" from a Pebble expression
+        IntInput input = IntInput.builder()
+            .id("integerValue")
+            .type(Type.INT)
+            .required(false)
+            .defaults(Property.ofValue(42))
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", ""));
+
+        // Then — the declared default is applied instead of throwing
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().value()).isEqualTo(42);
+        assertThat(values.getFirst().isDefault()).isTrue();
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @Test
+    void shouldFailWithMissingRequiredWhenRequiredIntInputIsEmptyString() {
+        // Given — a required INT input receiving "" (regression guard: error must not say "For input string")
+        IntInput input = IntInput.builder()
+            .id("integerValue")
+            .type(Type.INT)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", ""));
+
+        // Then — a "missing required" validation error, not a parse error
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNotNull().isNotEmpty();
+        assertThat(values.getFirst().exceptions().stream().map(InputOutputValidationException::getMessage).findFirst())
+            .isPresent()
+            .hasValueSatisfying(msg -> assertThat(msg).contains("Missing required input"));
+    }
+
+    @Test
+    void shouldKeepEmptyStringForStringInput() {
+        // Given — STRING is a text type; "" must remain a valid value (regression guard)
+        StringInput input = StringInput.builder()
+            .id("textValue")
+            .type(Type.STRING)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("textValue", ""));
+
+        // Then — "" is preserved as-is for text types
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().value()).isEqualTo("");
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @Test
+    void shouldResolveEmptyStringAsNullForOptionalFloatInput() {
+        // Given — FLOAT is also a non-text type; same normalization should apply
+        FloatInput input = FloatInput.builder()
+            .id("floatValue")
+            .type(Type.FLOAT)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("floatValue", ""));
+
+        // Then — resolves to null without throwing
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().value()).isNull();
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @Test
+    void shouldKeepEmptyStringForEmailInput() {
+        // Given — EMAIL is a text type; "" is allowed by EmailInput's validator pattern (which includes ^$).
+        // An optional EMAIL receiving "" resolves to "" (not null), matching the existing validator design.
+        EmailInput input = EmailInput.builder()
+            .id("emailValue")
+            .type(Type.EMAIL)
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("emailValue", ""));
+
+        // Then — "" is preserved for EMAIL inputs
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().value()).isEqualTo("");
+        assertThat(values.getFirst().exceptions()).isNull();
     }
 
     private static class MemoryCompletedPart implements CompletedPart {

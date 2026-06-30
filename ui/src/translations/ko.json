@@ -266,7 +266,6 @@
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
-      "viewAll": "전체 보기",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -276,7 +275,8 @@
         "success": "성공",
         "warning": "경고"
       },
-      "switch": "대시보드 전환"
+      "switch": "대시보드 전환",
+      "viewAll": "전체 보기"
     },
     "data": "데이터",
     "dataFilters": "데이터 필터",

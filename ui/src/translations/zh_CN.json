@@ -266,7 +266,6 @@
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
-      "viewAll": "查看全部",
       "preview": "预览仪表板",
       "quick_filters": {
         "all": "全部",
@@ -276,7 +275,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "切换仪表板"
+      "switch": "切换仪表板",
+      "viewAll": "查看全部"
     },
     "data": "数据",
     "dataFilters": "数据过滤器",

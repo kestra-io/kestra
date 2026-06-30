@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {chartSegmentDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
+import {chartSegmentDrillDown, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
 import {DEFAULT_BAR_CATEGORY_LIMIT, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
@@ -14,11 +14,11 @@ describe("chartSegmentDrillDown", () => {
                 type: EXEC,
                 where: [
                     {field: "STATE", type: "NOT_EQUAL_TO", value: "SUCCESS"},
-                    {field: "LABELS", labelKey: "status", type: "NOT_EQUAL_TO", value: "init"},
+                    {field: "LABELS", key: "status", type: "NOT_EQUAL_TO", value: "init"},
                 ],
             },
         }
-        const result = chartSegmentDrillDown(chart, {field: "LABELS", labelKey: "cleid"}, "cleid-010")
+        const result = chartSegmentDrillDown(chart, {field: "LABELS", key: "cleid"}, "cleid-010")
         expect(result).toEqual({
             name: "executions/list",
             timeFiltered: true,
@@ -55,7 +55,7 @@ describe("chartSegmentDrillDown", () => {
                 type: EXEC,
                 where: [
                     {field: "DURATION", type: "GREATER_THAN", value: 60}, // no executions filter -> skipped
-                    {field: "LABELS", type: "EQUAL_TO", value: "x"},      // no labelKey -> skipped
+                    {field: "LABELS", type: "EQUAL_TO", value: "x"},      // no key -> skipped
                     {field: "NAMESPACE", type: "EQUAL_TO", value: "io.kestra.test"},
                 ],
             },
@@ -74,7 +74,7 @@ describe("chartSegmentDrillDown", () => {
 
     it("joins array values for IN/NOT_IN where conditions", () => {
         const chart = {data: {type: EXEC, where: [{field: "STATE", type: "IN", value: ["FAILED", "WARNING"]}]}}
-        const result = chartSegmentDrillDown(chart, {field: "LABELS", labelKey: "cleid"}, "cleid-001")
+        const result = chartSegmentDrillDown(chart, {field: "LABELS", key: "cleid"}, "cleid-001")
         expect(result?.query["filters[state][IN]"]).toBe("FAILED,WARNING")
     })
 
@@ -100,6 +100,32 @@ describe("chartSegmentDrillDown", () => {
         const chart = {data: {type: EXEC, where: [{field: "NAMESPACE", type: "CONTAINS", value: "kestra"}]}}
         const result = chartSegmentDrillDown(chart, undefined, "x")
         expect(result?.query).toEqual({"filters[namespace][CONTAINS]": "kestra"})
+    })
+
+    it("supports drill-down for data sources registered via registerDrillDown, incl. metadata-style key-value filters", () => {
+        registerDrillDown("CustomEntity", {
+            route: "custom/list",
+            fieldKey: {NAMESPACE: "namespace", TYPE: "type", METADATA: "metadata"},
+            multiSelect: ["namespace"],
+            timeFiltered: false,
+        })
+
+        const chart = {
+            data: {
+                type: "io.kestra.plugin.x.dashboard.data.CustomEntity",
+                where: [{field: "TYPE", type: "EQUAL_TO", value: "vm"}],
+            },
+        }
+        // A metadata-keyed dimension (e.g. grouped by metadata.os) is encoded as a nested key-value filter.
+        const result = chartSegmentDrillDown(chart, {field: "METADATA", key: "os"}, "linux")
+        expect(result).toEqual({
+            name: "custom/list",
+            timeFiltered: false,
+            query: {
+                "filters[type][EQUALS]": "vm",
+                "filters[metadata][EQUALS][os]": "linux",
+            },
+        })
     })
 })
 

@@ -4,12 +4,12 @@ import {useMiscStore} from "override/stores/misc"
 
 interface WhereCondition {
     field?: string;
-    labelKey?: string;
+    key?: string;
     type?: string;
     value?: unknown;
 }
 
-interface DrillDownDescriptor {
+export interface DrillDownDescriptor {
     route: string;
     fieldKey: Record<string, string>;
     multiSelect: string[];
@@ -17,7 +17,7 @@ interface DrillDownDescriptor {
     dimensionType?: Record<string, string>;
 }
 
-type ClickDimension = {column: {field?: string; labelKey?: string} | undefined; value: string};
+type ClickDimension = {column: {field?: string; key?: string} | undefined; value: string};
 
 const WHERE_TYPE_TO_COMPARATOR: Record<string, string> = {
     EQUAL_TO: "EQUALS",
@@ -71,6 +71,14 @@ const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
     },
 }
 
+/**
+ * Registers a drill-down descriptor for a dashboard data source type (keyed by the type's short name, e.g. "Assets").
+ * Lets editions add drill-down support for their own data sources without editing this map.
+ */
+export function registerDrillDown(type: string, descriptor: DrillDownDescriptor): void {
+    DRILL_DOWNS[type] = descriptor
+}
+
 function extractState(value: unknown): unknown {
     if (typeof value !== "string" || !value.includes(",")) {
         return value
@@ -104,7 +112,7 @@ function buildFilter(
     descriptor: DrillDownDescriptor,
     field: string | undefined,
     type: string | undefined,
-    labelKey: string | undefined,
+    key: string | undefined,
     value: unknown,
 ): Record<string, string> {
     const filterKey = descriptor.fieldKey[field ?? ""]
@@ -114,20 +122,25 @@ function buildFilter(
     if (!comparator) return {}
 
     const resolved = asString(value)
+    // Key-value fields (e.g. Executions LABELS, Assets METADATA) carry a key and use a nested filter key.
+    if (key) {
+        return {[`filters[${filterKey}][${comparator}][${key}]`]: resolved}
+    }
+    // A key-value field with no key has no list equivalent, so it is skipped (superset, never wrong rows).
     if (filterKey === "labels") {
-        return labelKey ? {[`filters[labels][${comparator}][${labelKey}]`]: resolved} : {}
+        return {}
     }
     return {[`filters[${filterKey}][${comparator}]`]: resolved}
 }
 
 function dimensionFilter(
     descriptor: DrillDownDescriptor,
-    column: {field?: string; labelKey?: string} | undefined,
+    column: {field?: string; key?: string} | undefined,
     value: string,
 ): Record<string, string> {
     const resolved = column?.field === "STATE" ? extractState(value) : value
     const type = descriptor.dimensionType?.[column?.field ?? ""] ?? "EQUAL_TO"
-    return buildFilter(descriptor, column?.field, type, column?.labelKey, resolved)
+    return buildFilter(descriptor, column?.field, type, column?.key, resolved)
 }
 
 function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Record<string, string> {
@@ -136,14 +149,14 @@ function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Recor
     const out: Record<string, string> = {}
     for (const condition of where as WhereCondition[]) {
         if (condition?.value == null) continue
-        Object.assign(out, buildFilter(descriptor, condition.field, condition.type, condition.labelKey, condition.value))
+        Object.assign(out, buildFilter(descriptor, condition.field, condition.type, condition.key, condition.value))
     }
     return out
 }
 
 export function chartSegmentDrillDown(
     chart: {data?: Record<string, any>} | undefined,
-    column: {field?: string; labelKey?: string} | undefined,
+    column: {field?: string; key?: string} | undefined,
     value: string,
 ): {name: string; query: Record<string, string>; timeFiltered: boolean} | null {
     const descriptor = DRILL_DOWNS[chart?.data?.type?.split(".").pop() ?? ""]

@@ -266,7 +266,6 @@
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
-      "viewAll": "Pokaż wszystko",
       "preview": "Podgląd Dashboardu",
       "quick_filters": {
         "all": "Wszystkie",
@@ -276,7 +275,8 @@
         "success": "Sukces",
         "warning": "Ostrzeżenie"
       },
-      "switch": "Przełącz Dashboard"
+      "switch": "Przełącz Dashboard",
+      "viewAll": "Pokaż wszystko"
     },
     "data": "Dane",
     "dataFilters": "Filtry Danych",

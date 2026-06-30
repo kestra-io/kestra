@@ -225,14 +225,14 @@
     const ksBarRef = ref<InstanceType<typeof KsBar> | null>(null)
 
     const categoryColumn = computed(() =>
-        (data?.columns?.[chartOptions?.column ?? ""]) as {field?: string; labelKey?: string} | undefined,
+        (data?.columns?.[chartOptions?.column ?? ""]) as {field?: string; key?: string} | undefined,
     )
 
     const stackColumn = computed(() => {
         const category = chartOptions?.column ?? ""
         const key = Object.entries(data?.columns ?? {})
             .find(([k, v]) => !(v as Record<string, any>).agg && k !== category)?.[0]
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onChartClick(params: any) {

@@ -357,6 +357,7 @@
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
         "update:onRecap": [value: boolean];
+        "ready": [];
     }>()
 
     // Stores and composables
@@ -933,6 +934,8 @@
         // on first load default values need to be sent to the parent
         // since they are part of the actual value
         modelValue.value = {...inputsValues}
+
+        emit("ready")
     })
 
     // Lifecycle hooks

@@ -124,6 +124,7 @@ export function executeFormValuesStorageKey(flow: {tenantId?: string; namespace:
 export interface WizardStep {
     kind: "plain" | "form" | "recap";
     title?: string;
+    displayName?: string;
     description?: string;
     leafIds?: string[];
 }
@@ -148,7 +149,7 @@ export function buildWizardSteps(inputs: FlowInput[] | undefined): WizardStep[] 
             flushRun()
             const leafIds = flattenInputs([input]).map((l) => l.id)
             if (leafIds.length) {
-                result.push({kind: "form", title: input.displayName || input.id, description: input.description, leafIds})
+                result.push({kind: "form", title: input.displayName || input.id, displayName: input.displayName, description: input.description, leafIds})
             }
         } else {
             run.push(input.id)

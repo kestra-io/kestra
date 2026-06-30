@@ -1788,6 +1788,11 @@
           "label": "Barra laterale"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Medio",
+            "small": "Piccolo"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Dark 2.0",
@@ -1798,6 +1803,7 @@
             "color_mode": "La tua interfaccia ora usa il tema `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Fattore di scala applicato a tutte le dimensioni dei caratteri dell'interfaccia.",
             "color_mode": "Scegli il tema dell'interfaccia preferito.",
             "color_mode_shortcut": "Suggerimento: premi <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>L</kbd> per cambiare tema da qualsiasi punto.",
             "editor_folding_stratgy": "Comprimi i blocchi YAML lunghi per impostazione predefinita quando si apre un flow.",
@@ -1806,8 +1812,7 @@
             "editor_hover_description": "Mostra le descrizioni delle proprietà al passaggio del mouse nell'editor.",
             "environment_color": "Colore di accento utilizzato per l'ambiente corrente nella navigazione.",
             "environment_name": "Nome visualizzato per l'ambiente corrente, mostrato nella navigazione.",
-            "logs_font_size": "Dimensione del carattere utilizzata nei visualizzatori di log e nei terminali.",
-            "app_font_size": "Fattore di scala applicato a tutte le dimensioni dei caratteri dell'interfaccia."
+            "logs_font_size": "Dimensione del carattere utilizzata nei visualizzatori di log e nei terminali."
           },
           "fields": {
             "app_font_size": "Dimensione carattere applicazione",
@@ -1827,12 +1832,7 @@
             "logs_font_size": "Dimensione Font dei Log",
             "theme": "Modello"
           },
-          "label": "Preferenze del Tema",
-          "app_font_size_options": {
-            "small": "Piccolo",
-            "medium": "Medio",
-            "large": "Grande"
-          }
+          "label": "Preferenze del Tema"
         }
       },
       "label": "Impostazioni",

@@ -1788,6 +1788,11 @@
           "label": "Seitenleiste"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Groß",
+            "medium": "Mittel",
+            "small": "Klein"
+          },
           "color_modes": {
             "dark_1": "Dunkel 1.0",
             "dark_2": "Dunkel 2.0",
@@ -1798,6 +1803,7 @@
             "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche.",
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
             "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
@@ -1806,8 +1812,7 @@
             "editor_hover_description": "Eigenschaftsbeschreibungen beim Hover im Editor anzeigen.",
             "environment_color": "Auffälligkeitsfarbe, die für die aktuelle Umgebung in der Navigation verwendet wird.",
             "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
-            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird.",
-            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche."
+            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
           },
           "fields": {
             "app_font_size": "App-Schriftgröße",
@@ -1827,12 +1832,7 @@
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
-          "label": "Modus-Einstellungen",
-          "app_font_size_options": {
-            "small": "Klein",
-            "medium": "Mittel",
-            "large": "Groß"
-          }
+          "label": "Modus-Einstellungen"
         }
       },
       "label": "Einstellungen",

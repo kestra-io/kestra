@@ -999,12 +999,6 @@
             "rootAlias": "orange/700"
           },
           {
-            "name": "ks/test",
-            "value": "#d0d0da",
-            "var": "gray-neutral/200",
-            "rootAlias": "gray-neutral/200"
-          },
-          {
             "name": "ks/text-blue",
             "value": "#4f6df7",
             "var": "blue/400",
@@ -2575,12 +2569,6 @@
             "rootAlias": "orange/300"
           },
           {
-            "name": "ks/test",
-            "value": "#a9b5fe",
-            "var": "blue/200",
-            "rootAlias": "blue/200"
-          },
-          {
             "name": "ks/text-blue",
             "value": "#a9b5fe",
             "var": "blue/200",
@@ -4149,12 +4137,6 @@
             "value": "#ff8b61",
             "var": "orange/300",
             "rootAlias": "orange/300"
-          },
-          {
-            "name": "ks/test",
-            "value": "#de911d",
-            "var": "yellow/600",
-            "rootAlias": "yellow/600"
           },
           {
             "name": "ks/text-blue",

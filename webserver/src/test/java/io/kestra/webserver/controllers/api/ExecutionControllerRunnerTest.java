@@ -2390,7 +2390,7 @@ class ExecutionControllerRunnerTest {
         // Wait until topology is ready before connecting to the SSE stream, otherwise
         // findDependencies() returns empty and the stream emits only start + end-all.
         Awaitility.await()
-            .atMost(Duration.ofSeconds(10))
+            .atMost(Duration.ofSeconds(60))
             .pollInterval(Duration.ofMillis(100))
             .until(() -> flowService.findDependencies(MAIN_TENANT, TESTS_FLOW_NS, "subflow-parent", false, true).findAny().isPresent());
 

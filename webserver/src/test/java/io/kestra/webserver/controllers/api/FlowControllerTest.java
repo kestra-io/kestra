@@ -722,6 +722,82 @@ class FlowControllerTest {
     }
 
     @Test
+    void createFlowAsDraftWithUnrecognizedProperty() {
+        String flowId = IdUtils.create();
+        // unknown task property: a constraint violation that a draft is allowed to carry
+        String draftSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                unknownProp: someValue
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            POST("/api/v1/main/flows?draft=true", draftSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft())
+            .as("creating a draft with an unknown property is accepted (not 422), unlike a non-draft create")
+            .isTrue();
+        assertThat(result.getSource())
+            .as("the verbatim invalid source is preserved on the created draft")
+            .contains("unknownProp");
+    }
+
+    @Test
+    void createFlowAsDraftWithMissingTasks() {
+        String flowId = IdUtils.create();
+        // no tasks: violates @NotEmpty, but the identity (namespace/id) is still parseable
+        String draftSource = """
+            id: %s
+            namespace: %s
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            POST("/api/v1/main/flows?draft=true", draftSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft())
+            .as("a constraint-invalid (no-tasks) flow can be created as a draft, validation is deferred to execution")
+            .isTrue();
+        assertThat(result.getId())
+            .as("the draft is persisted under the namespace/id read from the raw source")
+            .isEqualTo(flowId);
+    }
+
+    @Test
+    void createFlowAsDraftWithUnparseableYamlIsRejected() {
+        // Syntactically broken YAML (unclosed bracket) - the identity cannot be extracted.
+        // Unlike updateFlow (which reads namespace/id from the URL), createFlow has no other source
+        // of identity, so a flow cannot be persisted and the request must be rejected.
+        String brokenSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: [unclosed
+            """.formatted(IdUtils.create(), TEST_NAMESPACE);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/flows?draft=true", brokenSource).contentType(MediaType.APPLICATION_YAML),
+                FlowWithSource.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode())
+            .as("a create-draft whose YAML is too broken to extract namespace/id is rejected, not silently persisted")
+            .isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void listDistinctNamespaces() {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)

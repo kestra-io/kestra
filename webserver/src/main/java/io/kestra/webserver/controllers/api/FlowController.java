@@ -273,9 +273,11 @@ public class FlowController {
         final String tenantId = tenantService.resolveTenant();
 
         // Draft is metadata about the revision, not part of the YAML body, so it comes from the
-        // request parameter (similar to how `revision` is excluded). For draft saves, tolerate
-        // constraint-invalid YAML by falling back to the identity read from the raw source - the
-        // create path has no path variables to fall back to, unlike updateFlow.
+        // request parameter (similar to how `revision` is excluded). A draft may be saved with a
+        // constraint-invalid body (unknown properties, missing tasks, ...): we fall back to reading
+        // the identity from the raw source. Unlike updateFlow, the create path has no path variables,
+        // so the body must still be parseable enough to extract `namespace` and `id` - a flow cannot
+        // be persisted without them, so a syntactically unparseable create is still rejected.
         GenericFlow genericFlow;
         try {
             genericFlow = parseFlowSource(flow).toBuilder().draft(draft).build();

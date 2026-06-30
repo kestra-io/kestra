@@ -58,52 +58,47 @@
     // FIXME: any - SSE objects don't have a consistent type in this codebase
     const sseBySubflow = ref<Record<string, any>>({}) // FIXME: any
 
-    // Live task logs, streamed only while the execution is running, so plugin
+    // Live task logs, polled while the execution is running, so plugin
     // topology-details slots can follow per-step progress in real time (metrics
     // and outputs only materialise once the task run completes).
+    //
+    // Polled, not streamed: the follow SSE only reliably delivers the snapshot
+    // replayed at connect time, and its realtime push isn't a dependable catch-up
+    // path — a stable connection never reconnects, so any lifecycle marker emitted
+    // after connect froze the stepper until the execution ended. A 1s GET snapshot
+    // is plenty (steps last seconds) and avoids the reconnect loop that caused the
+    // kestra-io/kestra#16982 off-heap leak.
     const executionLogs = ref<any[]>([]) // FIXME: any
-    let logsSSE: EventSource | undefined
-    let logsBuffer: any[] = []
-    let logsFlushTimer: ReturnType<typeof setTimeout> | undefined
+    let logsPollTimer: ReturnType<typeof setInterval> | undefined
 
-    function closeLogsSSE() {
-        logsSSE?.close()
-        logsSSE = undefined
-        if (logsFlushTimer) {
-            clearTimeout(logsFlushTimer)
-            logsFlushTimer = undefined
+    function stopLogsPolling() {
+        if (logsPollTimer) {
+            clearInterval(logsPollTimer)
+            logsPollTimer = undefined
         }
-        logsBuffer = []
     }
 
-    function flushLogsBuffer() {
-        logsFlushTimer = undefined
-        if (!logsBuffer.length) return
-        executionLogs.value = executionLogs.value.concat(logsBuffer)
-        logsBuffer = []
-    }
-
-    function streamExecutionLogs() {
-        closeLogsSSE()
-        executionLogs.value = []
+    function refreshExecutionLogs() {
         const id = execution.value?.id
         if (!id) return
         // INFO floor: the lifecycle step markers plugins emit are INFO, so this is
         // enough to drive live progress while filtering out DEBUG/TRACE log volume.
-        executionsStore.followLogs({id, params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO"}}).then((sse: EventSource) => {
-            logsSSE = sse
-            sse.onmessage = (event: MessageEvent) => {
-                if (event.lastEventId === "start") return
-                logsBuffer.push(JSON.parse(event.data))
-                if (!logsFlushTimer) logsFlushTimer = setTimeout(flushLogsBuffer, 200)
-            }
-            // No onerror handler: let EventSource auto-reconnect if the stream drops
-            // mid-execution. On reconnect the server replays all historical logs, so the
-            // stepper catches up without missing any lifecycle marker.
-            // The isExecutionRunning watch calls closeLogsSSE() when the execution
-            // terminates, which calls logsSSE.close() and prevents the reconnect loop
-            // that previously caused the kestra-io/kestra#16982 off-heap leak.
-        })
+        executionsStore.loadLogs({
+            executionId: id,
+            params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO"},
+            store: false,
+            showMessageOnError: false,
+        }).then((logs: any[]) => {
+            executionLogs.value = logs ?? []
+        }).catch(() => {})
+    }
+
+    function startLogsPolling() {
+        stopLogsPolling()
+        executionLogs.value = []
+        if (!execution.value?.id) return
+        refreshExecutionLogs()
+        logsPollTimer = setInterval(refreshExecutionLogs, 1000)
     }
 
     const isExecutionRunning = computed(() => {
@@ -114,8 +109,10 @@
     watch(
         [() => execution.value?.id, isExecutionRunning],
         ([id, running]) => {
-            if (id && running) streamExecutionLogs()
-            else closeLogsSSE()
+            if (id && running) startLogsPolling()
+            // One final fetch on terminate so the stepper lands on the complete
+            // marker set even if the last poll missed the closing steps.
+            else { stopLogsPolling(); refreshExecutionLogs() }
         },
         {immediate: true},
     )
@@ -143,7 +140,7 @@
 
     onUnmounted(() => {
         Object.keys(sseBySubflow.value).forEach(closeSSE)
-        closeLogsSSE()
+        stopLogsPolling()
     })
 
     function closeSSE(subflow: string) {

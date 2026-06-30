@@ -15,7 +15,10 @@ window.KESTRA_UI_PATH = "./";
 // Intercept all /api requests and return empty successful responses.
 // No backend is running during storybook tests, so this prevents network
 // errors, proxy failures, and the Vue/axios error cascade that follows.
-const originalAdapter = axios.defaults.adapter;
+// `axios.defaults.adapter` is an array of adapter names (e.g. ["xhr", "http", "fetch"]),
+// not a callable function — invoking it directly throws "originalAdapter is not a function".
+// Resolve it to the actual adapter function so non-/api requests are handled normally.
+const originalAdapter = axios.getAdapter(axios.defaults.adapter);
 axios.defaults.adapter = async (config) => {
     if (typeof config.url === "string" && config.url.includes("/api/")) {
         return {data: [], status: 200, statusText: "OK", headers: {}, config, request: {}};

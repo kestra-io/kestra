@@ -1788,6 +1788,11 @@
           "label": "侧边栏"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "深色模式 2.0",
@@ -1798,6 +1803,7 @@
             "color_mode": "您的界面现在使用 `{mode}` 主题。"
           },
           "descriptions": {
+            "app_font_size": "应用于所有界面字体大小的缩放系数。",
             "color_mode": "选择您偏好的界面主题。",
             "color_mode_shortcut": "提示：在任意位置按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 即可循环切换主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
@@ -1806,8 +1812,7 @@
             "editor_hover_description": "在编辑器中悬停时显示属性描述。",
             "environment_color": "用于导航中当前环境的强调颜色。",
             "environment_name": "当前环境的显示名称，显示在导航中。",
-            "logs_font_size": "日志查看器和终端中使用的字体大小。",
-            "app_font_size": "应用于所有界面字体大小的缩放系数。"
+            "logs_font_size": "日志查看器和终端中使用的字体大小。"
           },
           "fields": {
             "app_font_size": "应用字体大小",
@@ -1827,12 +1832,7 @@
             "logs_font_size": "日志字体大小",
             "theme": "主题"
           },
-          "label": "主题偏好",
-          "app_font_size_options": {
-            "small": "小",
-            "medium": "中",
-            "large": "大"
-          }
+          "label": "主题偏好"
         }
       },
       "label": "设置",

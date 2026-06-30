@@ -102,6 +102,12 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     @JsonAnySetter
     public void setMetadata(String name, Object value) {
+        // `metadataList` is an ElasticSearch indexing-only projection of `metadata` (see EE ElasticSearchAssetRepository).
+        // Fresh indices exclude it from _source, but existing/upgraded indices may still return it; never fold it back
+        // into the metadata map.
+        if ("metadataList".equals(name)) {
+            return;
+        }
         metadata.put(name, value);
     }
 

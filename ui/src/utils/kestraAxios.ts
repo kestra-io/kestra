@@ -56,8 +56,10 @@ export interface KestraAxiosOptions {
      * Called on a 401 when the user is not logged in.
      * Defaults to navigating to the login route.
      * EE overrides this to implement token-refresh before falling back to login.
+     * May return a Promise (e.g. a retried request after refresh); the interceptor
+     * forwards that Promise so the original caller gets the refreshed response.
      */
-    onUnauthorized?: (navigateToLogin: () => void) => void
+    onUnauthorized?: (navigateToLogin: () => void, errorResponse: unknown) => Promise<unknown> | void
 }
 
 // ── Main setup function ──────────────────────────────────────────────────────
@@ -125,9 +127,9 @@ export function setupKestraAxios(
         })
     }
 
-    const onUnauthorized = options.onUnauthorized ?? (() => {
+    const onUnauthorized = options.onUnauthorized ?? ((navigate: () => void) => {
         beforeLogout?.()
-        navigateToLogin()
+        navigate()
     })
 
     // ── Request: NProgress start + multipart empty-body fix ──────────────────
@@ -164,8 +166,8 @@ export function setupKestraAxios(
         }
 
         if (status === 401 && !isLoggedIn()) {
-            onUnauthorized(navigateToLogin)
-            return Promise.reject(errorResponse)
+            const result = onUnauthorized(navigateToLogin, errorResponse)
+            return result instanceof Promise ? result : Promise.reject(errorResponse)
         }
 
         if (status === 400) return Promise.reject(errorResponse.response.data)

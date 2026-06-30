@@ -28,6 +28,13 @@
             </KsButton>
         </KsButtonGroup>
     </div>
+    <KsAlert
+        v-else-if="previewError"
+        type="error"
+        :closable="false"
+    >
+        {{ previewError }}
+    </KsAlert>
     <div v-else-if="!preview">
         Loading...
     </div>
@@ -84,6 +91,7 @@
     const encodingModel = ref<EncodingOption["value"]>()
     const forceEditor = ref<boolean>()
     const preview = ref<Preview>()
+    const previewError = ref("")
     /** is the file bigger than 10MB */
     const bigFile = ref<boolean>(false)
     const metadata = ref<FileMetas>()
@@ -92,6 +100,8 @@
         return await ExecutionsAPI.fileMetadatasFromExecution({
             executionId: props.executionId,
             path: props.path,
+        }, {
+            validateStatus: (status: number) => status === 200 || status === 404 || status === 422,
         })
     }
 
@@ -150,23 +160,30 @@
         [maxRows, encodingModel],
         async ([maxRows, encoding]) => {
             if(maxRows === undefined || encoding === undefined) return
-            metadata.value = await getFileMeta()
-            if(metadata.value.size === 0) {
-                preview.value = {
-                    type: "RAW",
-                    content: "",
-                    truncated: false,
+            previewError.value = ""
+            try {
+                metadata.value = await getFileMeta()
+                if(metadata.value?.size === 0) {
+                    preview.value = {
+                        type: "RAW",
+                        content: "",
+                        truncated: false,
+                    }
+                    return
                 }
-                return
+                bigFile.value = (metadata.value?.size ?? 0) >= BIG_FILE_THRESHOLD
+                if(bigFile.value) {
+                    // For big files, we want to signal the user that it can take 
+                    // significant time to load the preview, so we set maxRows to 
+                    // undefined to disable the limit and load the full file.
+                    return
+                }
+                await loadPreview()
+            } catch (error) {
+                previewError.value = error instanceof Error
+                    ? error.message
+                    : String(error)
             }
-            bigFile.value = metadata.value.size >= BIG_FILE_THRESHOLD
-            if(bigFile.value) {
-                // For big files, we want to signal the user that it can take 
-                // significant time to load the preview, so we set maxRows to 
-                // undefined to disable the limit and load the full file.
-                return
-            }
-            await loadPreview()
         },
         {immediate: true},
     )

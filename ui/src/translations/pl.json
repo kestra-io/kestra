@@ -1806,9 +1806,11 @@
             "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
             "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
             "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
-            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach."
+            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach.",
+            "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu."
           },
           "fields": {
+            "app_font_size": "Rozmiar czcionki aplikacji",
             "chart_color_scheme": {
               "classic": "Klasyczny",
               "kestra": "Kestra",
@@ -1825,7 +1827,12 @@
             "logs_font_size": "Rozmiar czcionki logów",
             "theme": "Motyw"
           },
-          "label": "Preferencje Motywu"
+          "label": "Preferencje Motywu",
+          "app_font_size_options": {
+            "small": "Mały",
+            "medium": "Średni",
+            "large": "Duży"
+          }
         }
       },
       "label": "Ustawienia",

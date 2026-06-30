@@ -191,7 +191,7 @@
 
     .expandIcon {
         margin-left: 1rem;
-        font-size: 1.5rem;
+        font-size: var(--ks-font-size-4xl);
         transition: transform 0.2s $transition-timing;
         &.rotate-icon {
             transform: rotate(180deg);
@@ -229,7 +229,7 @@
             border-radius: $link-radius;
             transition: all 0.2s ease;
             margin-bottom: 2px;
-            font-size: 0.85rem;
+            font-size: var(--ks-font-size-base);
             cursor: pointer;
             width: 100%;
 
@@ -241,7 +241,7 @@
                     @if $i == 0 {
                         font-weight: 500;
                     } @else if $i == 1 {
-                        font-size: 0.8rem;
+                        font-size: var(--ks-font-size-base);
                         color: var(--ks-text-secondary);
                     } @else {
                         font-size: var(--ks-font-size-xs);
@@ -279,7 +279,7 @@
                 display: block;
                 padding: 0.25rem 0.5rem;
                 margin-bottom: 0.15rem;
-                font-size: 11px;
+                font-size: var(--ks-font-size-xs);
                 font-weight: 700;
                 letter-spacing: 0.05em;
                 color: var(--ks-text-secondary);

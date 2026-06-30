@@ -1806,9 +1806,11 @@
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
-            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
+            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
           },
           "fields": {
+            "app_font_size": "アプリのフォントサイズ",
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",
@@ -1825,7 +1827,12 @@
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
-          "label": "テーマ設定"
+          "label": "テーマ設定",
+          "app_font_size_options": {
+            "small": "小",
+            "medium": "中",
+            "large": "大"
+          }
         }
       },
       "label": "設定",

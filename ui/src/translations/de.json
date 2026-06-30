@@ -1806,9 +1806,11 @@
             "editor_hover_description": "Eigenschaftsbeschreibungen beim Hover im Editor anzeigen.",
             "environment_color": "Auffälligkeitsfarbe, die für die aktuelle Umgebung in der Navigation verwendet wird.",
             "environment_name": "Anzeigename für die aktuelle Umgebung, der in der Navigation angezeigt wird.",
-            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
+            "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird.",
+            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche."
           },
           "fields": {
+            "app_font_size": "App-Schriftgröße",
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",
@@ -1825,7 +1827,12 @@
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
-          "label": "Modus-Einstellungen"
+          "label": "Modus-Einstellungen",
+          "app_font_size_options": {
+            "small": "Klein",
+            "medium": "Mittel",
+            "large": "Groß"
+          }
         }
       },
       "label": "Einstellungen",

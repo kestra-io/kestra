@@ -1806,9 +1806,11 @@
             "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
             "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
             "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
-            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
+            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
+            "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다."
           },
           "fields": {
+            "app_font_size": "앱 글꼴 크기",
             "chart_color_scheme": {
               "classic": "클래식",
               "kestra": "Kestra",
@@ -1825,7 +1827,12 @@
             "logs_font_size": "로그 글꼴 크기",
             "theme": "테마"
           },
-          "label": "테마 설정"
+          "label": "테마 설정",
+          "app_font_size_options": {
+            "small": "작게",
+            "medium": "보통",
+            "large": "크게"
+          }
         }
       },
       "label": "설정",

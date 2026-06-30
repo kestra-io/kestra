@@ -1271,7 +1271,7 @@
   .file-placeholder {
     margin-left: 8px;
     color: var(--ks-text-secondary) !important;
-    font-size: 0.9em;
+    font-size: var(--ks-font-size-sm);
     flex: 1;
     max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */
     min-width: 0;

@@ -110,8 +110,8 @@
 
 .ks-empty-state__title {
     margin: 0;
-    font-size: 18px;
-    line-height: 22px;
+    font-size: var(--ks-font-size-xl);
+    line-height: var(--ks-line-height-tight);
     color: var(--ks-text-primary);
     font-weight: var(--ks-font-weight-semibold);
 }
@@ -119,9 +119,9 @@
 .ks-empty-state__description {
     margin: 0;
     width: 100%;
-    font-size: 14px;
+    font-size: var(--ks-font-size-base);
     color: var(--ks-text-secondary);
-    line-height: 18px;
+    line-height: var(--ks-line-height-tight);
 }
 
 .ks-empty-state__actions {

@@ -1806,9 +1806,11 @@
             "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
             "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
             "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
-            "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais."
+            "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais.",
+            "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface."
           },
           "fields": {
+            "app_font_size": "Tamanho de fonte do aplicativo",
             "chart_color_scheme": {
               "classic": "Clássico",
               "kestra": "Kestra",
@@ -1825,7 +1827,12 @@
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
-          "label": "Preferências de Tema"
+          "label": "Preferências de Tema",
+          "app_font_size_options": {
+            "small": "Pequeno",
+            "medium": "Médio",
+            "large": "Grande"
+          }
         }
       },
       "label": "Configurações",

@@ -202,7 +202,7 @@
     }
 
     .button-icon {
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-sm);
         transform: rotate(45deg);
     }
 

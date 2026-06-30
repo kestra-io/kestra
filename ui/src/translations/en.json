@@ -1036,21 +1036,22 @@
         "theme": {
           "label": "Appearance",
           "fields": {
-            "theme": "Theme",
-            "color_mode": "Color mode",
-            "editor_font_size": "Editor Font Size",
-            "logs_font_size": "Logs Font Size",
-            "editor_font_family": "Editor Font Family",
-            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
-            "editor_hover_description": "Hover on property to see description",
-            "environment_name": "Environment Name",
-            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
-            "environment_color": "Environment Color",
+            "app_font_size": "App Font Size",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
               "classic": "Classic",
               "kestra": "Kestra"
-            }
+            },
+            "color_mode": "Color mode",
+            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
+            "editor_font_family": "Editor Font Family",
+            "editor_font_size": "Editor Font Size",
+            "editor_hover_description": "Hover on property to see description",
+            "environment_color": "Environment Color",
+            "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
+            "logs_font_size": "Logs Font Size",
+            "theme": "Theme"
           },
           "color_modes": {
             "dark_2": "Dark 2.0",
@@ -1070,7 +1071,13 @@
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
-            "environment_color": "Accent color used for the current environment in the navigation."
+            "environment_color": "Accent color used for the current environment in the navigation.",
+            "app_font_size": "Scale factor applied to all interface font sizes."
+          },
+          "app_font_size_options": {
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large"
           }
         },
         "localization": {

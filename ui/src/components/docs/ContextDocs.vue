@@ -329,7 +329,7 @@
         align-items: center;
         justify-content: center;
         user-select: none;
-        font-size: 28px;
+        font-size: var(--ks-font-size-4xl);
         line-height: 0;
         margin-top: -6px;
         width: 28px;

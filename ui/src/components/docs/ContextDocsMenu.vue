@@ -5,11 +5,8 @@
             class="menuOpener"
             :class="{'is-open': menuOpen}"
         >
+            <Menu class="menuIcon" />
             {{ $t("documentationMenu") }}
-            <ChevronDown
-                class="expandIcon"
-                :class="{'rotate-icon': menuOpen}"
-            />
         </KsButton>
         <div v-if="menuOpen" class="docsMenuContainer">
             <ul class="docsMenu list-unstyled d-flex flex-column m-0">
@@ -49,7 +46,7 @@
     import {useDocStore} from "../../stores/doc"
     import {SECTIONS} from "./docsUtils"
 
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import Menu from "vue-material-design-icons/Menu.vue"
 
     import RecursiveToc from "./RecursiveToc.vue"
     import ContextDocsLink from "./ContextDocsLink.vue"
@@ -144,7 +141,6 @@
 
     $scrollbar-width: 6px;
     $link-radius: 6px;
-    $transition-timing: cubic-bezier(0.16, 1, 0.3, 1);
 
     @mixin custom-scrollbar {
         &::-webkit-scrollbar {
@@ -164,52 +160,49 @@
     }
 
     .docsMenuWrapper {
-        position: sticky;
-        top: 1rem;
         display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 0 27px;
+        flex-shrink: 0;
         z-index: 3;
     }
 
     .menuOpener {
-        flex: 1;
+        height: 32px;
         margin: 0;
-        width: 100%;
-        border-radius: $link-radius;
+        gap: 4px;
+        padding: 4px 8px;
+        white-space: nowrap;
+        border-radius: 8px;
+        border: 0.5px solid var(--ks-btn-secondary-border-default);
+        background: var(--ks-btn-secondary-bg-default);
+        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
         font-weight: 600;
         transition: all 0.2s ease;
 
         &.is-open {
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
             position: relative;
             z-index: 1001;
         }
     }
 
-    .expandIcon {
-        margin-left: 1rem;
-        font-size: var(--ks-font-size-4xl);
-        transition: transform 0.2s $transition-timing;
-        &.rotate-icon {
-            transform: rotate(180deg);
-        }
+    .menuIcon {
+        display: inline-flex;
+        margin-right: 4px;
+        color: var(--ks-icon-muted);
+        font-size: var(--ks-font-size-sm);
     }
 
     .docsMenuContainer {
         position: absolute;
         z-index: 1000;
         padding: 1rem 0.25rem 1rem 0.5rem;
-        left: 27px;
-        right: 27px;
+        left: 28px;
+        right: 28px;
         top: 100%;
         background-color: var(--ks-bg-surface);
-        border-radius: 0 0 $link-radius $link-radius;
+        border-radius: 8px;
         border: 1px solid var(--ks-border-default);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        margin-top: -1px;
+        margin-top: 4px;
     }
 
     .docsMenu {
@@ -229,7 +222,6 @@
             border-radius: $link-radius;
             transition: all 0.2s ease;
             margin-bottom: 2px;
-            font-size: var(--ks-font-size-base);
             cursor: pointer;
             width: 100%;
 
@@ -262,7 +254,7 @@
 
             &.active-page {
                 color: var(--ks-text-link) !important;
-                font-weight: 600;
+                font-weight: var(--ks-font-weight-semibold);
                 opacity: 1 !important;
                 background-color: var(--ks-btn-secondary-bg-hover);
             }
@@ -280,7 +272,7 @@
                 padding: 0.25rem 0.5rem;
                 margin-bottom: 0.15rem;
                 font-size: var(--ks-font-size-xs);
-                font-weight: 700;
+                font-weight: var(--ks-font-weight-regular);
                 letter-spacing: 0.05em;
                 color: var(--ks-text-secondary);
                 text-transform: uppercase;

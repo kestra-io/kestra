@@ -1,14 +1,13 @@
 <template>
     <template v-if="initialInputs">
-        <!-- Wizard progress: one step per fillable step (FORM titles, "Inputs" for ungrouped runs).
-             active = currentStep, so earlier steps render as finished and the recap marks them all done. -->
-        <el-steps v-if="isWizard" :active="currentStep" finishStatus="success" class="wizard-steps" data-testid="wizard-steps">
-            <el-step v-for="section in recapSections" :key="section.index" :title="section.title" />
-        </el-steps>
-        <!-- The section name lives in the stepper (bold when active); only the optional description
-             is shown above the fields. -->
-        <div v-if="isWizard && current?.kind === 'form' && current.description" class="wizard-step-header">
-            <Markdown :source="current.description" class="text-description" />
+        <!-- Active FORM header: its displayName (only when set), with the optional description beneath.
+             A FORM without a displayName, or an ungrouped inputs run, shows no header. Step progress
+             now lives in the bottom bar (see .wizard-progress below). -->
+        <div v-if="isWizard && current?.kind === 'form' && (current.displayName || current.description)" class="wizard-step-header">
+            <h5 v-if="current.displayName" class="wizard-step-title">
+                {{ current.displayName }}
+            </h5>
+            <Markdown v-if="current.description" :source="current.description" class="text-description" />
         </div>
 
         <el-form-item
@@ -305,6 +304,21 @@
                 {{ showComputingLabel ? $t('loading') : $t(returnToRecap ? 'done' : 'next') }}
             </el-button>
         </div>
+
+        <!-- Label-less progress bar pinned to the bottom of the pane; hidden on the recap, returns on Edit.
+             One segment per fillable step; fills only once the step is passed via Next (stepStatus).
+             1.3 has no design-system KsSteps variant, so the bar is inlined here as plain markup. -->
+        <div v-if="isWizard && !isOnRecap" class="wizard-progress" role="list" data-testid="wizard-progress">
+            <span
+                v-for="section in recapSections"
+                :key="section.index"
+                class="wizard-progress__seg"
+                :class="`is-${stepStatus(section.index)}`"
+                role="listitem"
+                :aria-label="section.title"
+                :aria-current="stepStatus(section.index) === 'process' ? 'step' : undefined"
+            />
+        </div>
     </template>
 
     <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
@@ -439,6 +453,7 @@
         navLoading,
         showComputingLabel,
         isOnRecap,
+        stepStatus,
         visibleInputs,
         inputLabel,
         recapSections,
@@ -947,27 +962,31 @@
 </script>
 
 <style scoped lang="scss">
-.wizard-steps {
-    margin-bottom: 1.5rem;
+.wizard-progress {
+    // Label-less, equal-width segmented progress meter, pinned to the bottom of the Inputs pane.
+    // 1.3 has no design-system KsSteps, so this is inlined (vs develop's KsSteps variant="bar").
+    // Tokens are 1.3 ui-libs names: --ks-border-active = brand violet, --ks-border-primary = neutral track.
+    position: sticky;
+    bottom: 0;
+    margin-top: 1rem;
+    padding: 0.75rem 0 0.25rem;
+    background: var(--ks-background-card);
+    border-top: 1px solid var(--ks-border-primary, #3d3d42);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
-    // Tune the active ("process") and completed ("success") step palette for the light execution
-    // form (element-plus el-steps defaults are built for other surfaces); keep it readable, no glow.
-    :deep(.el-step__head.is-process) {
-        color: var(--ks-content-primary);
+    .wizard-progress__seg {
+        flex: 1 1 0;
+        height: 0.375rem;
+        border-radius: 999px;
+        background: var(--ks-border-primary, #3d3d42);
+        transition: background 0.18s ease;
 
-        .el-step__icon {
-            border-color: var(--ks-border-active, #8405ff);
-            box-shadow: none;
-        }
-    }
-
-    :deep(.el-step__title.is-process) {
-        color: var(--ks-content-primary);
-        font-weight: 600;
-    }
-
-    :deep(.el-step__head.is-success .el-step__icon) {
-        box-shadow: none;
+        // stepStatus(): success = passed via Next (filled), process = current (active), wait = upcoming.
+        &.is-success { background: var(--ks-border-active, #8405ff); }
+        &.is-process { background: rgba(132, 5, 255, 0.45); }
+        &.is-wait { background: var(--ks-border-primary, #3d3d42); }
     }
 }
 

@@ -181,21 +181,23 @@ export const Wizard = {
         expect(can.queryByTestId("inputs-wizard-recap")).toBeNull();
         expect(can.getByTestId("on-recap")).toHaveTextContent("false");
 
-        // Progress stepper (el-steps): one step per fillable step ("Inputs", "Environment", "Inputs"),
-        // the current one in the "process" state.
-        const stepper = can.getByTestId("wizard-steps");
-        expect(stepper.querySelectorAll(".el-step")).toHaveLength(3);
-        expect(stepper).toHaveTextContent("Environment");
-        expect(stepper.querySelectorAll(".el-step__head")[0].className).toContain("is-process");
+        // Progress bar (inlined — 1.3 has no design-system): one label-less segment per fillable step
+        // (name, Environment, team). stepStatus drives the class: is-process = current, is-wait = upcoming.
+        const bar = can.getByTestId("wizard-progress");
+        expect(bar.querySelectorAll(".wizard-progress__seg")).toHaveLength(3);
+        expect(bar.querySelectorAll(".wizard-progress__seg")[0].className).toContain("is-process");
 
         // Next -> step 2 (the FORM "Environment", showing its dotted child region).
         await userEvent.click(can.getByTestId("wizard-next"));
         await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
         expect(can.getByTestId("wizard-back")).toBeTruthy();
+        // The active FORM's displayName shows as a header above its fields.
+        expect(canvasElement.querySelector(".wizard-step-title")).toHaveTextContent("Environment");
 
-        // Stepper tracks progress: step 0 completed (success), step 1 ("Environment") now in process.
-        expect(stepper.querySelectorAll(".el-step__head")[0].className).toContain("is-success");
-        expect(stepper.querySelectorAll(".el-step__head")[1].className).toContain("is-process");
+        // Bar tracks progress: step 0 passed (is-success), step 1 ("Environment") now current (is-process).
+        const segs = can.getByTestId("wizard-progress").querySelectorAll(".wizard-progress__seg");
+        expect(segs[0].className).toContain("is-success");
+        expect(segs[1].className).toContain("is-process");
 
         // Next -> step 3 (plain "team").
         await userEvent.click(can.getByTestId("wizard-next"));

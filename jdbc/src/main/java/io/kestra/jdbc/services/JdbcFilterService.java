@@ -157,8 +157,8 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition containsCondition(String field, Contains<F> filter) {
-        if (filter.getLabelKey() != null) {
-            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getLabelKey(), filter.getValue())), QueryFilter.Op.EQUALS);
+        if (filter.getKey() != null) {
+            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getKey(), filter.getValue())), QueryFilter.Op.EQUALS);
         }
 
         return field(field).contains(filter.getValue().toString());

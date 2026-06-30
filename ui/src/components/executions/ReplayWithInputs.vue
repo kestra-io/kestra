@@ -2,6 +2,7 @@
     <FlowRun
         flow
         execution
+        autoPrefill
         buttonText="replay"
         :buttonIcon="PlayBoxMultiple"
         :replaySubmit="handleReplaySubmit"

@@ -287,6 +287,7 @@
     import {apiUrl} from "override/utils/route"
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
+    import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import throttle from "lodash/throttle"
     import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
@@ -392,29 +393,7 @@
 
         // Order taskruns parent → child and annotate depth, so dynamically-generated taskruns
         // (e.g. each Ansible play/task) render indented under their parent taskrun.
-        const byId: Record<string, TaskRun> = Object.fromEntries(taskRunList.map((tr) => [tr.id, tr]))
-        const childrenByParent: Record<string, TaskRun[]> = {}
-        const roots: TaskRun[] = []
-        for (const tr of taskRunList) {
-            if (tr.parentTaskRunId && byId[tr.parentTaskRunId]) {
-                (childrenByParent[tr.parentTaskRunId] ??= []).push(tr)
-            } else {
-                roots.push(tr)
-            }
-        }
-
-        const ordered: TaskRunWithDepth[] = []
-        const walk = (nodes: TaskRun[], depth: number) => {
-            for (const node of nodes) {
-                ordered.push({...node, depth})
-                const children = childrenByParent[node.id]
-                if (children) {
-                    walk(children, depth + 1)
-                }
-            }
-        }
-        walk(roots, 0)
-        return ordered
+        return buildTaskRunHierarchy(taskRunList).map(({task, depth}) => ({...task, depth}))
     })
 
     const taskRunById = computed(() =>

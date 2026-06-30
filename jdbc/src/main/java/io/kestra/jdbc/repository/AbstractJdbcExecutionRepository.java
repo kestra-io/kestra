@@ -963,8 +963,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
                 labelFilters.forEach(labelFilter ->
                 {
-                    if (labelFilter.getLabelKey() != null) {
-                        mergedMap.put(labelFilter.getLabelKey(), labelFilter.getValue().toString());
+                    if (labelFilter.getKey() != null) {
+                        mergedMap.put(labelFilter.getKey(), labelFilter.getValue().toString());
                     } else if (labelFilter.getValue() instanceof String stringLabel) {
                         mergedMap.putAll(Label.from(stringLabel));
                     } else {

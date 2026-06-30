@@ -1,0 +1,25 @@
+{{- if .Values.deployments.controller.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "kestra.fullname" . }}-controller"
+  labels:
+    {{- include "kestra.labels" . | nindent 4 }}
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.service.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+      protocol: TCP
+  selector:
+    {{- include "kestra.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+{{- end }}

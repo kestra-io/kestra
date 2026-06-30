@@ -199,6 +199,52 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
+    void executingInvalidDraftReturnsAFailedExecution() {
+        // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty)
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
+                null
+            ),
+            Execution.class
+        );
+
+        assertThat(execution)
+            .as("explicitly executing an invalid draft by revision is accepted, not rejected with a 4xx")
+            .isNotNull();
+        assertThat(execution.getId())
+            .as("the accepted invalid-draft execution is persisted with an id")
+            .isNotNull();
+        assertThat(execution.getState().getCurrent())
+            .as("an invalid draft comes back already FAILED so the violation is visible in the execution log")
+            .isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void executingDraftOnlyFlowWithoutRevisionReturnsAFailedExecution() {
+        // webhook-draft has only draft revisions, so it cannot resolve to a published version
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
+                null
+            ),
+            Execution.class
+        );
+
+        assertThat(execution)
+            .as("starting a draft-only flow without a revision is accepted, not rejected with a bare 404")
+            .isNotNull();
+        assertThat(execution.getId())
+            .as("the accepted draft-only execution is persisted with an id")
+            .isNotNull();
+        assertThat(execution.getState().getCurrent())
+            .as("a draft-only flow run without a revision comes back FAILED with the reason in the execution log")
+            .isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.

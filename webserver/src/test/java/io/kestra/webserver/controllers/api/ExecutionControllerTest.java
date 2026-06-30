@@ -171,8 +171,6 @@ class ExecutionControllerTest {
     @Test
     @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
     void webhookOnDraftFlowReturnsNotFound() {
-        // A flow whose only revision is a draft is treated as if it does not exist for any
-        // execution start that does not pin an explicit revision (webhook entry, schedules, ...).
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
@@ -181,47 +179,12 @@ class ExecutionControllerTest {
             )
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Flow not found");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
-    void executingInvalidDraftReturnsAFailedExecution() {
-        // A draft can be saved with constraint violations (here: empty `tasks` violates @NotEmpty).
-        // Executing it explicitly is accepted (no 4xx) but the execution comes back already FAILED
-        // so the user sees the error in the UI's execution log instead of a confusing crash later.
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
-                null
-            ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-        assertThat(execution.getState().getCurrent()).isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
-    void executingDraftOnlyFlowWithoutRevisionReturnsAFailedExecution() {
-        // A flow whose only revisions are drafts can't resolve to a published version, so when the
-        // user starts an execution without specifying a revision the request is accepted but a
-        // FAILED execution is emitted, with the explanation visible in the UI's execution log -
-        // instead of returning a bare 404 that surfaces no diagnostic.
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
-                null
-            ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-        assertThat(execution.getState().getCurrent()).isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+        assertThat(exception.getStatus().getCode())
+            .as("a webhook on a draft-only flow is treated as non-existent (404) and must not fire an execution")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage())
+            .as("the 404 message explains the flow was not found")
+            .contains("Flow not found");
     }
 
     @Test

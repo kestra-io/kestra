@@ -203,9 +203,6 @@ public class ExecutionController {
     protected DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
-    protected DispatchQueueInterface<Execution> executionQueue;
-
-    @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     @Inject
@@ -716,13 +713,13 @@ public class ExecutionController {
                 Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
                 if (latestAny.isPresent() && latestAny.get().isDraft()) {
                     Flow draftFlow = latestAny.get();
-                    return Mono.just(emitFailedExecution(
+                    return emitFailedExecution(
                         draftFlow,
                         parsedLabels,
                         scheduleDate,
                         kind,
                         "Flow execution failed: flow only has draft revisions. Save it as a published revision before executing it without a revision."
-                    ));
+                    );
                 }
             }
             throw e;
@@ -734,13 +731,13 @@ public class ExecutionController {
         // and visible in the UI's execution log.
         Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
         if (violations.isPresent()) {
-            return Mono.just(emitFailedExecution(
+            return emitFailedExecution(
                 flow,
                 parsedLabels,
                 scheduleDate,
                 kind,
                 "Flow execution failed: flow definition is invalid. " + violations.get().getMessage()
-            ));
+            );
         }
 
 
@@ -829,38 +826,32 @@ public class ExecutionController {
     }
 
     /**
-     * Build a FAILED execution from the given flow, persist a single error log line through the
-     * run context appender (so the message lands in the UI's execution log) and emit it to the
-     * execution queue. Used when the request is accepted but the flow cannot be executed - e.g.,
-     * the flow only has draft revisions, or its definition has constraint violations.
+     * Create a FAILED execution for a flow that was accepted but cannot run - e.g. the flow only
+     * has draft revisions, or its definition has constraint violations. Like every other create,
+     * it goes through the executor command queue (a {@link Create} command already in the FAILED
+     * state) rather than emitting a raw execution, and the reason is logged against the execution
+     * id so it lands in the UI's execution log.
      */
-    private ExecutionResponse emitFailedExecution(
+    private Mono<ExecutionResponse> emitFailedExecution(
         Flow flow,
         List<Label> parsedLabels,
         Optional<ZonedDateTime> scheduleDate,
         Optional<ExecutionKind> kind,
         String errorMessage
     ) {
-        Execution failedExecution = Execution.newExecution(flow, null, parsedLabels, scheduleDate)
-            .toBuilder()
-            .kind(kind.orElse(null))
-            .build()
-            .withState(State.Type.FAILED);
-        runContextFactory.of(flow, failedExecution).logger().error(errorMessage);
-        try {
-            executionQueue.emit(failedExecution);
-            eventPublisher.publishEvent(CrudEvent.create(failedExecution));
-        } catch (QueueException e) {
-            throw new RuntimeException(e);
-        }
-        ExecutionId executionId = new ExecutionId(
-            failedExecution.getTenantId(),
-            failedExecution.getNamespace(),
-            failedExecution.getFlowId(),
-            failedExecution.getId(),
-            failedExecution.getFlowRevision()
-        );
-        return ExecutionResponse.fromExecution(failedExecution, executionUrl(executionId));
+        String executionId = IdUtils.create();
+        Create createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
+            .withLabels(parsedLabels)
+            .withScheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
+            .withKind(kind.orElse(null))
+            .withStateType(State.Type.FAILED);
+
+        Logs.logExecutionId(createCommand.executionFullId(), log, Level.ERROR, errorMessage);
+
+        return awaitBlockingAction(
+            executionId, "Create",
+            operationId -> executionCommandQueue.emit(createCommand.withOperationId(operationId))
+        ).map(res -> ExecutionResponse.fromExecution(res.body(), executionUrl(createCommand.executionFullId())));
     }
 
     private URI executionUrl(ExecutionId executionId) {

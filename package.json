@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17828135.30c54e76.93e9a466"
+  }
+}

@@ -88,6 +88,12 @@
     "before": "前",
     "behavior": "動作",
     "blueprints": {
+      "missingPlugins": {
+        "title": "不足しているplugin",
+        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
+        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "install": "pluginをインストール"
+      },
       "all": "すべて",
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",

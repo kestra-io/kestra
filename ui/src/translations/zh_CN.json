@@ -88,6 +88,12 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
+      "missingPlugins": {
+        "title": "缺少 plugin",
+        "description": "此 blueprint 使用了此实例上未安装的 plugin 的 task：{plugins}。请安装它们以使用此 blueprint。",
+        "card": "需要此实例上未安装的 plugin：{plugins}",
+        "install": "安装 plugin"
+      },
       "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",

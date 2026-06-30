@@ -1788,6 +1788,11 @@
           "label": "Barre latérale"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Moyenne",
+            "small": "Petite"
+          },
           "color_modes": {
             "dark_1": "Sombre 1.0",
             "dark_2": "Sombre 2.0",
@@ -1798,6 +1803,7 @@
             "color_mode": "Votre interface utilise maintenant le thème `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Facteur d'échelle appliqué à toutes les tailles de police de l'interface.",
             "color_mode": "Choisissez votre thème d'interface préféré.",
             "color_mode_shortcut": "Astuce : appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>L</kbd> pour changer de thème depuis n'importe où.",
             "editor_folding_stratgy": "Réduire les blocs YAML longs par défaut lors de l'ouverture d'un flow.",
@@ -1806,8 +1812,7 @@
             "editor_hover_description": "Afficher les descriptions des propriétés au survol dans l'éditeur.",
             "environment_color": "Couleur d'accent utilisée pour l'environnement actuel dans la navigation.",
             "environment_name": "Nom d'affichage pour l'environnement actuel, affiché dans la navigation.",
-            "logs_font_size": "Taille de police utilisée dans les visionneuses de log et les terminaux.",
-            "app_font_size": "Facteur d'échelle appliqué à toutes les tailles de police de l'interface."
+            "logs_font_size": "Taille de police utilisée dans les visionneuses de log et les terminaux."
           },
           "fields": {
             "app_font_size": "Taille de police de l'application",
@@ -1827,12 +1832,7 @@
             "logs_font_size": "Taille de police des Logs",
             "theme": "Modèle"
           },
-          "label": "Préférences de thème",
-          "app_font_size_options": {
-            "small": "Petite",
-            "medium": "Moyenne",
-            "large": "Grande"
-          }
+          "label": "Préférences de thème"
         }
       },
       "label": "Paramètres",

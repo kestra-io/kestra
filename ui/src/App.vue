@@ -19,8 +19,9 @@
     import "./styles/vendor.scss"
     import "./styles/app.scss"
 
-    import {ref, computed, watch, onMounted} from "vue"
+    import {ref, computed, watch, onMounted, provide} from "vue"
     import {useRoute} from "vue-router"
+    import {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "@kestra-io/design-system"
     import {useApiStore} from "./stores/api"
     import {useLayoutStore} from "./stores/layout"
     import {useCoreStore} from "./stores/core"
@@ -30,6 +31,7 @@
     import * as BasicAuth from "./utils/basicAuth"
     import {applyFontScale, getAppFontSizeMode} from "./utils/appFontSize"
     import {initPosthogIfEnabled} from "./utils/posthog"
+    import {trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
@@ -50,6 +52,8 @@
 
     const miscStore = useMiscStore()
     useThemeCycle(miscStore)
+
+    provide(SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter)
 
     const route = useRoute()
 

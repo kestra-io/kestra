@@ -94,6 +94,11 @@ export function useFlowEditorActions() {
                 const response = await executionsStore.triggerExecution({
                     namespace: flowStore.flow.namespace,
                     id: flowStore.flow.id,
+                    // Execute the revision we just saved (mirrors FlowRun.vue) so "Save & Execute" runs
+                    // exactly what is in the editor. Without it a draft would resolve to the latest
+                    // non-draft revision - running a stale published version, or failing outright when
+                    // the flow has only draft revisions.
+                    revision: flowStore.flow.revision,
                     formData: undefined,
                     kind: "NORMAL",
                     labels: ["system.from:ui"],

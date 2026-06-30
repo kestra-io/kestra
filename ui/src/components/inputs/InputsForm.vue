@@ -1,14 +1,11 @@
 <template>
     <template v-if="initialInputs">
-        <!-- Wizard progress: one KsStep per fillable step (FORM titles, "Inputs" for ungrouped runs).
-             active = currentStep, so earlier steps render as finished and the recap marks them all done. -->
-        <KsSteps v-if="isWizard" :active="currentStep" finishStatus="success" class="wizard-steps" data-testid="wizard-steps">
-            <KsStep v-for="section in recapSections" :key="section.index" :title="section.title" />
-        </KsSteps>
-        <!-- The section name lives in the stepper (bold when active); only the optional description
-             is shown above the fields. -->
-        <div v-if="isWizard && current?.kind === 'form' && current.description" class="wizard-step-header">
-            <KsMarkdown :content="current.description" class="text-description" />
+        <!-- Active FORM header: its displayName (only when set), with the optional description beneath.
+             A FORM without a displayName, or an ungrouped inputs run, shows no header. The step
+             progress now lives in the bottom bar (see .wizard-progress below). -->
+        <div v-if="isWizard && current?.kind === 'form' && (current.displayName || current.description)" class="wizard-step-header">
+            <h5 v-if="current.displayName" class="wizard-step-title">{{ current.displayName }}</h5>
+            <KsMarkdown v-if="current.description" :content="current.description" class="text-description" />
         </div>
 
         <template v-for="input in visibleInputs" :key="input.id">
@@ -289,6 +286,19 @@
                 {{ showComputingLabel ? $t('loading') : $t(returnToRecap ? 'done' : 'next') }}
             </KsButton>
         </div>
+
+        <!-- Label-less progress bar pinned to the bottom of the pane; hidden on the recap, returns on Edit.
+             One segment per fillable step; fills only once the step is passed via Next (stepStatus). -->
+        <div v-if="isWizard && !isOnRecap" class="wizard-progress">
+            <KsSteps variant="bar" :active="currentStep" data-testid="wizard-progress">
+                <KsStep
+                    v-for="section in recapSections"
+                    :key="section.index"
+                    :title="section.title"
+                    :status="stepStatus(section.index)"
+                />
+            </KsSteps>
+        </div>
     </template>
 
     <KsAlert type="info" :closable="false" class="mb-3" v-else>
@@ -417,6 +427,7 @@
         navLoading,
         showComputingLabel,
         isOnRecap,
+        stepStatus,
         visibleInputs,
         inputLabel,
         recapSections,
@@ -1003,31 +1014,13 @@
     height: var(--ks-font-size-lg);
 }
 
-.wizard-steps {
-    margin-bottom: 1.5rem;
-
-    // The design system marks the active ("process") step with white text + a white-bordered icon
-    // and a heavy glow, built for a dark surface; on the light execution form that hides the
-    // title/number and the glow looks out of place. Restore a visible palette and drop the glow.
-    // (These per-state selectors must match the design system's own specificity to win.)
-    :deep(.kel-step__head.is-process) {
-        color: var(--ks-text-primary);
-
-        .kel-step__icon {
-            border-color: var(--ks-border-focus, #631bf3);
-            box-shadow: none;
-        }
-    }
-
-    :deep(.kel-step__title.is-process) {
-        color: var(--ks-text-primary);
-        font-weight: 600;
-    }
-
-    // Completed steps: drop the green glow too — a plain green check reads cleaner.
-    :deep(.kel-step__head.is-success .kel-step__icon) {
-        box-shadow: none;
-    }
+.wizard-progress {
+    position: sticky;
+    bottom: 0;
+    margin-top: 1rem;
+    padding: 0.75rem 0 0.25rem;
+    background: var(--ks-bg-surface);
+    border-top: 1px solid var(--ks-border-default);
 }
 
 .wizard-step-header {

@@ -73,7 +73,7 @@
             .filter(([path]) => path.split("/").length === parentLevel + 1)
             .filter(([path]) => path !== currentPage.value)
             .map(([path, metadata]) => ({
-                path: path.replace(/^docs\//, ""),
+                path,
                 ...parentMetadata,
                 ...metadata,
             }))

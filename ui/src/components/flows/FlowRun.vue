@@ -250,6 +250,10 @@
         checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
     )
 
+    // The dialog-footer Execute (FlowRunActions) must follow the wizard: hidden until the recap when
+    // the flow has FORM inputs, so only one primary button shows (Next in-step, Execute on recap).
+    const showExecuteButton = computed(() => !hasFormInputs.value || inputsOnRecap.value)
+
     const canPrefill = computed(() =>
         Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
     )
@@ -266,6 +270,7 @@
         canPrefill,
         flowCanBeExecuted,
         hasBlockingChecks,
+        showExecuteButton,
         buttonText: props.buttonText,
         buttonIcon: props.buttonIcon,
         buttonTestId: props.buttonTestId,

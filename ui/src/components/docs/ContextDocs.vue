@@ -1,6 +1,6 @@
 <template>
     <ContextInfoContent :title="routeInfo.title" ref="contextInfoRef">
-        <template v-if="isOnline" #back-button>
+        <template v-if="isOnline && !isHomepage" #back-button>
             <KsButton
                 class="back-button"
                 nativeType="button"
@@ -105,6 +105,7 @@
     const markdownContent = ref<string>("")
 
     const pageMetadata = computed(() => docStore.pageMetadata)
+    const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
 
     const routeInfo = computed(() => ({

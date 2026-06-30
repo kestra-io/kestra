@@ -8,7 +8,7 @@
         >
             {{ $t("prefill inputs") }}
         </KsButton>
-        <span data-onboarding-target="flow-execute-confirm-button">
+        <span v-if="flowRun?.showExecuteButton" data-onboarding-target="flow-execute-confirm-button">
             <KsButton
                 class="flow-run-trigger-button"
                 type="primary"
@@ -36,6 +36,7 @@
         buttonText: string
         buttonIcon: Component
         buttonTestId: string
+        showExecuteButton: boolean
     }
 
     defineProps<{flowRun: FlowRunInstance | null}>()

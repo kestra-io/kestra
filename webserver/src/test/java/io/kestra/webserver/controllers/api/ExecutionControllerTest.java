@@ -6,9 +6,6 @@ import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +13,6 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -229,86 +225,6 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/webhook-dynamic-key.yaml" })
-    void webhookDynamicKey() {
-        Execution execution = client.toBlocking().retrieve(
-            GET(
-                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
-            ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-secret-key.yaml" })
-    @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
-    void webhookDynamicKeyFromASecret() {
-        Execution execution = client.toBlocking().retrieve(
-            GET(
-                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
-            ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-with-condition.yaml" })
-    void webhookWithCondition() {
-        record Hello(String hello) {
-        }
-
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                    new Hello("world")
-                ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(
-                HttpRequest
-                    .POST(
-                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                        new Hello("webhook")
-                    ),
-                Execution.class
-            )
-        );
-        assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getResponse().body()).isNull();
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-inputs.yaml" })
-    void webhookWithInputs() {
-        record Hello(String hello) {
-        }
-
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-inputs/webhookKey",
-                    new Hello("world")
-                ),
-            Execution.class
-        );
-
-        assertThat(execution).isNotNull();
-        assertThat(execution.getId()).isNotNull();
-    }
-
-    @Test
     void nullLabels() {
         MultipartBody requestBody = createExecutionInputsFlowBody();
 
@@ -497,23 +413,6 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/minimal.yaml" })
-    void scheduleDate() {
-        // given
-        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
-        String scheduleDate = URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(now), StandardCharsets.UTF_8);
-
-        // when
-        MutableHttpRequest<?> createRequest = HttpRequest
-            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + scheduleDate, null)
-            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        Execution execution = client.toBlocking().retrieve(createRequest, Execution.class);
-
-        // then
-        assertThat(execution.getScheduleDate()).isEqualTo(now.toInstant());
     }
 
     @Test

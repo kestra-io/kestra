@@ -214,6 +214,63 @@ workerGroups:
 ```
 The **workerGroups** follow exactly the same pattern you see in deployments key **worker**."
 
+## Kestra 2.0 — gRPC worker-controller
+
+Kestra 2.0 introduces a gRPC control plane between the standalone (or controller) server and detached
+worker pods. The chart exposes port **50051** (`grpc`) on all pods and the standalone Service by default.
+
+### Standalone mode (default)
+
+No change needed. The controller runs inside the standalone pod; the default `STATIC localhost:50051`
+config resolves automatically.
+
+### Standalone + detached worker (recommended 2.0 pattern)
+
+Enable the worker deployment and supply the controller endpoint in your application config:
+
+```yaml
+deployments:
+  worker:
+    enabled: true
+
+configurations:
+  application:
+    kestra:
+      worker:
+        controllers:
+          type: STATIC
+          static:
+            endpoints:
+              - host: <release-name>   # Kubernetes Service name, e.g. my-kestra
+                port: 50051
+```
+
+Or via a mounted secret/configmap (recommended for production):
+
+```yaml
+configurations:
+  secrets:
+    - name: kestra-worker-controller
+      key: worker-controller.yaml
+```
+
+```yaml
+# worker-controller.yaml secret content
+kestra:
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: <release-name>
+            port: 50051
+```
+
+### Upgrade prerequisite
+
+Instances must be on **>= 1.0.0** before upgrading to 2.0. The 2.0 startup migration drops the old
+JDBC queue tables — this is irreversible. Back up your database before upgrading."
+
 ## Values
 
 ### common settings
@@ -326,6 +383,7 @@ The **workerGroups** follow exactly the same pattern you see in deployments key 
 |-----|------|---------|-------------|
 | service.annotations | object | `{}` | Annotations to apply to the Service. |
 | service.labels | object | `{}` | Labels to apply to the Service. |
+| service.ports.grpc | object | `{"containerPort":50051,"port":50051,"protocol":"TCP","targetPort":50051}` | gRPC controller port (Kestra 2.0). Workers connect to the standalone controller at this port. |
 | service.ports.http | object | `{"containerPort":8080,"port":8080,"protocol":"TCP","targetPort":"http"}` | HTTP service port mapping. |
 | service.ports.management | object | `{"containerPort":8081,"port":8081,"protocol":"TCP","targetPort":"management"}` | Management (metrics/health) service port mapping. |
 | service.type | string | `"ClusterIP"` | Kubernetes Service type (ClusterIP, NodePort, LoadBalancer). |

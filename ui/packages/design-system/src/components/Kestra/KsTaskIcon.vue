@@ -15,6 +15,7 @@
     import {computed} from "vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import {cssVar} from "../../utils/css"
+    import {useTheme} from "../../composables/useTheme"
 
     defineOptions({
         name: "KsTaskIcon",
@@ -28,6 +29,8 @@
         onlyIcon?: boolean;
         variable?: string;
     }>()
+
+    const {isDark} = useTheme()
 
     const backgroundImage = computed(() => {
         return `data:image/svg+xml;base64,${imageBase64.value}`
@@ -46,6 +49,8 @@
     })
 
     const imageBase64 = computed(() => {
+        void isDark.value
+
         let localIcon = icon.value?.icon ? window.atob(icon.value.icon) : undefined
 
         if (!localIcon) {
@@ -58,15 +63,7 @@
                 "</svg>"
         }
 
-        let color = cssVar("--ks-text-primary") || cssVar("--ks-text-primary")
-
-        if (props.theme) {
-            color = (props.theme === "dark" ? cssVar("--ks-text-primary") : cssVar("--ks-text-primary")) || color
-        }
-
-        if (props.variable) {
-            color = cssVar(props.variable) || color
-        }
+        const color = (props.variable ? cssVar(props.variable) : "") || cssVar("--ks-text-primary")
 
         localIcon = localIcon.replace(/currentColor/g, color)
 

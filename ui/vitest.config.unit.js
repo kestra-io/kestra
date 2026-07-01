@@ -28,7 +28,7 @@ export default defineProject({
         ],
         coverage: {
             include: [
-                "src/**/*.{js,ts,vue}",
+                "src/**/*.{ts,vue}",
             ],
             exclude: [
                 "stylelint.config.mjs",

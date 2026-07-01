@@ -60,6 +60,7 @@ export default defineConfig({
         ],
     },
     coverage: {
+        include: ["src/**/*.{ts,vue}"],
         exclude: ["**/*.json"],
     },
     test: {
@@ -88,6 +89,9 @@ export default defineConfig({
                     },
                     coverage: {
                         reporter: ["text", "html"],
+                        include: [
+                            "src/**/*.{ts,vue}",
+                        ],
                         exclude: [
                             "**/*.stories.{ts,tsx}",
                             "**/*.spec.{ts,tsx}",

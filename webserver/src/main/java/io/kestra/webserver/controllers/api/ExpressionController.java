@@ -70,7 +70,7 @@ public class ExpressionController {
             "references anything unresolvable is returned unchanged. Provide an executionId to resolve against an " +
             "execution context, or a flow source to resolve against a flow context; otherwise only globals are available."
     )
-    public RenderedExpressions render(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
+    public RenderedExpressions renderExpressions(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
         Map<String, Object> variables = variablesFor(request);
         return new RenderedExpressions(displayExpressionRenderer.render(request.expressions(), variables));
     }

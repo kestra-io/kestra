@@ -421,6 +421,10 @@
           "title": "अपने वेरिएबल्स को केंद्रीय रूप से प्रबंधित करें"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition आपको flows पर कोटा परिभाषित करने देता है जो एक समय विंडो के भीतर समवर्ती या कुल निष्पादन की संख्या को सीमित करता है। कोटा आपको साझा बुनियादी ढांचे की रक्षा करने, SLAs लागू करने और अत्यधिक संसाधन खपत करने वाले workflows को रोकने में मदद करते हैं।",
+        "title": "Flows पर निष्पादन कोटा लागू करें"
+      },
       "secrets": {
         "add_env": {
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
@@ -1596,6 +1600,7 @@
       "shown": "तालिका में दिखाया गया"
     },
     "queued duration": "कतारबद्ध अवधि",
+    "quotas": "कोटा",
     "reach us": "हमसे बात करें",
     "read-more": "और अधिक पढ़ें",
     "readonly property": "केवल-पढ़ने की संपत्ति",

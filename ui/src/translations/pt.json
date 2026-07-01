@@ -421,6 +421,10 @@
           "title": "Governe Centralmente Suas Variáveis"
         }
       },
+      "quotas": {
+        "message": "A Kestra Enterprise Edition permite definir cotas em flows para limitar o número de execuções simultâneas ou totais dentro de uma janela de tempo. As cotas ajudam a proteger a infraestrutura partilhada, aplicar SLAs e impedir que workflows descontrolados consumam recursos excessivos.",
+        "title": "Aplicar cotas de execução em flows"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
@@ -1596,6 +1600,7 @@
       "shown": "Exibido na Tabela"
     },
     "queued duration": "Duração na fila",
+    "quotas": "Cotas",
     "reach us": "Fale conosco",
     "read-more": "Leia mais sobre",
     "readonly property": "Propriedade somente leitura",

@@ -421,6 +421,10 @@
           "title": "Verwalten Sie Ihre Variablen zentral"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition ermöglicht es Ihnen, Kontingente für Flows festzulegen, um die Anzahl gleichzeitiger oder gesamter Ausführungen in einem Zeitfenster zu begrenzen. Kontingente helfen Ihnen, gemeinsam genutzte Infrastruktur zu schützen, SLAs durchzusetzen und unkontrollierte Workflows daran zu hindern, übermäßige Ressourcen zu verbrauchen.",
+        "title": "Ausführungskontingente für Flows festlegen"
+      },
       "secrets": {
         "add_env": {
           "first": "Kodieren Sie den <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">geheimen Wert in Base64</a>",
@@ -1596,6 +1600,7 @@
       "shown": "In Tabelle angezeigt"
     },
     "queued duration": "Warteschlangendauer",
+    "quotas": "Quotas",
     "reach us": "Sprechen Sie mit uns",
     "read-more": "Mehr erfahren über",
     "readonly property": "Schreibgeschützte Eigenschaft",

@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
@@ -14,10 +15,12 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.services.QuotaService;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.KillSwitchActionService;
 
@@ -48,6 +51,9 @@ class ExecutionEventMessageHandlerTest {
     @Inject
     KillSwitchActionService killSwitchActionService;
 
+    @Inject
+    QuotaService quotaService;
+
     @MockBean(KillSwitchService.class)
     KillSwitchService killSwitchService() {
         return mock(KillSwitchService.class);
@@ -56,6 +62,11 @@ class ExecutionEventMessageHandlerTest {
     @MockBean(KillSwitchActionService.class)
     KillSwitchActionService killSwitchActionService() {
         return mock(KillSwitchActionService.class);
+    }
+
+    @MockBean(QuotaService.class)
+    QuotaService quotaService() {
+        return mock(QuotaService.class);
     }
 
     @BeforeEach
@@ -134,5 +145,49 @@ class ExecutionEventMessageHandlerTest {
         executionEventMessageHandler.handle(executionEvent);
 
         verify(killSwitchActionService, never()).handle(any(), any(), any());
+    }
+
+    @Test
+    void shouldFailExecutionWhenQuotaExceededWithFailBehavior() {
+        // Given
+        var quota = Quota.builder()
+            .duration(Duration.ofHours(1))
+            .limit(10L)
+            .behavior(Quota.Behavior.FAIL)
+            .build();
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flowWithQuotas(quota)));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        executionRepository.save(execution);
+        var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);
+        when(quotaService.checkAndIncrement(any())).thenReturn(Optional.of(quota));
+
+        // When
+        var maybeExecutor = executionEventMessageHandler.handle(executionEvent);
+
+        // Then
+        assertThat(maybeExecutor).isPresent();
+        assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldCancelExecutionWhenQuotaExceededWithCancelBehavior() {
+        // Given
+        var quota = Quota.builder()
+            .duration(Duration.ofHours(1))
+            .limit(10L)
+            .behavior(Quota.Behavior.CANCEL)
+            .build();
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flowWithQuotas(quota)));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        executionRepository.save(execution);
+        var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);
+        when(quotaService.checkAndIncrement(any())).thenReturn(Optional.of(quota));
+
+        // When
+        var maybeExecutor = executionEventMessageHandler.handle(executionEvent);
+
+        // Then
+        assertThat(maybeExecutor).isPresent();
+        assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 }

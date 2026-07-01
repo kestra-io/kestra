@@ -421,6 +421,10 @@
           "title": "Gérez vos Variables de manière centralisée"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition vous permet de définir des quotas sur les flows pour limiter le nombre d'exécutions simultanées ou totales dans une fenêtre de temps. Les quotas vous aident à protéger l'infrastructure partagée, à appliquer les SLAs et à empêcher les workflows incontrôlés de consommer des ressources excessives.",
+        "title": "Appliquer des quotas d'exécution sur les flows"
+      },
       "secrets": {
         "add_env": {
           "first": "Encodez la <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a>",
@@ -1596,6 +1600,7 @@
       "shown": "Affiché dans le tableau"
     },
     "queued duration": "Durée d'attente",
+    "quotas": "Quotas",
     "reach us": "Contactez-nous",
     "read-more": "En savoir plus sur",
     "readonly property": "Propriété non modifiable",

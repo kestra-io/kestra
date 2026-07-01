@@ -18,6 +18,8 @@
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
         "test:storybook": "vitest run --project=storybook",
+        "test:storybook:shard": "vitest run --project=storybook --coverage --coverage.reporter=json",
+        "test:storybook:merge": "node scripts/merge-coverage.mjs coverage coverage/storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "node ./src/translations/check.js",

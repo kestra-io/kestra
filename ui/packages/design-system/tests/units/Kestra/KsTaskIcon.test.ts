@@ -1,5 +1,6 @@
-import {describe, test, expect, beforeEach} from "vitest"
+import {describe, test, expect, beforeEach, vi} from "vitest"
 import {mount} from "@vue/test-utils"
+import DOMPurify from "dompurify"
 import KestraDesignSystem from "../../../src/index"
 import KsTaskIcon from "../../../src/components/Kestra/KsTaskIcon.vue"
 
@@ -14,10 +15,18 @@ const maliciousSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24
     "<script>alert(1)</script><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\" onclick=\"alert(2)\"/></svg>"
 const maliciousIconBase64 = btoa(maliciousSvg)
 
+// An icon with a <defs> gradient — the kind of id design tools commonly export as generic
+// ("gradient0", "Layer_1", …), which can collide with another icon's def once both are inlined.
+const gradientSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+    "<defs><linearGradient id=\"gradient0\"><stop offset=\"0\" stop-color=\"red\"/></linearGradient></defs>" +
+    "<rect width=\"24\" height=\"24\" fill=\"url(#gradient0)\"/></svg>"
+const gradientIconBase64 = btoa(gradientSvg)
+
 const mockIcons = {
     "io.kestra.plugin.core.log.Log": {icon: mockIconBase64, flowable: false},
     "io.kestra.plugin.core.flow.Parallel": {icon: mockIconBase64, flowable: true},
     "io.kestra.plugin.malicious.Task": {icon: maliciousIconBase64, flowable: false},
+    "io.kestra.plugin.gradient.Task": {icon: gradientIconBase64, flowable: false},
 }
 
 beforeEach(() => {
@@ -138,5 +147,31 @@ describe("KsTaskIcon", () => {
         // Should resolve to parent class and find the icon
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.find("circle").exists()).toBe(true)
+    })
+
+    test("sanitizes a given icon only once across multiple instances", () => {
+        // A never-before-mounted icon, so the module-level cache is guaranteed empty for it.
+        const freshSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><polygon points=\"1,1 2,2 3,3\" fill=\"currentColor\"/></svg>"
+        const freshIcons = {"io.kestra.plugin.fresh.Task": {icon: btoa(freshSvg), flowable: false}}
+
+        const spy = vi.spyOn(DOMPurify, "sanitize")
+        mount(KsTaskIcon, {props: {cls: "io.kestra.plugin.fresh.Task", icons: freshIcons, onlyIcon: true}, global: globalConfig})
+        mount(KsTaskIcon, {props: {cls: "io.kestra.plugin.fresh.Task", icons: freshIcons, onlyIcon: true}, global: globalConfig})
+        expect(spy).toHaveBeenCalledTimes(1)
+        spy.mockRestore()
+    })
+
+    test("namespaces def ids per instance so two icons never share a gradient id", () => {
+        const w1 = mount(KsTaskIcon, {props: {cls: "io.kestra.plugin.gradient.Task", icons: mockIcons, onlyIcon: true}, global: globalConfig})
+        const w2 = mount(KsTaskIcon, {props: {cls: "io.kestra.plugin.gradient.Task", icons: mockIcons, onlyIcon: true}, global: globalConfig})
+
+        const id1 = w1.find("linearGradient").attributes("id")
+        const id2 = w2.find("linearGradient").attributes("id")
+
+        expect(id1).toBeTruthy()
+        expect(id1).not.toBe(id2)
+        // The url(#...) reference must be rewritten to match its own instance's namespaced id
+        expect(w1.find("rect").attributes("fill")).toBe(`url(#${id1})`)
+        expect(w2.find("rect").attributes("fill")).toBe(`url(#${id2})`)
     })
 })

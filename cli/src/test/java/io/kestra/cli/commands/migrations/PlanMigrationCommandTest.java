@@ -35,6 +35,26 @@ class PlanMigrationCommandTest {
     }
 
     @Test
+    void plan_printsSql_whenSqlFlagSet() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(out));
+
+        MigrationRunner.setSkipAutoRun(true);
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            Integer call = PicocliRunner.call(PlanMigrationCommand.class, ctx, "--sql");
+            assertThat(call).isZero();
+        } finally {
+            MigrationRunner.setSkipAutoRun(false);
+            System.setOut(originalOut);
+        }
+
+        // the actual SQL of the pending migrations must be printed, not only their ids
+        assertThat(out.toString()).contains("0-init");
+        assertThat(out.toString()).containsIgnoringCase("CREATE TABLE");
+    }
+
+    @Test
     void plan_reportsNoPending_whenDatabaseUpToDate() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PrintStream originalOut = System.out;

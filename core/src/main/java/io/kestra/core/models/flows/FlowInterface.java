@@ -20,6 +20,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.event.BroadcastEvent;
@@ -77,6 +78,10 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
     default Concurrency getConcurrency() {
         return null;
+    }
+
+    default List<Quota> getQuotas() {
+        return List.of();
     }
 
     default List<SLA> getSla() {
@@ -187,13 +192,13 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
         /**
          * Dirty hack but only concern previous flow with no source code in org.yaml.snakeyaml.emitter.Emitter:
-         * 
+         *
          * <pre>
          * if (previousSpace) {
          *     spaceBreak = true;
          * }
          * </pre>
-         * 
+         *
          * This control will detect ` \n` as a no valid entry on a string and will break the multiline to transform in single line
          *
          * @param object the object to fix

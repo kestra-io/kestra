@@ -267,9 +267,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
-            if (isStopped() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
-                // if the Worker is terminating and the task is not in success, it may have been terminated by the worker
-                // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
+            if (isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+                // The Worker is terminating and forcibly interrupted this still-running task (grace period
+                // elapsed or force shutdown), so its failed state is an artifact of the shutdown, not a real
+                // failure: we return immediately without emitting any result as it will be resubmitted
+                // (except if WorkerTaskRestartStrategy is NEVER).
+                // A task that reached a FAILED state on its own during the drain window is NOT interrupted
+                // (isShutdownInterrupted() is false), so it falls through and its terminal result is emitted —
+                // otherwise its genuine failure would be silently dropped and the execution stuck RUNNING.
                 List<WorkerTaskResult> dynamicWorkerResults = runContext.dynamicWorkerResults();
                 List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
                 return new WorkerTaskResult(taskRunWithOutput.taskRun(), dynamicTaskRuns, taskRunWithOutput.outputs());

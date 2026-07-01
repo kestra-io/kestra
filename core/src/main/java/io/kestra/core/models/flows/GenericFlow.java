@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.GenericTask;
 import io.kestra.core.models.triggers.GenericTrigger;
@@ -40,6 +41,8 @@ public class GenericFlow extends AbstractFlow implements HasUID {
     private List<SLA> sla;
 
     private Concurrency concurrency;
+
+    private List<Quota> quotas;
 
     private List<GenericTask> tasks;
 

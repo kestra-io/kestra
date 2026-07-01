@@ -1164,6 +1164,10 @@
         "title": "Track Changes with Audit Logs",
         "message": "Kestra Enterprise Edition logs every activity with robust, immutable records, making it easy to track changes, maintain compliance, and troubleshoot issues."
       },
+      "quotas": {
+        "title": "Enforce Execution Quotas on Flows",
+        "message": "Kestra Enterprise Edition lets you define quotas on flows to limit the number of concurrent or total executions within a time window. Quotas help you protect shared infrastructure, enforce SLAs, and prevent runaway workflows from consuming excessive resources."
+      },
       "instance": {
         "title": "Manage Infrastructure Across Your Instance",
         "message": "Kestra Enterprise Edition provides an operational dashboard to help you observe the health of your platform and track the uptime metrics of all services such as a.o. Workers, Schedulers, and Executors. From the same page, you can also create Announcements to notify your users about planned downtime, and you can enter a maintenance mode which temporarily puts all services and workflow executions into a paused state to perform an upgrade."
@@ -1335,6 +1339,7 @@
     },
     "enable concurrency": "Enable concurrency",
     "auditlogs": "Audit Logs",
+    "quotas": "Quotas",
     "iam": "IAM",
     "tenant": {
       "name": "Tenant",

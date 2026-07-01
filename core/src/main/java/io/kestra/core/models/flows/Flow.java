@@ -16,6 +16,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
@@ -125,6 +126,14 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     @PluginProperty
     List<Check> checks;
+
+    @Schema(
+        title = "Quotas evaluated before the flow is executed.",
+        description = "A list of quotas that are evaluated before the flow is executed.  If no quotas are defined, the flow executes normally."
+    )
+    @Valid
+    @PluginProperty
+    List<Quota> quotas;
 
     public Stream<String> allTypes() {
         return Stream.of(

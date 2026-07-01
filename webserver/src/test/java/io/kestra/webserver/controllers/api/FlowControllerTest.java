@@ -689,7 +689,7 @@ class FlowControllerTest {
 
     @Test
     void updateFlowAsDraftWithInvalidYaml() {
-        // Regression: updating a draft with unparseable YAML should return 200, not 422.
+        // Regression: updating a draft with unparsable YAML should return 200, not 422.
         String flowId = IdUtils.create();
         String validSource = """
             id: %s
@@ -771,7 +771,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void createFlowAsDraftWithUnparseableYamlIsRejected() {
+    void createFlowAsDraftWithUnparsableYamlIsRejected() {
         // Syntactically broken YAML (unclosed bracket) - the identity cannot be extracted.
         // Unlike updateFlow (which reads namespace/id from the URL), createFlow has no other source
         // of identity, so a flow cannot be persisted and the request must be rejected.
@@ -1727,8 +1727,8 @@ class FlowControllerTest {
         String invalidYaml = "this is not valid flow yaml: [[[";
 
         // When / Then — YAML parse errors are wrapped as ConstraintViolationException → 422
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.POST(FLOW_PATH + "/expressions", invalidYaml)
                     .contentType("application/x-yaml"),
                 Argument.mapOf(String.class, List.class)

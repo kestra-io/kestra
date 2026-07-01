@@ -41,7 +41,6 @@ import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -766,11 +765,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public ArrayListTotal<Flow> find(
-            Pageable pageable,
-            @Nullable String tenantId,
-            String namespace,
-            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
-        ) {
+        Pageable pageable,
+        @Nullable String tenantId,
+        String namespace,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -789,10 +787,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<Flow> find(
-            Pageable pageable,
-            @Nullable String tenantId,
-            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
-        ) {
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -810,13 +807,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<Flow> findWithNoAcl(
-            Pageable pageable,
-            @Nullable String tenantId,
-            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
-        ) {
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 ArrayList<Field<?>> fields = new ArrayList<>();
                 fields.add(VALUE_FIELD);
@@ -931,7 +928,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException {
         try {
             // Check Flow with defaults.
-            // For drafts the YAML may be unparseable; if injectAllDefaults fails we skip all
+            // For drafts the YAML may be unparsable; if injectAllDefaults fails we skip all
             // validation since draft revisions are intentionally allowed to carry invalid content.
             FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, false);
             // Drafts are allowed to be saved invalid - they will fail at execution time instead.
@@ -958,7 +955,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             if (!flow.isDraft()) {
                 throw e;
             }
-            // Draft with unparseable YAML: skip validation entirely.
+            // Draft with unparsable YAML: skip validation entirely.
         }
 
         // Persist
@@ -971,7 +968,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         // Inject default plugin 'version' props before converting to flow to correctly resolve to
         // plugin type - this ensures the flow is parseable before saving.
-        // For drafts with unparseable YAML, fall back to a FlowWithException so the raw source can
+        // For drafts with unparsable YAML, fall back to a FlowWithException so the raw source can
         // still be persisted without throwing.
         FlowWithSource flowWithSource;
         try {

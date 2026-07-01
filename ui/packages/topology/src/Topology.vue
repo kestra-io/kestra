@@ -193,6 +193,10 @@
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
         showDetailsToggle?: boolean;
+        // Bump this from the caller whenever data rendered *inside* the taskDetails slot (e.g.
+        // live metrics or progress) changes but isn't itself part of `execution`/`flowGraph` — the
+        // slot content is only re-evaluated when a node's graph data is regenerated.
+        taskDetailsVersion?: number;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -213,6 +217,7 @@
         customActions: () => ({}),
         showDetails: () => ({}),
         showDetailsToggle: true,
+        taskDetailsVersion: undefined,
     })
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
@@ -300,6 +305,10 @@
             refitOnNodesInitialized.value = false
             fitView()
         }
+    })
+
+    watch(() => props.taskDetailsVersion, () => {
+        generateGraph()
     })
 
     const generateGraph = () => {

@@ -23,6 +23,7 @@
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
             :showDetailsToggle="hasExtraDetails"
+            :taskDetailsVersion="taskDetailsVersion"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -309,6 +310,14 @@
 
     const taskProgress = (taskId: string | undefined) =>
         executionsStore.progressEvents.filter((p) => p.taskId === taskId)
+
+    // Topology nodes only re-evaluate their taskDetails slot (where taskMetrics/taskProgress are
+    // read) when the graph is regenerated — bump this so a live metrics/progress update (which
+    // isn't part of `execution` or `flowGraph`) still reaches an already-rendered node.
+    const taskDetailsVersion = ref(0)
+    watch([() => executionsStore.metrics, () => executionsStore.progressEvents], () => {
+        taskDetailsVersion.value++
+    })
 
     const isTaskModalOpen = ref(false)
     const taskModalCtx = ref<Record<string, any> | null>(null)

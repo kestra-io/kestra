@@ -1,11 +1,11 @@
 
 import "pinia"
-import {type configureAxios} from "@kestra-io/kestra-sdk"
+import type {setupKestraAxios} from "./utils/kestraAxios"
 
 declare module "pinia" {
 
   export interface PiniaCustomProperties {
-    $http: ReturnType<typeof configureAxios>
+    $http: ReturnType<typeof setupKestraAxios>
 
     // type the router added by the plugin above (#adding-new-external-properties)
     $router: Router

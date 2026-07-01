@@ -207,7 +207,7 @@ class PluginControllerTest {
             Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat((Map<String, Object>) doc.get("properties")).hasSize(22);
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(23);
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 

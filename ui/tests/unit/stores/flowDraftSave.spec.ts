@@ -2,8 +2,10 @@ import {beforeAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 // Capture the `draft` query param the store sends to the backend on save.
-const put = vi.fn(() => Promise.resolve({status: 200, data: {id: "f", namespace: "ns", draft: false}}))
-const post = vi.fn(() => Promise.resolve({status: 200, data: {id: "f", namespace: "ns", draft: false}}))
+// Typed with varargs so `put.mock.calls.at(-1)?.[2]` (the request config, index 2) type-checks;
+// an argless `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
+const put = vi.fn((..._args: any[]) => Promise.resolve({status: 200, data: {id: "f", namespace: "ns", draft: false}}))
+const post = vi.fn((..._args: any[]) => Promise.resolve({status: 200, data: {id: "f", namespace: "ns", draft: false}}))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({put, post, get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),

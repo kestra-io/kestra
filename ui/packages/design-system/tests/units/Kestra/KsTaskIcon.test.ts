@@ -48,9 +48,8 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
         const icon = wrapper.find(".ks-task-icon__icon")
-        const svg = icon.find("svg")
-        expect(svg.exists()).toBe(true)
-        expect(svg.attributes("viewBox")).toBe("0 0 24 24")
+        expect(icon.element.tagName.toLowerCase()).toBe("svg")
+        expect(icon.attributes("viewBox")).toBe("0 0 24 24")
         expect(icon.find("circle").exists()).toBe(true)
         expect(icon.attributes("role")).toBe("img")
         expect(icon.attributes("aria-label")).toBe("io.kestra.plugin.core.log.Log")
@@ -114,7 +113,7 @@ describe("KsTaskIcon", () => {
         })
         const icon = wrapper.find(".ks-task-icon__icon")
         // Should still render with the fallback svg
-        expect(icon.find("svg").exists()).toBe(true)
+        expect(icon.element.tagName.toLowerCase()).toBe("svg")
         expect(icon.find("path").exists()).toBe(true)
     })
 
@@ -124,7 +123,7 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
         const icon = wrapper.find(".ks-task-icon__icon")
-        expect(icon.find("svg").exists()).toBe(true)
+        expect(icon.element.tagName.toLowerCase()).toBe("svg")
         expect(icon.find("circle").exists()).toBe(true)
     })
 

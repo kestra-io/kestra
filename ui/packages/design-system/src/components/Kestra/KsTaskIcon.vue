@@ -4,10 +4,10 @@
         class="ks-task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <div class="ks-task-icon__icon" :style="iconStyle" aria-hidden="true" v-html="sanitizedSvg" />
+            <svg class="ks-task-icon__icon" v-bind="svgIcon.attrs" :style="iconStyle" aria-hidden="true" v-html="svgIcon.innerHtml" />
         </KsTooltip>
 
-        <div v-else class="ks-task-icon__icon" :style="iconStyle" role="img" :aria-label="cls" v-html="sanitizedSvg" />
+        <svg v-else class="ks-task-icon__icon" v-bind="svgIcon.attrs" :style="iconStyle" role="img" :aria-label="cls" v-html="svgIcon.innerHtml" />
     </div>
 </template>
 
@@ -37,8 +37,16 @@
         "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/>" +
         "</svg>"
 
-    // Icon strings are stable per plugin class, so sanitize each unique icon once per session.
-    const sanitizedCache = new Map<string, string>()
+    // Attributes we render ourselves — never take these from the source icon markup.
+    const EXCLUDED_ATTRS = new Set(["class", "style", "role", "aria-hidden", "aria-label", "width", "height", "xmlns"])
+
+    interface SvgIcon {
+        attrs: Record<string, string>;
+        innerHtml: string;
+    }
+
+    // Icon strings are stable per plugin class, so sanitize/parse each unique icon once per session.
+    const svgIconCache = new Map<string, SvgIcon>()
 
     function ensureViewBox(svg: string): string {
         const svgTagMatch = svg.match(/<svg\b[^>]*>/i)
@@ -56,9 +64,11 @@
         return svg.replace(svgTagMatch[0], svgTagWithViewBox)
     }
 
-    function sanitize(rawBase64: string | undefined): string {
+    // Parses the sanitized markup so the root <svg>'s own attributes (viewBox, preserveAspectRatio, …)
+    // can be bound directly onto the <svg> element we render — no wrapping <div> is needed.
+    function toSvgIcon(rawBase64: string | undefined): SvgIcon {
         const cacheKey = rawBase64 ?? "__fallback__"
-        const cached = sanitizedCache.get(cacheKey)
+        const cached = svgIconCache.get(cacheKey)
         if (cached !== undefined) {
             return cached
         }
@@ -66,8 +76,22 @@
         const rawSvg = rawBase64 ? window.atob(rawBase64) : FALLBACK_SVG
         const sanitized = DOMPurify.sanitize(ensureViewBox(rawSvg), {USE_PROFILES: {svg: true, svgFilters: true}})
 
-        sanitizedCache.set(cacheKey, sanitized)
-        return sanitized
+        const parsed = new DOMParser().parseFromString(sanitized, "image/svg+xml")
+        const svgEl = parsed.documentElement
+
+        let result: SvgIcon = {attrs: {}, innerHtml: ""}
+        if (svgEl.tagName.toLowerCase() === "svg" && !parsed.querySelector("parsererror")) {
+            const attrs: Record<string, string> = {}
+            for (const attr of Array.from(svgEl.attributes)) {
+                if (!EXCLUDED_ATTRS.has(attr.name)) {
+                    attrs[attr.name] = attr.value
+                }
+            }
+            result = {attrs, innerHtml: svgEl.innerHTML}
+        }
+
+        svgIconCache.set(cacheKey, result)
+        return result
     }
 
     const classes = computed(() => {
@@ -80,7 +104,7 @@
         return props.variable ? {color: `var(${props.variable})`} : undefined
     })
 
-    const sanitizedSvg = computed(() => sanitize(icon.value?.icon))
+    const svgIcon = computed(() => toSvgIcon(icon.value?.icon))
 
     const icon = computed(() => {
         return props.cls ? (props.icons ?? {})[innerClassToParent(props.cls)] : props.customIcon
@@ -114,11 +138,5 @@
         display: block;
         border-radius: 3px;
         color: var(--ks-text-primary);
-    }
-
-    .ks-task-icon__icon svg {
-        width: 100%;
-        height: 100%;
-        display: block;
     }
 </style>

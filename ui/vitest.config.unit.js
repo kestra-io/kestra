@@ -26,18 +26,6 @@ export default defineProject({
             "node_modules/**",
             "tests/unit/**/translation.spec.js",
         ],
-        coverage: {
-            include: [
-                "src/**/*.{ts,vue}",
-            ],
-            exclude: [
-                "stylelint.config.mjs",
-                "storybook-static/**",
-                "**/.storybook/**",
-                "**/*.stories.*",
-                "**/*.d.ts",
-            ],
-        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

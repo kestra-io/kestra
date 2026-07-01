@@ -24,7 +24,6 @@ const meta: Meta<typeof KsTaskIcon> = {
         cls: {control: "text"},
         theme: {control: "select", options: ["dark", "light"]},
         onlyIcon: {control: "boolean"},
-        variable: {control: "text"},
     },
     parameters: {
         docs: {

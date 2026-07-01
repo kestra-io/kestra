@@ -4,10 +4,10 @@
         class="ks-task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <svg class="ks-task-icon__icon" v-bind="svgIcon.attrs" :style="iconStyle" aria-hidden="true" v-html="svgIcon.innerHtml" />
+            <svg class="ks-task-icon__icon" v-bind="svgIcon.attrs" aria-hidden="true" v-html="svgIcon.innerHtml" />
         </KsTooltip>
 
-        <svg v-else class="ks-task-icon__icon" v-bind="svgIcon.attrs" :style="iconStyle" role="img" :aria-label="cls" v-html="svgIcon.innerHtml" />
+        <svg v-else class="ks-task-icon__icon" v-bind="svgIcon.attrs" role="img" :aria-label="cls" v-html="svgIcon.innerHtml" />
     </div>
 </template>
 
@@ -26,7 +26,6 @@
         theme?: "dark" | "light";
         icons?: Record<string, {icon: string; flowable: boolean}>;
         onlyIcon?: boolean;
-        variable?: string;
     }>()
 
     const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
@@ -98,10 +97,6 @@
         return {
             "ks-task-icon--flowable": icon.value && "flowable" in icon.value ? icon.value.flowable : false,
         }
-    })
-
-    const iconStyle = computed(() => {
-        return props.variable ? {color: `var(${props.variable})`} : undefined
     })
 
     const svgIcon = computed(() => toSvgIcon(icon.value?.icon))

@@ -421,6 +421,10 @@
           "title": "Governe Centralmente Suas Variáveis"
         }
       },
+      "quotas": {
+        "message": "O Kestra Enterprise Edition permite definir cotas em flows para limitar o número de execuções simultâneas ou totais dentro de uma janela de tempo. As cotas ajudam a proteger a infraestrutura compartilhada, aplicar SLAs e impedir que workflows descontrolados consumam recursos excessivos.",
+        "title": "Aplicar cotas de execução em flows"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
@@ -443,11 +447,7 @@
         "message": "Verifique a lógica dos seus flows isoladamente, detecte regressões cedo e mantenha a confiança nas suas automações à medida que elas mudam e crescem.",
         "title": "Garanta a Confiabilidade com Cada Alteração"
       },
-      "watch_the_video": "Assista ao vídeo",
-      "quotas": {
-        "title": "Aplicar cotas de execução em flows",
-        "message": "O Kestra Enterprise Edition permite definir cotas em flows para limitar o número de execuções simultâneas ou totais dentro de uma janela de tempo. As cotas ajudam a proteger a infraestrutura compartilhada, aplicar SLAs e impedir que workflows descontrolados consumam recursos excessivos."
-      }
+      "watch_the_video": "Assista ao vídeo"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "Exibido na Tabela"
     },
     "queued duration": "Duração na fila",
+    "quotas": "Cotas",
     "reach us": "Fale conosco",
     "read-more": "Leia mais sobre",
     "readonly property": "Propriedade somente leitura",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
-    "yes": "Sim",
-    "quotas": "Cotas"
+    "yes": "Sim"
   }
 }

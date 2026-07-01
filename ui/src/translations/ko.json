@@ -421,6 +421,10 @@
           "title": "변수를 중앙에서 관리하세요"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition을 사용하면 플로우에 할당량을 정의하여 시간 창 내에서 동시 또는 총 실행 횟수를 제한할 수 있습니다. 할당량은 공유 인프라를 보호하고, SLA를 적용하며, 과도한 리소스를 소비하는 워크플로우를 방지하는 데 도움이 됩니다.",
+        "title": "플로우에 실행 할당량 적용"
+      },
       "secrets": {
         "add_env": {
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
@@ -443,11 +447,7 @@
         "message": "플로우의 로직을 개별적으로 검증하고, 회귀를 조기에 감지하며, 자동화가 변화하고 성장함에 따라 신뢰를 유지하세요.",
         "title": "모든 변경 사항에 대한 신뢰성 보장"
       },
-      "watch_the_video": "비디오 보기",
-      "quotas": {
-        "title": "플로우에 실행 할당량 적용",
-        "message": "Kestra Enterprise Edition을 사용하면 플로우에 할당량을 정의하여 시간 창 내에서 동시 또는 총 실행 횟수를 제한할 수 있습니다. 할당량은 공유 인프라를 보호하고, SLA를 적용하며, 과도한 리소스를 소비하는 워크플로우를 방지하는 데 도움이 됩니다."
-      }
+      "watch_the_video": "비디오 보기"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "표에 표시됨"
     },
     "queued duration": "대기 중 지속 시간",
+    "quotas": "할당량",
     "reach us": "문의하기",
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
-    "yes": "네",
-    "quotas": "할당량"
+    "yes": "네"
   }
 }

@@ -421,6 +421,10 @@
           "title": "集中管理您的变量"
         }
       },
+      "quotas": {
+        "message": "Kestra 企业版允许您为工作流定义配额，以限制在时间窗口内的并发或总执行次数。配额有助于保护共享基础设施、执行 SLA，并防止失控的工作流消耗过多资源。",
+        "title": "为工作流设置执行配额"
+      },
       "secrets": {
         "add_env": {
           "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
@@ -443,11 +447,7 @@
         "message": "验证您的flow逻辑是否独立，及早检测回归，并在自动化变更和增长时保持信心。",
         "title": "确保每次更改的可靠性"
       },
-      "watch_the_video": "观看视频",
-      "quotas": {
-        "title": "为工作流设置执行配额",
-        "message": "Kestra 企业版允许您为工作流定义配额，以限制在时间窗口内的并发或总执行次数。配额有助于保护共享基础设施、执行 SLA，并防止失控的工作流消耗过多资源。"
-      }
+      "watch_the_video": "观看视频"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "显示在表格中"
     },
     "queued duration": "排队时间",
+    "quotas": "配额",
     "reach us": "联系我们",
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
@@ -2285,7 +2286,6 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "yes": "是",
-    "quotas": "配额"
+    "yes": "是"
   }
 }

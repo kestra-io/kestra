@@ -421,6 +421,10 @@
           "title": "Verwalten Sie Ihre Variablen zentral"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition ermöglicht es Ihnen, Kontingente für Flows festzulegen, um die Anzahl gleichzeitiger oder gesamter Ausführungen in einem Zeitfenster zu begrenzen. Kontingente helfen Ihnen, gemeinsam genutzte Infrastruktur zu schützen, SLAs durchzusetzen und unkontrollierte Workflows daran zu hindern, übermäßige Ressourcen zu verbrauchen.",
+        "title": "Ausführungskontingente für Flows festlegen"
+      },
       "secrets": {
         "add_env": {
           "first": "Kodieren Sie den <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">geheimen Wert in Base64</a>",
@@ -443,11 +447,7 @@
         "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
         "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
       },
-      "watch_the_video": "Sieh dir das Video an",
-      "quotas": {
-        "title": "Ausführungskontingente für Flows festlegen",
-        "message": "Kestra Enterprise Edition ermöglicht es Ihnen, Kontingente für Flows festzulegen, um die Anzahl gleichzeitiger oder gesamter Ausführungen in einem Zeitfenster zu begrenzen. Kontingente helfen Ihnen, gemeinsam genutzte Infrastruktur zu schützen, SLAs durchzusetzen und unkontrollierte Workflows daran zu hindern, übermäßige Ressourcen zu verbrauchen."
-      }
+      "watch_the_video": "Sieh dir das Video an"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "In Tabelle angezeigt"
     },
     "queued duration": "Warteschlangendauer",
+    "quotas": "Quotas",
     "reach us": "Sprechen Sie mit uns",
     "read-more": "Mehr erfahren über",
     "readonly property": "Schreibgeschützte Eigenschaft",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
-    "yes": "Ja",
-    "quotas": "Quotas"
+    "yes": "Ja"
   }
 }

@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -108,6 +109,19 @@ public abstract class RunContext implements PropertyContext {
      */
     public void emitProgress(String step, String message) {
         logger().atInfo().addKeyValue(RunContextLogger.PROGRESS_KEY, step).log(message);
+    }
+
+    /**
+     * Same as {@link #emitProgress(String, String)}, but backdates the log entry to a real
+     * event time known only after the fact (e.g. a Kubernetes condition's {@code lastTransitionTime})
+     * instead of the moment this method is called, using the same override {@code RunContextLogger}
+     * already applies for {@link io.kestra.core.models.tasks.runners.TaskLogLineMatcher}.
+     */
+    public void emitProgress(String step, String message, Instant timestamp) {
+        logger().atInfo()
+            .addKeyValue(RunContextLogger.PROGRESS_KEY, step)
+            .addKeyValue(RunContextLogger.ORIGINAL_TIMESTAMP_KEY, timestamp)
+            .log(message);
     }
 
     /**

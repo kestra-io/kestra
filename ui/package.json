@@ -33,7 +33,7 @@
         "@google/genai": "^2.9.0",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
-        "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17805863.5a3d4f18.e462bf05",
+        "@kestra-io/kestra-sdk": "^2.0.0-kdevelop.17828135.30c54e76.93e9a466",
         "@kestra-io/slot-contracts": "*",
         "@kestra-io/topology": "*",
         "@module-federation/enhanced": "^2.4.0",

@@ -32,6 +32,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final AtomicBoolean killRequested = new AtomicBoolean(false);
+    private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
         MetricRegistry metricRegistry,
@@ -109,7 +110,19 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
         Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::kill);
     }
 
+    @Override
+    public void signalShutdownInterrupt() {
+        shutdownInterrupted.set(true);
+        // interrupt() (not kill()) so the callable still reports FAILED rather than KILLED;
+        // the shutdownInterrupted flag is what tells the processor to drop/defer the result.
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::interrupt);
+    }
+
     protected boolean isStopped() {
         return this.stopped.get();
+    }
+
+    protected boolean isShutdownInterrupted() {
+        return this.shutdownInterrupted.get();
     }
 }

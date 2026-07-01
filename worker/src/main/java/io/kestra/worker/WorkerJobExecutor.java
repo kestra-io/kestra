@@ -214,6 +214,7 @@ public class WorkerJobExecutor {
 
         if (terminationGracePeriod == null || terminationGracePeriod.equals(Duration.ZERO)) {
             // Force: kill in-flight tasks, then unblock consumers
+            signalShutdownInterruptToRunningJobs();
             this.executorService.shutdownNow();
             this.consumerThreads.forEach(Thread::interrupt);
             return false;
@@ -236,11 +237,22 @@ public class WorkerJobExecutor {
 
         if (!terminated) {
             log.warn("Worker still has pending jobs after the termination grace period. Forcing shutdown.");
+            signalShutdownInterruptToRunningJobs();
             this.executorService.shutdownNow();
             this.consumerThreads.forEach(Thread::interrupt);
         }
 
         return terminated;
+    }
+
+    /**
+     * Marks every in-flight job as interrupted by the shutdown right before the executor is forcibly stopped,
+     * so a task that gets torn down here is deferred for resubmission rather than reported as a genuine failure.
+     * A task that already reached a terminal state on its own during the grace period is unaffected — it is not
+     * interrupted, so its result is emitted as usual.
+     */
+    private void signalShutdownInterruptToRunningJobs() {
+        this.workerJobConsumers.forEach(WorkerJobConsumer::signalShutdownInterrupt);
     }
 
     /**
@@ -342,6 +354,17 @@ public class WorkerJobExecutor {
             WorkerJobProcessor<WorkerJob> processor = running.get();
             if (processor != null) {
                 processor.stop();
+            }
+        }
+
+        /**
+         * Signals the currently running job — if any — that it is being forcibly interrupted by the
+         * worker shutdown.
+         */
+        void signalShutdownInterrupt() {
+            WorkerJobProcessor<WorkerJob> processor = running.get();
+            if (processor != null) {
+                processor.signalShutdownInterrupt();
             }
         }
 

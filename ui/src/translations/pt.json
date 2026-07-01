@@ -443,7 +443,11 @@
         "message": "Verifique a lógica dos seus flows isoladamente, detecte regressões cedo e mantenha a confiança nas suas automações à medida que elas mudam e crescem.",
         "title": "Garanta a Confiabilidade com Cada Alteração"
       },
-      "watch_the_video": "Assista ao vídeo"
+      "watch_the_video": "Assista ao vídeo",
+      "quotas": {
+        "title": "Aplicar cotas de execução em flows",
+        "message": "A Kestra Enterprise Edition permite definir cotas em flows para limitar o número de execuções simultâneas ou totais dentro de uma janela de tempo. As cotas ajudam a proteger a infraestrutura partilhada, aplicar SLAs e impedir que workflows descontrolados consumam recursos excessivos."
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1788,6 +1792,11 @@
           "label": "Barra Lateral"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Médio",
+            "small": "Pequeno"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Escuro 2.0",
@@ -1798,6 +1807,7 @@
             "color_mode": "Sua interface agora usa o tema `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface.",
             "color_mode": "Escolha o tema de interface preferido.",
             "color_mode_shortcut": "Dica: prima <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas a partir de qualquer lugar.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
@@ -1806,8 +1816,7 @@
             "editor_hover_description": "Mostrar descrições de propriedades ao passar o mouse no editor.",
             "environment_color": "Cor de destaque usada para o ambiente atual na navegação.",
             "environment_name": "Nome de exibição para o ambiente atual, mostrado na navegação.",
-            "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais.",
-            "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface."
+            "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais."
           },
           "fields": {
             "app_font_size": "Tamanho da fonte da aplicação",
@@ -1827,12 +1836,7 @@
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
-          "label": "Preferências de Tema",
-          "app_font_size_options": {
-            "small": "Pequeno",
-            "medium": "Médio",
-            "large": "Grande"
-          }
+          "label": "Preferências de Tema"
         }
       },
       "label": "Configurações",
@@ -2281,6 +2285,7 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
-    "yes": "Sim"
+    "yes": "Sim",
+    "quotas": "Cotas"
   }
 }

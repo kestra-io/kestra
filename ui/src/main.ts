@@ -19,7 +19,8 @@ loadNodeTypes()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
-import {configureAxios, configureClient} from "@kestra-io/kestra-sdk"
+import {configureClient} from "@kestra-io/kestra-sdk"
+import {setupKestraAxios} from "./utils/kestraAxios"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter} from "./composables/useTenant"
@@ -28,7 +29,6 @@ import {getCsrfToken} from "./utils/csrf"
 import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
-import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 
 
@@ -43,11 +43,10 @@ const handleAuthError = (error: Error, to: {fullPath: string}) => {
     return {name: "setup"}
 }
 
-let axiosInstance: ReturnType<typeof configureAxios> | undefined
+let axiosInstance: ReturnType<typeof setupKestraAxios> | undefined
 
 function setupAxios(router: Router) {
     const coreStore = useCoreStore()
-    const authStore = useAuthStore()
     const unsavedChangesStore = useUnsavedChangesStore()
     const layoutStore = useLayoutStore()
 
@@ -59,18 +58,16 @@ function setupAxios(router: Router) {
     }
 
 
-    // axios
-    axiosInstance = configureAxios({}, {
-        authStore,
+    axiosInstance = setupKestraAxios({}, {
         coreStore,
-        oss: true,
         router,
         beforeLogout,
         isLoggedIn: () => !!BasicAuth.isLoggedIn(),
-        onAuthTimeout: beforeLogout,
-        isImpersonating: () => !!window.sessionStorage.getItem("impersonate"),
     })
 
+    // Add CSRF token to every request. setupKestraAxios calls configureClient internally,
+    // so once the SDK's configureClient registers the instance for useClient(), all paths
+    // (direct $http usage, generated OpenAPI client) share this same interceptor chain.
     axiosInstance.interceptors.request.use((config) => {
         const csrfToken = getCsrfToken()
         if (csrfToken) {
@@ -80,9 +77,8 @@ function setupAxios(router: Router) {
         return config
     })
 
-    // The generated OpenAPI client (client.gen) is configured via configureClient() inside
-    // configureAxios(), but its internal axios instance is created before the CSRF interceptor
-    // above is added. Re-bind it now so all generated-client POSTs also carry the CSRF token.
+    // Re-bind the generated OpenAPI client so it picks up the CSRF interceptor added above.
+    // This call can be removed once the SDK's configureClient sets axiosInstance itself.
     configureClient({axios: axiosInstance})
 
     return axiosInstance

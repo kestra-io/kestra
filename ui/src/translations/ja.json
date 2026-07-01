@@ -421,6 +421,10 @@
           "title": "変数を中央で管理する"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Editionでは、フローにクォータを定義して、時間枠内の同時実行数または総実行数を制限できます。クォータは、共有インフラストラクチャの保護、SLAの適用、および過剰なリソースを消費する暴走ワークフローの防止に役立ちます。",
+        "title": "フローの実行クォータを設定する"
+      },
       "secrets": {
         "add_env": {
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
@@ -443,11 +447,7 @@
         "message": "フローのロジックを個別に検証し、リグレッションを早期に検出し、変更や成長に伴う自動化に自信を持ち続けましょう。",
         "title": "すべての変更で信頼性を確保"
       },
-      "watch_the_video": "ビデオを見る",
-      "quotas": {
-        "title": "フローの実行クォータを設定する",
-        "message": "Kestra Enterprise Editionでは、フローにクォータを定義して、時間枠内の同時実行数または総実行数を制限できます。クォータは、共有インフラストラクチャの保護、SLAの適用、および過剰なリソースを消費する暴走ワークフローの防止に役立ちます。"
-      }
+      "watch_the_video": "ビデオを見る"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "表に表示"
     },
     "queued duration": "キュー待ち期間",
+    "quotas": "クォータ",
     "reach us": "お問い合わせ",
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "yes": "はい",
-    "quotas": "クォータ"
+    "yes": "はい"
   }
 }

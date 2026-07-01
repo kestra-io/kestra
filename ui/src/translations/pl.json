@@ -421,6 +421,10 @@
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition umożliwia definiowanie kwot dla flows w celu ograniczenia liczby równoczesnych lub łącznych wykonań w danym oknie czasowym. Kwoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflows.",
+        "title": "Egzekwowanie kwot wykonania dla flows"
+      },
       "secrets": {
         "add_env": {
           "first": "Zakoduj <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">wartość secret w Base64</a>",
@@ -443,11 +447,7 @@
         "message": "Zweryfikuj logikę swoich flow w izolacji, wcześnie wykrywaj regresje i utrzymuj pewność w swoich automatyzacjach, gdy się zmieniają i rozwijają.",
         "title": "Zapewnij niezawodność przy każdej zmianie"
       },
-      "watch_the_video": "Obejrzyj wideo",
-      "quotas": {
-        "title": "Egzekwowanie kwot wykonania dla flows",
-        "message": "Kestra Enterprise Edition umożliwia definiowanie kwot dla flows w celu ograniczenia liczby równoczesnych lub łącznych wykonań w danym oknie czasowym. Kwoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflows."
-      }
+      "watch_the_video": "Obejrzyj wideo"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "Wyświetlane w tabeli"
     },
     "queued duration": "Czas trwania w kolejce",
+    "quotas": "Kwoty",
     "reach us": "Porozmawiaj z nami",
     "read-more": "Czytaj więcej o",
     "readonly property": "Właściwość tylko do odczytu",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
-    "yes": "Tak",
-    "quotas": "Kwoty"
+    "yes": "Tak"
   }
 }

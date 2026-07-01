@@ -421,6 +421,10 @@
           "title": "अपने वेरिएबल्स को केंद्रीय रूप से प्रबंधित करें"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition आपको flows पर कोटा परिभाषित करने देता है जो एक समय विंडो के भीतर समवर्ती या कुल निष्पादन की संख्या को सीमित करता है। कोटा आपको साझा बुनियादी ढांचे की रक्षा करने, SLAs लागू करने और अत्यधिक संसाधन खपत करने वाले workflows को रोकने में मदद करते हैं।",
+        "title": "Flows पर निष्पादन कोटा लागू करें"
+      },
       "secrets": {
         "add_env": {
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
@@ -443,11 +447,7 @@
         "message": "अपने flows की लॉजिक को अलग-अलग सत्यापित करें, जल्दी से रिग्रेशन का पता लगाएं, और जैसे-जैसे आपके ऑटोमेशन बदलते और बढ़ते हैं, उन पर विश्वास बनाए रखें।",
         "title": "हर परिवर्तन के साथ विश्वसनीयता सुनिश्चित करें"
       },
-      "watch_the_video": "वीडियो देखें",
-      "quotas": {
-        "title": "Flows पर निष्पादन कोटा लागू करें",
-        "message": "Kestra Enterprise Edition आपको flows पर कोटा परिभाषित करने देता है जो एक समय विंडो के भीतर समवर्ती या कुल निष्पादन की संख्या को सीमित करता है। कोटा आपको साझा बुनियादी ढांचे की रक्षा करने, SLAs लागू करने और अत्यधिक संसाधन खपत करने वाले workflows को रोकने में मदद करते हैं।"
-      }
+      "watch_the_video": "वीडियो देखें"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "तालिका में दिखाया गया"
     },
     "queued duration": "कतारबद्ध अवधि",
+    "quotas": "कोटा",
     "reach us": "हमसे बात करें",
     "read-more": "और अधिक पढ़ें",
     "readonly property": "केवल-पढ़ने की संपत्ति",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
-    "yes": "हाँ",
-    "quotas": "कोटा"
+    "yes": "हाँ"
   }
 }

@@ -421,6 +421,10 @@
           "title": "Gobierne Centralmente Sus Variables"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition le permite definir cuotas en los flujos para limitar el número de ejecuciones simultáneas o totales dentro de una ventana de tiempo. Las cuotas le ayudan a proteger la infraestructura compartida, aplicar SLAs y evitar que los flujos descontrolados consuman recursos excesivos.",
+        "title": "Aplicar cuotas de ejecución en flujos"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifica el <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a>",
@@ -443,11 +447,7 @@
         "message": "Verifica la lógica de tus flows de forma aislada, detecta regresiones temprano y mantén la confianza en tus automatizaciones a medida que cambian y crecen.",
         "title": "Garantiza la Fiabilidad con Cada Cambio"
       },
-      "watch_the_video": "Mira el video",
-      "quotas": {
-        "title": "Aplicar cuotas de ejecución en flujos",
-        "message": "Kestra Enterprise Edition le permite definir cuotas en los flujos para limitar el número de ejecuciones simultáneas o totales dentro de una ventana de tiempo. Las cuotas le ayudan a proteger la infraestructura compartida, aplicar SLAs y evitar que los flujos descontrolados consuman recursos excesivos."
-      }
+      "watch_the_video": "Mira el video"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "Mostrado en Tabla"
     },
     "queued duration": "Duración en cola",
+    "quotas": "Cuotas",
     "reach us": "Habla con nosotros",
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
-    "yes": "Sí",
-    "quotas": "Cuotas"
+    "yes": "Sí"
   }
 }

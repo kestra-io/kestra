@@ -421,6 +421,10 @@
           "title": "Governa Centralmente le Tue Variabili"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition consente di definire quote sui flow per limitare il numero di esecuzioni simultanee o totali in una finestra temporale. Le quote aiutano a proteggere l'infrastruttura condivisa, applicare gli SLA e impedire che i workflow incontrollati consumino risorse eccessive.",
+        "title": "Applicare quote di esecuzione ai flow"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifica il <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valore segreto in Base64</a>",
@@ -443,11 +447,7 @@
         "message": "Verifica la logica dei tuoi flow in isolamento, rileva le regressioni in anticipo e mantieni la fiducia nelle tue automazioni mentre cambiano e crescono.",
         "title": "Garantisci l'affidabilità con ogni modifica"
       },
-      "watch_the_video": "Guarda il video",
-      "quotas": {
-        "title": "Applicare quote di esecuzione ai flow",
-        "message": "Kestra Enterprise Edition consente di definire quote sui flow per limitare il numero di esecuzioni simultanee o totali in una finestra temporale. Le quote aiutano a proteggere l'infrastruttura condivisa, applicare gli SLA e impedire che i workflow incontrollati consumino risorse eccessive."
-      }
+      "watch_the_video": "Guarda il video"
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1600,6 +1600,7 @@
       "shown": "Visualizzato nella tabella"
     },
     "queued duration": "Durata in coda",
+    "quotas": "Quote",
     "reach us": "Parlaci",
     "read-more": "Leggi di più su",
     "readonly property": "Proprietà di sola lettura",
@@ -2285,7 +2286,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
-    "yes": "Sì",
-    "quotas": "Quote"
+    "yes": "Sì"
   }
 }

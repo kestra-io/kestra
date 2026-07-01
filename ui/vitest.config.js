@@ -61,7 +61,6 @@ export default defineConfig({
     },
     coverage: {
         include: ["src/**/*.{ts,vue}"],
-        exclude: ["**/*.json"],
     },
     test: {
         projects: [
@@ -96,7 +95,6 @@ export default defineConfig({
                             "**/*.stories.{ts,tsx}",
                             "**/*.spec.{ts,tsx}",
                             "**/node_modules/**",
-                            "**/*.json",
                         ],
                     },
                 },

@@ -61,6 +61,10 @@
     // SSE as a typed field, so plugin topology-details slots can track per-step progress in real
     // time — metrics/outputs only materialise once the task run completes.
     let progressSSE: EventSource | undefined
+    // followLogs()/followExecution() resolve asynchronously; if the component unmounts in that
+    // window, the EventSource would land in a ref no one closes again. Guard against it explicitly
+    // instead of relying on onUnmounted alone.
+    let unmounted = false
 
     function closeProgressSSE() {
         progressSSE?.close()
@@ -72,6 +76,10 @@
         const id = execution.value?.id
         if (!id) return
         executionsStore.followLogs({id, params: levelToRequestParams({value: "INFO", direction: "min"})}).then((sse: EventSource) => {
+            if (unmounted) {
+                sse.close()
+                return
+            }
             progressSSE = sse
             sse.onmessage = (event: MessageEvent) => {
                 if (event.lastEventId === "start") return
@@ -128,6 +136,7 @@
     })
 
     onUnmounted(() => {
+        unmounted = true
         Object.keys(sseBySubflow.value).forEach(closeSSE)
         closeProgressSSE()
     })
@@ -221,8 +230,17 @@
             return
         }
 
-        executionsStore.followExecution({id: executionId}, t)
+        // rawSSE: true is required here — without it, followExecution() treats this as *the*
+        // followed execution: it nulls executionsStore.execution, closes, and overwrites the
+        // single shared executionsStore.sse ref. Expanding a subflow would silently kill the
+        // parent execution's own live SSE (see useExecutionRoot.ts) and, with several subflows
+        // expanded, each new one would kill the previous one's shared-ref tracking too.
+        executionsStore.followExecution({id: executionId, rawSSE: true}, t)
             .then((sse: {onmessage: ((event: MessageEvent) => void) | null; close: () => void}) => {
+                if (unmounted) {
+                    sse.close()
+                    return
+                }
                 sseBySubflow.value[subflow] = sse
                 sse.onmessage = (executionEvent: MessageEvent) => {
                     const isEnd = executionEvent && executionEvent.lastEventId === "end"

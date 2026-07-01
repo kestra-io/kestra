@@ -6,7 +6,7 @@
             class="json-tree__row"
             :class="{'json-tree__row--selected': row.path === selectedPath}"
             :style="{'--depth': row.depth}"
-            @click="$emit('select', row.path)"
+            @click="$emit('select', row.path, row.value)"
         >
             <span class="json-tree__gutter">{{ index + 1 }}</span>
 
@@ -52,7 +52,7 @@
     }>()
 
     defineEmits<{
-        (e: "select", path: string): void;
+        (e: "select", path: string, value: unknown): void;
     }>()
 
     interface TreeRow {
@@ -60,6 +60,7 @@
         depth: number;
         label: string;
         type: string;
+        value: unknown;
         display: string;
         isExpandable: boolean;
         isExpanded: boolean;
@@ -140,6 +141,7 @@
                 depth,
                 label: key,
                 type: valueType(child),
+                value: child,
                 display: expandable ? collapsedPreview(child) : leafDisplay(child),
                 isExpandable: expandable,
                 isExpanded: expanded,

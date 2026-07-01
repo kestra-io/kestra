@@ -301,9 +301,10 @@
         }
     }
 
-    function onSelectPath(path: string) {
+    function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
         expression.value = `{{ ${path} }}`
+        selectedValue.value = value
     }
 
     /* --------------------------------- Viewer -------------------------------- */

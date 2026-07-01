@@ -87,7 +87,7 @@ export default defineConfig({
                         ],
                     },
                     coverage: {
-                        reporter: ["text", "html"],
+                        reporter: ["text"],
                         exclude: [
                             "**/*.stories.{ts,tsx}",
                             "**/*.spec.{ts,tsx}",

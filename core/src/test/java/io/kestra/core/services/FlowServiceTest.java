@@ -752,6 +752,85 @@ class FlowServiceTest {
         assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
     }
 
+    @Test
+    void shouldNotEmitTriggerEventWhenCreatingDraftFlowWithScheduleTrigger() throws FlowProcessingException, QueueException {
+        // A draft revision must be invisible to the scheduler: it is never picked up implicitly.
+        // Creating a flow as a draft with a Schedule trigger must NOT emit any trigger lifecycle
+        // event — otherwise the scheduler creates trigger state for the draft and fires the schedule.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "* * * * *"
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        reset(triggerEventQueue);
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            assertThat(saved.isDraft()).isTrue();
+            verify(triggerEventQueue, never()).send(any());
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldNotEmitTriggerEventWhenUpdatingPublishedFlowToDraft() throws FlowProcessingException, QueueException {
+        // Saving a draft on top of a published flow must leave the scheduler on the last non-draft
+        // revision: no trigger event may be emitted, even when the draft changes the trigger.
+        // Otherwise the scheduler would repoint its flow cache at the draft revision.
+        String flowId = IdUtils.create();
+        String publishedSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 0 * * *"
+            """.formatted(flowId, TEST_NAMESPACE);
+        FlowWithSource published = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, publishedSource));
+
+        try {
+            reset(triggerEventQueue);
+
+            String draftSource = """
+                id: %s
+                namespace: %s
+                draft: true
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: hello
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/5 * * * *"
+                """.formatted(flowId, TEST_NAMESPACE);
+            FlowWithSource draft = flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftSource), published);
+
+            assertThat(draft.isDraft()).isTrue();
+            assertThat(draft.getRevision()).isEqualTo(2);
+            verify(triggerEventQueue, never()).send(any());
+        } finally {
+            flowRepository.findByIdWithSource(published.getTenantId(), published.getNamespace(), published.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
     @MockBean
     @Replaces(TriggerEventQueue.class)
     TriggerEventQueue triggerEventQueue() {

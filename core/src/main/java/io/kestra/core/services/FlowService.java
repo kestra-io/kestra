@@ -244,6 +244,15 @@ public class FlowService {
             return;
         }
 
+        // A draft revision must stay invisible to the scheduler: it is never picked up implicitly.
+        // Emitting trigger lifecycle events pinned to a draft revision would either create trigger
+        // state for a brand-new draft flow (firing its schedule) or repoint the scheduler's flow
+        // cache at the draft revision, masking the last non-draft revision. Skip recomputation so
+        // the scheduler keeps operating on the latest non-draft revision (or nothing, if none exists).
+        if (flow.isDraft()) {
+            return;
+        }
+
         if (previous != null) {
             FlowService.findRemovedTrigger(flow, previous).forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))

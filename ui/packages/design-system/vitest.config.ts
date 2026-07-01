@@ -48,6 +48,9 @@ export default defineConfig({
                         instances: [{browser: "chromium"}],
                     },
                     setupFiles: ["./.storybook/vitest.setup.ts"],
+                    coverage: {
+                        include: ["src/**/*.{ts,vue}"],
+                    },
                 },
             },
 
@@ -62,6 +65,9 @@ export default defineConfig({
                     globals: true,
                     browser: {enabled: false},
                     include: ["tests/**/*.test.ts"],
+                    coverage: {
+                        include: ["src/**/*.{ts,vue}"],
+                    },
                 },
             },
         ],

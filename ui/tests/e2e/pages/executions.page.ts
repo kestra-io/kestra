@@ -107,26 +107,19 @@ export class ExecutionsPage extends BasePage {
     }
 
     async setPaginationTo(size: Pagination) {
-        const paginationSelect = this.page.locator(".kel-pagination .kel-select")
-
-        // Pagination bar is hidden when the total fits within the smallest page size (<= 10 rows)
-        try {
-            await paginationSelect.waitFor({state: "visible", timeout: 15000})
-        } catch {
-            return
-        }
-
-        // The Element-Plus dropdown is not a `select` - click on the text
-        await paginationSelect.click()
+        // The Element-Plus dropdown is not a `select` - click on text
+        await this.page.locator(".kel-pagination .kel-select").click()
 
         // Wait for the select dropdown to show
         const dropdowns = this.page.locator(".kel-select-dropdown")
         const visibleDropdown = dropdowns.filter({has: this.page.locator(":visible")}).last()
-        await visibleDropdown.waitFor({state: "visible"})
+
+        // Wait for the visible dropdown to actually appear
+        await visibleDropdown.waitFor({state: "visible", timeout: 500})
 
         // Find and click the matching option
         const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size} per page`})
-        await option.waitFor({state: "visible"})
+        await option.waitFor({state: "visible", timeout: 500})
         await option.click()
     }
 }

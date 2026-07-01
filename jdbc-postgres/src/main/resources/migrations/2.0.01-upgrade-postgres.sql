@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_trigger_next_evaluation_date ON triggers (next_ev
 
 -- Executions: trigger reference
 ALTER TABLE executions ADD COLUMN IF NOT EXISTS "trigger_id" VARCHAR(150) GENERATED ALWAYS AS (value -> 'trigger' ->> 'id') STORED;
-CREATE INDEX IF NOT EXISTS idx_executions_trigger_id ON executions ("trigger_id");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_trigger_id ON executions ("trigger_id");
 
 -- Worker 2.0: replace worker_uuid with worker_uid
 DROP INDEX IF EXISTS worker_job_running_worker_uuid;
@@ -52,4 +52,4 @@ CREATE INDEX IF NOT EXISTS worker_job_running_worker_uid ON worker_job_running (
 -- Executions: parent execution ID and loop run index
 ALTER TABLE executions ADD COLUMN IF NOT EXISTS "parent_id" VARCHAR(100) GENERATED ALWAYS AS (value #>> '{parentId}') STORED;
 ALTER TABLE executions ADD COLUMN IF NOT EXISTS "loop_run_index" INT GENERATED ALWAYS AS ((value #>> '{loopRun,index}')::INT) STORED;
-CREATE INDEX IF NOT EXISTS executions_parent_id ON executions ("deleted", "tenant_id", "parent_id");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS executions_parent_id ON executions ("deleted", "tenant_id", "parent_id");

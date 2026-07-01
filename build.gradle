@@ -201,6 +201,9 @@ subprojects {subProj ->
             // We use 21 release (target) level temporary, will be switched to 25 for 2.0
             options.release = 21
         }
+        compileTestJava {
+            options.release = 21
+        }
 
         configurations {
             agent {

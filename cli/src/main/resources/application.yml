@@ -204,8 +204,8 @@ kestra:
   jdbc:
     queues:
       min-poll-interval: 25ms
-      max-poll-interval: 500ms
-      poll-switch-interval: 60s
+      max-poll-interval: 100ms
+      poll-switch-interval: 10s
 
     cleaner:
       initial-delay: 1h

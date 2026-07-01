@@ -28,8 +28,8 @@ public class QueuePollerConfigurationTest {
     void shouldCompute5StepsByDefault() {
         var configuration = new QueuePollerConfiguration(
             Duration.ofMillis(25),
-            Duration.ofMillis(500),
-            Duration.ofSeconds(60),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(10),
             100,
             5,
             true
@@ -39,12 +39,12 @@ public class QueuePollerConfigurationTest {
         List<QueuePollerConfiguration.Step> steps = configuration.computeSteps();
         assertThat(steps.size()).isEqualTo(6);
         assertThat(steps).contains(
-            new QueuePollerConfiguration.Step(Duration.ofMillis(25), Duration.ofMillis(1875)),
-            new QueuePollerConfiguration.Step(Duration.ofMillis(31), Duration.ofMillis(3750)),
-            new QueuePollerConfiguration.Step(Duration.ofMillis(62), Duration.ofMillis(7500)),
-            new QueuePollerConfiguration.Step(Duration.ofMillis(125), Duration.ofSeconds(15)),
-            new QueuePollerConfiguration.Step(Duration.ofMillis(250), Duration.ofSeconds(30)),
-            new QueuePollerConfiguration.Step(Duration.ofMillis(500), Duration.ofSeconds(60))
+            new QueuePollerConfiguration.Step(Duration.ofMillis(25), Duration.ofMillis(312)),
+            new QueuePollerConfiguration.Step(Duration.ofMillis(25), Duration.ofMillis(625)),
+            new QueuePollerConfiguration.Step(Duration.ofMillis(25), Duration.ofMillis(1250)),
+            new QueuePollerConfiguration.Step(Duration.ofMillis(25), Duration.ofMillis(2500)),
+            new QueuePollerConfiguration.Step(Duration.ofMillis(50), Duration.ofMillis(5000)),
+            new QueuePollerConfiguration.Step(Duration.ofMillis(100), Duration.ofSeconds(10))
         );
     }
 

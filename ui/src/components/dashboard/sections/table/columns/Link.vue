@@ -10,12 +10,12 @@
             },
         }"
     >
-        <code class="link">
+        <code class="link" :class="{colored: props.colored}">
             {{ props.execution ? label.slice(0, 8) : label }}
         </code>
     </RouterLink>
 
-    <code v-else class="link">{{ label }}</code>
+    <code v-else class="link" :class="{colored: props.colored}">{{ label }}</code>
 </template>
 
 <script setup lang="ts">
@@ -24,6 +24,7 @@
     const props = defineProps({
         execution: {type: Boolean, default: false},
         flow: {type: Boolean, default: false},
+        colored: {type: Boolean, default: true},
         row: {type: Object as PropType<Record<string, any>>, required: true},
         field: {type: String, required: true},
         columns: {type: Object as PropType<Record<string, any>>, required: true},
@@ -49,6 +50,10 @@
 
 <style scoped>
 .link {
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-sm);
+}
+.link.colored {
     color: var(--ks-text-link);
 }
 </style>

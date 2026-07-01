@@ -457,7 +457,7 @@
         if (!currentExecution?.state || State.isRunning(currentExecution.state.current)) {
             return false
         }
-        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, currentExecution.namespace) === true
+        return authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, currentExecution.namespace) === true
     })
 
     const replayAttemptIndex = computed(() =>

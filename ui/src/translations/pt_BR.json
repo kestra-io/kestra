@@ -421,6 +421,10 @@
           "title": "Governe Centralmente Suas Variáveis"
         }
       },
+      "quotas": {
+        "message": "O Kestra Enterprise Edition permite definir cotas em flows para limitar o número de execuções simultâneas ou totais dentro de uma janela de tempo. As cotas ajudam a proteger a infraestrutura compartilhada, aplicar SLAs e impedir que workflows descontrolados consumam recursos excessivos.",
+        "title": "Aplicar cotas de execução em flows"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
@@ -1596,6 +1600,7 @@
       "shown": "Exibido na Tabela"
     },
     "queued duration": "Duração na fila",
+    "quotas": "Cotas",
     "reach us": "Fale conosco",
     "read-more": "Leia mais sobre",
     "readonly property": "Propriedade somente leitura",
@@ -1788,6 +1793,11 @@
           "label": "Barra Lateral"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Médio",
+            "small": "Pequeno"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Dark 2.0",
@@ -1798,6 +1808,7 @@
             "color_mode": "Sua interface agora usa o tema `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Fator de escala aplicado a todos os tamanhos de fonte da interface.",
             "color_mode": "Escolha o tema de interface preferido.",
             "color_mode_shortcut": "Dica: pressione <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> para alternar temas de qualquer lugar.",
             "editor_folding_stratgy": "Recolher blocos longos de YAML por padrão ao abrir um flow.",
@@ -1809,6 +1820,7 @@
             "logs_font_size": "Tamanho da fonte usado em visualizadores de log e terminais."
           },
           "fields": {
+            "app_font_size": "Tamanho de fonte do aplicativo",
             "chart_color_scheme": {
               "classic": "Clássico",
               "kestra": "Kestra",

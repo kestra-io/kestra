@@ -24,21 +24,21 @@
 
 <style scoped lang="scss">
     .wrapper {
-        height: 100vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background-color: var(--ks-bg-surface);
         .content {
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
         }
     }
 
     .title {
         display: flex;
-        padding: 1rem;
-        padding-left: 1.6rem;
-        padding-right: 3rem;
-        border-bottom: 1px solid var(--ks-border-default);
+        padding: 2rem;
+        padding-bottom: 1rem;
         align-items: center;
         gap: 1rem;
 
@@ -51,6 +51,7 @@
             margin-top: 0;
             width: 100%;
             line-height: 1.2;
+            font-weight: var(--ks-font-weight-semibold);
         }
     }
 </style>

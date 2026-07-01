@@ -770,7 +770,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
 
         // Single pass over taskRuns, tracking the highest-priority terminal state found.
-        // Priority order: KILLED > FAILED > WARNING > PAUSED
+        // Priority order: KILLED > FAILED > CANCELLED > WARNING > PAUSED
         State.Type state = terminalState;
         for (TaskRun taskRun : taskRuns) {
             State.Type current = taskRun.getState().getCurrent();
@@ -779,7 +779,9 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
                 break; // highest priority, no need to continue
             } else if (current == State.Type.FAILED && state != State.Type.KILLED) {
                 state = State.Type.FAILED;
-            } else if (current == State.Type.WARNING && state != State.Type.KILLED && state != State.Type.FAILED) {
+            } else if (current == State.Type.CANCELLED && state != State.Type.KILLED && state != State.Type.FAILED) {
+                state = State.Type.CANCELLED;
+            } else if (current == State.Type.WARNING && state != State.Type.KILLED && state != State.Type.FAILED && state != State.Type.CANCELLED) {
                 state = State.Type.WARNING;
             } else if (current == State.Type.PAUSED && state == terminalState) {
                 state = State.Type.PAUSED;

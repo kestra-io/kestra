@@ -31,13 +31,13 @@ plugins {
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.36.0"
+    id "com.vanniktech.maven.publish" version "0.37.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.1.0"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.2"
 }
 
 idea {
@@ -435,6 +435,17 @@ tasks.register('generateTestMetadata') {
         outputFile.get().asFile.parentFile.mkdirs()
         outputFile.get().asFile.text = json
         logger.lifecycle("Test metadata written to ${outputFile.get().asFile.path}")
+    }
+}
+
+// Finalize every Test task (not just `check`) with generateTestMetadata. When a module's
+// test task exceeds its timeout, Gradle aborts the build before `check` runs, so a finalizer
+// of `check` is skipped and the metadata file is never written — leaving kestra-devtools to
+// silently report success for the timed-out module. A finalizer of the Test task itself still
+// runs on timeout (same as jacocoTestReport above), guaranteeing test-metadata.json is written.
+subprojects {
+    tasks.withType(Test).configureEach {
+        finalizedBy rootProject.tasks.named('generateTestMetadata')
     }
 }
 

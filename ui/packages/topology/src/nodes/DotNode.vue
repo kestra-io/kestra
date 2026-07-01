@@ -38,7 +38,6 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: 5px;
         color: var(--ks-topology-dash);
     }
 </style>

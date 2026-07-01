@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "书签",
+    "breakpoints": "断点",
     "bulk action async warning": "这可能需要一些时间。",
     "bulk actions": "批量操作",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
@@ -264,6 +265,7 @@
       },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
+      "others": "其他",
       "preview": "预览仪表板",
       "quick_filters": {
         "all": "全部",
@@ -273,7 +275,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "切换仪表板"
+      "switch": "切换仪表板",
+      "viewAll": "查看全部"
     },
     "data": "数据",
     "dataFilters": "数据过滤器",
@@ -917,6 +920,7 @@
     "items": "项目",
     "join community": "加入社区",
     "join_slack": "加入 Slack",
+    "jsonl": "JSONL",
     "jump to...": "跳转到...",
     "kestra": "Kestra",
     "key": "键",
@@ -982,6 +986,7 @@
       "auth_type": "身份验证",
       "basic_auth": "基本认证",
       "bearer_token": "Bearer token 身份验证",
+      "client_setup": "客户端设置",
       "connect": "连接",
       "connect_tab": {
         "auth_api_token_hint": "在启动客户端之前，将 <code>KESTRA_TOKEN</code> 设置为环境变量。",
@@ -1008,6 +1013,7 @@
       "id_placeholder": "例如 my-mcp-server",
       "instructions": "说明",
       "main_tenant": "main",
+      "managed_by_kestra": "由 Kestra 管理",
       "no_oauth_providers": "此实例中未配置 OIDC 提供商",
       "no_servers": "未找到MCP服务器。创建您的第一个服务器以向外部AI代理公开MCP Tool triggers。",
       "oauth": "OAuth",
@@ -1017,14 +1023,18 @@
       "oauth_provider_required": "当认证类型为 OAuth 时，OAuth 提供商为必填项",
       "page_description": "将您的Kestra flow公开为MCP兼容AI代理的工具",
       "private": "私有",
+      "private_server": "私有服务器",
       "public": "公开",
+      "public_hint": "警告：公共服务器无需身份验证。任何拥有此 URL 的人都可以调用此服务器公开的所有工具，无需 namespace 或权限检查。仅用于可以安全地对外公开的服务器。",
       "save": "保存更改",
       "scopes_supported": "支持的 scope",
       "scopes_supported_hint": "此服务器 Protected Resource Metadata 文档中公告的 scope。符合规范的 MCP 客户端将其授权请求限制为此列表。留空以省略该字段，让客户端回退到 IdP 公告的 scope。",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP 服务器",
+      "server_id": "服务器 ID",
       "server_type": "服务器类型",
       "servers": "MCP 服务器",
+      "servers_count": "{count} MCP 服务器",
       "tab_connect": "连接",
       "tab_edit": "编辑",
       "tab_tool_flows": "工具Flows",
@@ -1047,7 +1057,8 @@
         "view_flow": "打开 flow"
       },
       "url_copied": "URL 已复制！",
-      "username_password": "用户名和密码"
+      "username_password": "用户名和密码",
+      "your_servers": "您的服务器"
     },
     "metric": "指标",
     "metric choice": "此flow没有可用的指标",
@@ -1629,6 +1640,8 @@
     "restore confirm": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "restore revision": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "resume": "恢复",
+    "resume from breakpoint done": "执行已从断点恢复",
+    "resume from breakpoint title": "从断点恢复执行 `{{id}}`",
     "resumed confirm": "确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
     "resumed title": "恢复执行 <code>{id}</code>",
@@ -1793,9 +1806,11 @@
             "editor_hover_description": "在编辑器中悬停时显示属性描述。",
             "environment_color": "用于导航中当前环境的强调颜色。",
             "environment_name": "当前环境的显示名称，显示在导航中。",
-            "logs_font_size": "日志查看器和终端中使用的字体大小。"
+            "logs_font_size": "日志查看器和终端中使用的字体大小。",
+            "app_font_size": "应用于所有界面字体大小的缩放系数。"
           },
           "fields": {
+            "app_font_size": "应用字体大小",
             "chart_color_scheme": {
               "classic": "经典",
               "kestra": "Kestra",
@@ -1812,7 +1827,12 @@
             "logs_font_size": "日志字体大小",
             "theme": "主题"
           },
-          "label": "主题偏好"
+          "label": "主题偏好",
+          "app_font_size_options": {
+            "small": "小",
+            "medium": "中",
+            "large": "大"
+          }
         }
       },
       "label": "设置",
@@ -1841,7 +1861,6 @@
         "username_hint": "必须是有效的电子邮件地址。"
       },
       "login": "登录",
-      "login_subtitle": "输入您的凭证以访问您的Kestra实例",
       "login_title": "登录",
       "logout": "注销",
       "steps": {
@@ -1892,7 +1911,8 @@
         "firstName_required": "名字为必填项",
         "incorrect_creds": "用户名或密码无效。请确保您的凭据正确。",
         "lastName_required": "姓氏为必填项",
-        "password_invalid": "密码无效"
+        "password_invalid": "密码无效",
+        "password_required": "密码为必填项"
       }
     },
     "show": "显示",

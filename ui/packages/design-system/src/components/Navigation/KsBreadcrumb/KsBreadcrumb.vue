@@ -116,7 +116,7 @@
         align-items: center;
         gap: var(--ks-spacing-1);
         align-self: stretch;
-        font-size: var(--ks-font-size-md);
+        font-size: var(--ks-font-size-sm);
 
         &__leading {
             display: inline-flex;

@@ -26,14 +26,6 @@
                 @search="search = $event"
                 @filter="onFilterChange"
             />
-            <QuickFilters
-                v-if="!hasComplexFilters"
-                :levels="VALUES.LEVELS"
-                :level="effectiveSelectedLogLevel?.value"
-                :showInterval="false"
-                :levelLabel="t('filter.level_log_executions.label')"
-                @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
-            />
             <div class="gantt-stage">
                 <KsCard
                     id="gantt"
@@ -99,7 +91,10 @@
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
-                                            <div class="task-label">
+                                            <div
+                                                class="task-label"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
                                                     <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
                                                 </div>
@@ -244,6 +239,7 @@
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
+    import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
 
@@ -263,6 +259,11 @@
                 date: string;
             }>;
         };
+    }
+
+    interface TaskWrapper {
+        task: TaskRun;
+        depth: number;
     }
 
     interface SeriesItem {
@@ -333,7 +334,6 @@
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
     const {
         effectiveValue: effectiveSelectedLogLevel,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
@@ -342,9 +342,6 @@
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
-    const {VALUES} = useValues("logs")
-    const {hasComplexFilters} = useComplexFilters()
-
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
@@ -375,6 +372,11 @@
 
     const tasks = computed<Array<GanttTaskWrapper<TaskRun>>>(() =>
         buildGanttTasks((execution.value?.taskRunList || []) as TaskRun[]),
+    const tasks = computed<TaskWrapper[]>(() =>
+        buildTaskRunHierarchy(
+            (execution.value?.taskRunList || []) as TaskRun[],
+            (n1, n2) => ts(n1.state.histories[0].date) - ts(n2.state.histories[0].date),
+        ),
     )
 
     const taskTypeByTaskRun = computed<Array<[TaskRun, string | undefined]>>(() => {
@@ -814,6 +816,7 @@
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
+                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
 
                     code {
                         color: var(--ks-text-primary);

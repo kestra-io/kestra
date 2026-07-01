@@ -8,6 +8,7 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.preview.FileRenderer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -51,6 +52,7 @@ public class RegisteredPlugin {
     public static final String DATA_FILTERS_KPI_GROUP_NAME = "data-filters-kpi";
     public static final String LOG_EXPORTERS_GROUP_NAME = "log-exporters";
     public static final String ADDITIONAL_PLUGINS_GROUP_NAME = "additional-plugins";
+    public static final String FILE_RENDERERS_GROUP_NAME = "file-renderers";
 
     private final ExternalPlugin externalPlugin;
     private final Manifest manifest;
@@ -69,6 +71,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI;
     private final List<Class<? extends LogExporter<?>>> logExporters;
     private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
+    private final List<Class<? extends FileRenderer>> fileRenderers;
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
@@ -89,7 +92,8 @@ public class RegisteredPlugin {
             !dataFilters.isEmpty() ||
             !dataFiltersKPI.isEmpty() ||
             !logExporters.isEmpty() ||
-            !additionalPlugins.isEmpty();
+            !additionalPlugins.isEmpty() ||
+            !fileRenderers.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -165,6 +169,10 @@ public class RegisteredPlugin {
             return AdditionalPlugin.class;
         }
 
+        if (this.getFileRenderers().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return FileRenderer.class;
+        }
+
         if (this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
             return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
@@ -200,6 +208,7 @@ public class RegisteredPlugin {
         result.put(DATA_FILTERS_KPI_GROUP_NAME, Arrays.asList(this.getDataFiltersKPI().toArray(Class[]::new)));
         result.put(LOG_EXPORTERS_GROUP_NAME, Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
         result.put(ADDITIONAL_PLUGINS_GROUP_NAME, Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
+        result.put(FILE_RENDERERS_GROUP_NAME, Arrays.asList(this.getFileRenderers().toArray(Class[]::new)));
 
         return result;
     }
@@ -415,6 +424,12 @@ public class RegisteredPlugin {
         if (!this.getAdditionalPlugins().isEmpty()) {
             b.append("[Additional Plugins: ");
             b.append(this.getAdditionalPlugins().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getFileRenderers().isEmpty()) {
+            b.append("[File Renderers: ");
+            b.append(this.getFileRenderers().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

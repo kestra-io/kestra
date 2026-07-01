@@ -170,7 +170,7 @@
 
                     code {
                         font-family: var(--ks-font-family-mono);
-                        font-size: 0.92em;
+                        font-size: var(--ks-font-size-sm);
                         padding: var(--ks-spacing-px) var(--ks-spacing-1);
                         border-radius: var(--ks-radius-xs);
                         background: var(--ks-tag-background);

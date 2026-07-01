@@ -15,6 +15,7 @@ import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -211,6 +212,59 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
      */
     public void emitLogs(List<LogEntry> logEntries) {
         this.logEmitter.emits(logEntries);
+    }
+
+    /**
+     * Emit the log lines attached to a dynamically-generated taskrun through the regular logging
+     * pipeline, so the standard appender behaviour (secret masking, long-message splitting, level
+     * filtering, forwarding to the server log, file vs queue routing) applies natively — the only
+     * thing that changes is the taskrun the lines are attributed to.
+     * <p>
+     * When this context logs to a file ({@code logToFile}), its logs are file-only (no inline/queue
+     * display): the lines are routed through this context's own logger so they land in the same
+     * downloadable file. A flat file has no taskrun, so there is nothing to link there.
+     * <p>
+     * Otherwise the lines go through a child logger bound to a {@link LogEntry} whose execution,
+     * tenant, namespace and flow are taken from this context's bound entry — a caller cannot target
+     * another execution or tenant — with the dynamic taskrun's id and a fixed attempt 0 (these
+     * taskruns have a single attempt and the log view groups by the 0-based attempt). The level
+     * filter and the secrets known to this context are inherited so nothing else is lost.
+     */
+    public void emitDynamicTaskRunLogs(TaskRun dynamicTaskRun, List<DynamicTaskRunLog> logs) {
+        // A logToFile task logs to a file only (no inline display): route the lines through this
+        // context's own logger so they join the same downloadable file (a flat file has no taskrun
+        // to link to). Otherwise emit through a logger bound to the dynamic taskrun, so the lines
+        // are attributed to it while still passing through the regular appender pipeline.
+        org.slf4j.Logger logger = this.logToFile ? this.logger() : deriveLoggerFor(dynamicTaskRun).logger();
+
+        for (DynamicTaskRunLog log : logs) {
+            logger.atLevel(log.level()).log(log.message());
+        }
+    }
+
+    /**
+     * Derive a logger bound to a dynamically-generated taskrun: a child of this context that shares
+     * its log emitter, level filter and known secrets, but emits under the taskrun's id with a fixed
+     * attempt 0 (these taskruns have a single attempt and the log view groups by the 0-based
+     * attempt). Execution, tenant, namespace and flow are taken from this context, so a caller can
+     * only ever target this execution's taskrun — never forge a log for another execution or tenant.
+     */
+    private RunContextLogger deriveLoggerFor(TaskRun dynamicTaskRun) {
+        LogEntry boundLogEntry = LogEntry.builder()
+            .tenantId(this.logEntry.getTenantId())
+            .executionId(this.logEntry.getExecutionId())
+            .namespace(this.logEntry.getNamespace())
+            .flowId(this.logEntry.getFlowId())
+            .executionKind(this.logEntry.getExecutionKind())
+            .taskId(dynamicTaskRun.getTaskId())
+            .taskRunId(dynamicTaskRun.getId())
+            .attemptNumber(0)
+            .build();
+
+        RunContextLogger taskRunLogger = new RunContextLogger(this.logEmitter, boundLogEntry, null, false);
+        taskRunLogger.loglevel = this.loglevel; // inherit this context's level filter as-is (logback Level)
+        taskRunLogger.useSecrets.addAll(this.useSecrets);
+        return taskRunLogger;
     }
 
     private Logger initializeLogger() {

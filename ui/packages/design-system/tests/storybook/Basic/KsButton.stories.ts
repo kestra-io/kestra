@@ -199,6 +199,30 @@ export const WithIcon: Story = {
     },
 }
 
+/** Icon ↔ label spacing – the gap between a leading icon and the label is token-based and consistent across sizes */
+export const IconLabelSpacing: Story = {
+    render: () => ({
+        components: {KsButton},
+        setup() {
+            return {DownloadIcon}
+        },
+        template: `
+            <div style="padding:24px;display:flex;gap:12px;align-items:center">
+                <ks-button :icon="DownloadIcon" type="primary" size="large">Large</ks-button>
+                <ks-button :icon="DownloadIcon" type="primary">Default</ks-button>
+                <ks-button :icon="DownloadIcon" type="primary" size="small">Small</ks-button>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const labels = canvasElement.querySelectorAll(".kel-button .kel-icon + span")
+        await expect(labels.length).toBe(3)
+        for (const label of labels) {
+            await expect(getComputedStyle(label).marginLeft).toBe("8px")
+        }
+    },
+}
+
 /** Text and link variants */
 export const TextAndLink: Story = {
     render: () => ({

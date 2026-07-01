@@ -447,7 +447,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             workerTriggerRunning.getTrigger().getId()
         );
         workerJobRunningStateStore.deleteByKey(txContext, workerTriggerRunning.uid());
-        triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid()));
+        triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid(), workerTriggerRunning.getDispatchEpoch()));
         Logs.logTrigger(
             triggerId,
             Level.WARN,

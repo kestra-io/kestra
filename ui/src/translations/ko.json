@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "북마크",
+    "breakpoints": "중단점",
     "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
     "bulk actions": "일괄 작업",
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
@@ -264,6 +265,7 @@
       },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
+      "others": "기타",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -273,7 +275,8 @@
         "success": "성공",
         "warning": "경고"
       },
-      "switch": "대시보드 전환"
+      "switch": "대시보드 전환",
+      "viewAll": "전체 보기"
     },
     "data": "데이터",
     "dataFilters": "데이터 필터",
@@ -917,6 +920,7 @@
     "items": "항목",
     "join community": "커뮤니티에 참여하기",
     "join_slack": "Slack 참여",
+    "jsonl": "JSONL",
     "jump to...": "이동...",
     "kestra": "Kestra",
     "key": "Key",
@@ -982,6 +986,7 @@
       "auth_type": "인증",
       "basic_auth": "기본 인증",
       "bearer_token": "베어러 토큰 인증",
+      "client_setup": "클라이언트 설정",
       "connect": "연결",
       "connect_tab": {
         "auth_api_token_hint": "클라이언트를 시작하기 전에 <code>KESTRA_TOKEN</code>을 환경 변수로 설정하세요.",
@@ -1008,6 +1013,7 @@
       "id_placeholder": "예: my-mcp-server",
       "instructions": "지침",
       "main_tenant": "메인",
+      "managed_by_kestra": "Kestra에서 관리",
       "no_oauth_providers": "이 인스턴스에 구성된 OIDC 공급자가 없습니다",
       "no_servers": "MCP 서버를 찾을 수 없습니다. 외부 AI 에이전트에 MCP Tool trigger를 노출하기 위해 첫 번째 서버를 생성하세요.",
       "oauth": "OAuth",
@@ -1017,14 +1023,18 @@
       "oauth_provider_required": "인증 유형이 OAuth인 경우 OAuth 공급자가 필요합니다",
       "page_description": "Kestra flow를 MCP 호환 AI 에이전트의 도구로 노출하십시오.",
       "private": "비공개",
+      "private_server": "프라이빗 서버",
       "public": "공개",
+      "public_hint": "경고: 공개 서버는 인증이 필요하지 않습니다. URL을 아는 누구나 namespace 또는 권한 확인 없이 이 서버에 의해 노출된 모든 도구를 호출할 수 있습니다. 외부에 노출해도 안전한 서버에만 사용하십시오.",
       "save": "변경 사항 저장",
       "scopes_supported": "지원되는 scope",
       "scopes_supported_hint": "이 서버의 Protected Resource Metadata 문서에 공개된 scope. 사양을 준수하는 MCP 클라이언트는 이 목록으로 인증 요청을 제한합니다. 필드를 생략하고 클라이언트가 IdP의 공개 scope로 대체할 수 있도록 비워 두세요.",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCP 서버",
+      "server_id": "서버 ID",
       "server_type": "서버 유형",
       "servers": "MCP 서버",
+      "servers_count": "{count} MCP 서버",
       "tab_connect": "연결",
       "tab_edit": "편집",
       "tab_tool_flows": "도구 Flows",
@@ -1047,7 +1057,8 @@
         "view_flow": "flow 열기"
       },
       "url_copied": "URL이 복사되었습니다!",
-      "username_password": "사용자 이름 & 비밀번호"
+      "username_password": "사용자 이름 & 비밀번호",
+      "your_servers": "내 서버"
     },
     "metric": "메트릭",
     "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
@@ -1629,6 +1640,8 @@
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "restore revision": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "resume": "재개",
+    "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
+    "resume from breakpoint title": "`{{id}}` 실행을 중단점에서 재개",
     "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resumed title": "실행 <code>{id}</code> 재개",
@@ -1793,9 +1806,11 @@
             "editor_hover_description": "편집기에서 호버 시 속성 설명 표시.",
             "environment_color": "현재 환경의 탐색에서 사용되는 강조 색상.",
             "environment_name": "현재 환경의 표시 이름, 탐색에 표시됩니다.",
-            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
+            "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기.",
+            "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다."
           },
           "fields": {
+            "app_font_size": "앱 글꼴 크기",
             "chart_color_scheme": {
               "classic": "클래식",
               "kestra": "Kestra",
@@ -1812,7 +1827,12 @@
             "logs_font_size": "로그 글꼴 크기",
             "theme": "테마"
           },
-          "label": "테마 설정"
+          "label": "테마 설정",
+          "app_font_size_options": {
+            "small": "작게",
+            "medium": "보통",
+            "large": "크게"
+          }
         }
       },
       "label": "설정",
@@ -1841,7 +1861,6 @@
         "username_hint": "유효한 이메일 주소여야 합니다."
       },
       "login": "로그인",
-      "login_subtitle": "Kestra 인스턴스에 액세스하려면 자격 증명을 입력하세요.",
       "login_title": "로그인",
       "logout": "로그아웃",
       "steps": {
@@ -1892,7 +1911,8 @@
         "firstName_required": "이름이 필요합니다",
         "incorrect_creds": "잘못된 사용자 이름 또는 비밀번호입니다. 자격 증명이 올바른지 확인하세요.",
         "lastName_required": "성을 입력해야 합니다",
-        "password_invalid": "잘못된 비밀번호"
+        "password_invalid": "잘못된 비밀번호",
+        "password_required": "비밀번호는 필수입니다"
       }
     },
     "show": "보기",

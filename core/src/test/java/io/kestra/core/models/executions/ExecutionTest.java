@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -283,5 +285,62 @@ class ExecutionTest {
             null
         );
         assertThat(executionNew.getLabels()).containsExactly(new Label("test", "value2"));
+    }
+
+    @Test
+    void shouldGuessCancelledWhenTaskRunCancelled() {
+        // Given a flow whose single task run ended CANCELLED (e.g. workerSelector fallback: CANCEL)
+        Flow flow = flowWithTask("will-cancel");
+        Execution execution = executionWithTaskRun("will-cancel", State.Type.CANCELLED);
+
+        // When guessing the final state
+
+        // Then the execution must not be silently reported as SUCCESS
+        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldGuessFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
+        // Given one FAILED and one CANCELLED task run
+        Return failed = Return.builder().id("failed").type(Return.class.getName()).build();
+        Return cancelled = Return.builder().id("cancelled").type(Return.class.getName()).build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(failed, cancelled))
+            .build();
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .taskRunList(List.of(
+                TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
+                TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
+            ))
+            .build();
+
+        // When guessing the final state
+
+        // Then FAILED takes precedence over CANCELLED
+        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.FAILED);
+    }
+
+    private static Flow flowWithTask(String taskId) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(Return.builder().id(taskId).type(Return.class.getName()).build()))
+            .build();
+    }
+
+    private static Execution executionWithTaskRun(String taskId, State.Type state) {
+        return Execution.builder()
+            .id(IdUtils.create())
+            .taskRunList(List.of(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .taskId(taskId)
+                    .state(new State(state, new State()))
+                    .build()
+            ))
+            .build();
     }
 }

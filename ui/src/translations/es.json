@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Marcadores",
+    "breakpoints": "Puntos de interrupción",
     "bulk action async warning": "Esto podría tardar unos momentos.",
     "bulk actions": "Acciones masivas",
     "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
@@ -264,6 +265,7 @@
       },
       "no_description": "Sin descripción",
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
+      "others": "Otros",
       "preview": "Vista previa del Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -273,7 +275,8 @@
         "success": "Éxito",
         "warning": "Advertencia"
       },
-      "switch": "Cambiar Dashboard"
+      "switch": "Cambiar Dashboard",
+      "viewAll": "Ver todo"
     },
     "data": "Datos",
     "dataFilters": "Filtros de Datos",
@@ -917,6 +920,7 @@
     "items": "elementos",
     "join community": "Únete a la Comunidad",
     "join_slack": "Unirse a Slack",
+    "jsonl": "JSONL",
     "jump to...": "Saltar a...",
     "kestra": "Kestra",
     "key": "Key",
@@ -982,6 +986,7 @@
       "auth_type": "Autenticación",
       "basic_auth": "Autenticación Básica",
       "bearer_token": "Autenticación de token Bearer",
+      "client_setup": "Configuración del cliente",
       "connect": "Conectar",
       "connect_tab": {
         "auth_api_token_hint": "Configure <code>KESTRA_TOKEN</code> como variable de entorno antes de iniciar el cliente.",
@@ -1008,6 +1013,7 @@
       "id_placeholder": "p. ej. my-mcp-server",
       "instructions": "Instrucciones",
       "main_tenant": "principal",
+      "managed_by_kestra": "Gestionado por Kestra",
       "no_oauth_providers": "No hay proveedores OIDC configurados en esta instancia",
       "no_servers": "No se encontraron servidores MCP. Cree su primer servidor para exponer los triggers de la herramienta MCP a agentes de IA externos.",
       "oauth": "OAuth",
@@ -1017,14 +1023,18 @@
       "oauth_provider_required": "El proveedor OAuth es obligatorio cuando el tipo de autenticación es OAuth",
       "page_description": "Exponga sus flows de Kestra como herramientas para agentes de IA compatibles con MCP",
       "private": "Privado",
+      "private_server": "Servidor privado",
       "public": "Público",
+      "public_hint": "Advertencia: Los servidores públicos no requieren autenticación. Cualquiera con la URL puede invocar cada herramienta expuesta por este servidor, sin namespace ni comprobaciones de permisos. Úselo solo para servidores seguros de exponer externamente.",
       "save": "Guardar cambios",
       "scopes_supported": "Scopes admitidos",
       "scopes_supported_hint": "Scopes anunciados en el documento Protected Resource Metadata de este servidor. Los clientes MCP que cumplen con la especificación limitan su solicitud de autorización a esta lista. Déjelo vacío para omitir el campo y dejar que los clientes utilicen los scopes anunciados por el IdP.",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "Servidor MCP",
+      "server_id": "ID del servidor",
       "server_type": "Tipo de Servidor",
       "servers": "Servidores MCP",
+      "servers_count": "{{count}} Servidores MCP",
       "tab_connect": "Conectar",
       "tab_edit": "Editar",
       "tab_tool_flows": "Flujos de Herramientas",
@@ -1047,7 +1057,8 @@
         "view_flow": "Abrir flow"
       },
       "url_copied": "¡URL copiada!",
-      "username_password": "Nombre de usuario y contraseña"
+      "username_password": "Nombre de usuario y contraseña",
+      "your_servers": "Sus Servidores"
     },
     "metric": "Métrica",
     "metric choice": "No hay métricas disponibles para este flow",
@@ -1629,6 +1640,8 @@
     "restore confirm": "¿Estás seguro de restaurar la revisión <code>{revision}</code>?",
     "restore revision": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",
     "resume": "Reanudar",
+    "resume from breakpoint done": "Ejecución reanudada desde el punto de interrupción",
+    "resume from breakpoint title": "Reanudar ejecución `<code>{id}</code>` desde el punto de interrupción",
     "resumed confirm": "¿Estás seguro de reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
     "resumed title": "Reanudar ejecución <code>{id}</code>",
@@ -1793,9 +1806,11 @@
             "editor_hover_description": "Mostrar descripciones de propiedades al pasar el cursor en el editor.",
             "environment_color": "Color de acento utilizado para el entorno actual en la navegación.",
             "environment_name": "Nombre para mostrar del entorno actual, mostrado en la navegación.",
-            "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales."
+            "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales.",
+            "app_font_size": "Factor de escala aplicado a todos los tamaños de fuente de la interfaz."
           },
           "fields": {
+            "app_font_size": "Tamaño de fuente de la aplicación",
             "chart_color_scheme": {
               "classic": "Clásico",
               "kestra": "Kestra",
@@ -1812,7 +1827,12 @@
             "logs_font_size": "Tamaño de Fuente de Logs",
             "theme": "Tema"
           },
-          "label": "Preferencias de Tema"
+          "label": "Preferencias de Tema",
+          "app_font_size_options": {
+            "small": "Pequeño",
+            "medium": "Mediano",
+            "large": "Grande"
+          }
         }
       },
       "label": "Configuración",
@@ -1841,7 +1861,6 @@
         "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
-      "login_subtitle": "Ingrese sus credenciales para acceder a su instancia de Kestra",
       "login_title": "Iniciar sesión",
       "logout": "Cerrar sesión",
       "steps": {
@@ -1892,7 +1911,8 @@
         "firstName_required": "Nombre requerido",
         "incorrect_creds": "Nombre de usuario o contraseña inválidos. Asegúrate de que tus credenciales sean correctas.",
         "lastName_required": "Apellido requerido",
-        "password_invalid": "Contraseña inválida"
+        "password_invalid": "Contraseña inválida",
+        "password_required": "La contraseña es obligatoria"
       }
     },
     "show": "Mostrar",

@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -118,6 +119,13 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final AtomicInteger lastSentPermits = new AtomicInteger(-1);
 
     /**
+     * Whether job intake is paused (maintenance mode or cordon). When {@code true},
+     * {@link #calculatePermits()} reports zero so the controller stops dispatching, while the
+     * stream and fetch loop stay alive. Toggled by {@link #pause()} / {@link #resume()}.
+     */
+    private final AtomicBoolean fetchingPaused = new AtomicBoolean(false);
+
+    /**
      * UIDs of jobs that reached a terminal state on this worker and need to be
      * signaled back to the owning controller on the next outgoing
      * {@link WorkerJobRequest}. Drained into the {@code completedJobIds} field;
@@ -194,6 +202,53 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     public synchronized void init(final WorkerContext workerContext) {
         this.workerJobQueue = workerQueueRegistry.getOrCreate(workerContext, WorkerJob.class);
         this.workerContext = workerContext;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Pauses job intake <em>without</em> parking the fetch loop or tearing down the stream: the
+     * worker advertises zero permits so the controller stops dispatching, while the long-lived
+     * stream keeps delivering kill commands, metadata changes, the cluster-event relay (including
+     * the uncordon that lifts this pause on a dedicated worker) and completion signals. In-flight
+     * jobs continue running. Unlike {@link WorkerLoop#pause()} the loop thread is never blocked, so
+     * reconnect/backoff stays active while paused.
+     */
+    @Override
+    public void pause() {
+        if (fetchingPaused.compareAndSet(false, true)) {
+            // Tell the controller we have no capacity now; otherwise it keeps dispatching up to the
+            // last advertised permit level. If the stream isn't connected yet, calculatePermits()
+            // reports zero on the next outgoing request (the initial request on connect).
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null && lastSentPermits.get() >= 0) {
+                sendPermits(observer, calculatePermits());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Resumes job intake by re-advertising the worker's current remaining capacity. No-op when the
+     * fetcher is already stopping.
+     */
+    @Override
+    public void resume() {
+        if (fetchingPaused.compareAndSet(true, false) && isRunning()) {
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null && lastSentPermits.get() >= 0) {
+                sendPermits(observer, calculatePermits());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isPaused() {
+        return fetchingPaused.get();
     }
 
     /**
@@ -456,9 +511,13 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
     /**
      * Calculates the number of permits to request based on local queue remaining capacity.
+     * <p>
+     * Reports zero while intake is paused (maintenance / cordon) so every outgoing request — the
+     * initial request on (re)connect, periodic updates and completion piggy-backs — advertises no
+     * capacity and the controller stops dispatching. In-flight jobs still drain normally.
      */
     private int calculatePermits() {
-        return workerJobQueue.remainingCapacity();
+        return fetchingPaused.get() ? 0 : workerJobQueue.remainingCapacity();
     }
 
     /**

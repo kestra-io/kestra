@@ -113,6 +113,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "ブックマーク",
+    "breakpoints": "ブレークポイント",
     "bulk action async warning": "少々お待ちください。",
     "bulk actions": "一括操作",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
@@ -264,6 +265,7 @@
       },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
+      "others": "その他",
       "preview": "プレビュー ダッシュボード",
       "quick_filters": {
         "all": "すべて",
@@ -273,7 +275,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "ダッシュボードを切り替える"
+      "switch": "ダッシュボードを切り替える",
+      "viewAll": "すべて表示"
     },
     "data": "データ",
     "dataFilters": "データフィルター",
@@ -917,6 +920,7 @@
     "items": "アイテム",
     "join community": "コミュニティに参加",
     "join_slack": "Slackに参加",
+    "jsonl": "JSONL",
     "jump to...": "ジャンプ先...",
     "kestra": "Kestra",
     "key": "Key",
@@ -982,6 +986,7 @@
       "auth_type": "認証",
       "basic_auth": "ベーシック認証",
       "bearer_token": "ベアラートークン認証",
+      "client_setup": "クライアント設定",
       "connect": "接続",
       "connect_tab": {
         "auth_api_token_hint": "クライアントを起動する前に<code>KESTRA_TOKEN</code>を環境変数として設定してください。",
@@ -1008,6 +1013,7 @@
       "id_placeholder": "例: my-mcp-server",
       "instructions": "指示",
       "main_tenant": "メイン",
+      "managed_by_kestra": "Kestraによって管理されています",
       "no_oauth_providers": "このインスタンスにOIDCプロバイダーが設定されていません",
       "no_servers": "MCPサーバーが見つかりません。最初のサーバーを作成して、MCP Tool triggerを外部AIエージェントに公開してください。",
       "oauth": "OAuth",
@@ -1017,14 +1023,18 @@
       "oauth_provider_required": "認証タイプがOAuthの場合、OAuthプロバイダーは必須です",
       "page_description": "KestraのflowをMCP互換のAIエージェント用ツールとして公開する",
       "private": "プライベート",
+      "private_server": "プライベートサーバー",
       "public": "公開",
+      "public_hint": "警告: 公開サーバーは認証を必要としません。URLを知っている人なら誰でも、namespaceや権限のチェックなしに、このサーバーが公開するすべてのツールを呼び出すことができます。外部に公開しても安全なサーバーでのみ使用してください。",
       "save": "変更を保存",
       "scopes_supported": "サポートされているscope",
       "scopes_supported_hint": "このサーバーのProtected Resource Metadataドキュメントに記載されたscope。仕様準拠のMCPクライアントは認可リクエストをこのリストに制限します。フィールドを省略してクライアントがIdPの公開scopeにフォールバックできるよう空のままにしてください。",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCPサーバー",
+      "server_id": "サーバー ID",
       "server_type": "サーバータイプ",
       "servers": "MCPサーバー",
+      "servers_count": "{{count}} MCPサーバー",
       "tab_connect": "接続",
       "tab_edit": "編集",
       "tab_tool_flows": "ツールフローズ",
@@ -1047,7 +1057,8 @@
         "view_flow": "flowを開く"
       },
       "url_copied": "URLをコピーしました！",
-      "username_password": "ユーザー名 & パスワード"
+      "username_password": "ユーザー名 & パスワード",
+      "your_servers": "あなたのサーバー"
     },
     "metric": "メトリック",
     "metric choice": "このflowには利用可能なメトリクスがありません",
@@ -1629,6 +1640,8 @@
     "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "restore revision": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "resume": "再開",
+    "resume from breakpoint done": "ブレークポイントから実行が再開されました",
+    "resume from breakpoint title": "ブレークポイントから実行 <code>{id}</code> を再開します",
     "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resumed title": "実行<code>{id}</code>を再開",
@@ -1793,9 +1806,11 @@
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
-            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
+            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
           },
           "fields": {
+            "app_font_size": "アプリのフォントサイズ",
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",
@@ -1812,7 +1827,12 @@
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
-          "label": "テーマ設定"
+          "label": "テーマ設定",
+          "app_font_size_options": {
+            "small": "小",
+            "medium": "中",
+            "large": "大"
+          }
         }
       },
       "label": "設定",
@@ -1841,7 +1861,6 @@
         "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
-      "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
       "login_title": "サインイン",
       "logout": "ログアウト",
       "steps": {
@@ -1892,7 +1911,8 @@
         "firstName_required": "名が必要です",
         "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
-        "password_invalid": "無効なパスワード"
+        "password_invalid": "無効なパスワード",
+        "password_required": "パスワードは必須です"
       }
     },
     "show": "表示",

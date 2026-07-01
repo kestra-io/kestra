@@ -209,11 +209,17 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         Worker newWorker = newWorker();
         newWorker.start(1);
 
-        // wait a little to be sure there is no resubmit
-        Thread.sleep(500);
-        holdLatch.countDown();
-        newWorker.close();
-        assertThat(taskResults.getLast().getTaskRun().getState().getCurrent()).isNotEqualTo(State.Type.SUCCESS);
+        // Wait long enough to cover: (1) worker termination grace period (1s) so the task thread is
+        // force-killed before we release holdLatch, preventing a zombie-thread SUCCESS; and (2) the
+        // full liveness-detection window (timeout 3s + interval 1s + jitter 0.5s ≈ 4.5s) so the
+        // coordinator has had time to detect the dead worker and confirm it did not resubmit.
+        Thread.sleep(5000);
+        try {
+            assertThat(taskResults.getLast().getTaskRun().getState().getCurrent()).isNotEqualTo(State.Type.SUCCESS);
+        } finally {
+            holdLatch.countDown();
+            newWorker.close();
+        }
     }
 
     @ParameterizedTest

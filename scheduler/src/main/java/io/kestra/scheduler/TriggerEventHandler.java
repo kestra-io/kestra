@@ -251,30 +251,57 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
+        Optional<TriggerState> maybeState = triggerStateStore.findById(event.id());
+        if (maybeState.isEmpty()) {
+            Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
+            return;
+        }
+
+        if (TriggerType.REALTIME.equals(maybeState.get().getType())) {
+            onRealtimeExecutionTerminated(clock, event, maybeState.get());
+            return;
+        }
+
         findTriggerState(event).ifPresent(state ->
-        {
-            // A running realtime trigger emits many executions whose terminations must not release the
-            // trigger's lock — unlocking here would resubmit a trigger that is still running on a worker.
-            // The only expected termination signal for a realtime trigger is the FAILED execution
-            // produced when the trigger could not be started.
-            if (TriggerType.REALTIME.equals(state.getType()) && !State.Type.FAILED.equals(event.executionState())) {
-                Logs.logTrigger(
-                    event.id(),
-                    Level.WARN,
-                    "Ignoring event '{}' for execution '{}' in state '{}'. Cause: a realtime trigger is only unlocked by a FAILED trigger-creation execution.",
-                    event.type(),
-                    event.executionId(),
-                    event.executionState()
-                );
-                return;
-            }
             triggerStateStore.save(
                 state
                     .lastEventId(clock, event.eventId())
                     .locked(clock, false)
                     .updateOnExecutionTerminated(clock, event.executionState())
+            )
+        );
+    }
+
+    /**
+     * A realtime termination releases the lock, so it is fenced by the dispatch epoch rather than
+     * event-id ordering: across the independent event producers, a causally-later termination can
+     * carry a lower event id and would otherwise be wrongly skipped, leaving the trigger locked.
+     */
+    private void onRealtimeExecutionTerminated(Clock clock, TriggerExecutionTerminated event, TriggerState state) {
+        // A running realtime trigger emits many executions whose terminations must not release the
+        // trigger's lock — unlocking here would resubmit a trigger that is still running on a worker.
+        // The only expected termination signal for a realtime trigger is the FAILED execution
+        // produced when the trigger could not be started.
+        if (!State.Type.FAILED.equals(event.executionState())) {
+            Logs.logTrigger(
+                event.id(),
+                Level.WARN,
+                "Ignoring event '{}' for execution '{}' in state '{}'. Cause: a realtime trigger is only unlocked by a FAILED trigger-creation execution.",
+                event.type(),
+                event.executionId(),
+                event.executionState()
             );
-        });
+            return;
+        }
+        // Stale termination from a superseded dispatch: a newer one already took the lock.
+        if (event.dispatchEpoch() < state.getDispatchEpoch()) {
+            return;
+        }
+        triggerStateStore.save(
+            state
+                .locked(clock, false)
+                .updateOnExecutionTerminated(clock, event.executionState())
+        );
     }
 
     /**
@@ -357,15 +384,18 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerWorkerLost(Clock clock, TriggerWorkerLost event) {
-        findTriggerState(event).ifPresent(state ->
+        triggerStateStore.findById(event.id()).ifPresent(state ->
         {
             if (state.getWorkerId() != null && !state.getWorkerId().equals(event.workerUid())) {
                 // The trigger is already held by another worker.
                 return;
             }
+            if (event.dispatchEpoch() < state.getDispatchEpoch()) {
+                // A newer dispatch already superseded the lost one.
+                return;
+            }
             triggerStateStore.save(
                 state
-                    .lastEventId(clock, event.eventId())
                     .locked(clock, false)
                     .workerId(clock, null)
             );

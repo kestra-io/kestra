@@ -2,13 +2,11 @@ package io.kestra.jdbc.repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
 
@@ -51,30 +49,4 @@ public abstract class JdbcFlowRepositoryService {
             });
     }
 
-    public static Condition findCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query, Map<String, String> labels) {
-        List<Condition> conditions = new ArrayList<>();
-
-        if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(List.of("fulltext"), query));
-        }
-
-        if (labels != null) {
-            labels.forEach((key, value) ->
-            {
-                Field<String> field = DSL.field("JQ_STRING(\"value\", '.labels." + key + "')", String.class);
-
-                if (value == null) {
-                    conditions.add(field.isNotNull());
-                } else {
-                    conditions.add(field.eq(value));
-                }
-            });
-        }
-
-        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
-    }
-
-    public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {
-        return jdbcRepository.fullTextCondition(List.of("source_code"), query);
-    }
 }

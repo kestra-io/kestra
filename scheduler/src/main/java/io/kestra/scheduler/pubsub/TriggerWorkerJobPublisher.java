@@ -65,6 +65,7 @@ public class TriggerWorkerJobPublisher {
             .builder()
             .trigger(trigger)
             .data(WorkerTriggerData.from(conditionContext, triggerState.context()))
+            .dispatchEpoch(triggerState.getDispatchEpoch())
             .build();
         Optional<WorkerQueueRouting> routing;
         try {

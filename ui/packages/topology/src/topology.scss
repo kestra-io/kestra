@@ -29,7 +29,7 @@ html.dark {
 
 .text-danger { color: $base-red-500; }
 
-.button-icon { font-size: 0.66rem; }
+.button-icon { font-size: var(--ks-font-size-2xs); }
 
 .circle-button {
     display: flex;

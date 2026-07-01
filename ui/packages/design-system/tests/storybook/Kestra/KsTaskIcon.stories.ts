@@ -22,7 +22,6 @@ const meta: Meta<typeof KsTaskIcon> = {
     tags: ["autodocs"],
     argTypes: {
         cls: {control: "text"},
-        theme: {control: "select", options: ["dark", "light"]},
         onlyIcon: {control: "boolean"},
     },
     parameters: {

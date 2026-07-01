@@ -23,7 +23,6 @@
     const props = defineProps<{
         customIcon?: {icon: string};
         cls?: string;
-        theme?: "dark" | "light";
         icons?: Record<string, {icon: string; flowable: boolean}>;
         onlyIcon?: boolean;
     }>()

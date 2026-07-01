@@ -1788,6 +1788,11 @@
           "label": "サイドバー"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "ダーク 1.0",
             "dark_2": "ダーク 2.0",
@@ -1798,6 +1803,7 @@
             "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。",
             "color_mode": "お好みのインターフェーステーマを選択してください。",
             "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
@@ -1806,8 +1812,7 @@
             "editor_hover_description": "エディターでホバー時にプロパティの説明を表示します。",
             "environment_color": "ナビゲーションで現在の環境に使用されるアクセントカラー。",
             "environment_name": "現在の環境の表示名。ナビゲーションに表示されます。",
-            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。",
-            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。"
+            "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
           },
           "fields": {
             "app_font_size": "アプリのフォントサイズ",
@@ -1827,12 +1832,7 @@
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
-          "label": "テーマ設定",
-          "app_font_size_options": {
-            "small": "小",
-            "medium": "中",
-            "large": "大"
-          }
+          "label": "テーマ設定"
         }
       },
       "label": "設定",

@@ -1788,6 +1788,11 @@
           "label": "Pasek boczny"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Duży",
+            "medium": "Średni",
+            "small": "Mały"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Dark 2.0",
@@ -1798,6 +1803,7 @@
             "color_mode": "Twój interfejs używa teraz motywu `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu.",
             "color_mode": "Wybierz preferowany motyw interfejsu.",
             "color_mode_shortcut": "Wskazówka: naciśnij <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, aby zmieniać motywy z dowolnego miejsca.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML podczas otwierania flow.",
@@ -1806,8 +1812,7 @@
             "editor_hover_description": "Pokaż opisy właściwości po najechaniu kursorem w edytorze.",
             "environment_color": "Kolor akcentu używany dla bieżącego środowiska w nawigacji.",
             "environment_name": "Nazwa wyświetlana dla bieżącego środowiska, pokazywana w nawigacji.",
-            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach.",
-            "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu."
+            "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach."
           },
           "fields": {
             "app_font_size": "Rozmiar czcionki aplikacji",
@@ -1827,12 +1832,7 @@
             "logs_font_size": "Rozmiar czcionki logów",
             "theme": "Motyw"
           },
-          "label": "Preferencje Motywu",
-          "app_font_size_options": {
-            "small": "Mały",
-            "medium": "Średni",
-            "large": "Duży"
-          }
+          "label": "Preferencje Motywu"
         }
       },
       "label": "Ustawienia",

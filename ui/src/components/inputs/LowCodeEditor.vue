@@ -309,11 +309,28 @@
         )
     })
 
-    const taskMetrics = (taskId: string | undefined) =>
-        executionsStore.metrics.filter((m) => m.taskId === taskId)
+    // metrics/progressEvents are never reset across execution navigations (taskRunId is globally
+    // unique so old entries are harmless in isolation) — but filtering on taskId alone lets a
+    // PREVIOUS taskRun's entries leak into a fresh run of the same task, or into a pre-execution
+    // view with no run at all. Resolve this task's CURRENT taskRun from the execution and filter
+    // on that instead: no current taskRun means nothing to show.
+    const currentTaskRunId = (taskId: string | undefined): string | undefined => {
+        const list = exec.value?.taskRunList as any[] | undefined
+        const filtered = list?.filter((r: any) => r.taskId === taskId) ?? []
+        return filtered[filtered.length - 1]?.id
+    }
 
-    const taskProgress = (taskId: string | undefined) =>
-        executionsStore.progressEvents.filter((p) => p.taskId === taskId)
+    const taskMetrics = (taskId: string | undefined) => {
+        const taskRunId = currentTaskRunId(taskId)
+        if (!taskRunId) return []
+        return executionsStore.metrics.filter((m) => m.taskRunId === taskRunId)
+    }
+
+    const taskProgress = (taskId: string | undefined) => {
+        const taskRunId = currentTaskRunId(taskId)
+        if (!taskRunId) return []
+        return executionsStore.progressEvents.filter((p) => p.taskRunId === taskRunId)
+    }
 
     // Topology nodes only re-evaluate their taskDetails slot (where taskMetrics/taskProgress are
     // read) when the graph is regenerated — bump this so a live metrics/progress update (which

@@ -1,7 +1,6 @@
 import {mount} from "@vue/test-utils"
 import {describe, expect, test, vi} from "vitest"
 
-// import VariableTreeView from "../../../../../src/components/executions/outputs/VariableTreeView.vue"
 import VariableTreeView from "./VariableTreeView.vue"
 
 vi.mock("vue-i18n", () => ({
@@ -22,6 +21,11 @@ describe("VariableTreeView", () => {
                             uris: [fileUri],
                         },
                     },
+                },
+            },
+            global: {
+                mocks: {
+                    $t: (key: string) => key,
                 },
             },
         })

@@ -427,6 +427,10 @@
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition umożliwia definiowanie kwot dla flows w celu ograniczenia liczby równoczesnych lub łącznych wykonań w danym oknie czasowym. Kwoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflows.",
+        "title": "Egzekwowanie kwot wykonania dla flows"
+      },
       "secrets": {
         "add_env": {
           "first": "Zakoduj <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">wartość secret w Base64</a>",
@@ -1602,6 +1606,7 @@
       "shown": "Wyświetlane w tabeli"
     },
     "queued duration": "Czas trwania w kolejce",
+    "quotas": "Kwoty",
     "reach us": "Porozmawiaj z nami",
     "read-more": "Czytaj więcej o",
     "readonly property": "Właściwość tylko do odczytu",

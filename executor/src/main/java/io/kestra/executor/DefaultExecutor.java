@@ -678,7 +678,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
                 }
 
-                // check if there exist a queued execution and submit it to the execution queue
+                // check if there exists a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
                     // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED

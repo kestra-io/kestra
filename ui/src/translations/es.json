@@ -427,6 +427,10 @@
           "title": "Gobierne Centralmente Sus Variables"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition le permite definir cuotas en los flujos para limitar el número de ejecuciones simultáneas o totales dentro de una ventana de tiempo. Las cuotas le ayudan a proteger la infraestructura compartida, aplicar SLAs y evitar que los flujos descontrolados consuman recursos excesivos.",
+        "title": "Aplicar cuotas de ejecución en flujos"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifica el <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a>",
@@ -1602,6 +1606,7 @@
       "shown": "Mostrado en Tabla"
     },
     "queued duration": "Duración en cola",
+    "quotas": "Cuotas",
     "reach us": "Habla con nosotros",
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",

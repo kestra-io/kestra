@@ -40,15 +40,27 @@ describe("executions store progress events", () => {
         ])
     })
 
-    it("addProgressEvent dedupes on (taskRunId, step), keeping the first-seen timestamp", () => {
+    it("addProgressEvent dedupes on (taskRunId, step) without duplicating entries", () => {
         const store = useExecutionsStore()
 
         store.addProgressEvent({taskId: "launch", taskRunId: "tr-1", step: "pod.created", timestamp: "2026-07-01T10:00:00Z"})
         // same taskRunId+step arriving again (e.g. SSE reconnect replay) must not duplicate
-        store.addProgressEvent({taskId: "launch", taskRunId: "tr-1", step: "pod.created", timestamp: "2026-07-01T10:00:05Z"})
+        store.addProgressEvent({taskId: "launch", taskRunId: "tr-1", step: "pod.created", timestamp: "2026-07-01T10:00:00Z"})
 
         expect(store.progressEvents).toHaveLength(1)
-        expect(store.progressEvents[0].timestamp).toBe("2026-07-01T10:00:00Z")
+    })
+
+    it("addProgressEvent overwrites a stale timestamp when a task retries", () => {
+        const store = useExecutionsStore()
+
+        // first attempt
+        store.addProgressEvent({taskId: "launch", taskRunId: "tr-1", step: "pod.created", timestamp: "2026-07-01T10:00:00Z"})
+        // retry reuses the same taskRunId but reports a later, correct timestamp — must replace,
+        // not be silently dropped, or the UI gets stuck showing the failed attempt's numbers
+        store.addProgressEvent({taskId: "launch", taskRunId: "tr-1", step: "pod.created", timestamp: "2026-07-01T10:00:30Z"})
+
+        expect(store.progressEvents).toHaveLength(1)
+        expect(store.progressEvents[0].timestamp).toBe("2026-07-01T10:00:30Z")
     })
 
     it("addProgressEvent keeps distinct steps and distinct taskRunIds separate", () => {

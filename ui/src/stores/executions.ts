@@ -834,9 +834,20 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const addProgressEvent = (event: {taskId: string; taskRunId: string; step: string; timestamp: string}) => {
-        const alreadyKnown = progressEvents.value.some(e => e.taskRunId === event.taskRunId && e.step === event.step)
-        if (alreadyKnown) return
-        progressEvents.value.push(event)
+        // Overwrite (not skip) on a matching (taskRunId, step): a retried task reuses the same
+        // taskRunId, so a later attempt re-emitting the same step must replace the stale value
+        // from an earlier attempt, not be dropped. Idempotent for genuine SSE reconnect replay
+        // since that resends the identical timestamp.
+        //
+        // Reassign the array (like `metrics` does on every loadMetrics()) rather than push/splice
+        // in place: consumers watching this ref shallowly (e.g. to know when to re-render a
+        // topology node) only see a change on reference reassignment, not on in-place mutation.
+        const existingIndex = progressEvents.value.findIndex(e => e.taskRunId === event.taskRunId && e.step === event.step)
+        if (existingIndex === -1) {
+            progressEvents.value = [...progressEvents.value, event]
+        } else {
+            progressEvents.value = progressEvents.value.map((e, i) => i === existingIndex ? event : e)
+        }
     }
 
     const resetLogs = () => {

@@ -1794,6 +1794,11 @@
           "label": "Seitenleiste"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Groß",
+            "medium": "Mittel",
+            "small": "Klein"
+          },
           "color_modes": {
             "dark_1": "Dunkel 1.0",
             "dark_2": "Dunkel 2.0",
@@ -1804,6 +1809,7 @@
             "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche.",
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
             "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
@@ -1815,6 +1821,7 @@
             "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
           },
           "fields": {
+            "app_font_size": "App-Schriftgröße",
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",

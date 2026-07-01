@@ -1794,6 +1794,11 @@
           "label": "Боковая панель"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Большой",
+            "medium": "Средний",
+            "small": "Маленький"
+          },
           "color_modes": {
             "dark_1": "Темный 1.0",
             "dark_2": "Темный 2.0",
@@ -1804,6 +1809,7 @@
             "color_mode": "Ваш интерфейс теперь использует тему `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Коэффициент масштабирования, применяемый ко всем размерам шрифта интерфейса.",
             "color_mode": "Выберите предпочитаемый интерфейсный модус.",
             "color_mode_shortcut": "Совет: нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, чтобы переключать темы из любого места.",
             "editor_folding_stratgy": "Сворачивать длинные блоки YAML по умолчанию при открытии flow.",
@@ -1815,6 +1821,7 @@
             "logs_font_size": "Размер шрифта, используемый в Log Viewer и терминалах."
           },
           "fields": {
+            "app_font_size": "Размер шрифта приложения",
             "chart_color_scheme": {
               "classic": "Классический",
               "kestra": "Kestra",

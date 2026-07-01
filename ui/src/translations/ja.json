@@ -1794,6 +1794,11 @@
           "label": "サイドバー"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "ダーク 1.0",
             "dark_2": "ダーク 2.0",
@@ -1804,6 +1809,7 @@
             "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。",
             "color_mode": "お好みのインターフェーステーマを選択してください。",
             "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
@@ -1815,6 +1821,7 @@
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
           },
           "fields": {
+            "app_font_size": "アプリのフォントサイズ",
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",

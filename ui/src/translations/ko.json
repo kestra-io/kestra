@@ -1794,6 +1794,11 @@
           "label": "사이드바"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "크게",
+            "medium": "보통",
+            "small": "작게"
+          },
           "color_modes": {
             "dark_1": "다크 1.0",
             "dark_2": "다크 2.0",
@@ -1804,6 +1809,7 @@
             "color_mode": "인터페이스가 이제 `{mode}` 테마를 사용합니다."
           },
           "descriptions": {
+            "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다.",
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
             "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
@@ -1815,6 +1821,7 @@
             "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
           },
           "fields": {
+            "app_font_size": "앱 글꼴 크기",
             "chart_color_scheme": {
               "classic": "클래식",
               "kestra": "Kestra",

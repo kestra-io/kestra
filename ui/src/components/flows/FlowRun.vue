@@ -22,6 +22,7 @@
                         v-model="inputs"
                         :executeClicked="executeClicked"
                         @confirm="onSubmit"
+                        @ready="onInputsFormReady"
                         @update:model-value-no-default="values => inputsNoDefaults=values"
                         @update:checks="onChecksUpdate"
                         @update:on-recap="value => inputsOnRecap = value"
@@ -165,6 +166,7 @@
         buttonText?: string
         buttonIcon?: Component
         buttonTestId?: string
+        autoPrefill?: boolean
     }>(), {
         redirect: true,
         embed: false,
@@ -173,6 +175,7 @@
         buttonText: "launch execution",
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
+        autoPrefill: false,
     })
 
     const emit = defineEmits<{
@@ -247,6 +250,10 @@
         checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
     )
 
+    // The dialog-footer Execute (FlowRunActions) must follow the wizard: hidden until the recap when
+    // the flow has FORM inputs, so only one primary button shows (Next in-step, Execute on recap).
+    const showExecuteButton = computed(() => !hasFormInputs.value || inputsOnRecap.value)
+
     const canPrefill = computed(() =>
         Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
     )
@@ -263,6 +270,7 @@
         canPrefill,
         flowCanBeExecuted,
         hasBlockingChecks,
+        showExecuteButton,
         buttonText: props.buttonText,
         buttonIcon: props.buttonIcon,
         buttonTestId: props.buttonTestId,
@@ -288,6 +296,14 @@
 
     function onChecksUpdate(values: Check[]) {
         checks.value = values
+    }
+
+    let autoPrefilled = false
+    function onInputsFormReady() {
+        if (props.autoPrefill && !autoPrefilled && canPrefill.value) {
+            autoPrefilled = true
+            fillInputsFromExecution()
+        }
     }
 
     function fillInputsFromExecution() {

@@ -134,11 +134,10 @@
 <style scoped lang="scss">
     .search-container {
         position: relative;
+        flex: 1;
+        min-width: 0;
         margin-bottom: 0;
         z-index: 1001;
-        padding-top: 12px;
-        padding-left: 28px;
-        padding-right: 28px;
     }
 
     .search-input {
@@ -157,8 +156,8 @@
     .search-results {
         position: absolute;
         top: 100%;
-        left: 26px;
-        right: 26px;
+        left: 0;
+        right: 0;
         background-color: var(--ks-bg-surface);
         border-radius: 6px;
         margin-top: 4px;

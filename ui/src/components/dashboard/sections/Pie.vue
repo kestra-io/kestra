@@ -132,7 +132,7 @@
 
     const dimensionColumn = computed(() => {
         const dimensionKey = aggregator.field?.key
-        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onSegmentClick(params: any) {
@@ -192,7 +192,7 @@
         }
 
         &__success {
-            font-size: clamp(0.5rem, 4cqw, var(--ks-font-size-2xs));
+            font-size: var(--ks-font-size-2xs);
             color: var(--ks-text-success);
         }
     }

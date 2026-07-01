@@ -186,7 +186,7 @@
     .section {
         h2 {
             color: var(--ks-text-primary);
-            font-size: 1.20rem;
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
             padding: 0 1.25rem;
             margin-bottom: 1rem;
@@ -205,7 +205,7 @@
         h2 {
             margin-bottom: 1rem;
             color: var(--ks-text-primary);
-            font-size: 1.10rem;
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
         }
 

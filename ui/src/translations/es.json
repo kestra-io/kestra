@@ -1794,6 +1794,11 @@
           "label": "Barra lateral"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Mediano",
+            "small": "Pequeño"
+          },
           "color_modes": {
             "dark_1": "Oscuro 1.0",
             "dark_2": "Oscuro 2.0",
@@ -1804,6 +1809,7 @@
             "color_mode": "Tu interfaz ahora usa el tema `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Factor de escala aplicado a todos los tamaños de fuente de la interfaz.",
             "color_mode": "Elige tu tema de interfaz preferido.",
             "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar.",
             "editor_folding_stratgy": "Colapsar bloques largos de YAML por defecto al abrir un flow.",
@@ -1815,6 +1821,7 @@
             "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales."
           },
           "fields": {
+            "app_font_size": "Tamaño de fuente de la aplicación",
             "chart_color_scheme": {
               "classic": "Clásico",
               "kestra": "Kestra",

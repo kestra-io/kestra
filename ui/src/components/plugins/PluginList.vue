@@ -383,7 +383,7 @@
 
             .name {
                 color: var(--ks-text-primary);
-                font-size: var(--ks-font-size-base);
+                font-size: var(--ks-font-size-sm);
                 line-height: 1.5;
             }
         }

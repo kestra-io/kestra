@@ -58,6 +58,7 @@
     "yaml": "^2.8.2"
   },
   "dependencies": {
+    "dompurify": "^3.4.11",
     "echarts": ">=6.0.0",
     "element-plus": ">=2.13.5",
     "humanize-duration": "^3.33.2",

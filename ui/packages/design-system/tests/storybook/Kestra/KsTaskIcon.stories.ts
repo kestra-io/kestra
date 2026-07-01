@@ -115,3 +115,24 @@ export const AllSizes: Story = {
         `,
     }),
 }
+
+/**
+ * The icon markup uses `fill="currentColor"`, so it now recolors purely
+ * through CSS (`color: var(--ks-text-primary)`) instead of a JS color-bake
+ * into a data: URI. Toggle the Storybook theme toolbar to see it recolor live.
+ */
+export const DarkMode: Story = {
+    globals: {
+        theme: "dark",
+    },
+    render: (args) => ({
+        components: {KsTaskIcon},
+        setup() { return {args} },
+        template: "<div style=\"width:48px;height:48px\"><ks-task-icon v-bind=\"args\" /></div>",
+    }),
+    args: {
+        cls: "io.kestra.plugin.core.log.Log",
+        icons: mockIcons,
+        onlyIcon: true,
+    },
+}

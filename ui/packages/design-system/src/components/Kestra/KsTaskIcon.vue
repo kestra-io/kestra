@@ -4,17 +4,17 @@
         class="ks-task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <div class="ks-task-icon__icon" :style="styles" />
+            <div class="ks-task-icon__icon" :style="iconStyle" aria-hidden="true" v-html="sanitizedSvg" />
         </KsTooltip>
 
-        <div v-else class="ks-task-icon__icon" :style="styles" />
+        <div v-else class="ks-task-icon__icon" :style="iconStyle" role="img" :aria-label="cls" v-html="sanitizedSvg" />
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import DOMPurify from "dompurify"
     import KsTooltip from "../Feedback/KsTooltip.vue"
-    import {cssVar} from "../../utils/css"
 
     defineOptions({
         name: "KsTaskIcon",
@@ -29,9 +29,46 @@
         variable?: string;
     }>()
 
-    const backgroundImage = computed(() => {
-        return `data:image/svg+xml;base64,${imageBase64.value}`
-    })
+    const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
+        "xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" " +
+        "focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: " +
+        "rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" " +
+        "preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\">" +
+        "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/>" +
+        "</svg>"
+
+    // Icon strings are stable per plugin class, so sanitize each unique icon once per session.
+    const sanitizedCache = new Map<string, string>()
+
+    function ensureViewBox(svg: string): string {
+        const svgTagMatch = svg.match(/<svg\b[^>]*>/i)
+        if (!svgTagMatch || /\sviewBox=/i.test(svgTagMatch[0])) {
+            return svg
+        }
+
+        const widthMatch = svgTagMatch[0].match(/\swidth="([\d.]+)/i)
+        const heightMatch = svgTagMatch[0].match(/\sheight="([\d.]+)/i)
+        if (!widthMatch || !heightMatch) {
+            return svg
+        }
+
+        const svgTagWithViewBox = svgTagMatch[0].replace(/<svg\b/i, `<svg viewBox="0 0 ${widthMatch[1]} ${heightMatch[1]}"`)
+        return svg.replace(svgTagMatch[0], svgTagWithViewBox)
+    }
+
+    function sanitize(rawBase64: string | undefined): string {
+        const cacheKey = rawBase64 ?? "__fallback__"
+        const cached = sanitizedCache.get(cacheKey)
+        if (cached !== undefined) {
+            return cached
+        }
+
+        const rawSvg = rawBase64 ? window.atob(rawBase64) : FALLBACK_SVG
+        const sanitized = DOMPurify.sanitize(ensureViewBox(rawSvg), {USE_PROFILES: {svg: true, svgFilters: true}})
+
+        sanitizedCache.set(cacheKey, sanitized)
+        return sanitized
+    }
 
     const classes = computed(() => {
         return {
@@ -39,39 +76,11 @@
         }
     })
 
-    const styles = computed(() => {
-        return {
-            backgroundImage: `url(${backgroundImage.value})`,
-        }
+    const iconStyle = computed(() => {
+        return props.variable ? {color: `var(${props.variable})`} : undefined
     })
 
-    const imageBase64 = computed(() => {
-        let localIcon = icon.value?.icon ? window.atob(icon.value.icon) : undefined
-
-        if (!localIcon) {
-            localIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
-                "xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" " +
-                "focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: " +
-                "rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" " +
-                "preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\">" +
-                "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/>" +
-                "</svg>"
-        }
-
-        let color = cssVar("--ks-text-primary") || cssVar("--ks-text-primary")
-
-        if (props.theme) {
-            color = (props.theme === "dark" ? cssVar("--ks-text-primary") : cssVar("--ks-text-primary")) || color
-        }
-
-        if (props.variable) {
-            color = cssVar(props.variable) || color
-        }
-
-        localIcon = localIcon.replace(/currentColor/g, color)
-
-        return window.btoa(localIcon)
-    })
+    const sanitizedSvg = computed(() => sanitize(icon.value?.icon))
 
     const icon = computed(() => {
         return props.cls ? (props.icons ?? {})[innerClassToParent(props.cls)] : props.customIcon
@@ -97,15 +106,19 @@
             width: 100%;
             height: 100%;
         }
+    }
 
-        &__icon {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 3px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center center;
-        }
+    .ks-task-icon__icon {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 3px;
+        color: var(--ks-text-primary);
+    }
+
+    .ks-task-icon__icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
     }
 </style>

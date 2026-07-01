@@ -443,7 +443,11 @@
         "message": "フローのロジックを個別に検証し、リグレッションを早期に検出し、変更や成長に伴う自動化に自信を持ち続けましょう。",
         "title": "すべての変更で信頼性を確保"
       },
-      "watch_the_video": "ビデオを見る"
+      "watch_the_video": "ビデオを見る",
+      "quotas": {
+        "title": "フローの実行クォータを設定する",
+        "message": "Kestra Enterprise Editionでは、フローにクォータを定義して、時間枠内の同時実行数または総実行数を制限できます。クォータは、共有インフラストラクチャの保護、SLAの適用、および過剰なリソースを消費する暴走ワークフローの防止に役立ちます。"
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1788,6 +1792,11 @@
           "label": "サイドバー"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "ダーク 1.0",
             "dark_2": "ダーク 2.0",
@@ -1798,6 +1807,7 @@
             "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。",
             "color_mode": "お好みのインターフェーステーマを選択してください。",
             "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
@@ -1809,6 +1819,7 @@
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
           },
           "fields": {
+            "app_font_size": "アプリのフォントサイズ",
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",
@@ -2274,6 +2285,7 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "yes": "はい"
+    "yes": "はい",
+    "quotas": "クォータ"
   }
 }

@@ -443,7 +443,11 @@
         "message": "验证您的flow逻辑是否独立，及早检测回归，并在自动化变更和增长时保持信心。",
         "title": "确保每次更改的可靠性"
       },
-      "watch_the_video": "观看视频"
+      "watch_the_video": "观看视频",
+      "quotas": {
+        "title": "为工作流设置执行配额",
+        "message": "Kestra 企业版允许您为工作流定义配额，以限制在时间窗口内的并发或总执行次数。配额有助于保护共享基础设施、执行 SLA，并防止失控的工作流消耗过多资源。"
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1788,6 +1792,11 @@
           "label": "侧边栏"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "深色模式 2.0",
@@ -1798,6 +1807,7 @@
             "color_mode": "您的界面现在使用 `{mode}` 主题。"
           },
           "descriptions": {
+            "app_font_size": "应用于所有界面字体大小的缩放系数。",
             "color_mode": "选择您偏好的界面主题。",
             "color_mode_shortcut": "提示：在任意位置按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 即可循环切换主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
@@ -1809,6 +1819,7 @@
             "logs_font_size": "日志查看器和终端中使用的字体大小。"
           },
           "fields": {
+            "app_font_size": "应用字体大小",
             "chart_color_scheme": {
               "classic": "经典",
               "kestra": "Kestra",
@@ -2274,6 +2285,7 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "yes": "是"
+    "yes": "是",
+    "quotas": "配额"
   }
 }

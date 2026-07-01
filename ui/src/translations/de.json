@@ -443,7 +443,11 @@
         "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
         "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
       },
-      "watch_the_video": "Sieh dir das Video an"
+      "watch_the_video": "Sieh dir das Video an",
+      "quotas": {
+        "title": "Ausführungskontingente für Flows festlegen",
+        "message": "Kestra Enterprise Edition ermöglicht es Ihnen, Kontingente für Flows festzulegen, um die Anzahl gleichzeitiger oder gesamter Ausführungen in einem Zeitfenster zu begrenzen. Kontingente helfen Ihnen, gemeinsam genutzte Infrastruktur zu schützen, SLAs durchzusetzen und unkontrollierte Workflows daran zu hindern, übermäßige Ressourcen zu verbrauchen."
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1788,6 +1792,11 @@
           "label": "Seitenleiste"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Groß",
+            "medium": "Mittel",
+            "small": "Klein"
+          },
           "color_modes": {
             "dark_1": "Dunkel 1.0",
             "dark_2": "Dunkel 2.0",
@@ -1798,6 +1807,7 @@
             "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche.",
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
             "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
@@ -1809,6 +1819,7 @@
             "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
           },
           "fields": {
+            "app_font_size": "App-Schriftgröße",
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",
@@ -2274,6 +2285,7 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
-    "yes": "Ja"
+    "yes": "Ja",
+    "quotas": "Quotas"
   }
 }

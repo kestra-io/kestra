@@ -21,7 +21,7 @@
 
         &__heading {
             align-self: flex-start;
-            font-size: var(--ks-font-size-2xl);
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
             color: var(--ks-text-primary);
         }

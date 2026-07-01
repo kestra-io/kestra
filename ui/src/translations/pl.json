@@ -443,7 +443,11 @@
         "message": "Zweryfikuj logikę swoich flow w izolacji, wcześnie wykrywaj regresje i utrzymuj pewność w swoich automatyzacjach, gdy się zmieniają i rozwijają.",
         "title": "Zapewnij niezawodność przy każdej zmianie"
       },
-      "watch_the_video": "Obejrzyj wideo"
+      "watch_the_video": "Obejrzyj wideo",
+      "quotas": {
+        "title": "Egzekwowanie kwot wykonania dla flows",
+        "message": "Kestra Enterprise Edition umożliwia definiowanie kwot dla flows w celu ograniczenia liczby równoczesnych lub łącznych wykonań w danym oknie czasowym. Kwoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflows."
+      }
     },
     "density": "Density",
     "density_compact": "Compact",
@@ -1788,6 +1792,11 @@
           "label": "Pasek boczny"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Duży",
+            "medium": "Średni",
+            "small": "Mały"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Dark 2.0",
@@ -1798,6 +1807,7 @@
             "color_mode": "Twój interfejs używa teraz motywu `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu.",
             "color_mode": "Wybierz preferowany motyw interfejsu.",
             "color_mode_shortcut": "Wskazówka: naciśnij <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, aby zmieniać motywy z dowolnego miejsca.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML podczas otwierania flow.",
@@ -1809,6 +1819,7 @@
             "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach."
           },
           "fields": {
+            "app_font_size": "Rozmiar czcionki aplikacji",
             "chart_color_scheme": {
               "classic": "Klasyczny",
               "kestra": "Kestra",
@@ -2274,6 +2285,7 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
-    "yes": "Tak"
+    "yes": "Tak",
+    "quotas": "Kwoty"
   }
 }

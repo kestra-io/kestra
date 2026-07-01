@@ -387,7 +387,7 @@
     .chevron {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
-        font-size: 14px;
+        font-size: var(--ks-font-size-base);
     }
 }
 

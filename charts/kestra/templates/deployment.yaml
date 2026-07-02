@@ -47,7 +47,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  replicas: {{ default $common.replicas $content.replicas }}
+  replicas: {{ hasKey $content "replicas" | ternary $content.replicas $common.replicas }}
   revisionHistoryLimit: {{ default $common.revisionHistoryLimit $content.revisionHistoryLimit }}
   selector:
     matchLabels:

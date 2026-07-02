@@ -29,12 +29,37 @@ const entitySvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24
     "<title>My&nbsp;Icon</title><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></svg>"
 const entityIconBase64 = btoa(entitySvg)
 
+// A very common real-world pattern (Python, Slack, GitHub-sprite-style icons, …): the drawable
+// artwork lives in a <symbol> (never rendered on its own) and is instantiated via a local
+// <use href="#id">. DOMPurify's SVG profile disallows <use> by default, which — before this was
+// special-cased back in — silently rendered the whole icon blank despite the artwork being present.
+const useSymbolSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 24 24\">" +
+    "<use xlink:href=\"#body\"/><symbol id=\"body\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></symbol></svg>"
+const useSymbolIconBase64 = btoa(useSymbolSvg)
+
+// Another common real-world pattern: a nested self-contained SVG embedded via a data: URI on
+// <image>. This never triggers a network request, unlike a remote href, so it should survive.
+const nestedImageSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+    "<image href=\"data:image/svg+xml;base64," + mockIconBase64 + "\" width=\"24\" height=\"24\"/></svg>"
+const nestedImageIconBase64 = btoa(nestedImageSvg)
+
+// A malicious <use>/<image> pointing at a remote URL — should still be stripped: allowing local
+// fragments and data: URIs must not reopen the door to external resource loading.
+const remoteRefSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 24 24\">" +
+    "<use xlink:href=\"https://evil.example/x.svg#payload\"/>" +
+    "<image href=\"https://evil.example/tracker.png\" width=\"24\" height=\"24\"/>" +
+    "<circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></svg>"
+const remoteRefIconBase64 = btoa(remoteRefSvg)
+
 const mockIcons = {
     "io.kestra.plugin.core.log.Log": {icon: mockIconBase64, flowable: false},
     "io.kestra.plugin.core.flow.Parallel": {icon: mockIconBase64, flowable: true},
     "io.kestra.plugin.malicious.Task": {icon: maliciousIconBase64, flowable: false},
     "io.kestra.plugin.gradient.Task": {icon: gradientIconBase64, flowable: false},
     "io.kestra.plugin.entity.Task": {icon: entityIconBase64, flowable: false},
+    "io.kestra.plugin.useSymbol.Task": {icon: useSymbolIconBase64, flowable: false},
+    "io.kestra.plugin.nestedImage.Task": {icon: nestedImageIconBase64, flowable: false},
+    "io.kestra.plugin.remoteRef.Task": {icon: remoteRefIconBase64, flowable: false},
 }
 
 beforeEach(() => {
@@ -191,6 +216,39 @@ describe("KsTaskIcon", () => {
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.element.tagName.toLowerCase()).toBe("svg")
         expect(icon.attributes("viewBox")).toBe("0 0 24 24")
+        expect(icon.find("circle").exists()).toBe(true)
+    })
+
+    test("renders artwork defined in a <symbol> and instantiated via a local <use>", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.useSymbol.Task", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.find("use").exists()).toBe(true)
+        expect(icon.find("symbol").exists()).toBe(true)
+        expect(icon.find("circle").exists()).toBe(true)
+    })
+
+    test("renders a nested svg embedded via a data: URI on <image>", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.nestedImage.Task", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        const image = icon.find("image")
+        expect(image.exists()).toBe(true)
+        expect(image.attributes("href")).toContain("data:image/svg+xml;base64,")
+    })
+
+    test("strips <use>/<image> references to remote URLs, keeping only local and data: refs", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.remoteRef.Task", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.html()).not.toContain("evil.example")
+        // The rest of the (safe) markup should still render
         expect(icon.find("circle").exists()).toBe(true)
     })
 })

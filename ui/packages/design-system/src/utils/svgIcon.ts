@@ -5,6 +5,24 @@ export interface SvgIcon {
     innerHtml: string;
 }
 
+// DOMPurify's SVG profile disallows <use> entirely (it can reference external resources or, once
+// inserted into the live page, other elements on the page outside this icon). Real icons commonly
+// define their artwork once in a <symbol>/<defs> and instantiate it via a local <use href="#id">
+// — without <use>, that artwork is parsed but never rendered, silently degrading the icon to blank.
+// Re-allow the tag, but keep the original threat model: only permit href/xlink:href values that are
+// either a local same-document fragment ("#id") or a self-contained data: URI (e.g. a nested
+// <image href="data:image/svg+xml;base64,...">, which some icons use and never triggers a network
+// request) — never a remote URL or a reference to something elsewhere on the host page.
+DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => {
+    if (
+        (data.attrName === "href" || data.attrName === "xlink:href") &&
+        !data.attrValue.startsWith("#") &&
+        !data.attrValue.startsWith("data:")
+    ) {
+        data.keepAttr = false
+    }
+})
+
 const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
     "xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" " +
     "focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: " +
@@ -55,7 +73,7 @@ function parseSanitized(rawBase64: string | undefined): SvgIcon {
     }
 
     const rawSvg = rawBase64 ? window.atob(rawBase64) : FALLBACK_SVG
-    const sanitized = DOMPurify.sanitize(ensureViewBox(rawSvg), {USE_PROFILES: {svg: true, svgFilters: true}})
+    const sanitized = DOMPurify.sanitize(ensureViewBox(rawSvg), {USE_PROFILES: {svg: true, svgFilters: true}, ADD_TAGS: ["use"]})
 
     // Real-world plugin icons are rarely strictly well-formed XML (HTML entities like &nbsp;,
     // Illustrator/Inkscape cruft, etc.), so parse as HTML — the same forgiving grammar the browser

@@ -665,6 +665,10 @@
     function mappedChart(id: string, namespace: string) {
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION))
         MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id)
+        MAPPED_CHARTS.data.where = MAPPED_CHARTS.data.where.map((condition: any) => ({
+            ...condition,
+            value: condition.value.replace("${namespace}", namespace).replace("${flow_id}", id),
+        }))
         return MAPPED_CHARTS
     }
 

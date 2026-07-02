@@ -28,7 +28,7 @@ const meta: Meta<typeof KsTaskIcon> = {
     parameters: {
         docs: {
             description: {
-                component: "KsTaskIcon displays a task/plugin icon as an inline, inspectable `<svg>` (not a background image), exposed to assistive tech via `role=\"img\"` + `aria-label`. It resolves icons synchronously from the `icons` map when provided, or lazily via the `loadIcon` prop so callers don't have to preload the whole plugin-icons catalog. Falls back to a generic file icon when no matching icon is found.",
+                component: "KsTaskIcon displays a task/plugin icon as an `<img>` whose `src` is a `data:image/svg+xml;base64,...` URI. `currentColor` in the source SVG is replaced with the resolved theme/`variable` color before encoding, so recoloring happens once per render rather than via CSS. It resolves icons synchronously from the `icons` map when provided, or lazily via the `loadIcon` prop so callers don't have to preload the whole plugin-icons catalog. Falls back to a generic file icon when no matching icon is found.",
             },
         },
     },

@@ -108,6 +108,7 @@
 
     .footer {
         border-top: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
         flex-shrink: 0;
         position: sticky;
         bottom: 0;

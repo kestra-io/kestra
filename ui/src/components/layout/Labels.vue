@@ -8,8 +8,7 @@
             @change="updateLabel(label)"
             class="me-0 label"
         >
-            <template v-if="!label.key">{{ label.text ?? label.value }}</template>
-            <template v-else>{{ label.key }}:{{ label.value }}</template>
+            {{ label.text ?? (label.key ? `${label.key}:${label.value}` : label.value) }}
         </KsCheckTag>
     </span>
 </template>

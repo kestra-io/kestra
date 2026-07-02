@@ -173,8 +173,6 @@
                             size="large"
                             inlinePrompt
                             v-model="secret.updateValue"
-                            :activeIcon="PencilOutline"
-                            :inactiveIcon="PencilOff"
                         />
                     </KsCol>
                 </KsFormItem>
@@ -225,11 +223,9 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
     import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"

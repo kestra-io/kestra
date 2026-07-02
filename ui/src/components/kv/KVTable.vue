@@ -187,7 +187,6 @@
                     :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
-                    :activeActionIcon="Check"
                 />
                 <KsDatePicker
                     v-else-if="kv.type === 'DATETIME'"
@@ -282,7 +281,6 @@
     import _groupBy from "lodash/groupBy"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
-    import Check from "vue-material-design-icons/Check.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"

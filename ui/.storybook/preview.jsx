@@ -26,6 +26,22 @@ window.KESTRA_UI_PATH = "./";
 // real backend for ANY request to legitimately reach in this environment.
 axios.defaults.adapter = async (config) => ({data: [], status: 200, statusText: "OK", headers: {}, config, request: {}});
 
+// Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
+// TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
+// is mounted once at the layout root before any page's TopNavBar teleports
+// into it; Storybook has no such layout wrapper, so we render the same
+// targets as siblings ahead of <story/> in the decorator tree.
+const withTopNavTeleportTargets = () => ({
+  template: `
+    <div>
+      <span id="topnav-title-slot"></span>
+      <div id="topnav-description-slot"></div>
+      <div id="topnav-actions-slot"></div>
+      <story/>
+    </div>
+  `,
+});
+
 /**
  * @type {import('@storybook/vue3-vite').Preview}
  */
@@ -39,14 +55,19 @@ const preview = {
     },
   },
   decorators: [
-    vueRouter(),
+    vueRouter([
+      {path: "/", name: "home", component: {template: "<div>home</div>"}},
+      {path: "/about", name: "about", component: {template: "<div>about</div>"}},
+      {path: "/:pathMatch(.*)*", name: "catchAll", component: {template: "<div/>"}},
+    ]),
     withThemeByClassName({
         themes: {
           light: "light",
           dark: "dark",
         },
         defaultTheme: "light",
-      })
+      }),
+    withTopNavTeleportTargets,
   ]
 };
 

@@ -25,12 +25,120 @@
 </template>
 
 <script lang="ts">
-    // module scope (shared across every instance) — used to namespace svg ids, see namespaceIds()
-    let instanceSeq = 0
+    // Icons are inlined via a shared <symbol> pool instead of duplicating full markup into every
+    // instance: the same task/trigger icon commonly repeats dozens of times on one page (execution
+    // timelines, task lists, ...), and re-parsing/re-sanitizing/re-serializing it per instance is
+    // wasted work. The pool is a single hidden <svg>, appended once, holding one <symbol> per
+    // distinct icon; each KsTaskIcon instance just renders a tiny `<use>` referencing it.
+    const POOL_ID = "ks-task-icon-pool"
+    const FALLBACK_KEY = "fallback"
 
     export interface KsTaskIconData {
         icon: string;
         flowable: boolean;
+    }
+
+    const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">" +
+        "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/></svg>"
+
+    function getPool(): Element {
+        const existing = document.getElementById(POOL_ID)
+        if (existing) {
+            return existing
+        }
+
+        const pool = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        pool.setAttribute("id", POOL_ID)
+        pool.setAttribute("aria-hidden", "true")
+        pool.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden")
+        document.body.prepend(pool)
+        return pool
+    }
+
+    // Non-cryptographic string hash (FNV-1a-ish) — good enough to key a bounded, first-party set of
+    // plugin icons, not to defend against adversarial collisions. Prefixed with a letter because a
+    // CSS id selector ("#123abc") is invalid when it starts with a digit.
+    function hashKey(value: string): string {
+        let hash = 0
+        for (let i = 0; i < value.length; i++) {
+            hash = (Math.imul(31, hash) + value.charCodeAt(i)) | 0
+        }
+        return `kti-${(hash >>> 0).toString(36)}`
+    }
+
+    /**
+     * Icons ship inside third-party plugin JARs, so even though the backend strips executable
+     * content before serving them (see SvgSanitizer), we defensively re-check here as well.
+     */
+    function sanitize(doc: Document): boolean {
+        const root = doc.documentElement
+        if (root.nodeName !== "svg" || doc.querySelector("parsererror")) {
+            return false
+        }
+
+        doc.querySelectorAll("script, foreignObject").forEach(el => el.remove())
+        doc.querySelectorAll("*").forEach(el => {
+            Array.from(el.attributes).forEach(({name, value}) => {
+                if (/^on/i.test(name) || /javascript:/i.test(value)) {
+                    el.removeAttribute(name)
+                }
+            })
+        })
+
+        return true
+    }
+
+    /**
+     * Namespaces every `id` in the SVG (and its `url(#id)` / `href="#id"` references) to `key` so
+     * that gradients, clip-paths and `<use>` targets don't collide with another icon's once both
+     * live in the shared pool. Namespaced by icon (type), not by render instance — every instance
+     * of the same icon reuses the same pooled `<symbol>`.
+     */
+    function namespaceIds(svg: string, key: string): string {
+        return svg.replace(/\bid="([^"]+)"|url\(#([^)]+)\)|href="#([^"]+)"/g, (match, id, urlRef, hrefRef) => {
+            const target = id ?? urlRef ?? hrefRef
+            if (id !== undefined) return `id="${target}-${key}"`
+            if (urlRef !== undefined) return `url(#${target}-${key})`
+            return `href="#${target}-${key}"`
+        })
+    }
+
+    function toViewBox(svg: SVGSVGElement): string | undefined {
+        const viewBox = svg.getAttribute("viewBox")
+        if (viewBox) return viewBox
+
+        const width = Number(svg.getAttribute("width"))
+        const height = Number(svg.getAttribute("height"))
+        return width > 0 && height > 0 ? `0 0 ${width} ${height}` : undefined
+    }
+
+    /**
+     * Ensures a <symbol> for this icon exists in the shared pool, creating it on first use, and
+     * returns the id to <use> it by.
+     */
+    function ensureSymbol(rawIcon: string | undefined): string {
+        const key = rawIcon ? hashKey(rawIcon) : FALLBACK_KEY
+        const pool = getPool()
+        if (pool.querySelector(`#${key}`)) {
+            return key
+        }
+
+        const raw = rawIcon ? window.atob(rawIcon) : FALLBACK_SVG
+        const doc = new DOMParser().parseFromString(raw, "image/svg+xml")
+
+        if (!sanitize(doc)) {
+            return rawIcon ? ensureSymbol(undefined) : FALLBACK_KEY
+        }
+
+        const svg = doc.documentElement as unknown as SVGSVGElement
+        const viewBox = toViewBox(svg)
+        const inner = namespaceIds(svg.innerHTML, key)
+        pool.insertAdjacentHTML(
+            "beforeend",
+            `<symbol id="${key}"${viewBox ? ` viewBox="${viewBox}"` : ""}>${inner}</symbol>`,
+        )
+
+        return key
     }
 </script>
 
@@ -58,11 +166,6 @@
          */
         loadIcon?: (cls: string) => Promise<IconData | undefined>;
     }>()
-
-    const instanceUid = `kti${instanceSeq++}`
-
-    const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">" +
-        "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/></svg>"
 
     function innerClassToParent(cls: string) {
         return cls.includes("$") ? cls.substring(0, cls.indexOf("$")) : cls
@@ -106,58 +209,10 @@
         color: `var(${props.variable || "--ks-text-primary"})`,
     }))
 
-    /**
-     * Namespaces every `id` in the SVG (and its `url(#id)` / `href="#id"` references) to the
-     * current component instance so that gradients, clip-paths and `<use>` targets don't collide
-     * when the same icon is inlined more than once on a page.
-     */
-    function namespaceIds(svg: string): string {
-        return svg.replace(/\bid="([^"]+)"|url\(#([^)]+)\)|href="#([^"]+)"/g, (match, id, urlRef, hrefRef) => {
-            const target = id ?? urlRef ?? hrefRef
-            if (id !== undefined) return `id="${target}-${instanceUid}"`
-            if (urlRef !== undefined) return `url(#${target}-${instanceUid})`
-            return `href="#${target}-${instanceUid}"`
-        })
-    }
-
-    /**
-     * Icons ship inside third-party plugin JARs, so even though the backend strips executable
-     * content before serving them (see SvgSanitizer), we defensively re-check here as well.
-     */
-    function sanitize(doc: Document): boolean {
-        const root = doc.documentElement
-        if (root.nodeName !== "svg" || doc.querySelector("parsererror")) {
-            return false
-        }
-
-        doc.querySelectorAll("script, foreignObject").forEach(el => el.remove())
-        doc.querySelectorAll("*").forEach(el => {
-            Array.from(el.attributes).forEach(({name, value}) => {
-                if (/^on/i.test(name) || /javascript:/i.test(value)) {
-                    el.removeAttribute(name)
-                }
-            })
-        })
-
-        return true
-    }
-
     const svgMarkup = computed(() => {
-        const raw = icon.value?.icon ? window.atob(icon.value.icon) : FALLBACK_SVG
-
-        const doc = new DOMParser().parseFromString(raw, "image/svg+xml")
-        if (!sanitize(doc)) {
-            return FALLBACK_SVG
-        }
-
-        const svg = doc.documentElement
-        svg.setAttribute("width", "100%")
-        svg.setAttribute("height", "100%")
-        svg.setAttribute("focusable", "false")
-        // the accessible name lives on the wrapper (role="img" + aria-label) above
-        svg.setAttribute("aria-hidden", "true")
-
-        return namespaceIds(svg.outerHTML)
+        const symbolId = ensureSymbol(icon.value?.icon)
+        return "<svg width=\"100%\" height=\"100%\" focusable=\"false\" aria-hidden=\"true\">" +
+            `<use href="#${symbolId}" width="100%" height="100%"></use></svg>`
     })
 </script>
 

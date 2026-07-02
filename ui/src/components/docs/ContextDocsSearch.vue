@@ -16,10 +16,10 @@
             <template v-if="searchResults.length > 0">
                 <ContextDocsLink
                     v-for="(result, index) in searchResults"
-                    :key="result.url"
+                    :key="result.parsedUrl"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
-                    :href="result.parsedUrl.replace(/^docs\//, '')"
+                    :href="result.parsedUrl"
                     useRaw
                     :data-index="index"
                     @click="resetSearch"
@@ -48,7 +48,7 @@
     const docStore = useDocStore()
 
     const searchQuery = ref("")
-    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([])
+    const searchResults = ref<Array<{ title: string; preview: string; parsedUrl: string }>>([])
     const loading = ref(false)
     const selectedIndex = ref(0)
     const searchContainer = ref<HTMLDivElement | null>(null)

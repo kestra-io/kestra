@@ -153,6 +153,7 @@ public class MiscController {
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
+            .flowTemplate(this.flowTemplate)
             ;
 
         if (this.environmentName != null || this.environmentColor != null) {

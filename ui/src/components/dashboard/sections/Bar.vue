@@ -123,7 +123,7 @@
                 }
                 return v
             }),
-            barWidth: 16,
+            barWidth: 12,
             itemStyle: {
                 color: getConsistentHEXColor(theme.value, s.name),
                 borderColor: cssVar("--ks-bg-surface"),

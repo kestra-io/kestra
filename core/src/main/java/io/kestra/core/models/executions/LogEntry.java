@@ -66,6 +66,10 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     @Nullable
     ExecutionKind executionKind;
 
+    // Opaque plugin-defined step token; wrap in a record if percent/total is ever needed
+    @Nullable
+    String progress;
+
     public static List<Level> findLevelsByMin(Level minLevel) {
         if (minLevel == null) {
             return Arrays.asList(Level.values());

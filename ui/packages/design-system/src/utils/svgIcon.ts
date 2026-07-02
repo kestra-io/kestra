@@ -57,11 +57,15 @@ function parseSanitized(rawBase64: string | undefined): SvgIcon {
     const rawSvg = rawBase64 ? window.atob(rawBase64) : FALLBACK_SVG
     const sanitized = DOMPurify.sanitize(ensureViewBox(rawSvg), {USE_PROFILES: {svg: true, svgFilters: true}})
 
-    const parsed = new DOMParser().parseFromString(sanitized, "image/svg+xml")
-    const svgEl = parsed.documentElement
+    // Real-world plugin icons are rarely strictly well-formed XML (HTML entities like &nbsp;,
+    // Illustrator/Inkscape cruft, etc.), so parse as HTML — the same forgiving grammar the browser
+    // uses when this markup is later assigned via v-html — rather than as strict XML, which throws
+    // out the whole icon on the first well-formedness violation.
+    const parsed = new DOMParser().parseFromString(sanitized, "text/html")
+    const svgEl = parsed.body.querySelector("svg")
 
     let result: SvgIcon = {attrs: {}, innerHtml: ""}
-    if (svgEl.tagName.toLowerCase() === "svg" && !parsed.querySelector("parsererror")) {
+    if (svgEl) {
         const attrs: Record<string, string> = {}
         for (const attr of Array.from(svgEl.attributes)) {
             if (!EXCLUDED_ATTRS.has(attr.name)) {

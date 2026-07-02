@@ -22,11 +22,19 @@ const gradientSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 
     "<rect width=\"24\" height=\"24\" fill=\"url(#gradient0)\"/></svg>"
 const gradientIconBase64 = btoa(gradientSvg)
 
+// A realistic real-world plugin icon shape: HTML named entities (e.g. &nbsp;) are valid HTML but
+// NOT valid standalone XML without a DTD — a strict XML re-parse of the sanitized markup would
+// throw the whole icon out (silently rendering blank) even though the icon itself is perfectly fine.
+const entitySvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+    "<title>My&nbsp;Icon</title><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></svg>"
+const entityIconBase64 = btoa(entitySvg)
+
 const mockIcons = {
     "io.kestra.plugin.core.log.Log": {icon: mockIconBase64, flowable: false},
     "io.kestra.plugin.core.flow.Parallel": {icon: mockIconBase64, flowable: true},
     "io.kestra.plugin.malicious.Task": {icon: maliciousIconBase64, flowable: false},
     "io.kestra.plugin.gradient.Task": {icon: gradientIconBase64, flowable: false},
+    "io.kestra.plugin.entity.Task": {icon: entityIconBase64, flowable: false},
 }
 
 beforeEach(() => {
@@ -173,5 +181,16 @@ describe("KsTaskIcon", () => {
         // The url(#...) reference must be rewritten to match its own instance's namespaced id
         expect(w1.find("rect").attributes("fill")).toBe(`url(#${id1})`)
         expect(w2.find("rect").attributes("fill")).toBe(`url(#${id2})`)
+    })
+
+    test("still renders an icon containing an HTML entity that is not valid standalone XML", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.entity.Task", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.element.tagName.toLowerCase()).toBe("svg")
+        expect(icon.attributes("viewBox")).toBe("0 0 24 24")
+        expect(icon.find("circle").exists()).toBe(true)
     })
 })

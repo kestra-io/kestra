@@ -17,7 +17,7 @@
         "test:lint": "oxlint src packages && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
-        "test:storybook": "./run-storybook-tests.sh",
+        "test:storybook": "./scripts/run-storybook-tests.sh",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "node ./src/translations/check.js",

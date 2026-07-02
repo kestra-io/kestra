@@ -208,6 +208,36 @@ describe("KsTaskIcon", () => {
         expect(wrapperB.find("style").text()).toContain(`.${classB}{fill:currentColor;}`)
     })
 
+    test("gives every instance of the same repeated icon a distinct id, even attached to a shared document", () => {
+        // mount() detaches each wrapper by default; attach every instance into the same document
+        // so id uniqueness is checked against the actual combined DOM, not isolated fragments
+        const gradientSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            "<defs><linearGradient id=\"grad\"/></defs><circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
+        const icons = {"io.kestra.plugin.core.log.Log": {icon: btoa(gradientSvg), flowable: false}}
+
+        const host = document.createElement("div")
+        document.body.appendChild(host)
+
+        const wrappers = Array.from({length: 20}, () => mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
+            global: globalConfig,
+            attachTo: host,
+        }))
+
+        const ids = wrappers.map(w => w.find("linearGradient").attributes("id"))
+        expect(ids).toHaveLength(20)
+        expect(new Set(ids).size).toBe(20)
+
+        // and every actual DOM id in the combined, attached document is unique — the real-world
+        // failure mode is a duplicate id attribute anywhere in the page, not just a mismatch
+        // between this component's own bookkeeping and what landed in the DOM
+        const domIds = [...host.querySelectorAll("[id]")].map(el => el.id)
+        expect(new Set(domIds).size).toBe(domIds.length)
+
+        wrappers.forEach(w => w.unmount())
+        host.remove()
+    })
+
     test("strips event handler attributes from untrusted svg content", () => {
         const maliciousSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
             "<circle onclick=\"alert(1)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"

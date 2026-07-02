@@ -8,7 +8,7 @@
             @change="updateLabel(label)"
             class="me-0 label"
         >
-            <template v-if="!label.key">{{ label.value }}</template>
+            <template v-if="!label.key">{{ label.text ?? label.value }}</template>
             <template v-else>{{ label.key }}:{{ label.value }}</template>
         </KsCheckTag>
     </span>
@@ -24,6 +24,7 @@
     interface Label {
         key?: string;
         value: string;
+        text?: string;
     }
 
     const props = withDefaults(

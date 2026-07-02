@@ -99,6 +99,18 @@ public abstract class RunContext implements PropertyContext {
     public abstract Logger logger();
 
     /**
+     * Reports a lifecycle step of a multi-step task (e.g. a batch job or a runner that launches
+     * an external resource) so UIs following the execution live can track progress. Emitted as a
+     * regular INFO log line carrying a typed {@code step} token, so it rides the existing log
+     * queue and follow-logs SSE — no separate channel or endpoint needed. {@code step} is an
+     * opaque, plugin-defined identifier (e.g. {@code "pod.created"}); {@code message} is the
+     * human-readable text shown in the log console.
+     */
+    public void emitProgress(String step, String message) {
+        logger().atInfo().addKeyValue(RunContextLogger.PROGRESS_KEY, step).log(message);
+    }
+
+    /**
      * Gets the log file URI inside the internal storage.
      * Only populated if the task or trigger is configured to log o a file.<br>
      *

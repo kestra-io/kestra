@@ -229,6 +229,30 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
+        return HttpResponse.ok(pluginIconsIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "icons/{cls}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon",
+        description = "Lightweight alternative to `GET /plugins/icons` for resolving one icon at a time, " +
+            "so callers don't have to download the whole plugin catalog just to render one task icon."
+    )
+    public HttpResponse<PluginIcon> getPluginIcon(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+
+        if (icon == null) {
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(icon).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Cacheable("default")
+    protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
             .flatMap(
@@ -274,7 +298,7 @@ public class PluginController {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
         icons.putAll(aliasIcons);
 
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return icons;
     }
 
     @Get(uri = "icons/groups")

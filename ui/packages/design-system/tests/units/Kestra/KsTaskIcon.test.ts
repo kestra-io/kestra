@@ -1,5 +1,5 @@
-import {describe, test, expect, beforeEach} from "vitest"
-import {mount} from "@vue/test-utils"
+import {describe, test, expect, beforeEach, vi} from "vitest"
+import {mount, flushPromises} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsTaskIcon from "../../../src/components/Kestra/KsTaskIcon.vue"
 
@@ -28,22 +28,36 @@ describe("KsTaskIcon", () => {
         expect(wrapper.find(".ks-task-icon").exists()).toBe(true)
     })
 
-    test("renders icon element", () => {
-        const wrapper = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".ks-task-icon__icon").exists()).toBe(true)
-    })
-
-    test("sets background image style on icon", () => {
+    test("renders an inline, inspectable svg instead of a background image", () => {
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
             global: globalConfig,
         })
         const icon = wrapper.find(".ks-task-icon__icon")
-        expect(icon.attributes("style")).toContain("background-image")
-        expect(icon.attributes("style")).toContain("data:image/svg+xml;base64,")
+        expect(icon.attributes("style") ?? "").not.toContain("background-image")
+        expect(icon.find("svg").exists()).toBe(true)
+        expect(icon.find("circle").exists()).toBe(true)
+    })
+
+    test("exposes an accessible role and label", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.attributes("role")).toBe("img")
+        expect(icon.attributes("aria-label")).toBe("io.kestra.plugin.core.log.Log")
+        expect(icon.find("svg").attributes("aria-hidden")).toBe("true")
+    })
+
+    test("recolors via CSS currentColor inheritance instead of rewriting the svg", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true, variable: "--ks-text-error"},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.attributes("style")).toContain("color: var(--ks-text-error)")
+        expect(icon.find("circle").attributes("fill")).toBe("currentColor")
     })
 
     test("renders tooltip when onlyIcon is false", () => {
@@ -51,7 +65,7 @@ describe("KsTaskIcon", () => {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: false},
             global: globalConfig,
         })
-        // KsTooltip wraps the icon — the icon div should still be present
+        // KsTooltip wraps the icon — the icon span should still be present
         expect(wrapper.find(".ks-task-icon__icon").exists()).toBe(true)
         // KsTooltip component should be rendered
         const tooltip = wrapper.findComponent({name: "KsTooltip"})
@@ -89,8 +103,9 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
         const icon = wrapper.find(".ks-task-icon__icon")
-        // Should still render with a background image (the fallback SVG)
-        expect(icon.attributes("style")).toContain("data:image/svg+xml;base64,")
+        // Should still render the fallback svg
+        expect(icon.find("svg").exists()).toBe(true)
+        expect(icon.find("path").exists()).toBe(true)
     })
 
     test("renders with customIcon prop", () => {
@@ -99,7 +114,7 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
         const icon = wrapper.find(".ks-task-icon__icon")
-        expect(icon.attributes("style")).toContain("data:image/svg+xml;base64,")
+        expect(icon.find("circle").exists()).toBe(true)
     })
 
     test("resolves inner class to parent when cls contains $", () => {
@@ -112,8 +127,66 @@ describe("KsTaskIcon", () => {
         })
         // Should resolve to parent class and find the icon
         const icon = wrapper.find(".ks-task-icon__icon")
-        const style = icon.attributes("style") ?? ""
-        // The icon should use the resolved parent icon (encoded mockSvg contains circle)
-        expect(style).toContain("data:image/svg+xml;base64,")
+        expect(icon.find("circle").exists()).toBe(true)
+    })
+
+    test("lazily resolves the icon via loadIcon when it isn't in icons", async () => {
+        const loadIcon = vi.fn().mockResolvedValue({icon: mockIconBase64, flowable: false})
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", onlyIcon: true, loadIcon},
+            global: globalConfig,
+        })
+
+        // renders the fallback icon while the request is in flight
+        expect(wrapper.find(".ks-task-icon__icon circle").exists()).toBe(false)
+        expect(loadIcon).toHaveBeenCalledWith("io.kestra.plugin.core.log.Log")
+
+        await flushPromises()
+
+        expect(wrapper.find(".ks-task-icon__icon circle").exists()).toBe(true)
+    })
+
+    test("does not call loadIcon when the icon is already provided", () => {
+        const loadIcon = vi.fn().mockResolvedValue({icon: mockIconBase64, flowable: false})
+        mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true, loadIcon},
+            global: globalConfig,
+        })
+
+        expect(loadIcon).not.toHaveBeenCalled()
+    })
+
+    test("namespaces svg ids per instance so two icons on the same page don't collide", () => {
+        const gradientSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            "<linearGradient id=\"grad\"/><circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
+        const icons = {"io.kestra.plugin.core.log.Log": {icon: btoa(gradientSvg), flowable: false}}
+
+        const wrapperA = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const wrapperB = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
+            global: globalConfig,
+        })
+
+        const idA = wrapperA.find("linearGradient").attributes("id")
+        const idB = wrapperB.find("linearGradient").attributes("id")
+
+        expect(idA).not.toBe(idB)
+        expect(wrapperA.find("circle").attributes("fill")).toBe(`url(#${idA})`)
+        expect(wrapperB.find("circle").attributes("fill")).toBe(`url(#${idB})`)
+    })
+
+    test("strips event handler attributes from untrusted svg content", () => {
+        const maliciousSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            "<circle onclick=\"alert(1)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
+
+        const wrapper = mount(KsTaskIcon, {
+            props: {customIcon: {icon: btoa(maliciousSvg)}, onlyIcon: true},
+            global: globalConfig,
+        })
+
+        expect(wrapper.find("circle").attributes("onclick")).toBeUndefined()
     })
 })

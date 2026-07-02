@@ -109,6 +109,27 @@ class PluginControllerTest {
         ).isNotNull();
     }
 
+    @Test
+    void iconByClass() {
+        PluginIcon icon = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginIcon.class
+        );
+
+        assertThat(icon.getIcon()).isNotNull();
+        assertThat(icon.getName()).isEqualTo(Log.class.getSimpleName());
+    }
+
+    @Test
+    void iconByClassNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task"), PluginIcon.class)
+        );
+
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void returnTask() {

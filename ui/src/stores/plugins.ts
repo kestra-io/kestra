@@ -63,6 +63,7 @@ function usePluginsIcons() {
     const apiIcons = ref<Record<string, PluginIconData>>({})
     const pluginsIcons = ref<Record<string, PluginIconData>>({})
     const iconsPromiseLocal = ref<Promise<Record<string, PluginIconData>>>()
+    const iconRequests = new Map<string, Promise<PluginIconData | undefined>>()
     const axios = useClient()
 
     const icons = computed(() => {
@@ -100,10 +101,42 @@ function usePluginsIcons() {
         return iconsPromiseLocal.value
     }
 
+    // Lazily resolves a single icon instead of preloading the whole (potentially huge) plugin-icons
+    // catalog. Meant for views that only ever render a handful of task icons (execution timelines,
+    // trigger lists, ...); catalog-browsing views still use fetchIcons()/icons above.
+    function loadIcon(cls: string): Promise<PluginIconData | undefined> {
+        const cached = icons.value[cls]
+        if (cached) {
+            return Promise.resolve(cached)
+        }
+
+        if (iconsLoaded.value) {
+            // the full catalog is already loaded and simply doesn't have this class
+            return Promise.resolve(undefined)
+        }
+
+        const pending = iconRequests.get(cls)
+        if (pending) {
+            return pending
+        }
+
+        const request = axios.get<PluginIconData>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
+            .then(response => {
+                pluginsIcons.value = {...pluginsIcons.value, [cls]: response.data}
+                return response.data
+            })
+            .catch(() => undefined)
+            .finally(() => iconRequests.delete(cls))
+
+        iconRequests.set(cls, request)
+        return request
+    }
+
     return {
         icons,
         iconsLoaded,
         fetchIcons,
+        loadIcon,
     }
 }
 
@@ -383,7 +416,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "cls" && k !== "version" && k !== "forceRefresh")
     }
 
-    const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
+    const {icons, iconsLoaded, fetchIcons, loadIcon} = usePluginsIcons()
 
     const groupIcons = ref<PluginIconMap>({})
     let groupIconsPending: Promise<PluginIconMap> | null = null
@@ -484,6 +517,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         icons,
         iconsLoaded,
         fetchIcons,
+        loadIcon,
         groupIcons,
         ensureGroupIcons,
     }

@@ -15,6 +15,11 @@ export function useEditorBindings() {
     const {t} = useI18n()
     const router = useRouter()
 
+    // Code editors resolve arbitrary task types as the user types (autocomplete, hover docs), so
+    // they need the full plugin-icons catalog rather than a handful of known classes. Triggered
+    // here instead of eagerly at app boot so it only downloads for sessions that open an editor.
+    pluginsStore.fetchIcons()
+
     return reactive({
         theme: computed(() => {
             void miscStore.theme

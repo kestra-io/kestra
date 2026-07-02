@@ -22,14 +22,13 @@ const meta: Meta<typeof KsTaskIcon> = {
     tags: ["autodocs"],
     argTypes: {
         cls: {control: "text"},
-        theme: {control: "select", options: ["dark", "light"]},
         onlyIcon: {control: "boolean"},
         variable: {control: "text"},
     },
     parameters: {
         docs: {
             description: {
-                component: "KsTaskIcon displays a task/plugin icon resolved from the icons registry. Falls back to a generic file icon when no matching icon is found.",
+                component: "KsTaskIcon displays a task/plugin icon as an inline, inspectable `<svg>` (not a background image), exposed to assistive tech via `role=\"img\"` + `aria-label`. It resolves icons synchronously from the `icons` map when provided, or lazily via the `loadIcon` prop so callers don't have to preload the whole plugin-icons catalog. Falls back to a generic file icon when no matching icon is found.",
             },
         },
     },
@@ -98,6 +97,32 @@ export const CustomIcon: Story = {
     args: {
         customIcon: {icon: mockIconBase64},
         onlyIcon: true,
+    },
+}
+
+export const LazyLoaded: Story = {
+    render: (args) => ({
+        components: {KsTaskIcon},
+        setup() {
+            // simulates pluginsStore.loadIcon: fetches one icon on demand instead of
+            // requiring the whole plugin-icons catalog to be preloaded up front
+            const loadIcon = (cls: string) => new Promise<{icon: string; flowable: boolean} | undefined>(resolve => {
+                setTimeout(() => resolve(mockIcons[cls]), 1000)
+            })
+            return {args, loadIcon}
+        },
+        template: "<div style=\"width:32px;height:32px\"><ks-task-icon v-bind=\"args\" :loadIcon=\"loadIcon\" /></div>",
+    }),
+    args: {
+        cls: "io.kestra.plugin.core.log.Log",
+        onlyIcon: true,
+    },
+    parameters: {
+        docs: {
+            description: {
+                story: "No `icons` map is passed here — the icon is resolved on demand via `loadIcon` (shown after a simulated 1s network delay), falling back to the generic icon until it resolves.",
+            },
+        },
     },
 }
 

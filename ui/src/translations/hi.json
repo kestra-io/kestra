@@ -88,12 +88,6 @@
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
-      "missingPlugins": {
-        "title": "अनुपलब्ध plugins",
-        "description": "यह blueprint ऐसे plugin(s) के tasks का उपयोग करता है जो इस instance पर इंस्टॉल नहीं हैं: {plugins}। इस blueprint का उपयोग करने के लिए उन्हें इंस्टॉल करें।",
-        "card": "इस instance पर इंस्टॉल न किए गए plugin(s) की आवश्यकता है: {plugins}",
-        "install": "Plugins इंस्टॉल करें"
-      },
       "all": "सभी",
       "apps": "ऐप Blueprints",
       "community": "समुदाय",
@@ -114,6 +108,12 @@
           "1": "पहला कदम हमेशा सबसे कठिन होता है।",
           "2": "अपने अगले {kind} को शुरू करने के लिए ब्लूप्रिंट्स का अन्वेषण करें।"
         }
+      },
+      "missingPlugins": {
+        "card": "इस instance पर इंस्टॉल न किए गए plugin(s) की आवश्यकता है: {plugins}",
+        "description": "यह blueprint ऐसे plugin(s) के tasks का उपयोग करता है जो इस instance पर इंस्टॉल नहीं हैं: {plugins}। इस blueprint का उपयोग करने के लिए उन्हें इंस्टॉल करें।",
+        "install": "Plugins इंस्टॉल करें",
+        "title": "अनुपलब्ध plugins"
       },
       "title": "Blueprints"
     },

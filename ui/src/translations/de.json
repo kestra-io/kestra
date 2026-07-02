@@ -88,12 +88,6 @@
     "before": "vor",
     "behavior": "Verhalten",
     "blueprints": {
-      "missingPlugins": {
-        "title": "Fehlende Plugins",
-        "description": "Dieses Blueprint verwendet Tasks aus Plugin(s), die auf dieser Instanz nicht installiert sind: {plugins}. Installieren Sie sie, um dieses Blueprint zu verwenden.",
-        "card": "Erfordert Plugin(s), die auf dieser Instanz nicht installiert sind: {plugins}",
-        "install": "Plugins installieren"
-      },
       "all": "Alle",
       "apps": "App-Blueprints",
       "community": "Gemeinschaft",
@@ -114,6 +108,12 @@
           "1": "Der erste Schritt ist immer der schwerste.",
           "2": "Erkunden Sie Blueprints, um Ihr nächstes {kind} zu starten."
         }
+      },
+      "missingPlugins": {
+        "card": "Erfordert Plugin(s), die auf dieser Instanz nicht installiert sind: {plugins}",
+        "description": "Dieses Blueprint verwendet Tasks aus Plugin(s), die auf dieser Instanz nicht installiert sind: {plugins}. Installieren Sie sie, um dieses Blueprint zu verwenden.",
+        "install": "Plugins installieren",
+        "title": "Fehlende Plugins"
       },
       "title": "Blueprints"
     },

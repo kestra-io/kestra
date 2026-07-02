@@ -230,6 +230,10 @@ The **workerGroups** follow exactly the same pattern you see in deployments key 
 {{ define "extra.migration02" -}}
 ## Kestra 2.0 — gRPC worker-controller
 
+> **Breaking change (chart):** Port **50051** (`grpc`) is now exposed on all pods and on the standalone
+> Service by default. Existing deployments will see this port added on their next `helm upgrade`.
+> Update firewall rules or network policies accordingly before upgrading.
+
 Kestra 2.0 introduces a gRPC control plane between the standalone (or controller) server and detached
 worker pods. The chart exposes port **50051** (`grpc`) on all pods and the standalone Service by default.
 

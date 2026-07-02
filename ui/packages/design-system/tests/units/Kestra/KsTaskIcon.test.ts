@@ -65,7 +65,7 @@ describe("KsTaskIcon", () => {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: false},
             global: globalConfig,
         })
-        // KsTooltip wraps the icon — the icon span should still be present
+        // KsTooltip wraps the icon — the icon element should still be present
         expect(wrapper.find(".ks-task-icon__icon").exists()).toBe(true)
         // KsTooltip component should be rendered
         const tooltip = wrapper.findComponent({name: "KsTooltip"})

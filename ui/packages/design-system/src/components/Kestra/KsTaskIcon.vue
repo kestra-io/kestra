@@ -4,7 +4,7 @@
         class="ks-task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <span
+            <div
                 class="ks-task-icon__icon"
                 role="img"
                 :aria-label="ariaLabel"
@@ -13,7 +13,7 @@
             />
         </KsTooltip>
 
-        <span
+        <div
             v-else
             class="ks-task-icon__icon"
             role="img"

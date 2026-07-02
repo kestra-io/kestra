@@ -24,7 +24,6 @@ import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -81,9 +80,6 @@ class DefaultSchedulerTest {
 
     @Inject
     SchedulableEvaluator schedulableEvaluator;
-
-    @Inject
-    ModelValidator modelValidator;
 
     @Inject
     TriggerWorkerJobPublisher triggerWorkerJobPublisher;
@@ -261,8 +257,7 @@ class DefaultSchedulerTest {
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
             triggerWorkerJobPublisher,
             triggerExecutionPublisher,
-            SCHEDULER_CONFIGURATION,
-            modelValidator
+            SCHEDULER_CONFIGURATION
         );
     }
 

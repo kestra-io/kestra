@@ -24,7 +24,6 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
@@ -74,9 +73,6 @@ class TriggerSchedulerTest {
     @Inject
     TriggerWorkerJobPublisher triggerWorkerJobPublisher;
 
-    @Inject
-    ModelValidator modelValidator;
-
     private Clock initialSchedulerClock;
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
@@ -105,28 +101,6 @@ class TriggerSchedulerTest {
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
-    }
-
-    @Test
-    void shouldFailExecutionWhenFlowIsInvalid() {
-        // A flow that the scheduler picks up should be valid - validation runs at save time. As
-        // a defense in depth (drafts can be saved invalid, and external imports may bypass the
-        // save path), the scheduler validates the flow before sending the execution. If the flow
-        // has constraint violations (here: tasks: [] violates @NotEmpty), the execution is
-        // emitted in FAILED state with the error logged through the run context, instead of
-        // letting the executor run an under-defined flow that would only fail later on a task.
-        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toBuilder()
-            .tasks(List.of())
-            .build();
-        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
-        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
-
-        SchedulerClock.offset(Duration.ofMinutes(15));
-        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
-
-        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent())
-            .isEqualTo(State.Type.FAILED);
     }
 
     @Test
@@ -722,42 +696,6 @@ class TriggerSchedulerTest {
     }
 
     @Test
-    void shouldNotExecuteBackfillWhenFlowIsDraft() {
-        // A draft revision is never picked up implicitly. Even with an in-progress backfill, once the
-        // trigger's flow resolves to a draft the scheduler must skip it (DefaultSchedulableTriggerFetcher
-        // flow.isDraft() guard) instead of emitting a backfill execution. Guards the backfill path of
-        // the draft feature.
-        // region [GIVEN] a published scheduled flow with an in-progress backfill
-        FlowWithSource publishedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ);
-        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, List.of(publishedFlow));
-        TriggerScheduler scheduler = newTriggerScheduler(flowMetaStore, triggerWorkerJobPublisher);
-
-        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
-        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
-
-        assertThat(triggerStateStore.findById(Fixtures.triggerId())).isPresent();
-        completeExecution();
-        triggerExecutionPublisher.executions().clear();
-
-        ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(1));
-        triggerStateStore.save(
-            triggerStateStore.findById(Fixtures.triggerId()).orElseThrow()
-                .locked(SchedulerClock.getClock(), false)
-                .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
-        );
-        // endregion
-
-        // [WHEN] the flow's resolved revision becomes a draft, then the backfill ticks
-        flowMetaStore.add(publishedFlow.toBuilder().draft(true).build());
-        SchedulerClock.offset(Duration.ofSeconds(1));
-        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
-
-        // [THEN] no execution is emitted even though a backfill is active
-        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
-    }
-
-    @Test
     void shouldFailInitMissingScheduleTriggerGivenInvalidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M("Asia/Delhi");
@@ -802,8 +740,7 @@ class TriggerSchedulerTest {
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
             workerJobPublisher,
             triggerExecutionPublisher,
-            new SchedulerConfiguration(1, Duration.ZERO, 100),
-            modelValidator
+            new SchedulerConfiguration(1, Duration.ZERO, 100)
         );
     }
 

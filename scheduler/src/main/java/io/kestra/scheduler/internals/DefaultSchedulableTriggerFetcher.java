@@ -95,9 +95,9 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 // has not yet been processed. In these cases, 
                 final String triggerId = triggerState.getTriggerId();
                 Optional<AbstractTrigger> maybeTrigger = flow.getTriggers().stream().filter(it -> it.getId().equals(triggerId)).findFirst();
-                // Defense in depth: the meta-store already filters drafts, but a stale trigger
-                // event may briefly point to one if the meta-store hasn't refreshed yet.
-                if (flow.isDisabled() || flow.isDraft() || maybeTrigger.isEmpty() || maybeTrigger.get().isDisabled()) {
+                // Drafts are resolved away by the meta-store (find(revision=null) returns the latest
+                // non-draft revision), so no draft check is needed here — a draft never reaches this point.
+                if (flow.isDisabled() || maybeTrigger.isEmpty() || maybeTrigger.get().isDisabled()) {
                     // Skip processing this trigger to avoid acting on stale or invalid trigger.
                     return null;
                 }

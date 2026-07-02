@@ -99,32 +99,32 @@
         </template>
 
         <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
-            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="top">
+            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
                 <ControlButton @click.stop="zoomIn()">
                     <Plus />
                 </ControlButton>
             </KsTooltip>
-            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="top">
+            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
                 <ControlButton @click.stop="zoomOut()">
                     <Minus />
                 </ControlButton>
             </KsTooltip>
-            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="top">
+            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
                 <ControlButton @click.stop="fitView()">
                     <Fullscreen />
                 </ControlButton>
             </KsTooltip>
-            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="top">
+            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="right">
                 <ControlButton @click.stop="emit('toggle-orientation', $event)">
                     <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
                 </ControlButton>
             </KsTooltip>
-            <KsTooltip :content="$t('download')" placement="top">
+            <KsTooltip :content="$t('download')" placement="right">
                 <ControlButton @click.stop="toggleDropdown">
                     <Download />
                 </ControlButton>
             </KsTooltip>
-            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="top">
+            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
                 <ControlButton @click.stop="uncollapseAll()">
                     <ArrowExpandAll />
                 </ControlButton>
@@ -220,7 +220,7 @@
     const dragging = ref(false)
     const showExtraDetails = ref(false)
     const lastPosition = ref<XYPosition | null>()
-    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
     const edgeReplacer = ref({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -294,6 +294,14 @@
         generateGraph()
     })
 
+    const refitOnNodesInitialized = ref(false)
+    onNodesInitialized(() => {
+        if (refitOnNodesInitialized.value) {
+            refitOnNodesInitialized.value = false
+            fitView()
+        }
+    })
+
     const generateGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
@@ -329,7 +337,7 @@
 
             if (elements) {
                 setElements(elements)
-                fitView()
+                refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })

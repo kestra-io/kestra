@@ -7,7 +7,7 @@
         padding-top: 3.125rem;
 
         > a {
-            font-size: 1.87rem;
+            font-size: var(--ks-font-size-lg);
             padding-left: .6rem;
         }
     }
@@ -43,7 +43,7 @@
 
         &:not(.shiki code) {
             font-weight: 700;
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
             color: var(--ks-text-primary);
             border: 1px solid var(--border-killing);
         }
@@ -86,7 +86,7 @@
         margin-bottom: -1rem;
         padding-top: 56.75%;
         overflow: hidden;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         border-radius: calc(1rem / 2);
         border: 1px solid var(--ks-border-subtle);
 
@@ -131,10 +131,6 @@
         &:has(+ h2) {
             display: none;
         }
-    }
-
-    p {
-        line-height: 1.75rem;
     }
 
     .material-design-icon {

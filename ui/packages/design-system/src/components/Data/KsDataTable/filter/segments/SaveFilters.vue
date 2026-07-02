@@ -1,12 +1,14 @@
 <template>
-    <KsTooltip :content="$t('filter.save filter tooltip')" placement="top">
+    <KsTooltip v-if="$slots.default" :content="$t('filter.save filter tooltip')" placement="top">
         <KsButton
             type="default"
             :disabled="disabled"
             @click="showSaveDialog = true"
             :icon="ContentSaveOutline"
             class="no-bg-border"
-        />
+        >
+            <slot />
+        </KsButton>
     </KsTooltip>
 
     <KsDialog
@@ -24,7 +26,7 @@
                 </template>
             </KsAlert>
             <div>
-                <label>{{ $t("filter.name") }}</label>
+                <label>{{ $t("filter.name.label") }}</label>
                 <KsInput
                     v-model="filterName"
                     :placeholder="$t('filter.enter name')"
@@ -43,7 +45,8 @@
                 />
             </div>
 
-            <div v-if="!isEditMode">
+            <div>
+                <p v-if="isEditMode" class="update-hint">{{ $t("filter.update conditions hint") }}</p>
                 <div class="filter-summary">
                     <div v-if="appliedFilters.length > 0" class="filter-list">
                         <div
@@ -52,7 +55,7 @@
                             class="item"
                         >
                             <span class="key">{{ filter.keyLabel }}</span>
-                            <span class="comparator">{{ filter.comparatorLabel }}</span>
+                            <span class="comparator">{{ comparatorLabelFor(filter) }}</span>
                             <span class="value">{{ filter.valueLabel }}</span>
                         </div>
                     </div>
@@ -80,14 +83,23 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
+    import {useI18n} from "vue-i18n"
     import type {AppliedFilter, SavedFilter} from "../utils/filterTypes"
+    import {isDateRangeValue} from "../utils/filterChipFactory"
     import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
 
+    const {t} = useI18n({useScope: "global"})
+
+    // Range filters render a localized "between" label; everything else uses the
+    // comparator label baked into the model.
+    const comparatorLabelFor = (filter: AppliedFilter): string =>
+        isDateRangeValue(filter.value) ? t("filter.is_between") : filter.comparatorLabel
+
     const props = defineProps<{
-        disabled: boolean;
         savedFilters: SavedFilter[];
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
+        disabled?: boolean;
     }>()
 
     const emits = defineEmits<{
@@ -99,6 +111,8 @@
     const filterName = ref("")
     const showSaveDialog = ref(false)
     const filterDescription = ref("")
+
+    defineExpose({open: () => { showSaveDialog.value = true }})
 
     const isEditMode = computed(() => !!props.editingFilter)
 
@@ -157,6 +171,12 @@
         }
     }
 
+    .update-hint {
+        margin: 0 0 0.5rem;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
+    }
+
     .filter-summary {
         padding: 0.5rem 0.75rem;
         background-color: var(--ks-surface-secondary);
@@ -192,15 +212,6 @@
             font-weight: 700;
         }
     }
-}
-
-.no-bg-border {
-    margin: 0 !important;
-    padding: 0.5rem;
-    border-radius: var(--ks-radius-base);
-    font-size: var(--ks-font-size-base);
-    color: var(--ks-text-primary) !important;
-    box-shadow: 0 2px 4px var(--ks-shadow-surface);
 }
 
 .kel-button.is-disabled {

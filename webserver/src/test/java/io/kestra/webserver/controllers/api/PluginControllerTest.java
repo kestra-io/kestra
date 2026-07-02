@@ -13,6 +13,7 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.webserver.responses.PagedResults;
@@ -48,10 +49,11 @@ class PluginControllerTest {
 
     @Test
     void plugins() {
-        List<Plugin> list = client.toBlocking().retrieve(
+        PagedResults<Plugin> page = client.toBlocking().retrieve(
             HttpRequest.GET(PATH),
-            Argument.listOf(Plugin.class)
+            Argument.of(PagedResults.class, Plugin.class)
         );
+        List<Plugin> list = page.getResults();
 
         assertThat(list.size()).isEqualTo(3);
 
@@ -78,10 +80,11 @@ class PluginControllerTest {
         assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.CORE);
 
         // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
-        list = client.toBlocking().retrieve(
+        PagedResults<Plugin> page2 = client.toBlocking().retrieve(
             HttpRequest.GET(PATH),
-            Argument.listOf(Plugin.class)
+            Argument.of(PagedResults.class, Plugin.class)
         );
+        list = page2.getResults();
 
         assertThat(list.size()).isEqualTo(3);
     }
@@ -204,7 +207,7 @@ class PluginControllerTest {
             Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat((Map<String, Object>) doc.get("properties")).hasSize(22);
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(23);
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 
@@ -225,7 +228,7 @@ class PluginControllerTest {
             Argument.listOf(InputType.class)
         );
 
-        assertThat(doc.size()).isEqualTo(17);
+        assertThat(doc.size()).isEqualTo(18);
     }
 
     @SuppressWarnings("unchecked")
@@ -257,23 +260,43 @@ class PluginControllerTest {
         assertThat(manifest.manifest()).containsKey("io.kestra.plugin.redis.list.ListPop");
         List<PluginUiModuleWithGroup> pluginUiModules = manifest.manifest().get("io.kestra.plugin.redis.list.ListPop");
         assertThat(pluginUiModules).containsExactly(
-            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
-            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", PluginDistribution.OSS),
+            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", PluginDistribution.OSS)
         );
     }
 
     @Test
-    void should_not_get_plugin_manifest_for_groups() {
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.POST(
-                    PATH + "/pluginUiManifest",
-                    List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
-                ),
-                PluginUiManifest.class
-            )
+    void shouldReturnEmptyManifestGivenUnresolvedClasses() {
+        // A group name (not a task class) does not resolve to any task; the endpoint must
+        // return an empty manifest with HTTP 200 rather than a hard 404.
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest",
+                List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
+            ),
+            PluginUiManifest.class
         );
-        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+
+        assertThat(manifest.manifest()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyManifestGivenPluginsNotInstalled() {
+        // Blueprints may reference plugins that aren't installed on this instance; the
+        // endpoint must degrade gracefully (empty manifest, HTTP 200) so the UI keeps
+        // rendering instead of navigating to the global "Page not found" page.
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest",
+                List.of(
+                    new TaskWithVersion("io.kestra.plugin.ai.rag.IngestDocument", null),
+                    new TaskWithVersion("io.kestra.plugin.slack.notifications.SlackIncomingWebhook", null)
+                )
+            ),
+            PluginUiManifest.class
+        );
+
+        assertThat(manifest.manifest()).isEmpty();
     }
 
     @Test

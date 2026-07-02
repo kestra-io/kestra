@@ -9,7 +9,7 @@
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true
                 }"
             >
-                <div class="d-flex flex-column">
+                <div class="d-flex flex-column" :class="{'is-kpi': isKPIChart(chart.type)}">
                     <div class="d-flex justify-content-between">
                         <div id="charts_heading">
                             <p v-if="!isKPIChart(chart.type)">
@@ -30,7 +30,7 @@
                                 :tooltip="$t('dashboards.export')"
                             >
                                 <KsButton
-                                    @click="dashboardStore.export(dashboard, chart, {filters})"
+                                    @click="exportChart(chart)"
                                     :icon="Download"
                                     link
                                     class="ms-2"
@@ -81,6 +81,8 @@
     import {useRoute} from "vue-router"
     const route = useRoute()
 
+    import {decodeSearchParams} from "@kestra-io/design-system"
+
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
 
@@ -124,6 +126,12 @@
 
         return baseFilters
     })
+
+    function exportChart(chart: Chart) {
+        dashboardStore.export(props.dashboard, chart, {
+            filters: filters.value.concat(decodeSearchParams(route.query) ?? []),
+        })
+    }
 </script>
 
 <style scoped lang="scss">
@@ -152,11 +160,21 @@ section#charts {
     .dashboard-block {
         & > div {
             height: 100%;
-            padding: 1.5rem;
+            padding: 1.25rem;
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-base);
             box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
+
+            &.is-kpi {
+                position: relative;
+
+                #charts_buttons {
+                    position: absolute;
+                    top: 1.25rem;
+                    right: 1.25rem;
+                }
+            }
         }
 
         #charts_buttons {
@@ -166,6 +184,17 @@ section#charts {
 
         &:hover #charts_buttons {
             opacity: 1;
+        }
+
+        #charts_heading {
+            span {
+                color: var(--ks-text-primary);
+                font-size: var(--ks-font-size-md);
+            }
+            small {
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-xs);
+            }
         }
     }
 

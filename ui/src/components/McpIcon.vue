@@ -23,27 +23,22 @@
     </span>
 </template>
 
-<script lang="ts">
-    export default {
-        name: "McpIcon",
-        emits: ["click"],
-        props: {
-            title: {
-                type: String,
-                default: undefined,
-            },
-            fillColor: {
-                type: String,
-                default: "currentColor",
-            },
-            size: {
-                type: Number,
-                default: 24,
-            },
-            strokeWidth: {
-                type: Number,
-                default: 12,
-            },
-        },
-    }
+<script setup lang="ts">
+    defineOptions({name: "McpIcon"})
+
+    withDefaults(defineProps<{
+        title?: string
+        fillColor?: string
+        size?: number
+        strokeWidth?: number
+    }>(), {
+        title: undefined,
+        fillColor: "currentColor",
+        size: 24,
+        strokeWidth: 12,
+    })
+
+    defineEmits<{
+        click: [event: MouseEvent]
+    }>()
 </script>

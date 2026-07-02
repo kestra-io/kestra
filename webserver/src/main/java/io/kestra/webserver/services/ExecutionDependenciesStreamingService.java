@@ -125,13 +125,14 @@ public class ExecutionDependenciesStreamingService {
     public void registerSubscriber(String correlationId, String subscriberId, Subscriber consumer) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
-            // resume the subscription if paused
-            if (MapUtils.isEmpty(subscribers) && this.queueSubscriber.isPaused()) {
-                this.queueSubscriber.resume();
-            }
-
+            // Register the subscriber BEFORE resuming the queue to avoid a race where the polling
+            // thread delivers an event between resume() and put(), causing events to be dropped.
             subscribers.computeIfAbsent(correlationId, k -> new ConcurrentHashMap<>())
                 .put(subscriberId, consumer);
+
+            if (this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.resume();
+            }
         }
     }
 

@@ -20,8 +20,6 @@ import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
 import type {Types, Node, Edge, Element} from "../utils/types"
 
-import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies"
-
 // ─── CSS variable maps ────────────────────────────────────────────────────────
 
 const NODE_BG = {
@@ -125,7 +123,6 @@ export function useDependencies(
     subtype: Types = FLOW,
     initialNodeID: string,
     params: RouteParams,
-    isTesting = false,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
 ) {
     const coreStore = useCoreStore()
@@ -423,9 +420,19 @@ export function useDependencies(
     // ─── Data loading ─────────────────────────────────────────────────────────
 
     /**
-     * Polls until KsEchart's deferred `canRender` flag has triggered and ECharts
-     * has initialised, then registers a one-shot `finished` handler so positions
-     * are captured only after the force simulation has fully settled.
+     * Polls until ECharts has completed the initial force layout and node positions
+     * are available, then centres the view on the selected node (or fits all nodes
+     * for NAMESPACE graphs where no node is pre-selected).
+     *
+     * Why polling instead of listening for the `finished` event:
+     * `chartNodes` is set synchronously, which schedules a Vue microtask flush.
+     * That flush updates KsGraph's props, VChart calls setOption, and ECharts
+     * queues its own RAF for rendering.  `captureAndFocusWhenReady` is called
+     * right afterwards and queues *our* RAF.  Because both RAFs are in the same
+     * browser frame, ECharts renders (and fires `finished`) before our first poll
+     * fires — so the event is missed and positions are never captured.
+     * Polling `capturePositions()` every frame avoids that race: positions become
+     * non-empty one frame after ECharts renders, and we capture them reliably.
      */
     const captureAndFocusWhenReady = (): void => {
         let attempts = 0
@@ -437,75 +444,61 @@ export function useDependencies(
                 requestAnimationFrame(poll)
                 return
             }
-            // ECharts 'finished' fires once all animations (incl. force layout) complete.
-            const onFinished = () => {
-                chart.off("finished", onFinished)
-                capturePositions()
-                // Defer focusNode — calling setOption inside a 'finished' handler
-                // causes ECharts "setOption during main process" error.
-                if (selectedNodeID.value) {
-                    const id = selectedNodeID.value
-                    requestAnimationFrame(() => focusNode(id))
-                }
+            capturePositions()
+            if (storedPositions.value.size > 0) {
+                const id = selectedNodeID.value
+                requestAnimationFrame(() => {
+                    if (id) focusNode(id)
+                    else fitGraph()
+                })
+                return
             }
-            chart.on("finished", onFinished)
+            if (++attempts >= MAX_ATTEMPTS) return
+            requestAnimationFrame(poll)
         }
         requestAnimationFrame(poll)
     }
 
     onMounted(async () => {
-        if (isTesting) {
-            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)}
-            isLoading.value   = false
-            isRendering.value = false
-            if (subtype !== NAMESPACE) selectNode(elements.value.data.find(
-                (el): el is {data: Node} => el.data.type === NODE,
-            )?.data.id ?? initialNodeID)
-            await nextTick()
-            chartNodes.value = graphNodes.value
-            chartEdges.value = graphEdges.value
-            captureAndFocusWhenReady()
-        } else {
-            try {
-                if (fetchAssetDependencies) {
-                    const result = await fetchAssetDependencies()
-                    elements.value = {data: result.data, count: result.count}
-                } else if (subtype === NAMESPACE) {
-                    const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
-                    const nodes = data.nodes ?? []
-                    elements.value = {
-                        data:  transformResponse(data, NAMESPACE),
-                        count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
-                    }
-                } else {
-                    const result = await flowStore.loadDependencies(
-                        {
-                            id:       (subtype === FLOW ? params.id : params.flowId) as string,
-                            namespace: params.namespace as string,
-                            subtype:  subtype === FLOW ? FLOW : EXECUTION,
-                        },
-                        false,
-                    )
-                    elements.value = {data: result.data ?? [], count: result.count}
+        try {
+            if (fetchAssetDependencies) {
+                const result = await fetchAssetDependencies()
+                elements.value = {data: result.data, count: result.count}
+            } else if (subtype === NAMESPACE) {
+                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
+                const nodes = data.nodes ?? []
+                elements.value = {
+                    data:  transformResponse(data, NAMESPACE),
+                    count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
-            } catch (error) {
-                console.error(`Failed to load ${subtype} dependencies:`, error)
-                elements.value = {data: [], count: 0}
+            } else {
+                const result = await flowStore.loadDependencies(
+                    {
+                        id:       (subtype === FLOW ? params.id : params.flowId) as string,
+                        namespace: params.namespace as string,
+                        subtype:  subtype === FLOW ? FLOW : EXECUTION,
+                    },
+                    false,
+                )
+                elements.value = {data: result.data ?? [], count: result.count}
             }
-
-            isLoading.value   = false
-            isRendering.value = false
-
-            if (subtype !== NAMESPACE && elements.value.data.length > 0) {
-                // Wait for KsGraph to receive the new nodes prop and render.
-                await nextTick()
-                selectNode(initialNodeID)
-            }
-            await nextTick()
-            chartNodes.value = graphNodes.value
-            chartEdges.value = graphEdges.value
-            captureAndFocusWhenReady()
+        } catch (error) {
+            console.error(`Failed to load ${subtype} dependencies:`, error)
+            elements.value = {data: [], count: 0}
         }
+
+        isLoading.value   = false
+        isRendering.value = false
+
+        if (subtype !== NAMESPACE && elements.value.data.length > 0) {
+            // Wait for KsGraph to receive the new nodes prop and render.
+            await nextTick()
+            selectNode(initialNodeID)
+        }
+        await nextTick()
+        chartNodes.value = graphNodes.value
+        chartEdges.value = graphEdges.value
+        captureAndFocusWhenReady()
 
         if (subtype === EXECUTION) nextTick(() => openSSE())
     })
@@ -562,6 +555,11 @@ export function useDependencies(
                 title:   t("error"),
                 message: t("something_went_wrong.loading_execution"),
             }
+
+            // Close on error: EventSource auto-reconnects unless explicitly closed,
+            // and each reconnect leaks a server-side SSE connection (Netty direct
+            // buffers) over time. See kestra-io/kestra#16982.
+            closeSSE()
         }
     }
 

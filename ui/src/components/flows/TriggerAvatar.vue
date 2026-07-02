@@ -1,6 +1,6 @@
 <template>
     <div class="trigger">
-        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"
@@ -25,9 +25,9 @@
 </template>
 <script setup lang="ts">
     import {computed, ref, nextTick} from "vue"
-    import {useRoute} from "vue-router"
     import {usePluginsStore} from "../../stores/plugins"
     import * as Utils from "../../utils/utils"
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import TriggerVars from "./TriggerVars.vue"
     import {KsTaskIcon} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
@@ -55,7 +55,6 @@
     }>()
 
     const pluginsStore = usePluginsStore()
-    const route = useRoute()
 
     const popoverRefs = ref<Map<string, any>>(new Map())
 
@@ -95,11 +94,8 @@
     const toast = useToast()
 
     async function copyLink(trigger: Trigger) {
-        if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && props.flow) {
-            const tenant = route.params.tenant ? route.params.tenant + "/" : ""
-            const url =
-                new URL(window.location.href).origin +
-                `/api/v1/${tenant}executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`
+        if (trigger?.type === WEBHOOK_TRIGGER_TYPE && trigger.key && props.flow) {
+            const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
             try {
                 await Utils.copy(url)
                 toast.success(t("webhook link copied"))
@@ -118,17 +114,12 @@
     }
 
     .trigger-icon {
-        display: inline-flex !important;
+        display: inline-flex;
         align-items: center;
-        margin-right: .25rem;
-        border: none;
-        background-color: transparent;
-        padding: 2px;
-        cursor: default;
-    }
-
-    :deep(div.wrapper) {
+        justify-content: center;
         width: var(--ks-font-size-lg);
         height: var(--ks-font-size-lg);
+        margin-right: var(--ks-spacing-1);
+        cursor: default;
     }
 </style>

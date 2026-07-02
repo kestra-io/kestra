@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         :disabled="!enabled"
         :icon="RunFast"
         @click="click"
     >
         {{ $t("force run") }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog
         v-if="isDrawerOpen"
@@ -41,6 +41,7 @@
     import {useToast} from "../../../../../utils/toast"
 
     import RunFast from "vue-material-design-icons/RunFast.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
 
     interface ExecutionState {

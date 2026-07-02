@@ -5,7 +5,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Label;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.Input;
@@ -14,8 +17,8 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.services.ExecutionStreamingService;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -36,12 +39,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Singleton
 public class McpToolService {
-    private final DispatchQueueInterface<Execution> executionQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final FlowRepositoryInterface flowRepositoryInterface;
     private final FlowToolSchemaMapper flowToolSchemaMapper;
     private final ExecutionStreamingService streamingService;
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
     private final McpConfig mcpConfig;
+    private final FlowInputOutput flowInputOutput;
     private final Cache<ToolHandlerCacheKey, McpServerFeatures.AsyncToolSpecification> asyncToolSpecificationCache;
 
     private static final McpSchema.CallToolResult FLOW_ERROR_CALL_TOOL_RESULT = McpSchema.CallToolResult.builder()
@@ -50,18 +54,20 @@ public class McpToolService {
         .build();
 
     public McpToolService(
-        DispatchQueueInterface<Execution> executionQueue,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         FlowRepositoryInterface flowRepositoryInterface,
         FlowToolSchemaMapper flowToolSchemaMapper,
         ExecutionStreamingService streamingService, ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
-        McpConfig mcpConfig
+        McpConfig mcpConfig,
+        FlowInputOutput flowInputOutput
         ) {
-        this.executionQueue = executionQueue;
+        this.executionCommandQueue = executionCommandQueue;
         this.flowRepositoryInterface = flowRepositoryInterface;
         this.flowToolSchemaMapper = flowToolSchemaMapper;
         this.streamingService = streamingService;
         this.eventPublisher = eventPublisher;
         this.mcpConfig = mcpConfig;
+        this.flowInputOutput = flowInputOutput;
         asyncToolSpecificationCache = Caffeine.newBuilder()
             .maximumSize(mcpConfig.toolCacheConfig().maximumSize())
             .expireAfterAccess(mcpConfig.toolCacheConfig().expireAfterAccess())
@@ -72,6 +78,9 @@ public class McpToolService {
     public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId, McpServer.ServerType serverType) {
         return fetchFlowWithMcpToolTrigger(tenantId, serverId, serverType).stream().flatMap(flow -> flow.getTriggers().stream()
                 .filter(isMcpTriggerTypeAndEnabledPredicate())
+                .filter(trigger -> serverId.equals(
+                    Objects.requireNonNullElse(((McpToolTrigger) trigger).getMcpServer(), McpToolTrigger.DEFAULT_SERVER_ID)
+                ))
                 .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
             ).toList();
     }
@@ -96,7 +105,7 @@ public class McpToolService {
         Flow flow,
         McpToolTrigger toolTrigger
     ) {
-        final List<String> defaultsInputs = ListUtils.emptyOnNull(flow.getInputs())
+        final List<String> defaultsInputs = flow.resolvableInputs()
             .stream().map(Input::getId).toList();
 
         return (exchange, request) -> {
@@ -109,30 +118,58 @@ public class McpToolService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             KestraMcpTransportContext context = (KestraMcpTransportContext) exchange.transportContext();
-            return runFlowForMcpTask(flow, input, additionalInputs, toolTrigger, context)
-                .map(execution -> McpSchema.CallToolResult.builder()
-                    .structuredContent(execution.getOutputs() != null && execution.getState().isSuccess() ? execution.getOutputs() : Map.of())
-                    .isError(!execution.getState().isSuccess())
+
+            Execution execution = toolTrigger.evaluate(flow, input, additionalInputs, Label.from(Map.of(
+                Label.FROM, "mcp",
+                Label.MCP_SERVER_ID, context.getServerId(),
+                Label.MCP_SESSION_ID, context.getSessionId()
+            )));
+
+            List<String> validationErrors = collectInputValidationErrors(flow, execution, input);
+            if (!validationErrors.isEmpty()) {
+                log.debug(
+                    "Rejecting MCP tool '{}' call for flow {}/{}/{} (execution {}): {} invalid input(s): {}",
+                    toolTrigger.getToolName(), flow.getTenantId(), flow.getNamespace(), flow.getId(),
+                    execution.getId(), validationErrors.size(), validationErrors
+                );
+                return Mono.just(invalidInputResult(validationErrors));
+            }
+
+            return runFlowForMcpTask(flow, execution)
+                .map(executionResult -> McpSchema.CallToolResult.builder()
+                    .structuredContent(executionResult.getOutputs() != null && executionResult.getState().isSuccess() ? executionResult.getOutputs() : Map.of())
+                    .isError(!executionResult.getState().isSuccess())
                     .build())
                 .onErrorReturn(Exception.class, FLOW_ERROR_CALL_TOOL_RESULT);
         };
     }
 
+    List<String> collectInputValidationErrors(Flow flow, Execution execution, Map<String, Object> input) {
+        return flowInputOutput.resolveInputs(flow.getInputs(), flow, execution, input).stream()
+            .filter(resolved -> resolved.exceptions() != null && !resolved.exceptions().isEmpty())
+            .flatMap(resolved -> resolved.exceptions().stream())
+            .map(Throwable::getMessage)
+            .toList();
+    }
+
+    private static McpSchema.CallToolResult invalidInputResult(List<String> validationErrors) {
+        return McpSchema.CallToolResult.builder()
+            .isError(true)
+            .addTextContent("Invalid input provided to the tool:" + System.lineSeparator()
+                + String.join(System.lineSeparator(), validationErrors))
+            .build();
+    }
+
     private Mono<Execution> runFlowForMcpTask(
         Flow flow,
-        Map<String, Object> input,
-        Map<String, Object> additionalInputs,
-        McpToolTrigger toolTrigger,
-        KestraMcpTransportContext context
+        Execution execution
     ) {
-        Execution execution = toolTrigger.evaluate(flow, input, additionalInputs, Label.from(Map.of(
-            Label.FROM, "mcp",
-            Label.MCP_SERVER_ID, context.getServerId(),
-            Label.MCP_SESSION_ID, context.getSessionId()
-        )));
-
         try {
-            executionQueue.emit(execution);
+            executionCommandQueue.emit(Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+                .withKind(execution.getKind())
+                .withTrigger(execution.getTrigger())
+                .withLabels(execution.getLabels())
+                .withInputs(execution.getInputs()));
             eventPublisher.publishEvent(new CrudEvent<>(execution, null, CrudEventType.CREATE));
 
 

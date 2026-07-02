@@ -20,6 +20,7 @@ import static io.kestra.core.models.flows.State.Type.*;
 public class WorkerTaskCallable extends AbstractWorkerCallable {
     RunnableTask<?> task;
     MetricRegistry metricRegistry;
+    String workerGroup;
 
     @Getter
     WorkerTask workerTask;
@@ -27,11 +28,12 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
     @Getter
     Output taskOutput;
 
-    public WorkerTaskCallable(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
+    public WorkerTaskCallable(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry, String workerGroup) {
         super(runContext, task.getClass().getName(), workerTask.uid(), task.getClass().getClassLoader());
         this.workerTask = workerTask;
         this.task = task;
         this.metricRegistry = metricRegistry;
+        this.workerGroup = workerGroup;
     }
 
     @Override
@@ -73,6 +75,7 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
                                 MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION,
                                 metricRegistry.tags(
                                     this.workerTask,
+                                    this.workerGroup,
                                     MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
                                 )
                             )

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="hasButtons && activeTab" class="contextDrawer" :style="{width: `${drawerWidth}px`}">
+    <div v-if="hasButtons" class="contextDrawer" :class="{'is-closed': !activeTab}" :style="{'--drawer-width': `${drawerWidth}px`}">
         <KsSplitter
             class="drawerSplitter"
             :style="{width: `${maxDrawerWidth}px`}"
@@ -31,9 +31,6 @@
                             </KsTabPane>
                         </KsTabs>
 
-                        <KsIconButton class="close-btn" :ariaLabel="$t('close')" @click="setActiveTab('')">
-                            <Close />
-                        </KsIconButton>
                     </div>
 
                     <div class="panelContent">
@@ -56,7 +53,6 @@
     import {useStorage, useWindowSize} from "@vueuse/core"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import Close from "vue-material-design-icons/Close.vue"
 
     import {useApiStore} from "../stores/api"
     import {useMiscStore} from "override/stores/misc"
@@ -157,8 +153,20 @@
     .contextDrawer {
         position: relative;
         height: 100%;
+        width: var(--drawer-width);
         flex-shrink: 0;
         overflow: hidden;
+        transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+
+        &.is-closed {
+            width: 0;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .contextDrawer {
+            transition: none;
+        }
     }
 
     .drawerContent {
@@ -174,6 +182,7 @@
         flex-direction: row;
         align-items: stretch;
         background-color: var(--ks-bg-input);
+        border-left: 1px solid var(--ks-border-default);
 
         .context-tabs {
             flex: 1;
@@ -193,14 +202,6 @@
 
         .open-in-new {
             opacity: 0.5;
-        }
-
-        .close-btn {
-            align-self: center;
-            margin-right: 0.5rem;
-            border: none;
-            color: var(--ks-text-dim);
-            flex-shrink: 0;
         }
 
         .newsDot {

@@ -26,26 +26,26 @@ import java.util.HexFormat;
  * {@link #scriptId()}, and executed in that order.
  *
  * <p>
- * Script ID naming convention:
+ * Script ID naming convention: {@code <major>.<minor>.<two-digit-increment>-description}.
+ * The two-digit increment (01–99) defines execution order within a minor version.
  * <ul>
- * <li>Init scripts (fresh install only, skipped on Flyway upgrade):
+ * <li>Init scripts (fresh install only, skipped on Flyway upgrade; frozen, special case):
  * {@code "0-init"}, {@code "0-init-ee"}, {@code "0-init-queue"}, {@code "0-init-queue-ee"}</li>
- * <li>OSS versioned scripts: {@code "2.0"}, {@code "2.1"}, …</li>
- * <li>EE versioned scripts (JDBC and Elasticsearch): {@code "2.0-ee"}, {@code "2.1-ee"}, …</li>
- * <li>OSS queue scripts: {@code "2.0-queue"}, {@code "2.1-queue"}, …</li>
+ * <li>OSS versioned scripts: {@code "2.0.01-upgrade"}, {@code "2.0.04-mcp"}, …</li>
+ * <li>EE versioned scripts (JDBC and Elasticsearch): {@code "2.0.02-upgrade-ee"}, …</li>
+ * <li>OSS queue scripts: {@code "2.0.05-queue"}, …</li>
  * </ul>
  * The {@code "0-"} prefix ensures init scripts always sort before versioned scripts.
- * Within versioned scripts, EE JDBC and EE Elasticsearch share the {@code "-ee"} suffix
- * because only one repository backend is active at a time, so there is no ambiguity.
- * Lexicographic ordering ensures OSS scripts run before EE scripts of the same version
- * ({@code "2.0" < "2.0-ee" < "2.0-queue"}).
+ * Within versioned scripts, the two-digit increment controls execution order.
+ * Lexicographic ordering ensures scripts run in the intended sequence
+ * ({@code "2.0.01-upgrade" < "2.0.02-upgrade-ee" < "2.0.05-queue"}).
  */
 public interface MigrationScript {
 
     /**
      * Unique identifier for this script, used for lexicographic ordering and history tracking.
      *
-     * @return the script ID, e.g. {@code "2.0"} or {@code "2.0-ee"}
+     * @return the script ID, e.g. {@code "2.0.01-upgrade"} or {@code "2.0.02-upgrade-ee"}
      */
     String scriptId();
 
@@ -96,7 +96,7 @@ public interface MigrationScript {
      *
      * // SQL + Java migration — SQL resource tracked automatically;
      * // if the Java logic changes independently, add a version marker resource
-     * checksumOfResources("/migrations/upgrade-v2.0-h2.sql")
+     * checksumOfResources("/migrations/2.0.01-upgrade-h2.sql")
      * }</pre>
      *
      * @param resourcePaths one or more classpath resource paths to hash

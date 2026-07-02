@@ -61,7 +61,7 @@
                     @change="importFiles"
                 >
                 <KsDropdown>
-                    <KsButton>
+                    <KsButton :aria-label="$t('import')">
                         <PlusBox />
                     </KsButton>
                     <template #dropdown>
@@ -215,7 +215,9 @@
                     : $t('namespace files.create.folder')
             "
             width="500"
+            appendToBody
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            @opened="focusCreationInput"
         >
             <div class="pb-1">
                 <span>
@@ -267,8 +269,8 @@
         <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
-            width="500"
             @keydown.enter.prevent="renameItem()"
+            @opened="focusRenamingInput"
         >
             <div class="pb-1">
                 <span>
@@ -300,7 +302,6 @@
         <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
-            width="500"
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3" v-html="confirmationLabels.message" />
@@ -319,8 +320,9 @@
         <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
-            width="75%"
             top="10vh"
+            width="min(1200px, 90vw)"
+            appendToBody
         >
             <Revisions
                 v-if="revisionsHistory.visible"
@@ -357,14 +359,14 @@
 
 <script lang="ts">
     import {InjectionKey} from "vue"
-    import {EditorTabProps} from "./EditorWrapper.vue"
+    import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
     export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, nextTick, inject, watch} from "vue"
+    import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
     import * as Utils from "../../utils/utils"
@@ -409,6 +411,12 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+
+    // exposed so parents (e.g. the dedicated empty state) can reuse the
+    // create dialog instead of duplicating file-creation logic
+    defineExpose({
+        openCreationDialog: (type: "file" | "folder" = "file") => toggleDialog(true, type),
+    })
 
     const route = useRoute()
     const namespacesStore = useNamespacesStore()
@@ -708,7 +716,9 @@
                 dropdowns.value[dd]?.handleClose()
             }
         }
-        dropdowns.value[id]?.handleOpen()
+        if(typeof dropdowns.value[id]?.handleOpen === "function") {
+            dropdowns.value[id].handleOpen()
+        }
     }
 
     async function dialogHandler() {
@@ -725,17 +735,17 @@
             if (node?.data?.leaf === false) {
                 folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedNode = tree.value.getCurrentNode()
-                if (selectedNode?.leaf === false) {
-                    node = selectedNode.id
-                    folder = filesStore.getPath(selectedNode.id)
+                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
+                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
+                if (selectedNode?.data?.leaf === false) {
+                    node = selectedNode.data.id
+                    folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
             if(!type) return
             dialog.value.visible = true
             dialog.value.type = type
             dialog.value.folder = folder
-            focusCreationInput()
         } else {
             dialog.value.visible = false
             dialog.value = {...DIALOG_DEFAULTS}
@@ -751,7 +761,6 @@
                 old: name,
                 node,
             }
-            focusRenamingInput()
         } else {
             renameDialog.value = {...RENAME_DEFAULTS}
         }
@@ -786,15 +795,11 @@
     const renaming_name = ref<any>()
 
     function focusCreationInput() {
-        nextTick(() => {
-            creation_name.value?.focus()
-        })
+        creation_name.value?.$el?.querySelector("input")?.focus()
     }
 
     function focusRenamingInput() {
-        nextTick(() => {
-            renaming_name.value?.focus()
-        })
+        renaming_name.value?.$el?.querySelector("input")?.focus()
     }
 
     async function importFiles(event: Event) {
@@ -934,6 +939,11 @@
 
 <style scoped lang="scss">
 
+.revision-history-dialog-body {
+    // We subtract the dialog margins and title height (78px)
+    height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
+}
+
 .sidebar {
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
@@ -941,13 +951,10 @@
     min-width: calc(20% - 11px);
     width: 20%;
 
-    :deep(.revision-history-dialog-body) {
-        // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
-    }
-
     .filter{
-        .kel-input__wrapper {
+        :deep(.kel-select__wrapper) {
+            min-height: 32px;
+            height: 32px;
             padding-right: 0px;
         }
     }

@@ -74,7 +74,7 @@ class KVStoreServiceTest {
 
         List<KVEntry> kvEntries = storeService.listAll(MAIN_TENANT, kvStore.namespace());
         assertThat(kvEntries).hasSize(1);
-        assertThat(kvEntries.getFirst().version()).isEqualTo(2);
+        assertThat(kvEntries.getFirst().revision()).isEqualTo(2);
     }
 
     @MockBean(NamespaceService.class)

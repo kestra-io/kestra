@@ -2,6 +2,7 @@ package io.kestra.core.utils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -15,35 +16,66 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * A cache backed by a queue.
- * 
+ *
  * @param <T> the item of the cache
  */
 @Slf4j
 public class QueueCache<T extends SoftDeletable<T> & HasUID & BroadcastEvent> implements AutoCloseable {
     private final Map<String, T> cache;
     private final BroadcastQueueInterface<T> queue;
+    private final Optional<Consumer<T>> invalidationListener;
 
     private QueueSubscriber<T> subscriber;
 
     /**
      * Create a cache backed by a queue.
      *
+     * @see #QueueCache(BroadcastQueueInterface, Consumer)
      * @see #QueueCache(BroadcastQueueInterface, List)
+     * @see #QueueCache(BroadcastQueueInterface, List, Consumer))
      */
     public QueueCache(BroadcastQueueInterface<T> queue) {
-        this(queue, Collections.emptyList());
+        this(queue, Collections.emptyList(), null);
+    }
+
+    /**
+     * Create a cache backed by a queue with an invalidation listener.
+     * The invalidation listener will be called whenever an item is removed or updated from the cache.
+     *
+     * @see #QueueCache(BroadcastQueueInterface)
+     * @see #QueueCache(BroadcastQueueInterface, List)
+     * @see #QueueCache(BroadcastQueueInterface, List, Consumer)
+     */
+    public QueueCache(BroadcastQueueInterface<T> queue, Consumer<T> invalidationListener) {
+        this(queue, Collections.emptyList(), invalidationListener);
     }
 
     /**
      * Create a cache backed by a queue initialized with a list of items.
      *
      * @see #QueueCache(BroadcastQueueInterface)
+     * @see #QueueCache(BroadcastQueueInterface, Consumer)
+     * @see #QueueCache(BroadcastQueueInterface, List, Consumer)
      */
     public QueueCache(BroadcastQueueInterface<T> queue, List<T> initial) {
+        this(queue, initial, null);
+    }
+
+    /**
+     * Create a cache backed by a queue initialized with a list of items and an invalidation listener.
+     * The invalidation listener will be called whenever an item is removed or updated from the cache.
+     *
+     * @see #QueueCache(BroadcastQueueInterface)
+     * @see #QueueCache(BroadcastQueueInterface, Consumer)
+     * @see #QueueCache(BroadcastQueueInterface, List)
+     */
+    public QueueCache(BroadcastQueueInterface<T> queue, List<T> initial, Consumer<T> invalidationListener) {
         this.queue = queue;
         this.cache = new ConcurrentHashMap<>(calculateHashMapCapacity(initial.size()));
+        this.invalidationListener = Optional.ofNullable(invalidationListener);
 
         initial.forEach(it -> cache.put(it.uid(), it));
+
     }
 
     // this method is copied from HashMap.newHashMap() as the same didn't exist for ConcurrentHashMap
@@ -65,6 +97,8 @@ public class QueueCache<T extends SoftDeletable<T> & HasUID & BroadcastEvent> im
                 } else {
                     cache.put(item.uid(), item);
                 }
+
+                invalidationListener.ifPresent(listener -> listener.accept(item));
             }
         });
     }

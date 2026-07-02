@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         :disabled="!enabled"
         :icon="Pause"
         @click="click"
     >
         {{ $t('pause') }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
     import Pause from "vue-material-design-icons/Pause.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -48,7 +49,7 @@
         if (!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)) {
             return false
         }
-        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current)
+        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current) && props.execution.state.current !== "BREAKPOINT"
     })
 
     const click = () => {

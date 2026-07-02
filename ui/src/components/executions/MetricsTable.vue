@@ -1,6 +1,8 @@
 <template>
     <KsDataTable
         ref="dataTable"
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
         :loadData="loadData"
         :data="metrics"
         :total="metricsTotal"
@@ -8,6 +10,10 @@
     >
         <template #navbar>
             <slot name="navbar" />
+        </template>
+
+        <template v-if="$slots.empty" #empty>
+            <slot name="empty" />
         </template>
 
         <template v-for="col in displayColumns" :key="col">
@@ -66,7 +72,7 @@
                               query: {'filters[q][EQUALS]': scope.row.name}
                         }"
                     >
-                        <KsIconButton>
+                        <KsIconButton :tooltip="$t('view metrics')">
                             <ChartAreaspline />
                         </KsIconButton>
                     </router-link>
@@ -124,6 +130,8 @@
 
     const metrics = ref<any[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
+    const currentPage = ref(1)
+    const pageSize = ref(25)
 
     const dataTable = useTemplateRef("dataTable")
 

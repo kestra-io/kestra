@@ -1,0 +1,31 @@
+diff --git a/node_modules/monaco-yaml/yaml.worker.js b/node_modules/monaco-yaml/yaml.worker.js
+index beade0d..e626744 100644
+--- a/node_modules/monaco-yaml/yaml.worker.js
++++ b/node_modules/monaco-yaml/yaml.worker.js
+@@ -3007,7 +3007,7 @@ var BaseValidator = class {
+         } else if (isKubernetes) {
+           bestMatch = this.alternativeComparison(subValidationResult, bestMatch, subSchema, subMatchingSchemas);
+         } else {
+-          bestMatch = this.genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas);
++          bestMatch = this.genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas, callFromAutoComplete);
+         }
+       }
+       if (subMatches.length > 1 && (subMatches.length > 1 || noPropertyMatches.length === 0) && maxOneMatch) {
+@@ -3686,7 +3686,7 @@ var BaseValidator = class {
+     }
+     return bestMatch;
+   }
+-  genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas) {
++  genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas, callFromAutoComplete) {
+     if (!maxOneMatch && !subValidationResult.hasProblems() && !bestMatch.validationResult.hasProblems()) {
+       bestMatch.matchingSchemas.merge(subMatchingSchemas);
+       bestMatch.validationResult.propertiesMatches += subValidationResult.propertiesMatches;
+@@ -3695,7 +3695,7 @@ var BaseValidator = class {
+       const compareResult = subValidationResult.compareGeneric(bestMatch.validationResult);
+       if (compareResult > 0 || compareResult === 0 && maxOneMatch && bestMatch.schema.type === "object" && node.type !== "null" && node.type !== bestMatch.schema.type) {
+         bestMatch = { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas };
+-      } else if (compareResult === 0 || (node.value === null || node.type === "null") && node.length === 0) {
++      } else if (compareResult === 0 || (node.value === null || node.type === "null") && node.length === 0 || callFromAutoComplete && !maxOneMatch && subValidationResult.propertiesValueMatches > 0) {
+         this.mergeValidationMatches(bestMatch, subMatchingSchemas, subValidationResult);
+       }
+     }

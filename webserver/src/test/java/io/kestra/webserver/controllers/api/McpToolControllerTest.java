@@ -456,7 +456,7 @@ class McpToolControllerTest {
     private String saveServer(boolean disabled, String instructions) {
         String serverId = "server-" + IdUtils.create();
         McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverId,
-            "A test MCP server", instructions, null, null, disabled, false, false, null, null);
+            "A test MCP server", instructions, null, null, null, null, disabled, false, false, null, null);
         return mcpServerRepository.save(null, mcpServer).id();
     }
 

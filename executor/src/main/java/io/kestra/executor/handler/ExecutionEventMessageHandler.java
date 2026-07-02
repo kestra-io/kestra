@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.quota.Quota;
+import io.kestra.core.services.QuotaService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
@@ -17,18 +20,19 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
-import io.kestra.core.models.tasks.SystemTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.executor.KillSwitchActionService;
+import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
@@ -39,7 +43,6 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 @Slf4j
@@ -58,7 +61,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private ExecutorService executorService;
     @Inject
-    private WorkerGroupService workerGroupService;
+    private WorkerQueueService workerGroupService;
+    @Inject
+    private QuotaService quotaService;
 
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
@@ -72,6 +77,14 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
+
+    @Inject
+    private MetricRegistry metricRegistry;
+
     private final Tracer tracer;
 
     @Inject
@@ -81,6 +94,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionEvent message) {
+        EvaluationType evaluationType = killSwitchService.evaluate(message);
+        if (evaluationType != EvaluationType.PASS) {
+            var execution = executionStateStore.findById(message.executionId());
+            if (execution != null && evaluationType.isKillSwitched(execution)) {
+                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+                return Optional.empty();
+            }
+        }
+
         return executionStateStore.lock(
             message.executionId(), execution -> tracer.inCurrentContext(
                 execution,
@@ -103,49 +125,78 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             return executor;
                         }
 
-                        // create an SLA monitor if needed
-                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && !ListUtils.isEmpty(flow.getSla())) {
-                            List<SLAMonitor> monitors = flow.getSla().stream()
-                                .filter(ExecutionMonitoringSLA.class::isInstance)
-                                .map(ExecutionMonitoringSLA.class::cast)
-                                .map(
-                                    sla -> SLAMonitor.builder()
-                                        .executionId(execution.getId())
-                                        .slaId(((SLA) sla).getId())
-                                        .deadline(execution.getState().getStartDate().plus(sla.getDuration()))
-                                        .build()
-                                )
-                                .toList();
-                            monitors.forEach(monitor -> slaMonitorStateStore.save(monitor));
-                        }
+                        // process actions that must be done after the execution has been created
+                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted())) {
+                            // create an SLA monitor if needed
+                            if (!ListUtils.isEmpty(flow.getSla())) {
+                                List<SLAMonitor> monitors = flow.getSla().stream()
+                                    .filter(ExecutionMonitoringSLA.class::isInstance)
+                                    .map(ExecutionMonitoringSLA.class::cast)
+                                    .map(
+                                        sla -> SLAMonitor.builder()
+                                            .executionId(execution.getId())
+                                            .slaId(((SLA) sla).getId())
+                                            .deadline(execution.getState().getStartDate().plus(sla.getDuration()))
+                                            .build()
+                                    )
+                                    .toList();
+                                monitors.forEach(monitor -> slaMonitorStateStore.save(monitor));
+                            }
 
-                        // handle concurrency limit, we need to use a different queue to be sure that execution running
-                        // are processed sequentially so inside a queue with no parallelism
-                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && flow.getConcurrency() != null) {
-                            ExecutionRunning executionRunning = ExecutionRunning.builder()
-                                .tenantId(executor.getFlow().getTenantId())
-                                .namespace(executor.getFlow().getNamespace())
-                                .flowId(executor.getFlow().getId())
-                                .execution(executor.getExecution())
-                                .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
-                                .build();
+                            // handle quotas
+                            if (!ListUtils.isEmpty(flow.getQuotas())) {
+                                Optional<Quota> quota = quotaService.checkAndIncrement(flow);
+                                if (quota.isPresent()) {
+                                    // a quota is exceeded: stop the execution in the desired state
+                                    Execution newExecution = switch (quota.get().getBehavior()) {
+                                        case FAIL -> {
+                                            var failedExecution = execution.failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
+                                            var logger = runContextLoggerFactory.create(execution);
+                                            logger.emitLogs(failedExecution.logs());
+                                            yield failedExecution.execution();
+                                        }
+                                        case CANCEL -> execution.withState(State.Type.CANCELLED);
+                                    };
 
-                            ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
-                            {
-                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
-                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                                    return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
-                                } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                    executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
+                                    metricRegistry
+                                        .counter(MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
+                                        .increment();
+
+                                    return executor.withExecution(newExecution, "processQuotas");
                                 }
-                                return Pair.of(computed, concurrencyLimit);
-                            });
+                            }
 
-                            // if the execution is queued or terminated due to concurrency limit, we stop here
-                            if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
+                            // handle concurrency limit
+                            if (flow.getConcurrency() != null) {
+                                ExecutionRunning executionRunning = ExecutionRunning.builder()
+                                    .tenantId(executor.getFlow().getTenantId())
+                                    .namespace(executor.getFlow().getNamespace())
+                                    .flowId(executor.getFlow().getId())
+                                    .execution(executor.getExecution())
+                                    .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
+                                    .build();
+
+                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
+                                {
+                                    ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                                        return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
+                                    } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                        executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
+                                    }
+                                    return Pair.of(computed, concurrencyLimit);
+                                });
+
+                                // if the execution is queued or terminated due to concurrency limit, we stop here
+                                if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                    if (processed.getExecution().getState().getCurrent().isTerminatedInError()) {
+                                        Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + processed.getExecution().getState().getCurrent().name());
+                                    }
+                                    return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
+                                }
                             }
                         }
+
 
                         // handle execution changed SLA
                         executor = executorService.handleExecutionChangedSLA(executor);
@@ -182,16 +233,19 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             );
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
-                                                String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> executorTask.runContext().render(workerGroup.getKey())))
+                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask);
+                                                // Internal dispatch convention: null = default queue. SystemTask routing
+                                                // is enforced upstream in WorkerQueueService.
+                                                String workerQueueId = routing
+                                                    .map(WorkerQueueRouting::workerQueueId)
+                                                    .map(WorkerQueues::toDispatchKey)
                                                     .orElse(null);
-                                                String routingKey = resolveRoutingKey(workerTask.getTask(), workerGroupKey);
                                                 if (workerTask.getTask() instanceof WorkingDirectory) {
                                                     // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(routingKey, WorkerJobEvent.of(workerTask, routingKey));
+                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                    workerJobEventQueue.emit(routingKey, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), routingKey));
+                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
@@ -279,6 +333,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             executor.getLoopExecutions().forEach(throwConsumer(loopExecution -> executionQueue.emit(loopExecution)));
                         }
 
+                        if (executor.getExecution().getState().getCurrent().isTerminatedInError()) {
+                            Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + executor.getExecution().getState().getCurrent().name());
+                        }
                         return executor;
                     } catch (QueueException e) {
                         Span.current().recordException(e).setStatus(StatusCode.ERROR);
@@ -288,6 +345,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                     } catch (FlowNotFoundException e) {
                         // avoid infinite for FlowNotFoundException
                         if (!execution.getState().getCurrent().isFailed()) {
+                            Span.current().recordException(e).setStatus(StatusCode.ERROR);
                             Execution failedExecution = fail(execution, e);
                             return new ExecutorContext(execution).withExecution(failedExecution, "flowNotFound");
                         }
@@ -307,23 +365,4 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
-    /**
-     * Resolves the routing key for a {@code WorkerJobEvent}.
-     *
-     * <p>{@link SystemTask} implementations are always dispatched to the
-     * reserved {@link WorkerGroup#SYSTEM_KEY} routing key; any user-set
-     * worker group on such a task is ignored with a warning.</p>
-     */
-    static String resolveRoutingKey(Task task, String userKey) {
-        if (task instanceof SystemTask) {
-            if (userKey != null && !WorkerGroup.SYSTEM_KEY.equals(userKey)) {
-                log.warn(
-                    "Task {} is a SystemTask; ignoring user-set workerGroup '{}' and routing to '{}'",
-                    task.getType(), userKey, WorkerGroup.SYSTEM_KEY
-                );
-            }
-            return WorkerGroup.SYSTEM_KEY;
-        }
-        return userKey;
-    }
 }

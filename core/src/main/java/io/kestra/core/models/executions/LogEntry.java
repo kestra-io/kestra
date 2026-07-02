@@ -17,6 +17,8 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -71,6 +73,16 @@ public class LogEntry implements TenantInterface, DispatchEvent {
 
         return Arrays.stream(Level.values())
             .filter(level -> level.toInt() >= minLevel.toInt())
+            .toList();
+    }
+
+    public static List<Level> findLevelsByMax(Level maxLevel) {
+        if (maxLevel == null) {
+            return Arrays.asList(Level.values());
+        }
+
+        return Arrays.stream(Level.values())
+            .filter(level -> level.toInt() <= maxLevel.toInt())
             .toList();
     }
 
@@ -132,7 +144,7 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     }
 
     public Map<String, String> toMap() {
-        return Stream
+        Map<String, String> map = Stream
             .of(
                 new AbstractMap.SimpleEntry<>("tenantId", this.tenantId),
                 new AbstractMap.SimpleEntry<>("namespace", this.namespace),
@@ -145,6 +157,15 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             )
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // enrich with the active OpenTelemetry trace context, a no-op when tracing is disabled
+        SpanContext spanContext = Span.current().getSpanContext();
+        if (spanContext.isValid()) {
+            map.put("trace_id", spanContext.getTraceId());
+            map.put("span_id", spanContext.getSpanId());
+        }
+
+        return map;
     }
 
     public Map<String, Object> toLogMap() {

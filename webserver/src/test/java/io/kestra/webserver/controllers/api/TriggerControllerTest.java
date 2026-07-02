@@ -23,6 +23,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.webserver.models.api.ApiTriggerAndState;
 import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
@@ -199,9 +200,9 @@ class TriggerControllerTest {
 
     @Test
     void shouldReturnConflictWhenUnlockingTriggerAlreadyUnlocked() {
-        // GIVEN: use newRandomTriggerState (no evaluatedAt) so the scheduler does not pick it up as eligible
-        // and delete it as an orphan before we query it.
-        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
+        // GIVEN
+        TriggerState trigger = newRandomTriggerState()
+            .locked(Clock.systemDefaultZone(), false);
         jdbcTriggerRepository.save(trigger);
 
         // WHEN
@@ -221,6 +222,33 @@ class TriggerControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getMessage()).isEqualTo(
             "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
+                .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
+    }
+
+    @Test
+    void shouldReturnConflictWhenUnlockingRealtimeTrigger() {
+        // GIVEN — locked is the normal running state of a realtime trigger
+        TriggerState trigger = newRandomTriggerState(TriggerType.REALTIME).locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
+
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).isEqualTo(
+            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is a realtime trigger, reset it to kill and restart it"
                 .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
         );
     }
@@ -371,6 +399,24 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldAcceptUnlockByIdsWithZeroItemsWhenRealtime() {
+        // GIVEN
+        TriggerState state = newRandomTriggerState(TriggerType.REALTIME).locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(state);
+
+        // WHEN
+        List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
+    }
+
+    @Test
     void shouldAcceptUnlockByQueryWhenLocked() {
         // GIVEN
         TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
@@ -386,6 +432,23 @@ class TriggerControllerTest {
         // THEN
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
         assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldAcceptUnlockByQueryWithZeroItemsWhenRealtime() {
+        // GIVEN
+        TriggerState state = newRandomTriggerState(TriggerType.REALTIME).locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(state);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
     }
 
     @Test
@@ -569,12 +632,20 @@ class TriggerControllerTest {
     }
 
     private TriggerState newRandomTriggerState() {
+        return newRandomTriggerState(null);
+    }
+
+    private TriggerState newRandomTriggerState(TriggerType type) {
         String random = IdUtils.create();
+        // Set a far-future nextEvaluationDate so the scheduler never considers this trigger
+        // eligible for evaluation and does not delete it as an orphan (trigger has no associated flow).
         return TriggerState.builder()
             .tenantId(TENANT_ID)
             .namespace(random)
             .flowId(random)
             .triggerId(random)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
+            .type(type)
             .vnode(VNodes.computeVNodeFromFlow(FlowId.of(TENANT_ID, random, random, null), schedulerConfiguration.vnodes()))
             .build();
     }

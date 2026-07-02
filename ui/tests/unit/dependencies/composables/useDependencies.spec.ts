@@ -8,6 +8,7 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {AxiosResponse} from "axios"
 import {useFlowStore} from "../../../../src/stores/flow"
 import {RouteParams} from "vue-router"
+import {getDependencies} from "../../../fixtures/dependencies/getDependencies"
 
 // ─── CSS var sentinels ────────────────────────────────────────────────────────
 // Set recognisable values so we can assert which colour path each node took,
@@ -59,7 +60,7 @@ function mountControlled(initialNodeID = "A") {
         template: "<div></div>",
         setup() {
             const composable = useDependencies(
-                graphRef, FLOW, initialNodeID, {}, false, fetchAssetDependencies,
+                graphRef, FLOW, initialNodeID, {}, fetchAssetDependencies,
             )
             return {composable}
         },
@@ -123,7 +124,14 @@ const mountComponentWithUseDependencies = (
     const wrapper = mount({
       template: "<div></div>",
       setup() {
-        const composable = useDependencies(graphRef, subtype, initialNodeID, params, isTesting)
+        const composable = useDependencies(graphRef, subtype, initialNodeID, params, isTesting ? async () => {
+            return {
+                data: getDependencies({
+                    subtype,
+                }),
+                count: 42,
+            }
+        } : undefined)
         return {composable}
       },
     })
@@ -213,18 +221,25 @@ describe("useDependencies composable", () => {
     })
   })
 
+  const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
   describe("SSE", () => {
     it("should close SSE on unmount when subtype is EXECUTION", async () => {
       const close = vi.fn()
-      class MockEventSource {
-        close = close
+      let instantiated = false
+      vi.stubGlobal("EventSource", class AnonEventSource {
+        close: () => void = close
+        constructor() {
+          instantiated = true
+        }
+      })
+
+      const {wrapper} = await mountComponentWithUseDependencies(EXECUTION)
+
+      // when mount is finished, MockEventSource should have been instantiated to listen to execution updates
+      for(let i = 0; i < 5 && !instantiated; i++) {
+        await wait(100)
       }
-
-      vi.stubGlobal("EventSource", MockEventSource as unknown as typeof EventSource)
-
-      const {wrapper} = mountComponentWithUseDependencies(EXECUTION)
-      await nextTick()
-      await nextTick()
 
       wrapper.unmount()
 
@@ -320,7 +335,7 @@ describe("useDependencies composable", () => {
             setup() {
                 // Use initialNodeID="X" (nonexistent) so no node is pre-selected,
                 // leaving selectedNodeID undefined and letting tests control selection.
-                const composable = useDependencies(graphRef as any, FLOW, "X", {}, false, fetchAssetDependencies)
+                const composable = useDependencies(graphRef as any, FLOW, "X", {}, fetchAssetDependencies)
                 return {composable}
             },
         })

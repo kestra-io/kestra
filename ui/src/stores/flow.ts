@@ -77,7 +77,6 @@ export interface Flow {
 export type FlowSaveOutcome =
     | "saved"
     | "redirect_to_update"
-    | "confirmOutdatedSaveDialog"
     | "blocked"
     | "no_op";
 
@@ -112,7 +111,6 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
-    const confirmOutdatedSaveDialog = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
@@ -147,11 +145,30 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!flow.value) return "blocked"
         const source = flowYaml.value
+        const validation = await onEdit({source})
+        if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+            return "no_op"
+        }
         const outcome = await saveWithoutRevisionGuard()
         if (isSuccessfulFlowSaveOutcome(outcome)) {
             flowYamlOrigin.value = source
         }
         return outcome
+    }
+
+    function confirmOutdatedSave(): Promise<boolean> {
+        const key = "outdated revision save confirmation.update"
+        return KsMessageBox({
+            title: t(`${key}.title`),
+            message: () => h("div", null, [
+                h("p", null, `${t(`${key}.description`)} ${t(`${key}.details`)}`),
+            ]),
+            showCancelButton: true,
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("cancel"),
+            center: false,
+            showClose: false,
+        }).then(() => true).catch(() => false)
     }
 
     const route = useRoute()
@@ -169,8 +186,8 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (source) {
             const validation = await onEdit({source})
-            if (validation?.outdated && !isCreating.value) {
-                return "confirmOutdatedSaveDialog"
+            if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+                return "no_op"
             }
             const outcome = await saveWithoutRevisionGuard()
             if (isSuccessfulFlowSaveOutcome(outcome)) {
@@ -409,6 +426,10 @@ export const useFlowStore = defineStore("flow", () => {
                 },
             })
 
+        if (options.store === false) {
+            return response.data
+        }
+
         if (response.data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
@@ -428,10 +449,6 @@ export const useFlowStore = defineStore("flow", () => {
         validateFlow({
             flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`,
         })
-
-        if (options.store === false) {
-            return response.data
-        }
 
         flow.value = response.data
         flowYaml.value = response.data.source
@@ -556,15 +573,13 @@ function deleteFlowAndDependencies() {
 
                 if (deps.length) {
                     warning =
-                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                        "<div class=\"el-alert__content\">\n" +
-                        "<p class=\"el-alert__description\">\n" +
+                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
+                        "<p style=\"margin: 0;\">\n" +
                         t("dependencies delete flow") +
                         "<ul>\n" +
                         deps +
                         "</ul>\n" +
                         "</p>\n" +
-                        "</div>\n" +
                         "</div>"
                 }
             }
@@ -691,7 +706,7 @@ function deleteFlowAndDependencies() {
     async function exportFlowAsCSV(params: any) {
         const response = await axios.get(
             `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "blob"},
+            {params, responseType: "text", headers: {Accept: "text/csv"}},
         )
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")
@@ -971,7 +986,6 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
-        confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,
         metadata,

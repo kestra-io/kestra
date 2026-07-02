@@ -44,13 +44,14 @@ export function useSavedFilters(prefix: string) {
         }]
     }
 
-    const updateSavedFilter = (id: string, name: string, description: string) => {
+    const updateSavedFilter = (id: string, name: string, description: string, filters: any[]) => {
         const index = savedFilters.value.findIndex((f) => f.id === id)
         if (index !== -1) {
             savedFilters.value[index] = {
                 ...savedFilters.value[index],
                 name,
                 description,
+                filters: [...filters],
             }
         }
     }

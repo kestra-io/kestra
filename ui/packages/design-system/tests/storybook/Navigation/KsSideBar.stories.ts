@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import KsSideBar from "../../../src/components/Navigation/KsSideBar/KsSideBar.vue"
 import KsSideBarItem from "../../../src/components/Navigation/KsSideBar/KsSideBarItem.vue"
 import KsSideBarSection from "../../../src/components/Navigation/KsSideBar/KsSideBarSection.vue"
+import KsNewBadge from "../../../src/components/Data/KsNewBadge.vue"
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
 import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
@@ -131,6 +132,36 @@ export const LongLabelTruncates: Story = {
                 <ks-side-bar>
                     <ks-side-bar-section title="Overflow">
                         <ks-side-bar-item title="A very long item label that should ellipsize gracefully without breaking layout" :icon="FileTreeOutline" href="#" />
+                    </ks-side-bar-section>
+                </ks-side-bar>
+            </div>
+        `,
+    }),
+}
+
+export const NewFeatureSpotlight: Story = {
+    render: () => ({
+        components: {KsSideBar, KsSideBarSection, KsSideBarItem, KsNewBadge, ChartLineVariant, FileTreeOutline, FolderOpenOutline, PuzzleOutline},
+        setup() {
+            return {ChartLineVariant, FileTreeOutline, FolderOpenOutline, PuzzleOutline}
+        },
+        template: `
+            <div style="${wrapperStyle}">
+                <ks-side-bar>
+                    <ks-side-bar-section title="Workspace" collapsible>
+                        <ks-side-bar-item title="Dashboards" :icon="ChartLineVariant" href="/dashboards" active />
+                        <ks-side-bar-item title="Flows" :icon="FileTreeOutline" href="/flows" />
+                    </ks-side-bar-section>
+                    <ks-side-bar-section title="Resources" collapsible>
+                        <template #suffix>
+                            <ks-new-badge>New</ks-new-badge>
+                        </template>
+                        <ks-side-bar-item title="Namespaces" :icon="FolderOpenOutline" href="/namespaces" />
+                        <ks-side-bar-item title="Plugins" :icon="PuzzleOutline" href="/plugins">
+                            <template #suffix>
+                                <ks-new-badge>New</ks-new-badge>
+                            </template>
+                        </ks-side-bar-item>
                     </ks-side-bar-section>
                 </ks-side-bar>
             </div>

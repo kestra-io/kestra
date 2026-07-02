@@ -3,27 +3,18 @@
         v-if="path?.length"
         :id="id"
         :class="classes"
-        :style="data.haveDashArray ? {strokeDasharray: '2'} : {}"
         :d="path[0]"
         :marker-end="markerEnd"
     />
 
-    <EdgeLabelRenderer style="z-index: 10" v-if="path?.length">
+    <EdgeLabelRenderer v-if="path?.length && showCaseLabel">
         <div
+            class="edge-case-label"
             :style="{
-                pointerEvents: 'all',
-                position: 'absolute',
-                transform: `translate(-50%, -50%) translate(${path[1] + labelXOffset}px,${path[2] + labelYOffset}px)`,
+                transform: `translate(-50%, -50%) translate(${caseLabelX}px, ${caseLabelY}px)`,
             }"
         >
-            <KsTooltip :content="title">
-                <AddTaskButton
-                    v-if="data.haveAdd"
-                    :addTask="true"
-                    @click="$emit(EVENTS.ADD_TASK, data.haveAdd)"
-                    :class="{'text-danger': data.color}"
-                />
-            </KsTooltip>
+            {{ data.value }}
         </div>
     </EdgeLabelRenderer>
 </template>
@@ -31,11 +22,7 @@
 <script lang="ts" setup>
     import {computed} from "vue"
     import type {PropType} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {EdgeLabelRenderer, getSmoothStepPath} from "@vue-flow/core"
-    import AddTaskButton from "../buttons/AddTaskButton.vue"
-    import {EVENTS} from "../utils/constants"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -59,37 +46,25 @@
             : {}
     })
 
-    let t = (s: string) => s
-    try {
-        const {t: realT} = useI18n()
-        t = realT
-    } catch {
-        // not in an i18n context
-    }
-
-    const title = computed(() => {
-        const {haveAdd} = props.data ?? {}
-        return `${t("add task")} ${haveAdd?.length === 2 ? `${t(haveAdd[1])} ${haveAdd[0]}` : ""}`.trim()
-    })
-
     const path = computed(() => getSmoothStepPath(props as any))
 
-    const isVertical = computed(() => {
-        const dx = (props.targetX ?? 0) - (props.sourceX ?? 0)
-        const dy = (props.targetY ?? 0) - (props.sourceY ?? 0)
-        return Math.abs(dy) >= Math.abs(dx)
-    })
+    const showCaseLabel = computed(
+        () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),
+    )
 
-    const OFFSET = 14
-    const labelYOffset = computed(() => {
-        if (!isVertical.value) return 0
-        const boundary = props.data?.edgeBoundary
-        if (boundary === "top") return -OFFSET
-        if (boundary === "bottom") return OFFSET
-        return 0
+    const CASE_LABEL_GAP = 18
+    const caseLabelX = computed(() => {
+        const tx = props.targetX ?? 0
+        if (props.targetPosition === "left") return tx - CASE_LABEL_GAP
+        if (props.targetPosition === "right") return tx + CASE_LABEL_GAP
+        return tx
     })
-
-    const labelXOffset = computed(() => 0)
+    const caseLabelY = computed(() => {
+        const ty = props.targetY ?? 0
+        if (props.targetPosition === "top") return ty - CASE_LABEL_GAP
+        if (props.targetPosition === "bottom") return ty + CASE_LABEL_GAP
+        return ty
+    })
 
     defineOptions({inheritAttrs: false})
 </script>
@@ -98,5 +73,22 @@
     .stroke-danger { stroke: var(--ks-border-error); }
     .stroke-error { stroke: var(--ks-border-error); }
     .stroke-warning { stroke: var(--ks-status-warning); }
-    .vue-flow__edge-path { stroke-dasharray: 3 5; }
+    .vue-flow__edge-path { stroke-dasharray: 1.5 3; }
+
+    .edge-case-label {
+        position: absolute;
+        pointer-events: none;
+        font-size: var(--ks-font-size-xs);
+        font-family: var(--ks-font-family-mono);
+        line-height: 1;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        border-radius: var(--ks-radius-sm);
+        background: var(--ks-bg-surface);
+        color: var(--ks-text-primary);
+        border: 1px solid var(--ks-border-default);
+        white-space: nowrap;
+        max-width: 10rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 </style>

@@ -44,7 +44,10 @@ buildSkipTests: clean
 test: clean
 	./gradlew test
 
-build-exec:
+build-frontend:
+	cd ui && npm ci && npm run build
+
+build-exec: build-frontend
 	./gradlew -q executableJar --no-daemon --priority=normal
 
 install: build-exec

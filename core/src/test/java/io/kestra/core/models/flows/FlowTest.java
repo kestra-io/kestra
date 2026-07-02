@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
@@ -172,6 +173,40 @@ class FlowTest {
         File file = new File(resource.getFile());
 
         return YamlParser.parse(file, Flow.class);
+    }
+
+    @Test
+    void resolvableInputsExpandsFormsToDottedLeaves() {
+        // A flow whose FORM 'environment' groups 'region', plus an ungrouped top-level input.
+        Flow flow = Flow.builder()
+            .id("a")
+            .namespace("a")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("environment")
+                    .type(Type.FORM)
+                    .inputs(List.of(StringInput.builder().id("region").type(Type.STRING).build()))
+                    .build(),
+                StringInput.builder().id("api_key").type(Type.STRING).build()
+            ))
+            .build();
+
+        // resolvableInputs() must flatten the FORM into a dotted leaf and leave the ungrouped input untouched;
+        // no FORM node survives, and the leaf keeps its concrete subtype (downstream casts depend on it).
+        List<Input<?>> resolved = flow.resolvableInputs();
+
+        assertThat(resolved).hasSize(2);
+        assertThat(resolved).noneMatch(input -> input instanceof FormInput);
+        assertThat(resolved.getFirst()).isInstanceOf(StringInput.class);
+        assertThat(resolved.stream().map(Input::getId)).containsExactly("environment.region", "api_key");
+    }
+
+    @Test
+    void resolvableInputsEmptyWhenNoInputs() {
+        // The accessor must never return null even when the flow declares no inputs, so every caller can stream it.
+        Flow flow = Flow.builder().id("a").namespace("a").build();
+
+        assertThat(flow.resolvableInputs()).isEmpty();
     }
 
     @Test

@@ -127,6 +127,11 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         // here the realtime trigger fail before the publisher being call so we create a fail execution
                         if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
                             this.handleRealtimeTriggerError(workerTrigger, triggerContext, conditionContext, runContext, workerCallable.getException());
+                        } else if (!workerCallable.isErrorReported()) {
+                            // The publisher terminated cleanly (stream ended, stop or kill): send a terminal
+                            // result so the trigger is unlocked and can be resubmitted. Stream errors are
+                            // excluded as they were already reported through the onError callback.
+                            this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, null));
                         }
                     }
                 } catch (Exception e) {

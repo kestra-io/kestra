@@ -5,10 +5,12 @@
             :loadData="loadData"
             :data="secrets"
             :total="total"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             class="fill-height"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
@@ -136,6 +138,7 @@
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
+            :beforeClose="beforeSecretClose"
         >
             <KsForm class="ks-horizontal" :model="secret" :rules="rules" ref="form">
                 <KsFormItem
@@ -216,7 +219,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
+    import {ref, computed, watch, onMounted, nextTick, useTemplateRef} from "vue"
     import _merge from "lodash/merge"
 
     import Lock from "vue-material-design-icons/Lock.vue"
@@ -244,6 +247,7 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const secretsFilter = useSecretsFilter()
 
@@ -312,6 +316,10 @@
         update: undefined,
         updateValue: undefined,
     })
+
+    const secretBaseline = ref("")
+    const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
+    const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
 
     const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
 
@@ -490,14 +498,17 @@
         total.value = secretsResponse.total ?? 0
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     const updateSecretModal = (secretData: NamespaceSecret) => {
         secret.value.namespace = secretData?.namespace
@@ -580,7 +591,11 @@
     }
 
     watch(() => props.addSecretModalVisible, (newValue) => {
-        if (!newValue) {
+        if (newValue) {
+            nextTick(() => {
+                secretBaseline.value = JSON.stringify(secret.value)
+            })
+        } else {
             resetForm()
         }
     })

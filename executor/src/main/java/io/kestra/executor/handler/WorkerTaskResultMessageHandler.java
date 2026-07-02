@@ -4,12 +4,15 @@ import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
 import io.kestra.executor.ExecutorService;
+import io.kestra.executor.KillSwitchActionService;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -27,8 +30,22 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
 
+    @Inject
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
+
     @Override
     public Optional<ExecutorContext> handle(WorkerTaskResult message) {
+        EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
+        if (evaluationType != EvaluationType.PASS) {
+            var execution = executionStateStore.findById(message.getTaskRun().getExecutionId());
+            if (execution != null && evaluationType.isKillSwitched(execution)) {
+                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
+                return Optional.empty();
+            }
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }

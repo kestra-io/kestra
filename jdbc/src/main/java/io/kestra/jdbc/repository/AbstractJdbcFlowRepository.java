@@ -300,11 +300,20 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions) {
+        return findRevisions(namespace, id, revisions, this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted)));
+    }
+
+    @Override
+    public List<FlowWithSource> findRevisionsWithoutAcl(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions) {
+        return findRevisions(namespace, id, revisions, this.defaultFilterWithNoACL(tenantId, Boolean.TRUE.equals(allowDeleted)));
+    }
+
+    private List<FlowWithSource> findRevisions(String namespace, String id, List<Integer> revisions, Condition baseFilter) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                Condition tenantAndRevisionCondition = this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted));
+                Condition tenantAndRevisionCondition = baseFilter;
                 if (!ListUtils.isEmpty(revisions)) {
                     tenantAndRevisionCondition = tenantAndRevisionCondition.and(REVISION_FIELD.in(revisions));
                 }
@@ -778,11 +787,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, Collections.singletonList(field("source_code")));
 
                 if (query != null) {
-                    select.and(this.findSourceCodeCondition(query));
+                    select = select.and(this.findSourceCodeCondition(query));
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
+                    select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
                 }
 
                 return (ArrayListTotal) this.jdbcRepository.fetchPage(
@@ -1007,11 +1016,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         select = select.and(condition);
                     }
 
-                    if (orderByFields != null) {
-                        select.orderBy(orderByFields);
-                    }
+                    var fetchQuery = orderByFields != null
+                        ? select.orderBy(orderByFields).fetchSize(FETCH_SIZE)
+                        : select.fetchSize(FETCH_SIZE);
 
-                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
+                    try (var stream = fetchQuery.stream()) {
                         stream
                             .map(record -> (Flow) jdbcRepository.map(record))
                             .forEach(emitter::next);

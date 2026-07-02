@@ -8,7 +8,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.WorkerGroupMetaStore;
+import io.kestra.core.runners.WorkerQueueMetaStore;
 import io.kestra.core.runners.WorkerJobEvent;
 
 import io.micronaut.context.BeanProvider;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Requires(property = "kestra.metric.queue.lag.enabled", value = "true")
 public class QueueLagPoller {
     private final MetricRegistry metricRegistry;
-    private final WorkerGroupMetaStore workerGroupExecutor;
+    private final WorkerQueueMetaStore workerQueueMetaStore;
     private final Provider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider;
 
     private final Cache<CacheKey, Integer> queueLagCache = Caffeine.newBuilder()
@@ -34,26 +34,25 @@ public class QueueLagPoller {
 
     public QueueLagPoller(
         MetricRegistry metricRegistry,
-        WorkerGroupMetaStore workerGroupExecutor,
+        WorkerQueueMetaStore workerQueueMetaStore,
         Provider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider) {
         this.metricRegistry = metricRegistry;
         this.workerJobQueueProvider = workerJobQueueProvider;
-        this.workerGroupExecutor = workerGroupExecutor;
+        this.workerQueueMetaStore = workerQueueMetaStore;
     }
 
     @Scheduled(fixedDelay = "300s", initialDelay = "30s")
-    public void refreshWorkerGroups() {
-        Set<String> availableWorkerGroups = workerGroupExecutor.listAllWorkerGroupKeys();
+    public void refreshWorkerQueues() {
+        Set<String> availableWorkerQueues = workerQueueMetaStore.listAllWorkerQueueIds();
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobQueue = workerJobQueueProvider.get();
-        availableWorkerGroups.stream().filter(
-            workerGroup -> metricRegistry.findGauges(MetricRegistry.METRIC_QUEUE_MESSAGE_LAG).stream().noneMatch(
-                gauge -> workerGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP))
+        availableWorkerQueues.stream().filter(
+            workerQueueId -> metricRegistry.findGauges(MetricRegistry.METRIC_QUEUE_MESSAGE_LAG).stream().noneMatch(
+                gauge -> workerQueueId.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_QUEUE))
             )
         ).forEach(
-            workerGroup -> this.register(
-                getQueueLagForConsumerGroup(workerGroup, workerJobQueue),
-                MetricRegistry.TAG_WORKER_GROUP, workerGroup,
-                MetricRegistry.TAG_QUEUE_NAME, workerJobQueue.queueName()
+            workerQueueId -> this.register(
+                getQueueLagForConsumerGroup(workerQueueId, workerJobQueue),
+                metricRegistry.workerQueueTags(workerQueueId, MetricRegistry.TAG_QUEUE_NAME, workerJobQueue.queueName())
             )
         );
     }
@@ -63,15 +62,13 @@ public class QueueLagPoller {
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobQueue = workerJobQueueProvider.get();
         this.register(
             getQueueLagForConsumerGroup(null, workerJobQueue),
-            MetricRegistry.TAG_WORKER_GROUP, "__default__",
-            MetricRegistry.TAG_QUEUE_NAME, workerJobQueue.queueName()
+            metricRegistry.workerQueueTags(null, MetricRegistry.TAG_QUEUE_NAME, workerJobQueue.queueName())
         );
 
-        workerGroupExecutor.listAllWorkerGroupKeys().forEach(
-            workerGroupKey -> this.register(
-                getQueueLagForConsumerGroup(workerGroupKey, workerJobQueue),
-                MetricRegistry.TAG_WORKER_GROUP, workerGroupKey,
-                MetricRegistry.TAG_QUEUE_NAME, workerJobQueue.queueName()
+        this.workerQueueMetaStore.listAllWorkerQueueIds().forEach(
+            workerQueueId -> this.register(
+                getQueueLagForConsumerGroup(workerQueueId, workerJobQueue),
+                metricRegistry.workerQueueTags(workerQueueId, MetricRegistry.TAG_QUEUE_NAME, workerJobQueue.queueName())
             )
         );
     }

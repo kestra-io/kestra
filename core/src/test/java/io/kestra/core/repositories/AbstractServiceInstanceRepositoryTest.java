@@ -104,6 +104,19 @@ public abstract class AbstractServiceInstanceRepositoryTest {
             )
             .build(),
 
+        // ISO-8601 duration: "created in the last 24h" → now-created instance matches
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance))
+            .expectedInstances(List.of(runningInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.CREATED)
+                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                    .value("PT24H")
+                    .build()
+            )
+            .build(),
+
         FilterTestCase.builder()
             .instances(List.of(runningInstance, terminatingInstance, inactiveInstance))
             .expectedInstances(List.of(terminatingInstance, inactiveInstance))
@@ -148,6 +161,55 @@ public abstract class AbstractServiceInstanceRepositoryTest {
                     .field(QueryFilter.Field.CREATED)
                     .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
                     .value(Instant.now().minusSeconds(60).toString())
+                    .build()
+            )
+            .build(),
+
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(runningInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(runningInstance.uid())
+                    .build()
+            )
+            .build(),
+
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(schedulerInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("scheduler")
+                    .build()
+            )
+            .build(),
+
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(runningInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.NOT_EQUALS)
+                    .value("scheduler")
+                    .build()
+            )
+            .build(),
+
+        // QUERY matches on the server hostname (all fixtures run on "localhost")
+        FilterTestCase.builder()
+            .instances(List.of(runningInstance, schedulerInstance))
+            .expectedInstances(List.of(runningInstance, schedulerInstance))
+            .filter(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("localhost")
                     .build()
             )
             .build()

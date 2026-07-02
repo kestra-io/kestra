@@ -10,14 +10,6 @@
             @search="filter = $event"
             @filter="syncFromAppliedFilters"
         />
-        <QuickFilters
-            v-if="!hasComplexFilters"
-            :levels="logLevels"
-            :level="effectiveLevelValue?.value"
-            :showInterval="false"
-            :levelLabel="t('filter.level_log_executions.label')"
-            @update:level="(value) => setLevelRouteValue({value, direction: 'min'})"
-        />
         <div class="logs-toolbar">
             <div class="logs-toolbar__left">
                 <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
@@ -142,10 +134,6 @@
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
-    import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
-    import QuickFilters from "../filter/QuickFilters.vue"
-
     function distinctFilter(value: string, index: number, array: string[]) {
         return array.indexOf(value) === index
     }
@@ -168,7 +156,6 @@
 
     const {t} = useI18n()
     const toast = useToast()
-    const {hasComplexFilters} = useComplexFilters()
 
     const emit = defineEmits<{
         follow: [event: unknown]
@@ -209,7 +196,6 @@
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min" as const}),
         applyDefaultIfMissing: () => true,
@@ -223,9 +209,6 @@
     // Narrow the type from the composable's union return type
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
-
-    const {VALUES} = useValues("logs")
-    const logLevels = VALUES.LEVELS
 
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)
@@ -286,6 +269,13 @@
                 if (!sseFlushTimer) {
                     sseFlushTimer = setTimeout(flushSseBuffer, 200)
                 }
+            }
+            // Close on error: without this, EventSource auto-reconnects (~every 3s)
+            // and each reconnect opens a fresh server-side log-follow stream whose
+            // Netty direct buffers are not promptly reclaimed, leaking off-heap
+            // memory over time. See kestra-io/kestra#16982.
+            sse.onerror = () => {
+                closeLogsSSE()
             }
         })
     }

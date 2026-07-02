@@ -14,7 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
@@ -37,9 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 @Prototype
 @Slf4j
 public class WorkerJobExecutor {
-
-    private static final String EXECUTOR_NAME = "worker";
-
     private final WorkerQueueRegistry workerQueueRegistry;
     private final WorkerJobProcessorFactory workerJobProcessorFactory;
     private final ExecutorsUtils executorsUtils;
@@ -71,8 +71,12 @@ public class WorkerJobExecutor {
     public void start(final io.kestra.core.worker.models.WorkerContext context) {
         WorkerQueue<WorkerJob> workerJobQueue = workerQueueRegistry.getOrCreate(context, WorkerJob.class);
         if (this.started.compareAndSet(false, true)) {
-            // Thread pool for task and trigger execution
-            this.executorService = executorsUtils.maxCachedThreadPool(context.workerThreads(), EXECUTOR_NAME);
+            // Thread pool for task and trigger executions.
+            // Include the worker group id in the pool name so that the WorkerAgent and the SystemWorker register a distinct Micrometer executor metric set.
+            this.executorService = executorsUtils.maxCachedThreadPool(
+                context.workerThreads(),
+                Worker.EXECUTOR_NAME + "-" + WorkerGroups.normalize(context.workerGroupId())
+            );
             this.workerJobConsumers = new ArrayList<>(context.workerThreads());
             this.consumerThreads = new ArrayList<>(context.workerThreads());
             for (int i = 0; i < context.workerThreads(); i++) {
@@ -147,6 +151,35 @@ public class WorkerJobExecutor {
     }
 
     /**
+     * Gracefully stops every running realtime trigger, leaving in-flight tasks untouched.
+     * <p>
+     * Used when the worker enters maintenance mode: stopping a realtime trigger cleanly makes its
+     * scheduler lease release, so another worker can re-evaluate it once maintenance is over.
+     *
+     * @return the number of realtime triggers signalled to stop.
+     */
+    public int stopRealtimeTriggers() {
+        checkIsStarted();
+        int stopped = 0;
+        for (WorkerJobConsumer consumer : workerJobConsumers) {
+            if (consumer.stopIfRealtimeTrigger()) {
+                stopped++;
+            }
+        }
+        log.debug("Stopped {} running realtime trigger(s)", stopped);
+        return stopped;
+    }
+
+    /**
+     * Returns whether the given job is a realtime trigger (a long-lived streaming subscription),
+     * as opposed to a task or a polling trigger.
+     */
+    static boolean isRealtimeTriggerJob(final WorkerJob job) {
+        return job instanceof WorkerTrigger workerTrigger
+            && workerTrigger.getTrigger() instanceof RealtimeTriggerInterface;
+    }
+
+    /**
      * Immediately initiates shutdown of all consumers and halts the processing of waiting jobs.
      * <p>
      * This is a convenience method that calls {@link #shutdown(Duration)} with {@code Duration.ZERO}
@@ -181,6 +214,7 @@ public class WorkerJobExecutor {
 
         if (terminationGracePeriod == null || terminationGracePeriod.equals(Duration.ZERO)) {
             // Force: kill in-flight tasks, then unblock consumers
+            signalShutdownInterruptToRunningJobs();
             this.executorService.shutdownNow();
             this.consumerThreads.forEach(Thread::interrupt);
             return false;
@@ -203,11 +237,22 @@ public class WorkerJobExecutor {
 
         if (!terminated) {
             log.warn("Worker still has pending jobs after the termination grace period. Forcing shutdown.");
+            signalShutdownInterruptToRunningJobs();
             this.executorService.shutdownNow();
             this.consumerThreads.forEach(Thread::interrupt);
         }
 
         return terminated;
+    }
+
+    /**
+     * Marks every in-flight job as interrupted by the shutdown right before the executor is forcibly stopped,
+     * so a task that gets torn down here is deferred for resubmission rather than reported as a genuine failure.
+     * A task that already reached a terminal state on its own during the grace period is unaffected — it is not
+     * interrupted, so its result is emitted as usual.
+     */
+    private void signalShutdownInterruptToRunningJobs() {
+        this.workerJobConsumers.forEach(WorkerJobConsumer::signalShutdownInterrupt);
     }
 
     /**
@@ -310,6 +355,32 @@ public class WorkerJobExecutor {
             if (processor != null) {
                 processor.stop();
             }
+        }
+
+        /**
+         * Signals the currently running job — if any — that it is being forcibly interrupted by the
+         * worker shutdown.
+         */
+        void signalShutdownInterrupt() {
+            WorkerJobProcessor<WorkerJob> processor = running.get();
+            if (processor != null) {
+                processor.signalShutdownInterrupt();
+            }
+        }
+
+        /**
+         * Signals stop only when the currently running job is a realtime trigger; tasks and
+         * polling triggers are left untouched.
+         *
+         * @return {@code true} if a realtime trigger was signalled to stop.
+         */
+        boolean stopIfRealtimeTrigger() {
+            WorkerJobProcessor<WorkerJob> processor = running.get();
+            if (processor != null && isRealtimeTriggerJob(workerJob.get())) {
+                processor.stop();
+                return true;
+            }
+            return false;
         }
     }
 }

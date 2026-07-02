@@ -149,7 +149,7 @@
     }
 
     :deep(.news-date) {
-        font-size: 9px;
+        font-size: var(--ks-font-size-2xs);
         font-weight: 400;
         color: var(--ks-text-secondary);
     }

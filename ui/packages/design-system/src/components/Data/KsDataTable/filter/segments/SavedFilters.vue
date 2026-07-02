@@ -198,7 +198,7 @@
         .empty-icon {
             margin-bottom: var(--ks-spacing-1);
             color: var(--ks-text-dim);
-            font-size: 2rem;
+            font-size: var(--ks-font-size-4xl);
         }
 
         .empty-title {

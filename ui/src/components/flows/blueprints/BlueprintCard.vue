@@ -16,7 +16,12 @@
 
             <div class="footer">
                 <div class="icons">
-                    <span v-for="task in visibleTasks" :key="task" class="icon">
+                    <span
+                        v-for="task in visibleTasks"
+                        :key="task"
+                        class="icon"
+                        :class="{missing: missingTasks.includes(task)}"
+                    >
                         <KsTaskIcon :cls="task" :icons="icons" />
                     </span>
                     <span v-if="overflowCount" class="overflow">
@@ -25,17 +30,26 @@
                 </div>
 
                 <div class="actions">
+                    <KsTooltip v-if="hasMissingPlugins" :content="missingPluginsMessage">
+                        <AlertCircleOutline class="missing-indicator" />
+                    </KsTooltip>
                     <slot
                         name="buttons"
                         :blueprint="{...blueprint, kind: blueprintKind, type: blueprintType}"
                     >
-                        <KsButton
+                        <KsTooltip
                             v-if="(!embed || system) && userCanCreate"
-                            size="default"
-                            @click.prevent.stop="emit('use')"
+                            :disabled="!hasMissingPlugins"
+                            :content="missingPluginsMessage"
                         >
-                            {{ $t('use') }}
-                        </KsButton>
+                            <KsButton
+                                size="default"
+                                :disabled="hasMissingPlugins"
+                                @click.prevent.stop="emit('use')"
+                            >
+                                {{ $t('use') }}
+                            </KsButton>
+                        </KsTooltip>
                     </slot>
                 </div>
             </div>
@@ -45,9 +59,14 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import {KsTaskIcon} from "@kestra-io/design-system"
+    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import {canCreate} from "override/composables/blueprintsPermissions"
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+
+    const {t} = useI18n()
 
     const MAX_ICONS = 5
 
@@ -93,6 +112,20 @@
 
     const userCanCreate = computed(() =>
         canCreate(props.blueprintKind),
+    )
+
+    const {missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+
+    const missingTasks = computed(() =>
+        missingTaskTypes(props.blueprint.includedTasks),
+    )
+
+    const hasMissingPlugins = computed(() => missingTasks.value.length > 0)
+
+    const missingPluginsMessage = computed(() =>
+        t("blueprints.missingPlugins.card", {
+            plugins: missingPluginNames(props.blueprint.includedTasks).join(", "),
+        }),
     )
 </script>
 
@@ -180,6 +213,11 @@
                     width: 1.5rem;
                     height: 1.5rem;
                 }
+
+                &.missing {
+                    opacity: 0.4;
+                    filter: grayscale(1);
+                }
             }
 
             .overflow {
@@ -202,6 +240,12 @@
             align-items: center;
             gap: var(--ks-spacing-2);
             flex-shrink: 0;
+
+            .missing-indicator {
+                display: flex;
+                color: var(--ks-text-warning);
+                font-size: var(--ks-font-size-lg);
+            }
         }
     }
 </style>

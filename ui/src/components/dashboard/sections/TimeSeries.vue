@@ -18,6 +18,7 @@
             :options="echartsOption"
             :loading="false"
             :tooltipType="TooltipType.EXTERNAL"
+            :stickyTooltip="props.short"
             @echarts-click="onChartClick"
         />
     </div>
@@ -364,7 +365,7 @@
 
     const dimensionColumn = computed(() => {
         const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onChartClick(params: any) {

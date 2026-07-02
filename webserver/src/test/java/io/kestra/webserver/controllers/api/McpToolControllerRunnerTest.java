@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.models.property.Property;
@@ -230,6 +231,72 @@ class McpToolControllerRunnerTest {
                 tuple(Label.MCP_SERVER_ID, serverId),
                 tuple(Label.MCP_SESSION_ID, sessionId)
             );
+    }
+
+    @Test
+    void shouldNestFormGroupedInputsWhenExecutionCreated() throws InterruptedException {
+        // Given a flow whose only input is a FORM grouping a single child
+        String serverId = saveServer(false, null);
+        String flowId = IdUtils.create();
+        McpToolTrigger trigger = McpToolTrigger.builder()
+            .id("mcp-trigger")
+            .type(McpToolTrigger.class.getName())
+            .toolName("tool-" + flowId.toLowerCase())
+            .title("Form Test Tool")
+            .toolDescription("Verifies FORM-grouped inputs are nested on the execution")
+            .mcpServer(serverId)
+            .build();
+
+        FormInput environmentForm = FormInput.builder()
+            .id("environment")
+            .type(Type.FORM)
+            .inputs(List.of(
+                StringInput.builder()
+                    .id("region")
+                    .type(Type.STRING)
+                    .required(false)
+                    .build()
+            ))
+            .build();
+
+        CountDownLatch completionLatch = new CountDownLatch(1);
+        CountDownLatch continueLatch = new CountDownLatch(1);
+        CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(completionLatch, continueLatch, Duration.ofSeconds(10));
+        flowRepository.create(GenericFlow.of(
+            Flow.builder()
+                .id(flowId)
+                .namespace(TEST_NAMESPACE)
+                .tenantId(TenantService.MAIN_TENANT)
+                .inputs(List.of(environmentForm))
+                .tasks(List.of(task))
+                .triggers(List.of(trigger))
+                .build()
+        ));
+
+        String sessionId = initialize(serverId);
+        McpSchema.JSONRPCRequest callRequest = new McpSchema.JSONRPCRequest(
+            McpSchema.JSONRPC_VERSION,
+            McpSchema.METHOD_TOOLS_CALL,
+            3,
+            // The MCP schema exposes the FORM child by its dotted leaf path
+            new McpSchema.CallToolRequest(trigger.getToolName(), Map.of("environment.region", "EU"), null)
+        );
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(continueLatch::countDown, 1, TimeUnit.SECONDS);
+        try {
+            // When
+            client.toBlocking().retrieve(mcpPost(serverId, callRequest, sessionId), String.class);
+            assertThat(completionLatch.await(5, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            scheduler.shutdown();
+        }
+
+        // Then the stored execution inputs are nested under the form id, not flat-dotted
+        ArrayListTotal<Execution> executions = executionRepository.findByFlowId(TenantService.MAIN_TENANT, TEST_NAMESPACE, flowId, Pageable.unpaged());
+        assertThat(executions).hasSize(1);
+        assertThat(executions.getFirst().getInputs())
+            .isEqualTo(Map.of("environment", Map.of("region", "EU")));
     }
 
     private String saveServer(boolean disabled, String instructions) {

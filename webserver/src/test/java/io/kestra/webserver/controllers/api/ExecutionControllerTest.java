@@ -1,12 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
@@ -24,6 +26,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -427,6 +430,54 @@ class ExecutionControllerTest {
             HttpRequest.POST("/api/v1/main/flows", create.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
+    }
+
+    @Test
+    void shouldDownloadIonFileAsJsonl() throws Exception {
+        // Given - an execution with a stored Ion output file
+        String execId = IdUtils.create();
+        String ns = "io.kestra.test-jsonl";
+
+        Execution execution = Execution.builder()
+            .id(execId)
+            .tenantId(MAIN_TENANT)
+            .namespace(ns)
+            .flowId("flow-jsonl")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execution);
+
+        // Build a binary Ion file with two records
+        ByteArrayOutputStream ionBaos = new ByteArrayOutputStream();
+        FileSerde.write(ionBaos, Map.of("id", 1, "name", "alice"));
+        FileSerde.write(ionBaos, Map.of("id", 2, "name", "bob"));
+
+        URI ionFilePath = URI.create(
+            "/" + ns.replace(".", "/") + "/flow-jsonl/executions/" + execId + "/tasks/task1/tr1/output.ion"
+        );
+        URI ionFileUri = storageInterface.put(MAIN_TENANT, ns, ionFilePath,
+            new ByteArrayInputStream(ionBaos.toByteArray()));
+
+        // When - download with format=JSONL
+        String encodedPath = URLEncoder.encode(ionFileUri.toString(), StandardCharsets.UTF_8);
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/main/executions/" + execId + "/file?path=" + encodedPath + "&format=JSONL"),
+            String.class
+        );
+
+        // Then - response is JSON Lines with one record per line
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.header(HttpHeaders.CONTENT_DISPOSITION)).contains(".jsonl");
+
+        String body = response.body();
+        assertThat(body).isNotNull();
+        String[] lines = body.split("\n");
+        assertThat(lines).hasSize(2);
+        // Each line must be a valid JSON object
+        for (String line : lines) {
+            assertThat(line.trim()).startsWith("{").endsWith("}");
+        }
     }
 
     @Test

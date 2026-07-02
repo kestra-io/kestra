@@ -19,6 +19,9 @@ export interface Check {
 
 export interface InputError {
     message: string;
+    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
+    // input `defaults` Pebble expression that threw) rather than a value validation error
+    renderError?: boolean;
 }
 
 export interface ValidationResponse {
@@ -239,7 +242,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
             })
     }
@@ -252,7 +255,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -313,6 +316,18 @@ export const useExecutionsStore = defineStore("executions", () => {
                 "content-type": "multipart/form-data",
             },
         })
+    }
+
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
+        return axios.post<Execution>(
+            `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
+            null,
+            {
+                params: {
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+                },
+            },
+        )
     }
 
     const pause = (options: { id: string }) => {
@@ -508,6 +523,12 @@ export const useExecutionsStore = defineStore("executions", () => {
                     },
                 }
             }
+
+            // Close the stream on error: EventSource auto-reconnects (~every 3s)
+            // unless explicitly closed, and each reconnect opens a fresh server-side
+            // SSE connection whose Netty direct buffers are not promptly reclaimed,
+            // leaking off-heap memory over time. See kestra-io/kestra#16982.
+            closeSSE()
         }
 
         return Promise.resolve(sse.value)
@@ -882,6 +903,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkKill,
         queryKill,
         resume,
+        resumeFromBreakpoint,
         validateResume,
         pause,
         bulkPauseExecution,

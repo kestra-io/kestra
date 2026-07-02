@@ -29,8 +29,6 @@ start_time2=$(date +%s)
 
 echo "cd ./ui"
 cd ./ui
-echo "npm ci"
-npm ci
 
 echo 'sh ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
 ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"

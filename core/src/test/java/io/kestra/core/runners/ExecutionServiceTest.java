@@ -408,7 +408,7 @@ class ExecutionServiceTest {
                 message: "{{ render(vars.greeting) }}"
             """;
         FlowWithSource updated = flowService.update(GenericFlow.fromYaml(flow.getTenantId(), newSource), flow);
-        
+
         Execution restart = executionService.replay(execution, updated, null, updated.getRevision(), Optional.empty());
 
         assertThat(restart.getFlowRevision()).isEqualTo(updated.getRevision());
@@ -715,5 +715,23 @@ class ExecutionServiceTest {
         // originalId must match the provided execution id, not the auto-generated id from newExecution().
         assertThat(execution.getId()).isEqualTo(executionId);
         assertThat(execution.getOriginalId()).isEqualTo(executionId);
+    }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void restartShouldSuccessWhenNoTaskRun() throws Exception {
+        // Given
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution newExecution = Execution.newExecution(flow, Collections.emptyList())
+            .withState(State.Type.FAILED);
+
+        // When
+        Execution restarted = executionService.restart(newExecution, flow, null);
+
+        // Then
+        assertThat(restarted.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted.getId()).isEqualTo(newExecution.getId());
+        assertThat(restarted.getOriginalId()).isEqualTo(newExecution.getId());
+        assertThat(restarted.getTaskRunList()).isEmpty();
     }
 }

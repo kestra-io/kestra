@@ -13,9 +13,11 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -67,6 +69,9 @@ public class PluginController {
     @Inject
     @Named("PLUGIN")
     protected Searchable<Plugin> pluginSearchable;
+
+    @Inject
+    protected EditionProvider editionProvider;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -393,7 +398,8 @@ public class PluginController {
                         manifest.put(
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash()))
+                                .filter(module -> isDistributionAllowed(module.distribution()))
+                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()))
                                 .toList()
                         );
                     }
@@ -402,6 +408,13 @@ public class PluginController {
         }
 
         return new PluginUiManifest(manifest);
+    }
+
+    private boolean isDistributionAllowed(PluginDistribution distribution) {
+        if (editionProvider.get() == EditionProvider.Edition.OSS) {
+            return distribution != PluginDistribution.EE;
+        }
+        return true;
     }
 
     @Get(value = "/{group}/pluginUi/{path:.*}")

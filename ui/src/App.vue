@@ -26,6 +26,7 @@
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "./utils/utils"
     import * as BasicAuth from "./utils/basicAuth"
+    import {applyFontScale, getAppFontSizeMode} from "./utils/appFontSize"
     import {initPosthogIfEnabled} from "./utils/posthog"
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
@@ -34,6 +35,7 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
     import {usePluginsStore} from "./stores/plugins"
+    import {useThemeCycle} from "./composables/useThemeCycle"
 
     const loaded = ref(false)
 
@@ -41,7 +43,9 @@
     const layoutStore = useLayoutStore()
     const coreStore = useCoreStore()
     const docStore = useDocStore()
+
     const miscStore = useMiscStore()
+    useThemeCycle(miscStore)
 
     const route = useRoute()
 
@@ -83,6 +87,7 @@
 
     function displayApp() {
         Utils.switchTheme(miscStore)
+        applyFontScale(getAppFontSizeMode())
 
         const loader = document.getElementById("loader-wrapper")
         if (loader) loader.style.display = "none"

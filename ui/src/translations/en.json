@@ -441,6 +441,12 @@
         "category": "Category type",
         "links": "Link & Resources",
         "openInEditor": "Open in Edit Flow"
+      },
+      "missingPlugins": {
+        "title": "Missing plugins",
+        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
+        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "install": "Install plugins"
       }
     },
     "use": "Use",

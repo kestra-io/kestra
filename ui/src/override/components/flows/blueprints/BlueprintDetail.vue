@@ -10,12 +10,22 @@
             :icons="pluginsStore.icons"
             @back="goBack"
         >
-            <template #actions>
-                <router-link v-if="userCanCreate" :to="editorRoute">
-                    <KsButton type="primary" @click="trackBlueprintUse('detail')">
-                        {{ $t("blueprints.detail.openInEditor") }}
-                    </KsButton>
-                </router-link>
+            <template #actions="{hasMissingPlugins, missingPlugins}">
+                <template v-if="userCanCreate">
+                    <KsTooltip
+                        v-if="hasMissingPlugins"
+                        :content="$t('blueprints.missingPlugins.card', {plugins: missingPlugins.join(', ')})"
+                    >
+                        <KsButton type="primary" disabled>
+                            {{ $t("blueprints.detail.openInEditor") }}
+                        </KsButton>
+                    </KsTooltip>
+                    <router-link v-else :to="editorRoute">
+                        <KsButton type="primary" @click="trackBlueprintUse('detail')">
+                            {{ $t("blueprints.detail.openInEditor") }}
+                        </KsButton>
+                    </router-link>
+                </template>
             </template>
         </BlueprintDetailView>
     </template>
@@ -28,12 +38,22 @@
         :kind
         @back="goBack"
     >
-        <template #actions>
-            <router-link v-if="userCanCreate" :to="editorRoute">
-                <KsButton type="primary" @click="trackBlueprintUse('detail')">
-                    {{ $t("blueprints.detail.openInEditor") }}
-                </KsButton>
-            </router-link>
+        <template #actions="{hasMissingPlugins, missingPlugins}">
+            <template v-if="userCanCreate">
+                <KsTooltip
+                    v-if="hasMissingPlugins"
+                    :content="$t('blueprints.missingPlugins.card', {plugins: missingPlugins.join(', ')})"
+                >
+                    <KsButton type="primary" disabled>
+                        {{ $t("blueprints.detail.openInEditor") }}
+                    </KsButton>
+                </KsTooltip>
+                <router-link v-else :to="editorRoute">
+                    <KsButton type="primary" @click="trackBlueprintUse('detail')">
+                        {{ $t("blueprints.detail.openInEditor") }}
+                    </KsButton>
+                </router-link>
+            </template>
         </template>
     </BlueprintEmbedView>
 </template>

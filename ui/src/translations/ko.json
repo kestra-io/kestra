@@ -88,6 +88,12 @@
     "before": "이전",
     "behavior": "동작",
     "blueprints": {
+      "missingPlugins": {
+        "title": "누락된 plugin",
+        "description": "이 blueprint는 이 인스턴스에 설치되지 않은 plugin의 task를 사용합니다: {plugins}. 이 blueprint를 사용하려면 설치하세요.",
+        "card": "이 인스턴스에 설치되지 않은 plugin이 필요합니다: {plugins}",
+        "install": "plugin 설치"
+      },
       "all": "모두",
       "apps": "앱 Blueprints",
       "community": "커뮤니티",

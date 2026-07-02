@@ -34,11 +34,10 @@
                 </div>
                 <DocsLayout>
                     <template #content>
-                        <KsMarkdown 
-                            class="markdown" 
-                            :content="markdownContent" 
-                            :xssProtection="false" 
-                            :components="markdownComponents" 
+                        <KsMarkdown
+                            class="markdown"
+                            :content="markdownContent"
+                            :components="markdownComponents"
                         />
                     </template>
                 </DocsLayout>

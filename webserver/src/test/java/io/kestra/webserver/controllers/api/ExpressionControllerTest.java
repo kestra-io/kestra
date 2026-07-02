@@ -61,12 +61,12 @@ class ExpressionControllerTest {
             message: "{{ vars.region }}"
         """;
 
-    private Map<String, String> render(Map<String, Object> body) {
+    private ExpressionController.RenderedExpressions render(Map<String, Object> body) {
         return client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/" + TENANT_ID + "/expressions/render", body)
                 .contentType(MediaType.APPLICATION_JSON_TYPE),
-            Argument.mapOf(String.class, String.class)
+            Argument.of(ExpressionController.RenderedExpressions.class)
         );
     }
 
@@ -74,7 +74,7 @@ class ExpressionControllerTest {
     void shouldRenderAgainstFlowSource() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 
-        Map<String, String> rendered = render(Map.of(
+        var result = render(Map.of(
             "flow", FLOW_SOURCE,
             "expressions", List.of(
                 "{{ vars.region }}",
@@ -85,6 +85,7 @@ class ExpressionControllerTest {
             )
         ));
 
+        Map<String, String> rendered = result.rendered();
         // flow-level variables and flow metadata resolve
         assertThat(rendered).containsEntry("{{ vars.region }}", "us-east-1");
         assertThat(rendered).containsEntry("{{ flow.id }}", "render-test");
@@ -102,11 +103,12 @@ class ExpressionControllerTest {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
 
-        Map<String, String> rendered = render(Map.of(
+        var result = render(Map.of(
             "executionId", execution.getId(),
             "expressions", List.of("{{ execution.id }}", "{{ flow.id }}")
         ));
 
+        Map<String, String> rendered = result.rendered();
         assertThat(rendered).containsEntry("{{ execution.id }}", execution.getId());
         assertThat(rendered).containsEntry("{{ flow.id }}", "minimal");
     }
@@ -116,12 +118,13 @@ class ExpressionControllerTest {
     void shouldRenderAgainstFlowByNamespaceAndId() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 
-        Map<String, String> rendered = render(Map.of(
+        var result = render(Map.of(
             "namespace", TESTS_FLOW_NS,
             "flowId", "variables",
             "expressions", List.of("{{ vars.first }}", "{{ flow.id }}", "{{ now() }}")
         ));
 
+        Map<String, String> rendered = result.rendered();
         assertThat(rendered).containsEntry("{{ vars.first }}", "1");
         assertThat(rendered).containsEntry("{{ flow.id }}", "variables");
         assertThat(rendered).containsEntry("{{ now() }}", "{{ now() }}");
@@ -131,10 +134,11 @@ class ExpressionControllerTest {
     void shouldReturnEmptyContextWhenNeitherFlowNorExecutionProvided() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 
-        Map<String, String> rendered = render(Map.of(
+        var result = render(Map.of(
             "expressions", List.of("literal", "{{ vars.region }}", "{{ now() }}")
         ));
 
+        Map<String, String> rendered = result.rendered();
         // no context → literals pass through, everything resolvable-only stays raw
         assertThat(rendered).containsEntry("literal", "literal");
         assertThat(rendered).containsEntry("{{ vars.region }}", "{{ vars.region }}");

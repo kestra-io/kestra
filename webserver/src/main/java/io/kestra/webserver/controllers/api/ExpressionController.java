@@ -70,11 +70,9 @@ public class ExpressionController {
             "references anything unresolvable is returned unchanged. Provide an executionId to resolve against an " +
             "execution context, or a flow source to resolve against a flow context; otherwise only globals are available."
     )
-    public Map<String, String> renderExpressions(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
+    public RenderedExpressions renderExpressions(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
         Map<String, Object> variables = variablesFor(request);
-        // The response is a lookup table keyed by the raw expression, so the caller can match each
-        // rendered value back to its input.
-        return displayExpressionRenderer.render(request.expressions(), variables);
+        return new RenderedExpressions(displayExpressionRenderer.render(request.expressions(), variables));
     }
 
     private Map<String, Object> variablesFor(RenderExpressionRequest request) throws FlowProcessingException {
@@ -117,5 +115,10 @@ public class ExpressionController {
         @Nullable @Schema(description = "Resolve against this flow's context (with flowId)") String namespace,
         @Nullable @Schema(description = "Resolve against this flow's context (with namespace)") String flowId,
         @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow
+    ) {}
+
+    @Introspected
+    public record RenderedExpressions(
+        @Schema(description = "Rendered values keyed by their raw expression") Map<String, String> rendered
     ) {}
 }

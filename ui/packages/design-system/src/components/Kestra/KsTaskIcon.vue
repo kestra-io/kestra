@@ -4,17 +4,19 @@
         class="ks-task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <svg class="ks-task-icon__icon" v-bind="svgIcon.attrs" aria-hidden="true" v-html="svgIcon.innerHtml" />
+            <img class="ks-task-icon__icon" :src="src" alt="" />
         </KsTooltip>
 
-        <svg v-else class="ks-task-icon__icon" v-bind="svgIcon.attrs" role="img" :aria-label="cls" v-html="svgIcon.innerHtml" />
+        <img v-else class="ks-task-icon__icon" :src="src" :alt="cls ?? ''" />
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
-    import {getSvgIcon, nextInstanceId} from "../../utils/svgIcon"
+    import {useTheme} from "../../composables/useTheme"
+    import {cssVar} from "../../utils/css"
+    import {getTaskIconSrc} from "../../utils/taskIconSrc"
 
     defineOptions({
         name: "KsTaskIcon",
@@ -27,7 +29,10 @@
         onlyIcon?: boolean;
     }>()
 
-    const instanceId = nextInstanceId()
+    // cssVar() reads getComputedStyle synchronously and isn't reactive on its own; referencing
+    // isDark.value here forces this computed to re-run — and re-bake the icon's color — whenever
+    // the theme toggles, since --ks-text-primary's resolved value changes with it.
+    const {isDark} = useTheme()
 
     const classes = computed(() => {
         return {
@@ -35,7 +40,10 @@
         }
     })
 
-    const svgIcon = computed(() => getSvgIcon(icon.value?.icon, instanceId))
+    const src = computed(() => {
+        void isDark.value
+        return getTaskIconSrc(icon.value?.icon, cssVar("--ks-text-primary"))
+    })
 
     const icon = computed(() => {
         return props.cls ? (props.icons ?? {})[innerClassToParent(props.cls)] : props.customIcon
@@ -68,6 +76,6 @@
         height: 100%;
         display: block;
         border-radius: 3px;
-        color: var(--ks-text-primary);
+        object-fit: contain;
     }
 </style>

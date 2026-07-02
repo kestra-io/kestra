@@ -115,9 +115,10 @@ export const AllSizes: Story = {
 }
 
 /**
- * The icon markup uses `fill="currentColor"`, so it now recolors purely
- * through CSS (`color: var(--ks-text-primary)`) instead of a JS color-bake
- * into a data: URI. Toggle the Storybook theme toolbar to see it recolor live.
+ * The icon is rendered as an <img src="data:..."> — an isolated image document with no access to
+ * the host page's CSS, so `currentColor` is baked into the SVG source before building the src.
+ * useTheme()'s reactive isDark flag re-triggers that bake on every theme switch. Toggle the
+ * Storybook theme toolbar to see it recolor live.
  */
 export const DarkMode: Story = {
     globals: {

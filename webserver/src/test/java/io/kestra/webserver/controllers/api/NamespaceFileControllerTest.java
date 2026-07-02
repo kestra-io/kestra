@@ -183,6 +183,46 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void createFileWithTooLongNameReturnsCleanError() {
+        String longName = "x".repeat(300) + ".txt";
+        MultipartBody tooLongBody = MultipartBody.builder()
+            .addPart("fileContent", "data", "Hello".getBytes())
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + NAMESPACE + "/files?path=/" + longName, tooLongBody)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        // Clean 422 (not a 500), and the body must not leak the absolute internal-storage filesystem path.
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).contains("maximum length");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Internal server error");
+    }
+
+    @Test
+    void createFileWithLongButValidComponentsSucceeds() throws IOException {
+        // The limit is per path component: a multi-segment path whose total length exceeds 255 but whose
+        // individual segments are each <= 255 must be accepted (it would succeed on the filesystem),
+        // i.e. validation must not reject on the whole-path length.
+        String segment = "a".repeat(150);
+        String path = "/" + segment + "/" + segment + ".txt";
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "data", "Hello".getBytes())
+            .build();
+
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + NAMESPACE + "/files?path=" + path, body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        assertNamespaceGetFileContentContent(URI.create(path), "Hello");
+    }
+
+    @Test
     void createGetFileContentFlowException() {
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "_flows", "Hello".getBytes())

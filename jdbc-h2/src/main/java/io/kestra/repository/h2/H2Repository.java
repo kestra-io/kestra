@@ -88,9 +88,10 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
         Field<Object> field = AbstractJdbcRepository.field(fields.getFirst());
 
-        List<LikeEscapeStep> match = Arrays
+        List<Condition> match = Arrays
             .stream(query.split("\\p{P}|\\p{S}|\\p{Z}"))
-            .map(s -> field.likeIgnoreCase("%" + s.toUpperCase(Locale.ROOT) + "%"))
+            .filter(s -> !s.isEmpty())
+            .map(s -> field.likeIgnoreCase("%" + escapeForLike(s.toUpperCase(Locale.ROOT)) + "%").escape('\\'))
             .toList();
 
         if (match.size() == 0) {
@@ -98,6 +99,13 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         }
 
         return DSL.and(match);
+    }
+
+    private static String escapeForLike(String s) {
+        return s
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_");
     }
 
     @SuppressWarnings("unchecked")

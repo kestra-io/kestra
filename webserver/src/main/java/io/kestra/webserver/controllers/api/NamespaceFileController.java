@@ -43,6 +43,10 @@ import lombok.extern.slf4j.Slf4j;
 @Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceFileController {
     public static final String FLOWS_FOLDER = "_flows";
+
+    // Maximum length of a single file-name component on common filesystems (e.g. 255 bytes on ext4).
+    private static final int MAX_FILE_NAME_LENGTH = 255;
+
     @Inject
     private StorageInterface storageInterface;
     @Inject
@@ -189,6 +193,17 @@ public class NamespaceFileController {
             return;
         }
         forbiddenPathsGuard(path);
+
+        // Reject over-long names before writing: otherwise the filesystem raises ENAMETOOLONG, which
+        // surfaces as a 500 leaking the absolute internal-storage path. The limit is per path component
+        // (255 bytes on common filesystems), so we check each segment rather than the whole path — a
+        // valid multi-component path must not be rejected. Return a clean 4xx instead.
+        for (Path component : Path.of(filePath)) {
+            if (component.toString().length() > MAX_FILE_NAME_LENGTH) {
+                throw new IllegalArgumentException("A file or folder name exceeds the maximum length of " + MAX_FILE_NAME_LENGTH + " characters.");
+            }
+        }
+
         storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 

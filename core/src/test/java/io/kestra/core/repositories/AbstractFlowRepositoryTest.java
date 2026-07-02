@@ -24,6 +24,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
@@ -88,6 +89,14 @@ public abstract class AbstractFlowRepositoryTest {
 
     private static FlowWithSource.FlowWithSourceBuilder<?, ?> builder(String flowId, String taskId) {
         return FlowWithSource.builder()
+            .id(flowId)
+            .namespace(TEST_NAMESPACE)
+            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
+    }
+
+    private static FlowWithSource.FlowWithSourceBuilder<?, ?> builder(String tenantId, String flowId, String taskId) {
+        return FlowWithSource.builder()
+            .tenantId(tenantId)
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
@@ -873,6 +882,56 @@ public abstract class AbstractFlowRepositoryTest {
         } finally {
             deleteFlow(flow);
             executionRepository.delete(execution);
+        }
+    }
+
+    @Test
+    void shouldFilterSourceCodeByNamespaceAndQuery() {
+        // Given — two flows in the same tenant but different namespaces.
+        // Flow IDs use "alpha" / "beta" as distinct tokens that do not appear in each
+        // other's YAML (the common task type io.kestra.plugin.core.debug.Return
+        // contains neither word), enabling unambiguous query-filter assertions.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String namespaceA = "io.kestra.findsource.a";
+        String namespaceB = "io.kestra.findsource.b";
+
+        FlowWithSource flowA = builder(tenant, "source-flow-alpha", TEST_FLOW_ID)
+            .namespace(namespaceA)
+            .build();
+        FlowWithSource flowB = builder(tenant, "source-flow-beta", TEST_FLOW_ID)
+            .namespace(namespaceB)
+            .build();
+
+        flowA = flowRepository.create(GenericFlow.of(flowA));
+        flowB = flowRepository.create(GenericFlow.of(flowB));
+
+        try {
+            // When — filter by namespace only
+            ArrayListTotal<SearchResult<Flow>> byNamespaceA = flowRepository.findSourceCode(
+                Pageable.UNPAGED, null, tenant, namespaceA
+            );
+
+            // Then — only the flow in namespaceA is returned
+            assertThat(byNamespaceA)
+                .as("Expected only namespace %s but got: %s", namespaceA,
+                    byNamespaceA.stream().map(r -> r.getModel().getNamespace()).toList())
+                .hasSize(1);
+            assertThat(byNamespaceA.getFirst().getModel().getNamespace()).isEqualTo(namespaceA);
+
+            // When — filter by query using a token unique to flow-beta's source
+            ArrayListTotal<SearchResult<Flow>> byQuery = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "beta", tenant, null
+            );
+
+            // Then — only the flow whose source contains "beta" is returned
+            assertThat(byQuery)
+                .as("Expected only flow-beta but got: %s",
+                    byQuery.stream().map(r -> r.getModel().getId()).toList())
+                .hasSize(1);
+            assertThat(byQuery.getFirst().getModel().getId()).isEqualTo("source-flow-beta");
+        } finally {
+            deleteFlow(flowA);
+            deleteFlow(flowB);
         }
     }
 

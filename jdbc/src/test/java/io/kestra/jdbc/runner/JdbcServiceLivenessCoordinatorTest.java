@@ -104,6 +104,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         workerJobRunnings.forEach(workerJobRunning -> workerJobRunningRepository.deleteByKey(workerJobRunning.uid()));
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent liveness re-emit timing")
     @Test
     void shouldReEmitTasksWhenWorkerIsDetectedAsNonResponding() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);

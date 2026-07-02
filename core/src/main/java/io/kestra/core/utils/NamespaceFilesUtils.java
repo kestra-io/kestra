@@ -3,8 +3,9 @@ package io.kestra.core.utils;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -56,24 +57,29 @@ public class NamespaceFilesUtils {
         Boolean folderPerNamespace = runContext.render(namespaceFiles.getFolderPerNamespace()).as(Boolean.class)
             .orElse(false);
 
-        List<NamespaceFile> matchedNamespaceFiles = new ArrayList<>();
+        // Files are loaded in the namespace order, keeping only the latest version of a file: if the same destination
+        // path is present in several namespaces, the file from the last namespace wins. As the actual writes below run
+        // in parallel, we must deduplicate by destination path beforehand, otherwise the winning file would depend on
+        // which concurrent write finishes last (non-deterministic).
+        Map<Path, NamespaceFile> matchedNamespaceFiles = new LinkedHashMap<>();
         for (String namespace : namespaces) {
             List<NamespaceFile> files = runContext.storage()
                 .namespace(namespace)
                 .findAllFilesMatching(include, exclude);
 
-            matchedNamespaceFiles.addAll(files);
+            for (NamespaceFile file : files) {
+                matchedNamespaceFiles.put(destinationPath(file, folderPerNamespace), file);
+            }
         }
 
         int parallelism = maxThreads / 2;
-        Flux.fromIterable(matchedNamespaceFiles)
+        Flux.fromIterable(matchedNamespaceFiles.values())
             .parallel(parallelism)
             .runOn(Schedulers.fromExecutorService(EXECUTOR_SERVICE))
             .doOnNext(throwConsumer(nsFile ->
             {
                 try (InputStream content = runContext.storage().getFile(nsFile.uri())) {
-                    Path path = folderPerNamespace ? Path.of(nsFile.namespace() + "/" + nsFile.path()) : Path.of(nsFile.path());
-                    runContext.workingDir().putFile(path, content, fileExistComportment);
+                    runContext.workingDir().putFile(destinationPath(nsFile, folderPerNamespace), content, fileExistComportment);
                 }
             }))
             .doOnError(t ->
@@ -94,5 +100,11 @@ public class NamespaceFilesUtils {
             StringUtils.join(namespaces, ", "),
             DurationFormatUtils.formatDurationHMS(duration.toMillis())
         );
+    }
+
+    private static Path destinationPath(NamespaceFile namespaceFile, boolean folderPerNamespace) {
+        return folderPerNamespace
+            ? Path.of(namespaceFile.namespace() + "/" + namespaceFile.path())
+            : Path.of(namespaceFile.path());
     }
 }

@@ -150,6 +150,7 @@
         reloadLogs?: number;
         namespace?: string | null;
         restoreurl?: boolean;
+        withCharts?: boolean;
     }>(), {
         embed: false,
         showFilters: false,
@@ -158,6 +159,7 @@
         reloadLogs: undefined,
         namespace: undefined,
         restoreurl: undefined,
+        withCharts: true,
     })
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
@@ -407,7 +409,7 @@
         dataTable.value?.resetAndReload()
     })
 
-    const showStatChart = () => showChart.value
+    const showStatChart = () => props.withCharts && showChart.value
 
     const onShowChartChange = (value: boolean) => {
         showChart.value = value

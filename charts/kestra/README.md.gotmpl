@@ -315,6 +315,18 @@ configurations:
                 port: 50051
 ```
 
+> **Note:** The webserver pod also starts an embedded controller by default. In distributed mode
+> workers only connect to `<release-name>-controller`, so this embedded controller is unused.
+> This is harmless — Kestra supports multiple controllers for load balancing — but wastes resources.
+> To disable it, add `--no-controller` to the webserver's `extraArgs`:
+>
+> ```yaml
+> deployments:
+>   webserver:
+>     extraArgs:
+>       - --no-controller
+> ```
+
 ### Upgrade prerequisite
 
 Instances must be on **>= 1.0.0** before upgrading to 2.0. The 2.0 startup migration drops the old

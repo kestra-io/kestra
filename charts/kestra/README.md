@@ -266,6 +266,53 @@ kestra:
             port: 50051
 ```
 
+### Distributed mode (Kestra 2.0)
+
+In fully distributed mode (no standalone), a dedicated `controller` Deployment must be enabled.
+It hosts the gRPC control plane and gets its own Service at `<release-name>-controller:50051`.
+Workers connect to that Service, not to the webserver/executor.
+
+```yaml
+deployments:
+  standalone:
+    enabled: false
+  webserver:
+    enabled: true
+  executor:
+    enabled: true
+  indexer:
+    enabled: true
+  scheduler:
+    enabled: true
+  controller:
+    enabled: true
+  worker:
+    enabled: true
+
+configurations:
+  application:
+    kestra:
+      worker:
+        controllers:
+          type: STATIC
+          static:
+            endpoints:
+              - host: <release-name>-controller   # dedicated controller Service
+                port: 50051
+```
+
+> **Note:** The webserver pod also starts an embedded controller by default. In distributed mode
+> workers only connect to `<release-name>-controller`, so this embedded controller is unused.
+> This is harmless — Kestra supports multiple controllers for load balancing — but wastes resources.
+> To disable it, add `--no-controller` to the webserver's `extraArgs`:
+>
+> ```yaml
+> deployments:
+>   webserver:
+>     extraArgs:
+>       - --no-controller
+> ```
+
 ### Upgrade prerequisite
 
 Instances must be on **>= 1.0.0** before upgrading to 2.0. The 2.0 startup migration drops the old
@@ -319,6 +366,8 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| deployments.controller.enabled | bool | `false` | Enable the gRPC worker controller in distributed mode (Kestra 2.0). Required when running a detached worker without standalone. Workers must be configured to connect to the controller Service at <release>-controller:50051. |
+| deployments.controller.extraArgs | list | `[]` | Extra arguments to pass to the container. |
 | deployments.executor.enabled | bool | `false` | Enable executor in distributed mode. |
 | deployments.executor.extraArgs | list | `[]` | Extra arguments to pass to the container. |
 | deployments.indexer.enabled | bool | `false` | Enable indexer in distributed mode. |

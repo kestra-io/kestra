@@ -77,6 +77,9 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     const fileTree = ref<TreeNode[]>([])
     const searchResults = ref<string[]>([])
     const namespaceId = ref<string>()
+    // whether the root level of the tree has been loaded at least once,
+    // used to distinguish "not loaded yet" from "loaded and truly empty"
+    const rootLoaded = ref(false)
 
     const namespacesStore = useNamespacesStore()
     const toast = useToast()
@@ -277,10 +280,12 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     ) {
         if (namespaceId.value === undefined) return
         if (node.level === 0) {
+            rootLoaded.value = false
             const payload = {namespace: namespaceId.value}
             const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
             renderNodes(rootTreeNodes)
             fileTree.value = sorted(fileTree.value)
+            rootLoaded.value = true
             resolve?.(fileTree.value)
         } else if (isNotRootTreeNode(node)) {
             const payload = {
@@ -326,6 +331,10 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }
 
     const folders = computed(() => extractPaths(undefined, fileTree.value))
+
+    // true only once the root has been loaded and no file/folder exists,
+    // so the dedicated empty state can replace the file browser entirely
+    const isEmpty = computed(() => rootLoaded.value && fileTree.value.length === 0)
 
     function findNodeByPath(path: string, itemsArr: TreeNode[] = fileTree.value, parentPath = ""): TreeNode | null {
         for (const item of itemsArr) {
@@ -418,6 +427,8 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         getPath,
         fileTree,
         folders,
+        isEmpty,
+        rootLoaded,
         namespaceId,
         searchResults,
     }

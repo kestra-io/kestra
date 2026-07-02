@@ -398,6 +398,23 @@ class WorkerJobDispatcherTest {
             // Then
             assertThat(subscriber.resumeCount.get()).isEqualTo(resumesBefore);
         }
+
+        @Test
+        void shouldPauseSubscriptionWhenPermitsDropToZero() {
+            // Given - a worker that advertised capacity, so its subscription is resumed
+            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+            dispatcher.registerWorker(context);
+            dispatcher.onPermitsReceived(context, 5);
+            MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
+            assertThat(subscriber.isPaused.get()).isFalse();
+
+            // When - the worker drains itself to zero (maintenance / cordon, or a full queue)
+            dispatcher.onPermitsReceived(context, 0);
+
+            // Then - the subscription is paused so the controller stops dispatching to it
+            assertThat(context.getAvailablePermits()).isZero();
+            assertThat(subscriber.isPaused.get()).isTrue();
+        }
     }
 
     @Nested

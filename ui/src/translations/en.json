@@ -75,6 +75,10 @@
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "review your inputs": "Review your inputs",
     "edit flow": "Edit flow",
     "executions": "Executions",
     "execution": "Execution",
@@ -278,6 +282,7 @@
     "reuse original inputs": "Reuse original inputs",
     "modify inputs": "Modify inputs",
     "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
+    "replay select taskrun": "Select the task run to replay from:",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
@@ -292,6 +297,9 @@
     "resumed title": "Resume execution <code>{id}</code>",
     "resumed confirm": "Are you sure you want to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
+    "resume from breakpoint title": "Resume execution <code>{id}</code> from breakpoint",
+    "resume from breakpoint done": "Execution is resumed from breakpoint",
+    "breakpoints": "Breakpoints",
     "pause": "Pause",
     "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be processed, and the execution will have to be resumed manually.",
     "pause confirm": "Are you sure you want to pause execution <code>{id}</code>?",
@@ -309,6 +317,8 @@
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
+    "no metrics available": "No metrics recorded for this task run.",
+    "no outputs available": "No outputs available for this task run.",
     "outputs": "Outputs",
     "flow_outputs": "Flow Outputs",
     "no_flow_outputs": "No outputs available.",
@@ -395,11 +405,12 @@
       "n_items": "[ {count} items ]"
     },
     "file_preview": {
-        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-        "load_anyway": "Load anyway"
+      "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "load_anyway": "Load anyway"
     },
     "no_variables": "No variables available.",
     "download": "Download",
+    "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
@@ -430,6 +441,12 @@
         "category": "Category type",
         "links": "Link & Resources",
         "openInEditor": "Open in Edit Flow"
+      },
+      "missingPlugins": {
+        "title": "Missing plugins",
+        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
+        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "install": "Install plugins"
       }
     },
     "use": "Use",
@@ -525,7 +542,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-       "404": {
+      "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -813,9 +830,14 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
+      "new_file": "New File",
       "no_items": {
         "heading": "No files found in your namespace yet.",
         "paragraph": "Create or import files to share code across flows in your namespace."
+      },
+      "no_selection": {
+        "heading": "No Files Selected",
+        "description": "Select a file from the tree to view its content."
       },
       "tree": {
         "expand": "Expand all folders",
@@ -1020,21 +1042,22 @@
         "theme": {
           "label": "Appearance",
           "fields": {
-            "theme": "Theme",
-            "color_mode": "Color mode",
-            "editor_font_size": "Editor Font Size",
-            "logs_font_size": "Logs Font Size",
-            "editor_font_family": "Editor Font Family",
-            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
-            "editor_hover_description": "Hover on property to see description",
-            "environment_name": "Environment Name",
-            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
-            "environment_color": "Environment Color",
+            "app_font_size": "App Font Size",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
               "classic": "Classic",
               "kestra": "Kestra"
-            }
+            },
+            "color_mode": "Color mode",
+            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
+            "editor_font_family": "Editor Font Family",
+            "editor_font_size": "Editor Font Size",
+            "editor_hover_description": "Hover on property to see description",
+            "environment_color": "Environment Color",
+            "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
+            "logs_font_size": "Logs Font Size",
+            "theme": "Theme"
           },
           "color_modes": {
             "dark_2": "Dark 2.0",
@@ -1047,13 +1070,20 @@
           },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
-            "environment_color": "Accent color used for the current environment in the navigation."
+            "environment_color": "Accent color used for the current environment in the navigation.",
+            "app_font_size": "Scale factor applied to all interface font sizes."
+          },
+          "app_font_size_options": {
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large"
           }
         },
         "localization": {
@@ -1139,6 +1169,10 @@
       "audit-logs": {
         "title": "Track Changes with Audit Logs",
         "message": "Kestra Enterprise Edition logs every activity with robust, immutable records, making it easy to track changes, maintain compliance, and troubleshoot issues."
+      },
+      "quotas": {
+        "title": "Enforce Execution Quotas on Flows",
+        "message": "Kestra Enterprise Edition lets you define quotas on flows to limit the number of concurrent or total executions within a time window. Quotas help you protect shared infrastructure, enforce SLAs, and prevent runaway workflows from consuming excessive resources."
       },
       "instance": {
         "title": "Manage Infrastructure Across Your Instance",
@@ -1311,6 +1345,7 @@
     },
     "enable concurrency": "Enable concurrency",
     "auditlogs": "Audit Logs",
+    "quotas": "Quotas",
     "iam": "IAM",
     "tenant": {
       "name": "Tenant",
@@ -1478,7 +1513,7 @@
     "remove_bookmark": "Are you sure you want to remove this bookmark?",
     "showLess": "Show less",
     "showMore": "Show more",
-    "documentationMenu": "Documentation menu",
+    "documentationMenu": "Docs menu",
     "item": "item",
     "items": "items",
     "cron": "Cron",
@@ -1708,6 +1743,10 @@
     "dataFilters": "Data Filters",
     "logExporters": "Log Exporters",
     "empty": {
+      "namespaceFiles": {
+        "title": "No files in this namespace yet",
+        "content": "Namespace Files work like a project folder for this namespace. Store Python, SQL, dbt or Terraform code, then reference any file in your flows with"
+      },
       "announcements": {
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
@@ -1747,6 +1786,10 @@
       "pluginDefaults": {
         "title": "You have no plugin defaults yet!",
         "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
+      },
+      "variables": {
+        "title": "No variables yet",
+        "content": "Add key-value pairs to share configuration across flows. Child namespaces inherit them automatically, and you can reference any value with"
       },
       "workerRegistrationTokens": {
         "title": "You have no registration tokens yet!",
@@ -1842,6 +1885,10 @@
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
+      "no_description": "No description",
+      "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
+      "others": "Others",
+      "viewAll": "View all",
       "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export to CSV",
       "quick_filters": {
@@ -1855,8 +1902,7 @@
     },
     "setup": {
       "login": "Login",
-      "login_title": "Sign in",
-      "login_subtitle": "Enter your credentials to access your Kestra instance",
+      "login_title": "Sign in to Kestra",
       "logout": "Logout",
       "troubleshooting": "Trouble signing in?",
       "steps": {
@@ -1891,6 +1937,7 @@
         "firstName_required": "First name required",
         "lastName_required": "Last name required",
         "password_invalid": "Invalid password",
+        "password_required": "Password is required",
         "incorrect_creds": "Invalid username or password. Make sure your credentials are correct.",
         "config_message": "Make sure to update your configuration to fix this error message"
       },
@@ -2138,10 +2185,14 @@
       }
     },
     "mcp": {
+      "your_servers": "Your Servers",
+      "servers_count": "{count} MCP Servers",
+      "managed_by_kestra": "Managed by Kestra",
       "servers": "MCP Servers",
       "server": "MCP Server",
+      "client_setup": "Client setup",
       "page_description": "Expose your Kestra flows as tools for MCP-compatible AI agents",
-      "create": "Create Server",
+      "create": "Create a Server",
       "save": "Save Changes",
       "connect": "Connect",
       "copy_url": "Copy URL",
@@ -2150,7 +2201,9 @@
       "server_type": "Server Type",
       "auth_type": "Authentication",
       "private": "Private",
+      "private_server": "Private server",
       "public": "Public",
+      "public_hint": "Warning: Public servers require no authentication. Anyone with the URL can call every tool exposed by this server, with no namespace or permission checks. Use only for servers safe to expose externally.",
       "basic_auth": "Basic Auth",
       "api_token": "API Token",
       "oauth": "OAuth",
@@ -2166,6 +2219,7 @@
       "no_oauth_providers": "No OIDC providers configured in this instance",
       "delete_confirm": "Are you sure you want to delete this MCP server?",
       "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
+      "server_id": "Servers ID",
       "id_placeholder": "e.g. my-mcp-server",
       "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
       "main_tenant": "main",
@@ -2235,6 +2289,9 @@
       "open_flow": "Open flow",
       "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source"
-    }
+    },
+    "open source": "Open Source",
+    "pricing": "Pricing",
+    "license": "License"
   }
 }

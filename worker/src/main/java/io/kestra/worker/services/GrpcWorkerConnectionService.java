@@ -12,6 +12,7 @@ import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.serializers.JacksonMapper;
@@ -61,6 +62,7 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
         ConnectRequest request = ConnectRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerId))
+            .setWorkerNumThreads(KestraContext.getContext().getWorkerMaxNumThreads().orElse(0))
             .build();
 
         try {

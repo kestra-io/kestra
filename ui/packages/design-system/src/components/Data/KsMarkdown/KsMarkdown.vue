@@ -485,7 +485,6 @@
         }
 
         p {
-            margin: 0.75rem 0;
             &:first-child { margin-top: 0; }
             &:last-child { margin-bottom: 0; }
         }

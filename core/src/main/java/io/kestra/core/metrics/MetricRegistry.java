@@ -144,6 +144,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION = "SLA monitor loop duration inside the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION = "executor.loop.delay.duration";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION = "Execution delay loop duration inside the Executor";
+    public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT = "executor.quota.exceeded.total";
+    public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION = "The total number of exceeded quotas evaluated by the Executor";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
@@ -181,6 +183,11 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT = "scheduler.assigned.vnodes.count";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION = "The number of virtual nodes assigned to the scheduler";
 
+    public static final String METRIC_MAINTENANCE_ENTER_COUNT = "server.maintenance.enter.count";
+    public static final String METRIC_MAINTENANCE_ENTER_COUNT_DESCRIPTION = "The total number of times maintenance mode was entered";
+    public static final String METRIC_MAINTENANCE_EXIT_COUNT = "server.maintenance.exit.count";
+    public static final String METRIC_MAINTENANCE_EXIT_COUNT_DESCRIPTION = "The total number of times maintenance mode was exited";
+
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
     public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";
 
@@ -200,6 +207,10 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL_DESCRIPTION = "The total number of queue subscribers pause operations";
     public static final String METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL = "queue.subscribers.resumed.total";
     public static final String METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL_DESCRIPTION = "The total number of queue subscribers resume operations";
+    public static final String METRIC_SSE_CONNECTIONS_ACTIVE = "sse.connections.active";
+    public static final String METRIC_SSE_CONNECTIONS_ACTIVE_DESCRIPTION = "Number of currently-open Server-Sent Events (SSE) follow connections";
+    public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL = "sse.connections.opened.total";
+    public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL_DESCRIPTION = "The total number of Server-Sent Events (SSE) follow connections opened";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -210,6 +221,7 @@ public class MetricRegistry {
     public static final String TAG_WORKER_GROUP = "worker_group";
     public static final String TAG_WORKER_QUEUE = "worker_queue";
     public static final String TAG_QUEUE_NAME = "queue_name";
+    public static final String TAG_SSE_TYPE = "sse_type";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";

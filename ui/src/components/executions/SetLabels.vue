@@ -182,6 +182,7 @@
             align-items: center;
             justify-content: space-between;
             padding: var(--ks-spacing-5) var(--ks-spacing-4);
+            padding-bottom: 0;
         }
 
         &__title {

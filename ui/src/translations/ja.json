@@ -78,6 +78,7 @@
     "automatic refresh": "自動更新",
     "avg": "平均",
     "avg duration": "平均実行時間",
+    "back": "戻る",
     "back_to_dashboard": "ダッシュボードに戻る",
     "backfill": "Backfill",
     "backfill executions": "backfill実行",
@@ -87,6 +88,12 @@
     "before": "前",
     "behavior": "動作",
     "blueprints": {
+      "missingPlugins": {
+        "title": "不足しているplugin",
+        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
+        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "install": "pluginをインストール"
+      },
       "all": "すべて",
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",
@@ -112,6 +119,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "ブックマーク",
+    "breakpoints": "ブレークポイント",
     "bulk action async warning": "少々お待ちください。",
     "bulk actions": "一括操作",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
@@ -261,6 +269,9 @@
         "plural": "ダッシュボード",
         "singular": "ダッシュボード"
       },
+      "no_description": "説明なし",
+      "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
+      "others": "その他",
       "preview": "プレビュー ダッシュボード",
       "quick_filters": {
         "all": "すべて",
@@ -270,7 +281,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "ダッシュボードを切り替える"
+      "switch": "ダッシュボードを切り替える",
+      "viewAll": "すべて表示"
     },
     "data": "データ",
     "dataFilters": "データフィルター",
@@ -415,6 +427,10 @@
           "title": "変数を中央で管理する"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Editionでは、フローにクォータを定義して、時間枠内の同時実行数または総実行数を制限できます。クォータは、共有インフラストラクチャの保護、SLAの適用、および過剰なリソースを消費する暴走ワークフローの防止に役立ちます。",
+        "title": "フローの実行クォータを設定する"
+      },
       "secrets": {
         "add_env": {
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
@@ -490,6 +506,7 @@
       "github": "GitHub issueを開く"
     },
     "documentationMenu": "ドキュメントメニュー",
+    "done": "完了",
     "down trend": "減少",
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
@@ -586,6 +603,10 @@
         "content": "<code>McpToolTrigger</code>を追加して、flowをMCPツールとして公開します。<strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このサーバーにはまだツールflowが登録されていません。"
       },
+      "namespaceFiles": {
+        "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます",
+        "title": "このnamespaceにはまだファイルがありません"
+      },
       "panels": {
         "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。",
         "title": "パネルが開いていません"
@@ -605,6 +626,10 @@
       "triggers": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
+      },
+      "variables": {
+        "content": "フロー間で設定を共有するためにkv storeにkey-valueペアを追加します。子namespaceはそれらを自動的に継承し、任意のvalueを参照することができます。",
+        "title": "変数はまだありません"
       },
       "versionPlugin": {
         "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
@@ -905,6 +930,7 @@
     "items": "アイテム",
     "join community": "コミュニティに参加",
     "join_slack": "Slackに参加",
+    "jsonl": "JSONL",
     "jump to...": "ジャンプ先...",
     "kestra": "Kestra",
     "key": "Key",
@@ -943,6 +969,7 @@
     "launch execution": "実行",
     "learn_more": "詳細を確認",
     "leave page": "ページを離れる",
+    "license": "ライセンス",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line": "ライン",
@@ -969,6 +996,7 @@
       "auth_type": "認証",
       "basic_auth": "ベーシック認証",
       "bearer_token": "ベアラートークン認証",
+      "client_setup": "クライアント設定",
       "connect": "接続",
       "connect_tab": {
         "auth_api_token_hint": "クライアントを起動する前に<code>KESTRA_TOKEN</code>を環境変数として設定してください。",
@@ -995,6 +1023,7 @@
       "id_placeholder": "例: my-mcp-server",
       "instructions": "指示",
       "main_tenant": "メイン",
+      "managed_by_kestra": "Kestraによって管理されています",
       "no_oauth_providers": "このインスタンスにOIDCプロバイダーが設定されていません",
       "no_servers": "MCPサーバーが見つかりません。最初のサーバーを作成して、MCP Tool triggerを外部AIエージェントに公開してください。",
       "oauth": "OAuth",
@@ -1004,14 +1033,18 @@
       "oauth_provider_required": "認証タイプがOAuthの場合、OAuthプロバイダーは必須です",
       "page_description": "KestraのflowをMCP互換のAIエージェント用ツールとして公開する",
       "private": "プライベート",
+      "private_server": "プライベートサーバー",
       "public": "公開",
+      "public_hint": "警告: 公開サーバーは認証を必要としません。URLを知っている人なら誰でも、namespaceや権限のチェックなしに、このサーバーが公開するすべてのツールを呼び出すことができます。外部に公開しても安全なサーバーでのみ使用してください。",
       "save": "変更を保存",
       "scopes_supported": "サポートされているscope",
       "scopes_supported_hint": "このサーバーのProtected Resource Metadataドキュメントに記載されたscope。仕様準拠のMCPクライアントは認可リクエストをこのリストに制限します。フィールドを省略してクライアントがIdPの公開scopeにフォールバックできるよう空のままにしてください。",
       "scopes_supported_placeholder": "openid, profile, email",
       "server": "MCPサーバー",
+      "server_id": "サーバー ID",
       "server_type": "サーバータイプ",
       "servers": "MCPサーバー",
+      "servers_count": "{{count}} MCPサーバー",
       "tab_connect": "接続",
       "tab_edit": "編集",
       "tab_tool_flows": "ツールフローズ",
@@ -1034,7 +1067,8 @@
         "view_flow": "flowを開く"
       },
       "url_copied": "URLをコピーしました！",
-      "username_password": "ユーザー名 & パスワード"
+      "username_password": "ユーザー名 & パスワード",
+      "your_servers": "あなたのサーバー"
     },
     "metric": "メトリック",
     "metric choice": "このflowには利用可能なメトリクスがありません",
@@ -1101,9 +1135,14 @@
         "import": "インポート",
         "success": "ファイルが正常にインポートされました"
       },
+      "new_file": "新規ファイル",
       "no_items": {
         "heading": "まだnamespaceにファイルが見つかりません。",
         "paragraph": "フロー間でコードを共有するためにファイルを作成またはインポートします。"
+      },
+      "no_selection": {
+        "description": "ツリーからファイルを選択して内容を表示します。",
+        "heading": "ファイルが選択されていません"
       },
       "path": {
         "copy": "パスをコピー",
@@ -1150,12 +1189,15 @@
     "neutral trend": "安定",
     "new": "新規",
     "new version": "新しいバージョン{version}が利用可能です！",
+    "next": "次へ",
     "next evaluation date": "次の評価日",
     "next evaluation date tooltip": "トリガーが次に評価されるタイミングは、その間隔に基づきます。条件が満たされない場合、次の実行日と常に同じとは限りません。",
     "next execution date": "次の実行日",
     "next_execution": "次回の実行",
     "no data current task": "現在のタスクに利用可能なデータがありません。",
     "no inputs": "このflowにはinputがありません。",
+    "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
+    "no outputs available": "このタスク実行には利用可能なoutputがありません。",
     "no result": "表示する結果がありません。",
     "no revisions": "リビジョンなし",
     "no revisions found": "このFlowには1つのリビジョンしか存在しません",
@@ -1403,6 +1445,7 @@
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
     "open sidebar": "サイドバーを開く",
+    "open source": "オープンソース",
     "open_page": "Open page",
     "optional": "オプション",
     "original execution": "元の実行",
@@ -1554,6 +1597,7 @@
       "showing_rows": "{total}のうち{start}から{end}の行を表示中",
       "view": "表示"
     },
+    "pricing": "料金",
     "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",
@@ -1562,6 +1606,7 @@
       "shown": "表に表示"
     },
     "queued duration": "キュー待ち期間",
+    "quotas": "クォータ",
     "reach us": "お問い合わせ",
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
@@ -1583,6 +1628,7 @@
     "replay inputs": "入力",
     "replay inputs new required": "このリビジョンにはinputがあります。入力を求められます。",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
+    "replay select taskrun": "再生するタスク実行を選択してください:",
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "replay using": "を使用してリプレイ",
     "replay with inputs": "入力を使用してリプレイ",
@@ -1605,11 +1651,14 @@
     "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "restore revision": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
     "resume": "再開",
+    "resume from breakpoint done": "ブレークポイントから実行が再開されました",
+    "resume from breakpoint title": "ブレークポイントから実行 <code>{id}</code> を再開します",
     "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resumed title": "実行<code>{id}</code>を再開",
     "reuse original inputs": "元のinputを再利用",
     "reuse_original_inputs": "元のinputを再利用",
+    "review your inputs": "入力内容を確認してください",
     "revision": "リビジョン",
     "revision deleted": "リビジョン{revision}が正常に削除されました",
     "revisions": "リビジョン",
@@ -1750,6 +1799,11 @@
           "label": "サイドバー"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "ダーク 1.0",
             "dark_2": "ダーク 2.0",
@@ -1760,7 +1814,9 @@
             "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。",
             "color_mode": "お好みのインターフェーステーマを選択してください。",
+            "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
             "editor_font_family": "YAMLエディタで使用される等幅フォント。",
             "editor_font_size": "YAMLおよびノーコードエディタで使用されるフォントサイズ。",
@@ -1770,6 +1826,7 @@
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
           },
           "fields": {
+            "app_font_size": "アプリのフォントサイズ",
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",
@@ -1815,7 +1872,6 @@
         "username_hint": "有効なメールアドレスである必要があります。"
       },
       "login": "ログイン",
-      "login_subtitle": "Kestraインスタンスにアクセスするための認証情報を入力してください",
       "login_title": "サインイン",
       "logout": "ログアウト",
       "steps": {
@@ -1866,7 +1922,8 @@
         "firstName_required": "名が必要です",
         "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
-        "password_invalid": "無効なパスワード"
+        "password_invalid": "無効なパスワード",
+        "password_required": "パスワードは必須です"
       }
     },
     "show": "表示",

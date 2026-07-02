@@ -3,6 +3,7 @@ package io.kestra.executor.handler;
 import java.util.List;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
@@ -17,6 +18,16 @@ final class Fixtures {
             .namespace("namespace")
             .id(IdUtils.create())
             .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello World").build()))
+            .build();
+    }
+
+    static Flow flowWithQuotas(Quota quota) {
+        return Flow.builder()
+            .tenantId("tenant")
+            .namespace("namespace")
+            .id(IdUtils.create())
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello World").build()))
+            .quotas(List.of(quota))
             .build();
     }
 }

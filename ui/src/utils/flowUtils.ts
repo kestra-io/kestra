@@ -32,3 +32,16 @@ export function findTaskById(flow: unknown, taskId: string): {type?: string; id?
 
     return result.length > 0 ? result[0] : undefined
 }
+
+export function getAllTaskIds(flow: any): string[] {
+    if (!flow) return []
+    const result: any[] = []
+    if (flow.tasks) {
+        loopOver(flow.tasks, (value) => value instanceof Object && value.type !== undefined && value.id !== undefined, result)
+    }
+    if (flow.errors) {
+        loopOver(flow.errors, (value) => value instanceof Object && value.type !== undefined && value.id !== undefined, result)
+    }
+    return [...new Set(result.map(t => t.id))]
+}
+

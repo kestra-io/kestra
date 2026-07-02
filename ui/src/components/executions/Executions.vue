@@ -53,16 +53,6 @@
             :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
-                <QuickFilters
-                    v-if="!hasComplexFilters"
-                    :states="quickStates"
-                    :state="selectedStates"
-                    :stateLabel="t('filter.state.label')"
-                    :showInterval="false"
-                    :showLevel="false"
-                    :showState="true"
-                    @update:state="onQuickFilterState"
-                />
                 <KSFilter
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
@@ -92,7 +82,7 @@
                 <KsButton v-if="canUpdate" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
                     {{ $t("restart") }}
                 </KsButton>
-                <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                <KsButton v-if="canReplay" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
                 </KsButton>
                 <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
@@ -466,13 +456,10 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
-    import {useQuickStateFilter} from "../filter/composables/useQuickStateFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
-    import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
-    const {quickStates, selectedStates, onQuickFilterState, hasComplexFilters} = useQuickStateFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -700,8 +687,8 @@
         return canDelete.value || canUpdate.value || canKill.value
     })
 
-    const canCreate = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.namespace)
+    const canReplay = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.namespace)
     })
 
     const canUpdate = computed(() => {
@@ -721,7 +708,7 @@
     })
 
     const hasAnyExecute = computed(() => {
-        return authStore.user?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.CREATE)
+        return authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.EXECUTE)
     })
 
     const isDisplayedTop = computed(() => {

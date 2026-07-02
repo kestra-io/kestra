@@ -30,7 +30,7 @@
                                 :tooltip="$t('dashboards.export')"
                             >
                                 <KsButton
-                                    @click="dashboardStore.export(dashboard, chart, {filters})"
+                                    @click="exportChart(chart)"
                                     :icon="Download"
                                     link
                                     class="ms-2"
@@ -81,6 +81,8 @@
     import {useRoute} from "vue-router"
     const route = useRoute()
 
+    import {decodeSearchParams} from "@kestra-io/design-system"
+
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
 
@@ -124,6 +126,12 @@
 
         return baseFilters
     })
+
+    function exportChart(chart: Chart) {
+        dashboardStore.export(props.dashboard, chart, {
+            filters: filters.value.concat(decodeSearchParams(route.query) ?? []),
+        })
+    }
 </script>
 
 <style scoped lang="scss">

@@ -14,15 +14,9 @@ const mockIcons = {
     "io.kestra.plugin.core.flow.Parallel": {icon: mockIconBase64, flowable: true},
 }
 
-function pool() {
-    return document.getElementById("ks-task-icon-pool")
-}
-
 beforeEach(() => {
     // Reset HTML class to light mode before each test
     document.documentElement.className = ""
-    // the icon pool is module-scoped (shared across every instance) — reset it between tests
-    pool()?.remove()
 })
 
 describe("KsTaskIcon", () => {
@@ -41,7 +35,6 @@ describe("KsTaskIcon", () => {
         })
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.attributes("style") ?? "").not.toContain("background-image")
-        // the actual shape markup is directly inline, not hidden behind a <use> reference
         expect(icon.find("svg > circle").exists()).toBe(true)
     })
 
@@ -158,13 +151,18 @@ describe("KsTaskIcon", () => {
         expect(loadIcon).not.toHaveBeenCalled()
     })
 
-    test("hoists <defs> into a shared pool once, while keeping the visible shape inline per instance", () => {
+    test("keeps defs fully inline per instance so currentColor/theme context stays correct", () => {
+        // a <defs> shared out-of-context would ignore each instance's own color: verified this
+        // breaks in a real browser (a shared <stop stop-color="currentColor"> renders the same
+        // wrong color everywhere, ignoring each instance's `variable`/theme). Every instance must
+        // therefore keep its own private copy of its icon's defs.
         const gradientSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
-            "<defs><linearGradient id=\"grad\"/></defs><circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
+            "<defs><linearGradient id=\"grad\"><stop stop-color=\"currentColor\"/></linearGradient></defs>" +
+            "<circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
         const icons = {"io.kestra.plugin.core.log.Log": {icon: btoa(gradientSvg), flowable: false}}
 
         const wrapperA = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true, variable: "--ks-text-error"},
             global: globalConfig,
         })
         const wrapperB = mount(KsTaskIcon, {
@@ -172,75 +170,42 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
 
-        // the gradient definition is not duplicated into every instance...
-        expect(wrapperA.find("linearGradient").exists()).toBe(false)
-        expect(pool()?.querySelectorAll("linearGradient").length).toBe(1)
+        // each instance owns its own <linearGradient> — not a single shared/pooled node
+        const gradientA = wrapperA.find("linearGradient")
+        const gradientB = wrapperB.find("linearGradient")
+        expect(gradientA.exists()).toBe(true)
+        expect(gradientB.exists()).toBe(true)
+        expect(gradientA.element).not.toBe(gradientB.element)
 
-        // ...but the visible shape is still directly inline and readable in each instance
-        const circleA = wrapperA.find("circle")
-        const circleB = wrapperB.find("circle")
-        expect(circleA.exists()).toBe(true)
-        expect(circleB.exists()).toBe(true)
-
-        const gradientId = pool()?.querySelector("linearGradient")?.getAttribute("id")
-        expect(circleA.attributes("fill")).toBe(`url(#${gradientId})`)
-        expect(circleB.attributes("fill")).toBe(`url(#${gradientId})`)
+        // ...uniquely namespaced per instance, so their ids don't collide with each other
+        expect(gradientA.attributes("id")).not.toBe(gradientB.attributes("id"))
+        expect(wrapperA.find("circle").attributes("fill")).toBe(`url(#${gradientA.attributes("id")})`)
+        expect(wrapperB.find("circle").attributes("fill")).toBe(`url(#${gradientB.attributes("id")})`)
     })
 
-    test("namespaces ids by icon type so two different icons sharing an internal id don't collide", () => {
-        const gradientSvg = (color1: string, color2: string) =>
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
-            `<defs><linearGradient id="grad"><stop offset="0" stop-color="${color1}"/><stop offset="1" stop-color="${color2}"/></linearGradient></defs>` +
-            "<circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
-
-        const iconsA = {"io.kestra.plugin.core.log.Log": {icon: btoa(gradientSvg("red", "yellow")), flowable: false}}
-        const iconsB = {"io.kestra.plugin.core.flow.Parallel": {icon: btoa(gradientSvg("blue", "lime")), flowable: false}}
-
-        const wrapperA = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.log.Log", icons: iconsA, onlyIcon: true},
-            global: globalConfig,
-        })
-        const wrapperB = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.flow.Parallel", icons: iconsB, onlyIcon: true},
-            global: globalConfig,
-        })
-
-        const gradientIdA = wrapperA.find("circle").attributes("fill")?.match(/url\(#(.+)\)/)?.[1]
-        const gradientIdB = wrapperB.find("circle").attributes("fill")?.match(/url\(#(.+)\)/)?.[1]
-
-        expect(gradientIdA).not.toBe(gradientIdB)
-        expect(pool()?.querySelector(`#${gradientIdA}`)?.querySelector("stop")?.getAttribute("stop-color")).toBe("red")
-        expect(pool()?.querySelector(`#${gradientIdB}`)?.querySelector("stop")?.getAttribute("stop-color")).toBe("blue")
-    })
-
-    test("namespaces css classes so generic tool-exported class names (st0, cls-1, ...) don't collide", () => {
+    test("namespaces css classes per instance so generic tool-exported class names (st0, cls-1, ...) don't collide", () => {
         // mirrors real Illustrator/Figma-exported icons: a <style> block styling elements via a
         // generic class name, reused verbatim across unrelated icons
-        const classStyledSvg = (color: string) =>
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
-            `<style>.st0{fill:${color};}</style><circle class="st0" cx="12" cy="12" r="10"/></svg>`
-
-        const iconsA = {"io.kestra.plugin.core.log.Log": {icon: btoa(classStyledSvg("red")), flowable: false}}
-        const iconsB = {"io.kestra.plugin.core.flow.Parallel": {icon: btoa(classStyledSvg("blue")), flowable: false}}
+        const classStyledSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            "<style>.st0{fill:currentColor;}</style><circle class=\"st0\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
+        const icons = {"io.kestra.plugin.core.log.Log": {icon: btoa(classStyledSvg), flowable: false}}
 
         const wrapperA = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.log.Log", icons: iconsA, onlyIcon: true},
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
             global: globalConfig,
         })
         const wrapperB = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.flow.Parallel", icons: iconsB, onlyIcon: true},
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
             global: globalConfig,
         })
 
         const classA = wrapperA.find("circle").attributes("class")
         const classB = wrapperB.find("circle").attributes("class")
-
         expect(classA).not.toBe(classB)
 
-        // each icon's <style> block is hoisted into its own <g data-icon> group in the pool
-        const styleText = pool()?.innerHTML ?? ""
-        expect(styleText).toContain(`.${classA}{fill:red;}`)
-        expect(styleText).toContain(`.${classB}{fill:blue;}`)
+        // each instance's own <style> block matches its own (differently namespaced) class
+        expect(wrapperA.find("style").text()).toContain(`.${classA}{fill:currentColor;}`)
+        expect(wrapperB.find("style").text()).toContain(`.${classB}{fill:currentColor;}`)
     })
 
     test("strips event handler attributes from untrusted svg content", () => {

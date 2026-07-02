@@ -25,13 +25,14 @@
 </template>
 
 <script lang="ts">
-    // <defs>/<symbol>/<style> only matter through an id or class reference — they never render in
-    // place — so they're hoisted once into a shared, hidden pool keyed by icon content, instead of
-    // being re-declared in every instance. The actual visible shapes (paths, groups, ...) stay
-    // inline per instance, exactly as authored, so the rendered markup is still directly readable
-    // in the DOM rather than hidden behind a <use>-cloned shadow tree.
-    const POOL_ID = "ks-task-icon-pool"
-    const FALLBACK_KEY = "fallback"
+    // Icons are rendered fully inline, per instance — no shared/pooled defs. A shared pool was
+    // tried, but <defs>/<symbol>/<style> content commonly depends on the *current* CSS context
+    // (currentColor, custom properties) to render — a <linearGradient> stop using
+    // stop-color="currentColor" resolves against whatever element it physically lives under, so a
+    // gradient shared in an off-screen pool ignores every instance's own `variable`/theme color and
+    // renders identically (and wrongly) everywhere. Keeping each icon's defs inside its own
+    // instance's subtree is what makes per-instance recoloring correct.
+    let instanceSeq = 0
 
     export interface KsTaskIconData {
         icon: string;
@@ -41,29 +42,14 @@
     const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\">" +
         "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/></svg>"
 
-    function getPool(): Element {
-        const existing = document.getElementById(POOL_ID)
-        if (existing) {
-            return existing
-        }
-
-        const pool = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        pool.setAttribute("id", POOL_ID)
-        pool.setAttribute("aria-hidden", "true")
-        pool.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden")
-        document.body.prepend(pool)
-        return pool
-    }
-
-    // Non-cryptographic string hash (FNV-1a-ish) — good enough to key a bounded, first-party set of
-    // plugin icons, not to defend against adversarial collisions. Prefixed with a letter because a
-    // CSS id selector ("#123abc") is invalid when it starts with a digit.
+    // Non-cryptographic string hash (FNV-1a-ish) — used only to key the sanitized-markup cache
+    // below, not for uniqueness guarantees.
     function hashKey(value: string): string {
         let hash = 0
         for (let i = 0; i < value.length; i++) {
             hash = (Math.imul(31, hash) + value.charCodeAt(i)) | 0
         }
-        return `kti-${(hash >>> 0).toString(36)}`
+        return (hash >>> 0).toString(36)
     }
 
     /**
@@ -101,13 +87,8 @@
      * Namespaces every `id` (and its `url(#id)` / `href="#id"` references) plus every CSS `class`
      * (and its `.class` selectors) to `key`, so gradients, clip-paths, `<use>` targets and — just as
      * important — generic tool-exported class names (Illustrator's "st0", Figma's "cls-1", reused
-     * across dozens of unrelated icons) don't collide once several icons' ids/styles live in the
-     * same document. Namespaced by icon (type), not by render instance — every instance of the same
-     * icon reuses the same pooled defs.
-     *
-     * `classNames` must be collected from the *whole* icon up front (see collectClassNames): a
-     * `<style>` block only ever contains `.class` selectors, never a `class="..."` attribute, so
-     * namespacing it in isolation would never discover which class names to rename.
+     * across dozens of unrelated icons) don't collide once several instances are inlined on the same
+     * page. Namespaced per render instance, since each instance keeps its own private copy.
      */
     function namespace(svg: string, key: string, classNames: Set<string>): string {
         let out = svg.replace(/\bid="([^"]+)"|url\(#([^)]+)\)|href="#([^"]+)"/g, (match, id, urlRef, hrefRef) => {
@@ -137,21 +118,15 @@
         return width > 0 && height > 0 ? `0 0 ${width} ${height}` : undefined
     }
 
-    interface ProcessedIcon {
-        viewBox?: string;
-        body: string;
-    }
+    // Parsing/sanitizing is the expensive part and gives the same result for the same icon
+    // regardless of which instance asks for it, so it's cached; namespacing is cheap (plain regex)
+    // and runs per instance since its result must NOT be shared (see note above).
+    const sanitizedCache = new Map<string, string>()
 
-    const processedIcons = new Map<string, ProcessedIcon>()
-
-    /**
-     * Hoists this icon's <defs>/<symbol>/<style> elements into the shared pool (once per distinct
-     * icon) and returns the remaining, still fully inline, visible markup to render per instance.
-     */
-    function ensureProcessed(rawIcon: string | undefined): ProcessedIcon {
-        const key = rawIcon ? hashKey(rawIcon) : FALLBACK_KEY
-        const cached = processedIcons.get(key)
-        if (cached) {
+    function sanitizedMarkup(rawIcon: string | undefined): string {
+        const key = rawIcon ? hashKey(rawIcon) : "fallback"
+        const cached = sanitizedCache.get(key)
+        if (cached !== undefined) {
             return cached
         }
 
@@ -159,28 +134,22 @@
         const doc = new DOMParser().parseFromString(raw, "image/svg+xml")
 
         if (!sanitize(doc)) {
-            const fallback = rawIcon ? ensureProcessed(undefined) : {body: ""}
-            processedIcons.set(key, fallback)
+            const fallback = rawIcon ? sanitizedMarkup(undefined) : FALLBACK_SVG
+            sanitizedCache.set(key, fallback)
             return fallback
         }
 
         const svg = doc.documentElement as unknown as SVGSVGElement
         const viewBox = toViewBox(svg)
-        const classNames = collectClassNames(svg.innerHTML)
+        if (viewBox) svg.setAttribute("viewBox", viewBox)
+        svg.setAttribute("width", "100%")
+        svg.setAttribute("height", "100%")
+        svg.setAttribute("focusable", "false")
+        svg.setAttribute("aria-hidden", "true")
 
-        const definitions = [...svg.querySelectorAll("defs, symbol, style")]
-        if (definitions.length > 0) {
-            const pool = getPool()
-            if (!pool.querySelector(`[data-icon="${key}"]`)) {
-                const markup = definitions.map(el => el.outerHTML).join("")
-                pool.insertAdjacentHTML("beforeend", `<g data-icon="${key}">${namespace(markup, key, classNames)}</g>`)
-            }
-            definitions.forEach(el => el.remove())
-        }
-
-        const processed: ProcessedIcon = {viewBox, body: namespace(svg.innerHTML, key, classNames)}
-        processedIcons.set(key, processed)
-        return processed
+        const markup = svg.outerHTML
+        sanitizedCache.set(key, markup)
+        return markup
     }
 </script>
 
@@ -193,6 +162,8 @@
     })
 
     type IconData = KsTaskIconData
+
+    const instanceUid = `kti${instanceSeq++}`
 
     const props = defineProps<{
         customIcon?: {icon: string};
@@ -252,9 +223,8 @@
     }))
 
     const svgMarkup = computed(() => {
-        const {viewBox, body} = ensureProcessed(icon.value?.icon)
-        const viewBoxAttr = viewBox ? ` viewBox="${viewBox}"` : ""
-        return `<svg width="100%" height="100%" focusable="false" aria-hidden="true"${viewBoxAttr}>${body}</svg>`
+        const markup = sanitizedMarkup(icon.value?.icon)
+        return namespace(markup, instanceUid, collectClassNames(markup))
     })
 </script>
 

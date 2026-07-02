@@ -5,20 +5,13 @@ metadata:
   name: "{{ include "kestra.fullname" . }}-controller"
   labels:
     {{- include "kestra.labels" . | nindent 4 }}
-    {{- with .Values.service.labels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  {{- with .Values.service.annotations }}
-  annotations:
-  {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   type: ClusterIP
   ports:
     - name: grpc
-      port: 50051
-      targetPort: 50051
-      protocol: TCP
+      port: {{ .Values.service.ports.grpc.port }}
+      targetPort: {{ .Values.service.ports.grpc.targetPort }}
+      protocol: {{ .Values.service.ports.grpc.protocol | default "TCP" }}
   selector:
     {{- include "kestra.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: controller

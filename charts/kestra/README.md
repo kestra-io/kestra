@@ -269,7 +269,7 @@ kestra:
 ### Upgrade prerequisite
 
 Instances must be on **>= 1.0.0** before upgrading to 2.0. The 2.0 startup migration drops the old
-JDBC queue tables — this is irreversible. Back up your database before upgrading."
+JDBC queue tables — this is irreversible. Back up your database before upgrading.
 
 ## Values
 

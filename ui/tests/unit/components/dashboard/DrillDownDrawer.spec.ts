@@ -100,6 +100,31 @@ describe("DrillDownDrawer", () => {
         expect(store.isOpen).toBe(false)
     })
 
+    test("mode: table — page-changed re-fetches the next page", async () => {
+        const fetchMock = vi.fn().mockResolvedValue({
+            results: [{id: "e1", namespace: "ns", flowId: "f1"}],
+            total: 30,
+        })
+        registerDrillDownPreview("test/drawer-pagination/list", {
+            mode: "table",
+            columns: [{prop: "id", label: "Id"}],
+            fetch: fetchMock,
+            rowDetail: vi.fn(),
+        })
+
+        const wrapper = mountDrawer()
+        useDrillDownStore().open({name: "test/drawer-pagination/list", query: {}, timeFiltered: false})
+        await flushPromises()
+
+        const dataTable = wrapper.findComponent(KsDataTable)
+        expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({page: 1, size: 25}))
+
+        await dataTable.vm.$emit("page-changed", {page: 2, size: 25})
+        await flushPromises()
+
+        expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({page: 2, size: 25}))
+    })
+
     test("mode: logs — renders LogsWrapper with the encoded filters (no size/page)", async () => {
         registerDrillDownPreview("test/drawer-logs/list", {mode: "logs"})
 

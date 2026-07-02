@@ -13,7 +13,11 @@
                 :data="rows"
                 :total="total"
                 :loading="loading"
+                :currentPage="page"
+                :pageSize="size"
                 :loadData="loadData"
+                :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                @page-changed="onPageChanged"
                 @row-dblclick="onRowDblClick"
             >
                 <KsTableColumn
@@ -41,7 +45,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch} from "vue"
+    import {computed, ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import get from "lodash/get"
     import {KsExecutionStatus} from "@kestra-io/design-system"
@@ -65,15 +69,17 @@
     const rows = ref<any[]>([])
     const total = ref(0)
     const loading = ref(false)
+    const page = ref(1)
+    const size = ref(25)
 
-    const loadData = async ({page, size}: {page: number; size: number}) => {
+    const loadData = async ({page: loadPage, size: loadSize}: {page: number; size: number}) => {
         const currentTarget = target.value
         const currentPreview = preview.value
         if (!currentTarget || currentPreview?.mode !== "table") return
 
         loading.value = true
         try {
-            const response = await currentPreview.fetch(buildFullQuery(currentTarget, {page, size}))
+            const response = await currentPreview.fetch(buildFullQuery(currentTarget, {page: loadPage, size: loadSize}))
             rows.value = response.results
             total.value = response.total
         } finally {
@@ -81,13 +87,10 @@
         }
     }
 
-    // The drawer's content is destroyed on close (KsDrawer's destroyOnClose) so re-opening it
-    // for a new target remounts KsDataTable fresh, but if two "table" targets are opened back to
-    // back without the drawer closing in between, local state must be reset explicitly.
-    watch(target, () => {
-        rows.value = []
-        total.value = 0
-    })
+    const onPageChanged = ({page: newPage, size: newSize}: {page: number; size: number}) => {
+        page.value = newPage
+        size.value = newSize
+    }
 
     const onRowDblClick = (row: any) => {
         const currentPreview = preview.value

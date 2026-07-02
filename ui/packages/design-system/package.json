@@ -35,8 +35,6 @@
     "unit:test": "vitest run --config vitest.unit.config.ts",
     "unit:watch": "vitest",
     "storybook:test": "vitest run --config vitest.config.ts --project 'storybook:*'",
-    "storybook:test:shard": "vitest run --config vitest.config.ts --project 'storybook:*' --coverage --coverage.reporter=json",
-    "storybook:test:merge": "node ../../scripts/merge-coverage.mjs coverage coverage/storybook",
     "storybook:build": "storybook build",
     "lint:fix": "oxlint --fix && eslint --fix",
     "lint:test": "oxlint && eslint",

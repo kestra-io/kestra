@@ -19,7 +19,6 @@ loadNodeTypes()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
-import {configureClient} from "@kestra-io/kestra-sdk"
 import {setupKestraAxios} from "./utils/kestraAxios"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
@@ -65,9 +64,8 @@ function setupAxios(router: Router) {
         isLoggedIn: () => !!BasicAuth.isLoggedIn(),
     })
 
-    // Add CSRF token to every request. setupKestraAxios calls configureClient internally,
-    // so once the SDK's configureClient registers the instance for useClient(), all paths
-    // (direct $http usage, generated OpenAPI client) share this same interceptor chain.
+    // Add CSRF token to every request. Do NOT call configureClient({axios}) after this:
+    // it re-registers a fresh instance for useClient() and drops this interceptor (→ 403).
     axiosInstance.interceptors.request.use((config) => {
         const csrfToken = getCsrfToken()
         if (csrfToken) {
@@ -76,10 +74,6 @@ function setupAxios(router: Router) {
         }
         return config
     })
-
-    // Re-bind the generated OpenAPI client so it picks up the CSRF interceptor added above.
-    // This call can be removed once the SDK's configureClient sets axiosInstance itself.
-    configureClient({axios: axiosInstance})
 
     return axiosInstance
 }

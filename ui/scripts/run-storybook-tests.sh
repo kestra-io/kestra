@@ -12,21 +12,23 @@ set -e
 # Coverage (or any other flag this script is called with, e.g. --coverage)
 # does NOT merge across separate `vitest run` processes on its own — each
 # shard would otherwise overwrite the previous one's report. Instead, each
-# shard writes a `--reporter=blob` snapshot (results + coverage) to
+# shard also writes a `--reporter=blob` snapshot (results + coverage) to
 # .vitest-reports/, and a final `--merge-reports` pass combines them into one
 # real report using the reporters configured in vitest.config.js.
+# `--reporter=default` runs alongside blob so each shard still prints its own
+# live pass/fail output — reporters are additive, not exclusive.
 #
-# `--reporter=blob` also suppresses per-test pass/fail output during each
-# shard, so shards are never allowed to fail fast: every shard runs, then the
-# merge step (which produces the actual human-readable report) always runs
-# too, and only then does this script exit non-zero if anything failed.
+# Every shard always runs (none of them fail fast) so the merge step, and
+# therefore the final combined coverage report, always reflects the whole
+# suite even if one shard has a failing test; this script's own exit code
+# reflects whether anything failed along the way.
 SHARD_COUNT=4
 FAILED=0
 
 rm -rf .vitest-reports
 
 for i in $(seq 1 "$SHARD_COUNT"); do
-    vitest run --project=storybook --shard="$i/$SHARD_COUNT" --reporter=blob "$@" || FAILED=1
+    vitest run --project=storybook --shard="$i/$SHARD_COUNT" --reporter=blob --reporter=default "$@" || FAILED=1
 done
 
 vitest run --project=storybook --merge-reports "$@" || FAILED=1

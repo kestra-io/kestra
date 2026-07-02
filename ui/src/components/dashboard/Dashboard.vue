@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" class="filterPadding">
+    <section id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
@@ -191,7 +191,11 @@
 <style scoped lang="scss">
 
 .filterPadding {
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     padding: 0 2rem;
+}
+
+.noMarginTop {
+    margin-top: 0;
 }
 </style>

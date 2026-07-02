@@ -88,12 +88,6 @@
     "before": "przed",
     "behavior": "Zachowanie",
     "blueprints": {
-      "missingPlugins": {
-        "title": "Brakujące pluginy",
-        "description": "Ten blueprint używa tasków z pluginów, które nie są zainstalowane w tej instancji: {plugins}. Zainstaluj je, aby użyć tego blueprintu.",
-        "card": "Wymaga pluginów niezainstalowanych w tej instancji: {plugins}",
-        "install": "Zainstaluj pluginy"
-      },
       "all": "Wszystkie",
       "apps": "Szablony aplikacji",
       "community": "Społeczność",
@@ -114,6 +108,12 @@
           "1": "Pierwszy krok jest zawsze najtrudniejszy.",
           "2": "Eksploruj blueprints, aby rozpocząć swój następny {kind}."
         }
+      },
+      "missingPlugins": {
+        "card": "Wymaga pluginów niezainstalowanych w tej instancji: {plugins}",
+        "description": "Ten blueprint używa tasków z pluginów, które nie są zainstalowane w tej instancji: {plugins}. Zainstaluj je, aby użyć tego blueprintu.",
+        "install": "Zainstaluj pluginy",
+        "title": "Brakujące pluginy"
       },
       "title": "Blueprints"
     },

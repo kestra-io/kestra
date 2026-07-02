@@ -59,9 +59,6 @@ export default defineConfig({
             ...resolvedViteConfig.resolve.alias,
         ],
     },
-    coverage: {
-        exclude: ["**/*.json"],
-    },
     test: {
         projects: [
             "./vitest.config.unit.js",
@@ -86,18 +83,24 @@ export default defineConfig({
                             },
                         ],
                     },
-                    coverage: {
-                        reporter: ["text", "html"],
-                        exclude: [
-                            "**/*.stories.{ts,tsx}",
-                            "**/*.spec.{ts,tsx}",
-                            "**/node_modules/**",
-                            "**/*.json",
-                        ],
-                    },
                 },
             }),
         ],
+        coverage: {
+            reporter: ["text", "html"],
+            include: [
+                "src/**/*.{ts,vue}",
+            ],
+            exclude: [
+                "**/node_modules/**",
+                "**/*.stories.*",
+                "**/*.spec.{ts,tsx}",
+                "**/*.d.ts",
+                "**/.storybook/**",
+                "storybook-static/**",
+                "stylelint.config.mjs",
+            ],
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

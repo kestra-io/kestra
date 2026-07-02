@@ -220,7 +220,7 @@
     const dragging = ref(false)
     const showExtraDetails = ref(false)
     const lastPosition = ref<XYPosition | null>()
-    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
     const edgeReplacer = ref({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -294,6 +294,14 @@
         generateGraph()
     })
 
+    const refitOnNodesInitialized = ref(false)
+    onNodesInitialized(() => {
+        if (refitOnNodesInitialized.value) {
+            refitOnNodesInitialized.value = false
+            fitView()
+        }
+    })
+
     const generateGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
@@ -329,7 +337,7 @@
 
             if (elements) {
                 setElements(elements)
-                fitView()
+                refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })

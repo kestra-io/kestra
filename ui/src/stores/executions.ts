@@ -139,6 +139,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     const metrics = ref<any[]>([])
     const metricsTotal = ref<number>(0)
     const subflowsExecutions = ref<Record<string, any>>({})
+    // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
+    // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
+    // never reset across execution navigations, like subflowsExecutions above
+    const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<any | undefined>(undefined)
     const flowGraph = ref<any | undefined>(undefined)
     const namespaces = ref<string[]>([])
@@ -829,6 +833,12 @@ export const useExecutionsStore = defineStore("executions", () => {
         delete subflowsExecutions.value[subflow]
     }
 
+    const addProgressEvent = (event: {taskId: string; taskRunId: string; step: string; timestamp: string}) => {
+        const alreadyKnown = progressEvents.value.some(e => e.taskRunId === event.taskRunId && e.step === event.step)
+        if (alreadyKnown) return
+        progressEvents.value.push(event)
+    }
+
     const resetLogs = () => {
         logs.value = {results: [], total: 0}
     }
@@ -880,6 +890,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         metrics,
         metricsTotal,
         subflowsExecutions,
+        progressEvents,
         flow,
         flowGraph,
         namespaces,
@@ -944,6 +955,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLatestExecutions,
         addSubflowExecution,
         removeSubflowExecution,
+        addProgressEvent,
         resetLogs,
         appendLogs,
         appendFollowedLogs,

@@ -49,6 +49,7 @@
                         :namespace="props.namespace"
                         :flowId="props.flowId"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
+                        :progress="taskProgress(taskProps.data.node?.task?.id)"
                     />
                 </slot>
             </template>
@@ -178,6 +179,7 @@
                     :namespace="props.namespace"
                     :flowId="props.flowId"
                     :metrics="taskMetrics(selectedTask?.id)"
+                    :progress="taskProgress(selectedTask?.id)"
                     displayMode="full"
                     class="mt-3"
                 />
@@ -304,6 +306,9 @@
 
     const taskMetrics = (taskId: string | undefined) =>
         executionsStore.metrics.filter((m) => m.taskId === taskId)
+
+    const taskProgress = (taskId: string | undefined) =>
+        executionsStore.progressEvents.filter((p) => p.taskId === taskId)
 
     const isTaskModalOpen = ref(false)
     const taskModalCtx = ref<Record<string, any> | null>(null)

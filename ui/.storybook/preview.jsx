@@ -31,18 +31,25 @@ axios.defaults.adapter = async (config) => ({data: [], status: 200, statusText: 
 // Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
 // TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
 // is mounted once at the layout root before any page's TopNavBar teleports
-// into it; Storybook has no such layout wrapper, so we render the same
-// targets as siblings ahead of <story/> in the decorator tree.
-const withTopNavTeleportTargets = () => ({
-  template: `
-    <div>
-      <span id="topnav-title-slot"></span>
-      <div id="topnav-description-slot"></div>
-      <div id="topnav-actions-slot"></div>
-      <story/>
-    </div>
-  `,
-});
+// into it; Storybook has no such layout wrapper.
+//
+// These are appended directly to document.body — as plain DOM nodes, outside
+// Vue's own render tree — rather than rendered as template siblings in a
+// decorator. Teleport resolves its target via a synchronous
+// document.querySelector() call the instant it mounts; a decorator-rendered
+// sibling only reliably exists in time for components whose own mount is a
+// shallow, single synchronous pass. Components/Admin/Triggers renders
+// <TopNavBar> as a root element behind an extra layer of story/decorator
+// nesting, which raced the sibling into existing too late and printed
+// "Failed to locate Teleport target". Real, static body-level nodes created
+// once before any story ever mounts have no such race.
+for (const id of ["topnav-title-slot", "topnav-description-slot", "topnav-actions-slot"]) {
+  if (!document.getElementById(id)) {
+    const el = document.createElement(id === "topnav-title-slot" ? "span" : "div");
+    el.id = id;
+    document.body.appendChild(el);
+  }
+}
 
 /**
  * @type {import('@storybook/vue3-vite').Preview}
@@ -75,7 +82,6 @@ const preview = {
         },
         defaultTheme: "light",
       }),
-    withTopNavTeleportTargets,
   ]
 };
 

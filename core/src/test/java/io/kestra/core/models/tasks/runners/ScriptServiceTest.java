@@ -268,6 +268,14 @@ class ScriptServiceTest {
 
         // Assert the truncated prefix is correct
         assertThat(baseName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylong");
+
+        // A 43-char namespace yields a 55-char base name ("<43 chars>-flowid-task"), which is
+        // exactly one over the 54-char budget (63 total - 8 suffix - 1 hyphen). Assert it is
+        // still truncated so the total stays within the 63-char Kubernetes limit.
+        runContext = runContext(runContextFactory, "a".repeat(43));
+        jobName = ScriptService.jobName(runContext);
+        assertThat(jobName.length()).isEqualTo(63);
+        assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
     }
 
     @Test

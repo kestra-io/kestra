@@ -449,7 +449,7 @@
         position: sticky;
         top: 0;
         z-index: 10;
-        margin: 0 var(--ks-spacing-5) var(--ks-spacing-3);
+        margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
 
@@ -463,7 +463,6 @@
         &__actions {
             display: flex;
             align-items: center;
-            gap: var(--ks-spacing-2);
             margin-left: auto;
         }
 
@@ -491,7 +490,7 @@
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             padding: 1rem;
-            margin: 0 var(--ks-spacing-5);
+            margin: 0 var(--ks-spacing-6);
             padding-top: .5rem;
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);

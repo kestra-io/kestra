@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> {
-    public Long maxOffset = null;
+    private Long maxOffset = null;
 
     public JdbcBroadcastSubscriber(
         Class<T> cls,

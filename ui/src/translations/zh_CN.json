@@ -88,12 +88,6 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
-      "missingPlugins": {
-        "title": "缺少 plugin",
-        "description": "此 blueprint 使用了此实例上未安装的 plugin 的 task：{plugins}。请安装它们以使用此 blueprint。",
-        "card": "需要此实例上未安装的 plugin：{plugins}",
-        "install": "安装 plugin"
-      },
       "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",
@@ -114,6 +108,12 @@
           "1": "第一步总是最难的。",
           "2": "探索蓝图以启动您的下一个{kind}。"
         }
+      },
+      "missingPlugins": {
+        "card": "需要此实例上未安装的 plugin：{plugins}",
+        "description": "此 blueprint 使用了此实例上未安装的 plugin 的 task：{plugins}。请安装它们以使用此 blueprint。",
+        "install": "安装 plugin",
+        "title": "缺少 plugin"
       },
       "title": "蓝图"
     },

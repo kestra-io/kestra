@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble;
 
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -100,35 +101,14 @@ public class PebbleEngineFactory {
     public PebbleEngine createRestricted() {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
 
+        // Decorate each extension with a DisplayExtensionCustomizer so only safe functions survive.
+        // registerExtensionCustomizer only wraps Pebble's built-in extensions, not those added here,
+        // so the display filtering has to be applied explicitly to each bean extension.
         this.applicationContext.getBeansOfType(Extension.class).stream()
-            .map(this::extensionForDisplay)
+            .map(DisplayExtensionCustomizer::new)
             .forEach(builder::extension);
 
         return builder.build();
-    }
-
-    private Extension extensionForDisplay(Extension initial) {
-        // Any function that is not in the safe allowlist must be masked or removed.
-        boolean needsWrapping = initial.getFunctions().keySet().stream()
-            .anyMatch(name -> !SAFE_DISPLAY_FUNCTIONS.contains(name));
-
-        if (!needsWrapping) {
-            return initial;
-        }
-
-        return wrapExtension(initial, entry -> {
-            String name = entry.getKey();
-            if (SAFE_DISPLAY_FUNCTIONS.contains(name)) {
-                return entry;
-            } else if (name.equals(SecretFunction.NAME)) {
-                // Returns [secret: KEY] without touching the real secret service.
-                return Map.entry(name, new InterceptingFunction(entry.getValue(),
-                    args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
-            }
-            // Everything else (including env(), kv(), now(), uuid(), read(), …) is removed: Pebble cannot
-            // invoke it, the expression fails to evaluate, and the caller keeps it raw.
-            return null;
-        });
     }
 
     public PebbleEngine createWithMaskedFunctions(VariableRenderer renderer, final List<String> functionsToMask) {
@@ -215,6 +195,40 @@ public class PebbleEngineFactory {
         public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
             delegate.execute(args, self, context, lineNumber);
             return mask;
+        }
+    }
+
+    /**
+     * A Pebble {@link io.pebbletemplates.pebble.extension.ExtensionCustomizer} for the display engine:
+     * it keeps only the {@link #SAFE_DISPLAY_FUNCTIONS} (pure parsing / calendar helpers), masks
+     * {@code secret()} as {@code [secret: KEY]} without touching the real secret service, and drops every
+     * other function. A dropped function is unknown to Pebble, so any expression that calls one fails to
+     * evaluate and the caller keeps the raw expression. Every other extension method delegates to the
+     * wrapped extension unchanged.
+     */
+    static final class DisplayExtensionCustomizer extends io.pebbletemplates.pebble.extension.ExtensionCustomizer {
+        DisplayExtensionCustomizer(Extension ext) {
+            super(ext);
+        }
+
+        @Override
+        public Map<String, Function> getFunctions() {
+            Map<String, Function> functions = super.getFunctions();
+            if (functions == null) {
+                return null;
+            }
+
+            Map<String, Function> result = new HashMap<>();
+            functions.forEach((name, function) -> {
+                if (SAFE_DISPLAY_FUNCTIONS.contains(name)) {
+                    result.put(name, function);
+                } else if (name.equals(SecretFunction.NAME)) {
+                    result.put(name, new InterceptingFunction(function,
+                        args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
+                }
+                // Everything else (env(), kv(), now(), uuid(), read(), …) is dropped.
+            });
+            return result;
         }
     }
 

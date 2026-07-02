@@ -725,19 +725,22 @@ public class ExecutionController {
             throw e;
         }
 
-        // Drafts can be saved with constraint violations. When the user explicitly executes one
-        // (by passing the revision) the request is accepted but the execution is created already
-        // FAILED, with the validation error logged through the run context so it is persisted
-        // and visible in the UI's execution log.
-        Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
-        if (violations.isPresent()) {
-            return emitFailedExecution(
-                flow,
-                parsedLabels,
-                scheduleDate,
-                kind,
-                "Flow execution failed: flow definition is invalid. " + violations.get().getMessage()
-            );
+        // Only drafts need re-validation here: published revisions are already validated at save
+        // time, so re-validating every execution would just add cost to the hot path. A draft can be
+        // saved with constraint violations, so when the user explicitly executes one (by passing its
+        // revision) the request is accepted but the execution is created already FAILED, with the
+        // validation error logged through the run context so it is visible in the UI's execution log.
+        if (flow.isDraft()) {
+            Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
+            if (violations.isPresent()) {
+                return emitFailedExecution(
+                    flow,
+                    parsedLabels,
+                    scheduleDate,
+                    kind,
+                    "Flow execution failed: flow definition is invalid. " + violations.get().getMessage()
+                );
+            }
         }
 
 

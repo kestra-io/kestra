@@ -88,12 +88,6 @@
     "before": "avant",
     "behavior": "Comportement",
     "blueprints": {
-      "missingPlugins": {
-        "title": "Plugins manquants",
-        "description": "Ce blueprint utilise des tasks de plugin(s) qui ne sont pas installés sur cette instance : {plugins}. Installez-les pour utiliser ce blueprint.",
-        "card": "Nécessite des plugin(s) non installés sur cette instance : {plugins}",
-        "install": "Installer les plugins"
-      },
       "all": "Tous",
       "apps": "Plans d'application",
       "community": "Communauté",
@@ -114,6 +108,12 @@
           "1": "La première étape est toujours la plus difficile.",
           "2": "Explorez les blueprints pour démarrer votre prochain {kind}."
         }
+      },
+      "missingPlugins": {
+        "card": "Nécessite des plugin(s) non installés sur cette instance : {plugins}",
+        "description": "Ce blueprint utilise des tasks de plugin(s) qui ne sont pas installés sur cette instance : {plugins}. Installez-les pour utiliser ce blueprint.",
+        "install": "Installer les plugins",
+        "title": "Plugins manquants"
       },
       "title": "Blueprints"
     },

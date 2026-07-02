@@ -1,11 +1,10 @@
-import {getCurrentInstance, h} from "vue";
 import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
 import {globalI18n} from "../src/translations/i18n";
 import {configureAxios} from "@kestra-io/kestra-sdk";
 import axios from "axios";
-import {createMemoryHistory, useLink} from "vue-router";
+import {createMemoryHistory} from "vue-router";
 import {vueRouter} from "storybook-vue3-router";
 
 import "../src/styles/vendor.scss";
@@ -45,45 +44,6 @@ const withTopNavTeleportTargets = () => ({
   `,
 });
 
-// vue-router's real <RouterLink> renders a plain <a href>, and only calls
-// preventDefault() for a plain left click with no modifier keys; Playwright's
-// synthetic clicks don't always satisfy that guard, so the browser can follow
-// the href as a real navigation and destroy the test's execution context
-// mid-run. This variant always prevents the default and drives navigation
-// through vue-router's own `navigate()`, so no story can trigger one.
-const FakeRouterLink = {
-  name: "RouterLink",
-  props: ["to", "replace", "activeClass", "exactActiveClass", "custom", "ariaCurrentValue"],
-  setup(props, {slots}) {
-    const {href, navigate} = useLink(props);
-    return () => h("a", {
-      href: href.value,
-      onClick: (event) => {
-        event.preventDefault();
-        navigate(event);
-      },
-    }, slots.default?.());
-  },
-};
-
-// Each story mounts its own fresh Vue app, and storybook-vue3-router's
-// vueRouter() decorator calls app.use(router) on every one of them, which
-// registers the real RouterLink globally. Placed after vueRouter() in the
-// decorators array, this re-registers our fake right after so it always wins.
-// Guarding the call matters, not just for the (otherwise suppressed, see
-// vitest.setup.js) re-registration warning: re-registering unconditionally on
-// every render was observed to corrupt component resolution badly enough to
-// crash Vue's own error handler with a circular-reference dump.
-const withFakeRouterLink = () => ({
-  setup() {
-    const {app} = getCurrentInstance().appContext;
-    if (app.component("RouterLink") !== FakeRouterLink) {
-      app.component("RouterLink", FakeRouterLink);
-    }
-  },
-  template: "<story/>",
-});
-
 /**
  * @type {import('@storybook/vue3-vite').Preview}
  */
@@ -108,7 +68,6 @@ const preview = {
       ],
       {vueRouterOptions: {history: createMemoryHistory()}},
     ),
-    withFakeRouterLink,
     withThemeByClassName({
         themes: {
           light: "light",

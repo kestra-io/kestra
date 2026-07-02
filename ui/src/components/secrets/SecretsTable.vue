@@ -15,7 +15,7 @@
             class="fill-height"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
-            <template #top>
+            <template #top v-if="!paneView">
                 <KSFilter
                     :configuration="secretsFilter"
                     :tableOptions="{

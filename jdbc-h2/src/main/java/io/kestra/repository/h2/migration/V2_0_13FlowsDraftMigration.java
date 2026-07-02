@@ -19,14 +19,14 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.repository.type", pattern = "h2|memory")
-public class V2_0_10FlowsDraftMigration extends AbstractSQLMigrationScript {
+public class V2_0_13FlowsDraftMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0.10-flows-draft";
+    private static final String SCRIPT_ID = "2.0.13-flows-draft";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0_10FlowsDraftMigration(final DataSource dataSource) {
+    public V2_0_13FlowsDraftMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -42,11 +42,11 @@ public class V2_0_10FlowsDraftMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/2.0.10-flows-draft-h2.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.13-flows-draft-h2.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/2.0.10-flows-draft-h2.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.13-flows-draft-h2.sql");
     }
 }

@@ -45,7 +45,7 @@ class DisplayExpressionRendererTest {
 
     @Test
     void shouldRenderEmptyMapForNullOrEmptyList() {
-        assertThat(renderer.render(null, Map.of())).isEmpty();
+        assertThat(renderer.render((List<String>) null, Map.of())).isEmpty();
         assertThat(renderer.render(List.of(), Map.of())).isEmpty();
     }
 
@@ -59,12 +59,12 @@ class DisplayExpressionRendererTest {
 
     @Test
     void shouldReturnNullForNullTemplate() {
-        assertThat(renderer.resolveForDisplay(null, Map.of())).isNull();
+        assertThat(renderer.render((String) null, Map.of())).isNull();
     }
 
     @Test
     void shouldReturnLiteralWhenNoExpression() {
-        assertThat(renderer.resolveForDisplay("hello world", Map.of())).isEqualTo("hello world");
+        assertThat(renderer.render("hello world", Map.of())).isEqualTo("hello world");
     }
 
     // ---- vars.* / flow.* resolve ----
@@ -72,14 +72,14 @@ class DisplayExpressionRendererTest {
     @Test
     void shouldResolveVarsExpression() {
         var vars = Map.of("region", "us-east-1");
-        var result = renderer.resolveForDisplay("{{ vars.region }}", Map.of("vars", vars));
+        var result = renderer.render("{{ vars.region }}", Map.of("vars", vars));
         assertThat(result).isEqualTo("us-east-1");
     }
 
     @Test
     void shouldResolveFlowExpression() {
         var flow = Map.of("id", "my-flow", "namespace", "io.kestra.tests");
-        var result = renderer.resolveForDisplay("{{ flow.id }}", Map.of("flow", flow));
+        var result = renderer.render("{{ flow.id }}", Map.of("flow", flow));
         assertThat(result).isEqualTo("my-flow");
     }
 
@@ -87,14 +87,14 @@ class DisplayExpressionRendererTest {
 
     @Test
     void shouldKeepInputsRawWhenNoExecutionContext() {
-        var result = renderer.resolveForDisplay("{{ inputs.myInput }}", Map.of());
+        var result = renderer.render("{{ inputs.myInput }}", Map.of());
         assertThat(result).isEqualTo("{{ inputs.myInput }}");
     }
 
     @Test
     void shouldResolveInputsWhenExecutionContextPresent() {
         var inputs = Map.of("myInput", "hello");
-        var result = renderer.resolveForDisplay("{{ inputs.myInput }}", Map.of("inputs", inputs));
+        var result = renderer.render("{{ inputs.myInput }}", Map.of("inputs", inputs));
         assertThat(result).isEqualTo("hello");
     }
 
@@ -103,7 +103,7 @@ class DisplayExpressionRendererTest {
     @Test
     void shouldMaskSecretFunction() throws Exception {
         var flow = Map.of("namespace", "io.kestra.tests", "id", "test", "tenantId", "");
-        var result = renderer.resolveForDisplay("{{ secret('MY_API_KEY') }}", Map.of("flow", flow));
+        var result = renderer.render("{{ secret('MY_API_KEY') }}", Map.of("flow", flow));
         assertThat(result).isEqualTo("[secret: MY_API_KEY]");
 
         Mockito.verify(secretService, Mockito.never()).findSecret(any(), any(), any());
@@ -115,7 +115,7 @@ class DisplayExpressionRendererTest {
     void shouldKeepEnvFunctionRaw() {
         var flow = Map.of("namespace", "io.kestra.tests", "id", "test");
         var envs = Map.of("HOME", "/home/user");
-        var result = renderer.resolveForDisplay("{{ env('HOME') }}", Map.of("flow", flow, "envs", envs));
+        var result = renderer.render("{{ env('HOME') }}", Map.of("flow", flow, "envs", envs));
         assertThat(result).isEqualTo("{{ env('HOME') }}");
     }
 
@@ -123,31 +123,31 @@ class DisplayExpressionRendererTest {
 
     @Test
     void shouldKeepNowRaw() {
-        assertThat(renderer.resolveForDisplay("{{ now() }}", Map.of())).isEqualTo("{{ now() }}");
+        assertThat(renderer.render("{{ now() }}", Map.of())).isEqualTo("{{ now() }}");
     }
 
     @Test
     void shouldKeepUuidRaw() {
-        assertThat(renderer.resolveForDisplay("{{ uuid() }}", Map.of())).isEqualTo("{{ uuid() }}");
+        assertThat(renderer.render("{{ uuid() }}", Map.of())).isEqualTo("{{ uuid() }}");
     }
 
     // ---- allowlist: only pure, side-effect-free functions resolve ----
 
     @Test
     void shouldResolveSafeAllowlistedFunction() {
-        var result = renderer.resolveForDisplay("{{ fromJson('{\"region\":\"eu\"}').region }}", Map.of());
+        var result = renderer.render("{{ fromJson('{\"region\":\"eu\"}').region }}", Map.of());
         assertThat(result).isEqualTo("eu");
     }
 
     @Test
     void shouldKeepKvRawAsNotAllowlisted() {
-        var result = renderer.resolveForDisplay("{{ kv('my_key') }}", Map.of());
+        var result = renderer.render("{{ kv('my_key') }}", Map.of());
         assertThat(result).isEqualTo("{{ kv('my_key') }}");
     }
 
     @Test
     void shouldKeepFetchContextRawAsNotAllowlisted() {
-        var result = renderer.resolveForDisplay("{{ fetchContext() }}", Map.of());
+        var result = renderer.render("{{ fetchContext() }}", Map.of());
         assertThat(result).isEqualTo("{{ fetchContext() }}");
     }
 
@@ -158,7 +158,7 @@ class DisplayExpressionRendererTest {
         var vars = Map.of("region", "us-east-1", "env", "prod");
         var variables = Map.of("vars", (Object) vars);
 
-        var result = renderer.resolveForDisplay("{{ vars.region }}-{{ vars.env }}", variables);
+        var result = renderer.render("{{ vars.region }}-{{ vars.env }}", variables);
 
         assertThat(result).isEqualTo("us-east-1-prod");
     }
@@ -169,7 +169,7 @@ class DisplayExpressionRendererTest {
         var variables = Map.of("vars", (Object) vars);
 
         // now() is removed from the display engine, so the whole render aborts.
-        var result = renderer.resolveForDisplay("{{ vars.region }}-{{ now() }}", variables);
+        var result = renderer.render("{{ vars.region }}-{{ now() }}", variables);
 
         assertThat(result).isEqualTo("{{ vars.region }}-{{ now() }}");
     }
@@ -180,7 +180,7 @@ class DisplayExpressionRendererTest {
         var variables = Map.of("vars", (Object) vars);
 
         // inputs.missing is unresolvable under strictVariables, so the whole render aborts.
-        var result = renderer.resolveForDisplay("{{ vars.env }}-{{ inputs.missing }}", variables);
+        var result = renderer.render("{{ vars.env }}-{{ inputs.missing }}", variables);
 
         assertThat(result).isEqualTo("{{ vars.env }}-{{ inputs.missing }}");
     }
@@ -189,7 +189,7 @@ class DisplayExpressionRendererTest {
 
     @Test
     void shouldPreserveRawBlocks() {
-        var result = renderer.resolveForDisplay("{% raw %}{{ vars.region }}{% endraw %}", Map.of());
+        var result = renderer.render("{% raw %}{{ vars.region }}{% endraw %}", Map.of());
         assertThat(result).isEqualTo("{% raw %}{{ vars.region }}{% endraw %}");
     }
 
@@ -197,7 +197,7 @@ class DisplayExpressionRendererTest {
     void shouldPreserveRawBlocksEvenWhenVariableIsResolvable() {
         // The variable is in context but the raw block must prevent resolution.
         var vars = Map.of("region", "us-east-1");
-        var result = renderer.resolveForDisplay("{% raw %}{{ vars.region }}{% endraw %}", Map.of("vars", vars));
+        var result = renderer.render("{% raw %}{{ vars.region }}{% endraw %}", Map.of("vars", vars));
         assertThat(result).isEqualTo("{% raw %}{{ vars.region }}{% endraw %}");
     }
 
@@ -205,7 +205,7 @@ class DisplayExpressionRendererTest {
 
     @Test
     void shouldKeepMalformedExpressionRaw() {
-        var result = renderer.resolveForDisplay("{{ ??? }}", Map.of());
+        var result = renderer.render("{{ ??? }}", Map.of());
         assertThat(result).isEqualTo("{{ ??? }}");
     }
 }

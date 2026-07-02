@@ -56,7 +56,7 @@ public class DisplayExpressionRenderer {
         }
         for (String expression : expressions) {
             if (expression != null) {
-                rendered.put(expression, resolveForDisplay(expression, variables));
+                rendered.put(expression, render(expression, variables));
             }
         }
         return rendered;
@@ -72,8 +72,8 @@ public class DisplayExpressionRenderer {
      * @param variables the variable context (flow-level, or execution-level)
      * @return the resolved display string, or the original template if it cannot be fully resolved
      */
-    public String resolveForDisplay(String template, Map<String, Object> variables) {
-        if (template == null || !template.contains("{{")) {
+    public String render(String template, Map<String, Object> variables) {
+        if (template == null || !template.contains("{")) {
             return template;
         }
 

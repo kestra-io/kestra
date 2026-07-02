@@ -88,6 +88,12 @@
     "before": "prima",
     "behavior": "Comportamento",
     "blueprints": {
+      "missingPlugins": {
+        "title": "Plugin mancanti",
+        "description": "Questo blueprint utilizza task di plugin non installati su questa istanza: {plugins}. Installali per usare questo blueprint.",
+        "card": "Richiede plugin non installati su questa istanza: {plugins}",
+        "install": "Installa plugin"
+      },
       "all": "Tutti",
       "apps": "Blueprint delle App",
       "community": "Comunità",

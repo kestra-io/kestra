@@ -88,6 +88,12 @@
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
+      "missingPlugins": {
+        "title": "缺少 plugin",
+        "description": "此 blueprint 使用了此实例上未安装的 plugin 的 task：{plugins}。请安装它们以使用此 blueprint。",
+        "card": "需要此实例上未安装的 plugin：{plugins}",
+        "install": "安装 plugin"
+      },
       "all": "全部",
       "apps": "应用蓝图",
       "community": "社区",
@@ -113,6 +119,7 @@
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "书签",
+    "breakpoints": "断点",
     "bulk action async warning": "这可能需要一些时间。",
     "bulk actions": "批量操作",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
@@ -264,6 +271,7 @@
       },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
+      "others": "其他",
       "preview": "预览仪表板",
       "quick_filters": {
         "all": "全部",
@@ -273,7 +281,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "切换仪表板"
+      "switch": "切换仪表板",
+      "viewAll": "查看全部"
     },
     "data": "数据",
     "dataFilters": "数据过滤器",
@@ -417,6 +426,10 @@
           "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。",
           "title": "集中管理您的变量"
         }
+      },
+      "quotas": {
+        "message": "Kestra 企业版允许您为工作流定义配额，以限制在时间窗口内的并发或总执行次数。配额有助于保护共享基础设施、执行 SLA，并防止失控的工作流消耗过多资源。",
+        "title": "为工作流设置执行配额"
       },
       "secrets": {
         "add_env": {
@@ -917,6 +930,7 @@
     "items": "项目",
     "join community": "加入社区",
     "join_slack": "加入 Slack",
+    "jsonl": "JSONL",
     "jump to...": "跳转到...",
     "kestra": "Kestra",
     "key": "键",
@@ -1592,6 +1606,7 @@
       "shown": "显示在表格中"
     },
     "queued duration": "排队时间",
+    "quotas": "配额",
     "reach us": "联系我们",
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
@@ -1636,6 +1651,8 @@
     "restore confirm": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "restore revision": "确定要恢复修订版 <code>{revision}</code> 吗？",
     "resume": "恢复",
+    "resume from breakpoint done": "执行已从断点恢复",
+    "resume from breakpoint title": "从断点恢复执行 `{{id}}`",
     "resumed confirm": "确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
     "resumed title": "恢复执行 <code>{id}</code>",
@@ -1782,6 +1799,11 @@
           "label": "侧边栏"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "深色模式 2.0",
@@ -1792,6 +1814,7 @@
             "color_mode": "您的界面现在使用 `{mode}` 主题。"
           },
           "descriptions": {
+            "app_font_size": "应用于所有界面字体大小的缩放系数。",
             "color_mode": "选择您偏好的界面主题。",
             "color_mode_shortcut": "提示：在任意位置按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 即可循环切换主题。",
             "editor_folding_stratgy": "默认情况下，打开flow时折叠长YAML块。",
@@ -1803,6 +1826,7 @@
             "logs_font_size": "日志查看器和终端中使用的字体大小。"
           },
           "fields": {
+            "app_font_size": "应用字体大小",
             "chart_color_scheme": {
               "classic": "经典",
               "kestra": "Kestra",

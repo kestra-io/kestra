@@ -15,6 +15,7 @@
 
 <style scoped>
 .link {
-    color: var(--ks-text-link);
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-sm);
 }
 </style>

@@ -14,6 +14,7 @@ service ConnectControllerService {
 // Request message for worker connection
 message ConnectRequest {
   RequestOrResponseHeader header = 1;
+  int32 worker_num_threads = 2;
 }
 
 // Response message for worker connection

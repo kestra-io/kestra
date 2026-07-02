@@ -26,6 +26,7 @@
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "./utils/utils"
     import * as BasicAuth from "./utils/basicAuth"
+    import {applyFontScale, getAppFontSizeMode} from "./utils/appFontSize"
     import {initPosthogIfEnabled} from "./utils/posthog"
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
@@ -86,6 +87,7 @@
 
     function displayApp() {
         Utils.switchTheme(miscStore)
+        applyFontScale(getAppFontSizeMode())
 
         const loader = document.getElementById("loader-wrapper")
         if (loader) loader.style.display = "none"

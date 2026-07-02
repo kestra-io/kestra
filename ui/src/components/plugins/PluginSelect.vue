@@ -3,10 +3,11 @@
         v-model="modelValue"
         :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
+        :filterMethod="onFilter"
         clearable
     >
         <KsOption
-            v-for="item in taskModels"
+            v-for="item in filteredTaskModels"
             :key="item.cls"
             :label="item.cls"
             :value="item.cls"
@@ -118,7 +119,21 @@
             : (Array.from(taskModelsSets.value) as [string, string][])
                 .map(([cls, title]) => ({cls, title}))
 
-        return entries.sort((a, b) => a.cls.localeCompare(b.cls))
+        const unique = Array.from(new Map(entries.map(e => [e.cls, e])).values())
+        return unique.sort((a, b) => a.cls.localeCompare(b.cls))
+    })
+    
+    const query = ref("")
+    const onFilter = (value: string) => {
+        query.value = value ?? ""
+    }
+
+    const filteredTaskModels = computed(() => {
+        const q = query.value.trim().toLowerCase()
+        if (!q) {
+            return taskModels.value
+        }
+        return taskModels.value.filter(({cls}) => cls.toLowerCase().includes(q))
     })
 
     const hasIcons = computed(() => {

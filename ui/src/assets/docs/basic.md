@@ -340,7 +340,7 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble?u
 | `{{ flow.revision }}`               | The revision of the flow.                                                                                                                                                |
 | `{{ execution.id }}`                | The execution ID, a generated unique id for each execution.                                                                                                              |
 | `{{ execution.startDate }}`         | The start date of the current execution, can be formatted with `{{ execution.startDate \| date('yyyy-MM-dd HH:mm:ss.SSSSSS') }}`.                                        |
-| `{{ execution.endDate }}`            | The end date of the current execution, can be formatted with `{{ execution.endDate \| date('yyyy-MM-dd HH:mm:ss.SSSSSS') }}`.                                            |
+| `{{ execution.endDate }}`           | The end date of the current execution, can be formatted with `{{ execution.endDate \| date('yyyy-MM-dd HH:mm:ss.SSSSSS') }}`.                                            |
 | `{{ execution.originalId }}`        | The original execution ID, this id will never change even in case of replay and keep the first execution ID.                                                             |
 | `{{ execution.outputs }}`           | The outputs of the execution as defined in the flow outputs, only populated when the execution is terminated (`finally` or `afterExecution` block).                      |
 | `{{ execution.state }}`             | The current execution state (e.g. `RUNNING`, `SUCCESS`, `FAILED`, `KILLED`).                                                                                             |
@@ -372,6 +372,8 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble?u
 | `{{ trigger.namespace }}`           | The namespace of the flow that triggers the current flow.                                                                                                                |
 | `{{ trigger.flowId }}`              | The ID of the flow that triggers the current flow.                                                                                                                       |
 | `{{ trigger.flowRevision }}`        | The revision of the flow that triggers the current flow.                                                                                                                 |
+| `{{ trigger._context.id }}`         | The if of the trigger that executes the current flow.                                                                                                                    |
+| `{{ trigger._context.type }}`       | The type of the trigger that executes the current flow.                                                                                                                  |
 | `{{ envs.foo }}`                    | Accesses environment variable `ENV_FOO` (by default prefixed with `ENV_`).                                                                                               |
 | `{{ kestra.environment }}`          | Accesses Environment variables such as `kestra.environment.name.` Must be set in your [configuration](https://kestra.io/docs/configuration#kestra-url) to be accessible. |
 | `{{ kestra.url }}`                  | Accesses Environment URL variable. Must be set in your [configuration](https://kestra.io/docs/configuration#kestra-url) to be accessible.                                |

@@ -46,6 +46,10 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
     const steps = computed<WizardStep[]>(() => isWizard.value ? buildWizardSteps(props.initialInputs as any) : [])
 
     const currentStep = ref(0)
+    // Steps the user has passed via Next (sticky — never cleared, so editing from recap and
+    // navigating Back keep earlier segments filled). A step is "filled" iff visited; the active
+    // step is never filled (see stepStatus).
+    const visited = ref<Set<number>>(new Set())
     const current = computed<WizardStep | undefined>(() => steps.value[currentStep.value])
     const recapIndex = computed(() => steps.value.length - 1)
     const returnToRecap = ref(false)
@@ -113,6 +117,13 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
         })
     }
 
+    // Per-step state for the bottom progress bar. active beats filled beats upcoming.
+    function stepStatus(i: number): "process" | "success" | "wait" {
+        if (i === currentStep.value) return "process"
+        if (visited.value.has(i)) return "success"
+        return "wait"
+    }
+
     async function goNext(): Promise<void> {
         const step = current.value
         if (!step || step.kind === "recap") return
@@ -131,6 +142,7 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
         // reveal any per-field errors for this step now (bypass the 2s onChange delay)
         ;(step.leafIds ?? []).forEach(id => inputsValidated.value.add(id))
         if (!stepIsValid(step)) return
+        visited.value.add(currentStep.value)
         if (returnToRecap.value) {
             currentStep.value = recapIndex.value
             returnToRecap.value = false
@@ -189,6 +201,8 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
         navLoading,
         showComputingLabel,
         isOnRecap,
+        visited,
+        stepStatus,
         visibleInputs,
         formIds,
         inputLabel,

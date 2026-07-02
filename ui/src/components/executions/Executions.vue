@@ -53,16 +53,6 @@
             :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
-                <QuickFilters
-                    v-if="!hasComplexFilters"
-                    :states="quickStates"
-                    :state="selectedStates"
-                    :stateLabel="t('filter.state.label')"
-                    :showInterval="false"
-                    :showLevel="false"
-                    :showState="true"
-                    @update:state="onQuickFilterState"
-                />
                 <KSFilter
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
@@ -441,13 +431,10 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
-    import {useQuickStateFilter} from "../filter/composables/useQuickStateFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
-    import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
-    const {quickStates, selectedStates, onQuickFilterState, hasComplexFilters} = useQuickStateFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()

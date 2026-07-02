@@ -90,6 +90,13 @@
         return isOffsetInPebbleBlock(editor.getValue(), absoluteOffset)
     }
 
+    function cursorPebbleBlockKey(editor: monaco.editor.ICodeEditor): number | null {
+        const cursorPos = editor.getPosition()
+        if (!cursorPos) return null
+        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+        return pebbleBlockKeyAtOffset(editor.getValue(), absoluteOffset)
+    }
+
     function uid(): string {
         return Math.random().toString(36).slice(2, 11)
     }
@@ -199,7 +206,8 @@
     import type {VNode} from "vue"
     import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useThrottleFn} from "@vueuse/core"
+    import {useStorage, useThrottleFn} from "@vueuse/core"
+    import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     // @ts-expect-error tab focus path lacks types
@@ -217,7 +225,7 @@
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import {STATES} from "../../utils/state"
     import {findDuplicateTaskIds} from "../../utils/yamlValidation"
-    import {isPebbleEnabled} from "../../utils/pebbleBlock"
+    import {createPebbleEntryTracker, isPebbleEnabled, pebbleBlockKeyAtOffset} from "../../utils/pebbleBlock"
     import PlaceholderContentWidget from "../../composables/PlaceholderContentWidget"
 
     type ICodeEditor = monacoEditorNs.ICodeEditor
@@ -293,6 +301,21 @@
         UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
         UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
     } as const
+
+    const storedEditorFontSizeOverride = useStorage<number | null>("editorFontSize", null, localStorage, {
+        serializer: {
+            read: (v) => {
+                if (v === null || v === "null" || v === "") return null
+                const n = Number(v)
+                return isNaN(n) ? null : n
+            },
+            write: (v) => (v === null ? "null" : String(v)),
+        },
+    })
+    const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
+    const resolvedEditorFontSize = computed(
+        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
+    )
 
     const editorRef = ref<HTMLDivElement | null>(null)
     const container = ref<HTMLDivElement>()
@@ -402,15 +425,24 @@
         opts.wordWrap = mergedOptions.value.wordWrap ? "on" : "off"
         opts.automaticLayout = true
 
-        const settingsEditorFontSize = localStorage.getItem("editorFontSize")
-
         return {
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
-            fontSize: settingsEditorFontSize ? parseInt(settingsEditorFontSize) : 12,
+            fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
+            // Kestra's YAML editors put their meaningful completions inside YAML string
+            // tokens: plugin `type:` values and Pebble `{{ }}` expressions both tokenize as
+            // strings. Monaco's default quickSuggestions ({strings:false}) never auto-triggers
+            // there, so once the suggest widget is dismissed (backspace, space, moving the
+            // cursor away) it would not reappear while typing. Enabling string suggestions lets
+            // the editor re-show completions as the user types in those regions.
+            quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: pebbleEnabled.value || props.lang === "yaml",
+            },
             ...opts,
             ...props.options?.editor,
         }
@@ -982,18 +1014,26 @@
                 }
             })
 
-            let wasInPebbleBlock = false
-            localEditor.value.onDidChangeCursorPosition(debounce(() => {
+            const pebbleEntryTracker = createPebbleEntryTracker()
+            const triggerSuggestionsOnCursorSettle = debounce(() => {
                 if (!localEditor.value) return
-                const inPebble = isCursorInPebbleBlock(localEditor.value)
+                const enteredPebble = pebbleEntryTracker.consumeEntered()
                 if (suggestController!.model.state !== 0) {
                     suggestController!.cancelSuggestWidget()
                     localEditor.value.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {})
-                } else if (inPebble && !wasInPebbleBlock) {
+                } else if (enteredPebble) {
                     localEditor.value.trigger("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {})
                 }
-                wasInPebbleBlock = inPebble
-            }, 300))
+            }, 300)
+            // Track the Pebble block on every cursor change rather than inside the debounced
+            // callback: a fast move out of and back into a block (or straight from one `{{ }}`
+            // block to another) would otherwise be swallowed by the debounce, leaving the latch
+            // stale so the re-entry is missed and suggestions never reopen.
+            localEditor.value.onDidChangeCursorPosition(() => {
+                if (!localEditor.value) return
+                pebbleEntryTracker.track(cursorPebbleBlockKey(localEditor.value))
+                triggerSuggestionsOnCursorSettle()
+            })
 
             localEditor.value.onMouseMove((e) => emit("mouse-move", e))
             localEditor.value.onMouseLeave((e) => emit("mouse-leave", e))

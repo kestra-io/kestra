@@ -1,11 +1,18 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -17,12 +24,18 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
+import io.kestra.plugin.core.preview.TextFileRenderer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.debug.Breakpoint;
@@ -57,6 +70,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.services.ExecutionStreamingService;
@@ -88,8 +102,6 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.filepreview.FileRender;
-import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -229,6 +241,8 @@ public class ExecutionController {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -910,11 +924,12 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "/{executionId}/file", produces = {MediaType.APPLICATION_OCTET_STREAM, "application/x-ndjson"})
     @Operation(tags = { "Executions" }, summary = "Download file for an execution")
     public HttpResponse<StreamedFile> downloadFileFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The internal storage uri") @QueryValue URI path) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @QueryValue URI path,
+        @Parameter(description = "The requested file format; RAW returns the raw bytes (default), JSONL converts Ion records to JSON Lines") @QueryValue(defaultValue = "RAW") FileFormat format) throws IOException, URISyntaxException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
@@ -935,6 +950,29 @@ public class ExecutionController {
             }
             default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
         };
+
+        if (format == FileFormat.JSONL) {
+            if (!"ion".equalsIgnoreCase(FilenameUtils.getExtension(path.toString()))) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "JSONL format is only supported for Ion files");
+            }
+            String downloadFilename = FilenameUtils.getBaseName(path.toString()) + ".jsonl";
+            List<Object> records = new ArrayList<>();
+            try (InputStream is = new BufferedInputStream(fileHandler)) {
+                FileSerde.read(is, records::add);
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (Writer writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
+                 SequenceWriter seq = FileSerde.createJsonSequenceWriter(writer, new TypeReference<>() {})) {
+                for (Object record : records) {
+                    seq.write(record);
+                }
+            }
+            return HttpResponse.ok(
+                new StreamedFile(new ByteArrayInputStream(baos.toByteArray()), new MediaType("application/x-ndjson"))
+                    .attach(downloadFilename)
+            );
+        }
+
         return HttpResponse.ok(
             new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
                 .attach(FilenameUtils.getName(path.toString()))
@@ -1892,14 +1930,20 @@ public class ExecutionController {
             return validateResponse;
         }
 
-        String extension = FilenameUtils.getExtension(path.toString());
         Optional<Charset> charset;
-
         try {
             charset = Optional.ofNullable(encoding).map(Charset::forName);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
+
+        String extension = FilenameUtils.getExtension(path.toString());
+        FileRenderer renderer = pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
+            .map(this::instantiate)
+            .filter(fileRenderer -> fileRenderer.supports(extension))
+            .findFirst()
+            .orElseGet(TextFileRenderer::new);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -1913,14 +1957,21 @@ public class ExecutionController {
         };
 
         try (fileStream) {
-            FileRender fileRender = FileRenderBuilder.of(
+            FilePreview preview = renderer.render(
                 extension,
                 fileStream,
                 charset,
-                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows)
-            );
+                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows));
 
-            return HttpResponse.ok(fileRender);
+            return HttpResponse.ok(preview);
+        }
+    }
+
+    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
+        try {
+            return fileRenderer.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
     }
 

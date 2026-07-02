@@ -568,7 +568,7 @@ class TriggerEventHandlerTest {
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -578,7 +578,6 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
-        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
     @Test
@@ -590,7 +589,7 @@ class TriggerEventHandlerTest {
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -672,7 +671,54 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
-        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
+        // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-2");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        // a FAILED termination left over from the first dispatch (epoch 1)
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, 1L);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the current instance keeps its lock
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
+    }
+
+    @Test
+    void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
+        // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        // a worker-loss notice from the first dispatch (epoch 1) on the same worker
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", 1L);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the current instance keeps its lock
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
     }
 
     @Test

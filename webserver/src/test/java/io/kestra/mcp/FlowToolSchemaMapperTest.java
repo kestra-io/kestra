@@ -50,7 +50,11 @@ class FlowToolSchemaMapperTest {
             .build(),
         InputConversionTestCase.builder()
             .input(DateInput.builder().type(Type.DATE).after(LocalDate.of(2024, 1, 1)).before(LocalDate.of(2025, 1, 1)).build())
-            .expectedSchema(Map.of("type", "string", "format", "date", "minimum", "2024-01-01", "maximum", "2025-01-01"))
+             .expectedSchema(Map.of("type", "string", "format", "date", "description", "Must be on or after 2024-01-01. Must be on or before 2025-01-01."))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(DateInput.builder().type(Type.DATE).description("The target day.").after(LocalDate.of(2024, 1, 1)).build())
+            .expectedSchema(Map.of("type", "string", "format", "date", "description", "The target day. Must be on or after 2024-01-01."))
             .build(),
         InputConversionTestCase.builder()
             .input(DateTimeInput.builder().type(Type.DATETIME).build())
@@ -58,7 +62,7 @@ class FlowToolSchemaMapperTest {
             .build(),
         InputConversionTestCase.builder()
             .input(DateTimeInput.builder().type(Type.DATETIME).after(Instant.ofEpochMilli(0)).before(Instant.ofEpochMilli(1000)).build())
-            .expectedSchema(Map.of("type", "string", "format", "date-time", "minimum", "1970-01-01T00:00:00Z", "maximum", "1970-01-01T00:00:01Z"))
+            .expectedSchema(Map.of("type", "string", "format", "date-time", "description", "Must be on or after 1970-01-01T00:00:00Z. Must be on or before 1970-01-01T00:00:01Z."))
             .build(),
         InputConversionTestCase.builder()
             .input(DurationInput.builder().type(Type.DURATION).build())
@@ -66,7 +70,7 @@ class FlowToolSchemaMapperTest {
             .build(),
         InputConversionTestCase.builder()
             .input(DurationInput.builder().type(Type.DURATION).min(Duration.ofSeconds(1)).max(Duration.ofSeconds(60)).build())
-            .expectedSchema(Map.of("type", "string", "format", "duration", "minimum", "PT1S", "maximum", "PT1M"))
+            .expectedSchema(Map.of("type", "string", "format", "duration", "description", "Must be at least PT1S. Must be at most PT1M."))
             .build(),
         InputConversionTestCase.builder()
             .input(EmailInput.builder().type(Type.EMAIL).build())
@@ -132,7 +136,7 @@ class FlowToolSchemaMapperTest {
             .build(),
         InputConversionTestCase.builder()
             .input(TimeInput.builder().type(Type.TIME).after(LocalTime.of(9, 0)).before(LocalTime.of(17, 0)).build())
-            .expectedSchema(Map.of("type", "string", "format", "time", "minimum", "09:00", "maximum", "17:00"))
+            .expectedSchema(Map.of("type", "string", "format", "time", "description", "Must be on or after 09:00. Must be on or before 17:00."))
             .build(),
         InputConversionTestCase.builder()
             .input(URIInput.builder().type(Type.URI).build())

@@ -142,6 +142,12 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
             }
 
             Execution killing = executionService.kill(execution, flow, afterKillState);
+            // kill() returns the same object unchanged when the execution is already terminal.
+            // Calling withExecution() in that case would set executionUpdated=true and trigger
+            // a spurious toExecution() cycle that re-emits SubflowExecutionEnd for subflows.
+            if (killing == execution) {
+                return null;
+            }
             return new ExecutorContext(execution)
                 .withExecution(killing, "joinKillingExecution");
         });

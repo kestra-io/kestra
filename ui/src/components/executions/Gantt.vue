@@ -26,14 +26,6 @@
                 @search="search = $event"
                 @filter="onFilterChange"
             />
-            <QuickFilters
-                v-if="!hasComplexFilters"
-                :levels="VALUES.LEVELS"
-                :level="effectiveSelectedLogLevel?.value"
-                :showInterval="false"
-                :levelLabel="t('filter.level_log_executions.label')"
-                @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
-            />
             <div class="gantt-stage">
                 <KsCard
                     id="gantt"
@@ -99,7 +91,10 @@
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
-                                            <div class="task-label">
+                                            <div
+                                                class="task-label"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
                                                     <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
                                                 </div>
@@ -236,13 +231,11 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations"
-    import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
-    import QuickFilters from "../filter/QuickFilters.vue"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
+    import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
 
@@ -266,8 +259,7 @@
 
     interface TaskWrapper {
         task: TaskRun;
-        depth: number | undefined;
-        children?: TaskWrapper[];
+        depth: number;
     }
 
     interface SeriesItem {
@@ -338,7 +330,6 @@
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
     const {
         effectiveValue: effectiveSelectedLogLevel,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
@@ -347,9 +338,6 @@
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
-    const {VALUES} = useValues("logs")
-    const {hasComplexFilters} = useComplexFilters()
-
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
@@ -378,48 +366,12 @@
         return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0
     })
 
-    const tasks = computed<TaskWrapper[]>(() => {
-        const rootTasks: TaskWrapper[] = []
-        const childTasks: TaskWrapper[] = []
-        const sortedTasks: TaskWrapper[] = []
-        const tasksById: Record<string, TaskWrapper> = {}
-
-        for (const task of (execution.value?.taskRunList || []) as TaskRun[]) {
-            const taskWrapper: TaskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0}
-            if (task.parentTaskRunId) {
-                childTasks.push(taskWrapper)
-            } else {
-                rootTasks.push(taskWrapper)
-            }
-            tasksById[task.id] = taskWrapper
-        }
-
-        for (let i = 0; i < childTasks.length; i++) {
-            const taskWrapper = childTasks[i]
-            const parentTask = tasksById[taskWrapper.task.parentTaskRunId!]
-            if (parentTask) {
-                taskWrapper.depth = parentTask.depth! + 1
-                tasksById[taskWrapper.task.id] = taskWrapper
-                if (!parentTask.children) {
-                    parentTask.children = []
-                }
-                parentTask.children.push(taskWrapper)
-            }
-        }
-
-        const nodeStart = (node: TaskWrapper): number => ts(node.task.state.histories[0].date)
-        const childrenSort = (nodes: TaskWrapper[]): void => {
-            nodes.sort((n1, n2) => (nodeStart(n1) > nodeStart(n2) ? 1 : -1))
-            for (const node of nodes) {
-                sortedTasks.push(node)
-                if (node.children) {
-                    childrenSort(node.children)
-                }
-            }
-        }
-        childrenSort(rootTasks)
-        return sortedTasks
-    })
+    const tasks = computed<TaskWrapper[]>(() =>
+        buildTaskRunHierarchy(
+            (execution.value?.taskRunList || []) as TaskRun[],
+            (n1, n2) => ts(n1.state.histories[0].date) - ts(n2.state.histories[0].date),
+        ),
+    )
 
     const taskTypeByTaskRun = computed<Array<[TaskRun, string | undefined]>>(() => {
         return series.value.map(serie => [serie.task, taskType(serie.task)])
@@ -858,6 +810,7 @@
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
+                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
 
                     code {
                         color: var(--ks-text-primary);

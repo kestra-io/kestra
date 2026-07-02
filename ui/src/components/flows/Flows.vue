@@ -244,7 +244,7 @@
                 v-if="executionsStore.flow"
                 ref="flowRunRef"
                 :embed="true"
-                :redirect="false"
+                :redirect="true"
                 @execution-trigger="handleExecutionStart"
             />
             <template #footer>

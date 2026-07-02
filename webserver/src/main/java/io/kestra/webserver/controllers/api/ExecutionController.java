@@ -694,8 +694,8 @@ public class ExecutionController {
             flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
         } catch (NoSuchElementException e) {
             // No non-draft revision was found. If the flow exists but only has draft revisions,
-            // we accept the request and emit a FAILED execution explaining why instead of a bare
-            // 404, so the user sees the failure in the UI executions list.
+            // reject the request as unprocessable with an explanation instead of a bare 404, so the
+            // user knows to save a published revision before executing without a revision.
             if (revision.isEmpty()) {
                 Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
                 if (latestAny.isPresent() && latestAny.get().isDraft()) {
@@ -709,18 +709,12 @@ public class ExecutionController {
         // Only drafts need re-validation here: published revisions are already validated at save
         // time, so re-validating every execution would just add cost to the hot path. A draft can be
         // saved with constraint violations, so when the user explicitly executes one (by passing its
-        // revision) the request is accepted but the execution is created already FAILED, with the
-        // validation error logged through the run context so it is visible in the UI's execution log.
+        // revision) the request is rejected as unprocessable with the validation error, rather than
+        // starting an execution that cannot run.
         if (flow.isDraft()) {
             Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
             if (violations.isPresent()) {
-                return emitFailedExecution(
-                    flow,
-                    parsedLabels,
-                    scheduleDate,
-                    kind,
-                    "Flow execution failed: flow definition is invalid. " + violations.get().getMessage()
-                );
+                throw new IllegalArgumentException("Flow execution blocked: flow definition is invalid. " + violations.get().getMessage());
             }
         }
 
@@ -807,35 +801,6 @@ public class ExecutionController {
 //                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
 
             });
-    }
-
-    /**
-     * Create a FAILED execution for a flow that was accepted but cannot run - e.g. the flow only
-     * has draft revisions, or its definition has constraint violations. Like every other create,
-     * it goes through the executor command queue (a {@link Create} command already in the FAILED
-     * state) rather than emitting a raw execution, and the reason is logged against the execution
-     * id so it lands in the UI's execution log.
-     */
-    private Mono<ExecutionResponse> emitFailedExecution(
-        Flow flow,
-        List<Label> parsedLabels,
-        Optional<ZonedDateTime> scheduleDate,
-        Optional<ExecutionKind> kind,
-        String errorMessage
-    ) {
-        String executionId = IdUtils.create();
-        Create createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
-            .withLabels(parsedLabels)
-            .withScheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
-            .withKind(kind.orElse(null))
-            .withStateType(State.Type.FAILED);
-
-        Logs.logExecutionId(createCommand.executionFullId(), log, Level.ERROR, errorMessage);
-
-        return awaitBlockingAction(
-            executionId, "Create",
-            operationId -> executionCommandQueue.emit(createCommand.withOperationId(operationId))
-        ).map(res -> ExecutionResponse.fromExecution(res.body(), executionUrl(createCommand.executionFullId())));
     }
 
     private URI executionUrl(ExecutionId executionId) {

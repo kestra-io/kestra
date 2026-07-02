@@ -200,48 +200,46 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
-    void executingInvalidDraftReturnsAFailedExecution() {
+    void executingInvalidDraftIsRejected() {
         // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty)
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
-                null
-            ),
-            Execution.class
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
+                    null
+                ),
+                Execution.class
+            )
         );
 
-        assertThat(execution)
-            .as("explicitly executing an invalid draft by revision is accepted, not rejected with a 4xx")
-            .isNotNull();
-        assertThat(execution.getId())
-            .as("the accepted invalid-draft execution is persisted with an id")
-            .isNotNull();
-        assertThat(execution.getState().getCurrent())
-            .as("an invalid draft comes back already FAILED so the violation is visible in the execution log")
-            .isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+        assertThat(e.getStatus().getCode())
+            .as("explicitly executing an invalid draft by revision is rejected as unprocessable")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection surfaces that the flow definition is invalid")
+            .contains("flow definition is invalid");
     }
 
     @Test
     @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
-    void executingDraftOnlyFlowWithoutRevisionReturnsAFailedExecution() {
+    void executingDraftOnlyFlowWithoutRevisionIsRejected() {
         // webhook-draft has only draft revisions, so it cannot resolve to a published version
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
-                null
-            ),
-            Execution.class
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
+                    null
+                ),
+                Execution.class
+            )
         );
 
-        assertThat(execution)
-            .as("starting a draft-only flow without a revision is accepted, not rejected with a bare 404")
-            .isNotNull();
-        assertThat(execution.getId())
-            .as("the accepted draft-only execution is persisted with an id")
-            .isNotNull();
-        assertThat(execution.getState().getCurrent())
-            .as("a draft-only flow run without a revision comes back FAILED with the reason in the execution log")
-            .isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+        assertThat(e.getStatus().getCode())
+            .as("running a draft-only flow without a revision is rejected as unprocessable, not with a bare 404")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection explains that a published revision must be saved before executing without a revision")
+            .contains("only has draft revisions");
     }
 
     @Test

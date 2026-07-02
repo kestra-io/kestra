@@ -251,7 +251,11 @@ public class BasicAuthService {
             String tokenSha256 = sha256Hex(token);
 
             // Fast path: same token as last verified — skip bcrypt entirely.
-            if (tokenSha256.equals(lastVerifiedTokenSha256.get())) {
+            // compare via MessageDigest.isEqual to prevent timing attacks
+            String cachedTokenSha256 = lastVerifiedTokenSha256.get();
+            if (cachedTokenSha256 != null && MessageDigest.isEqual(
+                tokenSha256.getBytes(StandardCharsets.UTF_8),
+                cachedTokenSha256.getBytes(StandardCharsets.UTF_8))) {
                 return true;
             }
 

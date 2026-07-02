@@ -14,21 +14,15 @@ const mockIcons = {
     "io.kestra.plugin.core.flow.Parallel": {icon: mockIconBase64, flowable: true},
 }
 
-// Icons are rendered as a `<use>` referencing a `<symbol>` in a pool shared across every
-// KsTaskIcon instance (see KsTaskIcon.vue) rather than inlined directly under the wrapper —
-// resolve the actual shape markup for a mounted instance via that shared pool.
-function resolveSymbol(wrapper: ReturnType<typeof mount>) {
-    const use = wrapper.find(".ks-task-icon__icon use")
-    const id = use.attributes("href")?.replace("#", "")
-    const symbol = id ? document.querySelector(`#ks-task-icon-pool #${id}`) : null
-    return {use, id, symbol}
+function pool() {
+    return document.getElementById("ks-task-icon-pool")
 }
 
 beforeEach(() => {
     // Reset HTML class to light mode before each test
     document.documentElement.className = ""
     // the icon pool is module-scoped (shared across every instance) — reset it between tests
-    document.getElementById("ks-task-icon-pool")?.remove()
+    pool()?.remove()
 })
 
 describe("KsTaskIcon", () => {
@@ -47,10 +41,8 @@ describe("KsTaskIcon", () => {
         })
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.attributes("style") ?? "").not.toContain("background-image")
-        expect(icon.find("svg").exists()).toBe(true)
-
-        const {symbol} = resolveSymbol(wrapper)
-        expect(symbol?.querySelector("circle")).not.toBeNull()
+        // the actual shape markup is directly inline, not hidden behind a <use> reference
+        expect(icon.find("svg > circle").exists()).toBe(true)
     })
 
     test("exposes an accessible role and label", () => {
@@ -71,9 +63,7 @@ describe("KsTaskIcon", () => {
         })
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.attributes("style")).toContain("color: var(--ks-text-error)")
-
-        const {symbol} = resolveSymbol(wrapper)
-        expect(symbol?.querySelector("circle")?.getAttribute("fill")).toBe("currentColor")
+        expect(icon.find("circle").attributes("fill")).toBe("currentColor")
     })
 
     test("renders tooltip when onlyIcon is false", () => {
@@ -119,10 +109,7 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
         const icon = wrapper.find(".ks-task-icon__icon")
-        expect(icon.find("svg").exists()).toBe(true)
-
-        const {symbol} = resolveSymbol(wrapper)
-        expect(symbol?.querySelector("path")).not.toBeNull()
+        expect(icon.find("svg > path").exists()).toBe(true)
     })
 
     test("renders with customIcon prop", () => {
@@ -130,8 +117,7 @@ describe("KsTaskIcon", () => {
             props: {customIcon: {icon: mockIconBase64}, onlyIcon: true},
             global: globalConfig,
         })
-        const {symbol} = resolveSymbol(wrapper)
-        expect(symbol?.querySelector("circle")).not.toBeNull()
+        expect(wrapper.find(".ks-task-icon__icon circle").exists()).toBe(true)
     })
 
     test("resolves inner class to parent when cls contains $", () => {
@@ -142,9 +128,7 @@ describe("KsTaskIcon", () => {
             props: {cls: "io.kestra.plugin.core.log.Log$SubClass", icons: iconsWithParent, onlyIcon: true},
             global: globalConfig,
         })
-        // Should resolve to parent class and find the icon
-        const {symbol} = resolveSymbol(wrapper)
-        expect(symbol?.querySelector("circle")).not.toBeNull()
+        expect(wrapper.find(".ks-task-icon__icon circle").exists()).toBe(true)
     })
 
     test("lazily resolves the icon via loadIcon when it isn't in icons", async () => {
@@ -155,13 +139,13 @@ describe("KsTaskIcon", () => {
         })
 
         // renders the fallback icon while the request is in flight
-        expect(resolveSymbol(wrapper).symbol?.querySelector("circle")).toBeNull()
+        expect(wrapper.find(".ks-task-icon__icon circle").exists()).toBe(false)
         expect(loadIcon).toHaveBeenCalledWith("io.kestra.plugin.core.log.Log")
 
         await flushPromises()
         await wrapper.vm.$nextTick()
 
-        expect(resolveSymbol(wrapper).symbol?.querySelector("circle")).not.toBeNull()
+        expect(wrapper.find(".ks-task-icon__icon circle").exists()).toBe(true)
     })
 
     test("does not call loadIcon when the icon is already provided", () => {
@@ -174,27 +158,39 @@ describe("KsTaskIcon", () => {
         expect(loadIcon).not.toHaveBeenCalled()
     })
 
-    test("reuses the same pooled symbol for repeated instances of the same icon", () => {
+    test("hoists <defs> into a shared pool once, while keeping the visible shape inline per instance", () => {
+        const gradientSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            "<defs><linearGradient id=\"grad\"/></defs><circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
+        const icons = {"io.kestra.plugin.core.log.Log": {icon: btoa(gradientSvg), flowable: false}}
+
         const wrapperA = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
             global: globalConfig,
         })
         const wrapperB = mount(KsTaskIcon, {
-            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
+            props: {cls: "io.kestra.plugin.core.log.Log", icons, onlyIcon: true},
             global: globalConfig,
         })
 
-        const {id: idA} = resolveSymbol(wrapperA)
-        const {id: idB} = resolveSymbol(wrapperB)
+        // the gradient definition is not duplicated into every instance...
+        expect(wrapperA.find("linearGradient").exists()).toBe(false)
+        expect(pool()?.querySelectorAll("linearGradient").length).toBe(1)
 
-        expect(idA).toBe(idB)
-        expect(document.querySelectorAll(`#ks-task-icon-pool #${idA}`).length).toBe(1)
+        // ...but the visible shape is still directly inline and readable in each instance
+        const circleA = wrapperA.find("circle")
+        const circleB = wrapperB.find("circle")
+        expect(circleA.exists()).toBe(true)
+        expect(circleB.exists()).toBe(true)
+
+        const gradientId = pool()?.querySelector("linearGradient")?.getAttribute("id")
+        expect(circleA.attributes("fill")).toBe(`url(#${gradientId})`)
+        expect(circleB.attributes("fill")).toBe(`url(#${gradientId})`)
     })
 
-    test("namespaces svg ids by icon type so two different icons sharing an internal id don't collide", () => {
+    test("namespaces ids by icon type so two different icons sharing an internal id don't collide", () => {
         const gradientSvg = (color1: string, color2: string) =>
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
-            `<linearGradient id="grad"><stop offset="0" stop-color="${color1}"/><stop offset="1" stop-color="${color2}"/></linearGradient>` +
+            `<defs><linearGradient id="grad"><stop offset="0" stop-color="${color1}"/><stop offset="1" stop-color="${color2}"/></linearGradient></defs>` +
             "<circle fill=\"url(#grad)\" cx=\"12\" cy=\"12\" r=\"10\"/></svg>"
 
         const iconsA = {"io.kestra.plugin.core.log.Log": {icon: btoa(gradientSvg("red", "yellow")), flowable: false}}
@@ -209,17 +205,42 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
 
-        const {id: idA, symbol: symbolA} = resolveSymbol(wrapperA)
-        const {id: idB, symbol: symbolB} = resolveSymbol(wrapperB)
-
-        expect(idA).not.toBe(idB)
-
-        const gradientIdA = symbolA?.querySelector("linearGradient")?.getAttribute("id")
-        const gradientIdB = symbolB?.querySelector("linearGradient")?.getAttribute("id")
+        const gradientIdA = wrapperA.find("circle").attributes("fill")?.match(/url\(#(.+)\)/)?.[1]
+        const gradientIdB = wrapperB.find("circle").attributes("fill")?.match(/url\(#(.+)\)/)?.[1]
 
         expect(gradientIdA).not.toBe(gradientIdB)
-        expect(symbolA?.querySelector("circle")?.getAttribute("fill")).toBe(`url(#${gradientIdA})`)
-        expect(symbolB?.querySelector("circle")?.getAttribute("fill")).toBe(`url(#${gradientIdB})`)
+        expect(pool()?.querySelector(`#${gradientIdA}`)?.querySelector("stop")?.getAttribute("stop-color")).toBe("red")
+        expect(pool()?.querySelector(`#${gradientIdB}`)?.querySelector("stop")?.getAttribute("stop-color")).toBe("blue")
+    })
+
+    test("namespaces css classes so generic tool-exported class names (st0, cls-1, ...) don't collide", () => {
+        // mirrors real Illustrator/Figma-exported icons: a <style> block styling elements via a
+        // generic class name, reused verbatim across unrelated icons
+        const classStyledSvg = (color: string) =>
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            `<style>.st0{fill:${color};}</style><circle class="st0" cx="12" cy="12" r="10"/></svg>`
+
+        const iconsA = {"io.kestra.plugin.core.log.Log": {icon: btoa(classStyledSvg("red")), flowable: false}}
+        const iconsB = {"io.kestra.plugin.core.flow.Parallel": {icon: btoa(classStyledSvg("blue")), flowable: false}}
+
+        const wrapperA = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons: iconsA, onlyIcon: true},
+            global: globalConfig,
+        })
+        const wrapperB = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.flow.Parallel", icons: iconsB, onlyIcon: true},
+            global: globalConfig,
+        })
+
+        const classA = wrapperA.find("circle").attributes("class")
+        const classB = wrapperB.find("circle").attributes("class")
+
+        expect(classA).not.toBe(classB)
+
+        // each icon's <style> block is hoisted into its own <g data-icon> group in the pool
+        const styleText = pool()?.innerHTML ?? ""
+        expect(styleText).toContain(`.${classA}{fill:red;}`)
+        expect(styleText).toContain(`.${classB}{fill:blue;}`)
     })
 
     test("strips event handler attributes from untrusted svg content", () => {
@@ -231,7 +252,6 @@ describe("KsTaskIcon", () => {
             global: globalConfig,
         })
 
-        const {symbol} = resolveSymbol(wrapper)
-        expect(symbol?.querySelector("circle")?.getAttribute("onclick")).toBeNull()
+        expect(wrapper.find("circle").attributes("onclick")).toBeUndefined()
     })
 })

@@ -35,6 +35,7 @@ import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -121,6 +122,7 @@ public class PluginScanner {
         List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
+        List<Class<? extends LogRepositoryInterface>> logStores = new ArrayList<>();
         List<Class<? extends TaskRunner<?>>> taskRunners = new ArrayList<>();
         List<Class<? extends Asset>> assets = new ArrayList<>();
         List<Class<? extends AssetExporter<?>>> assetExporters = new ArrayList<>();
@@ -163,6 +165,10 @@ public class PluginScanner {
                     case SecretPluginInterface storage -> {
                         log.debug("Loading Secret plugin: '{}'", plugin.getClass());
                         secrets.add(storage.getClass());
+                    }
+                    case LogRepositoryInterface logStore -> {
+                        log.debug("Loading LogStore plugin: '{}'", plugin.getClass());
+                        logStores.add(logStore.getClass());
                     }
                     case TaskRunner<?> runner -> {
                         log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
@@ -272,6 +278,7 @@ public class PluginScanner {
             .triggers(triggers)
             .storages(storages)
             .secrets(secrets)
+            .logStores(logStores)
             .assets(assets)
             .assetExporters(assetExporters)
             .apps(apps)

@@ -139,7 +139,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(task -> task.getId())
             .collect(Collectors.toList());
 
-        violations.addAll(assetsViolations(allTasks));
+        violations.addAll(EEViolations(value));
 
         if (!invalidTasks.isEmpty()) {
             violations.add(
@@ -171,10 +171,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
     }
 
-    protected List<String> assetsViolations(List<Task> allTasks) {
-        return allTasks.stream().filter(task -> task.getAssets() != null)
+    protected List<String> EEViolations(Flow flow) {
+        var assetViolations = flow.allTasks().filter(task -> task.getAssets() != null)
             .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
             .toList();
+        List<String> violations = new ArrayList<>(assetViolations);
+
+        if (!ListUtils.isEmpty(flow.getQuotas())) {
+            violations.add("Quotas are only available in Enterprise Edition.");
+        }
+
+        return violations;
     }
 
     private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {
@@ -235,7 +242,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     }
 
-    private static List<String> getDuplicates(List<String> taskIds) {
+    protected static List<String> getDuplicates(List<String> taskIds) {
         return taskIds.stream()
             .distinct()
             .filter(entry -> Collections.frequency(taskIds, entry) > 1)

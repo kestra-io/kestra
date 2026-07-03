@@ -570,7 +570,7 @@
     async function updateKvModal(entry: any) {
         kv.value.namespace = entry.namespace
         kv.value.key = entry.key
-        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
         kv.value.type = type
         // Force the type reset before setting the value
         await nextTick()
@@ -595,7 +595,7 @@
     const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
 
     async function viewKvModal(entry: any) {
-        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
         const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
         viewKv.value = {
             namespace: entry.namespace,

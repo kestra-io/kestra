@@ -83,7 +83,7 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import {useNamespacesFilter} from "../../../components/filter/configurations"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
@@ -118,10 +118,7 @@
 
     const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
-        const filterParams = Object.fromEntries(
-            Object.entries(route.query).filter(([key]) => key.startsWith("filters[")),
-        )
-        namespaces.value = await useNamespaces(1000, filterParams).all()
+        namespaces.value = await useNamespaces(1000, {filters: routeQueryToQueryFilters(route.query)}).all()
     }
 
     watch(

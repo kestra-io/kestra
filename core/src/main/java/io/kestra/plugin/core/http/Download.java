@@ -98,7 +98,14 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                         size.set(0L);
                     }
 
-                    if (r.getBody() != null) {
+                    // Content-Length describes the size of the transferred (encoded) body, while `size` counts the
+                    // bytes actually written after any content-coding has been transparently decoded (e.g. gzip).
+                    // The two only match for identity encoding, so skip the check when the response is content-encoded.
+                    boolean contentEncoded = r.getHeaders().firstValue("Content-Encoding")
+                        .map(encoding -> !encoding.isBlank() && !"identity".equalsIgnoreCase(encoding))
+                        .orElse(false);
+
+                    if (r.getBody() != null && !contentEncoded) {
                         r.getHeaders().firstValue("Content-Length").ifPresent(header ->
                         {
                             long length = Long.parseLong(header);

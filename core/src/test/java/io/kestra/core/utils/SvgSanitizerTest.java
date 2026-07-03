@@ -16,12 +16,40 @@ class SvgSanitizerTest {
     }
 
     @Test
-    void shouldRemoveForeignObjectTags() {
+    void shouldPreserveHarmlessForeignObjectContent() {
+        // Figma's SVG export fakes conic/angular gradients this way; several real plugin icons
+        // have no visible content without it (a shape with no explicit fill inherits fill="none"
+        // from the root <svg> and relies entirely on this foreignObject for its visible color).
+        String svg = "<svg><foreignObject><div style=\"background:conic-gradient(red,blue)\"></div></foreignObject>" +
+            "<path d=\"M0 0\"/></svg>";
+
+        assertThat(SvgSanitizer.sanitize(svg)).isEqualTo(svg);
+    }
+
+    @Test
+    void shouldStripEventHandlersInsideForeignObject() {
         String svg = "<svg><foreignObject><body onload=\"alert(1)\"/></foreignObject><path d=\"M0 0\"/></svg>";
 
+        String sanitized = SvgSanitizer.sanitize(svg);
+
+        assertThat(sanitized).contains("foreignObject").doesNotContain("onload").contains("<path d=\"M0 0\"/>");
+    }
+
+    @Test
+    void shouldRemoveIframeTags() {
+        String svg = "<svg><foreignObject><iframe src=\"https://evil.example\"></iframe></foreignObject>" +
+            "<path d=\"M0 0\"/></svg>";
+
         assertThat(SvgSanitizer.sanitize(svg))
-            .doesNotContain("foreignObject")
+            .doesNotContain("<iframe")
             .contains("<path d=\"M0 0\"/>");
+    }
+
+    @Test
+    void shouldNeutralizeJavascriptSrcUris() {
+        String svg = "<svg><foreignObject><iframe src=\"javascript:alert(1)\"></iframe></foreignObject></svg>";
+
+        assertThat(SvgSanitizer.sanitize(svg)).doesNotContain("javascript:");
     }
 
     @Test

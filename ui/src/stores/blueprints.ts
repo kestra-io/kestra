@@ -3,6 +3,9 @@ import {defineStore} from "pinia"
 
 import {useClient} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
+import * as BlueprintsAPI from "@kestra-io/kestra-sdk/blueprints"
+import * as BlueprintTagsAPI from "@kestra-io/kestra-sdk/blueprint-tags"
+import type {QueryFilter} from "@kestra-io/design-system"
 
 import {useMiscStore} from "override/stores/misc"
 
@@ -66,64 +69,76 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
     const getBlueprints = async (options: Options) => {
-        const params = options.type === "custom" ? toCustomBlueprintFilterParams(options.params) : options.params
-        const PARAMS = {params, ...VALIDATE}
+        if (options.type === "community") {
+            const PARAMS = {params: options.params, ...VALIDATE}
+            const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
+            const response = await axios.get(COMMUNITY, PARAMS)
+            blueprints.value = response.data
+            return response.data
+        }
 
-        const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}`
-
-        const response = await axios.get(options.type === "community" ? COMMUNITY : CUSTOM, PARAMS)
-
-        blueprints.value = response.data
-        return response.data
+        try {
+            const data = await BlueprintsAPI.searchInternalBlueprints(toCustomBlueprintParams(options.params))
+            blueprints.value = data.results as unknown as Blueprint[]
+            return data
+        } catch (e: any) {
+            if (e.status === 401) return {results: [], total: 0}
+            throw e
+        }
     }
 
     /**
-     * The /blueprints/custom backend reads search/tag filters from the QueryFilter format
-     * (`filters[q][EQUALS]=…`, `filters[tags][IN]=…`). Legacy callers still pass `q` / `tags`
-     * as scalar params, so translate them here. The external community API (api.kestra.io)
-     * still expects the legacy scalar form, so we only translate for `custom`.
+     * The /blueprints/custom backend reads search/tag filters from the QueryFilter format.
+     * Legacy callers still pass `q` / `tags` as scalar params, so translate them into a
+     * QueryFilter[] here. The external community API (api.kestra.io) still expects the legacy
+     * scalar form, so this is only used for `custom`.
      */
-    function toCustomBlueprintFilterParams(params?: Record<string, any>): Record<string, any> | undefined {
-        if (!params) return params
-        const translated: Record<string, any> = {}
-        for (const [key, value] of Object.entries(params)) {
-            if (value === undefined || value === null) continue
-            if (key === "q") {
-                translated["filters[q][EQUALS]"] = value
-            } else if (key === "tags") {
-                translated["filters[tags][IN]"] = Array.isArray(value) ? value.join(",") : value
-            } else {
-                translated[key] = value
-            }
+    function toCustomBlueprintParams(params?: Record<string, any>) {
+        const {q, tags, ...rest} = params ?? {}
+        const filters: QueryFilter[] = []
+        if (q !== undefined && q !== null) {
+            filters.push({field: "QUERY", operation: "EQUALS", value: q})
         }
-        return translated
+        if (tags !== undefined && tags !== null) {
+            filters.push({field: "TAGS", operation: "IN", value: Array.isArray(tags) ? tags.join(",") : tags})
+        }
+        return {...rest, filters} as Parameters<typeof BlueprintsAPI.searchInternalBlueprints>[0]
     }
 
     const getBlueprint = async (options: Options) => {
-        const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}`
-
-        const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM)
-
-        if (response.data?.id) {
-            trackBlueprintSelection(response.data.id)
+        if (options.type === "community") {
+            const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
+            const response = await axios.get(COMMUNITY)
+            if (response.data?.id) {
+                trackBlueprintSelection(response.data.id)
+            }
+            blueprint.value = response.data
+            return response.data
         }
 
-        blueprint.value = response.data
-        return response.data
+        const data = await BlueprintsAPI.internalBlueprint({id: options.id!}) as unknown as Blueprint
+        if (data?.id) {
+            trackBlueprintSelection(data.id)
+        }
+        blueprint.value = data
+        return data
     }
 
     const getBlueprintSource = async (options: Options) => {
-        const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/source`
+        if (options.type === "community") {
+            const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
+            const response = await axios.get(COMMUNITY)
+            source.value = response.data
+            return response.data
+        }
 
-        const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM)
-
-        source.value = response.data
-        return response.data
+        const data = await BlueprintsAPI.internalBlueprintFlow({id: options.id!})
+        source.value = data
+        return data
     }
 
+    // No SDK equivalent exists for the "custom"/internal blueprint graph endpoint -
+    // both branches stay on raw axios.
     const getBlueprintGraph = async (options: Options) => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/graph`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/graph`
@@ -135,63 +150,46 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     }
 
     const getBlueprintTags = async (options: Options) => {
-        const params = options.type === "custom" ? toCustomBlueprintFilterParams(options.params) : options.params
-        const PARAMS = {params, ...VALIDATE}
+        if (options.type === "community") {
+            const PARAMS = {params: options.params, ...VALIDATE}
+            const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
+            const response = await axios.get(COMMUNITY, PARAMS)
+            return response.data
+        }
 
-        const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/tags`
-
-        const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM, PARAMS)
-
-        return response.data
+        try {
+            return await BlueprintTagsAPI.internalBlueprintTags(toCustomBlueprintParams(options.params) as Parameters<typeof BlueprintTagsAPI.internalBlueprintTags>[0])
+        } catch (e: any) {
+            if (e.status === 401) return []
+            throw e
+        }
     }
 
     const getFlowBlueprint = async (id: string): Promise<FlowBlueprint> => {
-        const url = `${apiUrl()}/blueprints/flow/${id}`
+        const data = await BlueprintsAPI.flowBlueprint({id}) as FlowBlueprint
 
-        const response = await axios.get(url)
-
-        if (response.data?.id) {
-            trackBlueprintSelection(response.data.id)
+        if (data?.id) {
+            trackBlueprintSelection(data.id)
         }
 
-        blueprint.value = response.data
-        return response.data
+        blueprint.value = data
+        return data
     }
 
     const createFlowBlueprint = async (toCreate: {source: string, title: string, description: string, tags: string[]}): Promise<FlowBlueprint> => {
-        const url = `${apiUrl()}/blueprints/flows`
-        const body = {
-            ...toCreate,
-        }
-        const response = await axios.post(url, body)
-
-        return response.data
+        return BlueprintsAPI.createFlowBlueprint(toCreate) as Promise<FlowBlueprint>
     }
 
     const updateFlowBlueprint = async (id: string, toUpdate: {source: string, title: string, description: string, tags: string[]}) :Promise<FlowBlueprint> => {
-        const url = `${apiUrl()}/blueprints/flows/${id}`
-        const body = {
-            ...toUpdate,
-        }
-        const response = await axios.put(url, body)
-
-        return response.data
+        return BlueprintsAPI.updateFlowBlueprint({id, ...toUpdate}) as Promise<FlowBlueprint>
     }
 
     const deleteFlowBlueprint = async (idToDelete: string) => {
-        const url = `${apiUrl()}/blueprints/flows/${idToDelete}`
-        await axios.delete(url)
+        await BlueprintsAPI.deleteFlowBlueprints({id: idToDelete})
     }
 
     const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, object>): Promise<{generatedFlowSource: string}> => {
-        const url = `${apiUrl()}/blueprints/flows/${id}/use-template`
-        const body = {
-            templateArgumentsInputs: inputs,
-        }
-        const response = await axios.post(url, body)
-
-        return response.data
+        return BlueprintsAPI.useBlueprintTemplate({id, templateArgumentsInputs: inputs as any}) as Promise<{generatedFlowSource: string}>
     }
 
     return {

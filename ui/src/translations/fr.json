@@ -109,10 +109,17 @@
           "2": "Explorez les blueprints pour démarrer votre prochain {kind}."
         }
       },
+      "missingPlugins": {
+        "card": "Nécessite des plugin(s) non installés sur cette instance : {plugins}",
+        "description": "Ce blueprint utilise des tasks de plugin(s) qui ne sont pas installés sur cette instance : {plugins}. Installez-les pour utiliser ce blueprint.",
+        "install": "Installer les plugins",
+        "title": "Plugins manquants"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Favoris",
+    "breakpoints": "Points d'arrêt",
     "bulk action async warning": "Cela peut prendre quelques instants.",
     "bulk actions": "Actions en masse",
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
@@ -264,6 +271,7 @@
       },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
+      "others": "Autres",
       "preview": "Aperçu du Dashboard",
       "quick_filters": {
         "all": "Tout",
@@ -273,7 +281,8 @@
         "success": "Succès",
         "warning": "Avertissement"
       },
-      "switch": "Changer de tableau de bord"
+      "switch": "Changer de tableau de bord",
+      "viewAll": "Tout voir"
     },
     "data": "Données",
     "dataFilters": "Filtres de données",
@@ -417,6 +426,10 @@
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir.",
           "title": "Gérez vos Variables de manière centralisée"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Edition vous permet de définir des quotas sur les flows pour limiter le nombre d'exécutions simultanées ou totales dans une fenêtre de temps. Les quotas vous aident à protéger l'infrastructure partagée, à appliquer les SLAs et à empêcher les workflows incontrôlés de consommer des ressources excessives.",
+        "title": "Appliquer des quotas d'exécution sur les flows"
       },
       "secrets": {
         "add_env": {
@@ -1593,6 +1606,7 @@
       "shown": "Affiché dans le tableau"
     },
     "queued duration": "Durée d'attente",
+    "quotas": "Quotas",
     "reach us": "Contactez-nous",
     "read-more": "En savoir plus sur",
     "readonly property": "Propriété non modifiable",
@@ -1637,6 +1651,8 @@
     "restore confirm": "Êtes vous sûr de vouloir restaurer la révision <code>{revision}</code>?",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "resume": "Reprendre",
+    "resume from breakpoint done": "L'exécution est reprise depuis le point d'arrêt",
+    "resume from breakpoint title": "Reprendre l'exécution <code>{id}</code> depuis le point d'arrêt",
     "resumed confirm": "Êtes-vous sur de vouloir reprendre l'exécution <code>{id}</code>?",
     "resumed done": "L'exécution est reprise",
     "resumed title": "Reprendre l'exécution <code>{id}</code>",
@@ -1783,6 +1799,11 @@
           "label": "Barre latérale"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Moyenne",
+            "small": "Petite"
+          },
           "color_modes": {
             "dark_1": "Sombre 1.0",
             "dark_2": "Sombre 2.0",
@@ -1793,6 +1814,7 @@
             "color_mode": "Votre interface utilise maintenant le thème `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Facteur d'échelle appliqué à toutes les tailles de police de l'interface.",
             "color_mode": "Choisissez votre thème d'interface préféré.",
             "color_mode_shortcut": "Astuce : appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>L</kbd> pour changer de thème depuis n'importe où.",
             "editor_folding_stratgy": "Réduire les blocs YAML longs par défaut lors de l'ouverture d'un flow.",
@@ -1804,6 +1826,7 @@
             "logs_font_size": "Taille de police utilisée dans les visionneuses de log et les terminaux."
           },
           "fields": {
+            "app_font_size": "Taille de police de l'application",
             "chart_color_scheme": {
               "classic": "Classique",
               "kestra": "Kestra",

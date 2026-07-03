@@ -23,14 +23,6 @@
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
-                    <QuickFilters
-                        v-if="!hasComplexFilters"
-                        :levels="VALUES.LEVELS"
-                        :level="effectiveLogLevel?.value"
-                        :levelLabel="t('filter.level_log_executions.label')"
-                        :showInterval="false"
-                        @update:level="selectLevel"
-                    />
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
@@ -113,7 +105,6 @@
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
@@ -177,7 +168,6 @@
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
-    const {hasComplexFilters} = useComplexFilters()
     const quickIntervals = computed(() => [
         {label: t("datepicker.short.15m"), value: "PT15M"},
         {label: t("datepicker.short.1h"), value: "PT1H"},
@@ -459,7 +449,7 @@
         position: sticky;
         top: 0;
         z-index: 10;
-        margin: 0 var(--ks-spacing-5) var(--ks-spacing-3);
+        margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
 
@@ -473,7 +463,6 @@
         &__actions {
             display: flex;
             align-items: center;
-            gap: var(--ks-spacing-2);
             margin-left: auto;
         }
 
@@ -501,7 +490,7 @@
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             padding: 1rem;
-            margin: 0 var(--ks-spacing-5);
+            margin: 0 var(--ks-spacing-6);
             padding-top: .5rem;
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);

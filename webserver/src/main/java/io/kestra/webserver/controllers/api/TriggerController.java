@@ -97,7 +97,7 @@ public class TriggerController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(
             description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc"),
+                @ExampleObject(name = "Sort by next evaluation date in ascending order", value = "nextEvaluationDate:asc"),
                 @ExampleObject(name = "Sort by trigger ID in descending order", value = "triggerId:desc")
             }
         ) @Nullable @QueryValue List<String> sort,

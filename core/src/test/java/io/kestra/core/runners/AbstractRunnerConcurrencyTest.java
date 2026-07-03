@@ -58,6 +58,15 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @LoadFlows(
+        value = { "flows/valids/flow-concurrency-sla-fail-parent.yml", "flows/valids/flow-concurrency-sla-fail-child.yml" },
+        tenantId = "flow-concurrency-sla-fail"
+    )
+    void flowConcurrencySlaFailSubflow() throws QueueException {
+        flowConcurrencyCaseTest.flowConcurrencySlaFailSubflow("flow-concurrency-sla-fail");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml" }, tenantId = "flow-concurrency-subflow")
     void flowConcurrencySubflow() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencySubflow("flow-concurrency-subflow");

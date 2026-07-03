@@ -109,10 +109,17 @@
           "2": "Erkunden Sie Blueprints, um Ihr nächstes {kind} zu starten."
         }
       },
+      "missingPlugins": {
+        "card": "Erfordert Plugin(s), die auf dieser Instanz nicht installiert sind: {plugins}",
+        "description": "Dieses Blueprint verwendet Tasks aus Plugin(s), die auf dieser Instanz nicht installiert sind: {plugins}. Installieren Sie sie, um dieses Blueprint zu verwenden.",
+        "install": "Plugins installieren",
+        "title": "Fehlende Plugins"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Lesezeichen",
+    "breakpoints": "Haltepunkte",
     "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk actions": "Massenaktionen",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
@@ -264,6 +271,7 @@
       },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
+      "others": "Andere",
       "preview": "Vorschau-Dashboard",
       "quick_filters": {
         "all": "Alle",
@@ -273,7 +281,8 @@
         "success": "Erfolg",
         "warning": "Warnung"
       },
-      "switch": "Dashboard wechseln"
+      "switch": "Dashboard wechseln",
+      "viewAll": "Alle anzeigen"
     },
     "data": "Daten",
     "dataFilters": "Datenfilter",
@@ -417,6 +426,10 @@
           "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Variablen definieren und verwalten, um wiederholte Konfigurationen über Flows hinweg zu eliminieren. Diese Variablen gewährleisten Konsistenz, vereinfachen Konfigurationsaktualisierungen und können von jedem Task oder Trigger leicht referenziert werden, um sauberere und besser wartbare Workflows zu ermöglichen.",
           "title": "Verwalten Sie Ihre Variablen zentral"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Edition ermöglicht es Ihnen, Kontingente für Flows festzulegen, um die Anzahl gleichzeitiger oder gesamter Ausführungen in einem Zeitfenster zu begrenzen. Kontingente helfen Ihnen, gemeinsam genutzte Infrastruktur zu schützen, SLAs durchzusetzen und unkontrollierte Workflows daran zu hindern, übermäßige Ressourcen zu verbrauchen.",
+        "title": "Ausführungskontingente für Flows festlegen"
       },
       "secrets": {
         "add_env": {
@@ -1593,6 +1606,7 @@
       "shown": "In Tabelle angezeigt"
     },
     "queued duration": "Warteschlangendauer",
+    "quotas": "Quotas",
     "reach us": "Sprechen Sie mit uns",
     "read-more": "Mehr erfahren über",
     "readonly property": "Schreibgeschützte Eigenschaft",
@@ -1637,6 +1651,8 @@
     "restore confirm": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "restore revision": "Sind Sie sicher, dass Sie die Revision <code>{revision}</code> wiederherstellen möchten?",
     "resume": "Fortsetzen",
+    "resume from breakpoint done": "Ausführung wird vom Breakpoint fortgesetzt",
+    "resume from breakpoint title": "Ausführung `<code>{id}</code>` vom Haltepunkt fortsetzen",
     "resumed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> fortsetzen möchten?",
     "resumed done": "Ausführung ist fortgesetzt",
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
@@ -1783,6 +1799,11 @@
           "label": "Seitenleiste"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Groß",
+            "medium": "Mittel",
+            "small": "Klein"
+          },
           "color_modes": {
             "dark_1": "Dunkel 1.0",
             "dark_2": "Dunkel 2.0",
@@ -1793,6 +1814,7 @@
             "color_mode": "Ihre Oberfläche verwendet jetzt das Design `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Skalierungsfaktor für alle Schriftgrößen der Benutzeroberfläche.",
             "color_mode": "Wählen Sie Ihren bevorzugten Interface-Modus.",
             "color_mode_shortcut": "Tipp: Drücken Sie <kbd>Strg</kbd>+<kbd>Umschalt</kbd>+<kbd>L</kbd>, um Designs von überall zu wechseln.",
             "editor_folding_stratgy": "Standardmäßig lange YAML-Blöcke beim Öffnen eines flow ausklappen.",
@@ -1804,6 +1826,7 @@
             "logs_font_size": "Schriftgröße, die in Log-Viewern und Terminals verwendet wird."
           },
           "fields": {
+            "app_font_size": "App-Schriftgröße",
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",

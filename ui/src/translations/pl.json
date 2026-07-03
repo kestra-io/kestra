@@ -109,10 +109,17 @@
           "2": "Eksploruj blueprints, aby rozpocząć swój następny {kind}."
         }
       },
+      "missingPlugins": {
+        "card": "Wymaga pluginów niezainstalowanych w tej instancji: {plugins}",
+        "description": "Ten blueprint używa tasków z pluginów, które nie są zainstalowane w tej instancji: {plugins}. Zainstaluj je, aby użyć tego blueprintu.",
+        "install": "Zainstaluj pluginy",
+        "title": "Brakujące pluginy"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Zakładki",
+    "breakpoints": "Punkty przerwania",
     "bulk action async warning": "To może zająć kilka chwil.",
     "bulk actions": "Akcje zbiorcze",
     "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?",
@@ -264,6 +271,7 @@
       },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
+      "others": "Inne",
       "preview": "Podgląd Dashboardu",
       "quick_filters": {
         "all": "Wszystkie",
@@ -273,7 +281,8 @@
         "success": "Sukces",
         "warning": "Ostrzeżenie"
       },
-      "switch": "Przełącz Dashboard"
+      "switch": "Przełącz Dashboard",
+      "viewAll": "Pokaż wszystko"
     },
     "data": "Dane",
     "dataFilters": "Filtry Danych",
@@ -417,6 +426,10 @@
           "message": "W Kestra Enterprise Edition możesz definiować i zarządzać zmiennymi na poziomie namespace, aby wyeliminować powtarzające się konfiguracje w różnych flow. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo odwoływane przez dowolny task lub trigger, co prowadzi do czystszych i łatwiejszych w utrzymaniu workflow.",
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Edition umożliwia definiowanie kwot dla flows w celu ograniczenia liczby równoczesnych lub łącznych wykonań w danym oknie czasowym. Kwoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflows.",
+        "title": "Egzekwowanie kwot wykonania dla flows"
       },
       "secrets": {
         "add_env": {
@@ -1593,6 +1606,7 @@
       "shown": "Wyświetlane w tabeli"
     },
     "queued duration": "Czas trwania w kolejce",
+    "quotas": "Kwoty",
     "reach us": "Porozmawiaj z nami",
     "read-more": "Czytaj więcej o",
     "readonly property": "Właściwość tylko do odczytu",
@@ -1637,6 +1651,8 @@
     "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "restore revision": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "resume": "Wznów",
+    "resume from breakpoint done": "Wykonanie zostało wznowione od punktu przerwania",
+    "resume from breakpoint title": "Wznów wykonanie <code>{id}</code> z punktu przerwania",
     "resumed confirm": "Czy na pewno chcesz wznowić wykonanie <code>{id}</code>?",
     "resumed done": "Wykonanie zostało wznowione",
     "resumed title": "Wznów wykonanie <code>{id}</code>",
@@ -1783,6 +1799,11 @@
           "label": "Pasek boczny"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Duży",
+            "medium": "Średni",
+            "small": "Mały"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Dark 2.0",
@@ -1793,6 +1814,7 @@
             "color_mode": "Twój interfejs używa teraz motywu `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Współczynnik skalowania stosowany do wszystkich rozmiarów czcionek interfejsu.",
             "color_mode": "Wybierz preferowany motyw interfejsu.",
             "color_mode_shortcut": "Wskazówka: naciśnij <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, aby zmieniać motywy z dowolnego miejsca.",
             "editor_folding_stratgy": "Domyślnie zwijaj długie bloki YAML podczas otwierania flow.",
@@ -1804,6 +1826,7 @@
             "logs_font_size": "Rozmiar czcionki używany w przeglądarkach logów i terminalach."
           },
           "fields": {
+            "app_font_size": "Rozmiar czcionki aplikacji",
             "chart_color_scheme": {
               "classic": "Klasyczny",
               "kestra": "Kestra",

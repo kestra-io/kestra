@@ -189,6 +189,17 @@ describe("buildWizardSteps", () => {
         expect(steps.map(s => s.kind)).toEqual(["plain", "recap"])
         expect(steps[0].leafIds).toEqual(["a", "b"])
     })
+
+    it("carries the FORM displayName separately from title", () => {
+        const steps = buildWizardSteps([
+            {id: "env", type: "FORM", displayName: "Environment", inputs: [{id: "region", type: "STRING"}]},
+            {id: "creds", type: "FORM", inputs: [{id: "token", type: "SECRET"}]},
+        ])
+        expect(steps[0].displayName).toBe("Environment")
+        expect(steps[0].title).toBe("Environment")
+        expect(steps[1].displayName).toBeUndefined() // no displayName -> undefined, title falls back to id
+        expect(steps[1].title).toBe("creds")
+    })
 })
 
 describe("inputsToFormData over flattened FORM inputs (submit contract)", () => {

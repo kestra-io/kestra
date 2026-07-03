@@ -123,11 +123,6 @@
         border: 1px solid var(--ks-border-info);
         white-space: nowrap;
 
-        :deep(.material-design-icon) {
-            position: absolute;
-            bottom: 0;
-        }
-
         @media (max-width: 576px) {
             padding: 6px 12px;
             font-size: var(--ks-font-size-sm);

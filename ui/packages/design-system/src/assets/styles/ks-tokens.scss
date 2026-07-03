@@ -9,16 +9,17 @@
     // typography
     --ks-font-family-sans: #{v.$font-family-sans-serif};
     --ks-font-family-mono: #{v.$font-family-monospace};
-    --ks-font-size-2xs: #{v.$font-size-2xs};
-    --ks-font-size-xs: #{v.$font-size-xs};
-    --ks-font-size-sm: #{v.$font-size-sm};
-    --ks-font-size-base: #{v.$font-size-base};
-    --ks-font-size-md: #{v.$font-size-md};
-    --ks-font-size-lg: #{v.$font-size-lg};
-    --ks-font-size-xl: #{v.$font-size-xl};
-    --ks-font-size-2xl: #{v.$font-size-2xl};
-    --ks-font-size-3xl: #{v.$font-size-3xl};
-    --ks-font-size-4xl: #{v.$font-size-4xl};
+    --ks-font-scale: 1;
+    --ks-font-size-2xs: calc(#{v.$font-size-2xs} * var(--ks-font-scale));
+    --ks-font-size-xs: calc(#{v.$font-size-xs} * var(--ks-font-scale));
+    --ks-font-size-sm: calc(#{v.$font-size-sm} * var(--ks-font-scale));
+    --ks-font-size-base: calc(#{v.$font-size-base} * var(--ks-font-scale));
+    --ks-font-size-md: calc(#{v.$font-size-md} * var(--ks-font-scale));
+    --ks-font-size-lg: calc(#{v.$font-size-lg} * var(--ks-font-scale));
+    --ks-font-size-xl: calc(#{v.$font-size-xl} * var(--ks-font-scale));
+    --ks-font-size-2xl: calc(#{v.$font-size-2xl} * var(--ks-font-scale));
+    --ks-font-size-3xl: calc(#{v.$font-size-3xl} * var(--ks-font-scale));
+    --ks-font-size-4xl: calc(#{v.$font-size-4xl} * var(--ks-font-scale));
 
     // radius
     --ks-radius-xs: #{v.$border-radius-xs};

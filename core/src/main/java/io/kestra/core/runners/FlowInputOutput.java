@@ -358,6 +358,11 @@ public class FlowInputOutput {
 
             Object value = resolvable.get().value();
 
+            // Pebble renders a null reference as ""; treat "" as absent for non-text types.
+            if (value instanceof String s && s.isEmpty() && !isTextType(input.getType())) {
+                value = null;
+            }
+
             // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
             // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
@@ -416,6 +421,17 @@ public class FlowInputOutput {
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
             case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
         };
+    }
+
+    /**
+     * Returns {@code true} for input types that treat an empty string as a valid value.
+     * All other types (INT, FLOAT, BOOL, DATE/TIME variants, DURATION, JSON, YAML, URI, FILE,
+     * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
+     * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
+     */
+    private static boolean isTextType(Type type) {
+        return type == Type.STRING || type == Type.SELECT
+            || type == Type.EMAIL || type == Type.SECRET;
     }
 
     @SuppressWarnings("unchecked")

@@ -103,7 +103,9 @@ public final class RunVariables {
         "taskrun.iteration",
         "taskrun.parentId",
         "taskrun.startDate",
-        "taskrun.value"
+        "taskrun.value",
+        // Trigger
+        "trigger"
     );
 
     /**
@@ -200,7 +202,11 @@ public final class RunVariables {
     static Map<String, Object> of(final AbstractTrigger trigger) {
         return Map.of(
             "id", trigger.getId(),
-            "type", trigger.getType()
+            "type", trigger.getType(),
+            "_context", Map.of(
+                "id", trigger.getId(),
+                "type", trigger.getType()
+            )
         );
     }
 
@@ -373,7 +379,8 @@ public final class RunVariables {
 
             // Trigger
             if (trigger != null) {
-                builder.put("trigger", RunVariables.of(trigger));
+                var triggerVariables = RunVariables.of(trigger);
+                builder.put("trigger", triggerVariables);
             }
 
             // Execution
@@ -467,13 +474,27 @@ public final class RunVariables {
                     }
                 }
 
-                if (realExecution.getTrigger() != null && realExecution.getTrigger().getVariables() != null) {
-                    Map<String, Object> triggerVariables = realExecution.getTrigger().getVariables();
-                    if (decryptVariables) {
-                        final Secret secret = new Secret(secretKey, logger);
-                        triggerVariables = secret.decrypt(triggerVariables);
+                if (realExecution.getTrigger() != null) {
+                    var executionTrigger = realExecution.getTrigger();
+                    var triggerContext = Map.of(
+                        "id", executionTrigger.getId(),
+                        "type", executionTrigger.getType()
+                    );
+
+                    if (executionTrigger.getVariables() != null) {
+                        Map<String, Object> triggerVariables = executionTrigger.getVariables();
+                        if (decryptVariables) {
+                            final Secret secret = new Secret(secretKey, logger);
+                            triggerVariables = secret.decrypt(triggerVariables);
+                        }
+                        triggerVariables.put("_context", triggerContext);
+                        builder.put("trigger", triggerVariables);
+                    } else {
+
+                        builder.put("trigger", Map.of(
+                            "_context", triggerContext
+                        ));
                     }
-                    builder.put("trigger", triggerVariables);
                 }
 
                 if (execution.getLabels() != null) {

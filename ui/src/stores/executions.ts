@@ -139,6 +139,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     const metrics = ref<any[]>([])
     const metricsTotal = ref<number>(0)
     const subflowsExecutions = ref<Record<string, any>>({})
+    // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
+    // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
+    // never reset across execution navigations, like subflowsExecutions above
+    const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<any | undefined>(undefined)
     const flowGraph = ref<any | undefined>(undefined)
     const namespaces = ref<string[]>([])
@@ -242,7 +246,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
             })
     }
@@ -255,7 +259,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -316,6 +320,18 @@ export const useExecutionsStore = defineStore("executions", () => {
                 "content-type": "multipart/form-data",
             },
         })
+    }
+
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
+        return axios.post<Execution>(
+            `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
+            null,
+            {
+                params: {
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+                },
+            },
+        )
     }
 
     const pause = (options: { id: string }) => {
@@ -817,6 +833,23 @@ export const useExecutionsStore = defineStore("executions", () => {
         delete subflowsExecutions.value[subflow]
     }
 
+    const addProgressEvent = (event: {taskId: string; taskRunId: string; step: string; timestamp: string}) => {
+        // Overwrite (not skip) on a matching (taskRunId, step): a retried task reuses the same
+        // taskRunId, so a later attempt re-emitting the same step must replace the stale value
+        // from an earlier attempt, not be dropped. Idempotent for genuine SSE reconnect replay
+        // since that resends the identical timestamp.
+        //
+        // Reassign the array (like `metrics` does on every loadMetrics()) rather than push/splice
+        // in place: consumers watching this ref shallowly (e.g. to know when to re-render a
+        // topology node) only see a change on reference reassignment, not on in-place mutation.
+        const existingIndex = progressEvents.value.findIndex(e => e.taskRunId === event.taskRunId && e.step === event.step)
+        if (existingIndex === -1) {
+            progressEvents.value = [...progressEvents.value, event]
+        } else {
+            progressEvents.value = progressEvents.value.map((e, i) => i === existingIndex ? event : e)
+        }
+    }
+
     const resetLogs = () => {
         logs.value = {results: [], total: 0}
     }
@@ -868,6 +901,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         metrics,
         metricsTotal,
         subflowsExecutions,
+        progressEvents,
         flow,
         flowGraph,
         namespaces,
@@ -891,6 +925,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkKill,
         queryKill,
         resume,
+        resumeFromBreakpoint,
         validateResume,
         pause,
         bulkPauseExecution,
@@ -931,6 +966,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLatestExecutions,
         addSubflowExecution,
         removeSubflowExecution,
+        addProgressEvent,
         resetLogs,
         appendLogs,
         appendFollowedLogs,

@@ -174,6 +174,46 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
+    /**
+     * Reproduces GitHub issue #16579: when a parent flow with a concurrency limit of 1 (QUEUE behavior)
+     * runs subflows that are killed by an SLA MAX_DURATION/FAIL violation, the duplicate terminal
+     * messages produced by the kill must NOT each release a concurrency slot — otherwise more than
+     * one parent ends up RUNNING simultaneously.
+     */
+    public void flowConcurrencySlaFailSubflow(String tenantId) throws QueueException {
+        // Run 3 executions: only 1 can be RUNNING at a time; the other 2 are QUEUED.
+        // The SLA on the child subflow fires after ~3 s, causing the parent to FAIL.
+        // After each parent fails the next queued one must be promoted to RUNNING.
+        // At the end, the concurrency counter must be 0 (nothing is running).
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent", Optional.empty())
+            .orElseThrow();
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().isQueued()).isTrue();
+        assertThat(execution3.getState().isQueued()).isTrue();
+
+        // Wait for all 3 to terminate — SLA will kill the child (FAIL), propagating FAILED to the parent.
+        // Use a generous timeout because 3 executions run sequentially, each ~3 s.
+        List<Execution> results = runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent", Duration.ofSeconds(60));
+
+        // Every execution must have terminated as FAILED because SLA FAIL propagates via transmitFailed.
+        assertThat(results).extracting(e -> e.getState().getCurrent())
+            .allMatch(State.Type.FAILED::equals);
+
+        // The concurrency counter must be back to 0 — no slot leak.
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent")
+            .orElseThrow(() -> new AssertionError("ConcurrencyLimit record must exist after executions ran"));
+        assertThat(concurrencyLimit.getRunning())
+            .as("Concurrency running counter must be 0 after all executions terminate")
+            .isEqualTo(0);
+    }
+
     public void flowConcurrencySubflow(String tenantId) throws TimeoutException, QueueException {
         runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-subflow", null, null, Duration.ofSeconds(30));
         runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-subflow");

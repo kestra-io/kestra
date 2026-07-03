@@ -109,10 +109,17 @@
           "2": "Esplora i blueprint per avviare il tuo prossimo {kind}."
         }
       },
+      "missingPlugins": {
+        "card": "Richiede plugin non installati su questa istanza: {plugins}",
+        "description": "Questo blueprint utilizza task di plugin non installati su questa istanza: {plugins}. Installali per usare questo blueprint.",
+        "install": "Installa plugin",
+        "title": "Plugin mancanti"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
     "bookmark": "Segnalibri",
+    "breakpoints": "Punti di interruzione",
     "bulk action async warning": "Questo potrebbe richiedere alcuni istanti.",
     "bulk actions": "Azioni collettive",
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
@@ -264,6 +271,7 @@
       },
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
+      "others": "Altri",
       "preview": "Anteprima Dashboard",
       "quick_filters": {
         "all": "Tutti",
@@ -273,7 +281,8 @@
         "success": "Successo",
         "warning": "Avviso"
       },
-      "switch": "Dashboard Switch"
+      "switch": "Dashboard Switch",
+      "viewAll": "Vedi tutti"
     },
     "data": "Dati",
     "dataFilters": "Filtri Dati",
@@ -417,6 +426,10 @@
           "message": "Nella Kestra Enterprise Edition, puoi definire e gestire variabili a livello di namespace per eliminare configurazioni ripetitive tra i flow. Queste variabili assicurano coerenza, semplificano gli aggiornamenti di configurazione e possono essere facilmente riferite da qualsiasi task o trigger per flussi di lavoro più puliti e manutenibili.",
           "title": "Governa Centralmente le Tue Variabili"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Edition consente di definire quote sui flow per limitare il numero di esecuzioni simultanee o totali in una finestra temporale. Le quote aiutano a proteggere l'infrastruttura condivisa, applicare gli SLA e impedire che i workflow incontrollati consumino risorse eccessive.",
+        "title": "Applicare quote di esecuzione ai flow"
       },
       "secrets": {
         "add_env": {
@@ -1593,6 +1606,7 @@
       "shown": "Visualizzato nella tabella"
     },
     "queued duration": "Durata in coda",
+    "quotas": "Quote",
     "reach us": "Parlaci",
     "read-more": "Leggi di più su",
     "readonly property": "Proprietà di sola lettura",
@@ -1637,6 +1651,8 @@
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "restore revision": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "resume": "Riprendi",
+    "resume from breakpoint done": "L'esecuzione è ripresa dal breakpoint",
+    "resume from breakpoint title": "Riprendi l'esecuzione <code>{id}</code> dal punto di interruzione",
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
@@ -1783,6 +1799,11 @@
           "label": "Barra laterale"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Medio",
+            "small": "Piccolo"
+          },
           "color_modes": {
             "dark_1": "Dark 1.0",
             "dark_2": "Dark 2.0",
@@ -1793,6 +1814,7 @@
             "color_mode": "La tua interfaccia ora usa il tema `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Fattore di scala applicato a tutte le dimensioni dei caratteri dell'interfaccia.",
             "color_mode": "Scegli il tema dell'interfaccia preferito.",
             "color_mode_shortcut": "Suggerimento: premi <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>L</kbd> per cambiare tema da qualsiasi punto.",
             "editor_folding_stratgy": "Comprimi i blocchi YAML lunghi per impostazione predefinita quando si apre un flow.",
@@ -1804,6 +1826,7 @@
             "logs_font_size": "Dimensione del carattere utilizzata nei visualizzatori di log e nei terminali."
           },
           "fields": {
+            "app_font_size": "Dimensione carattere applicazione",
             "chart_color_scheme": {
               "classic": "Classico",
               "kestra": "Kestra",

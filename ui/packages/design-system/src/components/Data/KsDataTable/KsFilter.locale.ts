@@ -177,6 +177,13 @@ export default {
                 "label": "State",
                 "description": "Filter by execution state",
             },
+            "state_group": {
+                "running": "Running",
+                "paused": "Paused",
+                "completed": "Completed",
+                "failed": "Failed",
+                "other": "Other",
+            },
             "childFilter": {
                 "label": "Hierarchy",
                 "description": "Filter by execution hierarchy",
@@ -622,6 +629,13 @@ export default {
                 "description": "Nach Zustand der Ausführung filtern",
                 "label": "Zustand",
             },
+            "state_group": {
+                "running": "Laufend",
+                "paused": "Pausiert",
+                "completed": "Abgeschlossen",
+                "failed": "Fehlgeschlagen",
+                "other": "Sonstige",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Anzeigetitel, der KI-Agenten angezeigt wird",
@@ -1011,6 +1025,13 @@ export default {
             "state": {
                 "description": "Filtrar por estado de ejecución",
                 "label": "Estado",
+            },
+            "state_group": {
+                "running": "En ejecución",
+                "paused": "Pausado",
+                "completed": "Completado",
+                "failed": "Fallido",
+                "other": "Otro",
             },
             "table_column": {
                 "mcpTools": {
@@ -1402,6 +1423,13 @@ export default {
                 "description": "Filtrer par état d'exécution",
                 "label": "État",
             },
+            "state_group": {
+                "running": "En cours",
+                "paused": "En pause",
+                "completed": "Terminé",
+                "failed": "Échoué",
+                "other": "Autre",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Titre affiché aux agents IA",
@@ -1791,6 +1819,13 @@ export default {
             "state": {
                 "description": "कार्य स्थिति द्वारा फ़िल्टर करें",
                 "label": "स्थिति",
+            },
+            "state_group": {
+                "running": "चल रहा है",
+                "paused": "रुका हुआ",
+                "completed": "पूर्ण",
+                "failed": "विफल",
+                "other": "अन्य",
             },
             "table_column": {
                 "mcpTools": {
@@ -2182,6 +2217,13 @@ export default {
                 "description": "Filtra per stato di esecuzione",
                 "label": "Zustato",
             },
+            "state_group": {
+                "running": "In esecuzione",
+                "paused": "In pausa",
+                "completed": "Completato",
+                "failed": "Non riuscito",
+                "other": "Altro",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Titolo visualizzato agli agenti IA",
@@ -2571,6 +2613,13 @@ export default {
             "state": {
                 "description": "実行状態でフィルター",
                 "label": "状態",
+            },
+            "state_group": {
+                "running": "実行中",
+                "paused": "一時停止",
+                "completed": "完了",
+                "failed": "失敗",
+                "other": "その他",
             },
             "table_column": {
                 "mcpTools": {
@@ -2962,6 +3011,13 @@ export default {
                 "description": "실행 상태별 필터링",
                 "label": "상태",
             },
+            "state_group": {
+                "running": "실행 중",
+                "paused": "일시 중지",
+                "completed": "완료",
+                "failed": "실패",
+                "other": "기타",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "AI 에이전트에게 표시되는 제목",
@@ -3351,6 +3407,13 @@ export default {
             "state": {
                 "description": "Filtruj według stanu wykonania",
                 "label": "Zmienny",
+            },
+            "state_group": {
+                "running": "W toku",
+                "paused": "Wstrzymano",
+                "completed": "Zakończono",
+                "failed": "Nie powiodło się",
+                "other": "Inne",
             },
             "table_column": {
                 "mcpTools": {
@@ -3742,6 +3805,13 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "A executar",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhado",
+                "other": "Outro",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título exibido aos agentes de IA",
@@ -4131,6 +4201,13 @@ export default {
             "state": {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
+            },
+            "state_group": {
+                "running": "Em execução",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhou",
+                "other": "Outro",
             },
             "table_column": {
                 "mcpTools": {
@@ -4522,6 +4599,13 @@ export default {
                 "description": "Фильтр по состоянию выполнения",
                 "label": "Состояние",
             },
+            "state_group": {
+                "running": "Выполняется",
+                "paused": "Приостановлено",
+                "completed": "Завершено",
+                "failed": "Ошибка",
+                "other": "Другое",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Заголовок, отображаемый ИИ-агентам",
@@ -4911,6 +4995,13 @@ export default {
             "state": {
                 "description": "按执行状态筛选",
                 "label": "状态",
+            },
+            "state_group": {
+                "running": "运行中",
+                "paused": "已暂停",
+                "completed": "已完成",
+                "failed": "失败",
+                "other": "其他",
             },
             "table_column": {
                 "mcpTools": {

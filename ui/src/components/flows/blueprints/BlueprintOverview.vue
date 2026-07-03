@@ -14,11 +14,29 @@
         <section v-if="uniqueTasks.length" class="block">
             <h4 class="label">{{ $t("tasks") }}</h4>
             <div class="tasks" :style="{'--task-columns': columns}">
-                <div v-for="task in uniqueTasks" :key="task" class="task">
+                <div
+                    v-for="task in uniqueTasks"
+                    :key="task"
+                    class="task"
+                    :class="{missing: missingTasks.includes(task)}"
+                >
                     <KsTaskIcon :cls="task" :icons="icons" onlyIcon />
                     <span>{{ taskName(task) }}</span>
                 </div>
             </div>
+        </section>
+
+        <section v-if="missingPlugins.length" class="block">
+            <KsAlert
+                type="warning"
+                :closable="false"
+                :title="$t('blueprints.missingPlugins.title')"
+            >
+                <p class="missing-description">
+                    {{ $t("blueprints.missingPlugins.description", {plugins: missingPlugins.join(", ")}) }}
+                </p>
+                <slot name="missing-plugins-action" :missingPlugins="missingPlugins" />
+            </KsAlert>
         </section>
 
         <section v-if="blueprint?.kind" class="block">
@@ -43,6 +61,7 @@
     import {KsTaskIcon, stringUtils} from "@kestra-io/design-system"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const props = withDefaults(defineProps<{
@@ -77,6 +96,16 @@
     const uniqueTasks = computed(() => [...new Set(props.blueprint?.includedTasks)])
 
     const taskName = (cls: string) => stringUtils.afterLastDot(cls)
+
+    const {missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+
+    const missingTasks = computed(() =>
+        missingTaskTypes(props.blueprint?.includedTasks),
+    )
+
+    const missingPlugins = computed(() =>
+        missingPluginNames(props.blueprint?.includedTasks),
+    )
 </script>
 
 <style scoped lang="scss">
@@ -137,6 +166,19 @@
                 width: 1.5rem;
                 height: 1.5rem;
             }
+
+            &.missing {
+                color: var(--ks-text-secondary);
+
+                :deep(.ks-task-icon) {
+                    opacity: 0.4;
+                    filter: grayscale(1);
+                }
+            }
+        }
+
+        .missing-description {
+            margin: 0;
         }
 
         .pill {

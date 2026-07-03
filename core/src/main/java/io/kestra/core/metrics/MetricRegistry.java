@@ -144,6 +144,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION = "SLA monitor loop duration inside the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION = "executor.loop.delay.duration";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION = "Execution delay loop duration inside the Executor";
+    public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT = "executor.quota.exceeded.total";
+    public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION = "The total number of exceeded quotas evaluated by the Executor";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
@@ -180,6 +182,11 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION = "The duration spent processing individual events within the event-loop.";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT = "scheduler.assigned.vnodes.count";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION = "The number of virtual nodes assigned to the scheduler";
+
+    public static final String METRIC_MAINTENANCE_ENTER_COUNT = "server.maintenance.enter.count";
+    public static final String METRIC_MAINTENANCE_ENTER_COUNT_DESCRIPTION = "The total number of times maintenance mode was entered";
+    public static final String METRIC_MAINTENANCE_EXIT_COUNT = "server.maintenance.exit.count";
+    public static final String METRIC_MAINTENANCE_EXIT_COUNT_DESCRIPTION = "The total number of times maintenance mode was exited";
 
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
     public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";

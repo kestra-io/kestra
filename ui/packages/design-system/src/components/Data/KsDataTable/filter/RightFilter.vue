@@ -208,7 +208,7 @@
             color: var(--ks-text-secondary);
             border-radius: 0.35rem;
             border: none;
-            font-size: 0.625rem;
+            font-size: var(--ks-font-size-sm);
         }
     }
 
@@ -230,7 +230,7 @@
         box-shadow: none;
         margin: 0;
         padding: 0.25rem 0.5rem;
-        font-size: var(--ks-font-size-xs);
+        font-size: var(--ks-font-size-sm);
 
         :deep(svg) {
             color: var(--ks-text-dim);

@@ -1,93 +1,67 @@
-import {useClient} from "@kestra-io/kestra-sdk"
+import * as McpAPI from "@kestra-io/kestra-sdk/mcp"
+import type {
+    ApiMcpServer,
+    ApiMcpServerWritable,
+    McpServerAuthType,
+    McpServerControllerApiMcpTool,
+    McpServerControllerApiMcpToolAnnotations,
+    PagedResultsApiMcpServer,
+} from "@kestra-io/kestra-sdk"
 import {defineStore} from "pinia"
 import {ref} from "vue"
-import {apiUrl} from "override/utils/route"
 
-export type McpAuthType = "BASIC" | "API_TOKEN" | "OAUTH";
-
-export interface McpServer {
-    id: string;
-    description?: string;
-    instructions?: string;
-    serverType: "PRIVATE" | "PUBLIC";
-    authType: McpAuthType;
-    oauthProvider?: string;
-    oauthScopesSupported?: string[];
-    disabled: boolean;
-    isDefault: boolean;
+// The generated types mark these fields optional (OpenAPI doesn't express that
+// the backend always populates them on responses/requires them on writes),
+// so re-narrow them to match what the API actually guarantees.
+export type McpServer = Omit<ApiMcpServer, "serverType" | "authType" | "disabled" | "isDefault"> & {
+    serverType: NonNullable<ApiMcpServer["serverType"]>;
+    authType: NonNullable<ApiMcpServer["authType"]>;
+    disabled: NonNullable<ApiMcpServer["disabled"]>;
+    isDefault: NonNullable<ApiMcpServer["isDefault"]>;
 }
-
-export interface McpServerPayload {
-    id: string;
-    description?: string;
-    instructions?: string;
-    serverType: "PRIVATE" | "PUBLIC";
-    authType: McpAuthType;
-    oauthProvider?: string;
-    oauthScopesSupported?: string[];
-    disabled: boolean;
+export type McpServerPayload = Omit<ApiMcpServerWritable, "serverType" | "authType" | "disabled"> & {
+    serverType: NonNullable<ApiMcpServerWritable["serverType"]>;
+    authType: NonNullable<ApiMcpServerWritable["authType"]>;
+    disabled: NonNullable<ApiMcpServerWritable["disabled"]>;
 }
-
-export interface McpToolAnnotations {
-    readOnly: boolean;
-    openWorld: boolean;
-    destructive: boolean;
-    idempotent: boolean;
-    returnDirect: boolean;
-}
-
-export interface McpTool {
-    toolName: string;
-    triggerId: string;
-    title: string;
-    description: string;
-    annotations: McpToolAnnotations;
-    namespace: string;
-    flowId: string;
-    flowRevision: number;
-    disabled: boolean;
-}
+export type McpAuthType = McpServerAuthType
+export type McpToolAnnotations = Required<McpServerControllerApiMcpToolAnnotations>
+export type McpTool = Required<Omit<McpServerControllerApiMcpTool, "annotations">> & {annotations: McpToolAnnotations}
 
 export const useMcpStore = defineStore("mcp", () => {
-    const axios = useClient()
     const server = ref<McpServer | null>(null)
 
     const list = async (): Promise<{results: McpServer[], total: number}> => {
-        const {data} = await axios.get(`${apiUrl()}/mcp/servers`)
-        return data
+        return McpAPI.listMcps() as Promise<PagedResultsApiMcpServer & {results: McpServer[]}>
     }
 
     const load = async (id: string): Promise<void> => {
         try {
-            const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}`)
-            server.value = data
+            server.value = await McpAPI.mcp({id}) as McpServer
         } catch {
             server.value = null
         }
     }
 
     const create = async (payload: McpServerPayload): Promise<McpServer> => {
-        const {data} = await axios.post(`${apiUrl()}/mcp/servers`, payload)
-        return data
+        return McpAPI.createMcp(payload) as Promise<McpServer>
     }
 
     const update = async (id: string, payload: McpServerPayload): Promise<McpServer> => {
-        const {data} = await axios.put(`${apiUrl()}/mcp/servers/${id}`, payload)
-        return data
+        const {id: _payloadId, ...rest} = payload
+        return McpAPI.updateMcp({id, ...rest}) as Promise<McpServer>
     }
 
     const remove = async (id: string): Promise<void> => {
-        await axios.delete(`${apiUrl()}/mcp/servers/${id}`)
+        await McpAPI.deleteMcp({id})
     }
 
     const toggle = async (id: string): Promise<McpServer> => {
-        const {data} = await axios.patch(`${apiUrl()}/mcp/servers/${id}/toggle`)
-        return data
+        return McpAPI.toggleMcp({id}) as Promise<McpServer>
     }
 
     const listTools = async (id: string): Promise<McpTool[]> => {
-        const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}/tools`)
-        return data
+        return McpAPI.listTools({id}) as Promise<McpTool[]>
     }
 
     return {server, list, load, create, update, remove, toggle, listTools}

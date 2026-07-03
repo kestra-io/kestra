@@ -287,7 +287,7 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
@@ -337,19 +337,20 @@
 
     const editorBindings = useEditorBindings()
 
+    const namespaceFilter = (namespace: string) =>
+        [{field: "NAMESPACE" as const, operation: "EQUALS" as const, value: namespace}]
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
+        const activeFilters = routeQueryToQueryFilters(route.query)
         const kvsResponse = await kvStore.find(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "name:asc"),
-            ...(props.namespace === undefined ? {} : {
-                filters: {
-                    namespace: {
-                        EQUALS: props.namespace,
-                    },
-                },
-            }),
+            filters: [
+                ...activeFilters,
+                ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
+            ],
         }))
 
         let allKvs = kvsResponse.results ?? []
@@ -359,11 +360,7 @@
 
             for (const parentNs of parentNamespaces) {
                 const parentKvsResponse = await kvStore.find(loadQuery({
-                    filters: {
-                        namespace: {
-                            EQUALS: parentNs,
-                        },
-                    },
+                    filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 
                 const parentKvs = parentKvsResponse?.results ?? []
@@ -382,8 +379,11 @@
     }
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return _merge(base, filters)
+        const {page: _p, size: _s, sort: _so, ...rest} = route.query
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)

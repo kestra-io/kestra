@@ -24,6 +24,11 @@ const dirname =
 // "No test files found". Skip the heavy project definition entirely during
 // merge and swap in a bare-bones one that only carries the matching name, which
 // is all `--merge-reports` needs to attribute blob data back to this project.
+// It still needs its own `include` matching real files on disk though — even
+// in merge mode, Vitest validates every project has at least one discoverable
+// file before proceeding, and the default `**/*.{test,spec}...` glob matches
+// none of the `*.stories.*` files here, which reproduces the same
+// "No test files found" failure via a different path.
 const isMergeReports = process.argv.includes("--merge-reports")
 
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
@@ -76,7 +81,13 @@ export default defineConfig({
         projects: [
             "./vitest.config.unit.js",
             isMergeReports
-                ? {test: {name: "storybook"}}
+                ? {
+                    test: {
+                        name: "storybook",
+                        include: ["tests/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+                        exclude: ["**/*.mdx"],
+                    },
+                }
                 : mergeConfig(resolvedViteConfig, {
                     plugins: [
                         // The plugin will run tests for the stories defined in your Storybook config

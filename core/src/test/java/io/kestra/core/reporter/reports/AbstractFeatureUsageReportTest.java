@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Concurrency;
-import io.kestra.core.models.flows.FlowPluginDefault;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Output;
@@ -117,11 +116,6 @@ public abstract class AbstractFeatureUsageReportTest {
                     Quota.builder().duration(Duration.ofMinutes(5)).limit(10L).behavior(Quota.Behavior.FAIL).build()
                 )
             )
-            .pluginDefaults(
-                List.of(
-                    FlowPluginDefault.builder().type(Log.class.getName()).values(Map.of("message", "default")).build()
-                )
-            )
             .tasks(
                 List.of(
                     Log.builder()
@@ -189,7 +183,6 @@ public abstract class AbstractFeatureUsageReportTest {
             assertThat(after.getFlows().getHasFinallyCount()).isEqualTo(before.getFlows().getHasFinallyCount() + 1);
             assertThat(after.getFlows().getHasAfterExecutionCount()).isEqualTo(before.getFlows().getHasAfterExecutionCount() + 1);
             assertThat(after.getFlows().getHasTriggersCount()).isEqualTo(before.getFlows().getHasTriggersCount() + 1);
-            assertThat(after.getFlows().getHasPluginDefaultsCount()).isEqualTo(before.getFlows().getHasPluginDefaultsCount() + 1);
             assertThat(after.getFlows().getHasConcurrencyCount()).isEqualTo(before.getFlows().getHasConcurrencyCount() + 1);
             assertThat(after.getFlows().getHasRetryCount()).isEqualTo(before.getFlows().getHasRetryCount() + 1);
             assertThat(after.getFlows().getHasSlaCount()).isEqualTo(before.getFlows().getHasSlaCount() + 1);

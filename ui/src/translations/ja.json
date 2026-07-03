@@ -109,6 +109,12 @@
           "2": "次の{kind}を始めるためにblueprintを探索してください。"
         }
       },
+      "missingPlugins": {
+        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
+        "install": "pluginをインストール",
+        "title": "不足しているplugin"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",

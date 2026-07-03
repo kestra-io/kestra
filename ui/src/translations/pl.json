@@ -109,6 +109,12 @@
           "2": "Eksploruj blueprints, aby rozpocząć swój następny {kind}."
         }
       },
+      "missingPlugins": {
+        "card": "Wymaga pluginów niezainstalowanych w tej instancji: {plugins}",
+        "description": "Ten blueprint używa tasków z pluginów, które nie są zainstalowane w tej instancji: {plugins}. Zainstaluj je, aby użyć tego blueprintu.",
+        "install": "Zainstaluj pluginy",
+        "title": "Brakujące pluginy"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",

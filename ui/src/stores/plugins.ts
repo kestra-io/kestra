@@ -197,6 +197,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         return response.data.results
     }
 
+    // Flat list of every task/trigger class installed on the instance, fetched
+    // from the plugins endpoint and cached independently of `plugins` (which
+    // other views overwrite with subgroup-shaped, partial payloads).
+    const installedPluginTypes = ref<string[]>()
+    let installedPluginTypesPending: Promise<string[]> | null = null
+    async function loadInstalledPluginTypes(): Promise<string[]> {
+        if (installedPluginTypes.value) return installedPluginTypes.value
+        if (installedPluginTypesPending) return installedPluginTypesPending
+        installedPluginTypesPending = axios
+            .get<{results: Plugin[]; total: number}>(`${apiUrlWithoutTenants()}/plugins`)
+            .then(response => {
+                installedPluginTypes.value = response.data.results.flatMap(p =>
+                    Object.entries(p)
+                        .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                        .flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)),
+                )
+                return installedPluginTypes.value
+            })
+            .finally(() => {
+                installedPluginTypesPending = null
+            })
+        return installedPluginTypesPending
+    }
+
     async function listTriggers() {
         const response = await axios.get<{results: TriggerPluginDto[]; total: number}>(
             `${apiUrlWithoutTenants()}/plugins/triggers`,
@@ -446,6 +470,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         listTriggers,
         listWithSubgroup,
         ensurePlugins,
+        installedPluginTypes,
+        loadInstalledPluginTypes,
         load,
         loadVersions,
         loadInputsType,

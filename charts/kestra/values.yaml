@@ -259,6 +259,15 @@ deployments:
     # -- Extra arguments to pass to the container.
     # @section -- kestra deployments
     extraArgs: []
+  controller:
+    # -- Enable the gRPC worker controller in distributed mode (Kestra 2.0).
+    # Required when running a detached worker without standalone. Workers must be configured
+    # to connect to the controller Service at <release>-controller:50051.
+    # @section -- kestra deployments
+    enabled: false
+    # -- Extra arguments to pass to the container.
+    # @section -- kestra deployments
+    extraArgs: []
 
 # -- EE only - Define additional worker groups with custom settings.
 # @section -- kestra workerGroups
@@ -298,6 +307,13 @@ service:
       port: 8081
       containerPort: 8081
       targetPort: management
+      protocol: TCP
+    # -- gRPC controller port (Kestra 2.0). Workers connect to the standalone controller at this port.
+    # @section -- kestra service
+    grpc:
+      port: 50051
+      containerPort: 50051
+      targetPort: 50051
       protocol: TCP
 
 ### -------------------------------

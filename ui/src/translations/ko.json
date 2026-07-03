@@ -109,6 +109,12 @@
           "2": "다음 {kind}을 시작하기 위해 blueprint를 탐색하세요."
         }
       },
+      "missingPlugins": {
+        "card": "이 인스턴스에 설치되지 않은 plugin이 필요합니다: {plugins}",
+        "description": "이 blueprint는 이 인스턴스에 설치되지 않은 plugin의 task를 사용합니다: {plugins}. 이 blueprint를 사용하려면 설치하세요.",
+        "install": "plugin 설치",
+        "title": "누락된 plugin"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",

@@ -88,12 +88,6 @@
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
-      "missingPlugins": {
-        "title": "Отсутствующие plugins",
-        "description": "Этот blueprint использует tasks из plugin(s), которые не установлены в этом экземпляре: {plugins}. Установите их, чтобы использовать этот blueprint.",
-        "card": "Требуются plugin(s), не установленные в этом экземпляре: {plugins}",
-        "install": "Установить plugins"
-      },
       "all": "Все",
       "apps": "Черновики приложений",
       "community": "Сообщество",
@@ -114,6 +108,12 @@
           "1": "Первый шаг всегда самый трудный.",
           "2": "Исследуйте blueprints, чтобы начать ваш следующий {kind}."
         }
+      },
+      "missingPlugins": {
+        "card": "Требуются plugin(s), не установленные в этом экземпляре: {plugins}",
+        "description": "Этот blueprint использует tasks из plugin(s), которые не установлены в этом экземпляре: {plugins}. Установите их, чтобы использовать этот blueprint.",
+        "install": "Установить plugins",
+        "title": "Отсутствующие plugins"
       },
       "title": "Blueprints"
     },

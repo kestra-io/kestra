@@ -419,7 +419,7 @@
 
 <style lang="scss">
     .ks-data-table-wrapper {
-        --ks-data-table-gutter: 24px;
+        --ks-data-table-gutter: 2rem;
         height: 100%;
         display: flex;
         flex-direction: column;

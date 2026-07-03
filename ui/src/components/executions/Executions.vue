@@ -4,9 +4,9 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
-                        <KsButton :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ $t('export_csv') }}
-                        </KsButton>
+                        <NavBarActionsDropdown>
+                            <NavBarAction :icon="Download" :label="$t('export_csv')" @click="exportExecutionsAsStream()" />
+                        </NavBarActionsDropdown>
                     </li>
                     <li>
                         <template v-if="hasAnyExecute">
@@ -433,6 +433,8 @@
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
+    import NavBarAction from "../../components/layout/NavBarAction.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"

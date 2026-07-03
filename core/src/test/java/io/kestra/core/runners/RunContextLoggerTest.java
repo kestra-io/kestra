@@ -27,6 +27,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import jakarta.inject.Inject;
+import org.slf4j.event.KeyValuePair;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -430,6 +431,68 @@ class RunContextLoggerTest {
         runContextLogger.resetMDC();
 
         assertThat(adapter.getCopyOfContextMap()).isNullOrEmpty();
+    }
+
+    @Test
+    void emitProgress_setsTypedProgressOnLogEntry() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        // mirrors RunContext#emitProgress, which is a thin wrapper over this exact call
+        runContextLogger.logger().atInfo().addKeyValue(RunContextLogger.PROGRESS_KEY, "pod.created").log("Pod created");
+        runContextLogger.logger().info("a plain log line has no progress");
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 2);
+        LogEntry progressEntry = matchingLog.stream().filter(l -> "Pod created".equals(l.getMessage())).findFirst().orElseThrow();
+        LogEntry plainEntry = matchingLog.stream().filter(l -> l.getMessage().startsWith("a plain log line")).findFirst().orElseThrow();
+
+        assertThat(progressEntry.getProgress()).isEqualTo("pod.created");
+        assertThat(plainEntry.getProgress()).isNull();
+    }
+
+    @Test
+    void transformPreservesKeyValuePairs() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry logEntry = LogEntry.of(execution);
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            logEntry,
+            Level.TRACE,
+            false
+        );
+        ch.qos.logback.classic.Logger perRunLogger =
+            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+
+        LoggingEvent original = new LoggingEvent(
+            RunContextLoggerTest.class.getName(),
+            perRunLogger,
+            ch.qos.logback.classic.Level.INFO,
+            "msg",
+            null,
+            null
+        );
+        original.addKeyValuePair(new KeyValuePair(RunContextLogger.PROGRESS_KEY, "pod.created"));
+
+        // transform() rebuilds the event from scratch; without re-attaching key-value pairs
+        // the progress token would be silently lost before logEntry() ever gets to read it
+        ILoggingEvent transformed = new TransformExposingAppender(runContextLogger, perRunLogger)
+            .transform(original);
+
+        assertThat(transformed.getKeyValuePairs())
+            .extracting(kv -> kv.key, kv -> kv.value)
+            .contains(org.assertj.core.groups.Tuple.tuple(RunContextLogger.PROGRESS_KEY, "pod.created"));
     }
 
     /**

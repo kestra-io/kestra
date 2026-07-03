@@ -160,6 +160,36 @@ class FlowTriggerServiceTest {
         assertThat(resultingExecutionsToRun).size().isEqualTo(0);
     }
 
+    @Test
+    void computeExecutionsFromFlowTriggers_filteringOutDraftFlows() {
+        // A draft flow must never be triggered implicitly. A Flow trigger defined on a flow whose
+        // latest revision is a draft should not fire, mirroring webhooks/schedules/subflows which
+        // all resolve to the latest non-draft revision. Reproduces the gap: FlowTriggerService
+        // filters disabled flows but not drafts, so a draft's Flow trigger currently fires.
+        var simpleFlow = aSimpleFlow();
+        var draftFlowWithFlowTrigger = Flow.builder()
+            .id("draft-flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .draft(true)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(
+                List.of(
+                    flowTriggerWithNoConditions()
+                )
+            )
+            .build();
+
+        var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            simpleFlowExecution,
+            draftFlowWithFlowTrigger
+        );
+
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
     private static Flow aSimpleFlow() {
         return Flow.builder()
             .id("simple-flow")

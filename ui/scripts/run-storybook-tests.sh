@@ -22,13 +22,22 @@ set -e
 # therefore the final combined coverage report, always reflects the whole
 # suite even if one shard has a failing test; this script's own exit code
 # reflects whether anything failed along the way.
+#
+# Each shard only sees a slice of the story files, so its own coverage
+# numbers are always incomplete and misleading on their own. Coverage data is
+# still collected per shard (needed for the merge below) but its report is
+# suppressed with --coverage.reporter none; the merge step reports the real,
+# whole-suite numbers using the reporters from vitest.config.js.
+# Note: vitest's CLI does not accept the `--coverage.reporter=none` form for
+# this nested option — it silently keeps the config default. It must be
+# passed as two separate arguments.
 SHARD_COUNT=4
 FAILED=0
 
 rm -rf .vitest-reports
 
 for i in $(seq 1 "$SHARD_COUNT"); do
-    vitest run --project=storybook --shard="$i/$SHARD_COUNT" --reporter=blob --reporter=default "$@" || FAILED=1
+    vitest run --project=storybook --shard="$i/$SHARD_COUNT" --reporter=blob --reporter=default "$@" --coverage.reporter none || FAILED=1
 done
 
 vitest run --project=storybook --merge-reports "$@" || FAILED=1

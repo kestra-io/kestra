@@ -9,7 +9,7 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('resume from breakpoint title', {id: execution.id})" />
+            <span v-html="$t('resume from breakpoint title', {id: escape(execution.id)})" />
         </template>
         <KsForm labelPosition="top" ref="form" @submit.prevent="false">
             <KsFormItem :label="$t('breakpoints')">
@@ -39,6 +39,7 @@
 
 <script setup lang="ts">
     import {computed, ref, onMounted} from "vue"
+    import escape from "lodash/escape"
     import Play from "vue-material-design-icons/Play.vue"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"

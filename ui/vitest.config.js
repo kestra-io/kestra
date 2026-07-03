@@ -13,13 +13,6 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
-// During --merge-reports vitest only reads blob files and generates a combined
-// report — it never runs tests and does not need a browser. However it still
-// loads the full project config, and the browser provider (Chromium/playwright)
-// is initialised as a side-effect, which causes a Segmentation Fault in CI
-// sandboxed environments. Detect merge mode early and skip browser setup.
-const isMergeReports = process.argv.includes("--merge-reports")
-
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 // No backend is available during tests — clear the API proxy so Vite doesn't
@@ -87,7 +80,7 @@ export default defineConfig({
                     // cannot call 'createTesters'" rather than a real test failure.
                     maxWorkers: 2,
                     browser: {
-                        enabled: !isMergeReports,
+                        enabled: true,
                         headless: true,
                         provider: playwright(),
                         instances: [

@@ -13,6 +13,19 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
+// `vitest run --merge-reports` never executes tests — it only reads the blob
+// files written by the sharded runs and regenerates a combined report. But
+// merely loading the full "storybook" project config still boots a Vite dev
+// server and its esbuild dependency optimizer for the browser/storybookTest
+// plugin stack, which reproducibly segfaults in this environment (confirmed
+// both in CI and locally). Toggling `browser.enabled` off doesn't avoid this —
+// it still loads the same heavy plugin stack — and additionally makes Vitest's
+// spec resolver drop all browser-pool files, which then fails the merge with
+// "No test files found". Skip the heavy project definition entirely during
+// merge and swap in a bare-bones one that only carries the matching name, which
+// is all `--merge-reports` needs to attribute blob data back to this project.
+const isMergeReports = process.argv.includes("--merge-reports")
+
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 // No backend is available during tests — clear the API proxy so Vite doesn't
@@ -62,35 +75,37 @@ export default defineConfig({
     test: {
         projects: [
             "./vitest.config.unit.js",
-            mergeConfig(resolvedViteConfig, {
-                plugins: [
-                    // The plugin will run tests for the stories defined in your Storybook config
-                    // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-                    storybookTest({
-                        configDir: path.join(dirname, ".storybook"),
-                    }),
-                ],
-                test: {
-                    name: "storybook",
-                    setupFiles: ["./.storybook/vitest.setup.js"],
-                    // Each worker drives its own headless Chromium instance; letting
-                    // this scale with CPU count (the default) spins up enough
-                    // concurrent browsers to exhaust CI memory, which kills a
-                    // worker mid-run and surfaces as "[birpc] rpc is closed,
-                    // cannot call 'createTesters'" rather than a real test failure.
-                    maxWorkers: 2,
-                    browser: {
-                        enabled: true,
-                        headless: true,
-                        provider: playwright(),
-                        instances: [
-                            {
-                                browser: "chromium",
-                            },
-                        ],
+            isMergeReports
+                ? {test: {name: "storybook"}}
+                : mergeConfig(resolvedViteConfig, {
+                    plugins: [
+                        // The plugin will run tests for the stories defined in your Storybook config
+                        // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
+                        storybookTest({
+                            configDir: path.join(dirname, ".storybook"),
+                        }),
+                    ],
+                    test: {
+                        name: "storybook",
+                        setupFiles: ["./.storybook/vitest.setup.js"],
+                        // Each worker drives its own headless Chromium instance; letting
+                        // this scale with CPU count (the default) spins up enough
+                        // concurrent browsers to exhaust CI memory, which kills a
+                        // worker mid-run and surfaces as "[birpc] rpc is closed,
+                        // cannot call 'createTesters'" rather than a real test failure.
+                        maxWorkers: 2,
+                        browser: {
+                            enabled: true,
+                            headless: true,
+                            provider: playwright(),
+                            instances: [
+                                {
+                                    browser: "chromium",
+                                },
+                            ],
+                        },
                     },
-                },
-            }),
+                }),
         ],
         coverage: {
             reporter: ["text", "html"],

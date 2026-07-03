@@ -16,19 +16,27 @@ const dirname =
 // `vitest run --merge-reports` never executes tests — it only reads the blob
 // files written by the sharded runs and regenerates a combined report. But
 // merely loading the full "storybook" project config still boots a Vite dev
-// server and its esbuild dependency optimizer for the browser/storybookTest
-// plugin stack, which reproducibly segfaults in this environment (confirmed
-// both in CI and locally). Toggling `browser.enabled` off doesn't avoid this —
-// it still loads the same heavy plugin stack — and additionally makes Vitest's
-// spec resolver drop all browser-pool files, which then fails the merge with
-// "No test files found". Skip the heavy project definition entirely during
-// merge and swap in a bare-bones one that only carries the matching name, which
-// is all `--merge-reports` needs to attribute blob data back to this project.
-// It still needs its own `include` matching real files on disk though — even
-// in merge mode, Vitest validates every project has at least one discoverable
-// file before proceeding, and the default `**/*.{test,spec}...` glob matches
-// none of the `*.stories.*` files here, which reproduces the same
-// "No test files found" failure via a different path.
+// server, and its esbuild dependency optimizer segfaults during the
+// "scanning dependencies" step (confirmed both in CI and locally) even though
+// no test ever actually runs in this mode.
+//
+// Swapping in a lighter project definition for merge mode (tried twice: bare
+// name only, then bare name + a matching `include` glob) avoids the crash but
+// breaks the merge in a different way: each blob records the `pool` the
+// original shard ran under (`"browser"`), and `mergeReports()` recreates each
+// specification against the *current* project using that exact pool
+// (`createSpecification(file.filepath, void 0, file.pool)`). A project
+// without a matching `browser` config can't back a "browser" pool spec, so
+// nothing ends up registered as a test module even though the raw per-file
+// results still print — and the default reporter's `onTestRunEnd` treats a
+// zero-length module list as "No test files found", regardless of how much
+// output was already printed.
+//
+// So the project identity/pool shape must stay exactly the same between the
+// sharded runs and the merge. Instead, target the actual crash directly:
+// disable Vite's automatic dependency *scan* (`optimizeDeps.noDiscovery`)
+// only during merge, since nothing is ever served or executed in this mode
+// and the scan has nothing legitimate to do anyway.
 const isMergeReports = process.argv.includes("--merge-reports")
 
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
@@ -80,43 +88,38 @@ export default defineConfig({
     test: {
         projects: [
             "./vitest.config.unit.js",
-            isMergeReports
-                ? {
-                    test: {
-                        name: "storybook",
-                        include: ["tests/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
-                        exclude: ["**/*.mdx"],
+            mergeConfig(resolvedViteConfig, {
+                plugins: [
+                    // The plugin will run tests for the stories defined in your Storybook config
+                    // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
+                    storybookTest({
+                        configDir: path.join(dirname, ".storybook"),
+                    }),
+                ],
+                // Merge-only: skip Vite's automatic dependency scan — see the
+                // comment above `isMergeReports` for why.
+                ...(isMergeReports ? {optimizeDeps: {noDiscovery: true, entries: []}} : {}),
+                test: {
+                    name: "storybook",
+                    setupFiles: ["./.storybook/vitest.setup.js"],
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
+                    browser: {
+                        enabled: true,
+                        headless: true,
+                        provider: playwright(),
+                        instances: [
+                            {
+                                browser: "chromium",
+                            },
+                        ],
                     },
-                }
-                : mergeConfig(resolvedViteConfig, {
-                    plugins: [
-                        // The plugin will run tests for the stories defined in your Storybook config
-                        // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-                        storybookTest({
-                            configDir: path.join(dirname, ".storybook"),
-                        }),
-                    ],
-                    test: {
-                        name: "storybook",
-                        setupFiles: ["./.storybook/vitest.setup.js"],
-                        // Each worker drives its own headless Chromium instance; letting
-                        // this scale with CPU count (the default) spins up enough
-                        // concurrent browsers to exhaust CI memory, which kills a
-                        // worker mid-run and surfaces as "[birpc] rpc is closed,
-                        // cannot call 'createTesters'" rather than a real test failure.
-                        maxWorkers: 2,
-                        browser: {
-                            enabled: true,
-                            headless: true,
-                            provider: playwright(),
-                            instances: [
-                                {
-                                    browser: "chromium",
-                                },
-                            ],
-                        },
-                    },
-                }),
+                },
+            }),
         ],
         coverage: {
             reporter: ["text", "html"],

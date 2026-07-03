@@ -790,6 +790,7 @@
                 position: relative;
                 padding-right: var(--ks-spacing-8);
                 background: var(--ks-dropdown-bg);
+                border-top: 1px solid var(--ks-border-default);
 
                 &.is-expanded {
                     background: var(--ks-dropdown-bg-active);
@@ -922,12 +923,7 @@
     }
 
     :deep(.vue-recycle-scroller__item-view) {
-        border-bottom: 1px solid var(--ks-border-default);
         margin-bottom: 10px;
-
-        &:last-child {
-            border-bottom: none;
-        }
     }
 
     .cursor-icon {

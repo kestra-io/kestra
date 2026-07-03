@@ -88,12 +88,6 @@
     "before": "前",
     "behavior": "動作",
     "blueprints": {
-      "missingPlugins": {
-        "title": "不足しているplugin",
-        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
-        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
-        "install": "pluginをインストール"
-      },
       "all": "すべて",
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",
@@ -114,6 +108,12 @@
           "1": "最初の一歩が一番難しい。",
           "2": "次の{kind}を始めるためにblueprintを探索してください。"
         }
+      },
+      "missingPlugins": {
+        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
+        "install": "pluginをインストール",
+        "title": "不足しているplugin"
       },
       "title": "Blueprints"
     },

@@ -1,5 +1,6 @@
 package io.kestra.queue.jdbc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import io.kestra.core.metrics.MetricRegistry;
@@ -46,7 +47,7 @@ public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatch
 
     @Override
     protected void doEmit(byte[] message, String key) throws QueueException {
-        jdbcQueueClient.publish(this.queueName(), null, key, new String(message));
+        jdbcQueueClient.publish(this.queueName(), null, key, new String(message, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -55,7 +56,7 @@ public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatch
         jdbcQueueClient.publish(
             messages
                 .stream()
-                .map(e -> new JdbcQueueClient.PublishedMessage(queueName, null, e.key(), new String(e.value())))
+                .map(e -> new JdbcQueueClient.PublishedMessage(queueName, null, e.key(), new String(e.value(), StandardCharsets.UTF_8)))
                 .toList()
         );
     }

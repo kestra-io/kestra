@@ -6,7 +6,7 @@
         </template>
         <template #content>
             <template>
-                <KsMarkdown class="markdown" :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
+                <KsMarkdown class="markdown" :content="markdownContent" :components="markdownComponents" />
             </template>
         </template>
     </DocsLayout>

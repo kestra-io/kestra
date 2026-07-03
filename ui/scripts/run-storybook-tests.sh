@@ -40,6 +40,12 @@ for i in $(seq 1 "$SHARD_COUNT"); do
     vitest run --project=storybook --shard="$i/$SHARD_COUNT" --reporter=blob --reporter=default "$@" --coverage.reporter none || FAILED=1
 done
 
-vitest run --project=storybook --merge-reports "$@" || FAILED=1
+# Deliberately no --project=storybook filter here (unlike the shard runs
+# above) — filtering the merge-only run down to a single project is the
+# working theory for why it kept reporting a false "No test files found"
+# despite every individual shard's results replaying successfully. Only
+# storybook blobs exist in .vitest-reports/ (the "unit" project's tests never
+# write there), so nothing else can get merged in by leaving this off.
+vitest run --merge-reports "$@" || FAILED=1
 
 exit $FAILED

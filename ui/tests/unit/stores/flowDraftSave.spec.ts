@@ -11,6 +11,11 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({put, post, get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
 }))
 
+// validateFlow() goes through the SDK's flows submodule, not useClient()'s axios instance
+vi.mock("@kestra-io/kestra-sdk/flows", () => ({
+    validateFlows: vi.fn(() => Promise.resolve([{}])),
+}))
+
 // Avoid mounting the notification service when notifySaved fires.
 vi.mock("../../../src/utils/toast", () => ({
     makeToast: () => ({saved: vi.fn(), success: vi.fn(), error: vi.fn(), deleted: vi.fn()}),

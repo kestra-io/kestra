@@ -563,13 +563,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -592,13 +592,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -613,13 +613,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })

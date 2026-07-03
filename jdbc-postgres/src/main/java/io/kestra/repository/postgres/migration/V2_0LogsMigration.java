@@ -1,8 +1,10 @@
 package io.kestra.repository.postgres.migration;
 
+import java.util.List;
 import java.util.Map;
 
-import io.kestra.core.migration.MigrationScript;
+import javax.sql.DataSource;
+
 import io.kestra.jdbc.LogJdbcDataSourceProvider;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 
@@ -15,17 +17,15 @@ import jakarta.inject.Singleton;
  * <p>
  * Creates the log table (idempotently) in the log datasource — the dedicated database when
  * {@code kestra.logs.postgres.url} is set, otherwise the primary datasource. Active only when
- * {@code kestra.logs.type} is postgres, so a pure back-compat install runs nothing and keeps using
- * the baseline-created {@code logs} table.
+ * {@code kestra.logs.type} is postgres, so a pure back-compat install keeps using the
+ * baseline-created {@code logs} table.
  */
 @Singleton
 @Requires(property = "kestra.logs.type", value = "postgres")
 public class V2_0LogsMigration extends AbstractSQLMigrationScript {
 
-    // The scriptId encodes the backend ("-postgres"): the log store is pluggable/switchable and
-    // scriptId is the immutable migration-history PK, so a per-backend id runs the new backend's init
-    // on a switch while a switch-back stays a no-op. See H2's V2_0LogsMigration for the full rationale.
     private static final String SCRIPT_ID = "0-init-logs-postgres";
+    private static final String SQL_RESOURCE = "/migrations/logs-postgres.sql";
 
     private final LogJdbcDataSourceProvider logDataSourceProvider;
 
@@ -47,16 +47,18 @@ public class V2_0LogsMigration extends AbstractSQLMigrationScript {
     }
 
     @Override
-    public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/logs-postgres.sql");
+    public List<String> sqlResources() {
+        return List.of(SQL_RESOURCE);
+    }
+
+    @Override
+    protected DataSource dataSource() {
+        return logDataSourceProvider.dataSource();
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlScript(
-            logDataSourceProvider.dataSource(),
-            "/migrations/logs-postgres.sql",
-            Map.of("table", logDataSourceProvider.table())
-        );
+        // Custom migrate() (vs the inherited default): substitute the configurable ${table} name.
+        executeSqlScript(dataSource(), SQL_RESOURCE, Map.of("table", logDataSourceProvider.table()));
     }
 }

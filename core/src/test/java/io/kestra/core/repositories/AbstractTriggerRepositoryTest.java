@@ -973,4 +973,95 @@ public abstract class AbstractTriggerRepositoryTest {
         List<TriggerState> expectedTriggers,
         QueryFilter queryFilter) {
     }
+
+    @Test
+    void shouldFindWithCombinedNamespaceAndFlowId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.combined").flowId("combined-flow").triggerId("t1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.combined").flowId("other-flow").triggerId("t2").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.different").flowId("combined-flow").triggerId("t3").build());
+
+        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, "io.kestra.combined", "combined-flow", null);
+
+        assertThat(find).hasSize(1);
+        assertThat(find.getFirst().getTriggerId()).isEqualTo("t1");
+    }
+
+    @Test
+    void shouldFindWithCombinedQueryAndWorkerId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.queryworker").flowId("matchflow").workerId("worker-a").triggerId("t1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.queryworker").flowId("matchflow").workerId("worker-b").triggerId("t2").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.other").flowId("unrelated").workerId("worker-a").triggerId("t3").build());
+
+        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, "matchflow", tenant, null, null, "worker-a");
+
+        assertThat(find).hasSize(1);
+        assertThat(find.getFirst().getTriggerId()).isEqualTo("t1");
+    }
+
+    @Test
+    void shouldFindWithAllFiveParametersCombined() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(
+            trigger(tenant)
+                .namespace("io.kestra.allparams")
+                .flowId("all-flow")
+                .workerId("all-worker")
+                .triggerId("matching-trigger")
+                .build()
+        );
+        triggerStateStore.save(
+            trigger(tenant)
+                .namespace("io.kestra.allparams")
+                .flowId("all-flow")
+                .workerId("different-worker")
+                .triggerId("non-matching-trigger")
+                .build()
+        );
+
+        List<TriggerState> find = triggerRepository.find(
+            TEST_DEFAULT_PAGED, "all-flow", tenant, "io.kestra.allparams", "all-flow", "all-worker"
+        );
+
+        assertThat(find).hasSize(1);
+        assertThat(find.getFirst().getTriggerId()).isEqualTo("matching-trigger");
+    }
+
+    @Test
+    void shouldFindWithAllNullFiltersReturnsEverything() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(trigger(tenant).triggerId("a").build());
+        triggerStateStore.save(trigger(tenant).triggerId("b").build());
+        triggerStateStore.save(trigger(tenant).triggerId("c").build());
+
+        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, null, null, null);
+
+        assertThat(find).hasSize(3);
+    }
+
+    @Test
+    void shouldPaginateFindWithLegacyParameters() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        for (int i = 0; i < 5; i++) {
+            triggerStateStore.save(trigger(tenant).triggerId("page-trigger-" + i).build());
+        }
+
+        ArrayListTotal<TriggerState> page1 = triggerRepository.find(
+            Pageable.from(1, 2, Sort.of(Sort.Order.asc("triggerId"))), null, tenant, null, null, null
+        );
+        assertThat(page1).hasSize(2);
+        assertThat(page1.getTotal()).isEqualTo(5);
+
+        ArrayListTotal<TriggerState> page3 = triggerRepository.find(
+            Pageable.from(3, 2, Sort.of(Sort.Order.asc("triggerId"))), null, tenant, null, null, null
+        );
+        assertThat(page3).hasSize(1);
+        assertThat(page3.getTotal()).isEqualTo(5);
+    }
 }

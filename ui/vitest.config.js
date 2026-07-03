@@ -73,6 +73,12 @@ export default defineConfig({
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
                     browser: {
                         enabled: true,
                         headless: true,

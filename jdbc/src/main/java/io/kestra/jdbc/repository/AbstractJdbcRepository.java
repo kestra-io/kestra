@@ -47,7 +47,9 @@ public abstract class AbstractJdbcRepository {
 
     @Getter
     @Inject
-    private SystemFlowsConfiguration systemFlowsConfiguration;
+    // Micronaut field-injects this for bean-managed repositories; log-store plugins (deserialized,
+    // not bean-managed) set it in AbstractJdbcLogRepository.initFrom — hence protected, not private.
+    protected SystemFlowsConfiguration systemFlowsConfiguration;
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);

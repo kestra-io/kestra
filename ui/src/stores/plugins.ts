@@ -1,13 +1,12 @@
 import {defineStore} from "pinia"
 import {ref, computed, toRaw, nextTick} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
-import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {useApiStore} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
-import {useClient} from "@kestra-io/kestra-sdk"
+import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 
 export interface PluginComponent {
     icon?: string;
@@ -63,7 +62,6 @@ function usePluginsIcons() {
     const apiIcons = ref<Record<string, PluginIconData>>({})
     const pluginsIcons = ref<Record<string, PluginIconData>>({})
     const iconsPromiseLocal = ref<Promise<Record<string, PluginIconData>>>()
-    const axios = useClient()
 
     const icons = computed(() => {
         return {
@@ -86,11 +84,10 @@ function usePluginsIcons() {
             return response.data
         })
 
-        const iconsPromise =
-            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
-                pluginsIcons.value = response.data ?? {}
-                return pluginsIcons.value
-            })
+        const iconsPromise = PluginsAPI.pluginIcons().then(async data => {
+            pluginsIcons.value = (data as Record<string, PluginIconData>) ?? {}
+            return pluginsIcons.value
+        })
 
         iconsPromiseLocal.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
             iconsLoaded.value = true
@@ -120,8 +117,6 @@ export const usePluginsStore = defineStore("plugins", () => {
     const inputsType = ref<any>()
     const schemaType = ref<Record<string, any>>()
     const forceIncludeProperties = ref<string[]>()
-
-    const axios = useClient()
 
     const flowSchema = computed(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
@@ -190,11 +185,9 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     async function list() {
-        const response = await axios.get<{results: Plugin[]; total: number}>(
-            `${apiUrlWithoutTenants()}/plugins`,
-        )
-        plugins.value = response.data.results
-        return response.data.results
+        const response = await PluginsAPI.listPlugins() as {results: Plugin[]; total: number}
+        plugins.value = response.results
+        return response.results
     }
 
     // Flat list of every task/trigger class installed on the instance, fetched
@@ -205,10 +198,9 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function loadInstalledPluginTypes(): Promise<string[]> {
         if (installedPluginTypes.value) return installedPluginTypes.value
         if (installedPluginTypesPending) return installedPluginTypesPending
-        installedPluginTypesPending = axios
-            .get<{results: Plugin[]; total: number}>(`${apiUrlWithoutTenants()}/plugins`)
+        installedPluginTypesPending = (PluginsAPI.listPlugins() as Promise<{results: Plugin[]; total: number}>)
             .then(response => {
-                installedPluginTypes.value = response.data.results.flatMap(p =>
+                installedPluginTypes.value = response.results.flatMap(p =>
                     Object.entries(p)
                         .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
                         .flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)),
@@ -222,18 +214,14 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     async function listTriggers() {
-        const response = await axios.get<{results: TriggerPluginDto[]; total: number}>(
-            `${apiUrlWithoutTenants()}/plugins/triggers`,
-        )
-        return response.data.results
+        const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
+        return response.results
     }
 
-    async function listWithSubgroup(options: Record<string, any>) {
-        const response = await axios.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins/groups/subgroups`, {
-            params: options,
-        })
-        plugins.value = response.data
-        return response.data
+    async function listWithSubgroup(_options?: Record<string, any>) {
+        const response = await PluginsAPI.pluginBySubgroups() as Plugin[]
+        plugins.value = response
+        return response
     }
 
     let pluginsPending: Promise<Plugin[]> | null = null
@@ -261,54 +249,45 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc
         }
 
-        const url = options.version ?
-            `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
-            `${apiUrlWithoutTenants()}/plugins/${options.cls}`
-
-        const response = await axios.get<PluginComponent>(url, options.all ? {
-            params: {
-                all: options.all,
-                hash: options.hash,
-            },
-        } : {})
+        const data = (options.version
+            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
+            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
 
         if (options.commit !== false) {
             if (options.all === true) {
-                pluginAllProps.value = response.data
+                pluginAllProps.value = data
             } else {
-                plugin.value = response.data
+                plugin.value = data
             }
         }
 
         if (!options.all) {
-            pluginsDocumentation.value[cacheKey] = response.data
+            pluginsDocumentation.value[cacheKey] = data
         }
 
-        return response.data
+        return data
     }
 
     async function loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
-        const response = await axios.get(
-            `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`,
-        )
+        const data = await PluginsAPI.pluginVersions({cls: options.cls}) as {type: string, versions: string[]}
         if (options.commit !== false) {
-            versions.value = response.data.versions
+            versions.value = data.versions
         }
 
-        return response.data
+        return data
     }
 
     function loadInputsType() {
-        return axios.get(`${apiUrlWithoutTenants()}/plugins/inputs`, {}).then(response => {
-            inputsType.value = response.data
-            return response.data
+        return PluginsAPI.allInputTypes().then(data => {
+            inputsType.value = data
+            return data
         })
     }
 
     function loadInputSchema(options: {type: string}) {
-        return axios.get(`${apiUrlWithoutTenants()}/plugins/inputs/${options.type}`, {}).then(response => {
-            inputSchema.value = response.data
-            return response.data
+        return PluginsAPI.schemaFromInputType({type: options.type as Parameters<typeof PluginsAPI.schemaFromInputType>[0]["type"]}).then(data => {
+            inputSchema.value = data
+            return data
         })
     }
 
@@ -321,10 +300,10 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     function loadSchemaType(options: {type: string}) {
-        return axios.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
+        return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
             schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = response.data
-            return response.data
+            schemaType.value[options.type] = data
+            return data
         })
     }
 
@@ -390,9 +369,9 @@ export const usePluginsStore = defineStore("plugins", () => {
     function ensureGroupIcons(): Promise<PluginIconMap> {
         if (Object.keys(groupIcons.value).length > 0) return Promise.resolve(groupIcons.value)
         if (groupIconsPending) return groupIconsPending
-        groupIconsPending = axios.get<PluginIconMap>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
-            .then(response => {
-                groupIcons.value = response.data ?? {}
+        groupIconsPending = (PluginsAPI.pluginGroupIcons() as Promise<PluginIconMap>)
+            .then(data => {
+                groupIcons.value = data ?? {}
                 return groupIcons.value
             })
             .finally(() => {

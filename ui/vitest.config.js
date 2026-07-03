@@ -109,7 +109,7 @@ export default defineConfig({
                     // cannot call 'createTesters'" rather than a real test failure.
                     maxWorkers: 2,
                     browser: {
-                        enabled: !isMergeReports,
+                        enabled: true,
                         headless: true,
                         provider: playwright(),
                         instances: [

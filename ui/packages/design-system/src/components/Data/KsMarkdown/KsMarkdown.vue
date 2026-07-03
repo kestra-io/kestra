@@ -150,7 +150,7 @@
 
         const attrs = parseHtmlAttributes(attrsStr.trim())
         const slots = innerHtml.trim()
-            ? {default: () => [h("span", {innerHTML: innerHtml})]}
+            ? {default: () => [h("span", {innerHTML: props.xssProtection ? htmlEscape(innerHtml) : innerHtml})]}
             : undefined
         return h(component as any, attrs, slots)
     }
@@ -485,7 +485,6 @@
         }
 
         p {
-            margin: 0.75rem 0;
             &:first-child { margin-top: 0; }
             &:last-child { margin-bottom: 0; }
         }

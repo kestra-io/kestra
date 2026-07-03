@@ -385,9 +385,11 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             else {
-                flows.value = response.data.results
-                total.value = response.data.total
-                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
+                if (options.commit !== false) {
+                    flows.value = response.data.results
+                    total.value = response.data.total
+                    overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
+                }
 
                 return response.data
             }

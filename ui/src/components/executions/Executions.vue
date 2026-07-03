@@ -4,9 +4,9 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
-                        <KsButton :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ $t('export_csv') }}
-                        </KsButton>
+                        <NavBarActionsDropdown>
+                            <NavBarAction :icon="Download" :label="$t('export_csv')" @click="exportExecutionsAsStream()" />
+                        </NavBarActionsDropdown>
                     </li>
                     <li>
                         <template v-if="hasAnyExecute">
@@ -53,16 +53,6 @@
             :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
-                <QuickFilters
-                    v-if="!hasComplexFilters"
-                    :states="quickStates"
-                    :state="selectedStates"
-                    :stateLabel="t('filter.state.label')"
-                    :showInterval="false"
-                    :showLevel="false"
-                    :showState="true"
-                    @update:state="onQuickFilterState"
-                />
                 <KSFilter
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
@@ -418,6 +408,8 @@
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
+    import NavBarAction from "../../components/layout/NavBarAction.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
@@ -441,13 +433,10 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
-    import {useQuickStateFilter} from "../filter/composables/useQuickStateFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
-    import QuickFilters from "../filter/QuickFilters.vue"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
-    const {quickStates, selectedStates, onQuickFilterState, hasComplexFilters} = useQuickStateFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()

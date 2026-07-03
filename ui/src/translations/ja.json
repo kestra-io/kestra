@@ -109,6 +109,12 @@
           "2": "次の{kind}を始めるためにblueprintを探索してください。"
         }
       },
+      "missingPlugins": {
+        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
+        "install": "pluginをインストール",
+        "title": "不足しているplugin"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
@@ -265,6 +271,7 @@
       },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
+      "others": "その他",
       "preview": "プレビュー ダッシュボード",
       "quick_filters": {
         "all": "すべて",
@@ -274,7 +281,8 @@
         "success": "成功",
         "warning": "警告"
       },
-      "switch": "ダッシュボードを切り替える"
+      "switch": "ダッシュボードを切り替える",
+      "viewAll": "すべて表示"
     },
     "data": "データ",
     "dataFilters": "データフィルター",
@@ -418,6 +426,10 @@
           "message": "Kestra Enterprise Editionでは、namespaceレベルの変数を定義および管理することで、flow全体での繰り返しの設定を排除できます。これらの変数は一貫性を確保し、設定の更新を簡素化し、どのtaskやtriggerからも簡単に参照できるため、よりクリーンで保守しやすいワークフローを実現します。",
           "title": "変数を中央で管理する"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Editionでは、フローにクォータを定義して、時間枠内の同時実行数または総実行数を制限できます。クォータは、共有インフラストラクチャの保護、SLAの適用、および過剰なリソースを消費する暴走ワークフローの防止に役立ちます。",
+        "title": "フローの実行クォータを設定する"
       },
       "secrets": {
         "add_env": {
@@ -957,6 +969,8 @@
     "launch execution": "実行",
     "learn_more": "詳細を確認",
     "leave page": "ページを離れる",
+    "open full page": "フルページを開く",
+    "drill down preview": "プレビュー",
     "license": "ライセンス",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
@@ -1594,6 +1608,7 @@
       "shown": "表に表示"
     },
     "queued duration": "キュー待ち期間",
+    "quotas": "クォータ",
     "reach us": "お問い合わせ",
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
@@ -1786,6 +1801,11 @@
           "label": "サイドバー"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "大",
+            "medium": "中",
+            "small": "小"
+          },
           "color_modes": {
             "dark_1": "ダーク 1.0",
             "dark_2": "ダーク 2.0",
@@ -1796,6 +1816,7 @@
             "color_mode": "インターフェースは現在 `{mode}` テーマを使用しています。"
           },
           "descriptions": {
+            "app_font_size": "インターフェース全体のフォントサイズに適用されるスケール係数。",
             "color_mode": "お好みのインターフェーステーマを選択してください。",
             "color_mode_shortcut": "ヒント: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> を押すとどこからでもテーマを切り替えられます。",
             "editor_folding_stratgy": "フローを開くときに長いYAMLブロックをデフォルトで折りたたむ。",
@@ -1807,6 +1828,7 @@
             "logs_font_size": "ログビューアとターミナルで使用されるフォントサイズ。"
           },
           "fields": {
+            "app_font_size": "アプリのフォントサイズ",
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",

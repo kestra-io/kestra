@@ -109,6 +109,12 @@
           "2": "Explora blueprints para iniciar tu próximo {kind}."
         }
       },
+      "missingPlugins": {
+        "card": "Requiere plugin(s) no instalados en esta instancia: {plugins}",
+        "description": "Este blueprint usa tasks de plugin(s) que no están instalados en esta instancia: {plugins}. Instálalos para usar este blueprint.",
+        "install": "Instalar plugins",
+        "title": "Plugins faltantes"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
@@ -265,6 +271,7 @@
       },
       "no_description": "Sin descripción",
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
+      "others": "Otros",
       "preview": "Vista previa del Dashboard",
       "quick_filters": {
         "all": "Todos",
@@ -274,7 +281,8 @@
         "success": "Éxito",
         "warning": "Advertencia"
       },
-      "switch": "Cambiar Dashboard"
+      "switch": "Cambiar Dashboard",
+      "viewAll": "Ver todo"
     },
     "data": "Datos",
     "dataFilters": "Filtros de Datos",
@@ -418,6 +426,10 @@
           "message": "En Kestra Enterprise Edition, puedes definir y gestionar variables a nivel de namespace para eliminar configuraciones repetitivas a través de los flows. Estas variables aseguran consistencia, simplifican las actualizaciones de configuración y pueden ser fácilmente referenciadas por cualquier task o trigger para flujos de trabajo más limpios y mantenibles.",
           "title": "Gobierne Centralmente Sus Variables"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Edition le permite definir cuotas en los flujos para limitar el número de ejecuciones simultáneas o totales dentro de una ventana de tiempo. Las cuotas le ayudan a proteger la infraestructura compartida, aplicar SLAs y evitar que los flujos descontrolados consuman recursos excesivos.",
+        "title": "Aplicar cuotas de ejecución en flujos"
       },
       "secrets": {
         "add_env": {
@@ -957,6 +969,8 @@
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
     "leave page": "Salir de la página",
+    "open full page": "Abrir página completa",
+    "drill down preview": "Vista previa",
     "license": "Licencia",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
@@ -1594,6 +1608,7 @@
       "shown": "Mostrado en Tabla"
     },
     "queued duration": "Duración en cola",
+    "quotas": "Cuotas",
     "reach us": "Habla con nosotros",
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
@@ -1786,6 +1801,11 @@
           "label": "Barra lateral"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Mediano",
+            "small": "Pequeño"
+          },
           "color_modes": {
             "dark_1": "Oscuro 1.0",
             "dark_2": "Oscuro 2.0",
@@ -1796,6 +1816,7 @@
             "color_mode": "Tu interfaz ahora usa el tema `{mode}`."
           },
           "descriptions": {
+            "app_font_size": "Factor de escala aplicado a todos los tamaños de fuente de la interfaz.",
             "color_mode": "Elige tu tema de interfaz preferido.",
             "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar.",
             "editor_folding_stratgy": "Colapsar bloques largos de YAML por defecto al abrir un flow.",
@@ -1807,6 +1828,7 @@
             "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales."
           },
           "fields": {
+            "app_font_size": "Tamaño de fuente de la aplicación",
             "chart_color_scheme": {
               "classic": "Clásico",
               "kestra": "Kestra",

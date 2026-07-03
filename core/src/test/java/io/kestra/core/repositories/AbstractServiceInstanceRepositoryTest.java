@@ -3,7 +3,10 @@ package io.kestra.core.repositories;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
+import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
@@ -232,6 +235,127 @@ public abstract class AbstractServiceInstanceRepositoryTest {
         assertThat(results)
             .usingRecursiveFieldByFieldElementComparatorOnFields("uid")
             .containsExactlyInAnyOrderElementsOf(testCase.expectedInstances());
+    }
+
+    @Test
+    public void shouldFindById() {
+        ServiceInstance instance = newServiceInstance(Service.ServiceState.RUNNING);
+        serviceInstanceRepository.save(instance);
+
+        Optional<ServiceInstance> found = serviceInstanceRepository.findById(instance.uid());
+
+        assertThat(found).isPresent();
+        assertThat(found.get().uid()).isEqualTo(instance.uid());
+    }
+
+    @Test
+    public void shouldReturnEmptyForUnknownId() {
+        Optional<ServiceInstance> found = serviceInstanceRepository.findById(IdUtils.create());
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    public void shouldFindAll() {
+        ServiceInstance instance1 = newServiceInstance(Service.ServiceState.RUNNING);
+        ServiceInstance instance2 = newServiceInstance(Service.ServiceState.TERMINATING);
+
+        serviceInstanceRepository.save(instance1);
+        serviceInstanceRepository.save(instance2);
+
+        List<ServiceInstance> all = serviceInstanceRepository.findAll();
+
+        assertThat(all.stream().map(ServiceInstance::uid).toList())
+            .contains(instance1.uid(), instance2.uid());
+    }
+
+    @Test
+    public void shouldDeleteServiceInstance() {
+        ServiceInstance instance = newServiceInstance(Service.ServiceState.RUNNING);
+        serviceInstanceRepository.save(instance);
+
+        assertThat(serviceInstanceRepository.findById(instance.uid())).isPresent();
+
+        serviceInstanceRepository.delete(instance);
+
+        assertThat(serviceInstanceRepository.findById(instance.uid())).isEmpty();
+    }
+
+    @Test
+    public void shouldFindWithStatesAndTypesDefaultMethod() {
+        ServiceInstance workerRunning = newServiceInstance(Service.ServiceState.RUNNING, ServiceType.WORKER);
+        ServiceInstance schedulerRunning = newServiceInstance(Service.ServiceState.RUNNING, ServiceType.SCHEDULER);
+        ServiceInstance workerTerminating = newServiceInstance(Service.ServiceState.TERMINATING, ServiceType.WORKER);
+
+        serviceInstanceRepository.save(workerRunning);
+        serviceInstanceRepository.save(schedulerRunning);
+        serviceInstanceRepository.save(workerTerminating);
+
+        // both states and types provided
+        ArrayListTotal<ServiceInstance> result = serviceInstanceRepository.find(
+            Pageable.unpaged(),
+            Set.of(Service.ServiceState.RUNNING),
+            Set.of(ServiceType.WORKER)
+        );
+
+        assertThat(result.stream().map(ServiceInstance::uid).toList()).containsExactly(workerRunning.uid());
+    }
+
+    @Test
+    public void shouldFindWithNullStatesAndTypes() {
+        ServiceInstance instance = newServiceInstance(Service.ServiceState.RUNNING);
+        serviceInstanceRepository.save(instance);
+
+        ArrayListTotal<ServiceInstance> result = serviceInstanceRepository.find(
+            Pageable.unpaged(), null, null
+        );
+
+        assertThat(result.stream().map(ServiceInstance::uid).toList())
+            .contains(instance.uid());
+    }
+
+    @Test
+    public void shouldFindAllInstancesBetween() {
+        Instant from = Instant.now().minus(Duration.ofMinutes(10));
+        Instant to = Instant.now().plus(Duration.ofMinutes(10));
+
+        ServiceInstance instance = newServiceInstance(Service.ServiceState.RUNNING, ServiceType.SCHEDULER);
+        serviceInstanceRepository.save(instance);
+
+        List<ServiceInstance> results = serviceInstanceRepository.findAllInstancesBetween(
+            ServiceType.SCHEDULER, from, to
+        );
+
+        assertThat(results.stream().map(ServiceInstance::uid).toList())
+            .contains(instance.uid());
+    }
+
+    @Test
+    public void shouldNotFindInstancesOutsideDateRange() {
+        Instant from = Instant.now().plus(Duration.ofMinutes(10));
+        Instant to = Instant.now().plus(Duration.ofMinutes(20));
+
+        ServiceInstance instance = newServiceInstance(Service.ServiceState.RUNNING, ServiceType.SCHEDULER);
+        serviceInstanceRepository.save(instance);
+
+        List<ServiceInstance> results = serviceInstanceRepository.findAllInstancesBetween(
+            ServiceType.SCHEDULER, from, to
+        );
+
+        assertThat(results.stream().map(ServiceInstance::uid).toList())
+            .doesNotContain(instance.uid());
+    }
+
+    @Test
+    public void shouldPaginateFindResults() {
+        for (int i = 0; i < 5; i++) {
+            serviceInstanceRepository.save(newServiceInstance(Service.ServiceState.RUNNING));
+        }
+
+        ArrayListTotal<ServiceInstance> page1 = serviceInstanceRepository.find(Pageable.from(1, 2), List.of());
+        assertThat(page1).hasSizeLessThanOrEqualTo(2);
+
+        ArrayListTotal<ServiceInstance> allUnpaged = serviceInstanceRepository.find(Pageable.unpaged(), List.of());
+        assertThat(page1.getTotal()).isEqualTo(allUnpaged.getTotal());
     }
 
     @Builder

@@ -109,6 +109,12 @@
           "2": "다음 {kind}을 시작하기 위해 blueprint를 탐색하세요."
         }
       },
+      "missingPlugins": {
+        "card": "이 인스턴스에 설치되지 않은 plugin이 필요합니다: {plugins}",
+        "description": "이 blueprint는 이 인스턴스에 설치되지 않은 plugin의 task를 사용합니다: {plugins}. 이 blueprint를 사용하려면 설치하세요.",
+        "install": "plugin 설치",
+        "title": "누락된 plugin"
+      },
       "title": "Blueprints"
     },
     "body_line_clamp": "Limit line height",
@@ -265,6 +271,7 @@
       },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
+      "others": "기타",
       "preview": "미리보기 대시보드",
       "quick_filters": {
         "all": "전체",
@@ -274,7 +281,8 @@
         "success": "성공",
         "warning": "경고"
       },
-      "switch": "대시보드 전환"
+      "switch": "대시보드 전환",
+      "viewAll": "전체 보기"
     },
     "data": "데이터",
     "dataFilters": "데이터 필터",
@@ -418,6 +426,10 @@
           "message": "Kestra Enterprise Edition에서는 namespace 수준 변수들을 정의하고 관리하여 flow 전반에 걸친 반복적인 구성을 제거할 수 있습니다. 이러한 변수들은 일관성을 보장하고, 구성 업데이트를 간소화하며, 어떤 task나 trigger에서도 쉽게 참조할 수 있어 더 깔끔하고 유지보수하기 쉬운 워크플로우를 만듭니다.",
           "title": "변수를 중앙에서 관리하세요"
         }
+      },
+      "quotas": {
+        "message": "Kestra Enterprise Edition을 사용하면 플로우에 할당량을 정의하여 시간 창 내에서 동시 또는 총 실행 횟수를 제한할 수 있습니다. 할당량은 공유 인프라를 보호하고, SLA를 적용하며, 과도한 리소스를 소비하는 워크플로우를 방지하는 데 도움이 됩니다.",
+        "title": "플로우에 실행 할당량 적용"
       },
       "secrets": {
         "add_env": {
@@ -957,6 +969,8 @@
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "leave page": "페이지 나가기",
+    "open full page": "전체 페이지 열기",
+    "drill down preview": "미리보기",
     "license": "라이선스",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
     "light_version": "라이트 버전",
@@ -1594,6 +1608,7 @@
       "shown": "표에 표시됨"
     },
     "queued duration": "대기 중 지속 시간",
+    "quotas": "할당량",
     "reach us": "문의하기",
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
@@ -1786,6 +1801,11 @@
           "label": "사이드바"
         },
         "theme": {
+          "app_font_size_options": {
+            "large": "크게",
+            "medium": "보통",
+            "small": "작게"
+          },
           "color_modes": {
             "dark_1": "다크 1.0",
             "dark_2": "다크 2.0",
@@ -1796,6 +1816,7 @@
             "color_mode": "인터페이스가 이제 `{mode}` 테마를 사용합니다."
           },
           "descriptions": {
+            "app_font_size": "인터페이스의 모든 글꼴 크기에 적용되는 배율입니다.",
             "color_mode": "선호하는 인터페이스 테마를 선택하세요.",
             "color_mode_shortcut": "팁: 어디서나 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>을 눌러 테마를 전환하세요.",
             "editor_folding_stratgy": "flow를 열 때 긴 YAML 블록을 기본적으로 축소합니다.",
@@ -1807,6 +1828,7 @@
             "logs_font_size": "로그 뷰어와 터미널에서 사용되는 글꼴 크기."
           },
           "fields": {
+            "app_font_size": "앱 글꼴 크기",
             "chart_color_scheme": {
               "classic": "클래식",
               "kestra": "Kestra",

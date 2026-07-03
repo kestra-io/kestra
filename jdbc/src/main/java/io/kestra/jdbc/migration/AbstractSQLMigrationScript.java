@@ -25,6 +25,60 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 public abstract class AbstractSQLMigrationScript implements MigrationScript {
 
     /**
+     * The {@link DataSource} this migration runs against, used by the default {@link #migrate()}.
+     * SQL-backed subclasses override this to return their injected data source.
+     *
+     * @return the data source, or {@code null} if the subclass provides its own {@link #migrate()}
+     */
+    protected DataSource dataSource() {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Derived from {@link #sqlResources()} so the resource path is declared only once.
+     */
+    @Override
+    public String checksum() {
+        return MigrationScript.checksumOfResources(sqlResources().toArray(String[]::new));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes each SQL resource declared by {@link #sqlResources()} against {@link #dataSource()}.
+     */
+    @Override
+    public void migrate() throws Exception {
+        for (String resource : sqlResources()) {
+            executeSqlResource(dataSource(), resource);
+        }
+    }
+
+    /**
+     * Reads a SQL resource from the classpath and returns its raw content.
+     *
+     * @param resourcePath classpath resource path to the SQL file (e.g. {@code "/migrations/baseline-h2.sql"})
+     * @return the SQL file content
+     * @throws IOException if the resource cannot be read
+     * @throws IllegalArgumentException if the resource is not found on the classpath
+     */
+    public static String readSqlResource(final String resourcePath) throws IOException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+            cl = AbstractSQLMigrationScript.class.getClassLoader();
+        }
+        String normalizedPath = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
+        try (InputStream is = cl.getResourceAsStream(normalizedPath)) {
+            if (is == null) {
+                throw new IllegalArgumentException("SQL resource not found on classpath: " + resourcePath);
+            }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    /**
      * Loads a SQL file from the classpath and executes all statements against the given
      * {@link DataSource}.
      *

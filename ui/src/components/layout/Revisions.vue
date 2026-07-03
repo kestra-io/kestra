@@ -10,8 +10,8 @@
                 />
             </KsSelect>
         </div>
-        <KsRow :gutter="15" class="mb-2">
-            <KsCol :span="12" v-if="revisionLeftIndex !== undefined">
+        <div class="revision-grid mb-2">
+            <div class="revision-grid-col" v-if="revisionLeftIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <KsSelect v-model="revisionLeftIndex" @change="addQuery">
@@ -22,15 +22,15 @@
                                 :value="item.value"
                                 class="revision-option"
                             >
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
-                                    <TrashCanOutline
-                                        @mousedown.stop.prevent
-                                        @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
-                                    />
                                 </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
                             </KsOption>
                         </KsSelect>
                         <KsButtonGroup>
@@ -48,8 +48,8 @@
                         <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
                     </div>
                 </div>
-            </KsCol>
-            <KsCol :span="12" v-if="revisionRightIndex !== undefined">
+            </div>
+            <div class="revision-grid-col" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <KsSelect v-model="revisionRightIndex" @change="addQuery">
@@ -60,15 +60,15 @@
                                 :value="item.value"
                                 class="revision-option"
                             >
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
-                                    <TrashCanOutline
-                                        @mousedown.stop.prevent
-                                        @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
-                                    />
                                 </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
                             </KsOption>
                         </KsSelect>
                         <KsButtonGroup>
@@ -86,13 +86,14 @@
                         <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
                     </div>
                 </div>
-            </KsCol>
-        </KsRow>
+            </div>
+        </div>
 
-        <Editor
+        <KsEditor
+            v-bind="editorBindings"
             class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
-            :diffSideBySide="sideBySide"
+            :options="{diffSideBySide: sideBySide}"
             :modelValue="revisionRightText"
             :original="revisionLeftText"
             readOnly
@@ -104,26 +105,31 @@
             <span class="ml-2">Loading revisions...</span>
         </div>
     </div>
-    <div v-else>
-        <KsAlert class="mb-0" :closable="false">
-            {{ $t("no revisions found") }}
-        </KsAlert>
-    </div>
+    <KsNoData
+        v-else
+        :icon="History"
+        :title="$t('no revisions')"
+        :description="$t('no revisions found')"
+    />
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
-    import Editor from "../../components/inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import moment from "moment"
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
 
     const flowStore = useFlowStore()
+
+    const editorBindings = useEditorBindings()
 
     export interface Revision {
         revision: number;
@@ -362,6 +368,16 @@
         padding-bottom: 1rem;
     }
 
+    .revision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-right: var(--ks-spacing-6);
+    }
+
+    .revision-grid-col {
+        min-width: 0;
+    }
+
     .revision-select-row {
         display: flex;
         align-items: center;
@@ -384,13 +400,21 @@
     }
 
     .revision-crud-info {
-        flex-shrink: 0;
-        white-space: nowrap;
+        width: calc(100% - var(--ks-spacing-4));
+        margin-right: var(--ks-spacing-4);
     }
 
+
     .revision-option {
-        padding-right: 0.5rem;
         min-width: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .revision-label {
+            display: flex;
+            gap: var(--ks-spacing-2);
+        }
     }
 
     .revision-number {
@@ -399,7 +423,7 @@
 
     .revision-timestamp {
         color: #888;
-        font-size: 0.85em;
+        font-size: var(--ks-font-size-sm);
     }
 
     .display-select {
@@ -408,9 +432,8 @@
 
     .revision-timestamp {
         color: #888;
-        font-size: 0.85em;
+        font-size: var(--ks-font-size-sm);
         text-align: right;
         flex-shrink: 0;
     }
-
 </style>

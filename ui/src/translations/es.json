@@ -27,15 +27,18 @@
     "activate_basic_auth": "Activar Autenticación Básica",
     "active": "Activo",
     "active-slots": "Ranuras activas",
+    "actual state": "Estado actual",
     "add": "Añadir",
     "add at position": "Añadir {position} <code>{task}</code>",
     "add error handler": "Añadir un manejador de errores",
     "add flow": "Añadir flujo",
+    "add label": "Agregar label",
     "add task": "Añadir una task",
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "add_new_item": "Agregar nuevo elemento",
     "additionalPlugins": "Plugins Adicionales",
     "admin": "Administrador",
+    "admin_preferences": "Preferences",
     "administration": "Administración",
     "advanced configuration": "Otras propiedades",
     "after": "después",
@@ -56,6 +59,7 @@
           "test": "Generando YAML de prueba para ti..."
         },
         "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra. Ejemplo de solicitud: Crear un flow que se ejecute todos los lunes a las 9 AM.",
+        "select_provider": "Seleccionar un proveedor",
         "title": "Agente de IA"
       }
     },
@@ -64,6 +68,7 @@
     "api": "API",
     "appBlocks": "Bloques de la App",
     "apps": "Aplicaciones",
+    "are you sure change state": "¿Está seguro de que desea cambiar el estado?",
     "assets": {
       "title": "Activos"
     },
@@ -73,6 +78,7 @@
     "automatic refresh": "Actualización automática",
     "avg": "Promedio",
     "avg duration": "Duración promedio de ejecución",
+    "back": "Atrás",
     "back_to_dashboard": "Volver al panel de control",
     "backfill": "Backfill",
     "backfill executions": "Ejecuciones de backfill",
@@ -82,11 +88,17 @@
     "before": "antes",
     "behavior": "Comportamiento",
     "blueprints": {
+      "all": "Todo",
       "apps": "Planos de la Aplicación",
       "community": "Comunidad",
       "create": "Crear un blueprint",
       "custom": "Planos personalizados",
       "dashboards": "Planos del Dashboard",
+      "detail": {
+        "category": "Tipo de categoría",
+        "links": "Enlace y Recursos",
+        "openInEditor": "Abrir en Edit Flow"
+      },
       "edit": "Editar un blueprint",
       "empty": "No hay blueprints para mostrar.",
       "flows": "Planos de Flow",
@@ -97,10 +109,19 @@
           "2": "Explora blueprints para iniciar tu próximo {kind}."
         }
       },
+      "missingPlugins": {
+        "card": "Requiere plugin(s) no instalados en esta instancia: {plugins}",
+        "description": "Este blueprint usa tasks de plugin(s) que no están instalados en esta instancia: {plugins}. Instálalos para usar este blueprint.",
+        "install": "Instalar plugins",
+        "title": "Plugins faltantes"
+      },
       "title": "Blueprints"
     },
+    "body_line_clamp": "Limit line height",
     "bookmark": "Marcadores",
+    "breakpoints": "Puntos de interrupción",
     "bulk action async warning": "Esto podría tardar unos momentos.",
+    "bulk actions": "Acciones masivas",
     "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
     "bulk delete": "¿Estás seguro de que quieres eliminar <code>{executionCount}</code> ejecución(es)?",
     "bulk delete backfills": "Eliminar {count} backfill",
@@ -205,10 +226,12 @@
     "copied": "Copiado",
     "copied_logs_to_clipboard": "Copiado logs al portapapeles.",
     "copy": "Copiar",
+    "copy all logs": "Copiar todos los Logs",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
     "copy_and_close": "Copiar y cerrar",
     "copy_to_clipboard": "Copiar al portapapeles",
+    "copy_value": "Copy value",
     "create": "Crear",
     "create first task": "Crea tu primera task",
     "create_flow": "Crear Flow",
@@ -222,6 +245,7 @@
     "current": "actual",
     "current execution": "Ejecución actual",
     "custom value": "Valor personalizado",
+    "customize sidebar": "Personalizar barra lateral",
     "dark_version": "Versión oscura",
     "dashboards": {
       "chart_preview": "Haz clic en un código fuente del gráfico para ver su vista previa",
@@ -245,8 +269,20 @@
         "plural": "Dashboards",
         "singular": "Panel de control"
       },
+      "no_description": "Sin descripción",
+      "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
+      "others": "Otros",
       "preview": "Vista previa del Dashboard",
-      "switch": "Cambiar Dashboard"
+      "quick_filters": {
+        "all": "Todos",
+        "failed": "Fallido",
+        "paused": "Pausado",
+        "running": "En ejecución",
+        "success": "Éxito",
+        "warning": "Advertencia"
+      },
+      "switch": "Cambiar Dashboard",
+      "viewAll": "Ver todo"
     },
     "data": "Datos",
     "dataFilters": "Filtros de Datos",
@@ -280,9 +316,25 @@
       "last7days": "Últimos 7 días",
       "leave empty for infinite": "Dejar vacío para duración infinita o escribir una duración ISO 8601 (ejemplo: 'P1DT1H1M1S)'",
       "never": "Nunca",
+      "next12hours": "Próximas 12 horas",
+      "next15minutes": "Próximos 15 minutos",
+      "next1hour": "Próxima 1 hora",
+      "next24hours": "Próximas 24 horas",
+      "next30days": "Próximos 30 días",
+      "next365days": "Próximos 365 días",
+      "next48hours": "Próximas 48 horas",
+      "next5minutes": "Próximos 5 minutos",
+      "next7days": "Próximos 7 días",
       "previousMonth": "Mes anterior",
       "previousWeek": "Semana anterior",
       "previousYear": "Año anterior",
+      "short": {
+        "12h": "12h",
+        "15m": "15m",
+        "1d": "1d",
+        "1h": "1h",
+        "7d": "7d"
+      },
       "thisMonth": "Este mes",
       "thisMonthSoFar": "Este mes hasta ahora",
       "thisWeek": "Esta semana",
@@ -375,6 +427,10 @@
           "title": "Gobierne Centralmente Sus Variables"
         }
       },
+      "quotas": {
+        "message": "Kestra Enterprise Edition le permite definir cuotas en los flujos para limitar el número de ejecuciones simultáneas o totales dentro de una ventana de tiempo. Las cuotas le ayudan a proteger la infraestructura compartida, aplicar SLAs y evitar que los flujos descontrolados consuman recursos excesivos.",
+        "title": "Aplicar cuotas de ejecución en flujos"
+      },
       "secrets": {
         "add_env": {
           "first": "Codifica el <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a>",
@@ -399,6 +455,10 @@
       },
       "watch_the_video": "Mira el video"
     },
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_expanded": "Expanded",
+    "density_normal": "Normal",
     "dependencies": "Dependencias",
     "dependencies delete flow": "Este flow tiene dependencias. Eliminarlo impedirá que se ejecuten sus dependencias.<br /><br /> Aquí está la lista de flows afectados:",
     "dependencies loaded": "Dependencias cargadas",
@@ -432,22 +492,28 @@
     "disabled": "Deshabilitado",
     "disabled flow desc": "Este flujo está deshabilitado, por favor habilítalo para poder ejecutarlo.",
     "disabled flow title": "Este flujo está deshabilitado",
+    "discard changes confirmation": "Tienes cambios no guardados. ¿Estás seguro de que deseas descartarlos?",
+    "discard execution confirmation": "Tienes entradas no guardadas. ¿Estás seguro de que deseas descartar esta ejecución?",
     "display direct sub tasks count": "Mostrar conteo directo de subtareas",
     "display flow {id} executions": "Mostrar ejecuciones del flujo {id}",
     "display metric for specific task": "Mostrar métrica para una tarea específica",
     "display output for specific task": "Mostrar salida para una tarea específica",
     "display topology for flow": "Mostrar topología para flujo",
+    "display_settings": "Display settings",
     "docs": "Documentos",
     "documentation": {
       "documentation": "Documentación",
       "github": "Abrir un issue en GitHub"
     },
     "documentationMenu": "Menú de documentación",
+    "done": "Hecho",
     "down trend": "Disminuyendo",
     "download": "Descargar",
     "download logs": "Descargar logs",
     "download_logos": "Descargar Paquete de Logos",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "draft_available": "El cambio en borrador está disponible en el editor",
+    "drop items here": "Suelta los elementos aquí",
     "duplicate-pair": "{label} \"{key}\" está duplicado, se ignora la primera clave.",
     "duration": "Duración",
     "dynamic": "Dinámico",
@@ -533,9 +599,17 @@
         "content": "La función Kill Switch proporciona un mecanismo basado en la UI para detener ejecuciones problemáticas. Reemplaza los comandos de solo CLI <code>--skip-executions</code> y <code>--skip-flows</code> con una interfaz de administración integral.",
         "title": "¡Aún no tienes Kill Switches!"
       },
+      "mcpToolFlows": {
+        "content": "Exponga un flow como una herramienta MCP añadiendo un <code>McpToolTrigger</code> a él. Lea más sobre el <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> en nuestra documentación.",
+        "title": "Aún no hay flows de herramientas registrados en este servidor."
+      },
+      "namespaceFiles": {
+        "content": "Los archivos del namespace funcionan como una carpeta de proyecto para este namespace. Almacena código Python, SQL, dbt o Terraform y luego referencia cualquier archivo en tus flows con",
+        "title": "Aún no hay archivos en este namespace"
+      },
       "panels": {
-        "content": "Abre Flow Code o No-Code para comenzar a editar tus flows, o selecciona otro panel (Topology, Documentation, Namespace Files, Blueprints, Context) para funciones relacionadas.",
-        "title": "Actualmente no hay paneles abiertos."
+        "content": "Has cerrado todos los paneles.  \nElige una pestaña arriba para continuar.",
+        "title": "No hay panel abierto"
       },
       "pluginDefaults": {
         "content": "Los valores predeterminados del plugin te permiten gobernar centralmente la configuración de tu plugin y compartirla con todos los flows en tu namespace.",
@@ -553,6 +627,10 @@
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> en nuestra documentación.",
         "title": "Tu flow no tiene ningún trigger."
       },
+      "variables": {
+        "content": "Agrega pares de key-value para compartir la configuración entre flows. Los namespaces secundarios los heredan automáticamente, y puedes referenciar cualquier value con",
+        "title": "Aún no hay variables"
+      },
       "versionPlugin": {
         "content": "Aquí puedes gestionar todos los plugins instalados en tu instancia de Kestra. Los plugins recién instalados pueden no estar disponibles de inmediato en todos los servicios de Kestra, dependiendo de la configuración de tu instancia.",
         "title": "¡Aún no tienes ningún plugin versionado!"
@@ -569,6 +647,7 @@
     "encoding": "Codificación",
     "end date": "Fecha de fin",
     "end datetime": "Fecha y hora de fin",
+    "environment": "Entorno",
     "environment color setting": "Color del entorno",
     "environment name setting": "Nombre del entorno",
     "error": "Error",
@@ -591,6 +670,8 @@
       }
     },
     "eval": {
+      "expression": "Expresión",
+      "preview": "Vista previa",
       "render": "Renderizar Expresión",
       "title": "Depurar Expresión",
       "tooltip": "Renderiza cualquier expresión Pebble e inspecciona el contexto de la ejecución."
@@ -603,8 +684,9 @@
     "execute the flow": "Ejecutar el flujo <code>{id}</code>",
     "execution": "Ejecución",
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
+    "execution id": "Id de Ejecución",
     "execution labels": "Etiquetas de ejecución",
-    "execution not found": "La ejecución <code>{executionId}</code> no se encuentra.",
+    "execution not found": "La ejecución {executionId} no se encuentra.",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
     "execution replay": "Esta ejecución es una repetición de",
@@ -656,6 +738,7 @@
     "expand all": "Expandir todo",
     "expand dependencies": "Expandir dependencias",
     "expand error": "Expandir solo tasks fallidas",
+    "expand_by_default": "Expand structured logs by default",
     "expiration": "Expiración",
     "expiration date": "Fecha de expiración",
     "export": "Exportar",
@@ -674,9 +757,19 @@
       "title": "Novedades en Kestra"
     },
     "file preview truncated": "El contenido mostrado ha sido truncado",
+    "file unavailable": "Archivo no disponible",
+    "file unavailable description": "Este archivo ya no está disponible; puede haber sido eliminado o haber expirado.",
     "fileTypeNotAllowed": "Tipo de archivo no permitido. Tipos aceptados: {types}",
+    "file_preview": {
+      "big_file_warning": "Este archivo tiene un tamaño de {size}. Puede tardar un tiempo en cargarse, bloqueando su navegador. ¿Desea cargarlo de todos modos?",
+      "load_anyway": "Cargar de todos modos"
+    },
     "files": "Archivos",
     "filter by log level": "Filtrar por nivel de log",
+    "filter by status": "Filtrar ejecuciones por estado {status}",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
     "filters": {
       "comparators": {
         "between": "entre",
@@ -766,7 +859,7 @@
         "tooltip": "Ver aplicaciones que usan este flow"
       },
       "dependencies": {
-        "suffix": "Dependencia(s)",
+        "suffix": "Dependencias",
         "tooltip": "Ver dependencias del flow"
       },
       "errors": {
@@ -792,7 +885,9 @@
     "flows imported": "Flujos importados",
     "focus task": "Haz clic en cualquier elemento para ver su documentación.",
     "fold_all_multi_lines": "Plegar Todas las Líneas Múltiples",
+    "font size": "Font size",
     "for flow": "para flow",
+    "forbidden system labels": "Solo system.correlationId puede usarse como label del sistema",
     "force run": "Forzar ejecución",
     "force run confirm": "¿Está seguro de forzar la ejecución <code>{id}</code>?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se descolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
     "force run done": "La ejecución es forzada a RUNNING",
@@ -802,6 +897,9 @@
     "form error": "Error en formulario",
     "from": "Desde",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "Esta ejecución terminó sin ejecutar ninguna task.\nVerifique su resumen y logs para conocer la razón.",
+    "gantt_no_tasks_match_filters": "Intenta ajustar los filtros de búsqueda, estado o nivel de log.",
+    "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
     "healthcheck date": "Fecha de HealthCheck",
     "hide task documentation": "Ocultar documentación de la task",
     "home": "Inicio",
@@ -832,6 +930,7 @@
     "items": "elementos",
     "join community": "Únete a la Comunidad",
     "join_slack": "Unirse a Slack",
+    "jsonl": "JSONL",
     "jump to...": "Saltar a...",
     "kestra": "Kestra",
     "key": "Key",
@@ -857,7 +956,9 @@
     "labels": "Etiquetas",
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} en los últimos {days} días",
+    "last error was": "Último error fue",
     "last evaluation date": "Última fecha de evaluación",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Fecha de última ejecución",
     "last execution state": "Último estado",
     "last execution status": "Último estado de ejecución",
@@ -868,14 +969,19 @@
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
     "leave page": "Salir de la página",
+    "open full page": "Abrir página completa",
+    "drill down preview": "Vista previa",
+    "license": "Licencia",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
     "line": "Línea",
     "line-by-line": "línea por línea",
     "loaded x dependencies": "{count} dependencias cargadas",
+    "loading": "Cargando...",
     "log expand setting": "Visualización predeterminada del Log",
     "logExporters": "Exportadores de Logs",
     "logs": "Logs",
+    "logs_copied": "Logs copied to your clipboard",
     "logs_view": {
       "compact": "Vista predeterminada",
       "compact_details": "Mostrar task logs en una vista compacta agrupada por cada task",
@@ -883,6 +989,7 @@
       "raw_details": "Mostrar task logs y flow logs completos en un formato crudo ordenado por marca de tiempo"
     },
     "main_configuration": "Configuración Principal",
+    "manage labels": "Gestionar etiquetas",
     "management port": "Puerto de gestión",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -891,21 +998,25 @@
       "auth_type": "Autenticación",
       "basic_auth": "Autenticación Básica",
       "bearer_token": "Autenticación de token Bearer",
+      "client_setup": "Configuración del cliente",
       "connect": "Conectar",
-      "connect_modal": {
+      "connect_tab": {
+        "auth_api_token_hint": "Configure <code>KESTRA_TOKEN</code> como variable de entorno antes de iniciar el cliente.",
+        "auth_basic_hint": "Configure <code>KESTRA_BASIC_AUTH</code> como variable de entorno que contenga una cadena <code>username:password</code> codificada en base64 antes de iniciar el cliente.",
+        "auth_oauth_browser_hint": "Su navegador abrirá la página de inicio de sesión del proveedor de identidad en la primera conexión.",
+        "auth_oauth_client_id_hint": "Reemplace <code>&lt;client-id&gt;</code> con el ID de cliente OAuth y registre <code>http://localhost:7777</code> como URI de redirección válida en ese cliente.",
         "claude_code": "Código Claude",
         "claude_code_hint": "Ejecute el siguiente comando en su terminal:",
         "claude_desktop": "Claude Desktop",
         "claude_desktop_hint": "Agrega lo siguiente a tu archivo claude_desktop_config.json:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
         "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "client_picker_label": "Elija su cliente de IA",
         "codex": "Codex (OpenAI)",
         "codex_hint": "Agrega lo siguiente a tu configuración MCP en codex.json:",
         "cursor": "Cursor",
         "cursor_hint": "Agrega lo siguiente a ~/.cursor/mcp.json:",
-        "done": "Hecho",
-        "server_url": "URL del servidor",
-        "title": "Conectar a {name}"
+        "server_url": "URL del servidor"
       },
       "copy_url": "Copiar URL",
       "create": "Crear Servidor",
@@ -914,21 +1025,52 @@
       "id_placeholder": "p. ej. my-mcp-server",
       "instructions": "Instrucciones",
       "main_tenant": "principal",
+      "managed_by_kestra": "Gestionado por Kestra",
+      "no_oauth_providers": "No hay proveedores OIDC configurados en esta instancia",
       "no_servers": "No se encontraron servidores MCP. Cree su primer servidor para exponer los triggers de la herramienta MCP a agentes de IA externos.",
+      "oauth": "OAuth",
+      "oauth_hint": "JWT Bearer de su proveedor OIDC",
+      "oauth_provider": "Proveedor OAuth",
+      "oauth_provider_placeholder": "Seleccione un proveedor OIDC configurado",
+      "oauth_provider_required": "El proveedor OAuth es obligatorio cuando el tipo de autenticación es OAuth",
       "page_description": "Exponga sus flows de Kestra como herramientas para agentes de IA compatibles con MCP",
       "private": "Privado",
+      "private_server": "Servidor privado",
       "public": "Público",
+      "public_hint": "Advertencia: Los servidores públicos no requieren autenticación. Cualquiera con la URL puede invocar cada herramienta expuesta por este servidor, sin namespace ni comprobaciones de permisos. Úselo solo para servidores seguros de exponer externamente.",
       "save": "Guardar cambios",
+      "scopes_supported": "Scopes admitidos",
+      "scopes_supported_hint": "Scopes anunciados en el documento Protected Resource Metadata de este servidor. Los clientes MCP que cumplen con la especificación limitan su solicitud de autorización a esta lista. Déjelo vacío para omitir el campo y dejar que los clientes utilicen los scopes anunciados por el IdP.",
+      "scopes_supported_placeholder": "openid, profile, email",
       "server": "Servidor MCP",
+      "server_id": "ID del servidor",
       "server_type": "Tipo de Servidor",
       "servers": "Servidores MCP",
+      "servers_count": "{{count}} Servidores MCP",
       "tab_connect": "Conectar",
-      "tab_connect_placeholder": "Detalles de conexión próximamente.",
       "tab_edit": "Editar",
       "tab_tool_flows": "Flujos de Herramientas",
       "tab_tool_flows_placeholder": "La gestión de flows de herramientas llegará pronto.",
+      "tools": {
+        "annotations": "Anotaciones",
+        "create_tool_flow": "Crear un flow de herramienta",
+        "description": "Descripción",
+        "destructive": "Destructivo",
+        "flow": "flow",
+        "idempotent": "Idempotente",
+        "no_tools": "No hay flows de herramientas que coincidan con tu búsqueda.",
+        "open_world": "Open world",
+        "read_only": "Solo lectura",
+        "return_direct": "Retorno directo",
+        "state": "Estado",
+        "title": "Título",
+        "tool_name": "Nombre de la herramienta",
+        "trigger_id": "ID del trigger",
+        "view_flow": "Abrir flow"
+      },
       "url_copied": "¡URL copiada!",
-      "username_password": "Nombre de usuario y contraseña"
+      "username_password": "Nombre de usuario y contraseña",
+      "your_servers": "Sus Servidores"
     },
     "metric": "Métrica",
     "metric choice": "No hay métricas disponibles para este flow",
@@ -938,6 +1080,7 @@
     "modify inputs": "Modificar inputs",
     "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
+    "more actions": "Más acciones",
     "more_actions": "Más acciones",
     "multi_panel_editor": {
       "close_all_panels": "Cerrar todos los paneles",
@@ -953,9 +1096,11 @@
       "create": {
         "file": "Crear archivo",
         "file_already_exists": "Ya existe un archivo con este nombre",
+        "file_conflicts_with_folder": "Ya existe una carpeta con este nombre",
         "file_error": "Se produjo un error al crear el archivo",
         "folder": "Crear carpeta",
         "folder_already_exists": "Ya existe una carpeta con este nombre",
+        "folder_conflicts_with_file": "Ya existe un archivo con este nombre",
         "folder_error": "Se produjo un error al crear la carpeta",
         "label": "Crear"
       },
@@ -992,9 +1137,14 @@
         "import": "Importar",
         "success": "Archivo(s) importado(s) exitosamente"
       },
+      "new_file": "Nuevo archivo",
       "no_items": {
         "heading": "No se encontraron archivos en tu namespace aún.",
         "paragraph": "Crea o importa archivos para compartir código entre flows en tu namespace."
+      },
+      "no_selection": {
+        "description": "Selecciona un archivo del árbol para ver su contenido.",
+        "heading": "Ningún archivo seleccionado"
       },
       "path": {
         "copy": "Copiar ruta",
@@ -1041,13 +1191,17 @@
     "neutral trend": "Estable",
     "new": "Nuevo",
     "new version": "¡Nueva versión {version} disponible!",
+    "next": "Siguiente",
     "next evaluation date": "Próxima fecha de evaluación",
     "next evaluation date tooltip": "Cuando el trigger se evaluará la próxima vez, basado en su intervalo. No siempre es lo mismo que la próxima fecha de ejecución si no se cumplen las condiciones.",
     "next execution date": "Fecha de próxima ejecución",
     "next_execution": "Próxima ejecución",
     "no data current task": "No hay datos disponibles para el task actual.",
     "no inputs": "Este flow no tiene inputs.",
+    "no metrics available": "No se registraron métricas para esta ejecución de task.",
+    "no outputs available": "No hay outputs disponibles para esta ejecución de task.",
     "no result": "No hay resultados para mostrar.",
+    "no revisions": "Sin revisiones",
     "no revisions found": "Solo existe una revisión para este flujo",
     "no-executions-view": {
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
@@ -1058,6 +1212,7 @@
       "title": "Comienza a automatizar con"
     },
     "no_code": {
+      "add_field": "Agregar {field}",
       "adding": "+ Agregar un {what}",
       "adding_default": "+ Añadir un nuevo value",
       "clearSelection": "Borrar selección",
@@ -1088,7 +1243,8 @@
           "taskDefaults": "Predeterminados de Task",
           "updated": "Actualizado",
           "variables": "Variables",
-          "workerGroup": "Grupo de Worker"
+          "workerGroup": "Grupo de Worker",
+          "workerSelector": "Selector de Worker"
         },
         "main": {
           "description": "Descripción",
@@ -1141,7 +1297,8 @@
     "no_history": "No hay historial disponible",
     "no_inputs": "No hay inputs disponibles.",
     "no_logs_data": "Sin datos",
-    "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
+    "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
+    "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
     "no_results": {
       "assets": "No se encontraron activos",
@@ -1290,6 +1447,8 @@
     "open in new tab": "En una nueva pestaña",
     "open in same tab": "En la misma pestaña",
     "open sidebar": "abrir barra lateral",
+    "open source": "Código Abierto",
+    "open_page": "Open page",
     "optional": "Opcional",
     "original execution": "Ejecución original",
     "originalCreatedDate": "Fecha de creación original",
@@ -1317,6 +1476,7 @@
       "next": "Página siguiente",
       "previous": "Página anterior"
     },
+    "panel actions": "Acciones del panel",
     "parent execution": "Ejecución padre",
     "password": "Contraseña",
     "password empty constraint": "Nombre de usuario o contraseña incorrectos",
@@ -1343,6 +1503,7 @@
       "toggle": "Área de pruebas",
       "tooltip_persistence": "Si desactivas y vuelves a activar el Playground, la información permanece mientras te mantengas en la página."
     },
+    "playground actions": "Acciones del Playground",
     "plugin defaults exported": "Valores predeterminados del plugin exportados",
     "plugin defaults imported": "Valores predeterminados del plugin importados",
     "plugin defaults not imported": "Algunos valores predeterminados del plugin no se pudieron importar",
@@ -1367,16 +1528,51 @@
       "yaml_configuration": "Configuración YAML"
     },
     "pluginPage": {
-      "alt": "Icono de Plugins",
+      "elementType": {
+        "apps": "Aplicación",
+        "charts": "Gráfico",
+        "conditions": "Condición",
+        "logExporters": "Exportador de logs",
+        "secrets": "Secreto",
+        "taskRunners": "Ejecutor de task",
+        "tasks": "Tarea",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Planos ({count})",
+        "plugins": "Plugins ({count})",
+        "tasks": "Tareas ({count})"
+      },
+      "header": {
+        "back": "Volver a plugins",
+        "certified": "Certificado",
+        "enterpriseEdition": "Edición Enterprise"
+      },
+      "loadError": "No se pudieron cargar los plugins. Por favor, inténtelo de nuevo.",
+      "noResults": "No hay plugins que coincidan con tu búsqueda.",
+      "notFound": "Este plugin no pudo ser encontrado.",
+      "overview": {
+        "createdBy": "Creado por",
+        "latest": "Último",
+        "linksResources": "Enlaces y Recursos",
+        "managedBy": "Gestionado por",
+        "minKestraVersion": "Vers. mínima compatible de Kestra: {version}",
+        "minKestraVersionShort": "Versión mínima de Kestra {version}",
+        "pluginType": "Tipo de plugin",
+        "previousVersions": "Versiones anteriores",
+        "releaseNotes": "Notas de la versión",
+        "title": "Visión general",
+        "versions": "Versiones"
+      },
       "search": "Buscar en más de {count} plugins",
+      "searchTasks": "Buscar {count} tasks",
       "sort": {
-        "most_used": "Más usados",
-        "name_asc": "Nombre A-Z",
-        "name_desc": "Nombre Z-A",
+        "mostUsed": "Más usados",
+        "nameAsc": "Nombre A-Z",
+        "nameDesc": "Nombre Z-A",
         "newest": "Más reciente"
       },
-      "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
-      "title2": "Busca tasks y triggers para construir tu flow."
+      "sortBy": "Ordenar por"
     },
     "plugin_default_already_exists": "El plugin predeterminado para <code>{type}</code> ya existe.",
     "plugins": {
@@ -1387,6 +1583,7 @@
     },
     "port": "Puerto",
     "prefill inputs": "Prefill",
+    "pretty_json": "Pretty JSON",
     "prev_execution": "Ejecución anterior",
     "preview": {
       "auto-view": "Vista automática",
@@ -1402,6 +1599,7 @@
       "showing_rows": "Mostrando filas {start}-{end} de {total}",
       "view": "Ver"
     },
+    "pricing": "Precios",
     "product_tour": "Recorrido del Producto",
     "properties": {
       "hidden": "Oculto en la Tabla",
@@ -1410,6 +1608,7 @@
       "shown": "Mostrado en Tabla"
     },
     "queued duration": "Duración en cola",
+    "quotas": "Cuotas",
     "reach us": "Habla con nosotros",
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
@@ -1419,6 +1618,8 @@
     "relative": "Relativo",
     "relative end date": "Fecha de fin relativa",
     "relative start date": "Fecha de inicio relativa",
+    "remove label": "Eliminar label",
+    "remove this item": "Eliminar este elemento",
     "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?",
     "replay": "Repetir",
     "replay confirm": "¿Estás seguro de repetir esta ejecución <code>{id}</code> y crear una nueva?",
@@ -1429,12 +1630,14 @@
     "replay inputs": "Entradas",
     "replay inputs new required": "Esta revisión tiene inputs. Se le pedirá que los complete.",
     "replay latest revision": "Repetir usando la última revisión",
+    "replay select taskrun": "Seleccione la ejecución de task para reproducir desde:",
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
     "replay with inputs": "Repetir con inputs",
-    "replayed": "La ejecución se ha repetido",
+    "replayed": "La ejecución se ha reproducido",
     "required field": "Campo requerido",
     "reset": "Reiniciar",
+    "reset to defaults": "Restablecer a los valores predeterminados",
     "restart": "Reiniciar",
     "restart change revision": "Puedes cambiar la revisión que se usará para la nueva ejecución.",
     "restart confirm": "¿Estás seguro de reiniciar la ejecución <code>{id}</code>?",
@@ -1445,21 +1648,25 @@
       "button": "Reiniciar trigger",
       "tooltip": "Reiniciar el trigger"
     },
-    "restarted": "La ejecución se ha reiniciado",
+    "restarted": "La ejecución se reinicia",
     "restore": "Restaurar",
     "restore confirm": "¿Estás seguro de restaurar la revisión <code>{revision}</code>?",
     "restore revision": "¿Estás seguro de que quieres restaurar la revisión <code>{revision}</code>?",
     "resume": "Reanudar",
+    "resume from breakpoint done": "Ejecución reanudada desde el punto de interrupción",
+    "resume from breakpoint title": "Reanudar ejecución `<code>{id}</code>` desde el punto de interrupción",
     "resumed confirm": "¿Estás seguro de reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
     "resumed title": "Reanudar ejecución <code>{id}</code>",
     "reuse original inputs": "Reutilizar inputs originales",
     "reuse_original_inputs": "Reutilizar inputs originales",
+    "review your inputs": "Revise sus entradas",
     "revision": "Revisión",
     "revision deleted": "La revisión {revision} ha sido eliminada con éxito",
     "revisions": "Revisiones",
     "row count": "Recuento de filas",
     "run task in playground": "Ejecutar task en el playground",
+    "run timeline": "Cronograma de Ejecución",
     "runners": "Corredores",
     "running": "RUNNING",
     "running duration": "Duración en ejecución",
@@ -1511,9 +1718,11 @@
     },
     "see dependencies": "Ver dependencias",
     "see full revision": "Ver revisión completa",
+    "see timeline": "Ver línea de tiempo",
     "see_all_states": "Ver todos los estados",
     "seeing old revision": "Estás viendo una revisión antigua: {revision}",
     "select": "Seleccione su {{section}}",
+    "select a state": "Seleccionar un estado",
     "select datetime": "Seleccionar una fecha",
     "select view": "Seleccionar vista",
     "selected": "Seleccionado",
@@ -1524,10 +1733,21 @@
     "sequential": "Secuencial",
     "server type": "Tipo de servidor",
     "services": "Servicios",
-    "set_extra_labels": "Establecer etiquetas adicionales",
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "Segundos entre actualizaciones automáticas de datos en las páginas de lista.",
+            "default_namespace": "Se utiliza al crear nuevos flows sin un namespace.",
+            "editor_type": "Editor mostrado al abrir un flow por primera vez.",
+            "execute_default_tab": "Pestaña seleccionada al navegar a una ejecución.",
+            "execute_flow": "Dónde se abren los resultados de ejecución después de activar una ejecución.",
+            "flow_default_tab": "Pestaña seleccionada al navegar a un flow.",
+            "log_display": "Cómo se presentan los logs al abrir una ejecución.",
+            "log_level": "Nivel mínimo de log mostrado en los logs de ejecución.",
+            "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
+            "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers."
+          },
           "fields": {
             "auto_refresh_interval": "Intervalo de Auto Refresh",
             "default_namespace": "Namespace Predeterminado",
@@ -1539,7 +1759,8 @@
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado",
             "multi_panel_editor": "Editor de Panel Múltiple",
-            "playground": "Área de pruebas"
+            "playground": "Área de pruebas",
+            "triggers_default_tab": "Pestaña de Triggers Predeterminados"
           },
           "label": "Configuración Principal"
         },
@@ -1551,6 +1772,11 @@
           "label": "Exportar"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "Formato utilizado para mostrar fechas en todo el dashboard.",
+            "language": "Idioma de la interfaz para menús y etiquetas.",
+            "time_zone": "Se utiliza para mostrar las fechas de ejecución y los triggers programados."
+          },
           "fields": {
             "date_format": "Formato de Fecha",
             "time_zone": "Zona Horaria"
@@ -1565,13 +1791,50 @@
           "unsaved_title": "Cambios no guardados",
           "unsaved_warning": "Tienes cambios no guardados. ¿Quieres guardarlos antes de salir?"
         },
-        "theme": {
+        "sidebar": {
+          "descriptions": {
+            "items": "Mostrar, ocultar y reordenar elementos en la barra lateral."
+          },
           "fields": {
+            "items": "Elementos de Navegación"
+          },
+          "label": "Barra lateral"
+        },
+        "theme": {
+          "app_font_size_options": {
+            "large": "Grande",
+            "medium": "Mediano",
+            "small": "Pequeño"
+          },
+          "color_modes": {
+            "dark_1": "Oscuro 1.0",
+            "dark_2": "Oscuro 2.0",
+            "light": "Claro",
+            "sync": "Sincronizar con el sistema"
+          },
+          "confirmations": {
+            "color_mode": "Tu interfaz ahora usa el tema `{mode}`."
+          },
+          "descriptions": {
+            "app_font_size": "Factor de escala aplicado a todos los tamaños de fuente de la interfaz.",
+            "color_mode": "Elige tu tema de interfaz preferido.",
+            "color_mode_shortcut": "Consejo: pulsa <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>L</kbd> para cambiar de tema desde cualquier lugar.",
+            "editor_folding_stratgy": "Colapsar bloques largos de YAML por defecto al abrir un flow.",
+            "editor_font_family": "Fuente monoespaciada utilizada en el editor YAML.",
+            "editor_font_size": "Tamaño de fuente utilizado en los editores YAML y sin código.",
+            "editor_hover_description": "Mostrar descripciones de propiedades al pasar el cursor en el editor.",
+            "environment_color": "Color de acento utilizado para el entorno actual en la navegación.",
+            "environment_name": "Nombre para mostrar del entorno actual, mostrado en la navegación.",
+            "logs_font_size": "Tamaño de fuente utilizado en visores de log y terminales."
+          },
+          "fields": {
+            "app_font_size": "Tamaño de fuente de la aplicación",
             "chart_color_scheme": {
               "classic": "Clásico",
               "kestra": "Kestra",
               "label": "Esquema de Colores del Gráfico"
             },
+            "color_mode": "Modo de color",
             "editor_folding_stratgy": "Plegado Automático de Código en el Editor",
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_font_size": "Tamaño de Fuente del Editor",
@@ -1585,7 +1848,8 @@
           "label": "Preferencias de Tema"
         }
       },
-      "label": "Configuración"
+      "label": "Configuración",
+      "updated": "{name} actualizado"
     },
     "setup": {
       "config": {
@@ -1605,9 +1869,12 @@
         "firstName": "Nombre",
         "lastName": "Apellido",
         "password": "Contraseña",
-        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número."
+        "password_requirements": "Al menos 8 caracteres con 1 letra mayúscula y 1 número.",
+        "username": "Nombre de usuario",
+        "username_hint": "Debe ser una dirección de correo electrónico válida."
       },
       "login": "Iniciar sesión",
+      "login_title": "Iniciar sesión",
       "logout": "Cerrar sesión",
       "steps": {
         "complete": "Iniciar Kestra UI",
@@ -1657,13 +1924,17 @@
         "firstName_required": "Nombre requerido",
         "incorrect_creds": "Nombre de usuario o contraseña inválidos. Asegúrate de que tus credenciales sean correctas.",
         "lastName_required": "Apellido requerido",
-        "password_invalid": "Contraseña inválida"
+        "password_invalid": "Contraseña inválida",
+        "password_required": "La contraseña es obligatoria"
       }
     },
     "show": "Mostrar",
     "show chart": "Mostrar Gráfico",
     "show description": "Mostrar una descripción",
+    "show details": "Mostrar detalles",
     "show documentation": "Mostrar documentación",
+    "show more details": "Mostrar más detalles",
+    "show raw": "Show raw",
     "show task condition": "Mostrar condición de task",
     "show task documentation": "Mostrar documentación de la task",
     "show task documentation in editor": "Mostrar documentación de la task en el editor",
@@ -1673,6 +1944,8 @@
     "showLess": "Mostrar menos",
     "showMore": "Mostrar más",
     "side-by-side": "lado a lado",
+    "similar lines": "similar lines",
+    "skipped": "Omitido",
     "slack support": "Haz cualquier pregunta vía Slack",
     "something_went_wrong": {
       "connection_lost": {
@@ -1687,6 +1960,12 @@
     "source and topology": "Fuente y topología",
     "source only": "Solo fuente",
     "source search": "Búsqueda de fuente",
+    "source_search": {
+      "match_count": "{count} coincidencia | {count} coincidencias",
+      "open_flow": "Abrir flow",
+      "preview_empty": "Selecciona un resultado para previsualizarlo. Haz clic en un flow de la lista de resultados para ver su código fuente.",
+      "preview_error": "Error al cargar el código fuente del flow"
+    },
     "specific task": "Tarea específica",
     "start date": "Fecha de inicio",
     "start datetime": "Fecha y hora de inicio",
@@ -1744,6 +2023,7 @@
     "to": "Hasta",
     "to toggle": "para alternar",
     "toggle fullscreen": "Alternar pantalla completa",
+    "toggle menu": "Alternar menú",
     "toggle output": "Alternar salidas",
     "toggle output display": "Alternar visualización de salida",
     "toggle periodic refresh each x seconds": "Alternar actualización periódica cada {interval} segundos",
@@ -1784,15 +2064,8 @@
     "triggers": "Triggers",
     "triggers_add_card_add": "Agregar",
     "triggers_add_card_add_to_flow": "Agregar al flow",
-    "triggers_add_category_app_description": "Comprobar periódicamente los recursos externos para detectar cambios.",
-    "triggers_add_category_app_title": "Disparadores de la App",
-    "triggers_add_category_core_description": "Triggers integrados esenciales para la mayoría de los workflows.",
-    "triggers_add_category_core_title": "Disparadores Principales",
     "triggers_add_category_empty": "No hay triggers en esta categoría.",
-    "triggers_add_category_realtime_description": "Reacciona instantáneamente a eventos de sistemas de mensajería.",
-    "triggers_add_category_realtime_title": "Disparadores en Tiempo Real",
     "triggers_add_ee_tooltip": "Este trigger requiere la Enterprise Edition.",
-    "triggers_add_empty_hint": "Intenta con un término de búsqueda diferente o navega por todas las categorías.",
     "triggers_add_empty_title": "No se encontraron triggers",
     "triggers_add_filter_all": "Todo",
     "triggers_add_filter_app": "Aplicación",
@@ -1810,8 +2083,6 @@
     "triggers_add_modal_trigger_id": "ID de Trigger",
     "triggers_add_modal_trigger_id_placeholder": "Identificador único para este trigger",
     "triggers_add_search_placeholder": "Buscar triggers...",
-    "triggers_add_see_less": "Ver menos",
-    "triggers_add_see_more": "Ver más ({count} más)",
     "triggers_header_description": "Navega, añade y gestiona triggers para automatizar tus flows. Elige entre exponer tu flow como una herramienta de IA, programar, añadir un webhook trigger, sondear cambios en aplicaciones externas o escuchar eventos en tiempo real.",
     "triggers_state": {
       "options": {
@@ -1854,16 +2125,32 @@
     "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Utiliza esta versión cuando trabajes sobre un fondo oscuro para asegurar que nuestro nombre permanezca legible.",
+    "valid": "Válido",
     "validate": "Validar",
     "value": "Value",
+    "variable_explorer": {
+      "empty": "No hay variables disponibles para esta ejecución.",
+      "n_items": "[ {count} elementos ]",
+      "n_keys": "\\{ {count} keys \\}",
+      "one_item": "[ 1 elemento ]",
+      "one_key": "\\{ 1 key \\}",
+      "raw_json": "Raw JSON",
+      "search_placeholder": "Buscar Key o value...",
+      "select_prompt": "Selecciona una variable para inspeccionar su value.",
+      "tasks_outputs": "Tasks outputs",
+      "title": "Entrada/Salida",
+      "tree": "Árbol"
+    },
     "variables": "Variables",
     "version": "Versión",
+    "view metrics": "Ver métricas",
     "warning": "Advertencia",
     "warning detected": "Advertencia(s) detectada(s)",
     "warning flow with triggers": "Este flujo contiene triggers y una ejecución manual fallará si este flujo depende de expresiones de trigger.",
     "watch": "Ver",
     "watch_video": "Ver Video",
     "webhook": {
+      "copy_url": "Copiar URL del webhook",
       "curl_command": "Comando cURL de Webhook",
       "curl_note": "Utiliza este comando cURL para trigger el flow a través de webhook con carga útil JSON personalizada",
       "no_triggers": "Este flow no tiene triggers de webhook habilitados",
@@ -2006,6 +2293,7 @@
     "worker information": "Información del Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "No se permite una key o value vacía en las etiquetas"
+    "wrong labels": "No se permite una key o value vacía en las etiquetas",
+    "yes": "Sí"
   }
 }

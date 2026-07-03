@@ -1,12 +1,16 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import {defineComponent} from "vue"
+import {ElDropdown} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsDropdown from "../../../src/components/Navigation/KsDropdown/KsDropdown.vue"
 import KsDropdownItem from "../../../src/components/Navigation/KsDropdown/KsDropdownItem.vue"
 import KsDropdownMenu from "../../../src/components/Navigation/KsDropdown/KsDropdownMenu.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
+
+const findModifier = (popperOptions: Record<string, unknown> | undefined, name: string) =>
+    (popperOptions?.modifiers as Array<Record<string, unknown>>)?.find((m) => m.name === name)
 
 const wrapInDropdown = (slotContent: string) =>
     defineComponent({
@@ -30,6 +34,29 @@ describe("KsDropdown", () => {
             global: globalConfig,
         })
         expect(wrapper).toBeTruthy()
+    })
+
+    test("keeps the menu away from the viewport edge by default", () => {
+        const wrapper = mount(KsDropdown, {
+            slots: {default: "<button>Actions</button>"},
+            global: globalConfig,
+        })
+
+        const popperOptions = wrapper.getComponent(ElDropdown).props("popperOptions") as Record<string, unknown>
+
+        expect(findModifier(popperOptions, "preventOverflow")?.options).toEqual({rootBoundary: "viewport", padding: 8})
+        expect(findModifier(popperOptions, "flip")?.options).toEqual({rootBoundary: "viewport", padding: 8})
+    })
+
+    test("lets a caller override the default popper-options", () => {
+        const custom = {strategy: "fixed", modifiers: [{name: "offset", options: {offset: [0, 12]}}]}
+        const wrapper = mount(KsDropdown, {
+            slots: {default: "<button>Actions</button>"},
+            attrs: {popperOptions: custom},
+            global: globalConfig,
+        })
+
+        expect(wrapper.getComponent(ElDropdown).props("popperOptions")).toEqual(custom)
     })
 })
 

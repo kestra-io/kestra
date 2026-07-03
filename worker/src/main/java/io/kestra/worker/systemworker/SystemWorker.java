@@ -2,11 +2,11 @@ package io.kestra.worker.systemworker;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.worker.AbstractWorker;
 import io.kestra.worker.WorkerJobExecutor;
 import io.micronaut.context.annotation.Requires;
@@ -57,32 +57,24 @@ public class SystemWorker extends AbstractWorker {
     }
 
     /**
-     * Start with the default thread-pool size and the reserved
-     * {@link WorkerGroup#SYSTEM_KEY} routing key. The pool size mirrors the
+     * Start with the default thread-pool size, pinned to the reserved
+     * {@link WorkerQueues#SYSTEM_ID} Worker Queue. The pool size mirrors the
      * executor's sizing pattern but multiplied by 4 because SystemTasks are
      * I/O-bound (DB-backed purge / ship-out work).
      */
     public void start() {
         int threads = Math.max(4, KestraContext.getContext().getAllocatedCpuCores());
-        start(threads, WorkerGroup.SYSTEM_KEY);
+        start(threads);
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * The SystemWorker exclusively serves the reserved {@link WorkerGroup#SYSTEM_KEY}
-     * routing key. The caller-supplied {@code workerGroupKey} is ignored, with a
-     * warning if it differs from the reserved value.
+     * The SystemWorker exclusively serves the reserved {@link WorkerQueues#SYSTEM_ID}
+     * Worker Queue.
      */
     @Override
-    protected String resolveWorkerGroup(final String workerGroupKey) {
-        if (workerGroupKey != null && !WorkerGroup.SYSTEM_KEY.equals(workerGroupKey)) {
-            log.warn(
-                "SystemWorker received workerGroupKey '{}'; ignoring and using reserved '{}' instead.",
-                workerGroupKey,
-                WorkerGroup.SYSTEM_KEY
-            );
-        }
-        return WorkerGroup.SYSTEM_KEY;
+    protected String resolveWorkerGroupId() {
+        return WorkerQueues.SYSTEM_ID;
     }
 }

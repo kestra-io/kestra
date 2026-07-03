@@ -8,6 +8,65 @@ import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as ExecutionUtils from "../utils/executionUtils"
+import {executionLogsDownloadFilename} from "../utils/logs"
+import {InputType} from "../utils/inputs"
+
+export interface Check {
+    message: string
+    style: string
+    behavior: string
+}
+
+export interface InputError {
+    message: string;
+    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
+    // input `defaults` Pebble expression that threw) rather than a value validation error
+    renderError?: boolean;
+}
+
+export interface ValidationResponse {
+    checks?: Check[];
+    inputs: Array<{
+        enabled: boolean;
+        input: InputMetaData;
+        errors?: InputError[];
+        value?: unknown;
+        isDefault?: boolean;
+    }>;
+}
+
+export interface ValidationEventPayload {
+    formData: FormData | undefined;
+    inputsMetaData: InputMetaData[];
+    callback: (response: ValidationResponse) => void;
+}
+
+export type ValueOptionLike = string | {label: string; value: string};
+
+export interface InputMetaData {
+    id: string;
+    type: InputType
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+    defaults?: unknown;
+    value?: unknown;
+    values?: ValueOptionLike[];
+    options?: ValueOptionLike[];
+    errors?: InputError[];
+    isDefault?: boolean;
+    isRadio?: boolean;
+    allowCustomValue?: boolean;
+    min?: number;
+    max?: number;
+    allowedFileExtensions?: string[];
+    accept?: string;
+    prefill?: unknown;
+    // present only on the raw flow inputs (props.initialInputs); the rendered
+    // validate response strips `expression`, keeping `dependsOn` at most
+    expression?: string;
+    dependsOn?: unknown;
+}
 
 interface LogsState {
     total: number;
@@ -80,6 +139,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     const metrics = ref<any[]>([])
     const metricsTotal = ref<number>(0)
     const subflowsExecutions = ref<Record<string, any>>({})
+    // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
+    // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
+    // never reset across execution navigations, like subflowsExecutions above
+    const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<any | undefined>(undefined)
     const flowGraph = ref<any | undefined>(undefined)
     const namespaces = ref<string[]>([])
@@ -183,7 +246,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
             })
     }
@@ -196,7 +259,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
                 },
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -259,6 +322,18 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
+        return axios.post<Execution>(
+            `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
+            null,
+            {
+                params: {
+                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+                },
+            },
+        )
+    }
+
     const pause = (options: { id: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/pause`)
     }
@@ -316,7 +391,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data",
@@ -452,6 +527,12 @@ export const useExecutionsStore = defineStore("executions", () => {
                     },
                 }
             }
+
+            // Close the stream on error: EventSource auto-reconnects (~every 3s)
+            // unless explicitly closed, and each reconnect opens a fresh server-side
+            // SSE connection whose Netty direct buffers are not promptly reclaimed,
+            // leaking off-heap memory over time. See kestra-io/kestra#16982.
+            closeSSE()
         }
 
         return Promise.resolve(sse.value)
@@ -461,8 +542,18 @@ export const useExecutionsStore = defineStore("executions", () => {
         return new EventSource(`${apiUrl()}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true})
     }
 
-    const followLogs = (options: { id: string }) => {
-        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow`, {withCredentials: true}))
+    const followLogs = (options: { id: string; params?: Record<string, any> }) => {
+        const search = new URLSearchParams()
+        Object.entries(options.params ?? {}).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === "") return
+            if (Array.isArray(value)) {
+                value.forEach(item => search.append(key, String(item)))
+            } else {
+                search.append(key, String(value))
+            }
+        })
+        const query = search.toString()
+        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean; showMessageOnError?: boolean }) => {
@@ -496,6 +587,15 @@ export const useExecutionsStore = defineStore("executions", () => {
             params: options.params,
         }).then(response => {
             return response.data
+        })
+    }
+
+    const downloadLogsFile = (options: { executionId: string; params?: Record<string, any> }) => {
+        return downloadLogs(options).then((text: unknown) => {
+            Utils.downloadUrl(
+                window.URL.createObjectURL(new Blob([text as BlobPart])),
+                executionLogsDownloadFilename(options.executionId, new Date()),
+            )
         })
     }
 
@@ -733,6 +833,23 @@ export const useExecutionsStore = defineStore("executions", () => {
         delete subflowsExecutions.value[subflow]
     }
 
+    const addProgressEvent = (event: {taskId: string; taskRunId: string; step: string; timestamp: string}) => {
+        // Overwrite (not skip) on a matching (taskRunId, step): a retried task reuses the same
+        // taskRunId, so a later attempt re-emitting the same step must replace the stale value
+        // from an earlier attempt, not be dropped. Idempotent for genuine SSE reconnect replay
+        // since that resends the identical timestamp.
+        //
+        // Reassign the array (like `metrics` does on every loadMetrics()) rather than push/splice
+        // in place: consumers watching this ref shallowly (e.g. to know when to re-render a
+        // topology node) only see a change on reference reassignment, not on in-place mutation.
+        const existingIndex = progressEvents.value.findIndex(e => e.taskRunId === event.taskRunId && e.step === event.step)
+        if (existingIndex === -1) {
+            progressEvents.value = [...progressEvents.value, event]
+        } else {
+            progressEvents.value = progressEvents.value.map((e, i) => i === existingIndex ? event : e)
+        }
+    }
+
     const resetLogs = () => {
         logs.value = {results: [], total: 0}
     }
@@ -762,7 +879,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const exportExecutionsAsCSV = async (params: any) => {
         const response = await axios.get(
             `${apiUrl()}/executions/export/by-query/csv`,
-            {params, responseType: "blob"},
+            {params, responseType: "text", headers: {Accept: "text/csv"}},
         )
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")
@@ -784,6 +901,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         metrics,
         metricsTotal,
         subflowsExecutions,
+        progressEvents,
         flow,
         flowGraph,
         namespaces,
@@ -807,6 +925,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkKill,
         queryKill,
         resume,
+        resumeFromBreakpoint,
         validateResume,
         pause,
         bulkPauseExecution,
@@ -826,6 +945,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLogs,
         loadMetrics,
         downloadLogs,
+        downloadLogsFile,
         deleteLogs,
         filePreview,
         setLabels,
@@ -846,6 +966,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLatestExecutions,
         addSubflowExecution,
         removeSubflowExecution,
+        addProgressEvent,
         resetLogs,
         appendLogs,
         appendFollowedLogs,

@@ -1,0 +1,18 @@
+id: subflow-function-mutual-b
+namespace: io.kestra.tests
+
+# Mutual recursion b -> a -> b -> ... see subflow-function-mutual-a.
+inputs:
+  - id: x
+    type: STRING
+    defaults: "{{ subflow(namespace='io.kestra.tests', id='subflow-function-mutual-a').outputs.x }}"
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.x }}"
+
+outputs:
+  - id: x
+    type: STRING
+    value: "{{ inputs.x }}"

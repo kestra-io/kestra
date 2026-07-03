@@ -17,12 +17,22 @@ public class TimeLineSearch {
     private ZonedDateTime endDate;
     private Duration timeRange;
 
+    /**
+     * Returns a flat list of all leaf {@link QueryFilter}s by recursing into node children.
+     * This ensures date boundary fields nested inside conditional groups (AND/OR nodes) are found.
+     */
+    private static List<QueryFilter> flatLeaves(List<QueryFilter> filters) {
+        return filters.stream()
+            .flatMap(f -> f.isNode() ? flatLeaves(f.children()).stream() : java.util.stream.Stream.of(f))
+            .toList();
+    }
+
     public static TimeLineSearch extractFrom(List<QueryFilter> filters) {
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
         Duration timeRange = null;
 
-        for (QueryFilter filter : filters) {
+        for (QueryFilter filter : flatLeaves(filters)) {
             if (filter.field() == null) {
                 continue;
             }

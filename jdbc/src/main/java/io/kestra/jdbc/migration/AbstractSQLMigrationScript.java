@@ -1,8 +1,5 @@
 package io.kestra.jdbc.migration;
 
-import io.kestra.core.migration.MigrationScript;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -12,30 +9,92 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
+import io.kestra.core.migration.MigrationScript;
+
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
+
 /**
  * Base class for migration scripts, providing utilities for executing SQL resources from the
  * classpath.
  *
- * <p>Subclasses are Micronaut {@code @Singleton} beans that use constructor injection.
+ * <p>
+ * Subclasses are Micronaut {@code @Singleton} beans that use constructor injection.
  */
 public abstract class AbstractSQLMigrationScript implements MigrationScript {
+
+    /**
+     * The {@link DataSource} this migration runs against, used by the default {@link #migrate()}.
+     * SQL-backed subclasses override this to return their injected data source.
+     *
+     * @return the data source, or {@code null} if the subclass provides its own {@link #migrate()}
+     */
+    protected DataSource dataSource() {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Derived from {@link #sqlResources()} so the resource path is declared only once.
+     */
+    @Override
+    public String checksum() {
+        return MigrationScript.checksumOfResources(sqlResources().toArray(String[]::new));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes each SQL resource declared by {@link #sqlResources()} against {@link #dataSource()}.
+     */
+    @Override
+    public void migrate() throws Exception {
+        for (String resource : sqlResources()) {
+            executeSqlResource(dataSource(), resource);
+        }
+    }
+
+    /**
+     * Reads a SQL resource from the classpath and returns its raw content.
+     *
+     * @param resourcePath classpath resource path to the SQL file (e.g. {@code "/migrations/baseline-h2.sql"})
+     * @return the SQL file content
+     * @throws IOException if the resource cannot be read
+     * @throws IllegalArgumentException if the resource is not found on the classpath
+     */
+    public static String readSqlResource(final String resourcePath) throws IOException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+            cl = AbstractSQLMigrationScript.class.getClassLoader();
+        }
+        String normalizedPath = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
+        try (InputStream is = cl.getResourceAsStream(normalizedPath)) {
+            if (is == null) {
+                throw new IllegalArgumentException("SQL resource not found on classpath: " + resourcePath);
+            }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
 
     /**
      * Loads a SQL file from the classpath and executes all statements against the given
      * {@link DataSource}.
      *
-     * <p>The SQL is split into individual statements using a parser that correctly handles:
+     * <p>
+     * The SQL is split into individual statements using a parser that correctly handles:
      * <ul>
-     *   <li>Single-quoted string literals ({@code '...'})</li>
-     *   <li>PostgreSQL dollar-quoted blocks ({@code $$...$$}, {@code $tag$...$tag$})</li>
-     *   <li>Single-line comments ({@code --})</li>
-     *   <li>Block comments ({@code /* ... *\/})</li>
+     * <li>Single-quoted string literals ({@code '...'})</li>
+     * <li>PostgreSQL dollar-quoted blocks ({@code $$...$$}, {@code $tag$...$tag$})</li>
+     * <li>Single-line comments ({@code --})</li>
+     * <li>Block comments ({@code /* ... *\/})</li>
      * </ul>
      *
-     * @param dataSource   the data source to obtain a connection from
+     * @param dataSource the data source to obtain a connection from
      * @param resourcePath classpath resource path to the SQL file (e.g.
-     *                     {@code "/migrations/baseline-h2.sql"})
-     * @throws IOException  if the resource cannot be read
+     *        {@code "/migrations/baseline-h2.sql"})
+     * @throws IOException if the resource cannot be read
      * @throws SQLException if a statement fails to execute
      */
     protected void executeSqlResource(final DataSource dataSource, final String resourcePath)
@@ -47,21 +106,23 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
      * Loads a SQL file from the classpath and executes all statements against the given
      * {@link DataSource}.
      *
-     * <p>The SQL is split into individual statements using a parser that correctly handles:
+     * <p>
+     * The SQL is split into individual statements using a parser that correctly handles:
      * <ul>
-     *   <li>Single-quoted string literals ({@code '...'})</li>
-     *   <li>PostgreSQL dollar-quoted blocks ({@code $$...$$}, {@code $tag$...$tag$})</li>
-     *   <li>Single-line comments ({@code --})</li>
-     *   <li>Block comments ({@code /* ... *\/})</li>
+     * <li>Single-quoted string literals ({@code '...'})</li>
+     * <li>PostgreSQL dollar-quoted blocks ({@code $$...$$}, {@code $tag$...$tag$})</li>
+     * <li>Single-line comments ({@code --})</li>
+     * <li>Block comments ({@code /* ... *\/})</li>
      * </ul>
      *
-     * <p>Also available as a static method for classes that extend
-     * {@link io.kestra.core.migration.AbstractV2UpgradeMigration} instead of this class.
+     * <p>
+     * Also available as a static method for classes that extend
+     * {@link io.kestra.core.migration.AbstractV2_0_01UpgradeMigration} instead of this class.
      *
-     * @param dataSource   the data source to obtain a connection from
+     * @param dataSource the data source to obtain a connection from
      * @param resourcePath classpath resource path to the SQL file (e.g.
-     *                     {@code "/migrations/baseline-h2.sql"})
-     * @throws IOException  if the resource cannot be read
+     *        {@code "/migrations/baseline-h2.sql"})
+     * @throws IOException if the resource cannot be read
      * @throws SQLException if a statement fails to execute
      */
     public static void executeSqlScript(final DataSource dataSource, final String resourcePath)
@@ -112,8 +173,10 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
             char c = sql.charAt(i);
 
             // --- Line comment ---
-            if (!inSingleQuote && !inDollarQuote && !inBlockComment
-                && c == '-' && i + 1 < length && sql.charAt(i + 1) == '-') {
+            if (
+                !inSingleQuote && !inDollarQuote && !inBlockComment
+                    && c == '-' && i + 1 < length && sql.charAt(i + 1) == '-'
+            ) {
                 inLineComment = true;
                 current.append(c);
                 i++;
@@ -129,8 +192,10 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
             }
 
             // --- Block comment ---
-            if (!inSingleQuote && !inDollarQuote
-                && c == '/' && i + 1 < length && sql.charAt(i + 1) == '*') {
+            if (
+                !inSingleQuote && !inDollarQuote
+                    && c == '/' && i + 1 < length && sql.charAt(i + 1) == '*'
+            ) {
                 inBlockComment = true;
                 current.append(c);
                 i++;

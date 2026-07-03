@@ -12,6 +12,7 @@ import io.kestra.core.utils.EditionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
@@ -28,10 +29,10 @@ public class DefaultStartupHook implements StartupHookInterface {
     private Optional<SettingRepositoryInterface> settingRepositoryProvider;
 
     @Inject
-    Optional<McpServerService> mcpServerService;
+    BeanProvider<McpServerService> mcpServerService;
 
     @Inject
-    Optional<TenantService> tenantService;
+    BeanProvider<TenantService> tenantService;
 
     @Override
     public void start(AbstractCommand cmd) {

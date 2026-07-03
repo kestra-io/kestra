@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.KestraRuntimeException;
@@ -430,11 +429,14 @@ public class PluginDefaultService {
             .stream()
             .collect(Collectors.groupingBy(PluginDefault::isForced, Collectors.toList()));
 
-        // non-forced
+        // Both maps keep the most-important-first order (flow, namespace, global) of getAllDefaults; the
+        // merge direction in defaults() decides which end of the list wins, no reversal needed:
+        // non-forced defaults only fill missing keys, so the first (closest) entry wins — flow beats namespace
+        // beats global.
         Map<String, List<PluginDefault>> defaults = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(false, Collections.emptyList()));
 
-        // forced plugin default need to be reverse, lower win
-        Map<String, List<PluginDefault>> forced = pluginDefaultsToMap(Lists.reverse(allDefaultsGroup.getOrDefault(true, Collections.emptyList())));
+        // forced defaults stamp over the result, so the last (admin-most) entry wins — global beats namespace.
+        Map<String, List<PluginDefault>> forced = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(true, Collections.emptyList()));
 
         Object pluginDefaults = flowAsMap.get(PLUGIN_DEFAULTS_FIELD);
         if (pluginDefaults != null) {
@@ -561,6 +563,14 @@ public class PluginDefaultService {
 
         Map<String, Object> result = (Map<String, Object>) plugin;
 
+        // The merge direction decides who wins (deepMerge: second argument wins), and it differs on purpose.
+        // 'matching' is ordered most-important-first (flow, namespace closest-first, global):
+        // - non-forced: deepMerge(values, result) — the accumulated result (the plugin's own values plus
+        //   already-applied defaults) stays on the winning side, so a default only fills still-missing keys
+        //   and the FIRST matching default wins: plugin > flow > namespace > global.
+        // - forced: deepMerge(result, values) — the default stamps over the accumulated result, so the LAST
+        //   matching default wins, i.e. the admin-most level: global > namespace (> flow, where 'forced' is
+        //   stripped anyway).
         for (PluginDefault pluginDefault : matching) {
             if (pluginDefault.isForced()) {
                 result = MapUtils.deepMerge(result, pluginDefault.getValues());

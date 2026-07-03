@@ -13,6 +13,7 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
+        setupFiles: ["./tests/unit/setup.ts"],
         reporters: [
             ["default"],
             ["junit"],
@@ -25,18 +26,6 @@ export default defineProject({
             "node_modules/**",
             "tests/unit/**/translation.spec.js",
         ],
-        coverage: {
-            include: [
-                "src/**/*.{js,ts,vue}",
-            ],
-            exclude: [
-                "stylelint.config.mjs",
-                "storybook-static/**",
-                "**/.storybook/**",
-                "**/*.stories.*",
-                "**/*.d.ts",
-            ],
-        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

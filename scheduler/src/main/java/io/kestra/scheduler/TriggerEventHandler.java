@@ -20,10 +20,12 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
@@ -41,6 +43,7 @@ import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
+import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
@@ -120,6 +123,7 @@ public class TriggerEventHandler {
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
+            case TriggerWorkerLost evt -> onTriggerWorkerLost(clock, evt);
             // Commands
             case CreateBackfillTrigger evt -> onCreateBackfill(clock, evt);
             case SetPauseBackfillTrigger evt -> onSetPauseBackfillTrigger(clock, evt);
@@ -221,6 +225,11 @@ public class TriggerEventHandler {
         findTriggerState(event).ifPresent(state ->
         {
             boolean wasDisabled = state.isDisabled();
+            // Stop the running instance: the disabled flag alone has no effect on a realtime
+            // trigger already running on a worker.
+            if (!wasDisabled && event.disabled()) {
+                maySendExecutionKilled(state);
+            }
             state = state
                 .lastEventId(clock, event.eventId())
                 .disabled(clock, event.disabled());
@@ -242,15 +251,57 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
+        Optional<TriggerState> maybeState = triggerStateStore.findById(event.id());
+        if (maybeState.isEmpty()) {
+            Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
+            return;
+        }
+
+        if (TriggerType.REALTIME.equals(maybeState.get().getType())) {
+            onRealtimeExecutionTerminated(clock, event, maybeState.get());
+            return;
+        }
+
         findTriggerState(event).ifPresent(state ->
-        {
             triggerStateStore.save(
                 state
                     .lastEventId(clock, event.eventId())
                     .locked(clock, false)
                     .updateOnExecutionTerminated(clock, event.executionState())
+            )
+        );
+    }
+
+    /**
+     * A realtime termination releases the lock, so it is fenced by the dispatch epoch rather than
+     * event-id ordering: across the independent event producers, a causally-later termination can
+     * carry a lower event id and would otherwise be wrongly skipped, leaving the trigger locked.
+     */
+    private void onRealtimeExecutionTerminated(Clock clock, TriggerExecutionTerminated event, TriggerState state) {
+        // A running realtime trigger emits many executions whose terminations must not release the
+        // trigger's lock — unlocking here would resubmit a trigger that is still running on a worker.
+        // The only expected termination signal for a realtime trigger is the FAILED execution
+        // produced when the trigger could not be started.
+        if (!State.Type.FAILED.equals(event.executionState())) {
+            Logs.logTrigger(
+                event.id(),
+                Level.WARN,
+                "Ignoring event '{}' for execution '{}' in state '{}'. Cause: a realtime trigger is only unlocked by a FAILED trigger-creation execution.",
+                event.type(),
+                event.executionId(),
+                event.executionState()
             );
-        });
+            return;
+        }
+        // Stale termination from a superseded dispatch: a newer one already took the lock.
+        if (event.dispatchEpoch() < state.getDispatchEpoch()) {
+            return;
+        }
+        triggerStateStore.save(
+            state
+                .locked(clock, false)
+                .updateOnExecutionTerminated(clock, event.executionState())
+        );
     }
 
     /**
@@ -273,6 +324,16 @@ public class TriggerEventHandler {
 
             if (event.evaluation() != null) {
                 newState = newState.updateOnExecutionCreated(clock, event.evaluation().stateType());
+                if (data.getRight() != null && !data.getRight().isAllowConcurrent()) {
+                    newState = newState.executionId(clock, event.evaluation().executionId());
+                }
+            } else {
+                // No execution was created (poll matched nothing, or the job was rejected before
+                // dispatch): release the lock taken at submission, otherwise the trigger would
+                // never be eligible for scheduling again.
+                newState = newState
+                    .locked(clock, false)
+                    .workerId(clock, null);
             }
 
             newState = newState.lastEventId(clock, event.eventId());
@@ -286,17 +347,58 @@ public class TriggerEventHandler {
     }
 
     /**
-     * Handler method for {@link ResetTrigger}.
+     * Handler method for {@link TriggerReceived}.
      *
      * @param event the event.
      */
     void onTriggerReceived(Clock clock, TriggerReceived event) {
-        findTriggerState(event).ifPresent(state ->
-        {
-            state = state
+        Optional<TriggerState> maybeState = findTriggerState(event);
+        if (maybeState.isEmpty()) {
+            // The trigger was deleted while its worker job was in flight: kill the instance
+            // the worker just started. Only do so when the state is truly missing, not when
+            // the event was de-duplicated.
+            if (triggerStateStore.findById(event.id()).isEmpty()) {
+                sendExecutionKilled(event.id());
+            }
+            return;
+        }
+        TriggerState state = maybeState.get();
+        // The trigger was disabled while its worker job was in flight: the kill broadcast
+        // found no holder at that time, so kill the instance now that a worker reports it.
+        if (state.isDisabled()) {
+            maySendExecutionKilled(state);
+        }
+        triggerStateStore.save(
+            state
                 .lastEventId(clock, event.eventId())
-                .workerId(clock, event.workerId());
-            triggerStateStore.save(state);
+                .workerId(clock, event.workerId())
+        );
+    }
+
+    /**
+     * Handler method for {@link TriggerWorkerLost}.
+     * <p>
+     * The worker holding the trigger is gone without reporting a result: release the lock so an
+     * eligible trigger is resubmitted from the current flow definition, while a disabled one stays off.
+     *
+     * @param event the event.
+     */
+    void onTriggerWorkerLost(Clock clock, TriggerWorkerLost event) {
+        triggerStateStore.findById(event.id()).ifPresent(state ->
+        {
+            if (state.getWorkerId() != null && !state.getWorkerId().equals(event.workerUid())) {
+                // The trigger is already held by another worker.
+                return;
+            }
+            if (event.dispatchEpoch() < state.getDispatchEpoch()) {
+                // A newer dispatch already superseded the lost one.
+                return;
+            }
+            triggerStateStore.save(
+                state
+                    .locked(clock, false)
+                    .workerId(clock, null)
+            );
         });
     }
 
@@ -329,6 +431,9 @@ public class TriggerEventHandler {
         {
             Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
             if (data.getRight() != null) {
+                // Kill the running instance so the updated definition is applied: its termination
+                // unlocks the state and the scheduler resubmits the trigger with the new configuration.
+                maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
                     .update(clock, data.getRight())
@@ -360,25 +465,36 @@ public class TriggerEventHandler {
         triggerStateStore.findById(event.id()).ifPresent(state ->
         {
             triggerStateStore.delete(event.id());
-            maySendExecutionKilled(event, state);
+            maySendExecutionKilled(state);
         });
     }
 
-    private void maySendExecutionKilled(TriggerDeleted event, TriggerState state) {
+    /**
+     * Kills the running instance of a realtime trigger, if any. A realtime trigger runs for its whole
+     * lifetime on a worker and is not affected by state changes (update, disable, delete) until killed.
+     */
+    private void maySendExecutionKilled(TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
-            try {
-                this.executionKilledQueue.emit(
-                    ExecutionKilledTrigger
-                        .builder()
-                        .tenantId(state.getTenantId())
-                        .namespace(state.getNamespace())
-                        .flowId(state.getFlowId())
-                        .triggerId(state.getTriggerId())
-                        .build()
-                );
-            } catch (QueueException e) {
-                Logs.logTrigger(event.id(), Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
-            }
+            sendExecutionKilled(state);
+        }
+    }
+
+    private void sendExecutionKilled(TriggerId id) {
+        try {
+            this.executionKilledQueue.emit(
+                ExecutionKilledTrigger
+                    .builder()
+                    // Trigger kills are not processed by the Executor: emit them directly in the
+                    // EXECUTED state, the only state forwarded to the workers.
+                    .state(ExecutionKilled.State.EXECUTED)
+                    .tenantId(id.getTenantId())
+                    .namespace(id.getNamespace())
+                    .flowId(id.getFlowId())
+                    .triggerId(id.getTriggerId())
+                    .build()
+            );
+        } catch (QueueException e) {
+            Logs.logTrigger(id, Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
         }
     }
 

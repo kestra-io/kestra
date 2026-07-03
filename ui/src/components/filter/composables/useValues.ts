@@ -47,6 +47,20 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
+    // Future-direction interval labels — used by filters whose selected date field points to a future
+    // event (e.g. the trigger Interval filter when "Apply to" is set to "Next execution date").
+    const RELATIVE_DATE_NEXT = [
+        {label: t("datepicker.next5minutes"), value: "PT5M"},
+        {label: t("datepicker.next15minutes"), value: "PT15M"},
+        {label: t("datepicker.next1hour"), value: "PT1H"},
+        {label: t("datepicker.next12hours"), value: "PT12H"},
+        {label: t("datepicker.next24hours"), value: "PT24H"},
+        {label: t("datepicker.next48hours"), value: "PT48H"},
+        {label: t("datepicker.next7days"), value: "PT168H"},
+        {label: t("datepicker.next30days"), value: "PT720H"},
+        {label: t("datepicker.next365days"), value: "PT8760H"},
+    ]
+
     const getRelativeDateLabel = (value: string): string => {
         const found = RELATIVE_DATE.find((item) => item.value === value)
         return found ? found.label : value
@@ -105,7 +119,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         LEVELS: ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"].map(level => ({
             label: level,
             value: level,
-            color: `var(--ks-log-border-${level.toLowerCase()})`,
+            color: `var(--ks-log-${level.toLowerCase()})`,
         })),
         TYPES: auditLogTypes,
         PERMISSIONS: buildFromObject(resource),
@@ -117,6 +131,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE,
+        RELATIVE_DATE_NEXT,
         TRIGGER_STATES:[
         {label: t("filter.triggerState.enabled"), value: "enabled"},
         {label: t("filter.triggerState.disabled"), value: "disabled"},

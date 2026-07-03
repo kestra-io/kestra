@@ -18,10 +18,17 @@
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
 
                     <div class="onboarding-success-card__actions">
-                        <KsButton @click="goToTutorial">
+                        <KsButton
+                            nativeType="button"
+                            @click="goToTutorial"
+                        >
                             {{ $t("welcome_copilot.success_popup.tutorial") }}
                         </KsButton>
-                        <KsButton type="primary" @click="goToExplore">
+                        <KsButton
+                            type="primary"
+                            tag="router-link"
+                            :to="successRoute"
+                        >
                             {{ $t("welcome_copilot.success_popup.explore") }}
                         </KsButton>
                     </div>
@@ -32,12 +39,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import Close from "vue-material-design-icons/Close.vue";
-    import {KsButton, KsIconButton} from "@kestra-io/design-system";
-    import {useOnboardingV2Store} from "../../stores/onboardingV2";
-    import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics";
+    import {computed, nextTick} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import Close from "vue-material-design-icons/Close.vue"
+    import {KsButton, KsIconButton} from "@kestra-io/design-system"
+    import {useOnboardingV2Store} from "../../stores/onboardingV2"
+    import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics"
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
@@ -49,10 +56,10 @@
         "update:modelValue": [boolean];
     }>()
 
-    const route = useRoute();
-    const router = useRouter();
-    const onboardingStore = useOnboardingV2Store();
-    const {trackOnboarding} = useOnboardingAnalytics();
+    const route = useRoute()
+    const router = useRouter()
+    const onboardingStore = useOnboardingV2Store()
+    const {trackOnboarding} = useOnboardingAnalytics()
     const tutorialRoute = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
@@ -67,17 +74,17 @@
         trackOnboarding({
             action,
             mode: onboardingStore.state.mode,
-        });
-        onboardingStore.complete();
-        emit("update:modelValue", false);
+        })
+        onboardingStore.complete()
+        emit("update:modelValue", false)
     }
 
     function closePopup() {
-        dismissPopup("success_popup_dismissed");
+        dismissPopup("success_popup_dismissed")
 
-        const query = {...route.query};
-        delete query.onboardingSuccess;
-        void router.replace({query});
+        const query = {...route.query}
+        delete query.onboardingSuccess
+        void router.replace({query})
     }
 
     async function goToTutorial() {
@@ -85,15 +92,15 @@
             return
         }
 
-        dismissPopup("success_popup_tutorial_clicked");
-        await nextTick();
-        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)));
-        window.location.assign(router.resolve(tutorialRoute.value).href);
+        dismissPopup("success_popup_tutorial_clicked")
+        await nextTick()
+        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)))
+        window.location.assign(router.resolve(tutorialRoute.value).href)
     }
 
     function goToExplore() {
-        dismissPopup("success_popup_explore_clicked");
-        void router.push(successRoute.value);
+        dismissPopup("success_popup_explore_clicked")
+        void router.push(successRoute.value)
     }
 </script>
 

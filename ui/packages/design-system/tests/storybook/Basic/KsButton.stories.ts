@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {within, userEvent, expect} from "storybook/test"
+import {within, userEvent, expect, waitFor} from "storybook/test"
 import {markRaw, ref} from "vue"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
@@ -18,6 +18,7 @@ const meta: Meta<typeof KsButton> = {
     argTypes: {
         type: {control: "select", options: ["default", "primary", "success", "warning", "info", "danger"]},
         size: {control: "select", options: ["small", "default", "large"]},
+        tooltip: {control: "text"},
         disabled: {control: "boolean"},
         loading: {control: "boolean"},
         plain: {control: "boolean"},
@@ -198,6 +199,30 @@ export const WithIcon: Story = {
     },
 }
 
+/** Icon ↔ label spacing – the gap between a leading icon and the label is token-based and consistent across sizes */
+export const IconLabelSpacing: Story = {
+    render: () => ({
+        components: {KsButton},
+        setup() {
+            return {DownloadIcon}
+        },
+        template: `
+            <div style="padding:24px;display:flex;gap:12px;align-items:center">
+                <ks-button :icon="DownloadIcon" type="primary" size="large">Large</ks-button>
+                <ks-button :icon="DownloadIcon" type="primary">Default</ks-button>
+                <ks-button :icon="DownloadIcon" type="primary" size="small">Small</ks-button>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const labels = canvasElement.querySelectorAll(".kel-button .kel-icon + span")
+        await expect(labels.length).toBe(3)
+        for (const label of labels) {
+            await expect(getComputedStyle(label).marginLeft).toBe("8px")
+        }
+    },
+}
+
 /** Text and link variants */
 export const TextAndLink: Story = {
     render: () => ({
@@ -238,6 +263,27 @@ export const CustomColor: Story = {
             </div>
         `,
     }),
+}
+
+/** Tooltip – icon-only buttons get a hover tooltip; aria-label is derived from it */
+export const Tooltip: Story = {
+    render: (args) => ({
+        components: {KsButton},
+        setup() {
+            return {args, PlusIcon}
+        },
+        template: "<div style=\"padding:48px\"><ks-button v-bind=\"args\" :icon=\"PlusIcon\" /></div>",
+    }),
+    args: {type: "default", tooltip: "Add label"},
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const btn = canvas.getByRole("button")
+        await expect(btn).toHaveAttribute("aria-label", "Add label")
+        await userEvent.hover(btn)
+        await waitFor(() =>
+            expect(document.body.querySelector("[role=\"tooltip\"]")?.textContent).toContain("Add label"),
+        )
+    },
 }
 
 /** Click event emission */

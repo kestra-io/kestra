@@ -9,13 +9,16 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static io.micronaut.http.HttpRequest.PUT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
 class ConcurrencyLimitControllerTest {
@@ -23,6 +26,23 @@ class ConcurrencyLimitControllerTest {
     @Inject
     @Client("/")
     private ReactorHttpClient client;
+
+    @Test
+    void shouldReturnBadRequestWhenUpdatingWithInvalidConcurrencyLimit() {
+        // Given - a ConcurrencyLimit with all required fields null
+        ConcurrencyLimit invalid = ConcurrencyLimit.builder().build();
+
+        // When
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                PUT("/api/v1/main/concurrency-limit/namespace/flowId", invalid)
+            )
+        );
+
+        // Then - Micronaut returns 422 for @Body @Valid bean validation failures
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
 
     @Test
     @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")

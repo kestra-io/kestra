@@ -1,6 +1,6 @@
 <template>
     <ContextInfoContent :title="routeInfo.title" ref="contextInfoRef">
-        <template v-if="isOnline" #back-button>
+        <template v-if="isOnline && !isHomepage" #back-button>
             <KsButton
                 class="back-button"
                 nativeType="button"
@@ -9,7 +9,7 @@
                 :class="{disabled: !canGoBack}"
                 :aria-label="$t('common.back')"
             >
-                <span class="back-icon" aria-hidden="true">‹</span>
+                <ChevronLeft class="back-icon" aria-hidden="true" />
             </KsButton>
         </template>
         <template #header>
@@ -28,11 +28,17 @@
         </template>
         <div class="docs-controls">
             <template v-if="isOnline">
-                <ContextDocsSearch />
-                <DocsMenu />
+                <div class="docs-toolbar">
+                    <ContextDocsSearch />
+                    <DocsMenu />
+                </div>
                 <DocsLayout>
                     <template #content>
-                        <KsMarkdown class="markdown" :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
+                        <KsMarkdown
+                            class="markdown"
+                            :content="markdownContent"
+                            :components="markdownComponents"
+                        />
                     </template>
                 </DocsLayout>
             </template>
@@ -45,6 +51,7 @@
     import {ref, watch, computed, onUnmounted, onMounted} from "vue"
     import {useDocStore} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import DocsLayout from "./DocsLayout.vue"
     import ContextDocsLink from "./ContextDocsLink.vue"
     import ContextChildCard from "./ContextChildCard.vue"
@@ -100,6 +107,7 @@
     const markdownContent = ref<string>("")
 
     const pageMetadata = computed(() => docStore.pageMetadata)
+    const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
 
     const routeInfo = computed(() => ({
@@ -290,24 +298,26 @@
 <style scoped lang="scss">
 
     .back-button {
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-color);
+        background: var(--ks-btn-secondary-bg-default);
+        border: 0.5px solid var(--ks-btn-secondary-border-default);
+        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 4px;
         color: var(--ks-text-primary);
-        border-radius: 6px;
-        width: 40px;
-        height: 40px;
+        border-radius: 8px;
+        width: 30px;
+        height: 32px;
         transition: all 0.2s ease;
-        padding: 0;
+        padding: 4px 8px;
         flex-shrink: 0;
 
         &:hover:not(.disabled),
         &:focus:not(.disabled) {
             background: var(--ks-bg-hover);
-            border-color: var(--ks-primary);
+            border-color: var(--ks-border-strong);
             color: var(--ks-primary);
             outline: none;
         }
@@ -319,15 +329,10 @@
     }
 
     .back-icon {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        user-select: none;
-        font-size: 28px;
-        line-height: 0;
-        margin-top: -6px;
-        width: 28px;
-        height: 28px;
+        font-size: var(--ks-font-size-md);
     }
 
     .blank {
@@ -340,9 +345,19 @@
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 1rem;
+    }
 
-        > * {
-            margin-bottom: 1rem;
-        }
+    .docs-toolbar {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 12px 28px 0;
+    }
+
+    .markdown :deep(p:first-child:not(.kel-alert *)) {
+        margin-bottom: var(--ks-spacing-4);
+        font-weight: bold;
+        font-size: var(--ks-font-size-lg);
     }
 </style>

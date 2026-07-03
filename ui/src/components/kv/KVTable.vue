@@ -4,15 +4,17 @@
         :loadData="loadData"
         :data="kvs"
         :total="total"
+        :currentPage="urlPage"
+        :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-        @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+        @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
-        <template #top>
+        <template #top v-if="!paneView">
             <KSFilter
                 :configuration="kvFilter"
                 :tableOptions="{
@@ -101,11 +103,24 @@
             </template>
         </KsTableColumn>
 
+        <KsTableColumn v-if="!paneView" columnKey="view" className="row-action">
+            <template #default="scope">
+                <KsIconButton
+                    v-if="!canUpdate(scope.row) && canRead(scope.row)"
+                    :tooltip="$t('show')"
+                    placement="left"
+                    @click="viewKvModal(scope.row)"
+                >
+                    <Eye />
+                </KsIconButton>
+            </template>
+        </KsTableColumn>
+
         <KsTableColumn v-if="!paneView" columnKey="update" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canUpdate(scope.row)"
-                    :tooltip="$t('update')"
+                    :tooltip="$t('edit')"
                     placement="left"
                     @click="updateKvModal(scope.row)"
                 >
@@ -132,6 +147,7 @@
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
+        :beforeClose="beforeKvClose"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
@@ -171,7 +187,6 @@
                     :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
-                    :activeActionIcon="Check"
                 />
                 <KsDatePicker
                     v-else-if="kv.type === 'DATETIME'"
@@ -191,9 +206,10 @@
                     allowCustom
                     @update:model-value="kv.value = $event.timeRange"
                 />
-                <Editor
-                    :fullHeight="false"
-                    :input="true"
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false}"
+                    :inline="true"
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
                     lang="json"
@@ -227,6 +243,30 @@
     </KsDrawer>
 
     <KsDrawer
+        v-if="viewKvDrawerVisible"
+        v-model="viewKvDrawerVisible"
+        :title="$t('show')"
+    >
+        <KsForm class="ks-horizontal">
+            <KsFormItem v-if="viewKv.namespace" :label="$t('namespace')">
+                <KsInput :modelValue="viewKv.namespace" disabled />
+            </KsFormItem>
+            <KsFormItem :label="$t('key')">
+                <KsInput :modelValue="viewKv.key" disabled />
+            </KsFormItem>
+            <KsFormItem :label="$t('kv.type')">
+                <KsInput :modelValue="viewKv.type" disabled />
+            </KsFormItem>
+            <KsFormItem :label="$t('value')">
+                <KsInput type="textarea" :rows="5" :modelValue="viewKv.value" readonly />
+            </KsFormItem>
+            <KsFormItem v-if="viewKv.description" :label="$t('description')">
+                <KsInput :modelValue="viewKv.description" disabled />
+            </KsFormItem>
+        </KsForm>
+    </KsDrawer>
+
+    <KsDrawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
@@ -241,17 +281,17 @@
     import _groupBy from "lodash/groupBy"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
-    import Check from "vue-material-design-icons/Check.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
+    import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton} from "@kestra-io/design-system"
-    import Editor from "../inputs/Editor.vue"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
-
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {formatKvValueForDisplay} from "./kvValueDisplay"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -294,6 +334,8 @@
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
     const kvStore = useKvStore()
+
+    const editorBindings = useEditorBindings()
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
@@ -344,14 +386,17 @@
         return _merge(base, filters)
     }
 
-    const filterQuery = computed(() => {
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
+        return JSON.stringify(filters)
     })
 
-    watch(filterQuery, () => {
+    watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
-    }, {deep: true})
+    })
 
     interface KvItem {
         namespace?: string;
@@ -372,6 +417,10 @@
         update: undefined,
         description: undefined,
     })
+
+    const kvBaseline = ref("")
+    const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
+    const beforeKvClose = (done: () => void) => guardKvClose(() => done())
 
     const {t} = useI18n()
 
@@ -483,6 +532,10 @@
         return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, kvItem.namespace)
     }
 
+    function canRead(kvItem: {namespace: string}) {
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.VIEW, kvItem.namespace)
+    }
+
     function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
         try {
             const parsed = JSON.parse(value)
@@ -536,6 +589,22 @@
         kv.value.update = true
         kv.value.description = entry.description
         addKvDrawerVisible.value = true
+    }
+
+    const viewKvDrawerVisible = ref(false)
+    const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
+
+    async function viewKvModal(entry: any) {
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
+        viewKv.value = {
+            namespace: entry.namespace,
+            key: entry.key,
+            type,
+            value: formatKvValueForDisplay(type, value, userTimezone),
+            description: entry.description,
+        }
+        viewKvDrawerVisible.value = true
     }
 
     function removeKv(namespace: string, key: string) {
@@ -632,7 +701,11 @@
     }
 
     watch(addKvDrawerVisible, (newValue) => {
-        if (!newValue) {
+        if (newValue) {
+            nextTick(() => {
+                kvBaseline.value = JSON.stringify(kv.value)
+            })
+        } else {
             resetKv()
         }
     })

@@ -32,4 +32,18 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/segmented';
+
+    .el-segmented__item-selected {
+        font-weight: 500;
+    }
+
+    .el-segmented.is-disabled .el-segmented__item-selected,
+    .kel-segmented.is-disabled .kel-segmented__item-selected {
+        background-color: var(--ks-bg-inactive);
+    }
+
+    .el-segmented.is-disabled .el-segmented__item.is-selected,
+    .kel-segmented.is-disabled .kel-segmented__item.is-selected {
+        color: var(--ks-text-secondary);
+    }
 </style>

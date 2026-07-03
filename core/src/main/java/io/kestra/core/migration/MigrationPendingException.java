@@ -39,11 +39,11 @@ public class MigrationPendingException extends KestraRuntimeException {
 
     private static String buildMessage(final List<String> pendingScriptIds) {
         return """
-            Database migrations are pending and automatic migration is disabled.
-            Pending scripts: %s
-            To apply migrations, either:
+            Kestra cannot start: one or more database schema migrations are needed first.
+            Migration scripts to apply: %s
+            To run the migrations, either:
               - Run: kestra migrate run
-              - Or set: kestra.migration.auto=true
+              - Or enable automatic migration by setting: kestra.migration.auto=true
             """.formatted(pendingScriptIds);
     }
 }

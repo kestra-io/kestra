@@ -69,3 +69,4 @@ core/src/main/resources/gradle.properties
 charts/kestra/charts/
 charts/kestra-starter/charts/
 .claude/settings.local.json
+.gstack/

@@ -26,9 +26,9 @@ updates:
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/backend"]
     ignore:
-      # Ignore versions of Protobuf >= 4.0.0 because Orc still uses version 3
-      - dependency-name: "com.google.protobuf:*"
-        versions: ["[4,)"]
+      # Ignore Micronaut 5.x until migration is planned
+      - dependency-name: "io.micronaut*"
+        versions: ["[5,)"]
 
   # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"
@@ -231,6 +231,39 @@ updates:
             "remark-*",
             "unified",
           ]
+
+  # Maintain dependencies for ui/packages/slot-contracts
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/slot-contracts"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
 
   # Maintain dependencies for ui/packages/topology
   - package-ecosystem: "npm"

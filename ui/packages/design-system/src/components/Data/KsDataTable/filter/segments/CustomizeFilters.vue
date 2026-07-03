@@ -16,24 +16,35 @@
 
         <div class="list">
             <div
-                v-for="key in configuration.keys"
+                v-for="key in groupableKeys"
                 :key="key.key"
                 class="item"
-                @click="toggleFilter(key)"
+                @click="addFilterForKey(key)"
             >
                 <div class="info">
-                    <span class="label" :class="{'selected': isSelected(key)}">{{ key.label }}</span>
-                    <small :class="{'selected': isSelected(key)}">{{ key.description }}</small>
+                    <span class="label">{{ key.label }}</span>
+                    <small>{{ key.description }}</small>
                 </div>
 
                 <KsButton
                     link
                     size="default"
-                    :icon="isSelected(key) ? undefined : Plus"
-                    :class="isSelected(key) ? 'selected' : 'unselected'"
-                    @click.stop="toggleFilter(key)"
+                    :icon="Plus"
+                    class="unselected"
+                    @click.stop="addFilterForKey(key)"
                 />
             </div>
+        </div>
+
+        <div class="advanced" @click="$emit('open-advanced')">
+            <span class="label">{{ $t("filter.add_advanced_filter") }}</span>
+            <KsButton
+                link
+                size="default"
+                :icon="Plus"
+                class="advanced-add"
+                @click.stop="$emit('open-advanced')"
+            />
         </div>
 
         <div class="footer">
@@ -43,13 +54,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {computed} from "vue"
     import {Close, Plus} from "../utils/icons"
-    import type {
-        FilterConfiguration,
-        FilterKeyConfig,
-        AppliedFilter,
+    import {
+        type FilterConfiguration,
+        type FilterKeyConfig,
+        type AppliedFilter,
     } from "../utils/filterTypes"
+    import {buildNewFilter} from "../utils/filterChipFactory"
 
     const props = defineProps<{
         configuration: FilterConfiguration;
@@ -60,41 +72,23 @@
         close: [];
         "add-filter": [filter: AppliedFilter];
         "remove-filter": [id: string];
+        "open-advanced": [];
     }>()
 
-    const selectedCount = computed(() => selectedKeys.value.size)
-    const totalCount = computed(() => props.configuration.keys.length)
+    const groupableKeys = computed(() =>
+        props.configuration.keys.filter((key) => key.groupable !== false),
+    )
 
-    const isSelected = (key: FilterKeyConfig): boolean =>
-        selectedKeys.value.has(key.key)
+    const selectedCount = computed(() =>
+        new Set(props.appliedFilters.map(f => f.key)).size,
+    )
+    const totalCount = computed(() => groupableKeys.value.length)
 
-    const selectedKeys = ref<Set<string>>(new Set(props.appliedFilters.map(f => f.key)))
-
-    watch(() => props.appliedFilters, (newAppliedFilters) => {
-        selectedKeys.value = new Set(newAppliedFilters.map(f => f.key))
-    }, {deep: true})
-
-    const toggleFilter = (key: FilterKeyConfig) => {
-        if (selectedKeys.value.has(key.key)) {
-            selectedKeys.value.delete(key.key)
-            const filterToRemove = props.appliedFilters.find(f => f.key === key.key)
-            if (filterToRemove) {
-                emits("remove-filter", filterToRemove.id)
-            }
-        } else {
-            selectedKeys.value.add(key.key)
-            const newFilter: AppliedFilter = {
-                id: `${key.key}-${Date.now()}`,
-                key: key.key,
-                keyLabel: key.label,
-                comparator: key.comparators?.[0],
-                comparatorLabel: key.comparators?.[0],
-                value: [],
-                valueLabel: "",
-            }
-            emits("add-filter", newFilter)
-        }
+    const addFilterForKey = (key: FilterKeyConfig) => {
+        const newFilter = buildNewFilter(key)
+        if (newFilter) emits("add-filter", newFilter)
     }
+
 </script>
 
 <style lang="scss" scoped>
@@ -103,7 +97,7 @@
     max-height: 500px;
     display: flex;
     flex-direction: column;
-    border-radius: 8px;
+    border-radius: var(--ks-radius-lg);
 
     small {
         font-size: var(--ks-font-size-xs);
@@ -115,7 +109,7 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        padding: 0.75rem 1rem 0.5rem;
+        padding: var(--ks-spacing-3) var(--ks-spacing-4) var(--ks-spacing-2);
         background-color: var(--ks-bg-active);
         border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
@@ -158,7 +152,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
         cursor: pointer;
         transition: all 0.2s ease;
         border-bottom: 1px solid var(--ks-border-default);
@@ -180,17 +174,28 @@
                 font-size: var(--ks-font-size-sm);
                 font-weight: 400;
                 line-height: 1.375rem;
-
-                &.selected {
-                    color: var(--ks-text-inactive);
-                }
             }
+        }
+    }
 
-            small {
-                &.selected {
-                    color: var(--ks-text-inactive);
-                }
-            }
+    .advanced {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        cursor: pointer;
+        border-top: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-active);
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: var(--ks-bg-hover-elevated);
+        }
+
+        .label {
+            font-size: var(--ks-font-size-sm);
+            font-weight: 600;
+            color: var(--ks-content-link, var(--ks-text-link));
         }
     }
 
@@ -200,9 +205,15 @@
         position: sticky;
         bottom: 0;
         z-index: 1;
-        padding: 0.5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
         text-align: center;
     }
+}
+
+:deep(.kel-button.advanced-add) {
+    color: var(--ks-text-link);
+    font-size: var(--ks-font-size-lg);
+    pointer-events: auto;
 }
 
 :deep(.kel-button.unselected) {

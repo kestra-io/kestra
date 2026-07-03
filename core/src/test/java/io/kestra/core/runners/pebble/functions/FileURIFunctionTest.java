@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
+import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -66,8 +67,8 @@ class FileURIFunctionTest {
         );
 
         var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileURI(fileA) }}", variables));
-        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
-        assertThat(exception.getCause().getMessage()).isEqualTo("Path must not contain '../'");
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Path must not contain '../'");
     }
 
     @Test
@@ -97,10 +98,10 @@ class FileURIFunctionTest {
 
         Map<String, Object> variables = getVariables(namespace);
 
-        String render = variableRenderer.render("{{ fileURI('" + filePath + "', version=1) }}", variables);
+        String render = variableRenderer.render("{{ fileURI('" + filePath + "', revision=1) }}", variables);
         assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
 
-        String readContent = variableRenderer.render("{{ read('" + filePath + "', version=1) }}", variables);
+        String readContent = variableRenderer.render("{{ read('" + filePath + "', revision=1) }}", variables);
         assertThat(readContent).isEqualTo("Version 1");
     }
 

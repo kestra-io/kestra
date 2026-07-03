@@ -84,7 +84,7 @@ export const EDITOR_CURSOR_INJECTION_KEY = Symbol("editor-cursor-injection-key")
 */
 export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection-key") as InjectionKey<Ref<number | undefined>>
 /**
-* Indicates if the Monaco editor is being used within EditorWrapper context for flow editing
+* Indicates if the Monaco editor is being used within FlowFileEditorTab context for flow editing
 */
 export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>
 

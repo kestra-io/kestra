@@ -2,6 +2,8 @@ package io.kestra.worker.services;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,27 +17,23 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 
-import io.micrometer.core.instrument.Counter;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link ExecutionKilledManager}.
  */
+@MicronautTest
 class ExecutionKilledManagerTest {
 
+    @Inject
     private MetricRegistry metricRegistry;
+
     private ExecutionKilledManager manager;
 
     @BeforeEach
     void setUp() {
-        metricRegistry = mock(MetricRegistry.class);
-        Counter mockCounter = mock(Counter.class);
-        when(metricRegistry.counter(anyString(), anyString())).thenReturn(mockCounter);
-
         manager = new ExecutionKilledManager(metricRegistry);
     }
 
@@ -236,15 +234,11 @@ class ExecutionKilledManagerTest {
 
     @Test
     void shouldIncrementMetricOnKill() {
-        // Given
-        Counter mockCounter = mock(Counter.class);
-        when(
-            metricRegistry.counter(
-                eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT),
-                eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION)
-            )
-        ).thenReturn(mockCounter);
+        double count = metricRegistry.findCounter(
+            MetricRegistry.METRIC_WORKER_KILLED_COUNT
+        ).count();
 
+        // Given
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
             .build();
@@ -253,7 +247,10 @@ class ExecutionKilledManagerTest {
         manager.onKillReceived(killEvent);
 
         // Then
-        verify(mockCounter).increment();
+        double newCount = metricRegistry.findCounter(
+            MetricRegistry.METRIC_WORKER_KILLED_COUNT
+        ).count();
+        assertThat(newCount).isEqualTo(count + 1);
     }
 
     // --- onKillReceived - ExecutionKilledTrigger ---

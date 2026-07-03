@@ -254,7 +254,8 @@ public class RunContextFactory {
             return Collections.emptyList();
         }
 
-        return flow.getInputs().stream()
+        // FORM inputs are expanded to dotted leaves so a SECRET grouped under a form is masked by its dotted path.
+        return flow.resolvableInputs().stream()
             .filter(input -> input.getType() == Type.SECRET)
             .map(input -> input.getId()).toList();
     }

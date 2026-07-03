@@ -8,19 +8,23 @@ import java.util.stream.Stream;
 
 import io.kestra.core.docs.*;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
@@ -41,7 +45,9 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import static io.kestra.core.models.Plugin.isDeprecated;
 import static io.kestra.core.models.Plugin.isInternal;
@@ -59,6 +65,13 @@ public class PluginController {
 
     @Inject
     protected JsonSchemaCache jsonSchemaCache;
+
+    @Inject
+    @Named("PLUGIN")
+    protected Searchable<Plugin> pluginSearchable;
+
+    @Inject
+    protected EditionProvider editionProvider;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -136,11 +149,18 @@ public class PluginController {
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get list of plugins")
-    public List<Plugin> listPlugins() {
-        return pluginRegistry.plugins()
+    public PagedResults<Plugin> listPlugins(
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10000") int size,
+        @Parameter(description = "A list of sort fields") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters
+    ) {
+        List<Plugin> items = pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
             .toList();
+
+        return PagedResults.of(pluginSearchable.filter(items, page, size, sort, filters));
     }
 
     @Get(uri = "triggers")
@@ -367,16 +387,8 @@ public class PluginController {
             );
         }
 
-        if (pluginTasks.isEmpty()) {
-            throw new NotFoundException();
-        }
-
         Set<String> groups = pluginTasks.keySet();
         List<RegisteredPlugin> plugins = pluginRegistry.plugins(registeredPlugin -> groups.contains(registeredPlugin.group()));
-
-        if (ListUtils.isEmpty(plugins)) {
-            throw new NotFoundException();
-        }
 
         Map<String, List<PluginUiModuleWithGroup>> manifest = new HashMap<>();
         for (RegisteredPlugin plugin : plugins) {
@@ -386,7 +398,8 @@ public class PluginController {
                         manifest.put(
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash()))
+                                .filter(module -> isDistributionAllowed(module.distribution()))
+                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()))
                                 .toList()
                         );
                     }
@@ -395,6 +408,13 @@ public class PluginController {
         }
 
         return new PluginUiManifest(manifest);
+    }
+
+    private boolean isDistributionAllowed(PluginDistribution distribution) {
+        if (editionProvider.get() == EditionProvider.Edition.OSS) {
+            return distribution != PluginDistribution.EE;
+        }
+        return true;
     }
 
     @Get(value = "/{group}/pluginUi/{path:.*}")

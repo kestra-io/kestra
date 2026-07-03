@@ -9,7 +9,7 @@ import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue"
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 
 import NoCode from "../../../components/no-code/NoCode.vue"
-import EditorWrapper from "../../../components/inputs/EditorWrapper.vue"
+import FlowFileEditorTab from "../../../components/inputs/FlowFileEditorTab.vue"
 import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue"
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue"
 import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.vue"
@@ -25,7 +25,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Flow Code",
         },
         uid: "code",
-        component: () => h(EditorWrapper, {
+        component: () => h(FlowFileEditorTab, {
             path: "Flow.yaml",
             name: "Flow.yaml",
             dirty: false,

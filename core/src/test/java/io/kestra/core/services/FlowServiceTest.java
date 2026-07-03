@@ -138,6 +138,30 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReturnNoWarningsWhenPropertiesProvidedByPluginDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+            pluginDefaults:
+              - type: io.kestra.plugin.core.http.Download
+                values:
+                  uri: https://kestra.io
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).isNull();
+        assertThat(results.getFirst().getWarnings()).isEmpty();
+    }
+
+    @Test
     void importFlow() throws FlowProcessingException {
         String source = """
             id: import
@@ -245,8 +269,9 @@ class FlowServiceTest {
               - id: for
                 type: io.kestra.plugin.core.flow.Loop
                 values: [1, 2, 3]
-                workerGroup:
-                  key: toto
+                workerSelector:
+                  tags:
+                    - toto
                 timeout: PT10S
                 taskCache:
                   enabled: true
@@ -254,8 +279,9 @@ class FlowServiceTest {
                 - id: hello
                   type: io.kestra.plugin.core.log.Log
                   message: Hello World! 🚀
-                  workerGroup:
-                    key: toto
+                  workerSelector:
+                    tags:
+                      - toto
                   timeout: PT10S
                   taskCache:
                     enabled: true
@@ -270,7 +296,7 @@ class FlowServiceTest {
         assertThat(results.getFirst().getWarnings()).containsExactlyInAnyOrder(
             "The task 'for' cannot use the 'timeout' property as it's only relevant for runnable tasks.",
             "The task 'for' cannot use the 'taskCache' property as it's only relevant for runnable tasks.",
-            "The task 'for' cannot use the 'workerGroup' property as it's only relevant for runnable tasks."
+            "The task 'for' cannot use the 'workerSelector' property as it's only relevant for runnable tasks."
         );
     }
 
@@ -393,6 +419,33 @@ class FlowServiceTest {
 
         // Then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldResolveNestedFormInputPathWhenRenderingChecks() {
+        // Given a check referencing a FORM child via its nested path, e.g. {{ inputs.environment.region }}
+        Check check = Check.builder()
+            .when("{{ inputs.environment.region == 'EU' }}")
+            .message("region must be EU")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(check));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+
+        // When inputs are passed as the NESTED map (what ExecutionController/CreateExecutionForm hand in
+        // for FORM inputs, via MapUtils.flattenToNestedMap), the nested path resolves...
+        List<Check> nestedEu = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "EU")));
+        List<Check> nestedUs = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "US")));
+
+        // Then EU satisfies the condition (no failed check) and US fails it.
+        assertThat(nestedEu).isEmpty();
+        assertThat(nestedUs).containsExactly(check);
+
+        // And a flat-dotted map (the un-nested form) cannot resolve the path — proving the nesting is required.
+        List<Check> flatDotted = flowService.getFailedChecks(flow, Map.of("environment.region", "EU"));
+        assertThat(flatDotted).isNotEmpty();
     }
 
     @Test

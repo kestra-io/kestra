@@ -13,6 +13,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         RunMigrationCommand.class,
+        PlanMigrationCommand.class,
         UnlockMigrationCommand.class
     }
 )

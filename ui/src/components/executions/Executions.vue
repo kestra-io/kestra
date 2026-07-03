@@ -825,7 +825,7 @@
             const ac = actionMap[queryAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.data.count}))
+                    toast.success(t(success, {executionCount: r.count}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -839,7 +839,7 @@
             const ac = actionMap[byIdAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.data.count}))
+                    toast.success(t(success, {executionCount: r.count}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 }).catch((e: any) => {
@@ -1019,7 +1019,7 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.data.count}))
+                        toast.success(t("Set labels done", {executionCount: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -1030,7 +1030,7 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.data.count}))
+                        toast.success(t("Set labels done", {executionCount: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {

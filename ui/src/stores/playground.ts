@@ -254,7 +254,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         let execution
         try {
             const response = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph)
-            execution = response?.data
+            execution = (response as any)?.data ?? response
         } catch (error: any) {
             if (error?.response?.status === 422) {
                 // Invalid entity, most likely due to invalid inputs - allow triggering the task again

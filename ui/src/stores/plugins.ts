@@ -50,7 +50,7 @@ export function removeRefPrefix(refStr?: string): string {
     return refStr?.replace(/^#\/definitions\//, "") ?? ""
 }
 
-interface PluginIconData {
+export interface PluginIconData {
     icon: string;
     flowable: boolean;
 }

@@ -15,17 +15,12 @@ export function useEditorBindings() {
     const {t} = useI18n()
     const router = useRouter()
 
-    // Code editors resolve arbitrary task types as the user types (autocomplete, hover docs), so
-    // they need the full plugin-icons catalog rather than a handful of known classes. Triggered
-    // here instead of eagerly at app boot so it only downloads for sessions that open an editor.
-    pluginsStore.fetchIcons()
-
     return reactive({
         theme: computed(() => {
             void miscStore.theme
             return getTheme()
         }),
-        pluginIcons: computed((): Record<string, {icon: string; flowable: boolean}> => pluginsStore.icons),
+        loadTaskIcon: pluginsStore.loadIcon,
         configureLanguage: (editor: monacoEditor.ICodeEditor | undefined, language: string, schemaType?: string) =>
             configureLanguageFn(flowStore, pluginsStore, t, editor, language, schemaType, router),
     })

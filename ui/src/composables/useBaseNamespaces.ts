@@ -81,11 +81,7 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kv(payload: {namespace: string; key: string}) {
-        try {
-            return await KvAPI.keyValue(payload)
-        } catch (e: any) {
-            throw new Error(e.message ?? e, {cause: e})
-        }
+        return KvAPI.keyValue(payload)
     }
 
     async function loadInheritedKVs(id: string) {

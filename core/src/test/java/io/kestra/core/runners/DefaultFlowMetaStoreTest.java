@@ -15,8 +15,11 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -24,6 +27,9 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 @org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD)
@@ -188,6 +194,52 @@ class DefaultFlowMetaStoreTest {
             .findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
 
         assertThat(maybeFlow).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    void findByIdFromTaskShouldResolveLatestNonDraftWhenCachedHeadIsADraft() {
+        // A subflow with no explicit revision resolves the child flow via findByIdFromTask -> findById
+        // with an empty revision. If the latest (cached) revision is a draft it must be dropped and the
+        // latest NON-draft revision returned from the execution-time lookup, so a subflow never runs a
+        // draft child (mirroring webhooks/schedules/Flow triggers). Deterministic unit: the metastore
+        // cache is seeded from findAllWithSourceForAllTenants() in the constructor.
+        String tenant = TenantService.MAIN_TENANT;
+        String namespace = "io.kestra.tests";
+        String id = IdUtils.create();
+
+        FlowWithSource draftHead = FlowWithSource.builder()
+            .tenantId(tenant).namespace(namespace).id(id).revision(2).draft(true)
+            .tasks(List.of(Return.builder().id("return").format(Property.ofValue("draft")).type(Return.class.getName()).build()))
+            .build();
+        FlowWithSource publishedRevision = FlowWithSource.builder()
+            .tenantId(tenant).namespace(namespace).id(id).revision(1).draft(false)
+            .tasks(List.of(Return.builder().id("return").format(Property.ofValue("published")).type(Return.class.getName()).build()))
+            .build();
+
+        FlowRepositoryInterface repository = mock(FlowRepositoryInterface.class);
+        // the metastore caches the latest revision (the draft head) at construction...
+        when(repository.findAllWithSourceForAllTenants()).thenReturn(List.of(draftHead));
+        // ...and the execution-time (draft-filtering) lookup returns the latest non-draft revision.
+        when(repository.findByIdWithSourceForExecution(tenant, namespace, id)).thenReturn(Optional.of(publishedRevision));
+
+        DefaultFlowMetaStore metaStore = new DefaultFlowMetaStore(
+            repository,
+            mock(PluginDefaultService.class),
+            mock(BroadcastQueueInterface.class),
+            mock(FlowWithDefaultCache.class)
+        );
+
+        Optional<FlowInterface> resolved = metaStore.findByIdFromTask(
+            tenant, namespace, id, Optional.empty(),
+            tenant, namespace, id
+        );
+
+        assertThat(resolved).isPresent();
+        assertThat(resolved.get().getRevision()).isEqualTo(1);
+        assertThat(resolved.get().isDraft()).isFalse();
+        // the draft head must not be served from cache; the non-draft fallback must be used
+        verify(repository).findByIdWithSourceForExecution(tenant, namespace, id);
     }
 
     private FlowWithSource createFlow() {

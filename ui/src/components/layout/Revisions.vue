@@ -24,6 +24,10 @@
                             >
                                 <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
@@ -62,6 +66,10 @@
                             >
                                 <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
@@ -120,6 +128,7 @@
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import moment from "moment"
@@ -135,6 +144,7 @@
         revision: number;
         updated?: string;  // ISO datetime string
         source?: string;
+        draft?: boolean;
     }
 
     const {t} = useI18n()
@@ -252,13 +262,14 @@
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision, updated}) => {
+            .map(({revision, updated, draft}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
+                    isDraft: draft === true,
                     text: formatRevisionText(revision),
                 }
             })
@@ -421,17 +432,12 @@
         font-weight: 500;
     }
 
-    .revision-timestamp {
-        color: #888;
-        font-size: var(--ks-font-size-sm);
-    }
-
     .display-select {
         width: 10%;
     }
 
     .revision-timestamp {
-        color: #888;
+        color: var(--ks-text-muted);
         font-size: var(--ks-font-size-sm);
         text-align: right;
         flex-shrink: 0;

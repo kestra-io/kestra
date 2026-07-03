@@ -52,6 +52,7 @@ public class FlowForExecution extends AbstractFlow {
             .triggers(ListUtils.emptyOnNull(flow.getTriggers()).stream().map(AbstractTriggerForExecution::of).toList())
             .disabled(flow.isDisabled())
             .deleted(flow.isDeleted())
+            .draft(flow.isDraft())
             .build();
     }
 

@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 
 /**
  * Represents a single versioned migration script.
@@ -79,6 +80,21 @@ public interface MigrationScript {
      * @throws Exception if the migration fails
      */
     void migrate() throws Exception;
+
+    /**
+     * Classpath path(s) to the SQL resource(s) this migration executes, in execution order.
+     *
+     * <p>This is the single source of truth for a SQL-backed migration's resource: SQL migrations
+     * declare it here and derive their {@link #checksum()} (and, where applicable, {@link #migrate()})
+     * from it. It also lets tooling preview the SQL a migration would run without applying it
+     * (e.g. the {@code migrate plan --sql} command).
+     *
+     * @return the classpath resource path(s), or an empty list for migrations that run no SQL resource
+     *         (e.g. pure-Java migrations)
+     */
+    default List<String> sqlResources() {
+        return List.of();
+    }
 
     /**
      * Computes a SHA-256 checksum from the content of one or more classpath resources.

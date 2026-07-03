@@ -219,6 +219,11 @@
           "default": false,
           "markdownDescription": "Default value is : `false`"
         },
+        "draft": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Whether this flow revision is a draft. Draft revisions are not picked up by webhooks, schedules, subflows or executions started without an explicit revision. Default value is : `false`"
+        },
         "errors": {
           "$ref": "#/definitions/io.kestra.preload.tasks"
         },

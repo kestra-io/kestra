@@ -47,6 +47,7 @@ import java.util.Map;
         @JsonSubTypes.Type(value = YamlInput.class, name = "YAML"),
         @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
         @JsonSubTypes.Type(value = FormInput.class, name = "FORM"),
+        @JsonSubTypes.Type(value = ReusableInputsInput.class, name = "REUSABLE_INPUTS"),
     }
 )
 @InputValidation

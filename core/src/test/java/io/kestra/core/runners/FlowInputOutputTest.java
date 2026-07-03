@@ -29,6 +29,7 @@ import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
+import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.URIInput;
@@ -788,6 +789,70 @@ class FlowInputOutputTest {
         Object apiKey = ((Map<?, ?>) result.get("credentials")).get("api_key");
         assertThat(apiKey).isInstanceOf(EncryptedString.class);
         assertThat(EncryptionService.decrypt(secretKey, ((EncryptedString) apiKey).getValue())).isEqualTo(TEST_SECRET_VALUE);
+    }
+
+    @Test
+    void shouldEncryptSubmittedFormNestedSecret() throws GeneralSecurityException {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("credentials")
+                    .type(Type.FORM)
+                    .inputs(List.of(
+                        SecretInput.builder()
+                            .id("api_key")
+                            .type(Type.SECRET)
+                            .required(true)
+                            .build()
+                    ))
+                    .build()
+            ))
+            .build();
+
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow, DEFAULT_TEST_EXECUTION, Map.of("credentials.api_key", "my-plaintext-secret")
+        );
+
+        Object apiKey = ((Map<?, ?>) result.get("credentials")).get("api_key");
+        assertThat(apiKey).isInstanceOf(EncryptedString.class);
+        assertThat(EncryptionService.decrypt(secretKey, ((EncryptedString) apiKey).getValue()))
+            .isEqualTo("my-plaintext-secret");
+    }
+
+    @Test
+    void shouldIncludeBothFormAndReusableRefSecretIdsInResolvableInputs() {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                FormInput.builder()
+                    .id("creds")
+                    .type(Type.FORM)
+                    .inputs(List.of(
+                        SecretInput.builder().id("token").type(Type.SECRET).required(true).build()
+                    ))
+                    .build(),
+                ReusableInputsInput.builder()
+                    .id("block")
+                    .type(Type.REUSABLE_INPUTS)
+                    .ref("my-block")
+                    .required(false)
+                    .build()
+            ))
+            .build();
+
+        // Stub expander: resolves the REUSABLE_INPUTS reference to a single SECRET child
+        ReusableInputsExpander stubExpander = (tenantId, ns, input, path) ->
+            List.of(SecretInput.builder().id(input.getId() + ".api_key").type(Type.SECRET).required(true).build());
+
+        List<String> secretIds = flow.resolvableInputs(stubExpander).stream()
+            .filter(i -> i.getType() == Type.SECRET)
+            .map(Input::getId)
+            .toList();
+
+        assertThat(secretIds).containsExactlyInAnyOrder("creds.token", "block.api_key");
     }
 
     @Test

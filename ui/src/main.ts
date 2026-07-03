@@ -35,7 +35,7 @@ const app = createApp(App)
 
 const handleAuthError = (error: Error, to: {fullPath: string}) => {
     if (error.message?.includes("401")) {
-        BasicAuth.logout()
+        void BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
     }
@@ -53,7 +53,7 @@ function setupAxios(router: Router) {
         document.body.classList.add("login")
         unsavedChangesStore.unsavedChange = false
         layoutStore.setTopNavbar(undefined)
-        BasicAuth.logout()
+        void BasicAuth.logout()
     }
 
 

@@ -64,7 +64,7 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
+    import {apiUrlWithoutTenants} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth"
     import {shouldShowWelcome} from "../../utils/welcomeGuard"
     import {identifyPosthogUser} from "../../utils/posthog"
@@ -115,12 +115,11 @@
 
     const axios = useClient()
 
-    const validateCredentials = async (auth: string) => {
+    const validateCredentials = async (username: string, password: string) => {
         try {
-            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
-            await axios.get(`${apiUrl()}/usages/all`, {timeout: 10000, withCredentials: true})
+            await axios.post(`${apiUrlWithoutTenants()}/login`, {username, password}, {timeout: 10000, withCredentials: true})
         } catch(e) {
-            BasicAuth.logout()
+            await BasicAuth.logout()
             throw e
         }
     }
@@ -161,14 +160,13 @@
 
             const {username, password} = credentials.value
             const trimmedUsername = username.trim()
-            const auth = btoa(`${trimmedUsername}:${password}`)
 
-            await validateCredentials(auth)
+            await validateCredentials(trimmedUsername, password)
 
             const isInitialized = await checkServerInitialization()
             if (!isInitialized) { router.push({name: "setup"}); return }
 
-            BasicAuth.signIn(trimmedUsername, password)
+            BasicAuth.signIn()
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
 

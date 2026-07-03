@@ -313,7 +313,7 @@
                 password: userFormData.value.password,
             })
 
-            BasicAuth.signIn(normalizedEmail, userFormData.value.password)
+            BasicAuth.signIn()
 
             const configs = await miscStore.loadConfigs()
 

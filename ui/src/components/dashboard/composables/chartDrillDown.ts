@@ -1,6 +1,8 @@
 import {useRoute, useRouter} from "vue-router"
 import {STATES} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
+import {useDrillDownStore, type DrillDownTarget} from "../../../stores/drillDown"
+import {getDrillDownPreview} from "./drillDownPreview"
 
 interface WhereCondition {
     field?: string;
@@ -34,7 +36,7 @@ const WHERE_TYPE_TO_COMPARATOR: Record<string, string> = {
     LESS_THAN_OR_EQUAL_TO: "LESS_THAN_OR_EQUAL_TO",
 }
 
-const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
+export const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
     Executions: {
         route: "executions/list",
         fieldKey: {
@@ -172,6 +174,22 @@ export function chartSegmentDrillDown(
     }
 }
 
+/**
+ * Reproduces the query augmentation the full listing pages expect (scope, pagination, and the
+ * default time-range filter), so the drawer's fetch, the drawer's "Open full page" push, and the
+ * legacy full-page redirect all build the exact same query from a drill-down target.
+ */
+export function buildFullQuery(target: DrillDownTarget, pagination?: {size: number; page: number}): Record<string, any> {
+    return {
+        ...target.query,
+        scope: "USER",
+        ...(pagination ? {size: pagination.size, page: pagination.page} : {}),
+        ...(target.timeFiltered
+            ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+            : {}),
+    }
+}
+
 export function useChartDrillDown(chart: {data?: Record<string, any>} | undefined) {
     const route = useRoute()
     const router = useRouter()
@@ -187,19 +205,22 @@ export function useChartDrillDown(chart: {data?: Record<string, any>} | undefine
             Object.assign(query, resolved.query)
         }
         if (!target) return
+        target = {...target, query}
+
+        const preview = getDrillDownPreview(target.name)
+        if (preview && preview.mode !== "none") {
+            useDrillDownStore().open(target)
+            return
+        }
+
+        if (!preview) {
+            console.error(`[drill-down] no drawer preview registered for route "${target.name}" — register one via registerDrillDownPreview, or opt out with {mode: "none"} to keep the full-page redirect silently.`)
+        }
 
         router.push({
             name: target.name,
             params: {tenant: route.params.tenant},
-            query: {
-                ...query,
-                scope: "USER",
-                size: 100,
-                page: 1,
-                ...(target.timeFiltered
-                    ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
-                    : {}),
-            },
+            query: buildFullQuery(target, {size: 100, page: 1}),
         })
     }
 

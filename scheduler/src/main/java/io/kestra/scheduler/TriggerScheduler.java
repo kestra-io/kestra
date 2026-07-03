@@ -46,7 +46,7 @@ import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
@@ -81,7 +81,7 @@ public class TriggerScheduler {
     private final TriggerWorkerJobPublisher triggerWorkerJobPublisher;
     private final SchedulableEvaluator schedulableEvaluator;
     private final TriggerExecutionPublisher triggerExecutionSender;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final DefaultSchedulableTriggerFetcher schedulableTriggerFetcher;
 
     // Stores
@@ -100,7 +100,7 @@ public class TriggerScheduler {
         MetricRegistry metricRegistry,
         RunContextFactory runContextFactory,
         ConditionService conditionService,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         SchedulableEvaluator schedulableEvaluator,
         DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
         TriggerWorkerJobPublisher triggerWorkerJobPublisher,
@@ -109,7 +109,7 @@ public class TriggerScheduler {
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
         this.runContextFactory = runContextFactory;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.metricRegistry = metricRegistry;
         this.conditionService = conditionService;
         this.triggerWorkerJobPublisher = triggerWorkerJobPublisher;
@@ -153,7 +153,7 @@ public class TriggerScheduler {
 
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
-            .map(flow -> pluginDefaultService.injectAllDefaults(flow, log))
+            .map(flow -> flowParsingService.parse(flow, log))
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(

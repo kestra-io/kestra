@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Concurrency;
-import io.kestra.core.models.flows.FlowPluginDefault;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Output;
@@ -97,56 +96,43 @@ public abstract class AbstractFeatureUsageReportTest {
             .workerSelector(new WorkerSelector(List.of("tag"), null))
             .concurrency(Concurrency.builder().limit(2).behavior(Concurrency.Behavior.CANCEL).build())
             .retry(Constant.builder().interval(Duration.ofSeconds(5)).maxAttempts(3).build())
-            .sla(
-                List.of(
-                    MaxDurationSLA.builder()
-                        .id("sla1")
-                        .type(SLA.Type.MAX_DURATION)
-                        .behavior(SLA.Behavior.FAIL)
-                        .duration(Duration.ofMinutes(10))
-                        .build()
-                )
-            )
-            .checks(
-                List.of(
-                    Check.builder().when("{{ true }}").message("ok").behavior(Check.Behavior.FAIL_EXECUTION).build()
-                )
-            )
-            .quotas(
-                List.of(
-                    Quota.builder().duration(Duration.ofMinutes(5)).limit(10L).behavior(Quota.Behavior.FAIL).build()
-                )
-            )
-            .pluginDefaults(
-                List.of(
-                    FlowPluginDefault.builder().type(Log.class.getName()).values(Map.of("message", "default")).build()
-                )
-            )
-            .tasks(
-                List.of(
-                    Log.builder()
-                        .id("main")
-                        .type(Log.class.getName())
-                        .message("hello")
-                        .retry(Constant.builder().interval(Duration.ofSeconds(1)).build())
-                        .timeout(Property.ofValue(Duration.ofSeconds(30)))
-                        .workerSelector(new WorkerSelector(List.of("tag"), null))
-                        .allowFailure(true)
-                        .logToFile(true)
-                        .runIf("{{ 1 == 1 }}")
-                        .allowWarning(true)
-                        .taskCache(new Cache(true, Duration.ofMinutes(1)))
-                        .assets(new AssetsDeclaration(null, null, null))
-                        .build(),
-                    Sequential.builder()
-                        .id("seq")
-                        .type(Sequential.class.getName())
-                        .tasks(List.of(Log.builder().id("inner").type(Log.class.getName()).message("inner").build()))
-                        .errors(List.of(Log.builder().id("innerErr").type(Log.class.getName()).message("err").build()))
-                        ._finally(List.of(Log.builder().id("innerFin").type(Log.class.getName()).message("fin").build()))
-                        .build()
-                )
-            )
+            .sla(List.of(
+                MaxDurationSLA.builder()
+                    .id("sla1")
+                    .type(SLA.Type.MAX_DURATION)
+                    .behavior(SLA.Behavior.FAIL)
+                    .duration(Duration.ofMinutes(10))
+                    .build()
+            ))
+            .checks(List.of(
+                Check.builder().when("{{ true }}").message("ok").behavior(Check.Behavior.FAIL_EXECUTION).build()
+            ))
+            .quotas(List.of(
+                Quota.builder().duration(Duration.ofMinutes(5)).limit(10L).behavior(Quota.Behavior.FAIL).build()
+            ))
+            .tasks(List.of(
+                Log.builder()
+                    .id("main")
+                    .type(Log.class.getName())
+                    .message("hello")
+                    .retry(Constant.builder().interval(Duration.ofSeconds(1)).build())
+                    .timeout(Property.ofValue(Duration.ofSeconds(30)))
+                    .workerSelector(new WorkerSelector(List.of("tag"), null))
+                    .allowFailure(true)
+                    .logToFile(true)
+                    .runIf("{{ 1 == 1 }}")
+                    .allowWarning(true)
+                    .taskCache(new Cache(true, Duration.ofMinutes(1)))
+                    .assets(new AssetsDeclaration(null, null, null))
+                    .build(),
+                Sequential.builder()
+                    .id("seq")
+                    .type(Sequential.class.getName())
+                    .tasks(List.of(Log.builder().id("inner").type(Log.class.getName()).message("inner").build()))
+                    .errors(List.of(Log.builder().id("innerErr").type(Log.class.getName()).message("err").build()))
+                    ._finally(List.of(Log.builder().id("innerFin").type(Log.class.getName()).message("fin").build()))
+                    .build()
+            ))
             .errors(List.of(Log.builder().id("err").type(Log.class.getName()).message("error").build()))
             ._finally(List.of(Log.builder().id("fin").type(Log.class.getName()).message("finally").build()))
             .afterExecution(List.of(Log.builder().id("after").type(Log.class.getName()).message("after").build()))
@@ -189,7 +175,6 @@ public abstract class AbstractFeatureUsageReportTest {
             assertThat(after.getFlows().getHasFinallyCount()).isEqualTo(before.getFlows().getHasFinallyCount() + 1);
             assertThat(after.getFlows().getHasAfterExecutionCount()).isEqualTo(before.getFlows().getHasAfterExecutionCount() + 1);
             assertThat(after.getFlows().getHasTriggersCount()).isEqualTo(before.getFlows().getHasTriggersCount() + 1);
-            assertThat(after.getFlows().getHasPluginDefaultsCount()).isEqualTo(before.getFlows().getHasPluginDefaultsCount() + 1);
             assertThat(after.getFlows().getHasConcurrencyCount()).isEqualTo(before.getFlows().getHasConcurrencyCount() + 1);
             assertThat(after.getFlows().getHasRetryCount()).isEqualTo(before.getFlows().getHasRetryCount() + 1);
             assertThat(after.getFlows().getHasSlaCount()).isEqualTo(before.getFlows().getHasSlaCount() + 1);

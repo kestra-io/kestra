@@ -44,7 +44,6 @@ public class FlowUsage {
     private final Long hasFinallyCount;
     private final Long hasAfterExecutionCount;
     private final Long hasTriggersCount;
-    private final Long hasPluginDefaultsCount;
     private final Long hasConcurrencyCount;
     private final Long hasRetryCount;
     private final Long hasSlaCount;
@@ -85,7 +84,6 @@ public class FlowUsage {
         LongAdder hasFinallyCount = new LongAdder();
         LongAdder hasAfterExecutionCount = new LongAdder();
         LongAdder hasTriggersCount = new LongAdder();
-        LongAdder hasPluginDefaultsCount = new LongAdder();
         LongAdder hasConcurrencyCount = new LongAdder();
         LongAdder hasRetryCount = new LongAdder();
         LongAdder hasSlaCount = new LongAdder();
@@ -121,9 +119,6 @@ public class FlowUsage {
             if (!ListUtils.isEmpty(flow.getTriggers())) {
                 hasTriggersCount.increment();
             }
-            if (!ListUtils.isEmpty(flow.getPluginDefaults())) {
-                hasPluginDefaultsCount.increment();
-            }
             if (flow.getConcurrency() != null) {
                 hasConcurrencyCount.increment();
             }
@@ -157,7 +152,6 @@ public class FlowUsage {
             .hasFinallyCount(hasFinallyCount.longValue())
             .hasAfterExecutionCount(hasAfterExecutionCount.longValue())
             .hasTriggersCount(hasTriggersCount.longValue())
-            .hasPluginDefaultsCount(hasPluginDefaultsCount.longValue())
             .hasConcurrencyCount(hasConcurrencyCount.longValue())
             .hasRetryCount(hasRetryCount.longValue())
             .hasSlaCount(hasSlaCount.longValue())

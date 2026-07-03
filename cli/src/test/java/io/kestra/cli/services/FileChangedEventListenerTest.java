@@ -98,45 +98,4 @@ class FileChangedEventListenerTest {
         );
     }
 
-    @FlakyTest(description = "OS file watcher events are non-deterministic; CI filesystems may delay or batch inotify events")
-    @Test
-    void testWithPluginDefault() throws IOException, TimeoutException {
-        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");
-        // remove the flow if it already exists
-        flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));
-
-        // create a flow with plugin default
-        String pluginDefault = """
-            id: pluginDefault
-            namespace: io.kestra.tests.watch
-
-            tasks:
-              - id: helloWithDefault
-                type: io.kestra.plugin.core.log.Log
-
-            pluginDefaults:
-              - type: io.kestra.plugin.core.log.Log
-                values:
-                  message: Hello World!
-            """;
-        GenericFlow genericFlow = GenericFlow.fromYaml(tenant, pluginDefault);
-        Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), pluginDefault.getBytes());
-        Await.until(
-            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "pluginDefault").isPresent(),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(10)
-        );
-        Flow pluginDefaultFlow = flowRepository.findById(tenant, "io.kestra.tests.watch", "pluginDefault").orElseThrow();
-        assertThat(pluginDefaultFlow.getTasks()).hasSize(1);
-        assertThat(pluginDefaultFlow.getTasks().getFirst().getId()).isEqualTo("helloWithDefault");
-        assertThat(pluginDefaultFlow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
-
-        // delete both files
-        Files.delete(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"));
-        Await.until(
-            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "pluginDefault").isEmpty(),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(10)
-        );
-    }
 }

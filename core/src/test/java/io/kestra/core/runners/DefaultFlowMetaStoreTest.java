@@ -19,7 +19,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -46,7 +46,7 @@ class DefaultFlowMetaStoreTest {
     @AfterEach
     void clean() {
         flowMetaStore.clearCache();
-        flowWithDefaultCache.clear();
+        flowWithDefaultCache.flushAll();
     }
 
     @Test
@@ -225,7 +225,7 @@ class DefaultFlowMetaStoreTest {
 
         DefaultFlowMetaStore metaStore = new DefaultFlowMetaStore(
             repository,
-            mock(PluginDefaultService.class),
+            mock(FlowParsingService.class),
             mock(BroadcastQueueInterface.class),
             mock(FlowWithDefaultCache.class)
         );

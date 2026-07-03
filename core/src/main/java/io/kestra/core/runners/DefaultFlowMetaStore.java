@@ -14,7 +14,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -25,17 +25,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final FlowRepositoryInterface flowRepository;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final ConcurrentHashMap<String, FlowWithSource> cache = new ConcurrentHashMap<>();
     private final BroadcastQueueInterface<FlowInterface> flowQueue;
     private final FlowWithDefaultCache withDefaultCache;
 
     private QueueSubscriber<FlowInterface> subscriber;
 
-    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, BroadcastQueueInterface<FlowInterface> flowQueue,
+    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, FlowParsingService flowParsingService, BroadcastQueueInterface<FlowInterface> flowQueue,
         FlowWithDefaultCache withDefaultCache) {
         this.flowRepository = flowRepository;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.flowQueue = flowQueue;
         this.withDefaultCache = withDefaultCache;
 
@@ -61,7 +61,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
                     cache.remove(flow.uidWithoutRevision());
                 } else {
                     try {
-                        FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, true);
+                        FlowWithSource flowWithSource = flowParsingService.parseSafely(flow, true);
                         cache.put(flow.uidWithoutRevision(), flowWithSource);
                     } catch (FlowProcessingException e) {
                         log.error("Unable to inject version defaults for flow {}", flow.getId(), e);
@@ -121,7 +121,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
             return fromCache;
         }
 
-        var flowWithDefault = findByExecution(execution).map(it -> pluginDefaultService.injectDefaults(it, execution));
+        var flowWithDefault = findByExecution(execution).map(it -> flowParsingService.parseForExecution(it, execution));
         flowWithDefault.ifPresent(it -> withDefaultCache.put(flowId, it));
         return flowWithDefault;
     }

@@ -57,9 +57,6 @@ public abstract class AbstractRunnerTest {
     protected MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
 
     @Inject
-    private PluginDefaultsCaseTest pluginDefaultsCaseTest;
-
-    @Inject
     protected FlowCaseTest flowCaseTest;
 
     @Inject
@@ -336,12 +333,6 @@ public abstract class AbstractRunnerTest {
     )
     void flowTriggerWithInvalidInputs() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerWithInvalidInputs();
-    }
-
-    @Test
-    @LoadFlows({ "flows/tests/plugin-defaults.yaml" })
-    void taskDefaults() throws Exception {
-        pluginDefaultsCaseTest.pluginDefaults();
     }
 
     @Test

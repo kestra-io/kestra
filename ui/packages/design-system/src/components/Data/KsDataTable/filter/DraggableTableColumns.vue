@@ -1,48 +1,73 @@
 <template>
-    <Reorder.Group
-        as="div"
-        axis="y"
-        :values="orderedItems"
-        @update:values="onReorder"
-    >
-        <Reorder.Item
-            v-for="column in orderedItems"
+    <template v-if="isSearching">
+        <ColumnToggleRow
+            v-for="column in filteredColumns"
             :key="column.prop"
-            :value="column"
-            as="div"
-            class="column-item"
-            :whileDrag="{scale: 1.02}"
-        >
-            <div class="column-info">
-                <DotsGrid class="drag-handle" :size="18" />
-                <div class="column-text">
-                    <span class="column-label">
-                        {{ column.label }}
-                    </span>
-                    <small>{{ column.description }}</small>
-                </div>
-            </div>
+            :column="column"
+            :checked="isVisible(column)"
+            :showDescription="!column.group"
+            @toggle="handleToggle(column)"
+        />
+        <div v-if="!filteredColumns.length" class="empty">
+            {{ $t("filter.no columns found") }}
+        </div>
+    </template>
 
-            <KsSwitch
-                :modelValue="isVisible(column)"
-                :aria-label="column.label"
-                @click.stop
-                @update:modelValue="() => handleToggle(column)"
-            />
-        </Reorder.Item>
-    </Reorder.Group>
+    <template v-else>
+        <Reorder.Group
+            as="div"
+            axis="y"
+            :values="ungroupedItems"
+            @update:values="onReorder"
+        >
+            <Reorder.Item
+                v-for="column in ungroupedItems"
+                :key="column.prop"
+                :value="column"
+                as="div"
+                :whileDrag="{scale: 1.02}"
+            >
+                <ColumnToggleRow
+                    :column="column"
+                    :checked="isVisible(column)"
+                    :showHandle="true"
+                    @toggle="handleToggle(column)"
+                />
+            </Reorder.Item>
+        </Reorder.Group>
+
+        <div v-for="group in groups" :key="group.name" class="column-group">
+            <button type="button" class="group-header" @click="toggleGroup(group.name)">
+                <ChevronDown class="chevron" :class="{open: expandedGroups[group.name]}" :size="18" />
+                <span class="group-name">{{ group.name }}</span>
+                <span class="group-count">{{ group.visibleCount }}/{{ group.columns.length }}</span>
+            </button>
+            <div v-show="expandedGroups[group.name]">
+                <ColumnToggleRow
+                    v-for="column in group.columns"
+                    :key="column.prop"
+                    :column="column"
+                    :checked="isVisible(column)"
+                    :showDescription="false"
+                    @toggle="handleToggle(column)"
+                />
+            </div>
+        </div>
+    </template>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue"
+    import {computed, ref, watch} from "vue"
     import {Reorder} from "motion-v"
-    import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ColumnToggleRow from "./ColumnToggleRow.vue"
     import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
 
     const props = defineProps<{
         columns: ColumnConfig[];
         visibleColumns: string[];
         storageKey: string;
+        search?: string;
     }>()
 
     const emits = defineEmits<{
@@ -61,18 +86,47 @@
         initialVisibleColumns: props.visibleColumns,
     })
 
-    const orderedItems = ref<ColumnConfig[]>(orderedColumns.value.slice())
+    const query = computed(() => (props.search ?? "").trim().toLowerCase())
+    const isSearching = computed(() => query.value.length > 0)
 
-    watch(orderedColumns, (cols) => {
-        if (cols.map(c => c.prop).join() !== orderedItems.value.map(c => c.prop).join()) {
-            orderedItems.value = cols.slice()
+    const filteredColumns = computed(() =>
+        orderedColumns.value.filter(c => c.label.toLowerCase().includes(query.value)),
+    )
+
+    const ungroupedColumns = computed(() => orderedColumns.value.filter(c => !c.group))
+
+    const groups = computed(() => {
+        const byName = new Map<string, ColumnConfig[]>()
+        for (const column of orderedColumns.value) {
+            if (!column.group) continue
+            if (!byName.has(column.group)) byName.set(column.group, [])
+            byName.get(column.group)!.push(column)
+        }
+        return Array.from(byName, ([name, columns]) => ({
+            name,
+            columns,
+            visibleCount: columns.filter(c => isVisible(c)).length,
+        }))
+    })
+
+    const ungroupedItems = ref<ColumnConfig[]>(ungroupedColumns.value.slice())
+
+    watch(ungroupedColumns, (cols) => {
+        if (cols.map(c => c.prop).join() !== ungroupedItems.value.map(c => c.prop).join()) {
+            ungroupedItems.value = cols.slice()
         }
     })
 
+    const expandedGroups = ref<Record<string, boolean>>({})
+    const toggleGroup = (name: string) => {
+        expandedGroups.value[name] = !expandedGroups.value[name]
+    }
+
     const onReorder = (items: ColumnConfig[]) => {
-        if (items.map(c => c.prop).join() === orderedItems.value.map(c => c.prop).join()) return
-        orderedItems.value = items
-        setColumnOrder(items.map(c => c.prop))
+        if (items.map(c => c.prop).join() === ungroupedItems.value.map(c => c.prop).join()) return
+        ungroupedItems.value = items
+        const groupedProps = orderedColumns.value.filter(c => c.group).map(c => c.prop)
+        setColumnOrder([...items.map(c => c.prop), ...groupedProps])
         emits("updateColumns", localVisibleColumns.value)
     }
 
@@ -83,44 +137,47 @@
 </script>
 
 <style lang="scss" scoped>
-.column-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.375rem 1rem;
-    border-bottom: 1px solid var(--ks-border-default);
-    cursor: grab;
-    user-select: none;
-    background: var(--ks-bg-surface);
-
-    &:active {
-        cursor: grabbing;
-    }
-
-    &:last-child {
-        border-bottom: none;
-    }
-
-    .column-info {
+.column-group {
+    .group-header {
         display: flex;
         align-items: center;
+        gap: 0.375rem;
+        width: 100%;
+        padding: 0.375rem var(--ks-spacing-4);
+        border: none;
+        border-bottom: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-active);
+        color: var(--ks-text-primary);
+        cursor: pointer;
+        font-size: var(--ks-font-size-sm);
+        font-weight: var(--ks-font-weight-semibold);
 
-        .drag-handle {
-            margin-right: 0.5rem;
+        .chevron {
             color: var(--ks-text-dim);
-            flex-shrink: 0;
-        }
+            transition: transform 0.15s ease;
 
-        .column-text {
-            display: flex;
-            flex-direction: column;
-
-            small {
-                color: var(--ks-text-dim);
-                font-size: var(--ks-font-size-xs);
-                font-weight: 400;
+            &.open {
+                transform: rotate(180deg);
             }
         }
+
+        .group-name {
+            flex: 1;
+            text-align: left;
+        }
+
+        .group-count {
+            color: var(--ks-text-dim);
+            font-weight: var(--ks-font-weight-regular);
+            font-size: var(--ks-font-size-xs);
+        }
     }
+}
+
+.empty {
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
+    text-align: center;
+    color: var(--ks-text-dim);
+    font-size: var(--ks-font-size-sm);
 }
 </style>

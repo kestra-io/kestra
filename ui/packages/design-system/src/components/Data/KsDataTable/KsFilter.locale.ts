@@ -16,6 +16,8 @@ export default {
             "customize": "Add filters",
             "customize tooltip": "Customize which filters to display",
             "customize columns": "Customize table columns",
+            "search columns": "Search columns",
+            "no columns found": "No columns found",
             "delete filter": "Delete filter",
             "delete filter confirm": "Are you sure you want to remove this filter?",
             "edit filter": "Edit filter",

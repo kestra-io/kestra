@@ -11,7 +11,8 @@ public enum SchemaType {
     PLUGINDEFAULT,
     APPS,
     TESTSUITES,
-    DASHBOARD;
+    DASHBOARD,
+    REUSABLEINPUTS;
 
     @JsonCreator
     public static SchemaType fromString(final String value) {

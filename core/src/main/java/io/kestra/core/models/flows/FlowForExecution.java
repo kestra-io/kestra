@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
+import io.kestra.core.runners.ReusableInputsExpander;
 import io.kestra.core.utils.ListUtils;
 
 import jakarta.validation.Valid;
@@ -37,6 +38,17 @@ public class FlowForExecution extends AbstractFlow {
 
     @Valid
     List<AbstractTriggerForExecution> triggers;
+
+    /**
+     * Like {@link #of(Flow)} but inlines every {@code REUSABLE_INPUTS} reference (FORM grouping preserved) so the
+     * execute form receives — and submits — the block's resolved inputs under the reference id. Use this on the
+     * execute-form endpoints; {@link #of(Flow)} stays a pure projection for callers without an expander.
+     */
+    public static FlowForExecution of(Flow flow, ReusableInputsExpander reusableInputsExpander) {
+        return of(flow).toBuilder()
+            .inputs(flow.inlinedInputs(reusableInputsExpander))
+            .build();
+    }
 
     public static FlowForExecution of(Flow flow) {
         return FlowForExecution.builder()

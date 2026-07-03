@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
@@ -110,6 +111,8 @@ public class PluginController {
     )
     public List<InputType> getAllInputTypes() throws ClassNotFoundException {
         return Stream.of(Type.values())
+            // exclude edition-restricted (@EeOnly) input types (e.g. REUSABLE_INPUTS) from the open-source listing
+            .filter(type -> !type.cls().isAnnotationPresent(EeOnly.class))
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
             .toList();
     }

@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 
@@ -38,7 +37,6 @@ public class JsonSchemaCache {
         registerClassForType(SchemaType.FLOW, Flow.class);
         registerClassForType(SchemaType.TASK, Task.class);
         registerClassForType(SchemaType.TRIGGER, AbstractTrigger.class);
-        registerClassForType(SchemaType.PLUGINDEFAULT, PluginDefault.class);
         registerClassForType(SchemaType.DASHBOARD, Dashboard.class);
     }
 

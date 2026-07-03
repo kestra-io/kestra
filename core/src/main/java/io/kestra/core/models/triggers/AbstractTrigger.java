@@ -64,6 +64,12 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @Schema(description = "Routing requirements (tags + fallback) for this trigger.")
     private WorkerSelector workerSelector;
 
+    @PluginProperty(hidden = true, group = "advanced")
+    @Schema(
+        description = "Identifiers of `enforcement: REFERENCE` governance policies to attach to this trigger and everything nested under it (Enterprise Edition; ignored in the open-source edition)."
+    )
+    private List<String> policyRefs;
+
     @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;
 

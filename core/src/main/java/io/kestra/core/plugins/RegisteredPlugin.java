@@ -20,6 +20,7 @@ import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.core.models.policies.RulePluginInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -54,6 +55,7 @@ public class RegisteredPlugin {
     public static final String DATA_FILTERS_GROUP_NAME = "data-filters";
     public static final String DATA_FILTERS_KPI_GROUP_NAME = "data-filters-kpi";
     public static final String LOG_EXPORTERS_GROUP_NAME = "log-exporters";
+    public static final String RULES_GROUP_NAME = "rules";
     public static final String ADDITIONAL_PLUGINS_GROUP_NAME = "additional-plugins";
     public static final String FILE_RENDERERS_GROUP_NAME = "file-renderers";
 
@@ -74,6 +76,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
     private final List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI;
     private final List<Class<? extends LogExporter<?>>> logExporters;
+    private final List<Class<? extends RulePluginInterface>> rules;
     private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
     private final List<Class<? extends FileRenderer>> fileRenderers;
     private final List<String> guides;
@@ -97,6 +100,7 @@ public class RegisteredPlugin {
             !dataFilters.isEmpty() ||
             !dataFiltersKPI.isEmpty() ||
             !logExporters.isEmpty() ||
+            !rules.isEmpty() ||
             !additionalPlugins.isEmpty() ||
             !fileRenderers.isEmpty();
     }
@@ -174,6 +178,10 @@ public class RegisteredPlugin {
             return LogExporter.class;
         }
 
+        if (this.getRules().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return RulePluginInterface.class;
+        }
+
         if (this.getAdditionalPlugins().stream().anyMatch(r -> r.getName().equals(cls))) {
             return AdditionalPlugin.class;
         }
@@ -217,6 +225,7 @@ public class RegisteredPlugin {
         result.put(DATA_FILTERS_GROUP_NAME, Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
         result.put(DATA_FILTERS_KPI_GROUP_NAME, Arrays.asList(this.getDataFiltersKPI().toArray(Class[]::new)));
         result.put(LOG_EXPORTERS_GROUP_NAME, Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
+        result.put(RULES_GROUP_NAME, Arrays.asList(this.getRules().toArray(Class[]::new)));
         result.put(ADDITIONAL_PLUGINS_GROUP_NAME, Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
         result.put(FILE_RENDERERS_GROUP_NAME, Arrays.asList(this.getFileRenderers().toArray(Class[]::new)));
 
@@ -446,6 +455,12 @@ public class RegisteredPlugin {
         if (!this.getLogExporters().isEmpty()) {
             b.append("[Log Exporters: ");
             b.append(this.getLogExporters().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getRules().isEmpty()) {
+            b.append("[Rules: ");
+            b.append(this.getRules().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

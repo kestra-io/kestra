@@ -68,7 +68,11 @@ public class LogRepositoryFactory {
                 )
             );
         }
-        return type;
+        // The in-memory backend is H2 with an in-memory datasource (every H2 repository/migration is
+        // gated @Requires(kestra.repository.type, pattern = "h2|memory"), see H2RepositoryEnabled), so
+        // logs follow the same mapping: memory resolves to the H2 log store. Any other unknown type
+        // still fails loudly in the factory with the supported-type list.
+        return "memory".equalsIgnoreCase(type) ? "h2" : type;
     }
 
     @ConfigurationProperties("kestra")

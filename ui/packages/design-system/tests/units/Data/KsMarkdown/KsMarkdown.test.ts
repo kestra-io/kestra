@@ -1,4 +1,5 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
+import {markRaw} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../../src/index"
@@ -435,7 +436,10 @@ describe("KsMarkdown", () => {
     })
 
     test("sanitizes custom-component inner HTML when xssProtection is on", () => {
-        const ChildCard = {name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"}
+        // markRaw prevents Vue's reactive() from wrapping the component definition
+        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
+        // warns "Vue received a Component that was made a reactive object".
+        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
         const wrapper = mount(KsMarkdown, {
             props: {
                 content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
@@ -448,7 +452,10 @@ describe("KsMarkdown", () => {
     })
 
     test("injects custom-component inner HTML verbatim when xssProtection is disabled", () => {
-        const ChildCard = {name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"}
+        // markRaw prevents Vue's reactive() from wrapping the component definition
+        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
+        // warns "Vue received a Component that was made a reactive object".
+        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
         const wrapper = mount(KsMarkdown, {
             props: {
                 content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",

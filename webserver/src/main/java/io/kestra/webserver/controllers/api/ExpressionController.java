@@ -108,7 +108,6 @@ public class ExpressionController {
         return runContextFactory.of(flow, Map.of()).getVariables();
     }
 
-    @Introspected
     public record RenderExpressionRequest(
         @NotEmpty @Size(max = 500) @Schema(description = "The raw Pebble expressions to render") List<String> expressions,
         @Nullable @Schema(description = "Resolve against this execution's context") String executionId,
@@ -117,7 +116,6 @@ public class ExpressionController {
         @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow
     ) {}
 
-    @Introspected
     public record RenderedExpressions(
         @Schema(description = "Rendered values keyed by their raw expression") Map<String, String> rendered
     ) {}

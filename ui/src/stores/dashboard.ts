@@ -3,9 +3,7 @@ import {defineStore} from "pinia"
 
 import type {AxiosRequestConfig, AxiosResponse} from "axios"
 
-const header: AxiosRequestConfig = {headers: {"Content-Type": "application/x-yaml"}}
 const response: AxiosRequestConfig = {responseType: "blob" as const}
-const validateStatus = (status: number) => status === 200 || status === 404
 const downloadHandler = (res: AxiosResponse, filename: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
@@ -13,12 +11,14 @@ const downloadHandler = (res: AxiosResponse, filename: string) => {
     Utils.downloadUrl(url, `${filename}.csv`)
 }
 
-import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
+import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts"
 import {useClient} from "@kestra-io/kestra-sdk"
+import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
+import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import _throttle from "lodash/throttle"
@@ -61,11 +61,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
-        const apiResponse = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params})
-        const res = apiResponse.data as { results: { id: string; title: string }[]}
+        const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
         await loadDefaults()
         let isThereADefault = false
-        dashboardList.value = res.results.map(dashboard => {
+        dashboardList.value = (res.results as { id: string; title: string }[]).map(dashboard => {
             const isADefaultForThisRoute = isAdminDefinedDefaultDashboard(dashboard.id, route)
             if(isADefaultForThisRoute){
                 isThereADefault = true
@@ -79,9 +78,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return dashboardList.value
     }
 
+    // Tenant-scoped settings, hardcoded to the "main" tenant (this OSS build is single-tenant) —
+    // bypasses normal tenant routing on purpose, same as before this endpoint moved to the SDK.
+    const DEFAULT_DASHBOARDS_TENANT_ID = "main"
+
     async function loadDefaults() {
-        const res = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`)
-        defaultDashboards.value = res.data
+        defaultDashboards.value = await TenantsAPI.defaultDashboards({id: DEFAULT_DASHBOARDS_TENANT_ID})
         return defaultDashboards.value
     }
 
@@ -93,8 +95,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const loadedDef = await loadDefaults()
         const def = {...loadedDef, ...defaultDashboardsRequest}
 
-        const res = await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}})
-        defaultDashboards.value = res.data
+        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboards({id: DEFAULT_DASHBOARDS_TENANT_ID, ...def})
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
@@ -175,60 +176,57 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
-        let res
+        let data
         try{
-            res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
+            data = await DashboardsAPI.dashboard({id})
         } catch {
             return undefined
         }
 
-        if (res.status === 404){
-            return undefined
-        }
-
-        activeDashboard.value = res.data
-        sourceCode.value = res.data.sourceCode ?? ""
+        activeDashboard.value = data as Dashboard
+        sourceCode.value = (data as Dashboard).sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
 
         return activeDashboard.value
     }
 
     async function create(source: Dashboard["sourceCode"]) {
-        const res = await axios.post(`${apiUrl()}/dashboards`, source, header)
+        const data = await DashboardsAPI.createDashboard({body: source ?? ""})
         sourceCodeOrigin.value = source ?? ""
-        return res.data
+        return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const res = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header)
+        const data = await DashboardsAPI.updateDashboard({id, body: source ?? ""})
         sourceCodeOrigin.value = source ?? ""
-        return res.data
+        return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const res = await axios.delete(`${apiUrl()}/dashboards/${id}`)
-        return res.data
+        return DashboardsAPI.deleteDashboard({id})
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const res = await axios.post(`${apiUrl()}/dashboards/validate`, source, header)
-        return res.data
+        return DashboardsAPI.validateDashboard({body: source ?? ""})
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
-        const res = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus})
-        return res.data
+        try {
+            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as any)
+        } catch (e: any) {
+            if (e.status === 404) return undefined
+            throw e
+        }
     }
 
     async function validateChart(source: string) {
-        const res = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, header)
-        chartErrors.value = res.data
-        return res.data
+        const data = await DashboardsAPI.validateChart({body: source})
+        chartErrors.value = data as unknown as string[]
+        return data
     }
 
     async function chartPreview(request: Request) {
-        const res = await axios.post(`${apiUrl()}/dashboards/charts/preview`, request)
-        return res.data
+        return DashboardsAPI.previewChart(request as any)
     }
 
     async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: Parameters) {

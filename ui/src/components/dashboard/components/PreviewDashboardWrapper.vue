@@ -55,7 +55,7 @@
         }
         const errors = await dashboardStore.validateChart(yamlChart)
         if (errors.constraints) {
-            result.error = errors.constraints
+            result.error = errors.constraints as unknown as string[]
         } else {
             result.data = {...chart, content: yamlChart, raw: chart}
         }

@@ -82,8 +82,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     // bypasses normal tenant routing on purpose, same as before this endpoint moved to the SDK.
     const DEFAULT_DASHBOARDS_TENANT_ID = "main"
 
+    // Stays on raw axios: the generated SDK's TenantsAPI.defaultDashboards() targets
+    // GET /api/v1/tenants/{id}/settings/default-dashboards, which has no @Get handler in this
+    // OSS backend's TenantController (POST-only). The real (tenant-scoped) read endpoint lives
+    // on DashboardController instead, with no SDK-generated function of its own.
     async function loadDefaults() {
-        defaultDashboards.value = await TenantsAPI.defaultDashboards({id: DEFAULT_DASHBOARDS_TENANT_ID})
+        const res = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`)
+        defaultDashboards.value = res.data
         return defaultDashboards.value
     }
 

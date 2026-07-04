@@ -120,10 +120,16 @@ function usePluginsIcons() {
             return pending
         }
 
-        const request = axios.get<PluginIconData>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
+        // Always answers 200 with `{icon: null}` when the class has no icon (a normal outcome,
+        // not every plugin ships one) rather than 404 — a 404 here would trip the shared HTTP
+        // client's global error handling, which takes over the whole page for any 404 response.
+        const request = axios.get<{icon: PluginIconData | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
             .then(response => {
-                pluginsIcons.value = {...pluginsIcons.value, [cls]: response.data}
-                return response.data
+                const icon = response.data.icon ?? undefined
+                if (icon) {
+                    pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
+                }
+                return icon
             })
             .catch(() => undefined)
             .finally(() => iconRequests.delete(cls))

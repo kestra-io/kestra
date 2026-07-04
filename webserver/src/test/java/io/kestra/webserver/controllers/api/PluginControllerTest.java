@@ -24,6 +24,7 @@ import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -111,23 +112,28 @@ class PluginControllerTest {
 
     @Test
     void iconByClass() {
-        PluginIcon icon = client.toBlocking().retrieve(
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
-            PluginIcon.class
+            PluginController.PluginIconResponse.class
         );
 
-        assertThat(icon.getIcon()).isNotNull();
-        assertThat(icon.getName()).isEqualTo(Log.class.getSimpleName());
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
     }
 
     @Test
     void iconByClassNotFound() {
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task"), PluginIcon.class)
+        // must answer 200 with a null icon, not 404: the frontend's shared HTTP client treats
+        // any 404 as a global error and would otherwise take over the whole page for what's just
+        // a normal "this class has no icon" outcome.
+        HttpResponse<PluginController.PluginIconResponse> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task"),
+            PluginController.PluginIconResponse.class
         );
 
-        assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(response.body().icon()).isNull();
     }
 
     @SuppressWarnings("unchecked")

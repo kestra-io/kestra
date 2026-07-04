@@ -238,17 +238,16 @@ public class PluginController {
         tags = { "Plugins" },
         summary = "Get a single plugin icon",
         description = "Lightweight alternative to `GET /plugins/icons` for resolving one icon at a time, " +
-            "so callers don't have to download the whole plugin catalog just to render one task icon."
+            "so callers don't have to download the whole plugin catalog just to render one task icon. " +
+            "Not every class has an icon, which is a normal outcome (not every plugin ships one), so this " +
+            "always answers 200 with `icon: null` rather than 404 — a bare 404 here would be indistinguishable, " +
+            "to the frontend's shared HTTP client, from a genuine routing error and trip its global error page."
     )
-    public HttpResponse<PluginIcon> getPluginIcon(
+    public HttpResponse<PluginIconResponse> getPluginIcon(
         @Parameter(description = "The plugin full class name") @PathVariable String cls) {
         PluginIcon icon = pluginIconsIndex().get(cls);
 
-        if (icon == null) {
-            return HttpResponse.notFound();
-        }
-
-        return HttpResponse.ok(icon).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @Cacheable("default")
@@ -532,6 +531,14 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Always-present wrapper around a possibly-absent {@link PluginIcon}, so the response body
+     * itself is never null. Micronaut treats a null response body as a 404, which would defeat
+     * the purpose of {@link #getPluginIcon} always answering 200.
+     */
+    public record PluginIconResponse(@Nullable PluginIcon icon) {
     }
 
     /**

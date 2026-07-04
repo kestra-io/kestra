@@ -14,7 +14,7 @@
         :appendToBody="true"
     >
         <template #header>
-            <span v-html="$t('force run title', {id: execution.id})" />
+            <span v-html="$t('force run title', {id: escape(execution.id)})" />
         </template>
         <template #footer>
             <KsButton
@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
+    import escape from "lodash/escape"
     import {State} from "@kestra-io/design-system"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"

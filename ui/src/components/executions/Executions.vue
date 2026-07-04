@@ -375,6 +375,7 @@
 
 <script setup lang="ts">
     import _merge from "lodash/merge"
+    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
@@ -844,7 +845,7 @@
                     dataTable.value?.reload()
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: exec.invalidValue})}
+                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
                     }), t(e.message))
                 })
         }
@@ -1034,7 +1035,7 @@
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: exec.invalidValue})}
+                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
                     }), t(e.message)))
             }
         },

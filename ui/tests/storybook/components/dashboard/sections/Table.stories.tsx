@@ -119,11 +119,14 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
     }),
     async play({canvasElement}) {
         const canvas = within(canvasElement);
+        // Default waitFor timeout (1000ms) is too tight here: each findByText call below has
+        // its own nested default-timeout wait, so a single outer retry can itself take longer
+        // than the outer waitFor's own budget before the mocked chart data finishes rendering.
         await waitFor(async () => {
             await expect(await canvas.findByText("2wJlDoXR")).toBeVisible();
             await expect(await canvas.findByText("2yiYHSqL")).toBeVisible();
             await expect(await canvas.findByText("2Iq5tjur")).toBeVisible();
             await expect(await canvas.findByText("69d95APm")).toBeVisible();
-        });
+        }, {timeout: 5000, interval: 100});
     }
 }

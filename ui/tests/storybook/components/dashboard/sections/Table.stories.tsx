@@ -1,51 +1,42 @@
-import {vi} from "vitest";
-
-// dashboardStore.generate() calls DashboardsAPI.dashboardChartData() directly, which goes
-// through the SDK's own internal client rather than the axios instance setMockClient() swaps -
-// so the mock has to intercept the SDK submodule function itself.
-vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
-    dashboardChartData: async () => ({
-        results: [
-            {
-                "namespace": "company.team",
-                "id": "2wJlDoXRsMc7jXJfQUWTE7",
-                "state": "RUNNING",
-                "flow": "sleep",
-                "start_date": "2025-11-25T09:28:00.000+00:00",
-            },
-            {
-                "namespace": "company.team",
-                "id": "2yiYHSqLwNbocm9FB8qK5L",
-                "state": "RUNNING",
-                "flow": "sleep",
-                "start_date": "2025-11-25T09:28:00.000+00:00"
-            },
-            {
-                "duration": 6,
-                "namespace": "company.team",
-                "id": "2Iq5tjur4bB9fRYYazstV4",
-                "state": "SUCCESS",
-                "flow": "sleep",
-                "end_date": "2025-11-25T09:27:00.000+00:00",
-                "start_date": "2025-11-25T09:27:00.000+00:00",
-            },
-            {
-                "namespace": "company.team",
-                "id": "69d95APmpdw94OkaMduCep",
-                "state": "RUNNING",
-                "flow": "sleep",
-                "start_date": "2025-11-25T09:27:00.000+00:00"
-            }
-        ],
-        total: 4,
-    }),
-}))
-
 import Table from "../../../../../src/components/dashboard/sections/Table.vue";
 import type {Chart} from "../../../../../src/components/dashboard/types.ts";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {expect, waitFor, within} from "storybook/test";
+import {useDashboardStore} from "../../../../../src/stores/dashboard";
+
+const MOCK_RESULTS = [
+    {
+        "namespace": "company.team",
+        "id": "2wJlDoXRsMc7jXJfQUWTE7",
+        "state": "RUNNING",
+        "flow": "sleep",
+        "start_date": "2025-11-25T09:28:00.000+00:00",
+    },
+    {
+        "namespace": "company.team",
+        "id": "2yiYHSqLwNbocm9FB8qK5L",
+        "state": "RUNNING",
+        "flow": "sleep",
+        "start_date": "2025-11-25T09:28:00.000+00:00"
+    },
+    {
+        "duration": 6,
+        "namespace": "company.team",
+        "id": "2Iq5tjur4bB9fRYYazstV4",
+        "state": "SUCCESS",
+        "flow": "sleep",
+        "end_date": "2025-11-25T09:27:00.000+00:00",
+        "start_date": "2025-11-25T09:27:00.000+00:00",
+    },
+    {
+        "namespace": "company.team",
+        "id": "69d95APmpdw94OkaMduCep",
+        "state": "RUNNING",
+        "flow": "sleep",
+        "start_date": "2025-11-25T09:27:00.000+00:00"
+    }
+];
 
 const meta: Meta<typeof Table> = {
     title: "Dashboard/Sections/Table",
@@ -80,6 +71,12 @@ export default meta;
 export const SimpleExecutionsCase: StoryObj<typeof Table> = {
     render: () => ({
         setup() {
+            // dashboardStore.generate() calls DashboardsAPI.dashboardChartData() directly,
+            // which goes through the SDK's own internal client rather than the axios instance
+            // setMockClient() swaps - so the store method itself is stubbed instead (same
+            // pattern as KSFilter.stories.tsx's useNamespacesStore().loadAutocomplete override).
+            useDashboardStore().generate = async () => ({results: MOCK_RESULTS, total: MOCK_RESULTS.length}) as any;
+
             const chart: Chart = {
                 "id": "executions_finished",
                 "type": "io.kestra.plugin.core.dashboard.chart.Table",

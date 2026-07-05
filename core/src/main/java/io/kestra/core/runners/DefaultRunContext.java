@@ -411,8 +411,12 @@ public class DefaultRunContext extends RunContext {
                 if (Thread.currentThread().isInterrupted() || 
                     e instanceof InterruptedException || 
                     e.getCause() instanceof InterruptedException || 
-                    e.getClass().getName().contains("Interrupt") || 
-                    (e.getCause() != null && e.getCause().getClass().getName().contains("Interrupt"))) {
+                    "software.amazon.awssdk.core.exception.AbortedException".equals(e.getClass().getName()) || 
+                    "com.amazonaws.AbortedException".equals(e.getClass().getName()) || 
+                    (e.getCause() != null && (
+                        "software.amazon.awssdk.core.exception.AbortedException".equals(e.getCause().getClass().getName()) || 
+                        "com.amazonaws.AbortedException".equals(e.getCause().getClass().getName())
+                    ))) {
                     Thread.currentThread().interrupt();
                 }
             }

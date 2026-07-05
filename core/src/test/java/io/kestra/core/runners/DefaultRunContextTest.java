@@ -60,30 +60,38 @@ class DefaultRunContextTest {
 
     @Test
     void shouldReturnNullAndRestoreInterruptStatusWhenLogUploadFails() throws IOException {
-        Storage storage = mock(Storage.class);
-        RuntimeException interruptedAwsException = new RuntimeException("Thread was interrupted", new InterruptedException());
-        when(storage.putFile(any(java.io.File.class))).thenThrow(interruptedAwsException);
-
-        RunContextLogger runContextLogger = new RunContextLogger(
-            mock(LogEntryEmitter.class),
-            LogEntry.builder().tenantId("t").namespace("n").flowId("f").build(),
-            org.slf4j.event.Level.INFO,
-            true
+        java.util.List<Exception> interruptedExceptions = java.util.List.of(
+            new RuntimeException("Thread was interrupted", new InterruptedException()),
+            new software.amazon.awssdk.core.exception.AbortedException("Aborted"),
+            new com.amazonaws.AbortedException("Aborted"),
+            new RuntimeException("Wrapped", new com.amazonaws.AbortedException("Aborted"))
         );
-        runContextLogger.logger();
 
-        DefaultRunContext runContext = (DefaultRunContext) runContextFactory.of();
-        runContext.setStorage(storage);
-        runContext.setLogger(runContextLogger);
+        for (Exception ex : interruptedExceptions) {
+            Storage storage = mock(Storage.class);
+            when(storage.putFile(any(java.io.File.class))).thenThrow(ex);
 
-        Thread.interrupted();
+            RunContextLogger runContextLogger = new RunContextLogger(
+                mock(LogEntryEmitter.class),
+                LogEntry.builder().tenantId("t").namespace("n").flowId("f").build(),
+                org.slf4j.event.Level.INFO,
+                true
+            );
+            runContextLogger.logger();
 
-        URI uri = runContext.logFileURI();
+            DefaultRunContext runContext = (DefaultRunContext) runContextFactory.of();
+            runContext.setStorage(storage);
+            runContext.setLogger(runContextLogger);
 
-        assertThat(uri).isNull();
-        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            Thread.interrupted();
 
-        Thread.interrupted();
+            URI uri = runContext.logFileURI();
+
+            assertThat(uri).isNull();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+
+            Thread.interrupted();
+        }
     }
 
     @Test

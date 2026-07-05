@@ -449,7 +449,7 @@ class TriggerSchedulerTest {
                 assertThat(currentTriggerState.isLocked()).isTrue();
                 assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15).toInstant());
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(expectedNextEvaluationNDate);
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
 
                 // Assert NO Execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);

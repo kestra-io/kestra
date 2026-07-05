@@ -24,12 +24,16 @@
                             >
                                 <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
-                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                 />
                             </KsOption>
                         </KsSelect>
@@ -62,12 +66,16 @@
                             >
                                 <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
-                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                 />
                             </KsOption>
                         </KsSelect>
@@ -120,6 +128,7 @@
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import moment from "moment"
@@ -135,6 +144,7 @@
         revision: number;
         updated?: string;  // ISO datetime string
         source?: string;
+        draft?: boolean;
     }
 
     const {t} = useI18n()
@@ -162,8 +172,11 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
-        editRouteQuery?: boolean
-    }>(), {editRouteQuery: true})
+        editRouteQuery?: boolean,
+        // Whether per-revision delete is available. Flows support it (default); consumers without a
+        // delete-by-revision backend (e.g. reusable inputs) pass false to hide the delete control.
+        canDelete?: boolean
+    }>(), {editRouteQuery: true, canDelete: true})
 
     const sortedRevisions = computed(() => {
         return props.revisions.toSorted((a, b) => a.revision - b.revision)
@@ -252,13 +265,14 @@
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision, updated}) => {
+            .map(({revision, updated, draft}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
+                    isDraft: draft === true,
                     text: formatRevisionText(revision),
                 }
             })
@@ -421,18 +435,13 @@
         font-weight: 500;
     }
 
-    .revision-timestamp {
-        color: #888;
-        font-size: 0.85em;
-    }
-
     .display-select {
         width: 10%;
     }
 
     .revision-timestamp {
-        color: #888;
-        font-size: 0.85em;
+        color: var(--ks-text-muted);
+        font-size: var(--ks-font-size-sm);
         text-align: right;
         flex-shrink: 0;
     }

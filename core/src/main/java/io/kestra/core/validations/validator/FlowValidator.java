@@ -3,6 +3,8 @@ package io.kestra.core.validations.validator;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.EeOnly;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.NamespaceService;
@@ -97,6 +99,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
         checkFlowInputsDependencyGraph(value, violations);
 
+        // EE-only input types (e.g. REUSABLE_INPUTS) cannot run on the open-source edition, so reject a flow
+        // declaring one at save/validation time rather than letting it fail only at execution. EE allows them.
+        violations.addAll(eeOnlyInputsViolations(value.getInputs()));
+
         // output unique name
         duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
@@ -175,6 +181,28 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         return allTasks.stream().filter(task -> task.getAssets() != null)
             .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
             .toList();
+    }
+
+    /**
+     * Inputs whose type is annotated {@link EeOnly} (e.g. {@code REUSABLE_INPUTS}) are not available in the
+     * open-source edition, so a flow declaring one is rejected here rather than failing only at execution time.
+     * Recurses into {@code FORM} children. The Enterprise build overrides this to allow such inputs.
+     */
+    protected List<String> eeOnlyInputsViolations(List<Input<?>> inputs) {
+        List<String> violations = new ArrayList<>();
+        collectEeOnlyInputs(inputs, violations);
+        return violations;
+    }
+
+    private static void collectEeOnlyInputs(List<Input<?>> inputs, List<String> violations) {
+        for (Input<?> input : ListUtils.emptyOnNull(inputs)) {
+            if (input.getClass().isAnnotationPresent(EeOnly.class)) {
+                violations.add("Input '" + input.getId() + "' of type " + input.getType() + " is only available in Enterprise Edition.");
+            }
+            if (input instanceof FormInput form) {
+                collectEeOnlyInputs(form.getInputs(), violations);
+            }
+        }
     }
 
     private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {

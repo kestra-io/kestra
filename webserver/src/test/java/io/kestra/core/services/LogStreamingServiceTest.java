@@ -190,6 +190,7 @@ class LogStreamingServiceTest {
             level,
             "main",
             message,
+            null,
             null
         );
     }

@@ -169,6 +169,25 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void webhookOnDraftFlowReturnsNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-draft/webhook-draft-key"),
+                Execution.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode())
+            .as("a webhook on a draft-only flow is treated as non-existent (404) and must not fire an execution")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage())
+            .as("the 404 message explains the flow was not found")
+            .contains("Flow not found");
+    }
+
+    @Test
     void nullLabels() {
         MultipartBody requestBody = createExecutionInputsFlowBody();
 

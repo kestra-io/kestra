@@ -38,7 +38,7 @@
         --kel-avatar-text-color: var(--ks-text-primary);
 
         &.kel-avatar--small {
-            font-size: 65%;
+            font-size: var(--ks-font-size-2xs);
         }
 
         html.dark & {

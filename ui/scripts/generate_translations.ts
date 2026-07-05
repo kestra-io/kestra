@@ -191,22 +191,6 @@ function removeEnPrefix(dictionary: FlatDict, prefix = "en|"): FlatDict {
     return result
 }
 
-// Recursively sort object keys to mirror Python's json.dump(sort_keys=True).
-// Arrays keep their element order (only their nested objects get sorted).
-function sortKeysRecursively(value: NestedValue): NestedValue {
-    if (value === null || typeof value !== "object") {
-        return value
-    }
-    if (Array.isArray(value)) {
-        return value.map(sortKeysRecursively)
-    }
-    const sorted: NestedDict = {}
-    for (const key of Object.keys(value).sort()) {
-        sorted[key] = sortKeysRecursively(value[key])
-    }
-    return sorted
-}
-
 async function main(
     languageCode: string,
     targetLanguage: string,
@@ -246,18 +230,20 @@ async function main(
 
     Object.assign(targetFlat, translatedFlatDict)
 
-    // Drop any key that no longer exists in en.json (e.g. removed from the source language).
-    const prunedTargetFlat: FlatDict = {}
-    for (const [k, v] of Object.entries(targetFlat)) {
-        if (k in enFlat) {
-            prunedTargetFlat[k] = v
+    // Rebuild the language dict in en.json key order so the output mirrors the
+    // reference ordering. This keeps regeneration from reordering existing
+    // key/value pairs — which would otherwise open PRs that only rearrange keys —
+    // and, by iterating enFlat, also drops any key no longer present in en.json.
+    const orderedTargetFlat: FlatDict = {}
+    for (const k of Object.keys(enFlat)) {
+        if (k in targetFlat) {
+            orderedTargetFlat[k] = targetFlat[k]
         }
     }
 
-    const updatedTargetDict = unflattenDict(prunedTargetFlat)
+    const updatedTargetDict = unflattenDict(orderedTargetFlat)
 
-    // Sort keys to keep output stable
-    const output = sortKeysRecursively({[languageCode]: updatedTargetDict})
+    const output = {[languageCode]: updatedTargetDict}
     writeFileSync(`ui/src/translations/${languageCode}.json`, JSON.stringify(output, null, 2))
 }
 

@@ -47,7 +47,7 @@
                         :opened="aiCopilotOpened"
                         @click="() => { draftSource = undefined; openAiCopilot(); }"
                     />
-                    <ContentSave v-if="!flow" @click="saveFileContent" />
+                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -329,12 +329,7 @@
         clearTimeout(timeout.value)
         if(!editorRefElement.value?.getEditor()) return
 
-        const creating = flowStore.isCreating
-
-        // Use saveAll() for consistency with the Save button behavior
-        const result = creating
-            ? await flowStore.save()
-            : await flowStore.saveAll()
+        const result = await flowStore.saveAll()
 
         if (result === "redirect_to_update") {
             await router.push({
@@ -369,7 +364,7 @@
             event.preventDefault()
             if (props.flow) {
                 saveFlowYaml()
-            } else {
+            } else if (isDirty.value) {
                 saveFileContent()
             }
         }
@@ -413,5 +408,11 @@
 <style scoped lang="scss">
     .image-preview {
         margin: 2rem;
+    }
+
+    .save-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
     }
 </style>

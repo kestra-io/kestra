@@ -1,15 +1,17 @@
 import {useRoute, useRouter} from "vue-router"
 import {STATES} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
+import {useDrillDownStore, type DrillDownTarget} from "../../../stores/drillDown"
+import {getDrillDownPreview} from "./drillDownPreview"
 
 interface WhereCondition {
     field?: string;
-    labelKey?: string;
+    key?: string;
     type?: string;
     value?: unknown;
 }
 
-interface DrillDownDescriptor {
+export interface DrillDownDescriptor {
     route: string;
     fieldKey: Record<string, string>;
     multiSelect: string[];
@@ -17,7 +19,7 @@ interface DrillDownDescriptor {
     dimensionType?: Record<string, string>;
 }
 
-type ClickDimension = {column: {field?: string; labelKey?: string} | undefined; value: string};
+type ClickDimension = {column: {field?: string; key?: string} | undefined; value: string};
 
 const WHERE_TYPE_TO_COMPARATOR: Record<string, string> = {
     EQUAL_TO: "EQUALS",
@@ -34,7 +36,7 @@ const WHERE_TYPE_TO_COMPARATOR: Record<string, string> = {
     LESS_THAN_OR_EQUAL_TO: "LESS_THAN_OR_EQUAL_TO",
 }
 
-const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
+export const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
     Executions: {
         route: "executions/list",
         fieldKey: {
@@ -71,6 +73,14 @@ const DRILL_DOWNS: Record<string, DrillDownDescriptor> = {
     },
 }
 
+/**
+ * Registers a drill-down descriptor for a dashboard data source type (keyed by the type's short name, e.g. "Assets").
+ * Lets editions add drill-down support for their own data sources without editing this map.
+ */
+export function registerDrillDown(type: string, descriptor: DrillDownDescriptor): void {
+    DRILL_DOWNS[type] = descriptor
+}
+
 function extractState(value: unknown): unknown {
     if (typeof value !== "string" || !value.includes(",")) {
         return value
@@ -104,7 +114,7 @@ function buildFilter(
     descriptor: DrillDownDescriptor,
     field: string | undefined,
     type: string | undefined,
-    labelKey: string | undefined,
+    key: string | undefined,
     value: unknown,
 ): Record<string, string> {
     const filterKey = descriptor.fieldKey[field ?? ""]
@@ -114,20 +124,25 @@ function buildFilter(
     if (!comparator) return {}
 
     const resolved = asString(value)
+    // Key-value fields (e.g. Executions LABELS, Assets METADATA) carry a key and use a nested filter key.
+    if (key) {
+        return {[`filters[${filterKey}][${comparator}][${key}]`]: resolved}
+    }
+    // A key-value field with no key has no list equivalent, so it is skipped (superset, never wrong rows).
     if (filterKey === "labels") {
-        return labelKey ? {[`filters[labels][${comparator}][${labelKey}]`]: resolved} : {}
+        return {}
     }
     return {[`filters[${filterKey}][${comparator}]`]: resolved}
 }
 
 function dimensionFilter(
     descriptor: DrillDownDescriptor,
-    column: {field?: string; labelKey?: string} | undefined,
+    column: {field?: string; key?: string} | undefined,
     value: string,
 ): Record<string, string> {
     const resolved = column?.field === "STATE" ? extractState(value) : value
     const type = descriptor.dimensionType?.[column?.field ?? ""] ?? "EQUAL_TO"
-    return buildFilter(descriptor, column?.field, type, column?.labelKey, resolved)
+    return buildFilter(descriptor, column?.field, type, column?.key, resolved)
 }
 
 function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Record<string, string> {
@@ -136,14 +151,14 @@ function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Recor
     const out: Record<string, string> = {}
     for (const condition of where as WhereCondition[]) {
         if (condition?.value == null) continue
-        Object.assign(out, buildFilter(descriptor, condition.field, condition.type, condition.labelKey, condition.value))
+        Object.assign(out, buildFilter(descriptor, condition.field, condition.type, condition.key, condition.value))
     }
     return out
 }
 
 export function chartSegmentDrillDown(
     chart: {data?: Record<string, any>} | undefined,
-    column: {field?: string; labelKey?: string} | undefined,
+    column: {field?: string; key?: string} | undefined,
     value: string,
 ): {name: string; query: Record<string, string>; timeFiltered: boolean} | null {
     const descriptor = DRILL_DOWNS[chart?.data?.type?.split(".").pop() ?? ""]
@@ -156,6 +171,22 @@ export function chartSegmentDrillDown(
             ...whereToFilters(descriptor, chart?.data?.where),
             ...dimensionFilter(descriptor, column, value),
         },
+    }
+}
+
+/**
+ * Reproduces the query augmentation the full listing pages expect (scope, pagination, and the
+ * default time-range filter), so the drawer's fetch, the drawer's "Open full page" push, and the
+ * legacy full-page redirect all build the exact same query from a drill-down target.
+ */
+export function buildFullQuery(target: DrillDownTarget, pagination?: {size: number; page: number}): Record<string, any> {
+    return {
+        ...target.query,
+        scope: "USER",
+        ...(pagination ? {size: pagination.size, page: pagination.page} : {}),
+        ...(target.timeFiltered
+            ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+            : {}),
     }
 }
 
@@ -174,19 +205,22 @@ export function useChartDrillDown(chart: {data?: Record<string, any>} | undefine
             Object.assign(query, resolved.query)
         }
         if (!target) return
+        target = {...target, query}
+
+        const preview = getDrillDownPreview(target.name)
+        if (preview && preview.mode !== "none") {
+            useDrillDownStore().open(target)
+            return
+        }
+
+        if (!preview) {
+            console.error(`[drill-down] no drawer preview registered for route "${target.name}" — register one via registerDrillDownPreview, or opt out with {mode: "none"} to keep the full-page redirect silently.`)
+        }
 
         router.push({
             name: target.name,
             params: {tenant: route.params.tenant},
-            query: {
-                ...query,
-                scope: "USER",
-                size: 100,
-                page: 1,
-                ...(target.timeFiltered
-                    ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
-                    : {}),
-            },
+            query: buildFullQuery(target, {size: 100, page: 1}),
         })
     }
 

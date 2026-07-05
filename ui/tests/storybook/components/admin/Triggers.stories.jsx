@@ -132,6 +132,20 @@ const Template = (args) => ({
                 }
             }
 
+            // The "add" tab (TriggersGrid) is the default tab and calls
+            // pluginsStore.listTriggers(), which hits this endpoint expecting
+            // {results: [...]}. Left unmocked, response.data.results is
+            // undefined, allTriggers.value becomes undefined, and the
+            // visibleTriggers computed throws trying to .filter() it.
+            if (uri.includes("/plugins/triggers")) {
+                return {
+                    data: {
+                        results: [],
+                        total: 0,
+                    }
+                }
+            }
+
             console.log("get request", uri)
             return {data: {}}
         }

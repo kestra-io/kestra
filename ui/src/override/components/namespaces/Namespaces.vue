@@ -9,7 +9,7 @@
         </template>
     </Navbar>
 
-    <KsRow class="p-4">
+    <KsRow class="row-padding">
         <KSFilter
             :configuration="namespacesFilter"
             :prefix="'namespaces-list'"
@@ -196,6 +196,10 @@
 </script>
 
 <style scoped lang="scss">
+
+.row-padding {
+    padding: var(--ks-spacing-6);
+}
 
 .namespaces {
     margin: 0.25rem 0;

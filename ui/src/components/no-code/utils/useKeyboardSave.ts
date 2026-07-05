@@ -6,7 +6,7 @@ export function useKeyboardSave() {
     const handleKeyboardSave = (e: KeyboardEvent) => {
         if (e.type === "keydown" && e.key === "s" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
-            flowStore.save()
+            flowStore.saveAll()
         }
     }
 

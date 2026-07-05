@@ -148,6 +148,23 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @Test
+    void flowSchemaExcludesEeOnlyInputTypes() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            String schema = jsonSchemaGenerator.schemas(Flow.class).toString();
+
+            // @EeOnly input types (e.g. REUSABLE_INPUTS) must not surface in the open-source flow schema — neither in
+            // the polymorphic anyOf/const subtype branches nor in the type/itemType enum arrays (REUSABLE_INPUTS was
+            // leaking through the latter).
+            assertThat(schema, not(containsString("REUSABLE_INPUTS")));
+            // sanity: ordinary input types are still present
+            assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void task() throws URISyntaxException {

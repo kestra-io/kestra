@@ -344,7 +344,7 @@
 .add-global-btn {
     margin: 0 !important;
     flex-shrink: 0;
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     color: var(--ks-text-secondary);
     border: 1px dashed var(--ks-border-default);
     background: transparent;
@@ -359,7 +359,7 @@
     position: relative;
     margin: 0 !important;
     background-color: var(--ks-btn-secondary-bg-default);
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     flex-shrink: 0;
     box-shadow: var(--ks-box-shadow);
 
@@ -402,7 +402,7 @@
 .customize-button {
     margin: 0 !important;
     background-color: var(--ks-btn-secondary-bg-default);
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     flex-shrink: 0;
     box-shadow: var(--ks-box-shadow);
 
@@ -418,7 +418,7 @@
 
 .refresh-btn {
     margin: 0 !important;
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     color: var(--ks-text-secondary);
 
     &:hover {

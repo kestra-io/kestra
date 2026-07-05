@@ -150,4 +150,9 @@ class RegexUtilsTest {
         // Then it must be rejected
         assertThat(RegexUtils.isSafeUserRegex(null)).isFalse();
     }
+
+    @Test
+    void shouldDefaultConfigurationTimeoutToTenSeconds() {
+        assertThat(new RegexConfiguration().getTimeout()).isEqualTo(Duration.ofSeconds(10));
+    }
 }

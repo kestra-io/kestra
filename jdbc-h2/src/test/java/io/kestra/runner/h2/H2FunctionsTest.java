@@ -1,8 +1,11 @@
 package io.kestra.runner.h2;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import com.github.benmanes.caffeine.cache.Cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,5 +106,30 @@ class H2FunctionsTest {
 
         // Then — no match (injection neutralised), no exception
         assertThat(result).isNull();
+    }
+
+    @Test
+    void shouldBoundCacheSizeWhenManyDistinctExpressionsAreEvaluated() throws Exception {
+        // Given a payload and many distinct jq expressions, mimicking a user filtering by an
+        // unbounded number of distinct label keys (each distinct key yields a distinct expression).
+        String json = "{\"labels\":[{\"key\":\"safe\",\"value\":\"v\"}]}";
+        long maximumSize = 1000L;
+        int distinctExpressions = (int) (maximumSize * 5);
+
+        // When each distinct expression is compiled and cached
+        for (int i = 0; i < distinctExpressions; i++) {
+            H2Functions.jqString(json, ".labels[]? | select(.key == \"k" + i + "\") | .value");
+        }
+
+        // Then the compiled-query cache stays bounded instead of growing without limit
+        Cache<?, ?> queryCache = queryCache();
+        queryCache.cleanUp();
+        assertThat(queryCache.estimatedSize()).isLessThanOrEqualTo(maximumSize);
+    }
+
+    private static Cache<?, ?> queryCache() throws Exception {
+        Field field = H2Functions.class.getDeclaredField("QUERY_CACHE");
+        field.setAccessible(true);
+        return (Cache<?, ?>) field.get(null);
     }
 }

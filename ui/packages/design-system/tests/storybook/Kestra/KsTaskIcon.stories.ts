@@ -1,18 +1,28 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import KsTaskIcon from "../../../src/components/Kestra/KsTaskIcon.vue"
 
-const mockIcons: Record<string, {flowable: boolean; monochrome: boolean}> = {
+const mockIcons: Record<string, {flowable: boolean; monochrome: boolean; hasIcon: boolean}> = {
     "io.kestra.plugin.core.log.Log": {
         flowable: false,
         monochrome: false,
+        hasIcon: true,
     },
     "io.kestra.plugin.core.flow.Parallel": {
         flowable: true,
         monochrome: false,
+        hasIcon: true,
     },
     "io.kestra.plugin.core.debug.Echo": {
         flowable: false,
         monochrome: true,
+        hasIcon: true,
+    },
+    // registered (present in the catalog) but ships no icon file — every task/trigger class gets
+    // an entry regardless of icon presence, since other consumers rely on `flowable` either way
+    "io.kestra.plugin.core.debug.NoIcon": {
+        flowable: false,
+        monochrome: false,
+        hasIcon: false,
     },
 }
 
@@ -28,7 +38,7 @@ const meta: Meta<typeof KsTaskIcon> = {
     parameters: {
         docs: {
             description: {
-                component: "KsTaskIcon renders the plugin icon as a real, browser-cacheable `image/svg+xml` resource served from `GET /api/v1/plugins/icons/{cls}/svg` — no more client-side base64 decode/recolor/encode on every render. Most icons ship fixed brand colors and render as a plain `<img>`. The rare single-color icon (flagged `monochrome` in the resolved icon metadata) is instead rendered via a CSS `mask-image` so it can be recolored through the CSS cascade (the `variable` prop, or `--ks-text-primary` by default). It resolves icon metadata synchronously from the `icons` map when provided, or lazily via the `loadIcon` prop so callers don't have to preload the whole plugin-icons catalog. Falls back to a generic file icon when no matching icon is found.",
+                component: "KsTaskIcon renders the plugin icon as a real, browser-cacheable `image/svg+xml` resource served from `GET /api/v1/plugins/icons/{cls}/icon.svg` — no more client-side base64 decode/recolor/encode on every render. Most icons ship fixed brand colors and render as a plain `<img>`. The rare single-color icon (flagged `monochrome` in the resolved icon metadata) is instead rendered via a CSS `mask-image` so it can be recolored through the CSS cascade (the `variable` prop, or `--ks-text-primary` by default). It resolves icon metadata synchronously from the `icons` map when provided, or lazily via the `loadIcon` prop so callers don't have to preload the whole plugin-icons catalog. Every registered class gets an `icons` entry regardless of whether it ships an icon (`hasIcon`), so KsTaskIcon falls back to a generic file icon both when the class is unknown and when it's known but iconless.",
             },
         },
     },
@@ -108,6 +118,26 @@ export const FallbackIcon: Story = {
     },
 }
 
+export const RegisteredWithoutIcon: Story = {
+    render: (args) => ({
+        components: {KsTaskIcon},
+        setup() { return {args} },
+        template: "<div style=\"width:32px;height:32px\"><ks-task-icon v-bind=\"args\" /></div>",
+    }),
+    args: {
+        cls: "io.kestra.plugin.core.debug.NoIcon",
+        icons: mockIcons,
+        onlyIcon: true,
+    },
+    parameters: {
+        docs: {
+            description: {
+                story: "A class can be registered (present in the `icons` map, with a real `flowable` value) without shipping an icon file at all — `hasIcon: false` — in which case KsTaskIcon falls back to the generic icon rather than pointing an `<img>` at a URL that would 404.",
+            },
+        },
+    },
+}
+
 // A literal SVG override, provided directly as a data URI rather than resolved from `cls`
 const customSvgDataUri = `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect width=\"24\" height=\"24\" rx=\"4\" fill=\"#8405FF\"/></svg>")}`
 const customMonochromeSvgDataUri = `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></svg>")}`
@@ -150,7 +180,7 @@ export const LazyLoaded: Story = {
         setup() {
             // simulates pluginsStore.loadIcon: fetches one icon on demand instead of
             // requiring the whole plugin-icons catalog to be preloaded up front
-            const loadIcon = (cls: string) => new Promise<{flowable: boolean; monochrome: boolean} | undefined>(resolve => {
+            const loadIcon = (cls: string) => new Promise<{flowable: boolean; monochrome: boolean; hasIcon: boolean} | undefined>(resolve => {
                 setTimeout(() => resolve(mockIcons[cls]), 1000)
             })
             return {args, loadIcon}

@@ -133,7 +133,7 @@ class PluginControllerTest {
         );
 
         HttpResponse<byte[]> response = client.toBlocking().exchange(
-            HttpRequest.GET(PATH + "/icons/" + Log.class.getName() + "/svg"),
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName() + "/icon.svg"),
             byte[].class
         );
 
@@ -148,7 +148,7 @@ class PluginControllerTest {
         // endpoint for a class it already confirmed has an icon, so a missing icon here is a genuine 404.
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/svg"),
+                HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/icon.svg"),
                 byte[].class
             )
         );

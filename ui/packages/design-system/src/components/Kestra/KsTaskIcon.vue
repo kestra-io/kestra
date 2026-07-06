@@ -28,6 +28,13 @@
     export interface KsTaskIconData {
         flowable: boolean;
         monochrome: boolean;
+        /**
+         * Whether this class actually ships an icon. Every registered task/trigger class gets an
+         * entry in the `icons` map regardless (other consumers rely on `flowable` being present
+         * even without one), so this is the only reliable signal to fall back to the generic icon
+         * instead of pointing at a `/svg` URL that would 404.
+         */
+        hasIcon: boolean;
     }
 
     const props = defineProps<{
@@ -96,7 +103,7 @@
         // Trim a trailing slash so a root base path ("/") doesn't produce a leading "//", which
         // browsers parse as a protocol-relative URL (host "api") instead of an absolute path.
         const basePath = ((window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? "").replace(/\/$/, "")
-        return `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/svg`
+        return `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/icon.svg`
     })
 
     const isMonochrome = computed(() => {
@@ -112,7 +119,7 @@
             return props.customIcon.icon
         }
 
-        return icon.value ? iconUrl.value : fallbackIcon
+        return icon.value?.hasIcon ? iconUrl.value : fallbackIcon
     })
 
     const maskStyle = computed(() => ({

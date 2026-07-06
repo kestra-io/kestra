@@ -253,7 +253,7 @@ public class PluginController {
         return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
-    @Get(uri = "icons/{cls}/svg", produces = "image/svg+xml")
+    @Get(uri = "icons/{cls}/icon.svg", produces = "image/svg+xml")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = { "Plugins" },

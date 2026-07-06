@@ -53,6 +53,27 @@ export function removeRefPrefix(refStr?: string): string {
 export interface PluginIconData {
     flowable: boolean;
     monochrome: boolean;
+    hasIcon: boolean;
+}
+
+// Wire shape returned by the backend's PluginIcon DTO. `icon` (base64, kept for the docs
+// generator) is never read for its content on the frontend anymore — only whether it's present,
+// since every registered task/trigger class gets an `icons` map entry regardless of whether it
+// actually ships an icon (other consumers rely on `flowable` being there either way).
+interface RawPluginIcon {
+    icon: string | null;
+    flowable: boolean;
+    monochrome: boolean;
+}
+
+function toPluginIconData(raw: RawPluginIcon): PluginIconData {
+    return {flowable: raw.flowable, monochrome: raw.monochrome, hasIcon: raw.icon != null}
+}
+
+function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
+    return Object.fromEntries(
+        Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
+    )
 }
 
 function usePluginsIcons() {
@@ -83,13 +104,13 @@ function usePluginsIcons() {
         }
 
         const apiPromise = apiStore.pluginIcons().then(async response => {
-            apiIcons.value = response.data ?? {}
-            return response.data
+            apiIcons.value = toPluginIconDataMap(response.data)
+            return apiIcons.value
         })
 
         const iconsPromise =
-            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
-                pluginsIcons.value = response.data ?? {}
+            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+                pluginsIcons.value = toPluginIconDataMap(response.data)
                 return pluginsIcons.value
             })
 
@@ -123,12 +144,14 @@ function usePluginsIcons() {
         // Always answers 200 with `{icon: null}` when the class has no icon (a normal outcome,
         // not every plugin ships one) rather than 404 — a 404 here would trip the shared HTTP
         // client's global error handling, which takes over the whole page for any 404 response.
-        const request = axios.get<{icon: PluginIconData | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
+        const request = axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
             .then(response => {
-                const icon = response.data.icon ?? undefined
-                if (icon) {
-                    pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
+                const raw = response.data.icon
+                if (!raw) {
+                    return undefined
                 }
+                const icon = toPluginIconData(raw)
+                pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
                 return icon
             })
             .catch(() => undefined)
@@ -429,9 +452,9 @@ export const usePluginsStore = defineStore("plugins", () => {
     function ensureGroupIcons(): Promise<PluginIconMap> {
         if (Object.keys(groupIcons.value).length > 0) return Promise.resolve(groupIcons.value)
         if (groupIconsPending) return groupIconsPending
-        groupIconsPending = axios.get<PluginIconMap>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
+        groupIconsPending = axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
             .then(response => {
-                groupIcons.value = response.data ?? {}
+                groupIcons.value = toPluginIconDataMap(response.data)
                 return groupIcons.value
             })
             .finally(() => {

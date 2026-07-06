@@ -28,29 +28,42 @@ describe("plugins store loadIcon", () => {
     })
 
     it("resolves the icon and caches it when the backend finds one", async () => {
-        const icon = {flowable: false, monochrome: false}
-        getMock.mockResolvedValueOnce({data: {icon}})
+        const raw = {icon: "base64svg", flowable: false, monochrome: false}
+        getMock.mockResolvedValueOnce({data: {icon: raw}})
 
         const result = await store.loadIcon("io.kestra.plugin.core.log.Log")
 
-        expect(result).toEqual(icon)
+        expect(result).toEqual({flowable: false, monochrome: false, hasIcon: true})
         expect(getMock).toHaveBeenCalledTimes(1)
 
         const cached = await store.loadIcon("io.kestra.plugin.core.log.Log")
-        expect(cached).toEqual(icon)
+        expect(cached).toEqual({flowable: false, monochrome: false, hasIcon: true})
         expect(getMock).toHaveBeenCalledTimes(1)
     })
 
     it("passes the monochrome field through untouched", async () => {
-        const icon = {flowable: false, monochrome: true}
-        getMock.mockResolvedValueOnce({data: {icon}})
+        const raw = {icon: "base64svg", flowable: false, monochrome: true}
+        getMock.mockResolvedValueOnce({data: {icon: raw}})
 
         const result = await store.loadIcon("io.kestra.plugin.core.debug.Echo")
 
         expect(result?.monochrome).toBe(true)
     })
 
+    it("derives hasIcon: false for a registered class that ships no icon file", async () => {
+        // The backend still returns an entry (with a real `flowable`) for every registered
+        // task/trigger class even when it has no icon — only the nested `icon` field is null.
+        const raw = {icon: null, flowable: true, monochrome: false}
+        getMock.mockResolvedValueOnce({data: {icon: raw}})
+
+        const result = await store.loadIcon("io.kestra.plugin.core.debug.NoIcon")
+
+        expect(result).toEqual({flowable: true, monochrome: false, hasIcon: false})
+    })
+
     it("resolves to undefined without throwing when the backend answers 200 with a null icon", async () => {
+        // Top-level `icon: null` means the class isn't registered at all (distinct from a
+        // registered-but-iconless class, which nests `icon: null` one level deeper).
         getMock.mockResolvedValueOnce({data: {icon: null}})
 
         const result = await store.loadIcon("io.kestra.plugin.unknown.Task")
@@ -77,7 +90,7 @@ describe("plugins store loadIcon", () => {
 
         expect(getMock).toHaveBeenCalledTimes(1)
 
-        resolveRequest({data: {icon: {flowable: false, monochrome: false}}})
+        resolveRequest({data: {icon: {icon: "base64svg", flowable: false, monochrome: false}}})
 
         const [firstResult, secondResult] = await Promise.all([first, second])
         expect(firstResult).toEqual(secondResult)

@@ -7,13 +7,16 @@ import fallbackIcon from "../../../src/assets/images/plugin-icon-fallback.svg"
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 const mockIcons = {
-    "io.kestra.plugin.core.log.Log": {flowable: false, monochrome: false},
-    "io.kestra.plugin.core.flow.Parallel": {flowable: true, monochrome: false},
-    "io.kestra.plugin.core.debug.Echo": {flowable: false, monochrome: true},
+    "io.kestra.plugin.core.log.Log": {flowable: false, monochrome: false, hasIcon: true},
+    "io.kestra.plugin.core.flow.Parallel": {flowable: true, monochrome: false, hasIcon: true},
+    "io.kestra.plugin.core.debug.Echo": {flowable: false, monochrome: true, hasIcon: true},
+    // registered (present in the catalog, with a real `flowable` value) but ships no icon file —
+    // every task/trigger class gets an entry regardless of icon presence
+    "io.kestra.plugin.core.debug.NoIcon": {flowable: false, monochrome: false, hasIcon: false},
 }
 
 function svgUrlFor(cls: string): string {
-    return `/api/v1/plugins/icons/${encodeURIComponent(cls)}/svg`
+    return `/api/v1/plugins/icons/${encodeURIComponent(cls)}/icon.svg`
 }
 
 beforeEach(() => {
@@ -48,6 +51,18 @@ describe("KsTaskIcon", () => {
         })
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.attributes("src")).toBe(svgUrlFor("io.kestra.plugin.core.log.Log"))
+    })
+
+    test("falls back to the local asset for a registered class that has no icon at all", () => {
+        // Regression: every registered task/trigger class gets an `icons` map entry (other
+        // consumers rely on `flowable` being present even without an icon) — being present in the
+        // map must NOT be treated as "has an icon", or the <img> points at a URL that 404s.
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.debug.NoIcon", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.attributes("src")).toBe(fallbackIcon)
     })
 
     test("prefixes the svg endpoint with KESTRA_BASE_PATH when the app is served behind a subpath", () => {
@@ -152,6 +167,18 @@ describe("KsTaskIcon", () => {
         expect(wrapper.find(".ks-task-icon--flowable").exists()).toBe(false)
     })
 
+    test("applies flowable class even for a registered class without an icon", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {
+                cls: "io.kestra.plugin.core.debug.NoIcon",
+                icons: {"io.kestra.plugin.core.debug.NoIcon": {flowable: true, monochrome: false, hasIcon: false}},
+                onlyIcon: true,
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-task-icon--flowable").exists()).toBe(true)
+    })
+
     test("falls back to the local fallback asset when cls has no matching icon", () => {
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.unknown.Task", icons: mockIcons, onlyIcon: true},
@@ -183,7 +210,7 @@ describe("KsTaskIcon", () => {
 
     test("resolves inner class to parent when cls contains $", () => {
         const iconsWithParent = {
-            "io.kestra.plugin.core.log.Log": {flowable: false, monochrome: false},
+            "io.kestra.plugin.core.log.Log": {flowable: false, monochrome: false, hasIcon: true},
         }
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log$SubClass", icons: iconsWithParent, onlyIcon: true},
@@ -195,7 +222,7 @@ describe("KsTaskIcon", () => {
     })
 
     test("lazily resolves the icon via loadIcon when it isn't in icons", async () => {
-        const loadIcon = vi.fn().mockResolvedValue({flowable: false, monochrome: false})
+        const loadIcon = vi.fn().mockResolvedValue({flowable: false, monochrome: false, hasIcon: true})
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log", onlyIcon: true, loadIcon},
             global: globalConfig,
@@ -212,7 +239,7 @@ describe("KsTaskIcon", () => {
     })
 
     test("does not call loadIcon when the icon is already provided", () => {
-        const loadIcon = vi.fn().mockResolvedValue({flowable: false, monochrome: false})
+        const loadIcon = vi.fn().mockResolvedValue({flowable: false, monochrome: false, hasIcon: true})
         mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true, loadIcon},
             global: globalConfig,

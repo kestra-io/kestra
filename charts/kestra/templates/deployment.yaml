@@ -47,7 +47,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  replicas: {{ hasKey $content "replicas" | ternary $content.replicas $common.replicas }}
+  {{- /* kindIs "invalid" is true only when replicas is unset or explicit null, so an explicit `replicas: 0` is preserved (unlike Sprig's `default`, which treats 0 as empty) */}}
+  replicas: {{ kindIs "invalid" $content.replicas | ternary $common.replicas $content.replicas }}
   revisionHistoryLimit: {{ default $common.revisionHistoryLimit $content.revisionHistoryLimit }}
   selector:
     matchLabels:

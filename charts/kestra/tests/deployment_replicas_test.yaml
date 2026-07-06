@@ -49,3 +49,16 @@ tests:
       - equal:
           path: spec.replicas
           value: 0
+
+  - it: falls back to common.replicas when the deployment sets replicas to null
+    set:
+      common:
+        replicas: 3
+      deployments:
+        standalone:
+          enabled: true
+          replicas: null
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3

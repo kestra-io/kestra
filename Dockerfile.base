@@ -1,5 +1,10 @@
 ARG JRE_VERSION="25"
-FROM eclipse-temurin:${JRE_VERSION}-jre
+# Pin the Ubuntu release explicitly. The unsuffixed `-jre` tag floats to the
+# latest Ubuntu, which silently drifted to 26.04 (Python 3.14) and broke the
+# build: `amazon-ion` (a `kestra` pip dep) has no cp314 wheel, so pip falls back
+# to a source build that needs cmake/gcc. 24.04 LTS ships Python 3.12, for which
+# a wheel exists. Pinning also keeps the base OS (and its UID layout) stable.
+FROM eclipse-temurin:${JRE_VERSION}-jre-noble
 
 ARG UV_VERSION="0.6.17"
 ARG WITH_PYTHON="false"

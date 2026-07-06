@@ -38,6 +38,13 @@ public class InMemoryFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
+    public Optional<FlowInterface> findByExecution(Execution execution) {
+        // unlike the interface default, does not require a flow revision on the execution:
+        // fixture flows are registered as single latest versions
+        return Optional.ofNullable(flows.get(key(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())));
+    }
+
+    @Override
     public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
         return Optional.ofNullable(flows.get(key(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())));
     }

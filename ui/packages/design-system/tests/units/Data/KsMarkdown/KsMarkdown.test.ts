@@ -1,4 +1,5 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
+import {markRaw} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../../src/index"
@@ -403,5 +404,66 @@ describe("KsMarkdown", () => {
         if (shikiDiv.exists()) {
             expect(shikiDiv.text()).toContain("greeting")
         }
+    })
+
+    // ─── XSS protection ──────────────────────────────────────────────────────
+
+    test("strips <script> tag from raw HTML by default (xssProtection on)", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<script>alert('xss')</script>"},
+            global: globalConfig,
+        })
+        // The <script> element is removed entirely, so nothing can execute.
+        // Its former body survives only as inert text — never as a live tag.
+        expect(wrapper.html()).not.toContain("<script")
+        expect(wrapper.find("script").exists()).toBe(false)
+    })
+
+    test("strips event-handler attributes from raw HTML by default", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<img src=\"x\" onerror=\"alert('xss')\">"},
+            global: globalConfig,
+        })
+        expect(wrapper.html()).not.toContain("onerror")
+    })
+
+    test("injects raw HTML verbatim when xssProtection is disabled (escape hatch)", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<img src=\"x\" onerror=\"alert('xss')\">", xssProtection: false},
+            global: globalConfig,
+        })
+        expect(wrapper.html()).toContain("onerror")
+    })
+
+    test("sanitizes custom-component inner HTML when xssProtection is on", () => {
+        // markRaw prevents Vue's reactive() from wrapping the component definition
+        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
+        // warns "Vue received a Component that was made a reactive object".
+        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
+        const wrapper = mount(KsMarkdown, {
+            props: {
+                content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
+                components: {ChildCard},
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.find(".child-card").exists()).toBe(true)
+        expect(wrapper.html()).not.toContain("onerror")
+    })
+
+    test("injects custom-component inner HTML verbatim when xssProtection is disabled", () => {
+        // markRaw prevents Vue's reactive() from wrapping the component definition
+        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
+        // warns "Vue received a Component that was made a reactive object".
+        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
+        const wrapper = mount(KsMarkdown, {
+            props: {
+                content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
+                components: {ChildCard},
+                xssProtection: false,
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.html()).toContain("onerror")
     })
 })

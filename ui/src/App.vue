@@ -36,7 +36,6 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
-    import {usePluginsStore} from "./stores/plugins"
     import {useThemeCycle} from "./composables/useThemeCycle"
 
     const loaded = ref(false)
@@ -58,8 +57,6 @@
         document.title = document.title.replace(/( - .+)?$/, envSuffix)
     }
 
-    const pluginsStore = usePluginsStore()
-
     async function loadGeneralResources() {
         const config = await miscStore.loadConfigs()
         const uid = localStorage.getItem("uid") || (() => {
@@ -71,8 +68,6 @@
         if (!config.isBasicAuthInitialized || !BasicAuth.isLoggedIn()) {
             return null
         }
-
-        pluginsStore.fetchIcons()
 
         await docStore.initResourceUrlTemplate(config.version)
 

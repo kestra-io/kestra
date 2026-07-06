@@ -61,6 +61,7 @@
         --kel-pagination-item-gap: 0;
         --kel-pagination-font-size-small: var(--ks-font-size-xs);
 
+        flex-wrap: wrap;
         gap: 8px;
 
         li, button, .btn-prev, .btn-next {

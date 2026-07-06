@@ -51,6 +51,7 @@ export const ORDER = [
     "variables",
     "plugin-defaults",
     "kv",
+    "reusable-inputs",
     "files",
     "history",
     "audit-logs",

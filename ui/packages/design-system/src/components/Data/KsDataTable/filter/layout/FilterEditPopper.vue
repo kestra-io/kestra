@@ -4,13 +4,16 @@
             :label="filterKey.label"
             :description="filterKey.description"
             @close="emits('close')"
-        />
-        <FilterComparatorSelect
-            :shouldShowComparator
-            :selectedComparator="state.selectedComparator"
-            :filterKey="filterKey"
-            @update:selected-comparator="state.selectedComparator = $event"
-        />
+        >
+            <template #trailing>
+                <FilterComparatorSelect
+                    :shouldShowComparator
+                    :selectedComparator="state.selectedComparator"
+                    :filterKey="filterKey"
+                    @update:selected-comparator="state.selectedComparator = $event"
+                />
+            </template>
+        </FilterHeader>
 
         <component
             v-if="valueComponent"
@@ -23,14 +26,14 @@
             :footerText
             :timeRangeMode="state.timeRangeMode"
             @reset="resetState"
-            @apply="handleApply"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, inject, watch} from "vue"
+    import {computed, onMounted, reactive, inject, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useDebounceFn} from "@vueuse/core"
     import {
         type AppliedFilter,
         type FilterKeyConfig,
@@ -82,6 +85,8 @@
     }>()
 
     const filterContext = inject(FILTER_CONTEXT_INJECTION_KEY)
+
+    const ready = ref(false)
 
     const state = reactive({
         textValue: "",
@@ -333,37 +338,41 @@
         }
     }
 
-    const handleApply = () => {
-        if (!state.selectedComparator) return
+    const emptyValueForType = (): AppliedFilter["value"] => {
+        const type = props.filterKey?.valueType
+        return type === "multi-select" || type === "key-value" ? [] : ""
+    }
 
-        const filterData = getFilterValue()
-        if (!filterData) {
-            // The parent closes the dialog as part of handling `remove`; no extra `close` needed.
-            emits("remove", props.filter.id)
+    // Live apply: every change emits `update` immediately (no Apply button). The popover stays
+    // open and is closed by the user (X / overlay); empty filters are cleaned up on close by the
+    // parent. Text inputs are debounced by the caller; time-range custom waits for both ends.
+    const applyLive = () => {
+        if (!ready.value || !state.selectedComparator) return
+
+        if (isTimeRange.value && state.timeRangeMode === "custom"
+            && (!state.startDateValue || !state.endDateValue)) {
             return
         }
 
+        const filterData = getFilterValue()
         const updatedFilter: any = {
             ...props.filter,
             comparator: state.selectedComparator,
             comparatorLabel: props.filterKey?.comparatorLabels?.[state.selectedComparator] ?? COMPARATOR_LABELS[state.selectedComparator],
-            value: filterData.value,
-            valueLabel: filterData.label,
+            value: filterData ? filterData.value : emptyValueForType(),
+            valueLabel: filterData ? filterData.label : "",
         }
 
-        if (filterData.meta !== undefined) {
+        if (filterData?.meta !== undefined) {
             updatedFilter.meta = filterData.meta
         } else if (props.filterKey?.key !== "timeRange") {
             delete updatedFilter.meta
         }
 
         if (props.filterKey?.keyLabelProvider) {
-            updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData.meta)
+            updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData?.meta)
         }
 
-        // The parent closes the dialog as part of handling `update`; no extra `close` needed.
-        // Emitting `close` here would run the parent's empty-chip auto-remove against the stale
-        // pre-update props and discard the chip we just applied.
         emits("update", updatedFilter)
     }
 
@@ -475,7 +484,10 @@
         initializeStateFromFilter(props.filter)
     }
 
-    onMounted(initializeFilter)
+    onMounted(async () => {
+        await initializeFilter()
+        ready.value = true
+    })
 
     // When the "Apply to" segmented selector flips, refresh the dropdown options so providers can
     // vary labels by the chosen date field. Cheap for filters with dateFilterOptions (relative dates
@@ -483,6 +495,20 @@
     // never changes there.
     watch(
         () => state.dateFilterMode,
-        () => loadValueOptions(),
+        async () => { await loadValueOptions(); applyLive() },
     )
+
+    const debouncedApplyLive = useDebounceFn(applyLive, 400)
+
+    watch(() => state.textValue, () => debouncedApplyLive())
+
+    watch([
+        () => state.selectValue,
+        () => state.keyValuePair,
+        () => state.radioValue,
+        () => state.selectedComparator,
+        () => state.startDateValue,
+        () => state.endDateValue,
+        () => state.timeRangeMode,
+    ], () => applyLive())
 </script>

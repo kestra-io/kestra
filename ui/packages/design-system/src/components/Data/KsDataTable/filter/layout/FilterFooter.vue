@@ -12,13 +12,6 @@
             <KsTooltip :content="$t('filter.reset_tooltip')" placement="top">
                 <KsButton size="small" :icon="Restore" @click="emits('reset')" />
             </KsTooltip>
-            <KsButton
-                type="primary"
-                size="small"
-                @click="emits('apply')"
-            >
-                {{ $t("filter.footer_apply") }}
-            </KsButton>
         </div>
     </div>
 </template>
@@ -33,7 +26,6 @@
 
     const emits = defineEmits<{
         reset: [];
-        apply: [];
     }>()
 </script>
 

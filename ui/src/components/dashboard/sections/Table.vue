@@ -18,7 +18,6 @@
                     :currentPage="pageNumber"
                     :pageSize="pageSize"
                     :height="240"
-                    size="small"
                     tableLayout="fixed"
                     noPaginationGutter
                     noFirstColumnGutter
@@ -50,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
     import {Motion} from "motion-v"
@@ -84,6 +83,10 @@
 
     const containerID = `${props.chart.id}__${Math.random()}`
 
+    const hasIdColumn = computed(() =>
+        Object.values(props.chart.data?.columns ?? {}).some((c: any) => c?.field === "ID"),
+    )
+
     const resolvedComponent = (field: string) => {
         switch (field) {
         case "ID":
@@ -108,7 +111,7 @@
         case "ID":
             return {...baseProps, execution: true}
         case "FLOW_ID":
-            return {...baseProps, flow: true}
+            return {...baseProps, flow: true, colored: !hasIdColumn.value}
         case "NAMESPACE":
             return {field: row[key]}
         case "STATE":

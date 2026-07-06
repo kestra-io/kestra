@@ -96,10 +96,20 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
         if (flow != null && revision.isPresent() && !revision.get().equals(flow.getRevision())) {
             flow = null; // force a reload
         }
-        return (Optional) Optional
-            .ofNullable(flow)
-            // this can happen if an execution is still running with an old revision or if the flow was deleted
-            .or(() -> flowRepository.findByIdWithSource(tenantId, namespace, id, revision));
+        // No explicit revision requested: this is an execution-time lookup (subflow, etc.) and
+        // must resolve to the latest non-draft revision. If the cached head is a draft we drop
+        // the cache hit and let the repository find the most recent non-draft revision.
+        if (revision.isEmpty() && flow != null && flow.isDraft()) {
+            flow = null;
+        }
+        if (flow != null) {
+            return (Optional) Optional.of(flow);
+        }
+        // this can happen if an execution is still running with an old revision or if the flow was deleted
+        if (revision.isEmpty()) {
+            return (Optional) flowRepository.findByIdWithSourceForExecution(tenantId, namespace, id);
+        }
+        return (Optional) flowRepository.findByIdWithSource(tenantId, namespace, id, revision);
     }
 
     @Override

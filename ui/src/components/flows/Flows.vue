@@ -101,6 +101,10 @@
                         >
                             <BreakableText :value="scope.row.id" />
                         </router-link>
+                        <KsTag size="small" v-if="scope.row.draft" class="me-1" plain>
+                            <CircleOpacity />
+                            {{ $t('draft') }}
+                        </KsTag>
                         <MarkdownTooltip
                             :id="scope.row.namespace +
                                 '-' +
@@ -271,6 +275,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import TrashCan from "vue-material-design-icons/TrashCan.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
+    import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
 
     import NavBarActions from "../layout/NavBarActions.vue"
     import NavBarAction from "../layout/NavBarAction.vue"
@@ -659,12 +664,20 @@
     }
 
     function rowClasses(row: any) {
-        return row && row.row && row.row.disabled ? "disabled" : ""
+        if (!row || !row.row) return ""
+        const classes = []
+        if (row.row.disabled) classes.push("disabled")
+        if (row.row.draft) classes.push("draft")
+        return classes.join(" ")
     }
 
     function mappedChart(id: string, namespace: string) {
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION))
         MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id)
+        MAPPED_CHARTS.data.where = MAPPED_CHARTS.data.where.map((condition: any) => ({
+            ...condition,
+            value: condition.value.replace("${namespace}", namespace).replace("${flow_id}", id),
+        }))
         return MAPPED_CHARTS
     }
 

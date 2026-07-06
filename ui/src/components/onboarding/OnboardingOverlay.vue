@@ -725,7 +725,7 @@
         align-items: center;
         gap: 0.25rem;
         color: var(--ks-status-success);
-        font-size: 0.78rem;
+        font-size: var(--ks-font-size-sm);
         font-weight: 600;
     }
 

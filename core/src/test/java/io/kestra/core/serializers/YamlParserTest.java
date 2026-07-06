@@ -168,7 +168,7 @@ class YamlParserTest {
 
         String s = MAPPER.writeValueAsString(flow);
         assertThat(s).isEqualTo(
-            "{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"},{\"key\":\"existing\",\"value\":\"label\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"
+            "{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"draft\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"},{\"key\":\"existing\",\"value\":\"label\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"
         );
     }
 
@@ -253,6 +253,7 @@ class YamlParserTest {
                 "namespace: io.kestra.tests\n" +
                 "disabled: false\n" +
                 "deleted: false\n" +
+                "draft: false\n" +
                 "labels:\n" +
                 "- key: key1\n" +
                 "  value: 123\n" +

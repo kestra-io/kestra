@@ -23,7 +23,8 @@ public enum Type {
     MULTISELECT(MultiselectInput.class.getName()),
     YAML(YamlInput.class.getName()),
     EMAIL(EmailInput.class.getName()),
-    FORM(FormInput.class.getName());
+    FORM(FormInput.class.getName()),
+    REUSABLE_INPUTS(ReusableInputsInput.class.getName());
 
     private final String clsName;
 

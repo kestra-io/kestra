@@ -119,6 +119,10 @@
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
         --kel-button-disabled-text-color: var(--ks-text-inactive);
 
+        [class*="kel-icon"] + span {
+            margin-left: var(--ks-spacing-2);
+        }
+
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
         }

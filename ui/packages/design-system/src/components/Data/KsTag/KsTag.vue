@@ -71,22 +71,22 @@
         warning: (
             bg: var(--ks-log-background-warn),
             border: var(--ks-log-border-warn),
-            text: var(--ks-log-warn),
+            text: var(--ks-status-warn),
         ),
         danger: (
-            bg: var(--ks-log-background-error),
+            bg: #FF6A6C1A,
             border: var(--ks-log-border-error),
-            text: var(--ks-log-error),
+            text: var(--ks-status-error),
         ),
         error: (
             bg: var(--ks-log-background-error),
             border: var(--ks-log-border-error),
-            text: var(--ks-log-error),
+            text: var(--ks-status-error),
         ),
         info: (
-            bg: var(--ks-log-background-info),
-            border: var(--ks-log-border-info),
-            text: var(--ks-log-info),
+            bg: #718BFE1A,
+            border: transparent,
+            text: var(--ks-status-info),
         ),
     );
 
@@ -102,6 +102,20 @@
             display: inline-flex;
             align-items: center;
             line-height: 0;
+
+            .material-design-icon,
+            .material-design-icon__svg {
+                width: 1em;
+                height: 1em;
+            }
+
+            .material-design-icon__svg {
+                position: static;
+            }
+        }
+
+        &.kel-tag--default.kel-tag--plain [class*="kel-icon"] .material-design-icon {
+            color: var(--ks-icon-muted);
         }
 
         &.kel-tag--plain {
@@ -148,7 +162,7 @@
             &.kel-tag--plain {
                 --kel-tag-bg-color: var(--ks-bg-tag);
                 --kel-tag-text-color: var(--ks-text-primary);
-                --kel-tag-border-color: var(--ks-border-strong);
+                --kel-tag-border-color: transparent;
                 --kel-tag-hover-color: var(--ks-text-primary);
 
                 a {

@@ -19,6 +19,17 @@ export function isFile(value: unknown): boolean {
     return typeof value === "string" && PREFIXES.some(p => value.startsWith(p))
 }
 
+/**
+ * Returns `true` when the value is an Ion internal-storage file (i.e. passes {@link isFile}
+ * and the URI ends with a `.ion` extension, case-insensitive).
+ *
+ * @param value Value to validate.
+ * @returns `true` if the value is an Ion file URI.
+ */
+export function isIon(value: unknown): boolean {
+    return isFile(value) && typeof value === "string" && value.toLowerCase().endsWith(".ion")
+}
+
 export function flatten(object: Record<string, any>) {
     return Object.assign({}, ...function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any>[] {
         if (child === null) {

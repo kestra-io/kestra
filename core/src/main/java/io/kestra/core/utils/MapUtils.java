@@ -202,7 +202,7 @@ public class MapUtils {
                 if (!currentMap.containsKey(key)) {
                     currentMap.put(key, new HashMap<>());
                 } else if (!(currentMap.get(key) instanceof Map)) {
-                    var invalidKey = String.join(",", Arrays.copyOfRange(keys, 0, i));
+                    var invalidKey = String.join(".", Arrays.copyOfRange(keys, 0, i + 1));
                     log.warn(CONFLICT_AT_KEY_MSG, invalidKey, flatMap.keySet());
                     continue;
                 }

@@ -10,8 +10,8 @@ import {federation} from "@module-federation/vite"
 // - missing .map files inside monaco-editor (marked.umd.js.map, etc.)
 const logger = createLogger()
 /**
- * @param {string} msg 
- * @returns 
+ * @param {string} msg
+ * @returns
  */
 const isNodeModulesSourcemapWarning = (msg) =>
     (/sourcemap/i).test(msg) && msg.includes("node_modules") && (
@@ -20,9 +20,9 @@ const isNodeModulesSourcemapWarning = (msg) =>
     )
 const loggerWarn = logger.warn.bind(logger)
 /**
- * @param {string} msg 
- * @param {any} options 
- * @returns 
+ * @param {string} msg
+ * @param {any} options
+ * @returns
  */
 logger.warn = (msg, options) => {
     if (isNodeModulesSourcemapWarning(msg)) return
@@ -30,9 +30,9 @@ logger.warn = (msg, options) => {
 }
 const loggerWarnOnce = logger.warnOnce.bind(logger)
 /**
- * @param {string} msg 
- * @param {any} options 
- * @returns 
+ * @param {string} msg
+ * @param {any} options
+ * @returns
  */
 logger.warnOnce = (msg, options) => {
     if (isNodeModulesSourcemapWarning(msg)) return
@@ -91,7 +91,7 @@ export default defineConfig(({mode}) => {
                 shared: {
                     vue: {
                         singleton: true,
-                        
+
                     },
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
@@ -154,6 +154,8 @@ export default defineConfig(({mode}) => {
                 "@module-federation/runtime",
                 "js-yaml",
                 "path-browserify",
+                "mailchecker",
+                "rapidoc",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

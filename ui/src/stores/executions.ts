@@ -6,7 +6,7 @@ import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
 import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX, routeQueryToQueryFilters} from "@kestra-io/design-system"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type ApiExecution, type ApiTaskRun} from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
@@ -76,57 +76,16 @@ interface LogsState {
     results: any[];
 }
 
-export interface Label{
-    key: string;
-    value: string;
-}
+export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type Histories = {
-    state: string;
-    date: string;
-}
-
-export interface Execution{
-    id: string;
-    namespace: string;
-    flowId: string;
-    tenantId?: string;
-    taskRunList:  {
-        id: string,
-        taskId: string,
-        value?: string
-        executionId?: string
-        outputs?: Record<string, any>
-        state?: {
-            current: string
-        }
-    }[]
-    state: {
-        current: string;
-        history: string;
-        startDate: string;
-        duration: string;
-        endDate?: string;
-        histories?: Histories[];
-    }
-    trigger?: {
-        id: any;
-        type: string;
-        variables: {
-            executionId: string;
-        }
-    },
-    metadata: {
-        originalCreatedDate: string;
-        attemptNumber: number;
-    },
+// inputs/variables/outputs and taskRunList[].outputs aren't modeled on the SDK's ApiExecution/
+// ApiTaskRun (a backend OpenAPI-spec gap), even though the backend's Execution/TaskRun models
+// have them - overridden here so this app's execution objects keep exposing them.
+export type Execution = ApiExecution & {
+    taskRunList?: (ApiTaskRun & {outputs?: Record<string, any>})[]
     inputs?: Record<string, any>;
-    labels?: Label[];
     variables?: Record<string, any>;
     outputs?: Record<string, any>;
-    originalId?: string;
-    flowRevision?: number;
-    scheduleDate?: string;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {
@@ -304,7 +263,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const loadExecution = (options: { id: string }) => {
         return ExecutionsAPI.execution({executionId: options.id}).then(data => {
-            execution.value = data as unknown as Execution
+            execution.value = data
             return execution.value
         })
     }

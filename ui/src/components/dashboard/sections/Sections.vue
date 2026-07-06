@@ -25,17 +25,28 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KsIcon
-                                v-if="isTableChart(chart.type)"
-                                :tooltip="$t('dashboards.export')"
+                            <KsDropdown
+                                v-if="isExportableChart(chart.type)"
+                                placement="bottom-end"
+                                trigger="click"
                             >
                                 <KsButton
-                                    @click="exportChart(chart)"
                                     :icon="Download"
+                                    :aria-label="$t('dashboards.export')"
                                     link
                                     class="ms-2"
                                 />
-                            </KsIcon>
+                                <template #dropdown>
+                                    <KsDropdownMenu>
+                                        <KsDropdownItem @click="exportChart(chart, 'CSV')">
+                                            {{ $t('dashboards.exportTo.csv') }}
+                                        </KsDropdownItem>
+                                        <KsDropdownItem @click="exportChart(chart, 'ION')">
+                                            {{ $t('dashboards.exportTo.ion') }}
+                                        </KsDropdownItem>
+                                    </KsDropdownMenu>
+                                </template>
+                            </KsDropdown>
 
                             <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
@@ -75,13 +86,13 @@
     import {ref, computed} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
-    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards"
+    import {isKPIChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
     import {TYPES} from "../dashboard-types"
 
     import {useRoute} from "vue-router"
     const route = useRoute()
 
-    import {decodeSearchParams} from "@kestra-io/design-system"
+    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
@@ -130,10 +141,10 @@
         return baseFilters
     })
 
-    function exportChart(chart: Chart) {
+    function exportChart(chart: Chart, format: "CSV" | "ION") {
         dashboardStore.export(props.dashboard, chart, {
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? []),
-        })
+        }, format)
     }
 </script>
 

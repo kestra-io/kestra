@@ -628,11 +628,19 @@ class DashboardControllerTest {
 
         // export CSV
         byte[] csvBytes = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id/export/to-csv", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
             Argument.of(byte[].class)
         );
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
         assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
+
+        // export ION
+        byte[] ionBytes = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id/export?format=ION", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+            Argument.of(byte[].class)
+        );
+        var ion = new String(ionBytes, StandardCharsets.UTF_8);
+        assertThat(ion).contains(fakeNamespace).contains(fakeExecutionId);
     }
 
     @Test
@@ -686,9 +694,256 @@ class DashboardControllerTest {
         assertThat(chartData.getResults().get(0).get("chart_execution_id")).isEqualTo(fakeExecutionId);
 
         // export CSV
-        byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export/to-csv", previewRequest), Argument.of(byte[].class));
+        byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export", previewRequest), Argument.of(byte[].class));
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
         assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
+    }
+
+    @Test
+    void exportNonTableDataChartToCsv() {
+        var uuid = IdUtils.create();
+        var fakeNamespace = "a-namespace_" + uuid;
+        var fakeExecutionId = "an-execution-id" + uuid;
+        logRepository.save(
+            LogEntry.builder()
+                .namespace(fakeNamespace)
+                .level(Level.INFO)
+                .attemptNumber(1)
+                .executionId(fakeExecutionId)
+                .tenantId(MAIN_TENANT)
+                .executionKind(ExecutionKind.NORMAL)
+                .flowId("a-flow-id")
+                .timestamp(Instant.now())
+                .message("a message")
+                .build()
+        );
+
+        String dashboardYaml = """
+            id: exportNonTableDataChartToCsv
+            title: A dashboard with a pie chart
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: pie_logs_chart_id
+                type: io.kestra.plugin.core.dashboard.chart.Pie
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    chart_namespace:
+                      field: NAMESPACE
+                    chart_execution_id:
+                      field: EXECUTION_ID
+                      agg: COUNT
+                  where:
+                    - field: NAMESPACE
+                      type: EQUAL_TO
+                      value: "%s"
+                    - field: EXECUTION_ID
+                      type: EQUAL_TO
+                      value: "%s"
+            """.formatted(fakeNamespace, fakeExecutionId);
+
+        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            DashboardController.DashboardResponse.class
+        );
+
+        // a Pie chart is not a Table but is still a DataChart: the export guard was broadened to allow it
+        byte[] csvBytes = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/pie_logs_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+            Argument.of(byte[].class)
+        );
+        var csv = new String(csvBytes, StandardCharsets.UTF_8);
+        assertThat(csv).contains("chart_namespace").contains("chart_execution_id").contains(fakeNamespace).contains("1");
+    }
+
+    @Test
+    void exportKpiChartToCsvAndIon() {
+        var uuid = IdUtils.create();
+        var fakeNamespace = "a-namespace_" + uuid;
+        var fakeExecutionId = "an-execution-id" + uuid;
+        logRepository.save(
+            LogEntry.builder()
+                .namespace(fakeNamespace)
+                .level(Level.INFO)
+                .attemptNumber(1)
+                .executionId(fakeExecutionId)
+                .tenantId(MAIN_TENANT)
+                .executionKind(ExecutionKind.NORMAL)
+                .flowId("a-flow-id")
+                .timestamp(Instant.now())
+                .message("a message")
+                .build()
+        );
+
+        String dashboardYaml = """
+            id: exportKpiChartToCsvAndIon
+            title: A dashboard with a KPI chart
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: kpi_logs_chart_id
+                type: io.kestra.plugin.core.dashboard.chart.KPI
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.LogsKPI
+                  columns:
+                    field: EXECUTION_ID
+                    agg: COUNT
+                  numerator:
+                    - field: LEVEL
+                      type: IN
+                      values:
+                        - INFO
+                  where:
+                    - field: NAMESPACE
+                      type: EQUAL_TO
+                      value: "%s"
+                    - field: EXECUTION_ID
+                      type: EQUAL_TO
+                      value: "%s"
+            """.formatted(fakeNamespace, fakeExecutionId);
+
+        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            DashboardController.DashboardResponse.class
+        );
+
+        // KPI charts are DataChartKPI, not DataChart: the export guard was broadened to allow them too
+        byte[] csvBytes = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/kpi_logs_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+            Argument.of(byte[].class)
+        );
+        assertThat(new String(csvBytes, StandardCharsets.UTF_8)).contains("value").contains("1.0");
+
+        byte[] ionBytes = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/kpi_logs_chart_id/export?format=ION", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+            Argument.of(byte[].class)
+        );
+        // ION encodes doubles in binary, so only the "value" field name (a text symbol) is asserted here
+        assertThat(new String(ionBytes, StandardCharsets.UTF_8)).contains("value");
+    }
+
+    @Test
+    void exportMarkdownChartIsRejected() {
+        String dashboardYaml = """
+            id: exportMarkdownChartIsRejected
+            title: A dashboard with a markdown chart
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: markdown_chart_id
+                type: io.kestra.plugin.core.dashboard.chart.Markdown
+                source:
+                  type: Text
+                  content: Some markdown content
+            """;
+
+        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            DashboardController.DashboardResponse.class
+        );
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/markdown_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+                Argument.of(byte[].class)
+            )
+        );
+        assertThat(httpClientResponseException.getMessage()).contains("Only data charts can be exported.");
+    }
+
+    @Test
+    void exportDefaultDashboardSentinelChart() {
+        // the "_default" id is a reserved sentinel resolving to the built-in default dashboard, not a stored one
+        DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/_default"),
+            DashboardController.DashboardResponse.class
+        );
+        assertThat(defaultDashboard).isNotNull();
+        assertThat(defaultDashboard.getId()).isEqualTo("_default");
+        assertThat(defaultDashboard.getCharts()).hasSize(10);
+
+        byte[] csvBytes = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
+            Argument.of(byte[].class)
+        );
+        var csv = new String(csvBytes, StandardCharsets.UTF_8);
+        assertThat(csv).contains("date").contains("level").contains("total");
+    }
+
+    @Test
+    void getDefaultDashboardDefinitionsReturnsBuiltins() {
+        Map definitions = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/defaults/definitions"),
+            Map.class
+        );
+        assertThat(definitions).containsOnlyKeys("main", "flow", "namespace");
+        assertThat((String) definitions.get("main")).contains("kpi_success_ratio");
+        assertThat((String) definitions.get("flow")).contains("--NAMESPACE--").contains("--FLOW--");
+        assertThat((String) definitions.get("namespace")).contains("kpi_success_ratio");
+    }
+
+    @Test
+    void cannotCreateDashboardWithReservedDefaultId() {
+        String dashboardYaml = """
+            id: _default
+            title: Some Dashboard
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  column: date
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+            """;
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+                DashboardController.DashboardResponse.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: '_default' is a reserved dashboard id");
+    }
+
+    @Test
+    void cannotUpdateDashboardToReservedDefaultId() {
+        String dashboardYaml = """
+            id: _default
+            title: Some Dashboard
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  column: date
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+            """;
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                PUT(DASHBOARD_PATH + "/_default", dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+                DashboardController.DashboardResponse.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: '_default' is a reserved dashboard id");
     }
 
     @Test

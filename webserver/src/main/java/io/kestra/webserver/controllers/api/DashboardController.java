@@ -3,6 +3,8 @@ package io.kestra.webserver.controllers.api;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -17,6 +19,7 @@ import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.ExportFormat;
 import io.kestra.core.models.dashboards.TimeWindow;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
@@ -30,11 +33,11 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
-import io.kestra.plugin.core.dashboard.chart.Table;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
@@ -61,6 +64,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
@@ -68,6 +72,16 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 @Slf4j
 public class DashboardController {
     public static final Pattern DASHBOARD_ID_PATTERN = Pattern.compile("^id:.*$", Pattern.MULTILINE);
+
+    /**
+     * Reserved id resolving to the built-in default dashboard definition. Not a real stored dashboard, never
+     * shown in dashboard id autocompletion — it's a backend/API sentinel only (e.g. used by export tooling
+     * when no explicit dashboardId is provided).
+     */
+    public static final String DEFAULT_DASHBOARD_ID = "_default";
+    private static final String DEFAULT_MAIN_DEFINITION_RESOURCE = "dashboards/default_main_definition.yaml";
+    private static final String DEFAULT_FLOW_DEFINITION_RESOURCE = "dashboards/default_flow_definition.yaml";
+    private static final String DEFAULT_NAMESPACE_DEFINITION_RESOURCE = "dashboards/default_namespace_definition.yaml";
 
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
@@ -100,6 +114,10 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Get a dashboard")
     public DashboardResponse getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id) throws ConstraintViolationException {
+        if (DEFAULT_DASHBOARD_ID.equals(id)) {
+            return new DashboardResponse(defaultDashboard());
+        }
+
         return dashboardRepository.get(tenantService.resolveTenant(), id).map(d ->
         {
             if (!DASHBOARD_ID_PATTERN.matcher(d.getSourceCode()).find()) {
@@ -107,6 +125,39 @@ public class DashboardController {
             }
             return new DashboardResponse(d);
         }).orElse(null);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "defaults/definitions")
+    @Operation(tags = { "Dashboards" }, summary = "Get the built-in default dashboard definitions")
+    public Map<String, String> getDefaultDashboardDefinitions() {
+        return Map.of(
+            "main", readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE),
+            "flow", readClasspathResource(DEFAULT_FLOW_DEFINITION_RESOURCE),
+            "namespace", readClasspathResource(DEFAULT_NAMESPACE_DEFINITION_RESOURCE)
+        );
+    }
+
+    private Dashboard defaultDashboard() {
+        String yaml = readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE);
+
+        return YamlParser.parse(yaml, Dashboard.class).toBuilder()
+            .id(DEFAULT_DASHBOARD_ID)
+            .tenantId(tenantService.resolveTenant())
+            .sourceCode("id: " + DEFAULT_DASHBOARD_ID + "\n" + yaml)
+            .deleted(false)
+            .build();
+    }
+
+    private String readClasspathResource(String path) {
+        try (var is = getClass().getClassLoader().getResourceAsStream(path)) {
+            if (is == null) {
+                throw new IllegalStateException("Missing resource: " + path);
+            }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -119,6 +170,7 @@ public class DashboardController {
         if (dashboardParsed.getId() == null) {
             throw new IllegalArgumentException("Dashboard id is mandatory");
         }
+        assertNotReservedId(dashboardParsed.getId(), dashboardParsed);
         modelValidator.validate(dashboardParsed);
 
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), dashboardParsed.getId());
@@ -170,6 +222,8 @@ public class DashboardController {
     public HttpResponse<DashboardResponse> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
+        assertNotReservedId(id, null);
+
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
         if (existingDashboard.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -191,6 +245,22 @@ public class DashboardController {
         modelValidator.validate(dashboardToSave);
 
         return HttpResponse.ok(new DashboardResponse(this.save(existingDashboard.get(), dashboardToSave, dashboard)));
+    }
+
+    private void assertNotReservedId(String id, Dashboard dashboardParsed) {
+        if (DEFAULT_DASHBOARD_ID.equals(id)) {
+            throw new ConstraintViolationException(
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        "'" + DEFAULT_DASHBOARD_ID + "' is a reserved dashboard id",
+                        dashboardParsed,
+                        Dashboard.class,
+                        "dashboard.id",
+                        id
+                    )
+                )
+            );
+        }
     }
 
     private Dashboard parseDashboard(String dashboard) {
@@ -283,7 +353,7 @@ public class DashboardController {
 
         filters = formatLabelsFilters(filters);
 
-        Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
+        Dashboard dashboard = DEFAULT_DASHBOARD_ID.equals(id) ? defaultDashboard() : dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboard == null) {
             return null;
         }
@@ -447,46 +517,54 @@ public class DashboardController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{id}/charts/{chartId}/export/to-csv", produces = MediaType.APPLICATION_OCTET_STREAM)
-    @Operation(tags = { "Dashboards" }, summary = "Export a dashboard chart data to CSV")
-    public HttpResponse<byte[]> exportDashboardChartDataToCSV(
+    @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(tags = { "Dashboards" }, summary = "Export a dashboard chart data")
+    public HttpResponse<byte[]> exportDashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
+        @Parameter(description = "The export format") @QueryValue(defaultValue = "CSV") ExportFormat format,
         @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body ChartFiltersOverrides globalFilter) throws IOException {
         var fetchChartDataQuery = buildDashboardChardDataQuery(id, chartId, globalFilter);
         if (fetchChartDataQuery == null) {
             return null;
         }
-        if (!(fetchChartDataQuery.chart instanceof Table)) {
-            throw new IllegalArgumentException("Only Table data charts can be exported.");
-        }
+        assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream);
-        CSVUtils.toCSV(outputStreamWriter, fetchedData.getResults());
-
-        var filename = "%s_%s_export.csv".formatted(id, chartId);
-        return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename));
+        return export(fetchedData.getResults(), "%s_%s_export".formatted(id, chartId), format);
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "charts/export/to-csv", produces = MediaType.APPLICATION_OCTET_STREAM)
-    @Operation(tags = { "Dashboards" }, summary = "Export a table chart data to CSV")
-    public HttpResponse<byte[]> exportChartToCsv(
+    @Post(uri = "charts/export", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(tags = { "Dashboards" }, summary = "Export a chart data")
+    public HttpResponse<byte[]> exportChart(
+        @Parameter(description = "The export format") @QueryValue(defaultValue = "CSV") ExportFormat format,
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
         var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
-        if (!(fetchChartDataQuery.chart instanceof Table)) {
-            throw new IllegalArgumentException("Only Table data charts can be exported.");
-        }
+        assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream);
-        CSVUtils.toCSV(outputStreamWriter, fetchedData.getResults());
+        return export(fetchedData.getResults(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
+    }
 
-        var filename = "%s_%s_export.csv".formatted("default-dashboard", fetchChartDataQuery.chart().getId());
-        return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename));
+    private void assertExportable(Chart<?> chart) {
+        if (!(chart instanceof DataChart) && !(chart instanceof DataChartKPI)) {
+            throw new IllegalArgumentException("Only data charts can be exported.");
+        }
+    }
+
+    private HttpResponse<byte[]> export(List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        if (format == ExportFormat.ION) {
+            FileSerde.writeAll(byteArrayOutputStream, Flux.fromIterable(rows)).block();
+        } else {
+            var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream);
+            CSVUtils.toCSV(outputStreamWriter, rows);
+        }
+
+        var fullFilename = "%s.%s".formatted(filename, format.name().toLowerCase());
+        return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(fullFilename));
     }
 
     public record PreviewRequest(

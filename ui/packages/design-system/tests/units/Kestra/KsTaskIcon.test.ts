@@ -60,6 +60,21 @@ describe("KsTaskIcon", () => {
         expect(icon.attributes("src")).toBe(`/kestra${svgUrlFor("io.kestra.plugin.core.log.Log")}`)
     })
 
+    test("does not produce a protocol-relative // url when KESTRA_BASE_PATH is the root path", () => {
+        // A trailing slash on the base path (the default for a root-hosted deployment) must not
+        // survive into the URL — "/" + "/api/..." = "//api/..." is parsed by browsers as a
+        // protocol-relative URL with host "api", not an absolute path.
+        (window as any).KESTRA_BASE_PATH = "/"
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        const src = icon.attributes("src") ?? ""
+        expect(src).toBe(svgUrlFor("io.kestra.plugin.core.log.Log"))
+        expect(src.startsWith("//")).toBe(false)
+    })
+
     test("renders a monochrome icon as a CSS mask instead of an img", () => {
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.debug.Echo", icons: mockIcons, onlyIcon: true},

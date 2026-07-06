@@ -93,7 +93,9 @@
             return undefined
         }
 
-        const basePath = (window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? ""
+        // Trim a trailing slash so a root base path ("/") doesn't produce a leading "//", which
+        // browsers parse as a protocol-relative URL (host "api") instead of an absolute path.
+        const basePath = ((window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? "").replace(/\/$/, "")
         return `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/svg`
     })
 

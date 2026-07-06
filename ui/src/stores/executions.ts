@@ -318,7 +318,10 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Stays on raw axios: callers pass either a pre-built FormData (e.g. file inputs) or a plain
+    // object of input values - the SDK's createExecution() only handles the latter (its
+    // formDataBodySerializer does Object.entries(body), which silently yields nothing for an
+    // already-built FormData instance, dropping every input). Utils.toFormData() normalizes both.
     const triggerExecution = (options: {
         namespace: string;
         id: string;
@@ -329,13 +332,19 @@ export const useExecutionsStore = defineStore("executions", () => {
         scheduleDate?: string,
         revision?: number,
     }) => {
-        const {breakpoints, formData, ...rest} = options
-        return ExecutionsAPI.createExecution({...rest, 
-            body: formData, 
-            breakpoints: breakpoints?.join(","),
-        }, {
+        return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-        })
+            headers: {
+                "content-type": "multipart/form-data",
+            },
+            params: {
+                labels: options.labels ?? [],
+                scheduleDate: options.scheduleDate,
+                kind: options.kind,
+                breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+                revision: options.revision,
+            },
+        }).then(response => response.data)
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {

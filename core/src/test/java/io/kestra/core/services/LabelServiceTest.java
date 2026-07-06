@@ -51,7 +51,7 @@ class LabelServiceTest {
             .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))
             .build();
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger);
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger, Collections.emptyMap());
 
         assertThat(labels).hasSize(3);
         assertThat(labels).contains(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"), new Label("variable", "variableValue"));
@@ -67,10 +67,26 @@ class LabelServiceTest {
             .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))
             .build();
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger);
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger, Collections.emptyMap());
 
         assertThat(labels).hasSize(2);
         assertThat(labels).contains(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"));
+    }
+
+    @Test
+    void shouldRenderLabelValueUsingProvidedVariables() {
+        RunContext runContext = runContextFactory.of();
+        Flow flow = Flow.builder()
+            .labels(List.of(new Label("key", "value")))
+            .build();
+        AbstractTrigger trigger = Schedule.builder()
+            .labels(List.of(new Label("dynamicLabel", "{{ trigger.executionId }}")))
+            .build();
+
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger, Map.of("trigger", Map.of("executionId", "exec-123")));
+
+        assertThat(labels).hasSize(2);
+        assertThat(labels).contains(new Label("key", "value"), new Label("dynamicLabel", "exec-123"));
     }
 
     @Test

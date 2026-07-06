@@ -307,7 +307,24 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
         }
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, this);
+        var executionTrigger = ExecutionTrigger.of(
+            this,
+            Output.builder()
+                .executionId(current.getId())
+                .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
+                .namespace(current.getNamespace())
+                .flowId(current.getFlowId())
+                .flowRevision(current.getFlowRevision())
+                .state(current.getState().getCurrent())
+                .startDate(current.getState().getStartDate())
+                .endDate(current.getState().getEndDate().orElse(null))
+                .firstFailedTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).stream().filter(t -> t.getState().getCurrent().isFailed()).map(TaskRun::getTaskId).findFirst().orElse(null))
+                .lastTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).reversed().stream().map(TaskRun::getTaskId).findFirst().orElse(null))
+                .outputs(outputs)
+                .build()
+        );
+
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, this, Map.of("trigger", executionTrigger.getVariables()));
         Streams.of(current.getLabels())
             .filter(label -> label.key().equals(Label.CORRELATION_ID))
             .findFirst()
@@ -321,24 +338,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .flowRevision(flow.getRevision())
             .labels(labels)
             .state(new State())
-            .trigger(
-                ExecutionTrigger.of(
-                    this,
-                    Output.builder()
-                        .executionId(current.getId())
-                        .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
-                        .namespace(current.getNamespace())
-                        .flowId(current.getFlowId())
-                        .flowRevision(current.getFlowRevision())
-                        .state(current.getState().getCurrent())
-                        .startDate(current.getState().getStartDate())
-                        .endDate(current.getState().getEndDate().orElse(null))
-                        .firstFailedTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).stream().filter(t -> t.getState().getCurrent().isFailed()).map(TaskRun::getTaskId).findFirst().orElse(null))
-                        .lastTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).reversed().stream().map(TaskRun::getTaskId).findFirst().orElse(null))
-                        .outputs(outputs)
-                        .build()
-                )
-            );
+            .trigger(executionTrigger);
 
         try {
             if (this.inputs != null) {

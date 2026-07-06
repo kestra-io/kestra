@@ -115,6 +115,7 @@ public final class ExecutorTestHarness {
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
     private final VariablesService variablesService;
+    private final KitRunContextFactory runContextFactory;
 
     public static ExecutorTestHarness create() {
         return new ExecutorTestHarness();
@@ -189,7 +190,7 @@ public final class ExecutorTestHarness {
             }
             return Mockito.RETURNS_DEFAULTS.answer(invocation);
         });
-        KitRunContextFactory runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
+        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
@@ -501,5 +502,13 @@ public final class ExecutorTestHarness {
 
     public VariablesService variablesService() {
         return variablesService;
+    }
+
+    /**
+     * The kit's {@link KitRunContextFactory} — for hand-wiring executor collaborators
+     * (e.g. {@code FlowTriggerService}) outside the harness in service-level tests.
+     */
+    public KitRunContextFactory runContextFactory() {
+        return runContextFactory;
     }
 }

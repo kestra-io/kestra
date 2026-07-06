@@ -150,7 +150,7 @@ class PluginControllerTest {
             byte[].class
         );
 
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
         assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
     }

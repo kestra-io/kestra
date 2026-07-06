@@ -20,7 +20,7 @@
         "test:storybook": "./scripts/run-storybook-tests.sh",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
-        "translations:check": "node ./src/translations/check.js",
+        "translations:check": "npx --yes tsx ./src/translations/check.ts",
         "lint": "oxlint --fix src packages && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",

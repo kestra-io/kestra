@@ -179,7 +179,7 @@ class PluginControllerTest {
             PluginController.PluginIconResponse.class
         );
 
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.body().icon()).isNull();
     }
 

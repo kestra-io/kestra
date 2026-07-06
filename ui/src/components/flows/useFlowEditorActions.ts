@@ -95,10 +95,10 @@ export function useFlowEditorActions() {
                     namespace: flowStore.flow.namespace,
                     id: flowStore.flow.id,
                     // Execute the revision we just saved (mirrors FlowRun.vue) so "Save & Execute" runs
-                    // exactly what is in the editor. Without it a draft would resolve to the latest
-                    // non-draft revision - running a stale published version, or failing outright when
-                    // the flow has only draft revisions.
-                    revision: flowStore.flow.revision,
+                    // exactly what is in the editor - except for drafts: a draft can only run as a
+                    // PLAYGROUND execution, so omit the revision and let the backend resolve the
+                    // latest published one.
+                    revision: flowStore.flow.draft ? undefined : flowStore.flow.revision,
                     formData: undefined,
                     kind: "NORMAL",
                     labels: ["system.from:ui"],

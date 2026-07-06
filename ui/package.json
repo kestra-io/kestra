@@ -24,7 +24,6 @@
         "lint": "oxlint --fix src packages && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "prepare": "cd .. && husky ui/.husky && ([ -d .git ] && rimraf .git/hooks) || true",
         "postinstall": "npx patch-package"
     },
     "dependencies": {
@@ -76,7 +75,6 @@
         "eslint": "^9.39.4",
         "eslint-plugin-vue": "^9.33.0",
         "globals": "^17.6.0",
-        "husky": "^9.1.7",
         "jsdom": "^29.1.1",
         "lint-staged": "^16.4.0",
         "lodash": "^4.18.1",

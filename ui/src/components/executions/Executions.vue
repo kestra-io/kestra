@@ -173,7 +173,7 @@
                 :prop="col.prop"
                 :label="col.label"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
-                :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
+                :align="col.prop === 'inputs' ? 'center' : undefined"
                 :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => h(BreakableText, {value: cellValue})) : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
                 :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
@@ -221,16 +221,6 @@
                             </template>
                             <div>
                                 <Import v-if="scope.row?.inputs" class="fs-5" />
-                            </div>
-                        </KsTooltip>
-                    </template>
-                    <template v-else-if="col.prop === 'outputs'">
-                        <KsTooltip>
-                            <template #content>
-                                <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
-                            </template>
-                            <div>
-                                <Export v-if="scope.row?.outputs" class="fs-5" />
                             </div>
                         </KsTooltip>
                     </template>
@@ -385,7 +375,6 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Import from "vue-material-design-icons/Import.vue"
-    import Export from "vue-material-design-icons/Export.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import PlayBox from "vue-material-design-icons/PlayBox.vue"
@@ -551,12 +540,6 @@
             description: t("filter.table_column.executions.inputs"),
         },
         {
-            label: t("outputs"),
-            prop: "outputs",
-            default: false,
-            description: t("filter.table_column.executions.outputs"),
-        },
-        {
             label: t("task id"),
             prop: "taskRunList.taskId",
             default: false,
@@ -594,7 +577,7 @@
     )
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
+        return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
     }
 
     const selectionMapper = (execution: any) => {

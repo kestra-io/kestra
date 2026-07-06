@@ -325,8 +325,6 @@
     "no metrics available": "Brak zarejestrowanych metryk dla tego uruchomienia task.",
     "no outputs available": "Brak dostępnych outputów dla tego uruchomienia task.",
     "outputs": "Wyjścia",
-    "flow_outputs": "Wyjścia Flow",
-    "no_flow_outputs": "Brak dostępnych outputów.",
     "output": "Wyjście",
     "eval": {
       "title": "Debugowanie Wyrażenia",

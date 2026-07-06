@@ -42,7 +42,7 @@
                 </KsDropdown>
 
                 <ExecutionActions
-                    v-if="isOverviewTab && overviewActions.length"
+                    v-if="execution && isOverviewTab && overviewActions.length"
                     :actions="overviewActions"
                     :execution="execution"
                 />

@@ -15,7 +15,7 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient, type FlowWithSource, type AbstractTrigger} from "@kestra-io/kestra-sdk"
+import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
@@ -36,9 +36,9 @@ export type Trigger = AbstractTrigger & {
     key?: string;
 }
 
-export interface Task {
-    id: string,
-    type: string
+// tasks nest recursively (Sequential, Parallel, EachSequential, ...), which the SDK's flat,
+// generic Task schema doesn't model - re-added here for this app's tree-walking usage.
+export type Task = SdkTask & {
     tasks?: Task[]
 }
 
@@ -61,8 +61,13 @@ export interface FlowValidations {
 // InputObject types don't model the recursive subtasks or OSS-specific fields (backfill) this
 // app relies on for tree-walking and trigger editing. source is narrowed to required since this
 // store only ever loads flows with the `source: true` request param, which always returns it.
-export type Flow = FlowWithSource & {
+// disabled/draft/deleted/tasks are widened back to optional: flowStore.flow is also used to hold
+// locally-constructed in-progress flows (new flow/file creation) that don't set them yet.
+export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {
     source: string;
+    disabled?: boolean;
+    draft?: boolean;
+    deleted?: boolean;
     triggers?: Trigger[];
     inputs?: Input[];
     errors?: Task[];

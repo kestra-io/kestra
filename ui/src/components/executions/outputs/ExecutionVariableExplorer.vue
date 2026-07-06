@@ -234,7 +234,6 @@
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
             {key: "inputs", label: t("inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
         ]
     })
@@ -283,12 +282,7 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
-        // if the selectedValue is in the flow Outputs section,
-        // it needs the `execution.` prefix to be debuggable.
-        const baseExpressionPath = sections.value.find((section) => 
-            section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
-            ? `execution.${item.expression}` 
-            : item.expression
+        const baseExpressionPath = item.expression
 
         // if there is only one item in the tree, select it by default to save users one click
         // specially useful for files

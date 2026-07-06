@@ -78,14 +78,15 @@ interface LogsState {
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-// inputs/variables/outputs and taskRunList[].outputs aren't modeled on the SDK's ApiExecution/
-// ApiTaskRun (a backend OpenAPI-spec gap), even though the backend's Execution/TaskRun models
-// have them - overridden here so this app's execution objects keep exposing them.
+// inputs/variables and taskRunList[].executionId/outputs aren't modeled on the SDK's
+// ApiExecution/ApiTaskRun (a backend OpenAPI-spec gap), even though the backend's Execution/
+// TaskRun models have them - overridden here so this app's execution objects keep exposing them.
+// (execution-level outputs is NOT included here: per review, that's a 1.3 artifact that no
+// longer exists in v2 - see the removed "outputs" column in Executions.vue.)
 export type Execution = ApiExecution & {
-    taskRunList?: (ApiTaskRun & {outputs?: Record<string, any>})[]
+    taskRunList?: (ApiTaskRun & {executionId?: string, outputs?: Record<string, any>})[]
     inputs?: Record<string, any>;
     variables?: Record<string, any>;
-    outputs?: Record<string, any>;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {

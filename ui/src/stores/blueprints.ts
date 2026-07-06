@@ -1,7 +1,7 @@
 import {ref} from "vue"
 import {defineStore} from "pinia"
 
-import {useClient} from "@kestra-io/kestra-sdk"
+import {BlueprintControllerApiFlowBlueprint, useClient} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import * as BlueprintsAPI from "@kestra-io/kestra-sdk/blueprints"
 import * as BlueprintTagsAPI from "@kestra-io/kestra-sdk/blueprint-tags"
@@ -17,35 +17,18 @@ type BlueprintKind = "flow" | "dashboard" | "app";
 
 interface Options {
     type: BlueprintType;
-
     kind?: BlueprintKind;
     id?: string;
     params?: Record<string, any>;
 }
 
 interface Blueprint {
-    id: string;
-    [key: string]: any;
+    id?: string;
 }
 
 export type TemplateArgument = Record<string, Input>;
 
-export interface BlueprintTemplate {
-    source: string;
-    templateArguments: Record<string, Input>;
-}
-
-export interface FlowBlueprint {
-    id: string,
-    title: string,
-    description: string,
-    kind?: string,
-    includedTasks?: string[],
-    tags?: string[],
-    source: string,
-    publishedAt?: string,
-    template?: BlueprintTemplate
-}
+export type {BlueprintControllerApiFlowBlueprint as FlowBlueprint}
 
 export interface BlueprintTag {
     id: string;
@@ -165,8 +148,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         }
     }
 
-    const getFlowBlueprint = async (id: string): Promise<FlowBlueprint> => {
-        const data = await BlueprintsAPI.flowBlueprint({id}) as FlowBlueprint
+    const getFlowBlueprint = async (id: string) => {
+        const data = await BlueprintsAPI.flowBlueprint({id})
 
         if (data?.id) {
             trackBlueprintSelection(data.id)
@@ -176,12 +159,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return data
     }
 
-    const createFlowBlueprint = async (toCreate: {source: string, title: string, description: string, tags: string[]}): Promise<FlowBlueprint> => {
-        return BlueprintsAPI.createFlowBlueprint(toCreate) as Promise<FlowBlueprint>
+    const createFlowBlueprint = async (toCreate: {source: string, title: string, description: string, tags: string[]}) => {
+        return BlueprintsAPI.createFlowBlueprint(toCreate)
     }
 
-    const updateFlowBlueprint = async (id: string, toUpdate: {source: string, title: string, description: string, tags: string[]}) :Promise<FlowBlueprint> => {
-        return BlueprintsAPI.updateFlowBlueprint({id, ...toUpdate}) as Promise<FlowBlueprint>
+    const updateFlowBlueprint = async (id: string, toUpdate: {source: string, title: string, description: string, tags: string[]}) => {
+        return BlueprintsAPI.updateFlowBlueprint({id, ...toUpdate})
     }
 
     const deleteFlowBlueprint = async (idToDelete: string) => {

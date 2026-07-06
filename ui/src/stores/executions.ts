@@ -6,7 +6,7 @@ import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
 import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX, routeQueryToQueryFilters} from "@kestra-io/design-system"
-import {useClient, type ApiExecution, type ApiTaskRun} from "@kestra-io/kestra-sdk"
+import {TaskRun, useClient, type Execution as SDKExecution} from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
@@ -78,13 +78,11 @@ interface LogsState {
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-// inputs/variables and taskRunList[].executionId/outputs aren't modeled on the SDK's
-// ApiExecution/ApiTaskRun (a backend OpenAPI-spec gap), even though the backend's Execution/
-// TaskRun models have them - overridden here so this app's execution objects keep exposing them.
-// (execution-level outputs is NOT included here: per review, that's a 1.3 artifact that no
-// longer exists in v2 - see the removed "outputs" column in Executions.vue.)
-export type Execution = ApiExecution & {
-    taskRunList?: (ApiTaskRun & {executionId?: string, outputs?: Record<string, any>})[]
+export type Execution = Omit<SDKExecution, "deleted" | "tenantId" | "taskRunList"> & {
+    tenantId?: string;
+    deleted?: boolean;
+    taskRunList?: (Omit<TaskRun, "namespace" | "executionId" | "flowId"> 
+        & Partial<Pick<TaskRun, "namespace" | "executionId" | "flowId">>)[];
     inputs?: Record<string, any>;
     variables?: Record<string, any>;
 }
@@ -331,18 +329,12 @@ export const useExecutionsStore = defineStore("executions", () => {
         scheduleDate?: string,
         revision?: number,
     }) => {
-        return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
+        const {breakpoints, formData, ...rest} = options
+        return ExecutionsAPI.createExecution({...rest, 
+            body: formData, 
+            breakpoints: breakpoints?.join(","),
+        }, {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
-            params: {
-                labels: options.labels ?? [],
-                scheduleDate: options.scheduleDate,
-                kind: options.kind,
-                breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-                revision: options.revision,
-            },
         })
     }
 

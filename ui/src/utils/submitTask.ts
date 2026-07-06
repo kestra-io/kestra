@@ -67,16 +67,16 @@ export const executeTask = (
             formData,
         })
         .then(response => {
-            executionsStore.execution = response.data
+            executionsStore.execution = response
             onboardingV2Store.recordExecution()
             if (options.redirect) {
                 if (options.newTab) {
                     const resolved = submitor.$router.resolve({
                         name: "executions/update",
                         params: {
-                            namespace: response.data.namespace,
-                            flowId: response.data.flowId,
-                            id: response.data.id,
+                            namespace: response.namespace,
+                            flowId: response.flowId,
+                            id: response.id,
                             tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant,
                         },
@@ -87,9 +87,9 @@ export const executeTask = (
                     submitor.$router.push({
                         name: "executions/update",
                         params: {
-                            namespace: response.data.namespace,
-                            flowId: response.data.flowId,
-                            id: response.data.id,
+                            namespace: response.namespace,
+                            flowId: response.flowId,
+                            id: response.id,
                             tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant,
                         },
@@ -97,7 +97,7 @@ export const executeTask = (
                     })
                 }
             }
-            return response.data
+            return response
         })
         .then((execution) => {
             if (!options.nextStep) {

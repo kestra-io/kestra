@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
 
 /**
@@ -38,5 +39,14 @@ public final class Flows {
 
     public static FlowWithSource of(Flow flow) {
         return FlowWithSource.of(flow, "");
+    }
+
+    /**
+     * Parse a YAML flow source (static Jackson, no Micronaut — core task types resolve through
+     * the {@code DefaultPluginRegistry} classpath fallback) and stamp the test tenant.
+     */
+    public static FlowWithSource yaml(String source) {
+        Flow parsed = YamlParser.parse(source, Flow.class);
+        return FlowWithSource.of(parsed.toBuilder().tenantId(TENANT).revision(1).build(), source);
     }
 }

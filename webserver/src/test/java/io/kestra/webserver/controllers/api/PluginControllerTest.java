@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
 
@@ -120,6 +122,51 @@ class PluginControllerTest {
         assertThat(response.icon()).isNotNull();
         assertThat(response.icon().getIcon()).isNotNull();
         assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
+        // Log ships a fixed brand-colored SVG, not a single `currentColor` glyph
+        assertThat(response.icon().getMonochrome()).isFalse();
+    }
+
+    @Test
+    void iconByClassMonochrome() {
+        // Echo's SVG uses `fill="currentColor"` and can therefore be recolored via CSS mask-image
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Echo.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getMonochrome()).isTrue();
+    }
+
+    @Test
+    void iconSvg() {
+        PluginController.PluginIconResponse jsonResponse = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName() + "/svg"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
+        assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
+    }
+
+    @Test
+    void iconSvgNotFound() {
+        // Unlike the JSON icon endpoint, the frontend only ever points an <img>/mask-image at this
+        // endpoint for a class it already confirmed has an icon, so a missing icon here is a genuine 404.
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/svg"),
+                byte[].class
+            )
+        );
+
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test

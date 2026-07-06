@@ -4,15 +4,14 @@
         class="ks-task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <img class="ks-task-icon__icon" :src="dataUri" :alt="ariaLabel">
+            <img v-if="!isMonochrome" class="ks-task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <div v-else class="ks-task-icon__icon ks-task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </KsTooltip>
 
-        <img
-            v-else
-            class="ks-task-icon__icon"
-            :src="dataUri"
-            :alt="ariaLabel"
-        >
+        <template v-else>
+            <img v-if="!isMonochrome" class="ks-task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <div v-else class="ks-task-icon__icon ks-task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
+        </template>
     </div>
 </template>
 
@@ -20,19 +19,19 @@
     import {computed, ref, watch} from "vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import {cssVar} from "../../utils/css"
-    import {useTheme} from "../../composables/useTheme"
+    import fallbackIcon from "../../assets/images/plugin-icon-fallback.svg"
 
     defineOptions({
         name: "KsTaskIcon",
     })
 
     export interface KsTaskIconData {
-        icon: string;
         flowable: boolean;
+        monochrome: boolean;
     }
 
     const props = defineProps<{
-        customIcon?: {icon: string};
+        customIcon?: {icon: string; monochrome?: boolean};
         cls?: string;
         icons?: Record<string, KsTaskIconData>;
         onlyIcon?: boolean;
@@ -46,26 +45,18 @@
         loadIcon?: (cls: string) => Promise<KsTaskIconData | undefined>;
     }>()
 
-    const {isDark} = useTheme()
-
-    const FALLBACK_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
-        "xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" " +
-        "focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: " +
-        "rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" " +
-        "preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\">" +
-        "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/>" +
-        "</svg>"
-
     function innerClassToParent(cls: string) {
         return cls.includes("$") ? cls.substring(0, cls.indexOf("$")) : cls
     }
 
+    const resolvedCls = computed(() => props.cls ? innerClassToParent(props.cls) : undefined)
+
     const providedIcon = computed<KsTaskIconData | undefined>(() => {
-        if (!props.cls) {
-            return props.customIcon as KsTaskIconData | undefined
+        if (!resolvedCls.value) {
+            return undefined
         }
 
-        return (props.icons ?? {})[innerClassToParent(props.cls)]
+        return (props.icons ?? {})[resolvedCls.value]
     })
 
     const lazyIcon = ref<KsTaskIconData>()
@@ -94,18 +85,39 @@
         "ks-task-icon--flowable": icon.value?.flowable ?? false,
     }))
 
-    const dataUri = computed(() => `data:image/svg+xml;base64,${imageBase64.value}`)
+    // Real, browser-cacheable SVG resource — no more client-side base64 decode/recolor/encode on
+    // every reactive change. KESTRA_BASE_PATH keeps this correct when the app is served behind a
+    // reverse-proxy path prefix.
+    const iconUrl = computed(() => {
+        if (!resolvedCls.value) {
+            return undefined
+        }
 
-    const imageBase64 = computed(() => {
-        void isDark.value
-
-        let localIcon = icon.value?.icon ? window.atob(icon.value.icon) : FALLBACK_SVG
-
-        const color = (props.variable ? cssVar(props.variable) : "") || cssVar("--ks-text-primary")
-        localIcon = localIcon.replace(/currentColor/g, color)
-
-        return window.btoa(localIcon)
+        const basePath = (window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? ""
+        return `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/svg`
     })
+
+    const isMonochrome = computed(() => {
+        if (props.customIcon) {
+            return props.customIcon.monochrome ?? false
+        }
+
+        return icon.value?.monochrome ?? false
+    })
+
+    const iconSrc = computed(() => {
+        if (props.customIcon) {
+            return props.customIcon.icon
+        }
+
+        return icon.value ? iconUrl.value : fallbackIcon
+    })
+
+    const maskStyle = computed(() => ({
+        maskImage: `url(${iconSrc.value})`,
+        WebkitMaskImage: `url(${iconSrc.value})`,
+        backgroundColor: (props.variable ? cssVar(props.variable) : "") || cssVar("--ks-text-primary"),
+    }))
 </script>
 
 <style lang="scss" scoped>
@@ -131,6 +143,15 @@
             border-radius: 3px;
             object-fit: contain;
             object-position: center center;
+
+            &--mask {
+                mask-repeat: no-repeat;
+                mask-position: center;
+                mask-size: contain;
+                -webkit-mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                -webkit-mask-size: contain;
+            }
         }
     }
 </style>

@@ -11,4 +11,5 @@ public class PluginIcon {
     String name;
     String icon;
     Boolean flowable;
+    Boolean monochrome;
 }

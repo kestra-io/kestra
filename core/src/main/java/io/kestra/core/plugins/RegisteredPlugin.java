@@ -302,8 +302,25 @@ public class RegisteredPlugin {
         return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Version");
     }
 
-    @SneakyThrows
     public String icon(Class<?> cls) {
+        return iconAndMonochrome(cls).map(IconAndMonochrome::icon).orElse(null);
+    }
+
+    public String icon() {
+        return icon("plugin-icon");
+    }
+
+    public String icon(String iconName) {
+        return iconAndMonochrome(iconName).map(IconAndMonochrome::icon).orElse(null);
+    }
+
+    /**
+     * Resolves, sanitizes and base64-encodes the SVG icon for a class, together with whether the
+     * SVG is a single-color icon (uses {@code currentColor} rather than fixed brand colors) and
+     * can therefore be recolored via CSS instead of shipping a fixed color.
+     */
+    @SneakyThrows
+    public Optional<IconAndMonochrome> iconAndMonochrome(Class<?> cls) {
         InputStream resourceAsStream = Stream
             .of(
                 this.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg"),
@@ -313,25 +330,27 @@ public class RegisteredPlugin {
             .findFirst()
             .orElse(null);
 
-        if (resourceAsStream != null) {
-            String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
-        }
-        return null;
-    }
-
-    public String icon() {
-        return icon("plugin-icon");
+        return encodeIcon(resourceAsStream);
     }
 
     @SneakyThrows
-    public String icon(String iconName) {
-        InputStream resourceAsStream = this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
-        if (resourceAsStream != null) {
-            String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
+    public Optional<IconAndMonochrome> iconAndMonochrome(String iconName) {
+        return encodeIcon(this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg"));
+    }
+
+    @SneakyThrows
+    private Optional<IconAndMonochrome> encodeIcon(InputStream resourceAsStream) {
+        if (resourceAsStream == null) {
+            return Optional.empty();
         }
-        return null;
+
+        String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
+        String base64 = Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
+
+        return Optional.of(new IconAndMonochrome(base64, svg.contains("currentColor")));
+    }
+
+    public record IconAndMonochrome(String icon, boolean monochrome) {
     }
 
     public long crc32() {

@@ -51,8 +51,8 @@ export function removeRefPrefix(refStr?: string): string {
 }
 
 export interface PluginIconData {
-    icon: string;
     flowable: boolean;
+    monochrome: boolean;
 }
 
 function usePluginsIcons() {

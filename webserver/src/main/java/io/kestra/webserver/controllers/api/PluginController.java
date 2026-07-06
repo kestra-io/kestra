@@ -253,6 +253,35 @@ public class PluginController {
         return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
+    @Get(uri = "icons/{cls}/svg", produces = "image/svg+xml")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon as a raw SVG",
+        description = "Serves the plugin icon as a real, browser-cacheable `image/svg+xml` resource so it can " +
+            "be referenced directly from an `<img src>` or CSS `mask-image` instead of being inlined as a data " +
+            "URI. The frontend only points at this endpoint for a class it already knows (via `icons`/`loadIcon`) " +
+            "has an icon, so a missing icon here is a genuine 404 rather than an expected outcome."
+    )
+    public HttpResponse<byte[]> getPluginIconSvg(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+        if (icon == null || icon.getIcon() == null) {
+            return HttpResponse.notFound();
+        }
+
+        return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    private static PluginIcon toPluginIcon(String name, Optional<RegisteredPlugin.IconAndMonochrome> icon, boolean flowable) {
+        return new PluginIcon(
+            name,
+            icon.map(RegisteredPlugin.IconAndMonochrome::icon).orElse(null),
+            flowable,
+            icon.map(RegisteredPlugin.IconAndMonochrome::monochrome).orElse(false)
+        );
+    }
+
     @Cacheable("default")
     protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
@@ -271,11 +300,7 @@ public class PluginController {
                     .map(
                         e -> new AbstractMap.SimpleEntry<>(
                             e.getName(),
-                            new PluginIcon(
-                                e.getSimpleName(),
-                                plugin.icon(e),
-                                FlowableTask.class.isAssignableFrom(e)
-                            )
+                            toPluginIcon(e.getSimpleName(), plugin.iconAndMonochrome(e), FlowableTask.class.isAssignableFrom(e))
                         )
                     )
             )
@@ -288,9 +313,9 @@ public class PluginController {
                 plugin -> plugin.getAliases().values().stream().map(
                     e -> new AbstractMap.SimpleEntry<>(
                         e.getKey(),
-                        new PluginIcon(
+                        toPluginIcon(
                             e.getKey().substring(e.getKey().lastIndexOf('.') + 1),
-                            plugin.icon(e.getValue()),
+                            plugin.iconAndMonochrome(e.getValue()),
                             FlowableTask.class.isAssignableFrom(e.getValue())
                         )
                     )
@@ -322,12 +347,12 @@ public class PluginController {
             {
                 String group = plugin.group();
                 if (group != null) {
-                    icons.put(group, new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false));
+                    icons.put(group, toPluginIcon("plugin-icon", plugin.iconAndMonochrome("plugin-icon"), false));
                 }
 
                 plugin.subGroupNames().forEach(subgroup ->
                 {
-                    icons.put(subgroup, new PluginIcon("plugin-icon", plugin.icon(subgroup), false));
+                    icons.put(subgroup, toPluginIcon("plugin-icon", plugin.iconAndMonochrome(subgroup), false));
                 });
             });
 

@@ -1,22 +1,39 @@
 <template>
     <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
         <KsCheckTag
-            v-for="(label, index) in props.labels"
+            v-for="(label, index) in visibleLabels"
             :key="index"
             :disabled="readOnly"
             :checked="isChecked(label)"
             @change="updateLabel(label)"
             class="me-0 label"
         >
-            {{ label.text ?? (label.key ? `${label.key}:${label.value}` : label.value) }}
+            {{ labelText(label) }}
         </KsCheckTag>
+
+        <KsTooltip
+            v-if="hiddenLabels.length"
+        >
+            <KsCheckTag class="me-0 label">
+                +{{ hiddenLabels.length }}
+            </KsCheckTag>
+            <template #content>
+                <div
+                    v-for="(label, index) in hiddenLabels"
+                    :key="index"
+                >
+                    {{ labelText(label) }}
+                </div>
+            </template>
+        </KsTooltip>
     </span>
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue"
+    import {computed, watch} from "vue"
 
     import {useRouter, useRoute} from "vue-router"
+    import {KsTooltip} from "@kestra-io/design-system"
     const router = useRouter()
     const route = useRoute()
 
@@ -32,13 +49,24 @@
             readOnly?: boolean;
             filterType?: "labels" | "metadata" | "type" | "details";
             wrap?: boolean;
+            max?: number;
         }>(),
         {
             labels: () => [],
             readOnly: false,
             filterType: "labels",
             wrap: false,
+            max: undefined,
         },
+    )
+
+    const labelText = (label: Label) => label.text ?? (label.key ? `${label.key}:${label.value}` : label.value)
+
+    const visibleLabels = computed(() =>
+        props.max != null ? props.labels.slice(0, props.max) : props.labels,
+    )
+    const hiddenLabels = computed(() =>
+        props.max != null ? props.labels.slice(props.max) : [],
     )
 
     import {decodeSearchParams} from "@kestra-io/design-system"

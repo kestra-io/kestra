@@ -13,21 +13,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Tests for {@link LogRepositoryInterfaceFactory}: plugin discovery and selection by
+ * Tests for {@link LogDataStoreInterfaceFactory}: plugin discovery and selection by
  * {@code kestra.logs.type}.
  * <p>
- * Lives in the {@code jdbc-h2} module so at least one log store ({@code H2LogStore}) is on the
+ * Lives in the {@code jdbc-h2} module so at least one log store ({@code H2LogDataStore}) is on the
  * classpath and discoverable via the plugin registry. It exercises the factory, not the store —
  * the store's behavior is covered by {@code H2LogRepositoryTest} (the shared repository suite).
  */
 @MicronautTest
-class LogRepositoryInterfaceFactoryTest {
+class LogDataStoreInterfaceFactoryTest {
 
     @Inject
-    LogRepositoryInterfaceFactory logRepositoryInterfaceFactory;
+    LogDataStoreInterfaceFactory logRepositoryInterfaceFactory;
 
     @Test
-    void shouldListDiscoveredLogStoreTypes() {
+    void shouldListDiscoveredLogDataStoreTypes() {
         assertThat(logRepositoryInterfaceFactory.getLoggableTypeIds()).contains("h2");
     }
 

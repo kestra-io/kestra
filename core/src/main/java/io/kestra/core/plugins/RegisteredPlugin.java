@@ -26,7 +26,7 @@ import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.preview.FileRenderer;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.SvgSanitizer;
@@ -44,7 +44,7 @@ public class RegisteredPlugin {
     public static final String TRIGGERS_GROUP_NAME = "triggers";
     public static final String STORAGES_GROUP_NAME = "storages";
     public static final String SECRETS_GROUP_NAME = "secrets";
-    public static final String LOG_STORES_GROUP_NAME = "log-stores";
+    public static final String LOG_DATA_STORES_GROUP_NAME = "log-data-stores";
     public static final String TASK_RUNNERS_GROUP_NAME = "task-runners";
     public static final String ASSETS_GROUP_NAME = "assets";
     public static final String ASSETS_EXPORTERS_GROUP_NAME = "asset-exporters";
@@ -64,7 +64,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends AbstractTrigger>> triggers;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
-    private final List<Class<? extends LogRepositoryInterface>> logStores;
+    private final List<Class<? extends LogDataStoreInterface>> logDataStores;
     private final List<Class<? extends TaskRunner<?>>> taskRunners;
     private final List<Class<? extends Asset>> assets;
     private final List<Class<? extends AssetExporter<?>>> assetExporters;
@@ -87,7 +87,7 @@ public class RegisteredPlugin {
             !triggers.isEmpty() ||
             !storages.isEmpty() ||
             !secrets.isEmpty() ||
-            !logStores.isEmpty() ||
+            !logDataStores.isEmpty() ||
             !taskRunners.isEmpty() ||
             !assets.isEmpty() ||
             !assetExporters.isEmpty() ||
@@ -134,8 +134,8 @@ public class RegisteredPlugin {
             return SecretPluginInterface.class;
         }
 
-        if (this.getLogStores().stream().anyMatch(r -> r.getName().equals(cls))) {
-            return LogRepositoryInterface.class;
+        if (this.getLogDataStores().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return LogDataStoreInterface.class;
         }
 
         if (this.getTaskRunners().stream().anyMatch(r -> r.getName().equals(cls))) {
@@ -207,7 +207,7 @@ public class RegisteredPlugin {
         result.put(TRIGGERS_GROUP_NAME, Arrays.asList(this.getTriggers().toArray(Class[]::new)));
         result.put(STORAGES_GROUP_NAME, Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put(SECRETS_GROUP_NAME, Arrays.asList(this.getSecrets().toArray(Class[]::new)));
-        result.put(LOG_STORES_GROUP_NAME, Arrays.asList(this.getLogStores().toArray(Class[]::new)));
+        result.put(LOG_DATA_STORES_GROUP_NAME, Arrays.asList(this.getLogDataStores().toArray(Class[]::new)));
         result.put(TASK_RUNNERS_GROUP_NAME, Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
         result.put(ASSETS_GROUP_NAME, Arrays.asList(this.getAssets().toArray(Class[]::new)));
         result.put(ASSETS_EXPORTERS_GROUP_NAME, Arrays.asList(this.getAssetExporters().toArray(Class[]::new)));
@@ -381,9 +381,9 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
-        if (!this.getLogStores().isEmpty()) {
+        if (!this.getLogDataStores().isEmpty()) {
             b.append("[Log Stores: ");
-            b.append(this.getLogStores().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append(this.getLogDataStores().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

@@ -14,25 +14,25 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.plugins.ApplicationContextInitializable;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
+import io.kestra.jdbc.repository.AbstractJdbcLogDataStore;
 import io.kestra.jdbc.services.JdbcFilterService;
 
 import io.micronaut.context.ApplicationContext;
 
 /**
- * PostgreSQL {@link LogRepositoryInterface} log store, selected by {@code kestra.logs.type: postgres}.
+ * PostgreSQL {@link LogDataStoreInterface} log store, selected by {@code kestra.logs.type: postgres}.
  * <p>
- * Deserialized from configuration by {@code LogRepositoryInterfaceFactory}, then wires its runtime
+ * Deserialized from configuration by {@code LogDataStoreInterfaceFactory}, then wires its runtime
  * dependencies in {@link #init(ApplicationContext)}: a dedicated Postgres repository when
  * {@code kestra.logs.postgres.url} is set, otherwise the shared {@code @Named("logs")} repository.
  */
 @Plugin
 @Plugin.Id("postgres")
-public class PostgresLogStore extends AbstractJdbcLogRepository implements ApplicationContextInitializable {
+public class PostgresLogDataStore extends AbstractJdbcLogDataStore implements ApplicationContextInitializable {
 
-    public PostgresLogStore() {
+    public PostgresLogDataStore() {
         super();
     }
 

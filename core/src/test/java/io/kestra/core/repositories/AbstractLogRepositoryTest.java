@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest(transactional = false)
 public abstract class AbstractLogRepositoryTest {
     @Inject
-    protected LogRepositoryInterface logRepository;
+    protected LogDataStoreInterface logRepository;
 
     protected static LogEntry.LogEntryBuilder logEntry(String tenantId, Level level) {
         return logEntry(tenantId, level, IdUtils.create());

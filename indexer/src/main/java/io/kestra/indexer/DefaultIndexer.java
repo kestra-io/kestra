@@ -10,7 +10,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.runners.IndexingRepository;
@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class DefaultIndexer extends AbstractService implements Indexer {
-    private final LogRepositoryInterface logRepository;
+    private final LogDataStoreInterface logRepository;
     private final DispatchQueueInterface<LogEntry> logQueue;
 
     private final MetricRepositoryInterface metricRepository;
@@ -53,7 +53,7 @@ public class DefaultIndexer extends AbstractService implements Indexer {
 
     @Inject
     public DefaultIndexer(
-        LogRepositoryInterface logRepository,
+        LogDataStoreInterface logRepository,
         DispatchQueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
         DispatchQueueInterface<MetricEntry> metricQueue,

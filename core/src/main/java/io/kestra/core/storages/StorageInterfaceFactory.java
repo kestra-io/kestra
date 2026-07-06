@@ -13,8 +13,6 @@ import jakarta.validation.Validator;
 
 /**
  * Factory class for constructing {@link StorageInterface} objects.
- * <p>
- * The shared find/deserialize/validate mechanism lives in {@link AbstractPluginInterfaceFactory}.
  */
 public class StorageInterfaceFactory extends AbstractPluginInterfaceFactory<StorageInterface> {
 

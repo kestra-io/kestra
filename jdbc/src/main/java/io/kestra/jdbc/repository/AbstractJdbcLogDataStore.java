@@ -19,8 +19,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.repositories.log.LogRepositoryAccessControl;
+import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.log.LogDataStoreAccessControl;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JdbcTableConfig;
@@ -39,12 +39,12 @@ import reactor.core.publisher.Flux;
 
 import java.util.function.BiFunction;
 
-public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
+public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
 
-    public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
+    public AbstractJdbcLogDataStore(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
         super(jdbcRepository);
 
         this.filterService = filterService;
@@ -56,7 +56,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
      *
      * @see io.kestra.core.plugins.ApplicationContextInitializable
      */
-    protected AbstractJdbcLogRepository() {
+    protected AbstractJdbcLogDataStore() {
         super(null);
     }
 
@@ -74,7 +74,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     protected void initFrom(final ApplicationContext applicationContext,
         final BiFunction<JdbcTableConfig, JooqDSLContextWrapper, io.kestra.jdbc.AbstractJdbcRepository<LogEntry>> dedicatedRepositoryFactory) {
         this.filterService = applicationContext.getBean(JdbcFilterService.class);
-        this.accessControl = applicationContext.getBean(LogRepositoryAccessControl.class);
+        this.accessControl = applicationContext.getBean(LogDataStoreAccessControl.class);
         // Field-injected on bean-managed repositories; set explicitly here since the plugin is deserialized.
         this.systemFlowsConfiguration = applicationContext.getBean(io.kestra.core.contexts.configuration.SystemFlowsConfiguration.class);
 
@@ -103,7 +103,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
      * do not call {@link #initFrom} behave exactly as before; log-store plugins set the real bean in
      * {@code init(ApplicationContext)} (the EE bean enforces namespace ACL + publishes audit events).
      */
-    protected LogRepositoryAccessControl accessControl = LogRepositoryAccessControl.GLOBAL;
+    protected LogDataStoreAccessControl accessControl = LogDataStoreAccessControl.GLOBAL;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
         return Map.of(

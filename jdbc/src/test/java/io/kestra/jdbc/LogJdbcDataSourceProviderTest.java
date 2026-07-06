@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.repositories.log.LogRepositoryFactory;
+import io.kestra.core.repositories.log.LogsConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -17,7 +17,7 @@ class LogJdbcDataSourceProviderTest {
 
     private static LogJdbcDataSourceProvider provider(Map<String, Object> logs, String repositoryType) {
         return new LogJdbcDataSourceProvider(
-            new LogRepositoryFactory.LogsConfig(logs),
+            new LogsConfig(logs),
             new Settings(),
             null,
             new RepositoryConfiguration(repositoryType)

@@ -17,7 +17,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
@@ -45,7 +45,7 @@ public class LoopCaseTest {
     private StorageInterface storageInterface;
 
     @Inject
-    private LogRepositoryInterface logRepositoryInterface;
+    private LogDataStoreInterface logRepositoryInterface;
 
     public void loopSerial(Execution execution) throws InternalException {
         // Then

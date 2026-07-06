@@ -8,24 +8,24 @@ import org.jooq.Field;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.plugins.ApplicationContextInitializable;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
+import io.kestra.jdbc.repository.AbstractJdbcLogDataStore;
 
 import io.micronaut.context.ApplicationContext;
 
 /**
- * H2 {@link LogRepositoryInterface} log store, selected by {@code kestra.logs.type: h2}.
+ * H2 {@link LogDataStoreInterface} log store, selected by {@code kestra.logs.type: h2}.
  * <p>
- * Deserialized from configuration by {@code LogRepositoryInterfaceFactory}, then wires its runtime
+ * Deserialized from configuration by {@code LogDataStoreInterfaceFactory}, then wires its runtime
  * dependencies in {@link #init(ApplicationContext)}: a dedicated H2 repository when
  * {@code kestra.logs.h2.url} is set, otherwise the shared {@code @Named("logs")} repository.
  */
 @Plugin
 @Plugin.Id("h2")
-public class H2LogStore extends AbstractJdbcLogRepository implements ApplicationContextInitializable {
+public class H2LogDataStore extends AbstractJdbcLogDataStore implements ApplicationContextInitializable {
 
-    public H2LogStore() {
+    public H2LogDataStore() {
         super();
     }
 

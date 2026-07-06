@@ -14,7 +14,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.repositories.log.LogRepositoryFactory;
+import io.kestra.core.repositories.log.LogsConfig;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -35,7 +35,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class LogJdbcDataSourceProvider implements AutoCloseable {
 
-    private final LogRepositoryFactory.LogsConfig logsConfig;
+    private final LogsConfig logsConfig;
     private final Settings jooqSettings;
     private final DataSource primaryDataSource;
     private final RepositoryConfiguration repositoryConfiguration;
@@ -46,7 +46,7 @@ public class LogJdbcDataSourceProvider implements AutoCloseable {
     private String table = "logs";
     private SQLDialect dialect;
 
-    public LogJdbcDataSourceProvider(final LogRepositoryFactory.LogsConfig logsConfig,
+    public LogJdbcDataSourceProvider(final LogsConfig logsConfig,
         final Settings jooqSettings,
         @Nullable final DataSource primaryDataSource,
         final RepositoryConfiguration repositoryConfiguration) {

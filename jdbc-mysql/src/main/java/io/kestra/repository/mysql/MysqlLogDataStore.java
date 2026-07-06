@@ -8,24 +8,24 @@ import org.jooq.Field;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.plugins.ApplicationContextInitializable;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
+import io.kestra.jdbc.repository.AbstractJdbcLogDataStore;
 
 import io.micronaut.context.ApplicationContext;
 
 /**
- * MySQL {@link LogRepositoryInterface} log store, selected by {@code kestra.logs.type: mysql}.
+ * MySQL {@link LogDataStoreInterface} log store, selected by {@code kestra.logs.type: mysql}.
  * <p>
- * Deserialized from configuration by {@code LogRepositoryInterfaceFactory}, then wires its runtime
+ * Deserialized from configuration by {@code LogDataStoreInterfaceFactory}, then wires its runtime
  * dependencies in {@link #init(ApplicationContext)}: a dedicated MySQL repository when
  * {@code kestra.logs.mysql.url} is set, otherwise the shared {@code @Named("logs")} repository.
  */
 @Plugin
 @Plugin.Id("mysql")
-public class MysqlLogStore extends AbstractJdbcLogRepository implements ApplicationContextInitializable {
+public class MysqlLogDataStore extends AbstractJdbcLogDataStore implements ApplicationContextInitializable {
 
-    public MysqlLogStore() {
+    public MysqlLogDataStore() {
         super();
     }
 

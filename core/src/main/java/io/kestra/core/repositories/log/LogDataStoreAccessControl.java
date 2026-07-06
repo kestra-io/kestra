@@ -5,7 +5,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.AccessScope;
 
 /**
- * Access-control + audit collaborator for {@link io.kestra.core.repositories.LogRepositoryInterface}
+ * Access-control + audit collaborator for {@link io.kestra.core.repositories.LogDataStoreInterface}
  * backends.
  * <p>
  * The backend consults it at its {@code defaultFilter} chokepoint and translates the returned
@@ -17,13 +17,13 @@ import io.kestra.core.models.AccessScope;
  * OSS provides a {@link #GLOBAL} no-op default; EE replaces the bean with a
  * {@code CurrentUserContext}-based implementation.
  */
-public interface LogRepositoryAccessControl {
+public interface LogDataStoreAccessControl {
 
     /**
      * A no-op collaborator granting global access with no auditing. Used as the safe default for log
      * repositories that are not wired to a real access-control bean.
      */
-    LogRepositoryAccessControl GLOBAL = AccessScope::global;
+    LogDataStoreAccessControl GLOBAL = AccessScope::global;
 
     /**
      * @return the access scope the current caller has on logs (global, a set of namespaces, or none).

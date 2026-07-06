@@ -10,7 +10,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
@@ -44,10 +44,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 @Controller("/api/v1/{tenant}/logs")
-@Requires(beans = LogRepositoryInterface.class)
+@Requires(beans = LogDataStoreInterface.class)
 public class LogController {
     @Inject
-    private LogRepositoryInterface logRepository;
+    private LogDataStoreInterface logRepository;
 
     @Inject
     private ExecutionLogService logService;

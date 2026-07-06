@@ -16,7 +16,7 @@ import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
-public interface LogRepositoryInterface extends IndexingRepository<LogEntry>, QueryBuilderInterface<Logs.Fields>, Plugin {
+public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, QueryBuilderInterface<Logs.Fields>, Plugin {
     /**
      * Finds all the log entries for the given tenant, execution and min log-level.
      * <p>

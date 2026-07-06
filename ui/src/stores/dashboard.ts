@@ -16,8 +16,9 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
+import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -31,11 +32,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
     const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
-    const defaultDashboards = ref<{
-         defaultHomeDashboard?: string,
-         defaultFlowOverviewDashboard?: string,
-         defaultNamespaceOverviewDashboard?: string,
-    }>()
+    const defaultDashboards = ref<DashboardSettings>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
 
@@ -82,21 +79,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
     // bypasses normal tenant routing on purpose, same as before this endpoint moved to the SDK.
     const DEFAULT_DASHBOARDS_TENANT_ID = "main"
 
-    // Stays on raw axios: the generated SDK's TenantsAPI.defaultDashboards() targets
-    // GET /api/v1/tenants/{id}/settings/default-dashboards, which has no @Get handler in this
-    // OSS backend's TenantController (POST-only). The real (tenant-scoped) read endpoint lives
-    // on DashboardController instead, with no SDK-generated function of its own.
     async function loadDefaults() {
-        const res = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`)
-        defaultDashboards.value = res.data
+        defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards()
         return defaultDashboards.value
     }
 
-    async function saveDefaults(defaultDashboardsRequest: {
-        defaultHomeDashboard?: string,
-        defaultFlowOverviewDashboard?: string,
-        defaultNamespaceOverviewDashboard?: string,
-    }) {
+    async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
         const loadedDef = await loadDefaults()
         const def = {...loadedDef, ...defaultDashboardsRequest}
 

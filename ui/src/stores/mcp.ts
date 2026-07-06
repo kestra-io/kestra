@@ -13,20 +13,11 @@ import {ref} from "vue"
 // The generated types mark these fields optional (OpenAPI doesn't express that
 // the backend always populates them on responses/requires them on writes),
 // so re-narrow them to match what the API actually guarantees.
-export type McpServer = Omit<ApiMcpServer, "serverType" | "authType" | "disabled" | "isDefault"> & {
-    serverType: NonNullable<ApiMcpServer["serverType"]>;
-    authType: NonNullable<ApiMcpServer["authType"]>;
-    disabled: NonNullable<ApiMcpServer["disabled"]>;
-    isDefault: NonNullable<ApiMcpServer["isDefault"]>;
-}
-export type McpServerPayload = Omit<ApiMcpServerWritable, "serverType" | "authType" | "disabled"> & {
-    serverType: NonNullable<ApiMcpServerWritable["serverType"]>;
-    authType: NonNullable<ApiMcpServerWritable["authType"]>;
-    disabled: NonNullable<ApiMcpServerWritable["disabled"]>;
-}
-export type McpAuthType = McpServerAuthType
+export type McpServer = ApiMcpServer & Pick<Required<ApiMcpServer>, "serverType" | "authType" | "disabled" | "isDefault">
+export type McpServerPayload = ApiMcpServerWritable & Pick<Required<ApiMcpServerWritable>, "serverType" | "authType" | "disabled">
+export {McpServerAuthType}
 export type McpToolAnnotations = Required<McpServerControllerApiMcpToolAnnotations>
-export type McpTool = Required<Omit<McpServerControllerApiMcpTool, "annotations">> & {annotations: McpToolAnnotations}
+export type McpTool = Required<McpServerControllerApiMcpTool> & {annotations: McpToolAnnotations}
 
 export const useMcpStore = defineStore("mcp", () => {
     const server = ref<McpServer | null>(null)

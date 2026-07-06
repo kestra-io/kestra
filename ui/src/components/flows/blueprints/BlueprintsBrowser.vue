@@ -305,6 +305,7 @@
         syncFromRoute()
         docStore.docId = `blueprints.${props.blueprintType}`
         ensureInstalledPluginsLoaded()
+        pluginsStore.fetchIcons()
     })
 
     onActivated(() => {

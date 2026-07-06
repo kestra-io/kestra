@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <KsTaskIcon v-if="!isPlaceholder" :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <KsTaskIcon v-if="!isPlaceholder" :cls="element.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
             <PlusBoxOutline v-else class="placeholder-icon" />
         </div>
 

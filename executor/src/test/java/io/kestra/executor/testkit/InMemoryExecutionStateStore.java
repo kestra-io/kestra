@@ -41,7 +41,7 @@ public class InMemoryExecutionStateStore implements ExecutionStateStore {
     }
 
     @Override
-    public Execution findById(String id) {
+    public Execution findByIdWithoutAcl(String id) {
         return executions.get(id);
     }
 

@@ -434,6 +434,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         executionDelayLoopTimer.record(() ->
         {
+            // Collect the resulting executors during the transaction and emit them only AFTER
+            // processExpired() commits. Emitting inside the transaction races the queue consumer:
+            // on a non-transactional queue (Kafka) a new execution created by replay
+            // (CREATE_NEW_EXECUTION / RESTART_FAILED_FLOW) can be consumed before its INSERT is
+            // visible, so the executor's lock finds no row, silently skips it ("not ready for now"),
+            // and the new execution is dropped — the retry chain never runs.
+            List<ExecutorContext> toEmit = new ArrayList<>();
             executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
             {
                 Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
@@ -500,8 +507,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     return executor;
                 });
 
-                maybeExecutor.ifPresent(this::toExecution);
+                maybeExecutor.ifPresent(toEmit::add);
             });
+
+            // Transaction has committed here: the new/updated executions are now durably visible,
+            // so emitting their events cannot be consumed before the state store can see them.
+            toEmit.forEach(this::toExecution);
         });
     }
 

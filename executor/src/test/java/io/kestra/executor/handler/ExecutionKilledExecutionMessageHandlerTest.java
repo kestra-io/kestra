@@ -1,63 +1,47 @@
 package io.kestra.executor.handler;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.ExecutorContext;
+import io.kestra.executor.testkit.ExecutorTestHarness;
+import io.kestra.executor.testkit.Flows;
 
-import io.micronaut.test.annotation.MockBean;
-import jakarta.inject.Inject;
+import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@KestraTest
 class ExecutionKilledExecutionMessageHandlerTest {
-    @Inject
-    private ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
-
-    @Inject
-    private ExecutionRepositoryInterface executionRepository;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
-    private BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue;
-
-    @Inject
-    KillSwitchService killSwitchService;
-
-    @MockBean(KillSwitchService.class)
-    KillSwitchService killSwitchService() {
-        return mock(KillSwitchService.class);
-    }
+    private ExecutorTestHarness harness;
+    private ExecutionKilledExecutionMessageHandler handler;
 
     @BeforeEach
     void setUp() {
-        when(killSwitchService.evaluate(anyString())).thenReturn(EvaluationType.PASS);
+        harness = ExecutorTestHarness.create();
+        handler = harness.executionKilledExecutionMessageHandler();
+        // killSubflowExecutions/killLoopSubExecutions query the execution repository on the real
+        // ExecutionService; stub them to "no child executions" — the old H2 tests had none either.
+        doReturn(Flux.empty()).when(harness.executionService()).killSubflowExecutions(any(), any());
+        doReturn(List.of()).when(harness.executionService()).killLoopSubExecutions(any(), any());
     }
 
     @Test
@@ -68,34 +52,48 @@ class ExecutionKilledExecutionMessageHandlerTest {
             .executionState(State.Type.FAILED)
             .build();
 
-        var maybeExecutor = executionKilledExecutionMessageHandler.handle(executionKilled);
+        var maybeExecutor = handler.handle(executionKilled);
 
-        assertTrue(maybeExecutor.isEmpty());
+        assertThat(maybeExecutor).isEmpty();
+        // The EXECUTED kill event is broadcast to the workers regardless of whether the execution exists.
+        assertThat(harness.kills()).hasSize(1);
+        assertThat(harness.kills().getFirst().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
     }
 
     @Test
     void shouldReturnAnExecutorForExistingExecution() {
-        var flow = flowRepository.create(GenericFlow.of(Fixtures.flow()));
+        var flow = Flows.of(Fixtures.flow());
+        harness.registerFlow(flow);
         var execution = Execution.newExecution(flow, Collections.emptyList());
-        executionRepository.save(execution);
+        harness.executionStateStore().save(execution);
         var executionKilledExecution = ExecutionKilledExecution.builder()
             .tenantId(execution.getTenantId())
             .executionId(execution.getId())
             .executionState(State.Type.KILLED)
             .build();
 
-        var maybeExecutor = executionKilledExecutionMessageHandler.handle(executionKilledExecution);
+        var maybeExecutor = handler.handle(executionKilledExecution);
 
         assertThat(maybeExecutor).isPresent();
         assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        // Exactly one kill event: the EXECUTED broadcast to the workers (no cascade children).
+        assertThat(harness.kills()).hasSize(1);
+        assertThat(harness.kills().getFirst()).isInstanceOfSatisfying(ExecutionKilledExecution.class, killed ->
+        {
+            assertThat(killed.getExecutionId()).isEqualTo(execution.getId());
+            assertThat(killed.getTenantId()).isEqualTo(execution.getTenantId());
+            assertThat(killed.getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
+            assertThat(killed.getIsOnKillCascade()).isFalse();
+        });
     }
 
     @Test
-    void shouldEmitSucceededProcessedEventWhenCommandCarriesOperationId() throws Exception {
+    void shouldEmitSucceededProcessedEventWhenCommandCarriesOperationId() {
         // Given: an existing flow + execution and a kill message carrying an operationId
-        var flow = flowRepository.create(GenericFlow.of(Fixtures.flow()));
+        var flow = Flows.of(Fixtures.flow());
+        harness.registerFlow(flow);
         var execution = Execution.newExecution(flow, Collections.emptyList());
-        executionRepository.save(execution);
+        harness.executionStateStore().save(execution);
         var operationId = IdUtils.create();
         var message = ExecutionKilledExecution.builder()
             .tenantId(execution.getTenantId())
@@ -103,54 +101,55 @@ class ExecutionKilledExecutionMessageHandlerTest {
             .executionState(State.Type.KILLED)
             .operationId(operationId)
             .build();
-        var future = subscribeForOperation(operationId);
 
         // When
-        var maybeExecutor = executionKilledExecutionMessageHandler.handle(message);
+        var maybeExecutor = handler.handle(message);
 
-        // Then: handler succeeds and emits a SUCCEEDED processed event for the same operation.
+        // Then: handler succeeds and reports a SUCCEEDED processed outcome for the same operation
+        // (the message carries the operationId, so the async-operation service emits the event).
         assertThat(maybeExecutor).isPresent();
-        AsyncOperationProcessedEvent event = future.get(5, TimeUnit.SECONDS);
-        assertThat(event.operationId()).isEqualTo(operationId);
-        assertThat(event.tenantId()).isEqualTo(execution.getTenantId());
-        assertThat(event.itemId()).isEqualTo(execution.getId());
-        assertThat(event.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.SUCCEEDED);
-        assertThat(event.error()).isNull();
+        assertThat(message.getOperationId()).isEqualTo(operationId);
+        verify(harness.asyncOperationService()).emitProcessedIfAsync(
+            same(message),
+            eq(execution.getTenantId()),
+            eq(execution.getId()),
+            eq(AsyncOperationProcessedEvent.Outcome.SUCCEEDED),
+            isNull()
+        );
     }
 
     @Test
-    void shouldNotEmitProcessedEventWhenCommandHasNoOperationId() throws Exception {
+    void shouldNotEmitProcessedEventWhenCommandHasNoOperationId() {
         // Given: an existing flow + execution and a kill message WITHOUT operationId
-        var flow = flowRepository.create(GenericFlow.of(Fixtures.flow()));
+        var flow = Flows.of(Fixtures.flow());
+        harness.registerFlow(flow);
         var execution = Execution.newExecution(flow, Collections.emptyList());
-        executionRepository.save(execution);
+        harness.executionStateStore().save(execution);
         var message = ExecutionKilledExecution.builder()
             .tenantId(execution.getTenantId())
             .executionId(execution.getId())
             .executionState(State.Type.KILLED)
             .build();
-        CompletableFuture<AsyncOperationProcessedEvent> future = new CompletableFuture<>();
-        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either ->
-        {
-            if (either.isLeft() && execution.getId().equals(either.getLeft().itemId())) {
-                future.complete(either.getLeft());
-            }
-        });
-        try {
-            // When
-            var maybeExecutor = executionKilledExecutionMessageHandler.handle(message);
 
-            // Then: handler succeeds and NO processed event is emitted for this execution.
-            assertThat(maybeExecutor).isPresent();
-            assertThatThrownBy(() -> future.get(1, TimeUnit.SECONDS))
-                .isInstanceOf(java.util.concurrent.TimeoutException.class);
-        } finally {
-            subscriber.close();
-        }
+        // When
+        var maybeExecutor = handler.handle(message);
+
+        // Then: handler succeeds; the message handed to the async-operation service carries no
+        // operationId, and emitProcessedIfAsync is a documented no-op in that case — so NO
+        // processed event is emitted for this execution.
+        assertThat(maybeExecutor).isPresent();
+        assertThat(message.getOperationId()).isNull();
+        verify(harness.asyncOperationService()).emitProcessedIfAsync(
+            same(message),
+            eq(execution.getTenantId()),
+            eq(execution.getId()),
+            eq(AsyncOperationProcessedEvent.Outcome.SUCCEEDED),
+            isNull()
+        );
     }
 
     @Test
-    void shouldEmitFailedProcessedEventWhenHandlerThrows() throws Exception {
+    void shouldEmitFailedProcessedEventWhenHandlerThrows() {
         // Given: an execution whose flow is NOT registered in the flow meta store.
         // `killingOrAfterKillState` will call `flowMetaStore.findByExecution(...).orElseThrow()`
         // which throws `NoSuchElementException` — a RuntimeException.
@@ -165,48 +164,41 @@ class ExecutionKilledExecutionMessageHandlerTest {
             .id(executionId)
             .state(new State().withState(State.Type.RUNNING))
             .build();
-        executionRepository.save(orphanExecution);
+        harness.executionStateStore().save(orphanExecution);
         var message = ExecutionKilledExecution.builder()
             .tenantId(tenantId)
             .executionId(executionId)
             .executionState(State.Type.KILLED)
             .operationId(operationId)
             .build();
-        var future = subscribeForOperation(operationId);
 
-        // When / Then: handler throws and still emits a FAILED processed event.
-        assertThatThrownBy(() -> executionKilledExecutionMessageHandler.handle(message))
+        // When / Then: handler throws and still reports a FAILED processed outcome for the operation.
+        assertThatThrownBy(() -> handler.handle(message))
             .isInstanceOf(RuntimeException.class);
 
-        AsyncOperationProcessedEvent event = future.get(5, TimeUnit.SECONDS);
-        assertThat(event.operationId()).isEqualTo(operationId);
-        assertThat(event.itemId()).isEqualTo(executionId);
-        assertThat(event.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.FAILED);
+        assertThat(message.getOperationId()).isEqualTo(operationId);
+        verify(harness.asyncOperationService()).emitProcessedIfAsync(
+            same(message),
+            eq(tenantId),
+            eq(executionId),
+            eq(AsyncOperationProcessedEvent.Outcome.FAILED),
+            any()
+        );
     }
 
     @Test
     void shouldReturnEmptyWhenKillSwitchIsIgnore() {
         // Given — execution is ignored by the kill switch
-        when(killSwitchService.evaluate("exec-ignored")).thenReturn(EvaluationType.IGNORE);
+        when(harness.killSwitchService().evaluate("exec-ignored")).thenReturn(EvaluationType.IGNORE);
         var message = ExecutionKilledExecution.builder()
             .tenantId("tenant").executionId("exec-ignored").isOnKillCascade(false).build();
 
         // When
-        Optional<ExecutorContext> result = executionKilledExecutionMessageHandler.handle(message);
+        Optional<ExecutorContext> result = handler.handle(message);
 
         // Then
         assertThat(result).isEmpty();
-    }
-
-    private CompletableFuture<AsyncOperationProcessedEvent> subscribeForOperation(String operationId) {
-        CompletableFuture<AsyncOperationProcessedEvent> future = new CompletableFuture<>();
-        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either ->
-        {
-            if (either.isLeft() && operationId.equals(either.getLeft().operationId())) {
-                future.complete(either.getLeft());
-            }
-        });
-        future.whenComplete((e, t) -> subscriber.close());
-        return future.orTimeout(10, TimeUnit.SECONDS);
+        // The handler bails out before broadcasting any kill event.
+        assertThat(harness.kills()).isEmpty();
     }
 }

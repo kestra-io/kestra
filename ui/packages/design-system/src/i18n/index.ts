@@ -9,10 +9,10 @@ export function setDesignSystemLocale(locale: string) {
 }
 
 const localeModules = import.meta.glob<{default: Record<string, unknown>}>(
-    "../components/**/*.locale.*.json",
+    "../components/**/*.json",
 )
 
-const LOCALE_FILE_PATTERN = /\.locale\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
+const LOCALE_FILE_PATTERN = /\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
 
 // Loads only "en" (the fallback) and the currently active locale, instead of
 // eagerly bundling every design-system translation regardless of what the user needs.

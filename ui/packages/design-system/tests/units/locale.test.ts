@@ -1,13 +1,13 @@
 import {describe, test, expect} from "vitest"
 
 const localeModules = import.meta.glob<{default: Record<string, unknown>}>(
-    "../../src/components/**/*.locale.*.json",
+    "../../src/components/**/*.json",
     {eager: true},
 )
 
 const LANGUAGES = ["en", "de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"]
 
-const FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
+const FILE_PATTERN = /^(.*)\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
 
 function getNestedKeys(obj: Record<string, unknown>, prefix = ""): string[] {
     return Object.keys(obj).reduce<string[]>((keys, key) => {
@@ -21,7 +21,7 @@ function getNestedKeys(obj: Record<string, unknown>, prefix = ""): string[] {
     }, [])
 }
 
-// Group per-language files back by their component (e.g. "KsEmpty.locale") so each
+// Group per-language files back by their component (e.g. "KsEmpty") so each
 // component's translations can be checked as a set, mirroring src/translations/check.js.
 const byComponent = new Map<string, Map<string, Record<string, unknown>>>()
 for (const [path, mod] of Object.entries(localeModules)) {

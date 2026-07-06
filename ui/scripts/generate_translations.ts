@@ -3,7 +3,7 @@
  *
  * Two sources are translated:
  *   1. `ui/src/translations/en.json` -> one JSON file per language (de.json, fr.json, ...).
- *   2. The design-system `*.locale.{lang}.json` files (ui/packages/design-system/.../*.locale.{lang}.json),
+ *   2. The design-system `*.{lang}.json` files (ui/packages/design-system/.../KsEmpty.{lang}.json),
  *      one file per language per component.
  *
  * Run from the repository root so the relative paths below resolve correctly:
@@ -248,17 +248,17 @@ async function main(
 }
 
 // ---------------------------------------------------------------------------
-// Design-system `*.locale.{lang}.json` files
+// Design-system `*.{lang}.json` files
 //
-// Each component has one file per language (e.g. KsEmpty.locale.en.json,
-// KsEmpty.locale.de.json, ...), each holding only that language's translations.
+// Each component has one file per language (e.g. KsEmpty.en.json,
+// KsEmpty.de.json, ...), each holding only that language's translations.
 // ---------------------------------------------------------------------------
 
 function loadLocaleFile(filePath: string): NestedDict {
     return existsSync(filePath) ? JSON.parse(readFileSync(filePath, "utf-8")) : {}
 }
 
-// Load a `*.locale.{lang}.json` file's contents from the previous commit so we can
+// Load a `*.{lang}.json` file's contents from the previous commit so we can
 // detect which source strings changed (mirrors loadEnChangesFromLastCommits).
 function loadLocaleFileFromLastCommits(filePath: string): NestedDict {
     const commits = (execFileSync("git", ["log", "-n", "2", "--format=%H", "--", filePath], {encoding: "utf-8"}) as string)
@@ -278,7 +278,7 @@ function loadLocaleFileFromLastCommits(filePath: string): NestedDict {
 }
 
 // Translate the missing/changed keys of a component's per-language locale files in place,
-// using its `*.locale.en.json` file as the source of truth for every other language.
+// using its `*.en.json` file as the source of truth for every other language.
 async function translateLocaleFile(enFilePath: string, retranslateModifiedKeys: boolean): Promise<void> {
     const enData = loadLocaleFile(enFilePath)
     const enFlat = flattenDict(enData)
@@ -353,8 +353,8 @@ for (const [languageCode, targetLanguage] of LANGUAGES) {
     await main(languageCode, targetLanguage, "ui/src/translations/en.json", boolFromCi)
 }
 
-// 2. Translate the design-system `*.locale.{lang}.json` files, one component at a time,
-// using each component's `*.locale.en.json` file as the source of truth.
-for (const enLocaleFile of globSync("ui/packages/design-system/**/*.locale.en.json")) {
+// 2. Translate the design-system `*.{lang}.json` files, one component at a time,
+// using each component's `*.en.json` file as the source of truth.
+for (const enLocaleFile of globSync("ui/packages/design-system/**/*.en.json")) {
     await translateLocaleFile(enLocaleFile, boolFromCi)
 }

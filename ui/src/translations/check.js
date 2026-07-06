@@ -43,11 +43,11 @@ languages.forEach((lang, i) => {
     if(extra.length) globalExtra[lang] = extra
 })
 
-// Design-system `*.locale.{lang}.json` files: one per component per language (see ui/AGENTS.md).
-const LOCALE_FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
+// Design-system `*.{lang}.json` files: one per component per language (see ui/AGENTS.md).
+const LOCALE_FILE_PATTERN = /^(.*)\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
 
 const localeFilesByComponent = new Map()
-for (const relPath of globSync("../../packages/design-system/src/components/**/*.locale.*.json", {cwd: dirname})) {
+for (const relPath of globSync("../../packages/design-system/src/components/**/*.json", {cwd: dirname})) {
     const match = relPath.match(LOCALE_FILE_PATTERN)
     if (!match) continue
     const [, base, lang] = match

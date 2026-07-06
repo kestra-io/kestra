@@ -1,6 +1,0 @@
-export default {
-    ks_plugin_card: {
-        tasks: "任务 | 任务",
-        blueprints: "蓝图 | 蓝图",
-    },
-}

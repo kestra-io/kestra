@@ -1,9 +1,0 @@
-export default {
-    password_requirements: {
-        length: "8자 이상",
-        uppercase: "대문자 1개",
-        lowercase: "소문자 1개",
-        number: "숫자 1개",
-        match: "비밀번호가 일치합니다",
-    },
-}

@@ -1,6 +1,0 @@
-export default {
-    ks_bulk_select: {
-        selected: "<strong>{count}</strong>件選択済み",
-        all: "すべて選択 ({count})",
-    },
-}

@@ -1,5 +1,0 @@
-export default {
-    topnav_sidebar_toggle: "Menü umschalten",
-    topnav_bookmark: "Lesezeichen umschalten",
-    topnav_dock_toggle: "Panel umschalten",
-}

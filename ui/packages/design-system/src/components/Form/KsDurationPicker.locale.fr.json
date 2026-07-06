@@ -1,0 +1,13 @@
+{
+    "years": "Années",
+    "months": "Mois",
+    "weeks": "Semaines",
+    "days": "Jours",
+    "hours": "Heures",
+    "minutes": "Minutes",
+    "seconds": "Secondes",
+    "input_custom_duration": "ou saisir une durée personnalisée :",
+    "datepicker": {
+        "custom duration": "Durée personnalisée"
+    }
+}

@@ -3,8 +3,8 @@
  *
  * Two sources are translated:
  *   1. `ui/src/translations/en.json` -> one JSON file per language (de.json, fr.json, ...).
- *   2. The design-system `*.locale.ts` files (ui/packages/design-system/.../  *.locale.ts),
- *      each of which holds every language in a single `export default { en: {...}, de: {...}, ... }`.
+ *   2. The design-system `*.locale.{lang}.json` files (ui/packages/design-system/.../*.locale.{lang}.json),
+ *      one file per language per component.
  *
  * Run from the repository root so the relative paths below resolve correctly:
  *   GEMINI_API_KEY=... node --experimental-strip-types ui/scripts/generate_translations.ts [true|false]
@@ -248,63 +248,17 @@ async function main(
 }
 
 // ---------------------------------------------------------------------------
-// Design-system `*.locale.{lang}.ts` files
+// Design-system `*.locale.{lang}.json` files
 //
-// Each component has one file per language (e.g. KsEmpty.locale.en.ts,
-// KsEmpty.locale.de.ts, ...), each exporting only that language's translations
-// as a plain object literal - no language-key wrapper.
-//
-// These files contain only string values and nested objects (no imports, types
-// or function calls), which lets us evaluate them as plain object literals and
-// re-serialise them back to TypeScript after filling in the translations.
+// Each component has one file per language (e.g. KsEmpty.locale.en.json,
+// KsEmpty.locale.de.json, ...), each holding only that language's translations.
 // ---------------------------------------------------------------------------
 
-const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/
-
-// Evaluate the body of a `*.locale.{lang}.ts` default export into a plain object.
-// The files are pure data literals, so this is safe (and far simpler than parsing TS).
-function evalLocaleModule(source: string): NestedDict {
-    const body = source
-        .replace(/export\s+default\s*/, "")
-        .replace(/;?\s*$/, "")
-    return new Function(`return (${body})`)() as NestedDict
+function loadLocaleFile(filePath: string): NestedDict {
+    return existsSync(filePath) ? JSON.parse(readFileSync(filePath, "utf-8")) : {}
 }
 
-// Serialise a value back to TypeScript source, matching the existing 4-space
-// indentation, trailing commas, and unquoted-identifier-keys style.
-function serializeLocaleValue(value: NestedValue, indent: number): string {
-    if (value === null || typeof value !== "object") {
-        return JSON.stringify(value)
-    }
-
-    const pad = "    ".repeat(indent)
-    const padInner = "    ".repeat(indent + 1)
-
-    if (Array.isArray(value)) {
-        if (value.length === 0) {
-            return "[]"
-        }
-        const items = value.map((v) => `${padInner}${serializeLocaleValue(v, indent + 1)},`)
-        return `[\n${items.join("\n")}\n${pad}]`
-    }
-
-    const entries = Object.entries(value)
-    if (entries.length === 0) {
-        return "{}"
-    }
-
-    const lines = entries.map(([k, v]) => {
-        const key = IDENTIFIER.test(k) ? k : JSON.stringify(k)
-        return `${padInner}${key}: ${serializeLocaleValue(v, indent + 1)},`
-    })
-    return `{\n${lines.join("\n")}\n${pad}}`
-}
-
-function serializeLocaleModule(data: NestedDict): string {
-    return `export default ${serializeLocaleValue(data, 0)}\n`
-}
-
-// Load a `*.locale.{lang}.ts` file's contents from the previous commit so we can
+// Load a `*.locale.{lang}.json` file's contents from the previous commit so we can
 // detect which source strings changed (mirrors loadEnChangesFromLastCommits).
 function loadLocaleFileFromLastCommits(filePath: string): NestedDict {
     const commits = (execFileSync("git", ["log", "-n", "2", "--format=%H", "--", filePath], {encoding: "utf-8"}) as string)
@@ -317,27 +271,26 @@ function loadLocaleFileFromLastCommits(filePath: string): NestedDict {
     const previousCommit = commits[1]
     try {
         const previousVersion = execFileSync("git", ["show", `${previousCommit}:${filePath}`], {encoding: "utf-8"}) as string
-        return evalLocaleModule(previousVersion)
+        return JSON.parse(previousVersion)
     } catch {
         return {}
     }
 }
 
 // Translate the missing/changed keys of a component's per-language locale files in place,
-// using its `*.locale.en.ts` file as the source of truth for every other language.
+// using its `*.locale.en.json` file as the source of truth for every other language.
 async function translateLocaleFile(enFilePath: string, retranslateModifiedKeys: boolean): Promise<void> {
-    const enData = evalLocaleModule(readFileSync(enFilePath, "utf-8"))
+    const enData = loadLocaleFile(enFilePath)
     const enFlat = flattenDict(enData)
 
     // Keys whose English source changed since the previous commit (used only when forcing re-translation).
     const changedEnKeys = detectChanges(enData, loadLocaleFileFromLastCommits(enFilePath))
 
-    const basePath = enFilePath.slice(0, -"en.ts".length)
+    const basePath = enFilePath.slice(0, -"en.json".length)
 
     for (const [code, targetLanguage] of LANGUAGES) {
-        const targetFilePath = `${basePath}${code}.ts`
-        const targetData = existsSync(targetFilePath) ? evalLocaleModule(readFileSync(targetFilePath, "utf-8")) : {}
-        const targetFlat = flattenDict(targetData)
+        const targetFilePath = `${basePath}${code}.json`
+        const targetFlat = flattenDict(loadLocaleFile(targetFilePath))
 
         // Keys to translate: changed English source, plus keys missing or empty in the target language.
         const toTranslate: FlatDict = {}
@@ -373,7 +326,7 @@ async function translateLocaleFile(enFilePath: string, retranslateModifiedKeys: 
                 prunedTargetFlat[k] = targetFlat[k]
             }
         }
-        writeFileSync(targetFilePath, serializeLocaleModule(unflattenDict(prunedTargetFlat)))
+        writeFileSync(targetFilePath, JSON.stringify(unflattenDict(prunedTargetFlat), null, 4) + "\n")
     }
 }
 
@@ -400,8 +353,8 @@ for (const [languageCode, targetLanguage] of LANGUAGES) {
     await main(languageCode, targetLanguage, "ui/src/translations/en.json", boolFromCi)
 }
 
-// 2. Translate the design-system `*.locale.{lang}.ts` files, one component at a time,
-// using each component's `*.locale.en.ts` file as the source of truth.
-for (const enLocaleFile of globSync("ui/packages/design-system/**/*.locale.en.ts")) {
+// 2. Translate the design-system `*.locale.{lang}.json` files, one component at a time,
+// using each component's `*.locale.en.json` file as the source of truth.
+for (const enLocaleFile of globSync("ui/packages/design-system/**/*.locale.en.json")) {
     await translateLocaleFile(enLocaleFile, boolFromCi)
 }

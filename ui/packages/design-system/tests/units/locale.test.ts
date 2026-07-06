@@ -1,13 +1,13 @@
 import {describe, test, expect} from "vitest"
 
 const localeModules = import.meta.glob<{default: Record<string, unknown>}>(
-    "../../src/components/**/*.locale.*.ts",
+    "../../src/components/**/*.locale.*.json",
     {eager: true},
 )
 
 const LANGUAGES = ["en", "de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"]
 
-const FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.ts$/
+const FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
 
 function getNestedKeys(obj: Record<string, unknown>, prefix = ""): string[] {
     return Object.keys(obj).reduce<string[]>((keys, key) => {

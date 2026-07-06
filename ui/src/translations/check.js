@@ -43,22 +43,16 @@ languages.forEach((lang, i) => {
     if(extra.length) globalExtra[lang] = extra
 })
 
-// Design-system `*.locale.{lang}.ts` files: one per component per language (see ui/AGENTS.md).
-// Evaluate each as a plain object literal (they contain only string/object literals, no imports).
-const evalLocaleModule = (source) => {
-    const body = source.replace(/export\s+default\s*/, "").replace(/;?\s*$/, "")
-    return new Function(`return (${body})`)()
-}
-
-const LOCALE_FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.ts$/
+// Design-system `*.locale.{lang}.json` files: one per component per language (see ui/AGENTS.md).
+const LOCALE_FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.json$/
 
 const localeFilesByComponent = new Map()
-for (const relPath of globSync("../../packages/design-system/src/components/**/*.locale.*.ts", {cwd: dirname})) {
+for (const relPath of globSync("../../packages/design-system/src/components/**/*.locale.*.json", {cwd: dirname})) {
     const match = relPath.match(LOCALE_FILE_PATTERN)
     if (!match) continue
     const [, base, lang] = match
     if (!localeFilesByComponent.has(base)) localeFilesByComponent.set(base, new Map())
-    localeFilesByComponent.get(base).set(lang, evalLocaleModule(fs.readFileSync(path.resolve(dirname, relPath), "utf-8")))
+    localeFilesByComponent.get(base).set(lang, readJSON(path.resolve(dirname, relPath)))
 }
 
 for (const [base, langMap] of localeFilesByComponent) {

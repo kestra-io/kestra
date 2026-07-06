@@ -1,6 +1,0 @@
-export default {
-    ks_empty_state: {
-        watch_the_video: "Watch the video",
-        learn_more: "Learn more",
-    },
-}

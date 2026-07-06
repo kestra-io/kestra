@@ -1,3 +1,0 @@
-export default {
-    no_data: "On dirait qu'il n'y a rien ici… pour l'instant !\nAjustez vos filtres, ou réessayez !",
-}

@@ -1,5 +1,0 @@
-export default {
-    topnav_sidebar_toggle: "मेनू टॉगल करें",
-    topnav_bookmark: "बुकमार्क टॉगल करें",
-    topnav_dock_toggle: "पैनल टॉगल करें",
-}

@@ -1,9 +1,12 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, afterEach} from "vitest"
 import {defineComponent, ref, reactive} from "vue"
 import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {useInputsWizard} from "../../../src/composables/useInputsWizard"
+import {executeFormValuesStorageKey} from "../../../src/utils/inputs"
 import type {InputMetaData} from "../../../src/stores/executions"
+
+const FLOW = {namespace: "company.team", id: "my-flow"}
 
 // A flow with one FORM (env.region) + one ungrouped input (name) -> steps: [form, plain, recap].
 const FORM_INPUTS = [
@@ -11,14 +14,14 @@ const FORM_INPUTS = [
     {id: "name", type: "STRING"},
 ] as unknown as InputMetaData[]
 
-function mountWizard(meta: InputMetaData[]) {
+function mountWizard(meta: InputMetaData[], flow?: {tenantId?: string; namespace: string; id: string; revision?: number}) {
     let api!: ReturnType<typeof useInputsWizard>
     const inputsValues = reactive<Record<string, any>>({})
     const inputsMetaData = ref<InputMetaData[]>(meta)
     const Comp = defineComponent({
         setup() {
             api = useInputsWizard({
-                props: {initialInputs: FORM_INPUTS, mode: "wizard"},
+                props: {initialInputs: FORM_INPUTS, mode: "wizard", flow: flow as any},
                 inputsMetaData,
                 inputsValues,
                 multiSelectInputs: reactive({}),
@@ -69,5 +72,45 @@ describe("useInputsWizard visited / stepStatus", () => {
         await flushPromises()
         expect(api.currentStep.value).toBe(0)
         expect(api.visited.value.size).toBe(0)
+    })
+})
+
+describe("useInputsWizard persistValues / restorePersistedValues", () => {
+    const storageKey = executeFormValuesStorageKey(FLOW)!
+
+    afterEach(() => localStorage.removeItem(storageKey))
+
+    test("persistValues never writes SECRET values to localStorage", () => {
+        const {api, inputsValues} = mountWizard(
+            [
+                {id: "env.region", type: "STRING", required: true} as InputMetaData,
+                {id: "name", type: "SECRET", required: true} as InputMetaData,
+            ],
+            FLOW,
+        )
+        inputsValues["env.region"] = "us-east"
+        inputsValues["name"] = "s3cr3t-token"
+
+        api.persistValues()
+
+        const stored = JSON.parse(localStorage.getItem(storageKey)!)
+        expect(stored).toEqual({"env.region": "us-east"})
+        expect(JSON.stringify(stored)).not.toContain("s3cr3t-token")
+    })
+
+    test("restorePersistedValues leaves SECRET fields unset after a reload", () => {
+        localStorage.setItem(storageKey, JSON.stringify({"env.region": "us-east"}))
+        const {api, inputsValues} = mountWizard(
+            [
+                {id: "env.region", type: "STRING", required: true} as InputMetaData,
+                {id: "name", type: "SECRET", required: true} as InputMetaData,
+            ],
+            FLOW,
+        )
+
+        api.restorePersistedValues()
+
+        expect(inputsValues["env.region"]).toBe("us-east")
+        expect(inputsValues["name"]).toBeUndefined()
     })
 })

@@ -15,7 +15,7 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type FlowWithSource, type AbstractTrigger} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
@@ -27,14 +27,13 @@ const textYamlHeader = {
     },
 }
 
-const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
-
-export interface Trigger {
-    id: string;
-    type: string;
+// backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
+// the SDK's generic AbstractTrigger schema (which models fields common to every trigger type).
+export type Trigger = AbstractTrigger & {
     backfill?: {
         start?: string;
     };
+    key?: string;
 }
 
 export interface Task {
@@ -58,23 +57,15 @@ export interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-export interface Flow {
-    id: string;
-    namespace: string;
+// tasks/errors/triggers/inputs are overridden below: the SDK's generic Task/AbstractTrigger/
+// InputObject types don't model the recursive subtasks or OSS-specific fields (backfill) this
+// app relies on for tree-walking and trigger editing. source is narrowed to required since this
+// store only ever loads flows with the `source: true` request param, which always returns it.
+export type Flow = FlowWithSource & {
     source: string;
-    revision?: number;
-    deleted?: boolean;
-    disabled?: boolean;
-    /** A draft revision is never picked up by webhooks, schedules, subflows or revision-less executions. */
-    draft?: boolean;
-    labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
-    errors?: { message: string; code?: string, id?: string }[];
-    concurrency?: {
-        limit: number;
-        behavior: string;
-    };
+    errors?: Task[];
     tasks?: Task[];
 }
 
@@ -506,8 +497,6 @@ export const useFlowStore = defineStore("flow", () => {
                 throw e
             })
     }
-    // Stays on raw axios: the SDK's updateFlow doesn't expose the `draft` query param, even though
-    // the backend (FlowController) genuinely supports it - a gap in the generated OpenAPI client.
     function saveFlow(options: { flow: string, draft?: boolean }) {
         let namespace: string
         let id: string
@@ -519,20 +508,16 @@ export const useFlowStore = defineStore("flow", () => {
             namespace = flow.value?.namespace ?? ""
             id = flow.value?.id ?? ""
         }
-        return axios.put(`${apiUrl()}/flows/${namespace}/${id}`, options.flow, {
-            ...textYamlHeader,
-            ...VALIDATE,
-            params: {draft: options.draft ?? false},
-        })
-            .then(response => {
-                if (response.status >= 300) {
-                    return Promise.reject(response)
-                } else {
-                    flow.value = response.data
+        return FlowsAPI.updateFlow({
+            namespace,
+            id,
+            body: options.flow,
+            draft: options.draft ?? false,
+        }).then(data => {
+            flow.value = data as Flow
 
-                    return response.data
-                }
-            })
+            return flow.value
+        })
     }
     function updateFlowTask(options: { flow: Flow, task: Task }) {
         return axios
@@ -548,28 +533,22 @@ export const useFlowStore = defineStore("flow", () => {
             })
     }
 
-    // Stays on raw axios: same `draft` param gap as saveFlow/updateFlow above.
     function createFlow(options: { flow: string, draft?: boolean }) {
-        return axios.post(`${apiUrl()}/flows`, options.flow, {
-            ...textYamlHeader,
-            ...VALIDATE,
+        return FlowsAPI.createFlow({
+            body: options.flow,
+            draft: options.draft ?? false,
             showMessageOnError: false,
-            params: {draft: options.draft ?? false},
-        }).then(response => {
-            if (response.status >= 300) {
-                return Promise.reject(response)
-            }
-
+        } as Parameters<typeof FlowsAPI.createFlow>[0]).then(data => {
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([])
             localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels)
 
-            flow.value = response.data
+            flow.value = data as Flow
 
             // clean-up
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
-            return response.data
+            return flow.value
         })
     }
 
@@ -936,7 +915,7 @@ function deleteFlowAndDependencies() {
             return false
         }
 
-        return (flow.value.labels?.["system.readOnly"] === "true") || (flow.value.labels?.["system.readOnly"] === true)
+        return flow.value.labels.some(label => label.key === "system.readOnly" && label.value === "true")
     })
 
     const isReadOnly = computed(() => {

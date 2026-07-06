@@ -9,7 +9,12 @@
 // button
 .el-button {
 
-    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
+    // NB: match only by the *absence* of a type modifier — do NOT add `&--default` here.
+    // Element Plus reuses `.el-button--default` for the default *size* too, so a typed button
+    // (e.g. `el-button--danger`) rendered at default size also carries `.el-button--default`.
+    // Matching `&--default` would then clobber its background to the secondary colour while the
+    // type keeps its own (white) text, producing invisible text — see Apps' Cancel button.
+    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground) {
         --el-button-hover-text-color: var(--ks-content-primary);
         --el-button-hover-border-color: var(--ks-border-primary);
         --el-button-bg-color: var(--ks-button-background-secondary);

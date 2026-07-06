@@ -6,7 +6,7 @@
                     class="plugin-icon"
                     :cls="currentPlugin.cls"
                     onlyIcon
-                    :icons="pluginsStore.icons"
+                    :loadIcon="pluginsStore.loadIcon"
                 />
                 <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}

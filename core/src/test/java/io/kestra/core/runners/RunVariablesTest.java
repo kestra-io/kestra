@@ -336,6 +336,22 @@ class RunVariablesTest {
     }
 
     @Test
+    void shouldExposeFlowVarsWhenNoExecution() {
+        Flow flow = Flow.builder()
+            .id("id-value")
+            .namespace("namespace-value")
+            .revision(42)
+            .variables(Map.of("region", "us-east-1"))
+            .build();
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables.get("vars")).isEqualTo(Map.of("region", "us-east-1"));
+    }
+
+    @Test
     void allContextPathsShouldContainExpectedStructuralPaths() {
         List<String> paths = RunVariables.allContextPaths();
 

@@ -12,9 +12,7 @@ import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -420,15 +418,10 @@ public final class RunVariables {
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (realExecution.getInputs() != null) {
                     inputs.putAll(realExecution.getInputs());
-                    if (decryptVariables && flow != null && flow.getInputs() != null) {
-                        // if some inputs are of type secret, we decode them
+                    if (decryptVariables && !ListUtils.isEmpty(secretInputs)) {
                         final Secret secret = new Secret(secretKey, logger);
-                        // Expand FORM inputs so SECRET children are decoded by their dotted path; decodeInput already
-                        // navigates the nested inputs map for dotted ids.
-                        for (Input<?> input : flow.resolvableInputs()) {
-                            if (input instanceof SecretInput) {
-                                decodeInput(secret, input.getId(), inputs);
-                            }
+                        for (String secretId : secretInputs) {
+                            decodeInput(secret, secretId, inputs);
                         }
                     }
                 }
@@ -515,25 +508,27 @@ public final class RunVariables {
                 if (execution.getLoopRun() != null) {
                     builder.put("item", RunVariables.of(execution.getLoopRun()));
                 }
-
-                // variables
-                Optional.ofNullable(execution.getVariables())
-                    .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
-                    .map(HashMap::new)
-                    .ifPresent(variables ->
-                    {
-                        Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
-                        builder.put("vars", ImmutableMap.copyOf(variables));
-
-                        if (fixtureFiles != null) {
-                            builder.put("files", fixtureFiles);
-                        }
-                    });
             } else if (flow != null) {
                 // if the execution is null, we should add flow labels
                 // this is useful for triggers that don't have an execution
                 builder.put(LABELS, Label.toNestedMap(flow.getLabels()));
             }
+
+            // variables: execution-level variables take precedence, falling back to flow-level variables.
+            // Flow `vars.*` are exposed even without an execution so they resolve in flow-only contexts
+            // (e.g. triggers and display-time expression rendering).
+            Optional.ofNullable(execution).map(Execution::getVariables)
+                .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
+                .map(HashMap::new)
+                .ifPresent(variables ->
+                {
+                    Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
+                    builder.put("vars", ImmutableMap.copyOf(variables));
+
+                    if (fixtureFiles != null) {
+                        builder.put("files", fixtureFiles);
+                    }
+                });
 
             // Kestra configuration
             if (kestraConfiguration != null) {

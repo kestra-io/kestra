@@ -11,6 +11,7 @@
     </div>
     <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
+    <DrillDownDrawer />
 </template>
 
 <script lang="ts" setup>
@@ -34,6 +35,7 @@
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
+    import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import {usePluginsStore} from "./stores/plugins"
     import {useThemeCycle} from "./composables/useThemeCycle"
 

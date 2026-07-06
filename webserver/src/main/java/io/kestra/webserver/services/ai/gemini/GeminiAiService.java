@@ -20,9 +20,11 @@ import io.kestra.webserver.utils.HttpClientUtils;
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -75,5 +77,24 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         }
 
         return builder.build();
+    }
+
+    @Override
+    public StreamingChatModel streamingChatModel(List<ChatModelListener> listeners) {
+        return GoogleAiGeminiStreamingChatModel.builder()
+            .baseUrl(getAiConfiguration().baseUrl())
+            .listeners(listeners)
+            .modelName(getAiConfiguration().modelName())
+            .apiKey(getAiConfiguration().apiKey())
+            .temperature(getAiConfiguration().temperature())
+            .topP(getAiConfiguration().topP())
+            .topK(getAiConfiguration().topK())
+            .maxOutputTokens(getAiConfiguration().maxOutputTokens())
+            .logRequests(getAiConfiguration().logRequests())
+            .logResponses(getAiConfiguration().logResponses())
+            .thinkingConfig(GeminiThinkingConfig.builder().includeThoughts(false).build())
+            .returnThinking(false)
+            .timeout(getAiConfiguration().timeout())
+            .build();
     }
 }

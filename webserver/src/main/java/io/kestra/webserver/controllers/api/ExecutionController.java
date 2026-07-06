@@ -166,6 +166,9 @@ public class ExecutionController {
     private FlowInputOutput flowInputOutput;
 
     @Inject
+    private io.kestra.core.runners.ReusableInputsExpander reusableInputsExpander;
+
+    @Inject
     private StorageInterface storageInterface;
 
     @Inject
@@ -2330,7 +2333,8 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
-        return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2341,7 +2345,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The flow revision") @Nullable Integer revision) {
 
-        return FlowForExecution.of(flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow());
+        Flow flow = flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow();
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)

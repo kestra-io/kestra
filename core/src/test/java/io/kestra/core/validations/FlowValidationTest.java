@@ -358,6 +358,28 @@ class FlowValidationTest {
     }
 
     @Test
+    void eeOnlyInputFailsValidationOnOpenSource() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: cfg
+                type: REUSABLE_INPUTS
+                ref: my_block
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.");
+    }
+
+    @Test
     void formInputs_sameChildIdInDifferentForms_succeeds() {
         // Scoped uniqueness: a child id may repeat across different forms because the expanded paths differ.
         Flow flow = YamlParser.parse("""

@@ -28,6 +28,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.SvgSanitizer;
 
 import lombok.*;
 
@@ -313,9 +314,8 @@ public class RegisteredPlugin {
             .orElse(null);
 
         if (resourceAsStream != null) {
-            return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-            );
+            String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
         }
         return null;
     }
@@ -328,9 +328,8 @@ public class RegisteredPlugin {
     public String icon(String iconName) {
         InputStream resourceAsStream = this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
         if (resourceAsStream != null) {
-            return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-            );
+            String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
         }
         return null;
     }

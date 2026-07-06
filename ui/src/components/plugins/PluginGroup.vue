@@ -282,6 +282,7 @@
     onMounted(() => {
         miscStore.loadConfigs()
         pluginsStore.ensurePlugins()
+        pluginsStore.fetchIcons()
         loadGroupIcons()
     })
 </script>

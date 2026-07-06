@@ -33,7 +33,7 @@
                                 <TrashCanOutline
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
-                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                 />
                             </KsOption>
                         </KsSelect>
@@ -75,7 +75,7 @@
                                 <TrashCanOutline
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
-                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                 />
                             </KsOption>
                         </KsSelect>
@@ -172,8 +172,11 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
-        editRouteQuery?: boolean
-    }>(), {editRouteQuery: true})
+        editRouteQuery?: boolean,
+        // Whether per-revision delete is available. Flows support it (default); consumers without a
+        // delete-by-revision backend (e.g. reusable inputs) pass false to hide the delete control.
+        canDelete?: boolean
+    }>(), {editRouteQuery: true, canDelete: true})
 
     const sortedRevisions = computed(() => {
         return props.revisions.toSorted((a, b) => a.revision - b.revision)

@@ -3,7 +3,7 @@ package io.kestra.executor.statemachine;
 import java.time.Duration;
 import java.time.Instant;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.Execution;
@@ -19,68 +19,53 @@ import io.kestra.executor.testkit.Flows;
 import io.kestra.executor.testkit.Results;
 import io.kestra.plugin.core.log.Log;
 
-import org.assertj.core.api.Assertions;
-
 import static io.kestra.executor.testkit.ExecutorContextAssert.assertThat;
 
 /**
- * Layer-1 saga: retry decision with behavior CREATE_NEW_EXECUTION, driven as
- * process → fail the emitted worker task → process again. Covers the decision logic behind
- * {@code AbstractRunnerRetryTest#retryNewExecution*} without runner, database or queues.
+ * Layer-1 retry decision matrix: behavior (CREATE_NEW_EXECUTION / RETRY_FAILED_TASK) × scope
+ * (task retry / flow retry) × limits (attempts / duration), driven as explicit sagas —
+ * process → fail the emitted worker task → assert the ExecutorContext command object.
+ * Twins the decision logic behind AbstractRunnerRetryTest#retryNewExecution*,
+ * #retryFailedTask*, #retryFailedFlow* (each of which boots a full StandAloneRunner × 5 backends).
+ * No Micronaut, no database, no queues.
  */
 class RetryDecisionTest {
 
     private static final Duration INTERVAL = Duration.ofMinutes(1);
+    private static final Instant ATTEMPT_END = Instant.parse("2026-07-06T10:00:00Z");
+    private static final String TASK_ID = "failing-task";
 
-    private ExecutorTestHarness harness;
-    private FlowWithSource flow;
+    private final ExecutorTestHarness harness = ExecutorTestHarness.create();
 
-    @BeforeEach
-    void setUp() {
-        harness = ExecutorTestHarness.create();
-        flow = Flows.of(
-            Log.builder()
-                .id("failing-task")
-                .type(Log.class.getName())
-                .message("boom")
-                .retry(Constant.builder()
-                    .interval(INTERVAL)
-                    .maxAttempts(3)
-                    .behavior(AbstractRetry.Behavior.CREATE_NEW_EXECUTION)
-                    .build())
-                .build()
-        );
-        harness.registerFlow(flow);
-    }
+    // --- behavior CREATE_NEW_EXECUTION (task retry)
 
     @Test
     void shouldScheduleNewExecutionDelayWhenTaskFailsUnderCreateNewExecution() throws Exception {
         // Given: a fresh execution — the executor must emit exactly one worker task
-        Execution execution = Executions.created(flow);
-        ExecutorContext cycle1 = harness.process(flow, execution);
+        FlowWithSource flow = flowWithTaskRetry(AbstractRetry.Behavior.CREATE_NEW_EXECUTION, 3);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
 
         assertThat(cycle1)
-            .hasWorkerTaskFor("failing-task")
+            .hasWorkerTaskFor(TASK_ID)
             .hasNoExecutionDelays();
 
         // When: the "worker" fails the task; the attempt end date is our deterministic clock anchor
-        Instant attemptEnd = Instant.parse("2026-07-06T10:00:00Z");
         ExecutorContext cycle2 = harness.processResult(
             flow,
             cycle1,
-            Results.failed(cycle1.getWorkerTasks().getFirst(), attemptEnd)
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
         );
 
-        // Then: CREATE_NEW_EXECUTION ⇒ a RESTART_FAILED_FLOW delay at attemptEnd + interval,
-        // the taskrun marked RETRIED, and no other command leaks out of the accumulator
+        // Then: a RESTART_FAILED_FLOW delay at attemptEnd + interval, the taskrun marked RETRIED,
+        // and no other command leaks out of the accumulator
         assertThat(cycle2)
             .hasSingleExecutionDelay(delay -> {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_FLOW);
-                Assertions.assertThat(delay.getDate()).isEqualTo(attemptEnd.plus(INTERVAL));
+                Assertions.assertThat(delay.getDate()).isEqualTo(ATTEMPT_END.plus(INTERVAL));
                 Assertions.assertThat(delay.getExecutionId()).isEqualTo(cycle2.getExecution().getId());
                 Assertions.assertThat(delay.getState()).isEqualTo(State.Type.RUNNING);
             })
-            .hasTaskRunInState("failing-task", State.Type.RETRIED)
+            .hasTaskRunInState(TASK_ID, State.Type.RETRIED)
             .executionInState(State.Type.RETRIED)
             .updatedFrom("handleRetryTask")
             .hasNoWorkerTasks()
@@ -93,23 +78,222 @@ class RetryDecisionTest {
     }
 
     @Test
+    void shouldFailExecutionWhenCreateNewExecutionAttemptsExhausted() throws Exception {
+        // Given: maxAttempts 1 while the execution is already attempt number 1
+        FlowWithSource flow = flowWithTaskRetry(AbstractRetry.Behavior.CREATE_NEW_EXECUTION, 1);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
+        );
+
+        // Then: no delay — the failure follows the normal FAILED path
+        assertThat(cycle2)
+            .hasNoExecutionDelays()
+            .hasTaskRunInState(TASK_ID, State.Type.FAILED)
+            .executionInState(State.Type.FAILED);
+    }
+
+    // --- behavior RETRY_FAILED_TASK (task retry)
+
+    @Test
+    void shouldScheduleTaskRestartDelayWhenTaskFailsUnderRetryFailedTask() throws Exception {
+        // Given
+        FlowWithSource flow = flowWithTaskRetry(AbstractRetry.Behavior.RETRY_FAILED_TASK, 3);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+        assertThat(cycle1).hasWorkerTaskFor(TASK_ID);
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
+        );
+
+        // Then: the delay restarts the TASK in place — no new execution
+        assertThat(cycle2)
+            .hasSingleExecutionDelay(delay -> {
+                Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_TASK);
+                Assertions.assertThat(delay.getDate()).isEqualTo(ATTEMPT_END.plus(INTERVAL));
+            })
+            .hasTaskRunInState(TASK_ID, State.Type.RETRYING)
+            .executionInState(State.Type.RETRYING)
+            .updatedFrom("handleRetryTask")
+            .hasNoWorkerTasks();
+    }
+
+    @Test
+    void shouldFailExecutionWhenRetryFailedTaskAttemptsExhausted() throws Exception {
+        // Given: maxAttempts 2 and a result already carrying 2 failed attempts
+        FlowWithSource flow = flowWithTaskRetry(AbstractRetry.Behavior.RETRY_FAILED_TASK, 2);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failedAttempts(cycle1.getWorkerTasks().getFirst(), 2, ATTEMPT_END)
+        );
+
+        // Then
+        assertThat(cycle2)
+            .hasNoExecutionDelays()
+            .hasTaskRunInState(TASK_ID, State.Type.FAILED)
+            .executionInState(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldFailExecutionWhenRetryFailedTaskExceedsMaxDuration() throws Exception {
+        // Given: the next retry date (attemptEnd + 10min) would exceed maxDuration (5min)
+        FlowWithSource flow = Flows.of(failingTask(Constant.builder()
+            .interval(Duration.ofMinutes(10))
+            .maxDuration(Duration.ofMinutes(5))
+            .behavior(AbstractRetry.Behavior.RETRY_FAILED_TASK)
+            .build()));
+        harness.registerFlow(flow);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
+        );
+
+        // Then
+        assertThat(cycle2)
+            .hasNoExecutionDelays()
+            .executionInState(State.Type.FAILED);
+    }
+
+    // --- flow-level retry (task has none)
+
+    @Test
+    void shouldScheduleTaskRestartDelayWhenFlowRetryDefinedWithRetryFailedTask() throws Exception {
+        // Given: the retry lives on the FLOW, the task has none
+        FlowWithSource flow = flowWithFlowRetry(AbstractRetry.Behavior.RETRY_FAILED_TASK);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+        assertThat(cycle1).hasWorkerTaskFor(TASK_ID);
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
+        );
+
+        // Then: flow-level RETRY_FAILED_TASK uses the taskrun attempt dates — exact arithmetic holds
+        assertThat(cycle2)
+            .hasSingleExecutionDelay(delay -> {
+                Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_TASK);
+                Assertions.assertThat(delay.getDate()).isEqualTo(ATTEMPT_END.plus(INTERVAL));
+            })
+            .hasTaskRunInState(TASK_ID, State.Type.RETRYING)
+            .executionInState(State.Type.RETRYING);
+    }
+
+    @Test
+    void shouldScheduleNewExecutionDelayWhenFlowRetryDefinedWithCreateNewExecution() throws Exception {
+        // Given
+        FlowWithSource flow = flowWithFlowRetry(AbstractRetry.Behavior.CREATE_NEW_EXECUTION);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
+        );
+
+        // Then: flow-level CREATE_NEW_EXECUTION bases its date on the execution state history
+        // (wall-clock stamped) — assert the decision, not the exact timestamp
+        assertThat(cycle2)
+            .hasSingleExecutionDelay(delay -> {
+                Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_FLOW);
+                Assertions.assertThat(delay.getDate()).isAfterOrEqualTo(ATTEMPT_END);
+            })
+            .hasTaskRunInState(TASK_ID, State.Type.RETRIED)
+            .executionInState(State.Type.RETRIED);
+    }
+
+    // --- no retry involved
+
+    @Test
     void shouldTerminateSuccessfullyWhenTaskSucceeds() throws Exception {
         // Given
-        Execution execution = Executions.created(flow);
-        ExecutorContext cycle1 = harness.process(flow, execution);
-        assertThat(cycle1).hasWorkerTaskFor("failing-task");
+        FlowWithSource flow = flowWithTaskRetry(AbstractRetry.Behavior.CREATE_NEW_EXECUTION, 3);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+        assertThat(cycle1).hasWorkerTaskFor(TASK_ID);
 
         // When: the "worker" succeeds
         ExecutorContext cycle2 = harness.processResult(
             flow,
             cycle1,
-            Results.success(cycle1.getWorkerTasks().getFirst(), Instant.parse("2026-07-06T10:00:00Z"))
+            Results.success(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
         );
 
         // Then: no retry machinery involved, plain success
         assertThat(cycle2)
             .hasNoExecutionDelays()
-            .hasTaskRunInState("failing-task", State.Type.SUCCESS)
+            .hasTaskRunInState(TASK_ID, State.Type.SUCCESS)
             .executionInState(State.Type.SUCCESS);
+    }
+
+    @Test
+    void shouldFailExecutionWhenTaskFailsWithoutAnyRetry() throws Exception {
+        // Given: no retry anywhere
+        FlowWithSource flow = Flows.of(Log.builder().id(TASK_ID).type(Log.class.getName()).message("boom").build());
+        harness.registerFlow(flow);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+
+        // When
+        ExecutorContext cycle2 = harness.processResult(
+            flow,
+            cycle1,
+            Results.failed(cycle1.getWorkerTasks().getFirst(), ATTEMPT_END)
+        );
+
+        // Then
+        assertThat(cycle2)
+            .hasNoExecutionDelays()
+            .executionInState(State.Type.FAILED);
+    }
+
+    // --- fixtures
+
+    private FlowWithSource flowWithTaskRetry(AbstractRetry.Behavior behavior, int maxAttempts) {
+        FlowWithSource flow = Flows.of(failingTask(Constant.builder()
+            .interval(INTERVAL)
+            .maxAttempts(maxAttempts)
+            .behavior(behavior)
+            .build()));
+        harness.registerFlow(flow);
+        return flow;
+    }
+
+    private FlowWithSource flowWithFlowRetry(AbstractRetry.Behavior behavior) {
+        FlowWithSource flow = Flows.of(
+            Flows.builder(Log.builder().id(TASK_ID).type(Log.class.getName()).message("boom").build())
+                .retry(Constant.builder()
+                    .interval(INTERVAL)
+                    .maxAttempts(3)
+                    .behavior(behavior)
+                    .build())
+                .build()
+        );
+        harness.registerFlow(flow);
+        return flow;
+    }
+
+    private static Log failingTask(Constant retry) {
+        return Log.builder()
+            .id(TASK_ID)
+            .type(Log.class.getName())
+            .message("boom")
+            .retry(retry)
+            .build();
     }
 }

@@ -29,30 +29,43 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHandler<ExecutionKilledExecution> {
-    @Inject
-    private ExecutorService executorService;
-    @Inject
-    private ExecutionService executionService;
+    private final ExecutorService executorService;
+    private final ExecutionService executionService;
+
+    private final ExecutionStateStore executionStateStore;
+    private final ExecutionQueuedStateStore executionQueuedStateStore;
+
+    private final MetricRegistry metricRegistry;
+
+    private final FlowMetaStoreInterface flowMetaStore;
+
+    private final BroadcastQueueInterface<ExecutionKilled> killQueue;
+
+    private final AsyncOperationService asyncOperationService;
+
+    private final KillSwitchService killSwitchService;
 
     @Inject
-    private ExecutionStateStore executionStateStore;
-    @Inject
-    private ExecutionQueuedStateStore executionQueuedStateStore;
-
-    @Inject
-    private MetricRegistry metricRegistry;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private BroadcastQueueInterface<ExecutionKilled> killQueue;
-
-    @Inject
-    private AsyncOperationService asyncOperationService;
-
-    @Inject
-    private KillSwitchService killSwitchService;
+    public ExecutionKilledExecutionMessageHandler(
+        ExecutorService executorService,
+        ExecutionService executionService,
+        ExecutionStateStore executionStateStore,
+        ExecutionQueuedStateStore executionQueuedStateStore,
+        MetricRegistry metricRegistry,
+        FlowMetaStoreInterface flowMetaStore,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        AsyncOperationService asyncOperationService,
+        KillSwitchService killSwitchService) {
+        this.executorService = executorService;
+        this.executionService = executionService;
+        this.executionStateStore = executionStateStore;
+        this.executionQueuedStateStore = executionQueuedStateStore;
+        this.metricRegistry = metricRegistry;
+        this.flowMetaStore = flowMetaStore;
+        this.killQueue = killQueue;
+        this.asyncOperationService = asyncOperationService;
+        this.killSwitchService = killSwitchService;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionKilledExecution message) {

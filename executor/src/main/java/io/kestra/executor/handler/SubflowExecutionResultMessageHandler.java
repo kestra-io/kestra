@@ -25,21 +25,31 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class SubflowExecutionResultMessageHandler implements ExecutorMessageHandler<SubflowExecutionResult> {
-    @Inject
-    private ExecutorService executorService;
-    @Inject
-    private MetricRegistry metricRegistry;
-    @Inject
-    private ExecutionService executionService;
+    private final ExecutorService executorService;
+    private final MetricRegistry metricRegistry;
+    private final ExecutionService executionService;
+
+    private final ExecutionStateStore executionStateStore;
+
+    private final TaskOutputService taskOutputService;
+
+    private final KillSwitchService killSwitchService;
 
     @Inject
-    private ExecutionStateStore executionStateStore;
-
-    @Inject
-    private TaskOutputService taskOutputService;
-
-    @Inject
-    private KillSwitchService killSwitchService;
+    public SubflowExecutionResultMessageHandler(
+        ExecutorService executorService,
+        MetricRegistry metricRegistry,
+        ExecutionService executionService,
+        ExecutionStateStore executionStateStore,
+        TaskOutputService taskOutputService,
+        KillSwitchService killSwitchService) {
+        this.executorService = executorService;
+        this.metricRegistry = metricRegistry;
+        this.executionService = executionService;
+        this.executionStateStore = executionStateStore;
+        this.taskOutputService = taskOutputService;
+        this.killSwitchService = killSwitchService;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(SubflowExecutionResult message) {

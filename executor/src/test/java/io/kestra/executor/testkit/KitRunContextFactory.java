@@ -21,7 +21,9 @@ import io.kestra.core.services.TaskOutputService;
 
 /**
  * {@link RunContextFactory} for executor unit tests: builds {@link DefaultRunContext}s with a real
- * {@link VariableRenderer} (real Pebble) but without any Micronaut {@link io.micronaut.context.ApplicationContext}.
+ * {@link VariableRenderer} (real Pebble) but without a running Micronaut container — the
+ * {@link io.micronaut.context.ApplicationContext} is a mocked bean locator answering only the beans
+ * that {@code DefaultRunContext.services()} and {@code inputAndOutput()} resolve.
  * <p>
  * Only the overloads used by the executor are overridden; calling any other factory method
  * fails because the inherited injected fields are null by design.
@@ -31,17 +33,19 @@ public class KitRunContextFactory extends RunContextFactory {
     private final RunContextLoggerFactory loggerFactory;
     private final MetricRegistry meterRegistry;
     private final TaskOutputService taskOutputService;
+    private final io.micronaut.context.ApplicationContext applicationContext;
 
     public KitRunContextFactory(
         VariableRenderer renderer,
         RunContextLoggerFactory loggerFactory,
         MetricRegistry meterRegistry,
-        TaskOutputService taskOutputService
-    ) {
+        TaskOutputService taskOutputService,
+        io.micronaut.context.ApplicationContext applicationContext) {
         this.renderer = renderer;
         this.loggerFactory = loggerFactory;
         this.meterRegistry = meterRegistry;
         this.taskOutputService = taskOutputService;
+        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -51,12 +55,12 @@ public class KitRunContextFactory extends RunContextFactory {
         return newKitBuilder(runContextLogger)
             .withVariables(
                 runVariableModifier.apply(
-                        new RunVariables.DefaultBuilder()
-                            .withFlow(flow)
-                            .withExecution(execution)
-                            .withOutputs(taskOutputService.computeOutputs(execution))
-                            .withDecryptVariables(decryptVariables)
-                    )
+                    new RunVariables.DefaultBuilder()
+                        .withFlow(flow)
+                        .withExecution(execution)
+                        .withOutputs(taskOutputService.computeOutputs(execution))
+                        .withDecryptVariables(decryptVariables)
+                )
                     .build(runContextLogger, PropertyContext.create(renderer))
             )
             .build();
@@ -83,6 +87,7 @@ public class KitRunContextFactory extends RunContextFactory {
 
     private DefaultRunContext.Builder newKitBuilder(RunContextLogger runContextLogger) {
         return new DefaultRunContext.Builder()
+            .withApplicationContext(applicationContext)
             .withLogger(runContextLogger)
             .withMeterRegistry(meterRegistry)
             .withVariableRenderer(renderer)

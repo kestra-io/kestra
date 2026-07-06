@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -20,6 +21,8 @@ import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.runners.DisabledReusableInputsExpander;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -33,6 +36,7 @@ import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
@@ -55,6 +59,7 @@ import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
+import jakarta.validation.Validator;
 
 /**
  * Composition root for executor unit tests: wires the real {@link ExecutorService} and all
@@ -111,6 +116,7 @@ public final class ExecutorTestHarness {
     private final FlowTriggerService flowTriggerService;
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
+    private final VariablesService variablesService;
 
     public static ExecutorTestHarness create() {
         return new ExecutorTestHarness();
@@ -148,7 +154,46 @@ public final class ExecutorTestHarness {
             new PebbleEngineFactory(Mockito.mock(ApplicationContext.class), variableConfiguration, new SimpleMeterRegistry()),
             variableConfiguration
         );
-        KitRunContextFactory runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService);
+        TracerFactory tracerFactory = Mockito.mock(
+            TracerFactory.class,
+            invocation -> "getTracer".equals(invocation.getMethod().getName()) ? new PassthroughTracer() : Mockito.RETURNS_DEFAULTS.answer(invocation)
+        );
+        this.variablesService = Mockito.mock(VariablesService.class);
+        // Task-bean validation after Property rendering is a no-op in the unit lane: a Mockito
+        // Validator returns no violations (empty-set default), so RunContextProperty#as never NPEs.
+        Validator validator = Mockito.mock(Validator.class);
+        // DefaultRunContext.services(), validate() and inputAndOutput() resolve beans through the
+        // run context's ApplicationContext; this mocked locator answers only those lookups
+        // (Optional-returning methods like getProperty/findBean fall back to Mockito's empty
+        // defaults, so Services.isWorker resolves to false and additionalService() stays allowed).
+        KitRunContextFactory[] runContextFactoryRef = new KitRunContextFactory[1];
+        FlowInputOutput flowInputOutput = new FlowInputOutput(
+            Mockito.mock(StorageInterface.class),
+            () -> runContextFactoryRef[0],
+            new EncryptionConfig(null),
+            new DisabledReusableInputsExpander()
+        );
+        ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
+        {
+            if ("getBean".equals(invocation.getMethod().getName()) && invocation.getArguments().length == 1) {
+                Object beanType = invocation.getArgument(0);
+                if (TracerFactory.class.equals(beanType)) {
+                    return tracerFactory;
+                }
+                if (VariablesService.class.equals(beanType)) {
+                    return variablesService;
+                }
+                if (FlowInputOutput.class.equals(beanType)) {
+                    return flowInputOutput;
+                }
+                if (Validator.class.equals(beanType)) {
+                    return validator;
+                }
+            }
+            return Mockito.RETURNS_DEFAULTS.answer(invocation);
+        });
+        KitRunContextFactory runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
+        runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
         // the executor-facing ExecutionService methods are pure and never touch its injected fields
@@ -164,10 +209,6 @@ public final class ExecutorTestHarness {
         this.asyncOperationService = Mockito.mock(AsyncOperationService.class);
         this.flowTriggerService = Mockito.mock(FlowTriggerService.class);
         this.multipleConditionStateStore = Mockito.mock(MultipleConditionStateStore.class);
-        TracerFactory tracerFactory = Mockito.mock(
-            TracerFactory.class,
-            invocation -> "getTracer".equals(invocation.getMethod().getName()) ? new PassthroughTracer() : Mockito.RETURNS_DEFAULTS.answer(invocation)
-        );
 
         this.executorService = new ExecutorService(
             runContextFactory,
@@ -466,5 +507,9 @@ public final class ExecutorTestHarness {
 
     public ExecutionService executionService() {
         return executionService;
+    }
+
+    public VariablesService variablesService() {
+        return variablesService;
     }
 }

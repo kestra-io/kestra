@@ -561,7 +561,7 @@
 
     function kvKeyDuplicate(_rule: any, value: string, callback: (error?: Error) => void) {
         if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
-            return callback(new Error("kv.duplicate"))
+            return callback(new Error(t("kv.duplicate")))
         } else {
             callback()
         }

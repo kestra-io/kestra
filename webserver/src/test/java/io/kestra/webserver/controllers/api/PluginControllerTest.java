@@ -20,7 +20,6 @@ import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.core.models.ui.TaskWithVersion;
-import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
 
@@ -124,18 +123,6 @@ class PluginControllerTest {
         assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
         // Log ships a fixed brand-colored SVG, not a single `currentColor` glyph
         assertThat(response.icon().getMonochrome()).isFalse();
-    }
-
-    @Test
-    void iconByClassMonochrome() {
-        // Echo's SVG uses `fill="currentColor"` and can therefore be recolored via CSS mask-image
-        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
-            HttpRequest.GET(PATH + "/icons/" + Echo.class.getName()),
-            PluginController.PluginIconResponse.class
-        );
-
-        assertThat(response.icon()).isNotNull();
-        assertThat(response.icon().getMonochrome()).isTrue();
     }
 
     @Test

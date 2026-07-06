@@ -156,6 +156,8 @@
     }
 
     onMounted(async () => {
+        pluginsStore.fetchIcons()
+
         const blueprintData = await blueprintsStore.getBlueprint({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
             kind: props.kind as any,

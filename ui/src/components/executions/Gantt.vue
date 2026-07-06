@@ -96,7 +96,7 @@
                                                 :style="{'--depth': item.depth || 0}"
                                             >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
-                                                    <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
+                                                    <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :loadIcon="pluginsStore.loadIcon" />
                                                 </div>
                                                 <KsTooltip placement="top-start">
                                                     <template #content>
@@ -298,7 +298,6 @@
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const pluginsStore = usePluginsStore()
-    pluginsStore.fetchIcons()
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
     const ganttExecutionFilter = useGanttExecutionFilter()
 

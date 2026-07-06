@@ -1,4 +1,5 @@
 playwright-report
+.vitest-reports
 test-results
 tests/.env
 tests/data/

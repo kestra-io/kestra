@@ -75,7 +75,6 @@
     import CardLogos from "../content/CardLogos.vue"
     import ChildReleases from "../content/ChildReleases.vue"
     import DownloadLogoPack from "../content/DownloadLogoPack.vue"
-    import GuidesChildCard from "../content/GuidesChildCard.vue"
     import HomePageButtons from "../content/HomePageButtons.vue"
     import HomePageHeader from "../content/HomePageHeader.vue"
     import ProseImg from "../content/ProseImg.vue"
@@ -89,7 +88,7 @@
         ChildReleases: ChildReleases,
         ChildTableOfContents: ContextChildTableOfContents,
         DownloadLogoPack: DownloadLogoPack,
-        GuidesChildCard: GuidesChildCard,
+        GuidesChildCard: ContextChildCard,
         HomePageButtons: HomePageButtons,
         HomePageHeader: HomePageHeader,
         PluginCount: PluginCount,

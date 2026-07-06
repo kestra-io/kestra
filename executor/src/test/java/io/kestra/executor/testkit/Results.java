@@ -23,6 +23,28 @@ public final class Results {
         return terminated(emitted, State.Type.FAILED, attemptEnd, null);
     }
 
+    /**
+     * A failed result carrying {@code attemptCount} FAILED attempts, the last one ending at
+     * {@code lastAttemptEnd} and the previous ones one minute apart — for retry-exhaustion cases.
+     */
+    public static WorkerTaskResult failedAttempts(ExecutorContext.ExecutorWorkerTask emitted, int attemptCount, Instant lastAttemptEnd) {
+        List<TaskRunAttempt> attempts = new java.util.ArrayList<>(attemptCount);
+        for (int i = attemptCount - 1; i >= 0; i--) {
+            Instant end = lastAttemptEnd.minusSeconds(60L * i);
+            attempts.add(TaskRunAttempt.builder()
+                .state(new State(State.Type.FAILED, List.of(
+                    new State.History(State.Type.CREATED, end.minusSeconds(1)),
+                    new State.History(State.Type.FAILED, end)
+                )))
+                .build());
+        }
+
+        TaskRun taskRun = emitted.workerTask().getTaskRun()
+            .withAttempts(attempts)
+            .withState(State.Type.FAILED);
+        return new WorkerTaskResult(taskRun);
+    }
+
     public static WorkerTaskResult success(ExecutorContext.ExecutorWorkerTask emitted, Instant attemptEnd) {
         return terminated(emitted, State.Type.SUCCESS, attemptEnd, null);
     }

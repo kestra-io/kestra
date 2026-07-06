@@ -8,15 +8,24 @@ export function setDesignSystemLocale(locale: string) {
     designSystemLocale.value = locale
 }
 
-const localeModules = import.meta.glob<{default: Record<string, object>}>(
-    "../components/**/*.locale.ts",
+const localeModules = import.meta.glob<{default: Record<string, unknown>}>(
+    "../components/**/*.locale.*.ts",
 )
 
-export async function registerDesignSystemI18n(i18n: I18n) {
-    for (const loadMod of Object.values(localeModules)) {
-        const mod = await loadMod()
-        for (const [lang, messages] of Object.entries(mod.default)) {
-            i18n.global.mergeLocaleMessage(lang, messages)
+const LOCALE_FILE_PATTERN = /\.locale\.([a-z]{2}(?:_[A-Z]{2})?)\.ts$/
+
+// Loads only "en" (the fallback) and the currently active locale, instead of
+// eagerly bundling every design-system translation regardless of what the user needs.
+export async function registerDesignSystemI18n(i18n: I18n, locale = "en") {
+    const localesToLoad = new Set(["en", locale])
+
+    for (const [path, loadMod] of Object.entries(localeModules)) {
+        const match = path.match(LOCALE_FILE_PATTERN)
+        if (!match || !localesToLoad.has(match[1])) {
+            continue
         }
+
+        const mod = await loadMod()
+        i18n.global.mergeLocaleMessage(match[1], mod.default)
     }
 }

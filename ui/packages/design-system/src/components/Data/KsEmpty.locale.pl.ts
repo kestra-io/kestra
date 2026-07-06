@@ -1,0 +1,3 @@
+export default {
+    no_data: "Wygląda na to, że nic tu nie ma... jeszcze!\nDostosuj swoje filtry lub spróbuj ponownie!",
+}

@@ -1,0 +1,13 @@
+export default {
+    years: "年",
+    months: "月份",
+    weeks: "周",
+    days: "天数",
+    hours: "小时",
+    minutes: "分钟",
+    seconds: "秒钟",
+    input_custom_duration: "或输入自定义持续时间：",
+    datepicker: {
+        "custom duration": "自定义持续时间",
+    },
+}

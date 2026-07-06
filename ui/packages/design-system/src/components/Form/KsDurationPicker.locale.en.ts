@@ -1,0 +1,13 @@
+export default {
+    years: "Years",
+    months: "Months",
+    weeks: "Weeks",
+    days: "Days",
+    hours: "Hours",
+    minutes: "Minutes",
+    seconds: "Seconds",
+    input_custom_duration: "or input custom duration:",
+    datepicker: {
+        "custom duration": "Custom duration",
+    },
+}

@@ -1,0 +1,13 @@
+export default {
+    years: "Годы",
+    months: "Месяцы",
+    weeks: "Недели",
+    days: "Дни",
+    hours: "Часы",
+    minutes: "Минуты",
+    seconds: "Секунды",
+    input_custom_duration: "или введите пользовательскую продолжительность:",
+    datepicker: {
+        "custom duration": "Пользовательская длительность",
+    },
+}

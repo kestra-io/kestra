@@ -1,0 +1,6 @@
+export default {
+    ks_empty_state: {
+        watch_the_video: "영상 보기",
+        learn_more: "자세히 보기",
+    },
+}

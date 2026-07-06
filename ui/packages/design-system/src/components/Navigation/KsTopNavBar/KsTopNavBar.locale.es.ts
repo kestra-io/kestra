@@ -1,0 +1,5 @@
+export default {
+    topnav_sidebar_toggle: "Alternar menú",
+    topnav_bookmark: "Alternar marcador",
+    topnav_dock_toggle: "Alternar panel",
+}

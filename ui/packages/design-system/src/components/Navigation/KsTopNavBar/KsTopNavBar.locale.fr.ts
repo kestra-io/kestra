@@ -1,0 +1,5 @@
+export default {
+    topnav_sidebar_toggle: "Basculer le menu",
+    topnav_bookmark: "Basculer le favori",
+    topnav_dock_toggle: "Basculer le panneau",
+}

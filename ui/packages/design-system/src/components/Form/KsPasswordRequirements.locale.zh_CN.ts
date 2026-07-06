@@ -1,0 +1,9 @@
+export default {
+    password_requirements: {
+        length: "至少 8 个字符",
+        uppercase: "一个大写字母",
+        lowercase: "一个小写字母",
+        number: "一个数字",
+        match: "密码匹配",
+    },
+}

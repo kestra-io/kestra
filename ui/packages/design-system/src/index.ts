@@ -438,7 +438,12 @@ const KestraDesignSystem = {
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         // oxlint-disable-next-line no-underscore-dangle
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) void registerDesignSystemI18n(i18n)
+        if (i18n) {
+            const currentLocale = i18n.mode === "legacy"
+                ? (i18n.global.locale as unknown as string)
+                : (i18n.global.locale as unknown as {value: string}).value
+            void registerDesignSystemI18n(i18n, currentLocale)
+        }
     },
 }
 

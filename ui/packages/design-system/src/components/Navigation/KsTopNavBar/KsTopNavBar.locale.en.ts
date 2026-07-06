@@ -1,0 +1,5 @@
+export default {
+    topnav_sidebar_toggle: "Toggle menu",
+    topnav_bookmark: "Toggle bookmark",
+    topnav_dock_toggle: "Toggle panel",
+}

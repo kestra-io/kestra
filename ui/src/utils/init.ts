@@ -128,7 +128,9 @@ export default async (
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
-    await registerDesignSystemI18n(i18n)
+    // The i18n instance is still set up with "en" at this point (see setupI18n above),
+    // so pass the resolved locale explicitly rather than reading it off i18n.
+    await registerDesignSystemI18n(i18n, locale)
 
     if(locale !== "en"){
         // FIXME: any - loadLocaleMessages/setI18nLanguage expect literal locale types

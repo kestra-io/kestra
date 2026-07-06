@@ -62,13 +62,8 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import KsTag from "./KsTag/KsTag.vue"
     import KsTaskIcon from "../Kestra/KsTaskIcon.vue"
-    import locale from "./KsPluginCard.locale"
 
-    const {t} = useI18n({
-        useScope: "local",
-        inheritLocale: true,
-        messages: locale,
-    })
+    const {t} = useI18n({useScope: "global"})
     const slots = useSlots()
 
     const props = withDefaults(defineProps<{

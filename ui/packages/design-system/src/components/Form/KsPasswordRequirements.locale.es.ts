@@ -1,0 +1,9 @@
+export default {
+    password_requirements: {
+        length: "Al menos 8 caracteres",
+        uppercase: "Una letra mayúscula",
+        lowercase: "Una letra minúscula",
+        number: "Un número",
+        match: "Las contraseñas coinciden",
+    },
+}

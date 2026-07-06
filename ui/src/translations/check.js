@@ -1,8 +1,9 @@
-import fs from "fs"
+import fs, {globSync} from "fs"
 import path from "path"
 import {fileURLToPath} from "url"
 
-const getPath = (lang) => path.resolve(path.dirname(fileURLToPath(import.meta.url)), `./${lang}.json`)
+const dirname = path.dirname(fileURLToPath(import.meta.url))
+const getPath = (lang) => path.resolve(dirname, `./${lang}.json`)
 const readJSON = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf-8"))
 
 const getNestedKeys = (obj, prefix = "") =>
@@ -41,6 +42,43 @@ languages.forEach((lang, i) => {
     if(missing.length) globalMissing[lang] = missing
     if(extra.length) globalExtra[lang] = extra
 })
+
+// Design-system `*.locale.{lang}.ts` files: one per component per language (see ui/AGENTS.md).
+// Evaluate each as a plain object literal (they contain only string/object literals, no imports).
+const evalLocaleModule = (source) => {
+    const body = source.replace(/export\s+default\s*/, "").replace(/;?\s*$/, "")
+    return new Function(`return (${body})`)()
+}
+
+const LOCALE_FILE_PATTERN = /^(.*\.locale)\.([a-z]{2}(?:_[A-Z]{2})?)\.ts$/
+
+const localeFilesByComponent = new Map()
+for (const relPath of globSync("../../packages/design-system/src/components/**/*.locale.*.ts", {cwd: dirname})) {
+    const match = relPath.match(LOCALE_FILE_PATTERN)
+    if (!match) continue
+    const [, base, lang] = match
+    if (!localeFilesByComponent.has(base)) localeFilesByComponent.set(base, new Map())
+    localeFilesByComponent.get(base).set(lang, evalLocaleModule(fs.readFileSync(path.resolve(dirname, relPath), "utf-8")))
+}
+
+for (const [base, langMap] of localeFilesByComponent) {
+    const componentContent = getNestedKeys(langMap.get("en") ?? {})
+
+    languages.forEach((lang) => {
+        const current = getNestedKeys(langMap.get(lang) ?? {})
+
+        const missing = componentContent.filter((key) => !current.includes(key))
+        const extra = current.filter((key) => !componentContent.includes(key))
+
+        console.log(`---\n\x1b[34mComparison with ${lang.toUpperCase()} (${base})\x1b[0m  \n`)
+        console.log(missing.length ? `Missing keys: \x1b[31m${missing.join(", ")}\x1b[0m` : "No missing keys.")
+        console.log(extra.length ? `Extra keys: \x1b[32m${extra.join(", ")}\x1b[0m` : "No extra keys.")
+        console.log("---\n")
+
+        if(missing.length) globalMissing[`${base}:${lang}`] = missing
+        if(extra.length) globalExtra[`${base}:${lang}`] = extra
+    })
+}
 
 let errorString = ""
 if(Object.keys(globalMissing).length) {

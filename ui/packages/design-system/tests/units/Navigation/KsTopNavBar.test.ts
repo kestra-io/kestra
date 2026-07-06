@@ -3,9 +3,8 @@ import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsTopNavBar from "../../../src/components/Navigation/KsTopNavBar/KsTopNavBar.vue"
-import locales from "../../../src/components/Navigation/KsTopNavBar/KsTopNavBar.locale"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: locales})
+const i18n = createI18n({legacy: false, locale: "en", messages: {}})
 const globalConfig = {
     plugins: [i18n, KestraDesignSystem],
     stubs: {RouterLink: {template: "<a><slot /></a>"}},

@@ -1,0 +1,7 @@
+export default {
+    ks_no_data: {
+        no_results: "Nie ma wyników do wyświetlenia.",
+        nothing_here: "Wygląda na to, że nic tu jeszcze nie ma…!",
+        will_appear: "Pojawi się tutaj, gdy będzie coś do wyświetlenia.",
+    },
+}

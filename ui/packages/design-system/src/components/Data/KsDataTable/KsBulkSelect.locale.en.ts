@@ -1,0 +1,6 @@
+export default {
+    ks_bulk_select: {
+        selected: "<strong>{count}</strong> selected",
+        all: "Select all ({count})",
+    },
+}

@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -69,6 +70,12 @@ public class JdbcTableConfigsFactory {
     @Named("multipleconditions")
     public InstantiableJdbcTableConfig multipleConditions() {
         return new InstantiableJdbcTableConfig("multipleconditions", MultipleConditionWindow.class, "multipleconditions");
+    }
+
+    @Bean
+    @Named("executionstatistics")
+    public InstantiableJdbcTableConfig executionStatistics() {
+        return new InstantiableJdbcTableConfig("executionstatistics", ExecutionStatistic.class, "execution_statistics");
     }
 
     @Bean

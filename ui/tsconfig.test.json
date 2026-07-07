@@ -11,7 +11,9 @@
   ],
   "include": [
     ".storybook/preview.*",
-    "scripts/**/*.ts",  
+    "scripts/**/*.ts",
+    "src/translations/check.ts",
+    "src/translations/compareTranslations.ts",
     "tests/fixtures/**/*.ts",
     "tests/unit/**/*.ts",
     "tests/unit/**/*.tsx",

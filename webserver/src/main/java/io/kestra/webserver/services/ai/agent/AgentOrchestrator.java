@@ -70,21 +70,21 @@ public class AgentOrchestrator {
         this.modelCallTimeout = configuration.modelCallTimeout();
     }
 
-    public void runTurn(final AgentThread thread, final String prompt, final AgentMode mode,
-                        final String tenant, final String providerId, final TurnEventSink sink) {
+    public void runTurn(final AgentTurnContext context, final TurnEventSink sink) {
+        AgentThread thread = context.thread();
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.uid()).size() + 1);
         try {
-            ResolvedProfile profile = modeProfiles.resolve(mode);
-            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+            ResolvedProfile profile = modeProfiles.resolve(context.mode());
+            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
 
-            AgentThread running = threadManager.markRunning(thread, mode);
-            threadManager.appendUser(running.uid(), traceId, prompt);
+            AgentThread running = threadManager.markRunning(thread, context.mode());
+            threadManager.appendUser(running.uid(), traceId, context.prompt());
 
             List<ChatMessage> messages = new ArrayList<>();
             messages.add(SystemMessage.from(profile.systemPrompt()));
             messages.addAll(ChatMessageAdaptor.project(threadManager.load(running.uid())));
 
-            runLoop(new AgentLoopContext(running, tenant, providerId, mode, profile, model, messages, traceId, new AtomicBoolean(false)), sink);
+            runLoop(new AgentLoopContext(running, context.tenant(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink);
         } catch (Exception e) {
             failTurn(thread, sink, e);
         }

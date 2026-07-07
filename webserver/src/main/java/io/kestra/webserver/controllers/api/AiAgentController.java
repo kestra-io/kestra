@@ -10,6 +10,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
+import io.kestra.webserver.services.ai.agent.AgentTurnContext;
 import io.kestra.webserver.services.ai.agent.ConfirmationRegistry;
 import io.kestra.webserver.services.ai.agent.SuspendedTurn;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
@@ -121,7 +122,9 @@ public class AiAgentController {
         }
 
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
-        return stream(sink -> orchestrator.runTurn(thread, request.prompt(), mode, tenant, request.providerId(), sink));
+        return stream(sink -> orchestrator.runTurn(
+            new AgentTurnContext(thread, request.prompt(), mode, tenant, request.providerId()), sink
+        ));
     }
 
     @Post(uri = "/{threadId}/confirm", produces = MediaType.TEXT_EVENT_STREAM)

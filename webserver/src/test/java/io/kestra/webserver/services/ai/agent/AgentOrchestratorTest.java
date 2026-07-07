@@ -86,7 +86,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "what is a trigger?", AgentMode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null), sink);
 
         // Then
         assertThat(sink.names()).containsExactly(AgentEvents.TOKEN, AgentEvents.DONE);
@@ -105,7 +105,7 @@ class AgentOrchestratorTest {
         scriptedModel.enqueue(AiMessage.from("answer"));
 
         // When
-        orchestrator.runTurn(thread, "How do retries work?", AgentMode.ASK, TENANT, null, new CollectingSink());
+        orchestrator.runTurn(new AgentTurnContext(thread, "How do retries work?", AgentMode.ASK, TENANT, null), new CollectingSink());
 
         // Then
         assertThat(reload(thread).title()).isEqualTo("How do retries work?");
@@ -119,7 +119,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
@@ -149,7 +149,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "restart it", AgentMode.EDIT, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), sink);
 
         // Then — suspended before executing; a turn is parked and the thread awaits confirmation
         assertThat(sink.names()).containsExactly(AgentEvents.PROPOSED_ACTION, AgentEvents.DONE);
@@ -166,7 +166,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "restart it", AgentMode.EDIT, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("Done, I restarted it."));
         CollectingSink sink = new CollectingSink();
@@ -191,7 +191,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "restart it", AgentMode.EDIT, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("Okay, I won't restart it."));
         CollectingSink sink = new CollectingSink();
@@ -216,7 +216,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "fix it", AgentMode.PLAN, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null), sink);
 
         // Then — a plan card (no tool) awaiting confirmation
         AgentEvents.ProposedActionEvent plan = (AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION);
@@ -231,7 +231,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read logs\n2. restart"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "fix it", AgentMode.PLAN, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         CollectingSink sink = new CollectingSink();
 
@@ -255,7 +255,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "restart it", AgentMode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the disallowed call is rejected (not dispatched) and the loop continues to an answer
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
@@ -271,7 +271,7 @@ class AgentOrchestratorTest {
         sink.cancel();
 
         // When
-        orchestrator.runTurn(thread, "hi", AgentMode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null), sink);
 
         // Then — nothing is emitted or errored, and the thread is returned to IDLE
         assertThat(sink.names()).isEmpty();
@@ -288,7 +288,7 @@ class AgentOrchestratorTest {
         sink.cancelOnFirstEmit();
 
         // When
-        orchestrator.runTurn(thread, "hi", AgentMode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the streamed token was delivered, but the turn aborts before DONE (without erroring
         // or looping again) and the thread is returned to IDLE
@@ -306,7 +306,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When — the bounded model-call wait (PT1S in tests) elapses
-        orchestrator.runTurn(thread, "hello?", AgentMode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the turn fails cleanly with a timeout and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
@@ -321,7 +321,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "hello", AgentMode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the turn fails cleanly: error surfaced and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();

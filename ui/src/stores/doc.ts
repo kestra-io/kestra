@@ -16,6 +16,7 @@ interface FetchResourceResponse {
 interface SearchResult {
     parsedUrl: string;
     title: string;
+    preview: string;
 }
 
 interface State {
@@ -102,9 +103,11 @@ export const useDocStore = defineStore("doc", {
                 if (!url) throw new Error("Resource URL template not initialized")
 
                 const response = await axios.get(`${url}?q=${q}&type=DOCS`)
-                return response.data.results.map(({url: itemUrl, title}: {url: string; title: string}): SearchResult => ({
+                return response.data.results.map(({url: itemUrl, title, highlights}: {url: string; title: string; highlights?: string[]}): SearchResult => ({
                     parsedUrl: itemUrl,
                     title,
+                    // highlights are HTML snippets (with <mark>/<br/> tags); strip them for a plain-text preview
+                    preview: (highlights?.[0] ?? "").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
                 }))
             }
 

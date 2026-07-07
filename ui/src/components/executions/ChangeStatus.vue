@@ -5,7 +5,7 @@
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'el-button'">{{ $t('change state') }}</span>
+        <span v-if="component !== 'KsButton'">{{ $t('change state') }}</span>
 
         <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
@@ -13,7 +13,7 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
+                <p v-html="$t('change state confirm', {id: escape(execution.id), task: escape(taskRun.taskId)})" />
 
                 <p>
                     {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
@@ -64,6 +64,7 @@
 <script setup lang="ts">
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
     import {computed, ref} from "vue"
+    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
@@ -79,7 +80,7 @@
         taskRun?: any // FIXME: any
         attemptIndex?: number
     }>(), {
-        component: "b-button",
+        component: "KsButton",
         taskRun: undefined,
         attemptIndex: undefined,
     })

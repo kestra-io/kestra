@@ -190,7 +190,7 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.size()).isZero();
 
         LogEntry save = logRepository.save(builder.build());
-        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // should only be loaded by execution id
+        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // non-NORMAL: excluded from the default NORMAL-only listing
 
         find = logRepository.find(Pageable.UNPAGED, tenant, null);
         assertThat(find.size()).isEqualTo(1);
@@ -217,6 +217,17 @@ public abstract class AbstractLogRepositoryTest {
         logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
+
+        // An explicit KIND filter overrides the NORMAL default and selects the requested kind.
+        find = logRepository.find(Pageable.UNPAGED, tenant, List.of(
+            QueryFilter.builder()
+                .field(Field.KIND)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(ExecutionKind.TEST.name())
+                .build()
+        ));
+        assertThat(find.size()).isEqualTo(1);
+        assertThat(find.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.TEST);
 
         List<LogEntry> list = logRepository.findByExecutionId(tenant, save.getExecutionId(), null);
         assertThat(list.size()).isEqualTo(2);
@@ -357,6 +368,26 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void deleteByQueryWithNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry parent = logEntry(tenant, Level.INFO, "exec-parent").namespace("io.kestra.purge").build();
+        LogEntry child = logEntry(tenant, Level.INFO, "exec-child").namespace("io.kestra.purge.child").build();
+        LogEntry sibling = logEntry(tenant, Level.INFO, "exec-sibling").namespace("io.kestra.purgeother").build();
+        logRepository.save(parent);
+        logRepository.save(child);
+        logRepository.save(sibling);
+
+        // Without a flowId, the namespace is a prefix: the namespace itself and its descendants are
+        // purged, while sibling namespaces sharing a textual prefix (io.kestra.purgeother) are kept.
+        int deleted = logRepository.deleteByQuery(tenant, "io.kestra.purge", null, null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, null);
+
+        assertThat(deleted).isEqualTo(2);
+        assertThat(logRepository.findByExecutionId(tenant, parent.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, child.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, sibling.getExecutionId(), null)).hasSize(1);
+    }
+
+    @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());
@@ -475,6 +506,14 @@ public abstract class AbstractLogRepositoryTest {
     private static final LogEntry nowLog = logEntry(null, Level.INFO, "exec-now").timestamp(T_NOW).build();
     private static final LogEntry futureLog = logEntry(null, Level.INFO, "exec-future").timestamp(T_FUTURE).build();
     private static final List<LogEntry> timeLogs = List.of(pastLog, nowLog, futureLog);
+
+    private static final LogEntry normalKindLog = logEntry(null, Level.INFO, "exec-normal-kind")
+        .executionKind(ExecutionKind.NORMAL).build();
+    private static final LogEntry playgroundKindLog = logEntry(null, Level.INFO, "exec-playground-kind")
+        .executionKind(ExecutionKind.PLAYGROUND).build();
+    private static final LogEntry loopKindLog = logEntry(null, Level.INFO, "exec-loop-kind")
+        .executionKind(ExecutionKind.LOOP).build();
+    private static final List<LogEntry> kindLogs = List.of(normalKindLog, playgroundKindLog, loopKindLog);
 
     public static final List<FiltersTestCase> filtersTestCases = List.of(
         FiltersTestCase.builder()
@@ -780,7 +819,20 @@ public abstract class AbstractLogRepositoryTest {
             .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.IN).build()).build(),
         FiltersTestCase.builder()
             .logs(distinctLogs).expectedLogs(List.of(gammaLog))
-            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.NOT_IN).build()).build()
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(playgroundKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.PLAYGROUND.name()).operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(normalKindLog, loopKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.PLAYGROUND.name()).operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(playgroundKindLog, loopKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name())).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(normalKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name())).operation(Op.NOT_IN).build()).build()
     );
 
     @ParameterizedTest
@@ -799,10 +851,65 @@ public abstract class AbstractLogRepositoryTest {
             );
     }
 
+    @Test
+    void findDefaultsToNormalKindWhenNoKindFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        kindLogs.forEach(log -> logRepository.save(log.toBuilder().tenantId(tenant).build()));
+
+        ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, tenant, null);
+
+        assertThat(results)
+            .extracting(LogEntry::getExecutionId)
+            .containsExactly(normalKindLog.getExecutionId());
+    }
+
     @Builder
     public record FiltersTestCase(
         List<LogEntry> logs,
         List<LogEntry> expectedLogs,
         QueryFilter queryFilter) {
+    }
+
+    @Test
+    void shouldFindByExecutionIdWithMinLevelFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+
+        logRepository.save(logEntry(tenant, Level.DEBUG, executionId).build());
+        logRepository.save(logEntry(tenant, Level.WARN, executionId).build());
+        logRepository.save(logEntry(tenant, Level.ERROR, executionId).build());
+
+        List<LogEntry> results = logRepository.findByExecutionId(tenant, executionId, Level.WARN);
+
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting(LogEntry::getLevel).containsExactlyInAnyOrder(Level.WARN, Level.ERROR);
+    }
+
+    @Test
+    void shouldFindWithNullTenantId() {
+        LogEntry saved = logRepository.save(logEntry(null, Level.INFO, "nullTenantExec").build());
+        try {
+            ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, null, null);
+
+            assertThat(results.stream().map(LogEntry::getExecutionId).toList())
+                .contains(saved.getExecutionId());
+        } finally {
+            logRepository.purge(Execution.builder().id(saved.getExecutionId()).build());
+        }
+    }
+
+    @Test
+    void shouldNotFindTenantLogsWhenQueryingNullTenant() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry saved = logRepository.save(logEntry(tenant, Level.INFO, "realTenantExec").build());
+
+        try {
+            ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, null, null);
+
+            assertThat(results.stream().map(LogEntry::getExecutionId).toList())
+                .doesNotContain(saved.getExecutionId());
+        } finally {
+            logRepository.purge(Execution.builder().id(saved.getExecutionId()).build());
+        }
     }
 }

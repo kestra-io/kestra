@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
     >
         {{ $t('unqueue') }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: execution.id})" />
+            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
 
             <KsSelect
                 :required="true"
@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+    import escape from "lodash/escape"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -51,6 +52,7 @@
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
 
     interface Execution {
         id: string;

@@ -63,6 +63,8 @@ export interface Flow {
     revision?: number;
     deleted?: boolean;
     disabled?: boolean;
+    /** A draft revision is never picked up by webhooks, schedules, subflows or revision-less executions. */
+    draft?: boolean;
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
@@ -138,9 +140,15 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
-    async function saveAll(): Promise<FlowSaveOutcome> {
-        if ((!haveChange.value && !isCreating.value) || flowErrors.value?.length) {
-            return (!haveChange.value && !isCreating.value) ? "no_op" : "blocked"
+    async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
+        const isDraft = draft ?? flow.value?.draft ?? false
+
+        if (!haveChange.value && !isCreating.value) {
+            return "no_op"
+        }
+
+        if (flowErrors.value?.length && !isDraft) {
+            return "blocked"
         }
 
         if (!flow.value) return "blocked"
@@ -149,7 +157,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
             return "no_op"
         }
-        const outcome = await saveWithoutRevisionGuard()
+        const outcome = await saveWithoutRevisionGuard(isDraft)
         if (isSuccessfulFlowSaveOutcome(outcome)) {
             flowYamlOrigin.value = source
         }
@@ -171,14 +179,18 @@ export const useFlowStore = defineStore("flow", () => {
         }).then(() => true).catch(() => false)
     }
 
+    async function saveAsDraft(): Promise<FlowSaveOutcome> {
+        return saveAll(true)
+    }
+
     const route = useRoute()
 
     const getNamespace = () => {
         return route.query.namespace || defaultNamespace()
     }
 
-    async function save(): Promise<FlowSaveOutcome> {
-        if (flowErrors.value?.length) {
+    async function save(draft: boolean = false): Promise<FlowSaveOutcome> {
+        if (flowErrors.value?.length && !draft) {
             return "blocked"
         }
 
@@ -189,7 +201,7 @@ export const useFlowStore = defineStore("flow", () => {
             if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
                 return "no_op"
             }
-            const outcome = await saveWithoutRevisionGuard()
+            const outcome = await saveWithoutRevisionGuard(draft)
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 flowYamlOrigin.value = source
             }
@@ -256,10 +268,21 @@ export const useFlowStore = defineStore("flow", () => {
 
     const toast = makeToast(t)
 
-    async function saveWithoutRevisionGuard(): Promise<FlowSaveOutcome> {
+    function notifySaved(name: string, draft: boolean) {
+        if (draft) {
+            toast.success(
+                t("saved as draft done", {name}),
+                t("saved as draft"),
+            )
+        } else {
+            toast.saved(name)
+        }
+    }
+
+    async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
         const flowSource = flowYaml.value ?? ""
 
-        if (flowParsed.value === undefined) {
+        if (flowParsed.value === undefined && !draft) {
             coreStore.message = {
                 variant: "error",
                 title: t("invalid flow"),
@@ -298,19 +321,19 @@ export const useFlowStore = defineStore("flow", () => {
         const isCreatingBackup = isCreating.value
         if (isCreating.value && !overrideFlow) {
             try {
-                const response = await createFlow({flow: flowSource ?? ""})
-                toast.saved(response.id)
+                const response = await createFlow({flow: flowSource ?? "", draft})
+                notifySaved(response.id, draft)
                 isCreating.value = false
             } catch (error: any) {
                 if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
-                        message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
+                        message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? ""})}),
                         type: "warning",
                         showCancelButton: true,
                     }).then(async () => {
-                        const response = await saveFlow({flow: flowSource})
-                        toast.saved(response.id)
+                        const response = await saveFlow({flow: flowSource, draft})
+                        notifySaved(response.id, draft)
                         isCreating.value = false
                         return true
                     })
@@ -329,9 +352,9 @@ export const useFlowStore = defineStore("flow", () => {
                 throw error
             }
         } else {
-            await saveFlow({flow: flowSource})
+            await saveFlow({flow: flowSource, draft})
                 .then((response: Flow) => {
-                    toast.saved(response.id)
+                    notifySaved(response.id, draft)
                 })
         }
 
@@ -385,9 +408,11 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             else {
-                flows.value = response.data.results
-                total.value = response.data.total
-                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
+                if (options.commit !== false) {
+                    flows.value = response.data.results
+                    total.value = response.data.total
+                    overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
+                }
 
                 return response.data
             }
@@ -426,6 +451,10 @@ export const useFlowStore = defineStore("flow", () => {
                 },
             })
 
+        if (options.store === false) {
+            return response.data
+        }
+
         if (response.data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
@@ -446,17 +475,12 @@ export const useFlowStore = defineStore("flow", () => {
             flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`,
         })
 
-        if (options.store === false) {
-            return response.data
-        }
-
         flow.value = response.data
         flowYaml.value = response.data.source
         flowYamlOrigin.value = response.data.source
         overallTotal.value = 1
 
         return response.data
-
     }
     function loadTask(options: { namespace: string, id: string, taskId: string, revision?: string }) {
         return axios.get(
@@ -477,11 +501,21 @@ export const useFlowStore = defineStore("flow", () => {
                 }
             })
     }
-    function saveFlow(options: { flow: string }) {
-        const flowData = YAML_UTILS.parse(options.flow)
-        return axios.put(`${apiUrl()}/flows/${flowData.namespace}/${flowData.id}`, options.flow, {
+    function saveFlow(options: { flow: string, draft?: boolean }) {
+        let namespace: string
+        let id: string
+        try {
+            const flowData = YAML_UTILS.parse(options.flow)
+            namespace = flowData.namespace
+            id = flowData.id
+        } catch {
+            namespace = flow.value?.namespace ?? ""
+            id = flow.value?.id ?? ""
+        }
+        return axios.put(`${apiUrl()}/flows/${namespace}/${id}`, options.flow, {
             ...textYamlHeader,
             ...VALIDATE,
+            params: {draft: options.draft ?? false},
         })
             .then(response => {
                 if (response.status >= 300) {
@@ -507,11 +541,12 @@ export const useFlowStore = defineStore("flow", () => {
             })
     }
 
-    function createFlow(options: { flow: string }) {
+    function createFlow(options: { flow: string, draft?: boolean }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, {
             ...textYamlHeader,
             ...VALIDATE,
             showMessageOnError: false,
+            params: {draft: options.draft ?? false},
         }).then(response => {
             if (response.status >= 300) {
                 return Promise.reject(response)
@@ -573,15 +608,13 @@ function deleteFlowAndDependencies() {
 
                 if (deps.length) {
                     warning =
-                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                        "<div class=\"el-alert__content\">\n" +
-                        "<p class=\"el-alert__description\">\n" +
+                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
+                        "<p style=\"margin: 0;\">\n" +
                         t("dependencies delete flow") +
                         "<ul>\n" +
                         deps +
                         "</ul>\n" +
                         "</p>\n" +
-                        "</div>\n" +
                         "</div>"
                 }
             }
@@ -636,6 +669,7 @@ function deleteFlowAndDependencies() {
                 flowVar.source = options.flow
                 // prevent losing revision when loading graph from source
                 flowVar.revision = flow.value?.revision
+                flowVar.draft = flow.value?.draft
                 flow.value = flowVar
 
                 return response
@@ -708,7 +742,7 @@ function deleteFlowAndDependencies() {
     async function exportFlowAsCSV(params: any) {
         const response = await axios.get(
             `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "blob"},
+            {params, responseType: "text", headers: {Accept: "text/csv"}},
         )
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement("a")
@@ -776,7 +810,6 @@ function deleteFlowAndDependencies() {
                 }
 
                 flowValidation.value = validResults
-
                 return validResults
             })
     }
@@ -998,6 +1031,7 @@ function deleteFlowAndDependencies() {
         setOpenAiCopilot,
         onSaveMetadata,
         saveAll,
+        saveAsDraft,
         save,
         onEdit,
         initYamlSource,

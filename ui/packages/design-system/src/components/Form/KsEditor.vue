@@ -90,6 +90,13 @@
         return isOffsetInPebbleBlock(editor.getValue(), absoluteOffset)
     }
 
+    function cursorPebbleBlockKey(editor: monaco.editor.ICodeEditor): number | null {
+        const cursorPos = editor.getPosition()
+        if (!cursorPos) return null
+        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+        return pebbleBlockKeyAtOffset(editor.getValue(), absoluteOffset)
+    }
+
     function uid(): string {
         return Math.random().toString(36).slice(2, 11)
     }
@@ -199,7 +206,8 @@
     import type {VNode} from "vue"
     import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useThrottleFn} from "@vueuse/core"
+    import {useStorage, useThrottleFn} from "@vueuse/core"
+    import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     // @ts-expect-error tab focus path lacks types
@@ -211,13 +219,13 @@
     import uniqBy from "lodash/uniqBy"
 
     import KsDatePicker from "./KsDatePicker.vue"
-    import KsTaskIcon from "../Kestra/KsTaskIcon.vue"
+    import KsTaskIcon, {type KsTaskIconData} from "../Kestra/KsTaskIcon.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import {STATES} from "../../utils/state"
     import {findDuplicateTaskIds} from "../../utils/yamlValidation"
-    import {isPebbleEnabled} from "../../utils/pebbleBlock"
+    import {createPebbleEntryTracker, isPebbleEnabled, pebbleBlockKeyAtOffset} from "../../utils/pebbleBlock"
     import PlaceholderContentWidget from "../../composables/PlaceholderContentWidget"
 
     type ICodeEditor = monacoEditorNs.ICodeEditor
@@ -239,7 +247,7 @@
         inline?: boolean
         navbar?: boolean
         configureLanguage?: (editor: ICodeEditor | undefined, language: string, schemaType?: string) => Promise<void>
-        pluginIcons?: Record<string, {icon: string; flowable: boolean}>
+        loadTaskIcon?: (cls: string) => Promise<KsTaskIconData | undefined>
         options?: KsEditorOptions
     }>(), {
         modelValue: "",
@@ -254,7 +262,7 @@
         inline: false,
         navbar: true,
         configureLanguage: undefined,
-        pluginIcons: () => ({}),
+        loadTaskIcon: undefined,
         options: undefined,
     })
 
@@ -286,12 +294,28 @@
         (e: "confirm", value?: string): void
         (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
         (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
+        (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
     }>()
 
     const icon = {
         UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
         UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
     } as const
+
+    const storedEditorFontSizeOverride = useStorage<number | null>("editorFontSize", null, localStorage, {
+        serializer: {
+            read: (v) => {
+                if (v === null || v === "null" || v === "") return null
+                const n = Number(v)
+                return isNaN(n) ? null : n
+            },
+            write: (v) => (v === null ? "null" : String(v)),
+        },
+    })
+    const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
+    const resolvedEditorFontSize = computed(
+        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
+    )
 
     const editorRef = ref<HTMLDivElement | null>(null)
     const container = ref<HTMLDivElement>()
@@ -337,6 +361,7 @@
 
     const showPlaceholder = computed(() =>
         props.inline === true &&
+        !props.placeholder &&
         !mergedOptions.value.shouldFocus &&
         (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
         !isFocused.value,
@@ -400,17 +425,26 @@
         opts.wordWrap = mergedOptions.value.wordWrap ? "on" : "off"
         opts.automaticLayout = true
 
-        const settingsEditorFontSize = localStorage.getItem("editorFontSize")
-
         return {
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
-            fontSize: settingsEditorFontSize ? parseInt(settingsEditorFontSize) : 12,
+            fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
+            // Kestra's YAML editors put their meaningful completions inside YAML string
+            // tokens: plugin `type:` values and Pebble `{{ }}` expressions both tokenize as
+            // strings. Monaco's default quickSuggestions ({strings:false}) never auto-triggers
+            // there, so once the suggest widget is dismissed (backspace, space, moving the
+            // cursor away) it would not reappear while typing. Enabling string suggestions lets
+            // the editor re-show completions as the user types in those regions.
+            quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: pebbleEnabled.value || props.lang === "yaml",
+            },
             ...opts,
-            ...(props.options?.editor ?? {}),
+            ...props.options?.editor,
         }
     })
 
@@ -500,14 +534,12 @@
             const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove()
 
-            if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (props.pluginIcons?.[completionValue] !== undefined) {
-                    replaceRowIcon(vsCodeIcon, h(KsTaskIcon as any, {
-                        cls: completionValue,
-                        "only-icon": true,
-                        icons: props.pluginIcons,
-                    }))
-                }
+            if (completionValue.includes(".") && !completionValue.includes("{") && props.loadTaskIcon) {
+                replaceRowIcon(vsCodeIcon, h(KsTaskIcon as any, {
+                    cls: completionValue,
+                    "only-icon": true,
+                    loadIcon: props.loadTaskIcon,
+                }))
             } else if ((STATES as any)[completionValue] !== undefined) {
                 replaceRowIcon(vsCodeIcon, h((STATES as any)[completionValue].icon))
             } else {
@@ -530,13 +562,6 @@
             return maybeRows
         }) as HTMLElement[]
     }
-
-    watch(() => props.pluginIcons, () => {
-        const widget = suggestWidget.value
-        if (widget === undefined) return
-        const rows = [...widget.getElementsByClassName("monaco-list-row")] as HTMLElement[]
-        if (rows.length > 0) replaceRowsIcons(rows)
-    })
 
     watch(suggestWidget, async (newVal) => {
         const asCodeEditor = editorResolved.value?.getEditorType() === monaco.editor.EditorType.ICodeEditor
@@ -980,18 +1005,26 @@
                 }
             })
 
-            let wasInPebbleBlock = false
-            localEditor.value.onDidChangeCursorPosition(debounce(() => {
+            const pebbleEntryTracker = createPebbleEntryTracker()
+            const triggerSuggestionsOnCursorSettle = debounce(() => {
                 if (!localEditor.value) return
-                const inPebble = isCursorInPebbleBlock(localEditor.value)
+                const enteredPebble = pebbleEntryTracker.consumeEntered()
                 if (suggestController!.model.state !== 0) {
                     suggestController!.cancelSuggestWidget()
                     localEditor.value.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {})
-                } else if (inPebble && !wasInPebbleBlock) {
+                } else if (enteredPebble) {
                     localEditor.value.trigger("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {})
                 }
-                wasInPebbleBlock = inPebble
-            }, 300))
+            }, 300)
+            // Track the Pebble block on every cursor change rather than inside the debounced
+            // callback: a fast move out of and back into a block (or straight from one `{{ }}`
+            // block to another) would otherwise be swallowed by the debounce, leaving the latch
+            // stale so the re-entry is missed and suggestions never reopen.
+            localEditor.value.onDidChangeCursorPosition(() => {
+                if (!localEditor.value) return
+                pebbleEntryTracker.track(cursorPebbleBlockKey(localEditor.value))
+                triggerSuggestionsOnCursorSettle()
+            })
 
             localEditor.value.onMouseMove((e) => emit("mouse-move", e))
             localEditor.value.onMouseLeave((e) => emit("mouse-leave", e))
@@ -1010,10 +1043,15 @@
 
         observeAndResizeSuggestWidget()
 
+        // Remeasure once now for the already-cached font, and again once web fonts finish
+        // loading — otherwise Monaco caches fallback-font glyph widths and the caret drifts
+        // as you type. See https://github.com/microsoft/monaco-editor/issues/392
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
+        document.fonts.ready.then(() => monaco.editor.remeasureFonts())
 
         // Editor-did-mount: setup keybindings + decorations
         editorDidMount(editorResolved.value)
+        emit("editorMounted", editorResolved.value)
 
         resizeObserver.value = new ResizeObserver(() => {
             if (localEditor.value) localEditor.value.layout()
@@ -1416,10 +1454,10 @@
             &.single-line {
                 min-height: var(--kel-component-size);
                 padding: 7px 11px;
-                background-color: var(--kel-input-bg-color, var(--kel-fill-color-blank));
+                background-color: var(--ks-bg-input);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
                 transition: var(--kel-transition-box-shadow);
-                box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
+                box-shadow: 0 0 0 1px var(--ks-border-default) inset;
 
                 &.custom-dark-vs-theme {
                     background-color: var(--ks-bg-input);
@@ -1533,6 +1571,11 @@
         color: var(--ks-text-inactive) !important;
     }
 
+    .monaco-editor .codelens-decoration > a:hover,
+    .monaco-editor .codelens-decoration > a:hover .codicon {
+        color: var(--ks-text-link) !important;
+    }
+
     .ks-monaco-editor {
         position: absolute;
         width: 100%;
@@ -1544,12 +1587,12 @@
         padding: 1rem 0 0 1rem;
     }
 
-    .custom-dark-vs-theme .ks-monaco-editor :deep(.sticky-widget) {
+    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
         background-color: var(--ks-bg-input);
     }
 
     .monaco-editor {
-        :deep(.monaco-scrollable-element) {
+        .monaco-scrollable-element {
             > .scrollbar {
                 .slider {
                     width: 13px !important;

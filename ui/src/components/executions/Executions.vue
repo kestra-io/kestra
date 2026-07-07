@@ -4,9 +4,9 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
-                        <KsButton :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ $t('export_csv') }}
-                        </KsButton>
+                        <NavBarActionsDropdown>
+                            <NavBarAction :icon="Download" :label="$t('export_csv')" @click="exportExecutionsAsStream()" />
+                        </NavBarActionsDropdown>
                     </li>
                     <li>
                         <template v-if="hasAnyExecute">
@@ -43,7 +43,7 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
-            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
@@ -69,13 +69,6 @@
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                 />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
-                />
             </template>
 
             <template v-if="showStatChart()" #top>
@@ -89,7 +82,7 @@
                 <KsButton v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                     {{ $t("restart") }}
                 </KsButton>
-                <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                <KsButton v-if="canReplay" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
                 </KsButton>
                 <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
@@ -181,7 +174,7 @@
                 :label="col.label"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
                 :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
-                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => invisibleSpace(cellValue)) : undefined"
+                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => h(BreakableText, {value: cellValue})) : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
                 :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
             >
@@ -196,21 +189,27 @@
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                        <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
+                        <span :title="scope.row?.namespace"><BreakableText :value="scope.row?.namespace" /></span>
                     </template>
                     <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
                         <router-link
                             :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
                             }"
                         >
-                            {{ invisibleSpace(scope.row?.flowId) }}
+                            <BreakableText :value="scope.row?.flowId" />
                         </router-link>
                     </template>
                     <template v-else-if="col.prop === 'labels'">
                         <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
-                        <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
+                        <KsExecutionStatus
+                            :status="scope.row?.state?.current"
+                            size="small"
+                            clickable
+                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            @click.stop="onStateClick(scope.row?.state?.current)"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'flowRevision'">
                         <code class="code-text">{{ scope.row?.flowRevision }}</code>
@@ -376,6 +375,7 @@
 
 <script setup lang="ts">
     import _merge from "lodash/merge"
+    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
@@ -409,14 +409,16 @@
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
+    import NavBarAction from "../../components/layout/NavBarAction.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels} from "./utils"
+    import {filterValidLabels, keepSupportedFilters} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {invisibleSpace} from "../../utils/filters"
+    import BreakableText from "../BreakableText"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -432,12 +434,10 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
-    import QuickFilters from "../filter/QuickFilters.vue"
+    import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
     const {t} = useI18n()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -601,6 +601,20 @@
         return execution.id
     }
 
+    const {filterByState, navigateToStateFilter} = useStateFilter()
+
+    const onStateClick = (state?: string) => {
+        if (!state) return
+        if (!props.embed) {
+            filterByState(state)
+            return
+        }
+        const scope: Record<string, string> = {}
+        if (props.namespace) scope["filters[namespace][PREFIX]"] = props.namespace
+        if (props.flowId) scope["filters[flowId][EQUALS]"] = props.flowId
+        navigateToStateFilter(state, scope)
+    }
+
     const ready = ref(false)
     const dataTable = useTemplateRef<any>("dataTable")
 
@@ -650,8 +664,8 @@
         return canDelete.value || canUpdate.value || canKill.value
     })
 
-    const canCreate = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.namespace)
+    const canReplay = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.namespace)
     })
 
     const canUpdate = computed(() => {
@@ -671,7 +685,7 @@
     })
 
     const hasAnyExecute = computed(() => {
-        return authStore.user?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.CREATE)
+        return authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.EXECUTE)
     })
 
     const isDisplayedTop = computed(() => {
@@ -732,9 +746,25 @@
         dataTable.value?.reload()
     }
 
+    const supportedFilterFields = computed<Set<string>>(() => {
+        const configuration = (props.namespace === undefined || props.flowId === undefined)
+            ? executionFilter.value
+            : flowExecutionFilter.value
+        const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
+            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
+        )
+        if (configuration.searchPlaceholder) {
+            fields.push("q")
+        }
+        return new Set(fields)
+    })
+
+    const dropUnsupportedFilters = (query: Record<string, any>): Record<string, any> =>
+        keepSupportedFilters(query, supportedFilterFields.value) as Record<string, any>
+
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
-        let queryFilter: Record<string, any> = {...restQuery}
+        let queryFilter: Record<string, any> = dropUnsupportedFilters(restQuery)
 
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = props.namespace
@@ -815,7 +845,7 @@
                     dataTable.value?.reload()
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: exec.invalidValue})}
+                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
                     }), t(e.message))
                 })
         }
@@ -1005,7 +1035,7 @@
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: exec.invalidValue})}
+                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
                     }), t(e.message)))
             }
         },
@@ -1041,7 +1071,7 @@
 
     async function exportExecutionsAsStream() {
         await executionsStore.exportExecutionsAsCSV(
-            route.query,
+            dropUnsupportedFilters(route.query),
         )
     }
 </script>

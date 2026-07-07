@@ -398,6 +398,23 @@ class WorkerJobDispatcherTest {
             // Then
             assertThat(subscriber.resumeCount.get()).isEqualTo(resumesBefore);
         }
+
+        @Test
+        void shouldPauseSubscriptionWhenPermitsDropToZero() {
+            // Given - a worker that advertised capacity, so its subscription is resumed
+            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+            dispatcher.registerWorker(context);
+            dispatcher.onPermitsReceived(context, 5);
+            MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
+            assertThat(subscriber.isPaused.get()).isFalse();
+
+            // When - the worker drains itself to zero (maintenance / cordon, or a full queue)
+            dispatcher.onPermitsReceived(context, 0);
+
+            // Then - the subscription is paused so the controller stops dispatching to it
+            assertThat(context.getAvailablePermits()).isZero();
+            assertThat(subscriber.isPaused.get()).isTrue();
+        }
     }
 
     @Nested
@@ -459,6 +476,27 @@ class WorkerJobDispatcherTest {
             verify(context.getResponseObserver()).onNext(any(WorkerJobResponse.class));
             assertThat(context.getInFlightCount()).isEqualTo(1);
             assertThat(context.getAvailablePermits()).isEqualTo(4);
+        }
+
+        @Test
+        void shouldRequeueWhenStateStorePersistFails() throws QueueException {
+            // Given - persisting the running state fails transiently (e.g. pool exhaustion)
+            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+            context.addPermits(5);
+            dispatcher.registerWorker(context);
+            doThrow(new RuntimeException("connection pool exhausted")).when(mockStateStore).save(any(), any());
+
+            MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
+            WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A);
+
+            // When - the failure must not propagate to the poller
+            subscriber.deliverJob(event);
+
+            // Then - the job is re-queued, not sent, and the reserved capacity is restored
+            verify(mockQueue).emit(eq(WORKER_GROUP_A), eq(event));
+            verify(context.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
+            assertThat(context.getInFlightCount()).isEqualTo(0);
+            assertThat(context.getAvailablePermits()).isEqualTo(5);
         }
 
         @Test
@@ -1411,6 +1449,44 @@ class WorkerJobDispatcherTest {
 
         // Then — worker should still be registered and subscriptions intact
         assertThat(dispatcher.getActiveWorkerCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldEvictWorkerOnWorkerDisconnectClusterEvent() {
+        // Given - two workers in the same group
+        WorkerStreamContext<WorkerJobResponse> revoked = createWorkerContext("worker-revoked", WORKER_GROUP_A, WORKER_GROUP_A, 10);
+        WorkerStreamContext<WorkerJobResponse> kept = createWorkerContext("worker-kept", WORKER_GROUP_A, WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(revoked);
+        dispatcher.registerWorker(kept);
+
+        // When — a disconnect event targets one worker (as EE emits on token revoke/delete)
+        ClusterEvent disconnectEvent = new ClusterEvent(
+            ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED,
+            LocalDateTime.now(),
+            "worker-revoked"
+        );
+        clusterEventConsumer.accept(Either.left(disconnectEvent));
+
+        // Then — the targeted worker is unregistered and its stream closed; the other stays
+        assertThat(dispatcher.getWorkerIdsByWorkerGroup(WORKER_GROUP_A)).containsExactly("worker-kept");
+        verify(revoked.getResponseObserver()).onCompleted();
+        verify(kept.getResponseObserver(), never()).onCompleted();
+    }
+
+    @Test
+    void shouldIgnoreWorkerDisconnectEventForUnknownWorker() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        // When — a disconnect event targets a worker not connected here
+        clusterEventConsumer.accept(Either.left(new ClusterEvent(
+            ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED, LocalDateTime.now(), "unknown-worker"
+        )));
+
+        // Then — no effect on connected workers
+        assertThat(dispatcher.getActiveWorkerCount()).isEqualTo(1);
+        verify(context.getResponseObserver(), never()).onCompleted();
     }
 
     // shouldPreservePermitsDuringReRegistrationWithPercentageChange moved to EE

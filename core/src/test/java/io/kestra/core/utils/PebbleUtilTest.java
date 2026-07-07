@@ -57,4 +57,27 @@ class PebbleUtilTest {
     void endsWithClosingBlockDelimiterReturnsFalse(String value) {
         assertThat(PebbleUtil.endsWithClosingBlockDelimiter(value)).isFalse();
     }
+
+    @Test
+    void replaceInBlockTransformsPrintAndExecuteBlocks() {
+        String result = PebbleUtil.replaceInBlock(
+            "prefix {{ foo }} middle {% if bar %}baz{% endif %} suffix",
+            String::toUpperCase
+        );
+        // {% ... %} blocks are matched non-greedily, so "{% if bar %}" and "{% endif %}" are separate blocks and the
+        // free text "baz" between them is untouched.
+        assertThat(result).isEqualTo("prefix {{ FOO }} middle {% IF BAR %}baz{% ENDIF %} suffix");
+    }
+
+    @Test
+    void replaceInBlockLeavesTextWithoutBlocksUnchanged() {
+        assertThat(PebbleUtil.replaceInBlock("plain text, no blocks", String::toUpperCase))
+            .isEqualTo("plain text, no blocks");
+    }
+
+    @Test
+    void replaceInBlockHandlesMultilineBlocks() {
+        assertThat(PebbleUtil.replaceInBlock("{%\n if true \n%}", block -> "X"))
+            .isEqualTo("X");
+    }
 }

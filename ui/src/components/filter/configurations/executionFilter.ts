@@ -101,6 +101,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                     searchable: true,
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "scope",
@@ -131,6 +132,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
                         return VALUES.RELATIVE_DATE

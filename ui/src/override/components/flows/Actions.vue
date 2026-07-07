@@ -53,13 +53,23 @@
         />
 
         <template #primary>
-            <NavBarAction
+            <KsDropdown
                 v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                splitButton
                 type="primary"
-                :label="t('save')"
-                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
+                :disabled="!editorCanSave || editorIsReadOnly"
+                :buttonProps="{disabled: editorHasErrors}"
                 @click="editorSave"
-            />
+            >
+                {{ t('save') }}
+                <template #dropdown>
+                    <KsDropdownMenu>
+                        <KsDropdownItem :icon="FileDocumentEditOutline" @click="editorSaveAsDraft">
+                            {{ t('save_as_draft') }}
+                        </KsDropdownItem>
+                    </KsDropdownMenu>
+                </template>
+            </KsDropdown>
 
             <TriggerFlow
                 v-if="shouldShowExecute"
@@ -86,6 +96,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import PlayBoxOutline from "vue-material-design-icons/PlayBoxOutline.vue"
+    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
@@ -126,6 +137,7 @@
         isAllowedEdit: editorIsAllowedEdit,
         isPlaygroundAllowed,
         save: editorSave,
+        saveAsDraft: editorSaveAsDraft,
         saveAndExecute: editorSaveAndExecute,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
@@ -145,7 +157,7 @@
     )
 
     const canExecute = computed(() =>
-        flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace),
+        flow.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, flow.value.namespace),
     )
 
     const shouldShowExecute = computed(() => {

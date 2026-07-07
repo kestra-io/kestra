@@ -12,6 +12,7 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
+        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -206,16 +207,6 @@ kestra:
       max-poll-interval: 500ms
       poll-switch-interval: 60s
 
-    cleaner:
-      initial-delay: 1h
-      fixed-delay: 1h
-      retention: 7d
-      types:
-        - type: io.kestra.core.models.executions.LogEntry
-          retention: 1h
-        - type: io.kestra.core.models.executions.MetricEntry
-          retention: 1h
-
   plugins:
     repositories:
       central:
@@ -270,6 +261,12 @@ kestra:
 
   async-operations:
     wait-timeout: PT30S
+
+  tasks:
+    sdk:
+      authentication:
+        username: ${kestra.server.basic-auth.username:}
+        password: ${kestra.server.basic-auth.password:}
 
 otel:
   exclusions:

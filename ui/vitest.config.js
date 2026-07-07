@@ -13,6 +13,32 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
+// `vitest run --merge-reports` never executes tests — it only reads the blob
+// files written by the sharded runs and regenerates a combined report. But
+// merely loading the full "storybook" project config still boots a Vite dev
+// server, and its esbuild dependency optimizer segfaults during the
+// "scanning dependencies" step (confirmed both in CI and locally) even though
+// no test ever actually runs in this mode.
+//
+// Swapping in a lighter project definition for merge mode (tried twice: bare
+// name only, then bare name + a matching `include` glob) avoids the crash but
+// breaks the merge in a different way: each blob records the `pool` the
+// original shard ran under (`"browser"`), and `mergeReports()` recreates each
+// specification against the *current* project using that exact pool
+// (`createSpecification(file.filepath, void 0, file.pool)`). A project
+// without a matching `browser` config can't back a "browser" pool spec, so
+// nothing ends up registered as a test module even though the raw per-file
+// results still print — and the default reporter's `onTestRunEnd` treats a
+// zero-length module list as "No test files found", regardless of how much
+// output was already printed.
+//
+// So the project identity/pool shape must stay exactly the same between the
+// sharded runs and the merge. Instead, target the actual crash directly:
+// disable Vite's automatic dependency *scan* (`optimizeDeps.noDiscovery`)
+// only during merge, since nothing is ever served or executed in this mode
+// and the scan has nothing legitimate to do anyway.
+const isMergeReports = process.argv.includes("--merge-reports")
+
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 // No backend is available during tests — clear the API proxy so Vite doesn't
@@ -59,9 +85,6 @@ export default defineConfig({
             ...resolvedViteConfig.resolve.alias,
         ],
     },
-    coverage: {
-        exclude: ["**/*.json"],
-    },
     test: {
         projects: [
             "./vitest.config.unit.js",
@@ -73,9 +96,18 @@ export default defineConfig({
                         configDir: path.join(dirname, ".storybook"),
                     }),
                 ],
+                // Merge-only: skip Vite's automatic dependency scan — see the
+                // comment above `isMergeReports` for why.
+                ...(isMergeReports ? {optimizeDeps: {noDiscovery: true, entries: []}} : {}),
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
                     browser: {
                         enabled: true,
                         headless: true,
@@ -89,6 +121,21 @@ export default defineConfig({
                 },
             }),
         ],
+        coverage: {
+            reporter: ["text", "html"],
+            include: [
+                "src/**/*.{ts,vue}",
+            ],
+            exclude: [
+                "**/node_modules/**",
+                "**/*.stories.*",
+                "**/*.spec.{ts,tsx}",
+                "**/*.d.ts",
+                "**/.storybook/**",
+                "storybook-static/**",
+                "stylelint.config.mjs",
+            ],
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

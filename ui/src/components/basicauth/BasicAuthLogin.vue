@@ -1,68 +1,51 @@
 <template>
-    <div class="basic-auth-login">
-        <div class="basic-auth-login__brand">
-            <Logo class="basic-auth-login__logo" />
-            <KsText tag="h1" class="basic-auth-login__title">{{ $t("setup.login_title") }}</KsText>
-            <KsText tag="p" class="basic-auth-login__subtitle">{{ $t("setup.login_subtitle") }}</KsText>
-        </div>
+    <div class="oss-login">
+        <img src="../../assets/monogram.svg" alt="Kestra" class="oss-login__icon" />
+        <h1 class="oss-login__title">{{ $t("setup.login_title") }}</h1>
 
-        <KsForm @submit.prevent :model="credentials" ref="form" :rules="rules">
+        <KsForm ref="form" :model="credentials" :rules="rules" class="oss-login__form" @submit.prevent="handleSubmit">
             <input type="hidden" name="from" :value="redirectPath">
-            <KsFormItem prop="username" class="basic-auth-login__field">
+
+            <KsFormItem prop="username">
                 <KsInput
-                    name="username"
-                    size="large"
                     id="input-username"
                     v-model="credentials.username"
+                    name="username"
+                    type="email"
                     :placeholder="$t('email')"
-                    required
+                    autocomplete="username"
                 >
-                    <template #prepend>
-                        <Account />
-                    </template>
+                    <template #prefix><KsIcon><AccountOutline /></KsIcon></template>
                 </KsInput>
             </KsFormItem>
-            <KsFormItem prop="password" class="basic-auth-login__field">
-                <KsInput
-                    v-model="credentials.password"
-                    size="large"
-                    name="password"
-                    id="input-password"
-                    :placeholder="$t('password')"
-                    type="password"
-                    showPassword
-                    required
-                >
-                    <template #prepend>
-                        <Lock />
-                    </template>
-                </KsInput>
-            </KsFormItem>
-            <KsFormItem class="basic-auth-login__submit">
-                <KsButton
-                    type="primary"
-                    class="w-100"
-                    size="large"
-                    nativeType="submit"
-                    @click.prevent="handleSubmit"
-                    :disabled="isLoading"
-                    :loading="isLoading"
-                >
-                    {{ $t("setup.login") }}
-                </KsButton>
-            </KsFormItem>
-        </KsForm>
 
-        <div class="basic-auth-login__footer">
+            <KsFormItem prop="password">
+                <KsInput
+                    id="input-password"
+                    v-model="credentials.password"
+                    name="password"
+                    showPassword
+                    :placeholder="$t('password')"
+                    autocomplete="current-password"
+                >
+                    <template #prefix><KsIcon><LockOutline /></KsIcon></template>
+                </KsInput>
+            </KsFormItem>
+
             <KsButton
-                text
                 type="primary"
-                :icon="OpenInNew"
-                @click="openTroubleshootingGuide"
+                nativeType="submit"
+                class="oss-login__submit"
+                :loading="isLoading"
+                :disabled="isLoading"
             >
+                {{ $t("setup.login") }}
+            </KsButton>
+
+            <KsButton text type="primary" @click="openTroubleshootingGuide">
                 {{ $t("setup.troubleshooting") }}
             </KsButton>
-        </div>
+        </KsForm>
     </div>
 </template>
 
@@ -70,15 +53,12 @@
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsMessage} from "@kestra-io/design-system"
+    import {KsMessage, KsIcon} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import {useClient} from "@kestra-io/kestra-sdk"
-    import MailChecker from "mailchecker"
 
-    import Account from "vue-material-design-icons/Account.vue"
-    import Lock from "vue-material-design-icons/Lock.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import Logo from "../home/Logo.vue"
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
+    import LockOutline from "vue-material-design-icons/LockOutline.vue"
 
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
@@ -104,31 +84,28 @@
 
     const form = ref<FormInstance>()
     const isLoading = ref(false)
-    const credentials = ref<Credentials>({
-        username: "",
-        password: "",
-    })
+    const credentials = ref<Credentials>({username: "", password: ""})
 
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
-    const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
+    const redirectPath = computed(() => route.query.from as string | undefined)
+
+    const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (!value?.trim()) {
-            return callback(new Error(t("setup.validation.email_required")))
+            callback(new Error(t("setup.validation.email_required")))
         } else if (!EMAIL_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.email_invalid")))
-        } else if (!MailChecker.isValid(value)) {
-            return callback(new Error(t("setup.validation.email_temporary_not_allowed")))
+            callback(new Error(t("setup.validation.email_invalid")))
         } else {
             callback()
         }
     }
 
-    const validatePassword = (_rule: any, value: string, callback: (error?: Error) => void) => {
-        if (!value || !PASSWORD_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.password_invalid")))
+    const validatePassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+        if (!value) {
+            callback(new Error(t("setup.validation.password_required")))
+        } else {
+            callback()
         }
-        callback()
     }
 
     const rules = computed(() => ({
@@ -136,17 +113,12 @@
         password: [{required: true, validator: validatePassword, trigger: "blur"}],
     }))
 
-    const redirectPath = computed(() => route.query.from as string | undefined)
-
     const axios = useClient()
 
     const validateCredentials = async (auth: string) => {
         try {
             document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
-            await axios.get(`${apiUrl()}/usages/all`, {
-                timeout: 10000,
-                withCredentials: true,
-            })
+            await axios.get(`${apiUrl()}/usages/all`, {timeout: 10000, withCredentials: true})
         } catch(e) {
             BasicAuth.logout()
             throw e
@@ -154,10 +126,7 @@
     }
 
     const checkServerInitialization = async () => {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
-            timeout: 10000,
-            withCredentials: true,
-        })
+        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000, withCredentials: true})
         return response.data?.isBasicAuthInitialized
     }
 
@@ -169,24 +138,16 @@
 
     const loadAuthConfigErrors = async () => {
         try {
-            const errors = await miscStore.loadBasicAuthValidationErrors()
-            if (errors?.length) {
-                errors.forEach((error: string) => {
-                    KsMessage.error({
-                        message: `${error}. ${t("setup.validation.config_message")}`,
-                        duration: 5000,
-                        showClose: false,
-                    })
+            const errs = await miscStore.loadBasicAuthValidationErrors()
+            if (errs?.length) {
+                errs.forEach((err: string) => {
+                    KsMessage.error({message: `${err}. ${t("setup.validation.config_message")}`, duration: 5000, showClose: false})
                 })
             } else {
-                KsMessage.error({
-                    message: t("setup.validation.incorrect_creds"),
-                })
+                KsMessage.error({message: t("setup.validation.incorrect_creds")})
             }
         } catch {
-            KsMessage.error({
-                message: t("setup.validation.incorrect_creds"),
-            })
+            KsMessage.error({message: t("setup.validation.incorrect_creds")})
         }
     }
 
@@ -194,27 +155,18 @@
         try {
             coreStore.error = undefined
             if (!form.value || isLoading.value) return
-
             if (!(await form.value.validate().catch(() => false))) return
 
             isLoading.value = true
 
             const {username, password} = credentials.value
-
-            if (!username?.trim() || !password?.trim()) {
-                throw new Error("Username and password are required")
-            }
-
             const trimmedUsername = username.trim()
             const auth = btoa(`${trimmedUsername}:${password}`)
 
             await validateCredentials(auth)
 
             const isInitialized = await checkServerInitialization()
-            if (!isInitialized) {
-                router.push({name: "setup"})
-                return
-            }
+            if (!isInitialized) { router.push({name: "setup"}); return }
 
             BasicAuth.signIn(trimmedUsername, password)
             localStorage.removeItem("basicAuthSetupInProgress")
@@ -222,12 +174,9 @@
 
             const configs = await miscStore.loadConfigs()
             await identifyPosthogUser(configs, {email: trimmedUsername})
-
             credentials.value = {username: "", password: ""}
 
-            if (shouldShowHelloDialog()) {
-                localStorage.setItem("showSurveyDialogAfterLogin", "true")
-            }
+            if (shouldShowHelloDialog()) localStorage.setItem("showSurveyDialogAfterLogin", "true")
 
             if (await shouldShowWelcome()) {
                 router.push({name: "welcome"})
@@ -237,17 +186,13 @@
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }
         } catch (error: any) {
-            if (handleNetworkError(error)) {
-                router.push({name: "setup"})
-                return
-            }
-
+            if (handleNetworkError(error)) { router.push({name: "setup"}); return }
             if (error?.response?.status === 401) {
                 await loadAuthConfigErrors()
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
-                KsMessage.error("Login failed")
+                KsMessage.error(t("setup.validation.incorrect_creds"))
             }
         } finally {
             isLoading.value = false
@@ -255,78 +200,45 @@
     }
 
     const openTroubleshootingGuide = () => {
-        apiStore.posthogEvents({
-            type: "ossauth",
-            action: "forgot_password_click",
-        })
+        apiStore.posthogEvents({type: "ossauth", action: "forgot_password_click"})
         window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting?utm_source=app&utm_medium=referral&utm_campaign=login&utm_content=lost-password", "_blank")
     }
 </script>
 
 <style scoped lang="scss">
-    .basic-auth-login {
+    :global(body .fullscreen-layout:has(.oss-login)) {
+        background: var(--ks-bg-base) url("../onboarding/assets/grid.svg") center calc(50% + 165px) / auto no-repeat;
+    }
+
+    .oss-login {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-6);
+        width: 320px;
+    }
+
+    .oss-login__icon {
+        width: 3.5rem;
+        height: 3.5rem;
+    }
+
+    .oss-login__title {
+        margin: 0;
+        font-size: var(--ks-font-size-xl);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        text-align: center;
+    }
+
+    .oss-login__form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
         width: 100%;
-        max-width: 400px;
-        padding: 2rem;
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
-        box-shadow: var(--ks-shadow-lg);
+    }
 
-        &__brand {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            margin-bottom: 1.75rem;
-        }
-
-        &__logo {
-            width: 140px;
-            margin-bottom: 1.25rem;
-        }
-
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-xl);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
-
-        &__subtitle {
-            margin: 0.25rem 0 0;
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-secondary);
-        }
-
-        &__field {
-            margin-bottom: 1.75rem;
-        }
-
-        &__submit {
-            margin-bottom: 0;
-        }
-
-        &__footer {
-            display: flex;
-            justify-content: center;
-            margin-top: 0.75rem;
-        }
-
-        .kel-form-item {
-            .kel-input {
-                height: 54px;
-            }
-
-            .kel-input-group__prepend {
-                .material-design-icon {
-                    .material-design-icon__svg {
-                        width: var(--ks-font-size-xl);
-                        height: var(--ks-font-size-xl);
-                        bottom: -0.250em;
-                    }
-                }
-            }
-        }
+    .oss-login__submit {
+        width: 100%;
     }
 </style>

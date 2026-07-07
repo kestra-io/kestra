@@ -40,7 +40,8 @@ public class FlowToolSchemaMapper {
                 a.returnDirect()
             ))
             .inputSchema(buildToolInputSchema(
-                    ListUtils.emptyOnNull(flow.getInputs())
+                    // FORM inputs are expanded to dotted leaf paths; FORM never reaches convert().
+                    flow.resolvableInputs()
                 )
             )
             .outputSchema(
@@ -162,11 +163,11 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getAfter() != null) {
-            baseSchema.put("minimum", input.getAfter().toString());
+            appendConstraint(baseSchema, "Must be on or after " + input.getAfter() + ".");
         }
 
         if (input.getBefore() != null) {
-            baseSchema.put("maximum", input.getBefore().toString());
+            appendConstraint(baseSchema, "Must be on or before " + input.getBefore() + ".");
         }
 
         return baseSchema;
@@ -178,11 +179,11 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getAfter() != null) {
-            baseSchema.put("minimum", input.getAfter().toString());
+            appendConstraint(baseSchema, "Must be on or after " + input.getAfter() + ".");
         }
 
         if (input.getBefore() != null) {
-            baseSchema.put("maximum", input.getBefore().toString());
+            appendConstraint(baseSchema, "Must be on or before " + input.getBefore() + ".");
         }
 
         return baseSchema;
@@ -194,11 +195,11 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getMin() != null) {
-            baseSchema.put("minimum", input.getMin().toString());
+            appendConstraint(baseSchema, "Must be at least " + input.getMin() + ".");
         }
 
         if (input.getMax() != null) {
-            baseSchema.put("maximum", input.getMax().toString());
+            appendConstraint(baseSchema, "Must be at most " + input.getMax() + ".");
         }
 
         return baseSchema;
@@ -300,14 +301,22 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getAfter() != null) {
-            baseSchema.put("minimum", input.getAfter().toString());
+            appendConstraint(baseSchema, "Must be on or after " + input.getAfter() + ".");
         }
 
         if (input.getBefore() != null) {
-            baseSchema.put("maximum", input.getBefore().toString());
+            appendConstraint(baseSchema, "Must be on or before " + input.getBefore() + ".");
         }
 
         return baseSchema;
+    }
+
+    private static void appendConstraint(Map<String, Object> baseSchema, String constraint) {
+        String existing = (String) baseSchema.get("description");
+        baseSchema.put(
+            "description",
+            existing == null || existing.isBlank() ? constraint : existing + " " + constraint
+        );
     }
 
     private static Map<String, Object> toURIType(URIInput input, Map<String, Object> baseSchema) {
@@ -326,6 +335,7 @@ public class FlowToolSchemaMapper {
             case FLOAT -> "number";
             case BOOL -> "boolean";
             case ARRAY, MULTISELECT -> "array";
+            case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
 }

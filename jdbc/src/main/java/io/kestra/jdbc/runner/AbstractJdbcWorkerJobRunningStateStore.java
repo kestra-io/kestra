@@ -30,7 +30,13 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
             var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
             this.jdbcRepository.persist(workerJobRunning, dslContext, this.jdbcRepository.persistFields(workerJobRunning));
         } else {
-            this.jdbcRepository.persist(workerJobRunning);
+            // Commit on a dedicated connection: the entry must be visible to concurrent result
+            // processing as soon as the job is sent to the worker, even when the caller holds an
+            // open thread-bound transaction (the dispatch-queue poll transaction) — otherwise the
+            // terminal result of a fast task deletes nothing and the entry leaks forever.
+            this.jdbcRepository.getDslContextWrapper().requireNewTransaction(configuration ->
+                this.jdbcRepository.persist(workerJobRunning, DSL.using(configuration), this.jdbcRepository.persistFields(workerJobRunning))
+            );
         }
         return workerJobRunning;
     }

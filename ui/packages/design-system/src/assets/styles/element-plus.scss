@@ -145,6 +145,7 @@ $fill-color-base: #fafcff;
     #{--kel-color-warning-light-9}: palette.$base-orange-25;
     #{--kel-color-warning-dark-2}: palette.$base-orange-700;
 
+    #{--kel-color-danger}: var(--ks-text-error);
     #{--kel-color-danger-light-3}: palette.$base-red-300;
     #{--kel-color-danger-light-5}: palette.$base-red-200;
     #{--kel-color-danger-light-7}: palette.$base-red-100;
@@ -168,7 +169,7 @@ $fill-color-base: #fafcff;
 
     /* page */
     //#{--kel-bg-color-page}: var(--ks-text-primary);
-    #{--kel-bg-color}: var(--ks-bg-base);
+    #{--kel-bg-color}: var(--ks-bg-surface);
     #{--kel-bg-color-overlay}: var(--ks-bg-elevated);
 
     #{--kel-popover-bg-color}: var(--ks-bg-elevated);
@@ -200,7 +201,8 @@ $fill-color-base: #fafcff;
     /* disabled */
     #{--kel-disabled-bg-color}: var(--ks-bg-inactive);
     #{--kel-disabled-text-color}: var(--ks-text-inactive);
-    #{--kel-disabled-border-color}: var(--ks-border-subtle);
+    #{--kel-disabled-border-color}: var(--ks-border-strong);
+    #{--kel-input-border-color}: var(--ks-border-strong);
 
     /* shadow */
     #{--kel-box-shadow}: 0px 12px 32px 4px var(--ks-shadow-element), 0px 8px 20px var(--ks-shadow-surface);

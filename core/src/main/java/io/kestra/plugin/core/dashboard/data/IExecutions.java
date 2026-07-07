@@ -32,7 +32,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 labelFilters.forEach(f ->
                 {
                     if (f.value() instanceof Map<?, ?> m) {
-                        m.forEach((key, value) -> updatedWhere.add(Contains.<Fields> builder().field(Fields.LABELS).labelKey(key.toString()).value(value).build()));
+                        m.forEach((key, value) -> updatedWhere.add(Contains.<Fields> builder().field(Fields.LABELS).key(key.toString()).value(value).build()));
                     } else {
                         updatedWhere.add(Contains.<Fields> builder().field(Fields.LABELS).value(f.value()).build());
                     }

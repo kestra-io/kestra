@@ -97,7 +97,7 @@ public class TriggerController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(
             description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc"),
+                @ExampleObject(name = "Sort by next evaluation date in ascending order", value = "nextEvaluationDate:asc"),
                 @ExampleObject(name = "Sort by trigger ID in descending order", value = "triggerId:desc")
             }
         ) @Nullable @QueryValue List<String> sort,
@@ -162,7 +162,7 @@ public class TriggerController {
     @Post(uri = "/{namespace}/{flowId}/{triggerId}/unlock")
     @Operation(tags = { "Triggers" }, summary = "Unlock a trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = ApiTriggerState.class)) })
-    @ApiResponse(responseCode = "409", description = "If the trigger is already unlocked")
+    @ApiResponse(responseCode = "409", description = "If the trigger is already unlocked or is a realtime trigger")
     public HttpResponse<ApiTriggerState> unlockTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,

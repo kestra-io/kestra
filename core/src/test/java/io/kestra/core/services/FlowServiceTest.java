@@ -41,6 +41,7 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
@@ -422,6 +423,33 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldResolveNestedFormInputPathWhenRenderingChecks() {
+        // Given a check referencing a FORM child via its nested path, e.g. {{ inputs.environment.region }}
+        Check check = Check.builder()
+            .when("{{ inputs.environment.region == 'EU' }}")
+            .message("region must be EU")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(check));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+
+        // When inputs are passed as the NESTED map (what ExecutionController/CreateExecutionForm hand in
+        // for FORM inputs, via MapUtils.flattenToNestedMap), the nested path resolves...
+        List<Check> nestedEu = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "EU")));
+        List<Check> nestedUs = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "US")));
+
+        // Then EU satisfies the condition (no failed check) and US fails it.
+        assertThat(nestedEu).isEmpty();
+        assertThat(nestedUs).containsExactly(check);
+
+        // And a flat-dotted map (the un-nested form) cannot resolve the path — proving the nesting is required.
+        List<Check> flatDotted = flowService.getFailedChecks(flow, Map.of("environment.region", "EU"));
+        assertThat(flatDotted).isNotEmpty();
+    }
+
+    @Test
     void create() throws FlowProcessingException, QueueException, InterruptedException {
         Flow subflow = Flow.builder()
             .id(IdUtils.create())
@@ -724,9 +752,222 @@ class FlowServiceTest {
         assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
     }
 
+    @Test
+    void shouldNotEmitTriggerEventWhenCreatingDraftFlowWithScheduleTrigger() throws FlowProcessingException, QueueException {
+        // A draft revision must be invisible to the scheduler: it is never picked up implicitly.
+        // Creating a flow as a draft with a Schedule trigger must NOT emit any trigger lifecycle
+        // event — otherwise the scheduler creates trigger state for the draft and fires the schedule.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "* * * * *"
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        reset(triggerEventQueue);
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            assertThat(saved.isDraft()).isTrue();
+            verify(triggerEventQueue, never()).send(any());
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldNotEmitTriggerEventWhenUpdatingPublishedFlowToDraft() throws FlowProcessingException, QueueException {
+        // Saving a draft on top of a published flow must leave the scheduler on the last non-draft
+        // revision: no trigger event may be emitted, even when the draft changes the trigger.
+        // Otherwise the scheduler would repoint its flow cache at the draft revision.
+        String flowId = IdUtils.create();
+        String publishedSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 0 * * *"
+            """.formatted(flowId, TEST_NAMESPACE);
+        FlowWithSource published = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, publishedSource));
+
+        try {
+            reset(triggerEventQueue);
+
+            String draftSource = """
+                id: %s
+                namespace: %s
+                draft: true
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: hello
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/5 * * * *"
+                """.formatted(flowId, TEST_NAMESPACE);
+            FlowWithSource draft = flowService.update(GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftSource), published);
+
+            assertThat(draft.isDraft()).isTrue();
+            assertThat(draft.getRevision()).isEqualTo(2);
+            verify(triggerEventQueue, never()).send(any());
+        } finally {
+            flowRepository.findByIdWithSource(published.getTenantId(), published.getNamespace(), published.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
     @MockBean
     @Replaces(TriggerEventQueue.class)
     TriggerEventQueue triggerEventQueue() {
         return mock(TriggerEventQueue.class);
+    }
+
+    @Test
+    void shouldAllowSavingDraftWithMissingTasks() throws FlowProcessingException, QueueException {
+        // A draft is allowed to be saved invalid (here: empty tasks list violates @NotEmpty).
+        // It will fail at execution time, but persisting it lets the user keep iterating.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks: []
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            assertThat(saved).isNotNull();
+            assertThat(saved.isDraft()).isTrue();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldRejectSavingNonDraftWithMissingTasks() {
+        // Belt-and-braces: the same invalid flow without draft:true must still be refused so we
+        // do not regress the validation guarantee on published flows.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks: []
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        assertThatThrownBy(() ->
+            flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source))
+        ).isInstanceOf(jakarta.validation.ConstraintViolationException.class);
+    }
+
+    @Test
+    void shouldAllowSavingDraftWithUnrecognizedTaskProperty() throws FlowProcessingException, QueueException {
+        // Regression: creating a draft whose task has an unrecognized property used to return 422
+        // because FlowService applied strict parsing regardless of the draft flag.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                unknownProp: someValue
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            assertThat(saved).isNotNull();
+            assertThat(saved.isDraft()).isTrue();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldAllowUpdatingDraftWithUnrecognizedTaskProperty() throws FlowProcessingException, QueueException {
+        // Same as above but for the update path.
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, validSource));
+
+        try {
+            String draftSource = """
+                id: %s
+                namespace: %s
+                draft: true
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: hello
+                    unknownProp: someValue
+                """.formatted(flowId, TEST_NAMESPACE);
+
+            FlowWithSource updated = flowService.update(
+                GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftSource),
+                created
+            );
+
+            assertThat(updated).isNotNull();
+            assertThat(updated.isDraft()).isTrue();
+        } finally {
+            flowRepository.findByIdWithSource(created.getTenantId(), created.getNamespace(), created.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldReportConstraintViolationsWhenValidatingInvalidDraftForExecution() throws FlowProcessingException, QueueException {
+        // After an invalid draft is saved, validateForExecution must surface the violations so
+        // the caller (ExecutionController) can mark the execution as FAILED rather than running
+        // an under-defined flow that would blow up later in a confusing way.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks: []
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            Optional<jakarta.validation.ConstraintViolationException> violations =
+                flowService.validateForExecution(saved.toFlow());
+            assertThat(violations).isPresent();
+            // The flow has at least one violation - we don't pin the exact message so this stays
+            // robust against bean-validation message wording changes.
+            assertThat(violations.get().getConstraintViolations()).isNotEmpty();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
     }
 }

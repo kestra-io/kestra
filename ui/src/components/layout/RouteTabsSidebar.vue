@@ -38,7 +38,7 @@
     import type {RouteLocationRaw} from "vue-router"
     import {storeToRefs} from "pinia"
     import {KsSideBar, KsSideBarItem} from "@kestra-io/design-system"
-    import {useRouteTabsStore, type RouteTab} from "../../stores/routeTabs"
+    import {useRouteTabsStore, activeScopeTab, type RouteTab} from "../../stores/routeTabs"
 
     const {t} = useI18n()
     const route = useRoute()
@@ -54,10 +54,10 @@
         return typeof fromRoute === "string" ? fromRoute : undefined
     })
 
+    const scopeTab = computed(() => activeScopeTab(route, visibleTabs.value, router))
+
     function isActive(tab: RouteTab): boolean {
-        if (tab.route) {
-            return router.resolve(tab.route).fullPath === route.fullPath
-        }
+        if (tab.route) return tab === scopeTab.value
         const current = activeTabName.value ?? visibleTabs.value[0]?.name
         return (tab.name ?? "default") === (current ?? "default")
     }
@@ -87,6 +87,7 @@
         width: 200px;
         flex-shrink: 0;
         --ks-sidebar-item-font-weight: normal;
+        --ks-sidebar-item-title-color: currentColor;
     }
 
     .tabs-list {
@@ -99,8 +100,12 @@
     .tab-header {
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
-        color: var(--ks-text-primary);
+        font-weight: var(--ks-font-weight-regular);
+        color: var(--ks-text-dim);
+
+        & ~ .tab-header {
+            margin-top: var(--ks-spacing-3);
+        }
     }
 
     .indented {

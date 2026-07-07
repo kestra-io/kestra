@@ -7,7 +7,7 @@
 
 ---
 {{- $type := "worker" }}
-{{- $list := list "standalone" "webserver" "executor" "indexer" "scheduler" }}
+{{- $list := list "standalone" "webserver" "executor" "indexer" "scheduler" "controller" }}
 {{- range $i, $val := $list }}
 {{- if eq $val $name }}
 {{- $type = $name }}
@@ -47,7 +47,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  replicas: {{ default $common.replicas $content.replicas }}
+  replicas: {{ kindIs "invalid" $content.replicas | ternary $common.replicas $content.replicas }}
   revisionHistoryLimit: {{ default $common.revisionHistoryLimit $content.revisionHistoryLimit }}
   selector:
     matchLabels:

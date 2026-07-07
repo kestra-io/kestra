@@ -25,20 +25,13 @@ export default defineProject({
             "tests/e2e/**",
             "node_modules/**",
             "tests/unit/**/translation.spec.js",
+            // Design system has its own dedicated CI job (Frontend - Design System
+            // tests) running its own vitest config/setup from within that package.
+            // Without this exclude, this project's default include glob picks up
+            // those same test files too, re-running them a second time here under
+            // the wrong setup file (missing the design-system-specific mocks).
+            "packages/design-system/**",
         ],
-        coverage: {
-            include: [
-                "src/**/*.{js,ts,vue}",
-            ],
-            exclude: [
-                "stylelint.config.mjs",
-                "storybook-static/**",
-                "**/.storybook/**",
-                "**/*.stories.*",
-                "**/*.d.ts",
-                "**/*.json",
-            ],
-        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

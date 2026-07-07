@@ -15,9 +15,11 @@ public class PebbleUtils {
             return true;
         }
         if ("STANDALONE".equals(serverType)) {
-            // check that it's called inside a worker thread
-            // Note: this is not ideal as we check that it starts with the name used in the Worker executor
-            return Thread.currentThread().getName().startsWith(Worker.EXECUTOR_NAME + "_");
+            // check that it's called inside a worker thread.
+            // Worker executor threads are named "worker-<group>_<n>" (e.g. "worker-default_0",
+            // "worker-system_0"), so matching on the "worker-" prefix covers both WorkerAgent and
+            // SystemWorker thread pools regardless of worker group.
+            return Thread.currentThread().getName().startsWith(Worker.EXECUTOR_NAME + "-");
         }
 
         return false;

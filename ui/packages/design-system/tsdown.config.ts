@@ -48,6 +48,7 @@ export default defineConfig({
     },
     copy: [
         {from: "src/assets/images", to: "dist/assets"},
+        {from: "src/assets/styles", to: "dist/assets"},
     ],
     deps: {
         neverBundle: [/\.png$/, "@vue/reactivity"],

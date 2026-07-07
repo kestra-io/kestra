@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.webserver.tenants.TenantValidationFilter;
+import io.opentelemetry.api.trace.StatusCode;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -75,6 +76,34 @@ public class TracesTest {
         assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("trace-parent");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
         assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.executor.DefaultExecutor");
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/traces-failed.yaml" })
+    void failedExecutionShouldGenerateErrorSpans(String tenantId) {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        // running a flow until completion (it will fail)
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/trace-failed?wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        List<SpanData> spans = otelTesting.getSpans().stream()
+            .filter(span -> tenantId.equals(span.getAttributes().get(TraceUtils.ATTR_TENANT_ID)))
+            .toList();
+
+        // Both the WORKER task span and the EXECUTOR span must have Status=Error
+        List<SpanData> workerSpans = spans.stream().filter(s -> s.getName().startsWith("WORKER - ")).toList();
+        assertThat(workerSpans).isNotEmpty();
+        assertThat(workerSpans).allMatch(s -> s.getStatus().getStatusCode() == StatusCode.ERROR);
+
+        List<SpanData> executorSpans = spans.stream().filter(s -> s.getName().startsWith("EXECUTOR - ")).toList();
+        assertThat(executorSpans).isNotEmpty();
+        assertThat(executorSpans).anyMatch(s -> s.getStatus().getStatusCode() == StatusCode.ERROR);
     }
 
     @MockBean

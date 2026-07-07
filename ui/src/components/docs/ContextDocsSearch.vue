@@ -16,10 +16,10 @@
             <template v-if="searchResults.length > 0">
                 <ContextDocsLink
                     v-for="(result, index) in searchResults"
-                    :key="result.url"
+                    :key="result.parsedUrl"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
-                    :href="result.parsedUrl.replace(/^docs\//, '')"
+                    :href="result.parsedUrl"
                     useRaw
                     :data-index="index"
                     @click="resetSearch"
@@ -48,7 +48,7 @@
     const docStore = useDocStore()
 
     const searchQuery = ref("")
-    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([])
+    const searchResults = ref<Array<{ title: string; preview: string; parsedUrl: string }>>([])
     const loading = ref(false)
     const selectedIndex = ref(0)
     const searchContainer = ref<HTMLDivElement | null>(null)
@@ -134,11 +134,10 @@
 <style scoped lang="scss">
     .search-container {
         position: relative;
+        flex: 1;
+        min-width: 0;
         margin-bottom: 0;
         z-index: 1001;
-        padding-top: 12px;
-        padding-left: 28px;
-        padding-right: 28px;
     }
 
     .search-input {
@@ -157,8 +156,8 @@
     .search-results {
         position: absolute;
         top: 100%;
-        left: 26px;
-        right: 26px;
+        left: 0;
+        right: 0;
         background-color: var(--ks-bg-surface);
         border-radius: 6px;
         margin-top: 4px;

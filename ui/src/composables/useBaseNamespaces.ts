@@ -36,15 +36,18 @@ export const useBaseNamespacesStore = () => {
         return response
     }
 
-    async function search(options: Parameters<typeof NamespaceAPI.searchNamespaces>[0] & {commit?: boolean}) {
+    async function search(options: {commit?: boolean, sort?: string, [key: string]: any}) {
         const shouldCommit = options.commit !== false
         delete options.commit
-        const response = await NamespaceAPI.searchNamespaces(options)
+        const sortString = options.sort ? `?sort=${options.sort}` : ""
+        delete options.sort
+
+        const {data} = await axios.get(`${apiUrl()}/namespaces/search${sortString}`, {params: options})
         if (shouldCommit) {
-            namespaces.value = response.results
-            total.value = response.total
+            namespaces.value = data.results
+            total.value = data.total
         }
-        return response
+        return data
     }
 
     async function load(id: string) {

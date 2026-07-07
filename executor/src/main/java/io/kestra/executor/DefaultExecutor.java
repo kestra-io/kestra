@@ -5,8 +5,6 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Concurrency;
@@ -16,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -24,6 +23,7 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
@@ -32,6 +32,8 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.flow.Loop;
@@ -58,12 +60,15 @@ import static io.kestra.core.utils.Rethrow.*;
 @Slf4j
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
-    private static final String IGNORING_EXECUTION_MSG = "Ignoring execution {} because there is a kill switch on it";
 
     @Inject
     private DispatchQueueInterface<Execution> executionQueue;
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    @Inject
+    private KillSwitchService killSwitchService;
+    @Inject
+    private KillSwitchActionService killSwitchActionService;
     @Inject
     private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
     @Inject
@@ -80,10 +85,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     @Inject
     private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
     @Inject
     private ExecutorService executorService;
     @Inject
@@ -317,32 +318,25 @@ public class DefaultExecutor extends AbstractService implements Executor {
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
-    // The execution queue is used to send newly created executions, so the first step is to create the execution inside the database
     private void executionQueue(Either<Execution, DeserializationException> either) {
         if (either.isRight()) {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-
-        Execution message = either.getLeft();
-
+        Execution execution = either.getLeft();
+        // Always persist first so the execution is present in the DB even if kill-switched.
         try {
-            // we create the execution even if skipped, so it is at least present in the DB
-            executionStateStore.create(message);
+            executionStateStore.create(execution);
         } catch (Exception e) {
-            log.error("Unable to create execution {}", message.getId(), e);
+            log.error("Unable to create execution {}", execution.getId(), e);
         }
-
-        EvaluationType evaluationType = killSwitchService.evaluate(message);
-        if (evaluationType.isKillSwitched(message)) {
-            killSwitchActionService.handle(evaluationType, message.getTenantId(), message.getId());
+        EvaluationType evaluationType = killSwitchService.evaluate(execution);
+        if (evaluationType.isKillSwitched(execution)) {
+            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
             return;
         }
-
-        var eventType = message.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
-        var executionEvent = new ExecutionEvent(message, eventType);
-        Optional<ExecutorContext> maybeExecutor = executionEventMessageHandler.handle(executionEvent);
-        maybeExecutor.ifPresent(this::toExecution);
+        var eventType = execution.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
+        executionEventMessageHandler.handle(new ExecutionEvent(execution, eventType)).ifPresent(this::toExecution);
     }
 
     private void executionCommandQueue(Either<ExecutionCommand, DeserializationException> either) {
@@ -359,19 +353,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-
-        ExecutionEvent message = either.getLeft();
-        EvaluationType evaluationType = killSwitchService.evaluate(message);
-        if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.executionId());
-            if (evaluationType.isKillSwitched(execution)) {
-                killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-                return;
-            }
-        }
-
-        Optional<ExecutorContext> maybeExecutor = executionEventMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        executionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -379,16 +361,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage(), either.getRight());
             return;
         }
-
-        WorkerTaskResult message = either.getLeft();
-        EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
-        if (evaluationType != EvaluationType.PASS) {
-            killSwitchActionService.handle(evaluationType, message.getTaskRun().getTenantId(), message.getTaskRun().getExecutionId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = workerTaskResultMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        workerTaskResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void killQueue(Either<ExecutionKilled, DeserializationException> either) {
@@ -409,17 +382,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        if (killSwitchService.evaluate(killedExecution.getExecutionId()) == EvaluationType.IGNORE) { // we process other types of evaluation
-            log.warn(IGNORING_EXECUTION_MSG, killedExecution.getExecutionId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = executionKilledExecutionMessageHandler.handle(killedExecution);
-
         // Transmit the new execution state. Note that the execution
         // will eventually transition to KILLED state before sub-flow executions are actually killed.
         // This behavior is acceptable due to the fire-and-forget nature of the killing event.
-        maybeExecutor.ifPresent(executor -> this.toExecution(executor, true));
+        executionKilledExecutionMessageHandler.handle(killedExecution).ifPresent(executor -> this.toExecution(executor, true));
     }
 
     private void subflowExecutionResultQueue(Either<SubflowExecutionResult, DeserializationException> either) {
@@ -427,21 +393,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a subflow execution result: {}", either.getRight().getMessage());
             return;
         }
-
-        SubflowExecutionResult message = either.getLeft();
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
-        if (killSwitchService.evaluate(message.getExecutionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution result for child execution {} as there is a kill switch in it", message.getExecutionId());
-            return;
-        }
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
-        if (killSwitchService.evaluate(message.getParentTaskRun()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution result for parent execution {} as there is a kill switch in it", message.getParentTaskRun().getExecutionId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = subflowExecutionResultMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        subflowExecutionResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
@@ -449,20 +401,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
             return;
         }
-
-        SubflowExecutionEnd message = either.getLeft();
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
-        if (killSwitchService.evaluate(message.childExecution()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution end for child execution {} as there is a kill switch in it", message.childExecution().getId());
-            return;
-        }
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
-        if (killSwitchService.evaluate(message.parentExecutionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution end for parent execution {} as there is a kill switch in it", message.parentExecutionId());
-            return;
-        }
-
-        subflowExecutionEndMessageHandler.handle(message);
+        subflowExecutionEndMessageHandler.handle(either.getLeft());
     }
 
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {
@@ -470,10 +409,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a multiple condition event: {}", either.getRight().getMessage());
             return;
         }
-
-        MultipleConditionEvent multipleConditionEvent = either.getLeft();
-
-        multipleConditionEventMessageHandler.handle(multipleConditionEvent);
+        multipleConditionEventMessageHandler.handle(either.getLeft());
     }
 
     private void loopExecutionEventQueue(Either<LoopExecutionEvent, DeserializationException> either) {
@@ -481,20 +417,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a loop execution event: {}", either.getRight().getMessage());
             return;
         }
-
-        LoopExecutionEvent message = either.getLeft();
-        // skip if there is a kill switch on the loop sub-execution or the parent execution
-        if (killSwitchService.evaluate(message.executionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring loop execution event for sub-execution {} as there is a kill switch on it", message.executionId());
-            return;
-        }
-        if (killSwitchService.evaluate(message.loopRun().parent().getId()) != EvaluationType.PASS) {
-            log.warn("Ignoring loop execution event for parent execution {} as there is a kill switch on it", message.loopRun().parent().getId());
-            return;
-        }
-
-        Optional<ExecutorContext> maybeExecutor = loopExecutionEventMessageHandler.handle(message);
-        maybeExecutor.ifPresent(this::toExecution);
+        loopExecutionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
     }
 
     /**
@@ -675,7 +598,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     sendTriggerExecutionTerminated(execution);
-                    this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
+                    this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                 }
 
                 return;
@@ -755,7 +678,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
                 }
 
-                // check if there exist a queued execution and submit it to the execution queue
+                // check if there exists a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
                     // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
@@ -801,7 +724,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 }
 
                 // purge the trigger: reset scheduler trigger at end
-                if (execution.getTrigger() != null) {
+                if (execution.getTrigger() != null && !isRealtimeTriggerExecution(executor.getFlow(), execution)) {
                     sendTriggerExecutionTerminated(execution);
                 }
 
@@ -809,31 +732,40 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 this.executionEventQueue.emit(event);
 
                 // update all execution followers
-                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
+                // Note that we must use 'emit' here and not emitAsync as we need to emit it inside the same transaction to avoid races,
+                // and transactions are bound to a thread. This is true for all emission of the follow execution event inside an execution lock.
+                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
 
                 // update all execution followers
-                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
+                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
             }
         } catch (QueueException | FlowNotFoundException | InternalException e) {
             if (!ignoreFailure) {
-                // If we cannot add the new worker task result to the execution, we fail it
-                executionStateStore.lock(executor.getExecution().getId(), execution ->
-                {
-                    try {
+                // If we cannot add the new worker task result to the execution, we fail it.
+                // Persist the FAILED state first, then emit the queue events
+                // only after the transaction commits to avoid potential race conditions inside the follow endpoint.
+                Optional<ExecutorContext> failedExecutorOpt = executionStateStore.lock(
+                    executor.getExecution().getId(), execution ->
+                    {
                         Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
-                        ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);
-                        this.executionEventQueue.emit(event);
+                        return new ExecutorContext(execution).withExecution(failed, "toExecutionFailure");
+                    }
+                );
+
+                if (failedExecutorOpt.isPresent()) {
+                    Execution failedExecution = failedExecutorOpt.get().getExecution();
+                    try {
+                        this.executionEventQueue.emit(new ExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
 
                         // update all execution followers
-                        this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(failed, ExecutionEventType.UPDATED));
+                        this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
                     } catch (QueueException ex) {
-                        log.error("Unable to emit the execution {}", execution.getId(), ex);
+                        log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
                     }
-                    return null;
-                });
+                }
             }
         }
     }
@@ -844,6 +776,24 @@ public class DefaultExecutor extends AbstractService implements Executor {
             TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
             triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
         }
+    }
+
+    /**
+     * A realtime trigger's lock spans the trigger's whole lifetime on the worker, not a single execution.
+     * Terminations of the executions it emits must not send {@link TriggerExecutionTerminated}, otherwise the
+     * scheduler would unlock and resubmit a trigger that is still running. The trigger-creation failure path
+     * (FAILED execution with no task run) bypasses this check and remains the termination signal.
+     */
+    static boolean isRealtimeTriggerExecution(FlowWithSource flow, Execution execution) {
+        if (flow == null || flow.getTriggers() == null) {
+            return false;
+        }
+        for (AbstractTrigger trigger : flow.getTriggers()) {
+            if (trigger.getId().equals(execution.getTrigger().getId())) {
+                return TriggerType.REALTIME.equals(TriggerType.from(trigger));
+            }
+        }
+        return false;
     }
 
     private void processFlowTriggers(Execution execution) throws QueueException {

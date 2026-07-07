@@ -16,6 +16,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
@@ -88,6 +89,9 @@ public class RunContextFactory {
 
     @Inject
     private Provider<RunContextInitializer> runContextInitializerProvider;
+
+    @Inject
+    private Provider<ReusableInputsExpander> reusableInputsExpanderProvider;
 
     // hacky
     public RunContextInitializer initializer() {
@@ -254,9 +258,11 @@ public class RunContextFactory {
             return Collections.emptyList();
         }
 
-        return flow.getInputs().stream()
+        // Use the expander so that REUSABLE_INPUTS-referenced SECRETs are inlined alongside FORM-nested ones.
+        // On OSS the expander is a no-op when no REUSABLE_INPUTS are present, so FORM-nested SECRETs still work.
+        return flow.resolvableInputs(reusableInputsExpanderProvider.get()).stream()
             .filter(input -> input.getType() == Type.SECRET)
-            .map(input -> input.getId()).toList();
+            .map(Input::getId).toList();
     }
 
     private DefaultRunContext.Builder newBuilder() {

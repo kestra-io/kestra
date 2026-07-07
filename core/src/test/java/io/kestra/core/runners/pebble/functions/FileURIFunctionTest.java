@@ -98,10 +98,10 @@ class FileURIFunctionTest {
 
         Map<String, Object> variables = getVariables(namespace);
 
-        String render = variableRenderer.render("{{ fileURI('" + filePath + "', version=1) }}", variables);
+        String render = variableRenderer.render("{{ fileURI('" + filePath + "', revision=1) }}", variables);
         assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
 
-        String readContent = variableRenderer.render("{{ read('" + filePath + "', version=1) }}", variables);
+        String readContent = variableRenderer.render("{{ read('" + filePath + "', revision=1) }}", variables);
         assertThat(readContent).isEqualTo("Version 1");
     }
 

@@ -199,6 +199,50 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
+    void executingInvalidDraftIsRejected() {
+        // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty)
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("explicitly executing an invalid draft by revision is rejected as unprocessable")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection surfaces that the flow definition is invalid")
+            .contains("flow definition is invalid");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void executingDraftOnlyFlowWithoutRevisionIsRejected() {
+        // webhook-draft has only draft revisions, so it cannot resolve to a published version
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("running a draft-only flow without a revision is rejected as unprocessable, not with a bare 404")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection explains that a published revision must be saved before executing without a revision")
+            .contains("only has draft revisions");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
@@ -1127,18 +1171,16 @@ class ExecutionControllerRunnerTest {
         assertThat(execution).isNotNull();
         assertThat(execution.getId()).isNotNull();
 
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(
-                HttpRequest
-                    .POST(
-                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                        new Hello("webhook")
-                    ),
-                Execution.class
-            )
+        // When the condition is not met, no execution is created and the webhook returns 204 (not 409).
+        var response = client.toBlocking().exchange(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    new Hello("webhook")
+                )
         );
-        assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getResponse().body()).isNull();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        assertThat(response.body()).isNull();
     }
 
     @Test
@@ -1736,6 +1778,29 @@ class ExecutionControllerRunnerTest {
 
         // check that afterExecutions has been run even if killed
         assertThat(execution.getTaskRunList().getLast().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sleep-long-after-execution-flowable.yml" })
+    void shouldRunFlowableAfterExecutionWhenExecutionIsKilled() throws QueueException {
+        Execution runningExecution = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep-long-after-execution-flowable");
+        assertThat(runningExecution.getState().isRunning()).isTrue();
+
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/main/executions/" + runningExecution.getId() + "/actions/kill")
+        );
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(runningExecution.getId(), exec ->
+            exec.getState().getCurrent() == State.Type.KILLED &&
+                exec.findTaskRunsByTaskId("after-if").stream().anyMatch(taskRun -> taskRun.getState().isTerminated()) &&
+                exec.findTaskRunsByTaskId("after-if-log").stream().anyMatch(taskRun -> taskRun.getState().isTerminated()) &&
+                exec.findTaskRunsByTaskId("after-end").stream().anyMatch(taskRun -> taskRun.getState().isTerminated())
+        );
+        assertThat(execution.findTaskRunsByTaskId("sleep-long").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(execution.findTaskRunsByTaskId("after-if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after-if-log").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after-end").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -3016,6 +3081,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs.yaml" })
     void commaInOneOfMultiLabels() {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
         String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);

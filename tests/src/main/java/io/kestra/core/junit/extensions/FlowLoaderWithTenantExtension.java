@@ -35,6 +35,7 @@ public class FlowLoaderWithTenantExtension extends AbstractLoaderExtension imple
         ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
         store.put(KEY_TENANT_ID, tenantId);
         LoadFlowsWithTenant loadFlows = getLoadFlows(extensionContext);
+        createTenant(extensionContext, tenantId);
         loadFlows(extensionContext, tenantId, loadFlows.value());
         return tenantId;
     }
@@ -47,6 +48,7 @@ public class FlowLoaderWithTenantExtension extends AbstractLoaderExtension imple
         if (StringUtils.isNotBlank(tenantId)) {
             LoadFlowsWithTenant loadFlows = getLoadFlows(extensionContext);
             deleteFlows(tenantId, loadFlows.value());
+            deleteTenant(tenantId);
         }
     }
 

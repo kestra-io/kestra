@@ -44,11 +44,13 @@
         isFullScreen?: boolean
         withHeader?: boolean
         resizable?: boolean
+        beforeClose?: (done: () => void) => void
     }>(), {
         title: undefined,
         isFullScreen: false,
         withHeader: true,
         resizable: false,
+        beforeClose: undefined,
     })
 
     const emit = defineEmits<{

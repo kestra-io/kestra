@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -43,6 +44,9 @@ public class FlowTriggerService {
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
         return allFlows
             .filter(flow -> !flow.isDisabled())
+            // a draft revision is never picked up implicitly: a Flow trigger on a flow whose latest
+            // revision is a draft must not fire, like webhooks/schedules/subflows
+            .filter(flow -> !flow.isDraft())
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)));
     }
@@ -187,10 +191,12 @@ public class FlowTriggerService {
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
             // filter out Test Executions
-                execution.getKind() != null ||
-                // ensure flow & triggers are enabled
-                flow.isDisabled() || flow instanceof FlowWithException ||
-                flow.getTriggers() == null || flow.getTriggers().isEmpty()
+            (execution.getKind() != null && execution.getKind() != ExecutionKind.NORMAL) ||
+            // ensure flow & triggers are enabled
+            flow.isDisabled() || flow instanceof FlowWithException ||
+            // a draft revision is never picked up implicitly (see withFlowTriggersOnly)
+            flow.isDraft() ||
+            flow.getTriggers() == null || flow.getTriggers().isEmpty()
         ) {
             return Collections.emptyList();
         }

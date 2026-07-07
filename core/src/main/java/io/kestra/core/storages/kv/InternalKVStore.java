@@ -90,7 +90,7 @@ public class InternalKVStore implements KVStore {
                 .build()
         );
         this.storage.put(
-            this.tenant, this.namespace, this.storageUri(key, saved.getVersion()), new StorageObject(
+            this.tenant, this.namespace, this.storageUri(key, saved.getRevision()), new StorageObject(
                 value.metadataAsMap(),
                 new ByteArrayInputStream(serialized)
             )
@@ -120,7 +120,7 @@ public class InternalKVStore implements KVStore {
         );
         KVValueAndMetadata wrapper = new KVValueAndMetadata(metadata, null);
         this.storage.put(
-            this.tenant, this.namespace, this.storageUri(key, saved.getVersion()), new StorageObject(
+            this.tenant, this.namespace, this.storageUri(key, saved.getRevision()), new StorageObject(
                 wrapper.metadataAsMap(),
                 new ByteArrayInputStream(rawValue)
             )
@@ -147,7 +147,7 @@ public class InternalKVStore implements KVStore {
 
         Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
 
-        int version = maybeMetadata.map(PersistedKvMetadata::getVersion).orElse(1);
+        int revision = maybeMetadata.map(PersistedKvMetadata::getRevision).orElse(1);
         if (maybeMetadata.isPresent()) {
             PersistedKvMetadata metadata = maybeMetadata.get();
             if (metadata.isDeleted()) {
@@ -162,7 +162,7 @@ public class InternalKVStore implements KVStore {
 
         StorageObject withMetadata;
         try {
-            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key, version));
+            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key, revision));
         } catch (FileNotFoundException e) {
             return Optional.empty();
         }

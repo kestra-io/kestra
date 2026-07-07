@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         :disabled="!enabled"
         :icon="RunFast"
         @click="click"
     >
         {{ $t("force run") }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog
         v-if="isDrawerOpen"
@@ -14,7 +14,7 @@
         :appendToBody="true"
     >
         <template #header>
-            <span v-html="$t('force run title', {id: execution.id})" />
+            <span v-html="$t('force run title', {id: escape(execution.id)})" />
         </template>
         <template #footer>
             <KsButton
@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
+    import escape from "lodash/escape"
     import {State} from "@kestra-io/design-system"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -41,6 +42,7 @@
     import {useToast} from "../../../../../utils/toast"
 
     import RunFast from "vue-material-design-icons/RunFast.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
 
     interface ExecutionState {

@@ -10,6 +10,10 @@
     >
         <Background :patternColor="cssVariable('--ks-topology-bg')" />
 
+        <Panel v-if="showDetailsToggle" position="top-right">
+            <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
+        </Panel>
+
         <template #node-cluster="clusterProps">
             <ClusterNode
                 v-bind="clusterProps"
@@ -30,6 +34,7 @@
                 :iconComponent="iconComponent"
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
+                :replayEnabled="replayEnabled"
                 :customActions="customActions"
                 :showDetails="showDetails"
                 @edit="emit(EVENTS.EDIT, $event)"
@@ -38,6 +43,8 @@
                 @expand="expand($event)"
                 @open-link="emit(EVENTS.OPEN_LINK, $event)"
                 @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                 @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
                 @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
                 @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
@@ -92,27 +99,36 @@
         </template>
 
         <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
-            <ControlButton @click.stop="zoomIn()">
-                <Plus />
-            </ControlButton>
-            <ControlButton @click.stop="zoomOut()">
-                <Minus />
-            </ControlButton>
-            <ControlButton @click.stop="fitView()">
-                <Fullscreen />
-            </ControlButton>
-            <ControlButton @click.stop="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
-                <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
-            </ControlButton>
-            <ControlButton @click.stop="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
-                <InformationSlabCircleOutline />
-            </ControlButton>
-            <ControlButton @click.stop="toggleDropdown">
-                <Download />
-            </ControlButton>
-            <ControlButton @click.stop="uncollapseAll()" v-if="collapsed.size > 0">
-                <ArrowExpandAll />
-            </ControlButton>
+            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
+                <ControlButton @click.stop="zoomIn()">
+                    <Plus />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
+                <ControlButton @click.stop="zoomOut()">
+                    <Minus />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
+                <ControlButton @click.stop="fitView()">
+                    <Fullscreen />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="right">
+                <ControlButton @click.stop="emit('toggle-orientation', $event)">
+                    <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip :content="$t('download')" placement="right">
+                <ControlButton @click.stop="toggleDropdown">
+                    <Download />
+                </ControlButton>
+            </KsTooltip>
+            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
+                <ControlButton @click.stop="uncollapseAll()">
+                    <ArrowExpandAll />
+                </ControlButton>
+            </KsTooltip>
             <ul v-if="isDropdownOpen" class="exporting">
                 <li @click="exportAsImage('jpeg')" class="item">
                     Export as .JPEG
@@ -127,7 +143,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow} from "@vue-flow/core"
+    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import type {XYPosition} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -143,9 +159,8 @@
     import AlignHorizontalCenter from "vue-material-design-icons/AlignHorizontalCenter.vue"
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import InformationSlabCircleOutline from "vue-material-design-icons/InformationSlabCircleOutline.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
@@ -173,9 +188,15 @@
         subflowsExecutions?: Record<string, any[]>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
+        replayEnabled?: boolean;
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
+        showDetailsToggle?: boolean;
+        // Bump this from the caller whenever data rendered *inside* the taskDetails slot (e.g.
+        // live metrics or progress) changes but isn't itself part of `execution`/`flowGraph` — the
+        // slot content is only re-evaluated when a node's graph data is regenerated.
+        taskDetailsVersion?: number;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -190,10 +211,13 @@
         enableSubflowInteraction: true,
         playgroundEnabled: false,
         playgroundReadyToStart: false,
+        replayEnabled: false,
         subflowsExecutions: () => ({}),
         getNodeDimensions: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
+        showDetailsToggle: true,
+        taskDetailsVersion: undefined,
     })
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
@@ -201,7 +225,7 @@
     const dragging = ref(false)
     const showExtraDetails = ref(false)
     const lastPosition = ref<XYPosition | null>()
-    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
     const edgeReplacer = ref({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -215,19 +239,12 @@
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
                 : {width: getNodeWidth(node), height: baseHeight}
 
-            if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                return {...dimensions, height: baseHeight}
+            if (props.execution && (VueFlowUtils.isTaskNode(node) || VueFlowUtils.isTriggerNode(node) || VueFlowUtils.isCustomNode(node))) {
+                dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
             }
 
-            if (showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                const taskType = node?.task?.type as string | undefined
-                const hasDetailsAction = Boolean(
-                    (taskType && props.customActions?.[taskType]) ||
-                        (taskType && props.showDetails?.[taskType]),
-                )
-                if (hasDetailsAction) {
-                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)}
-                }
+            if (VueFlowUtils.isTaskNode(node) && !showExtraDetails.value) {
+                return {...dimensions, height: baseHeight}
             }
 
             return dimensions
@@ -246,6 +263,8 @@
             EVENTS.RUN_TASK,
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,
+            EVENTS.SHOW_OUTPUTS,
+            EVENTS.REPLAY_TASK,
             EVENTS.SHOW_DESCRIPTION,
             "on-add-flowable-error",
             EVENTS.ADD_TASK,
@@ -280,6 +299,18 @@
         generateGraph()
     })
 
+    const refitOnNodesInitialized = ref(false)
+    onNodesInitialized(() => {
+        if (refitOnNodesInitialized.value) {
+            refitOnNodesInitialized.value = false
+            fitView()
+        }
+    })
+
+    watch(() => props.taskDetailsVersion, () => {
+        generateGraph()
+    })
+
     const generateGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
@@ -292,7 +323,8 @@
             collapsed.value = new Set<string>()
             hiddenNodes.value = []
             edgeReplacer.value = {}
-            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false, false))
+            clusterToNode.value = []
+            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
             const elements = VueFlowUtils.generateGraph(
                 props.id,
@@ -314,7 +346,7 @@
 
             if (elements) {
                 setElements(elements)
-                fitView()
+                refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })
@@ -455,12 +487,13 @@
         return null
     }
 
-    const collapseCluster = (clusterUid: string, regenerate: boolean, recursive = false) => {
+    const collapseCluster = (clusterUid: string, regenerate: boolean) => {
         const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
 
-        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive))
+        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes)
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,
@@ -471,7 +504,7 @@
 
         for (let child of cluster.nodes) {
             if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
-                collapseCluster(child, false, true)
+                collapseCluster(child, false)
             }
         }
 
@@ -494,7 +527,7 @@
         clusterToNode.value = []
         collapsed.value.delete(expandData.id)
 
-        collapsed.value.forEach(n => collapseCluster(n, false, false))
+        collapsed.value.forEach(n => collapseCluster(n, false))
 
         generateGraph()
     }
@@ -547,7 +580,7 @@
             padding: 5px 8px;
             cursor: pointer;
             color: var(--ks-text-primary);
-            font-size: 12px;
+            font-size: var(--ks-font-size-sm);
             width: 110px;
 
             &:first-child{

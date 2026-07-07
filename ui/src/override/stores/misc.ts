@@ -6,6 +6,7 @@ import {ref} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
+import type {SelectedTheme} from "../../utils/utils"
 
 
 
@@ -14,7 +15,7 @@ export const useMiscStore = defineStore("misc", () => {
     const configs = ref<Record<string, any>>()
     const contextInfoBarOpenTab = ref("")
     const lastContextTab = ref("news")
-    const theme = ref<"light" | "dark">("light")
+    const theme = ref<SelectedTheme>("syncWithSystem")
 
     const axios = useClient()
 

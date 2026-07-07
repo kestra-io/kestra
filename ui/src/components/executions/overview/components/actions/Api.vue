@@ -1,14 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         v-if="isAllowedEdit"
         :icon="Api"
-        tag="a"
-        :href="`${apiUrl()}/executions/${props.execution.id}`"
-        target="_blank"
-        rel="noopener noreferrer"
+        @click="openApi"
     >
         {{ $t("api") }}
-    </KsButton>
+    </NavBarAction>
 </template>
 
 <script setup lang="ts">
@@ -23,6 +20,7 @@
     import action from "../../../../../models/action"
 
     import Api from "vue-material-design-icons/Api.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
 
     const props = defineProps<{ execution: Execution }>()
 
@@ -36,4 +34,8 @@
             )
         )
     })
+
+    const openApi = () => {
+        window.open(`${apiUrl()}/executions/${props.execution.id}`, "_blank", "noopener,noreferrer")
+    }
 </script>

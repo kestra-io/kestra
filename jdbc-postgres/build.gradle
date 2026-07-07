@@ -3,6 +3,7 @@ configurations {
 }
 
 dependencies {
+    annotationProcessor project(":processor")
     implementation project(":core")
     implementation project(":jdbc")
     implementation project(":executor")
@@ -13,6 +14,7 @@ dependencies {
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("org.postgresql:postgresql")
 
+    testAnnotationProcessor project(":processor")
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':executor').sourceSets.test.output

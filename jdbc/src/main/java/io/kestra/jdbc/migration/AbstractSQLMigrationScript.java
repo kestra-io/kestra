@@ -129,6 +129,22 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
      */
     public static void executeSqlScript(final DataSource dataSource, final String resourcePath)
         throws IOException, SQLException {
+        executeSqlScript(dataSource, resourcePath, java.util.Map.of());
+    }
+
+    /**
+     * Same as {@link #executeSqlScript(DataSource, String)} but substitutes {@code ${key}}
+     * placeholders in the SQL with the given replacements before executing. Used e.g. to inject a
+     * configurable table name into a log-store migration script.
+     *
+     * @param dataSource   the data source to obtain a connection from
+     * @param resourcePath classpath resource path to the SQL file
+     * @param replacements placeholder key → value substitutions (key {@code x} replaces {@code ${x}})
+     * @throws IOException if the resource cannot be read
+     * @throws SQLException if a statement fails to execute
+     */
+    public static void executeSqlScript(final DataSource dataSource, final String resourcePath, final java.util.Map<String, String> replacements)
+        throws IOException, SQLException {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) {
             cl = AbstractSQLMigrationScript.class.getClassLoader();
@@ -139,6 +155,9 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
                 throw new IllegalArgumentException("SQL resource not found on classpath: " + resourcePath);
             }
             String sql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            for (var replacement : replacements.entrySet()) {
+                sql = sql.replace("${" + replacement.getKey() + "}", replacement.getValue());
+            }
             // Unwrap any Micronaut Data AOP proxy so getConnection() works without a @Connectable context.
             DataSource raw = DelegatingDataSource.unwrapDataSource(dataSource);
             try (Connection connection = raw.getConnection()) {

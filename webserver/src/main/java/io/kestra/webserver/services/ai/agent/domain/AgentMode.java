@@ -1,8 +1,9 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
 import java.util.EnumSet;
-import java.util.Locale;
 import java.util.Set;
+
+import io.kestra.core.utils.Enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -32,9 +33,6 @@ public enum AgentMode {
 
     @JsonCreator
     public static AgentMode fromString(final String value) {
-        if (value == null) {
-            return null;
-        }
-        return AgentMode.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        return Enums.getForNameIgnoreCase(value, AgentMode.class);
     }
 }

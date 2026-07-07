@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
-import java.util.Locale;
+import io.kestra.core.utils.Enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.core.annotation.Nullable;
@@ -18,10 +18,7 @@ public record AgentScopeBinding(
 
         @JsonCreator
         public static Kind fromString(final String value) {
-            if (value == null) {
-                return null;
-            }
-            return Kind.valueOf(value.trim().toUpperCase(Locale.ROOT));
+            return Enums.getForNameIgnoreCase(value, Kind.class);
         }
     }
 }

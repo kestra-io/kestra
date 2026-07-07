@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai.agent.domain;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AgentModeTest {
 
@@ -27,10 +28,18 @@ class AgentModeTest {
     }
 
     @Test
-    void shouldParseModeCaseInsensitivelyAndTolerateNull() {
+    void shouldParseModeCaseInsensitively() {
         // Then
         assertThat(AgentMode.fromString("plan")).isEqualTo(AgentMode.PLAN);
-        assertThat(AgentMode.fromString("  Edit ")).isEqualTo(AgentMode.EDIT);
-        assertThat(AgentMode.fromString(null)).isNull();
+        assertThat(AgentMode.fromString("Edit")).isEqualTo(AgentMode.EDIT);
+    }
+
+    @Test
+    void shouldFailFastOnNullOrUnknownMode() {
+        // Then: no UNKNOWN fallback — an unparseable value is a hard error
+        assertThatThrownBy(() -> AgentMode.fromString(null))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AgentMode.fromString("teleport"))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 }

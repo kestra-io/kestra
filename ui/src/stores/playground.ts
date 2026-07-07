@@ -89,9 +89,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
-            // The playground must run exactly what is in the editor, including draft
-            // revisions - without an explicit revision the backend resolves the latest
-            // published one, silently running stale code after a draft save.
+            // Explicit revision so drafts run too - the backend otherwise resolves the latest published one.
             revision: flow.revision,
         })
     }

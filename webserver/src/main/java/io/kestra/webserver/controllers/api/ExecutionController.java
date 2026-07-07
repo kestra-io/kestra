@@ -1264,9 +1264,8 @@ public class ExecutionController {
     }
 
     /**
-     * Rejects executing a draft revision as anything but a {@link ExecutionKind#PLAYGROUND}
-     * execution. A draft is a work in progress: it must never produce a production run, even
-     * when its revision is passed explicitly (create) or inherited from a replayed execution.
+     * Rejects executing a draft revision as anything but a {@link ExecutionKind#PLAYGROUND} execution,
+     * whether the revision is passed explicitly (create) or inherited from a replayed execution.
      */
     private static void controlDraftExecutableAs(Flow flow, @Nullable ExecutionKind kind) {
         if (flow.isDraft() && ExecutionKind.PLAYGROUND != kind) {

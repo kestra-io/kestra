@@ -385,8 +385,7 @@
                                 newTab: newTab.value,
                                 id: flow.value.id,
                                 namespace: flow.value.namespace,
-                                // A draft must not be executed from the flow page: omit the
-                                // revision so the backend resolves the latest published one.
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
                                 revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
                                 scheduleDate: moment(scheduleDate.value)

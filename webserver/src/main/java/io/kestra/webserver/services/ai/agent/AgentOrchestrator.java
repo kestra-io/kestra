@@ -89,12 +89,9 @@ public class AgentOrchestrator {
         }
     }
 
-    public void resume(final SuspendedTurn turn, final boolean approve, final String reason, final TurnEventSink sink) {
-        AgentThread thread = threadManager.find(turn.tenant(), turn.threadId()).orElseThrow();
+    public void resume(final SuspendedTurn turn, final AgentThread running, final boolean approve, final String reason, final TurnEventSink sink) {
         try {
             StreamingChatModel model = aiServiceManager.getAiService(turn.providerId()).streamingChatModel(List.of());
-            AgentThread running = threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
-                .orElseThrow(() -> new IllegalStateException("Thread '" + thread.uid() + "' is no longer awaiting confirmation"));
             AgentLoopContext ctx = new AgentLoopContext(
                 running, turn.tenant(), turn.providerId(), turn.mode(), turn.profile(),
                 model, turn.messages(), turn.traceId(), new AtomicBoolean(turn.planProposal())
@@ -106,7 +103,7 @@ public class AgentOrchestrator {
                 resumeHeldAction(ctx, turn.heldRequest(), approve, reason, sink);
             }
         } catch (Exception e) {
-            failTurn(thread, sink, e);
+            failTurn(running, sink, e);
         }
     }
 

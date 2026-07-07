@@ -134,7 +134,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, true, null, sink);
+        orchestrator.resume(turn, claim(thread, turn), true, null, sink);
 
         // Then — the read tool was dispatched (not suspended) and the loop continued to a final answer
         assertThat(sink.names()).containsExactly(
@@ -180,7 +180,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, true, null, sink);
+        orchestrator.resume(turn, claim(thread, turn), true, null, sink);
 
         // Then — the real restart tool ran and the turn finished IDLE
         assertThat(sink.names()).containsExactly(
@@ -205,7 +205,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, false, "leave it", sink);
+        orchestrator.resume(turn, claim(thread, turn), false, "leave it", sink);
 
         // Then — held tool not run; a rejected result is recorded and the loop resumes to IDLE
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
@@ -244,7 +244,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, false, "not now", sink);
+        orchestrator.resume(turn, claim(thread, turn), false, "not now", sink);
 
         // Then — the plan aborts with a closing note and the thread returns IDLE
         assertThat(sink.names()).containsExactly(AgentEvents.DONE);
@@ -415,6 +415,11 @@ class AgentOrchestratorTest {
 
     private AgentThread reload(final AgentThread thread) {
         return threadStore.find(TENANT, thread.uid()).orElseThrow();
+    }
+
+    /** Claim an awaiting thread for resumption, as the confirm endpoint does before calling resume. */
+    private AgentThread claim(final AgentThread thread, final SuspendedTurn turn) {
+        return threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION).orElseThrow();
     }
 
     private static ToolExecutionRequest toolCall(final String id, final String name, final String executionId) {

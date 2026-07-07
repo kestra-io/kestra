@@ -138,14 +138,19 @@ public class AiAgentController {
         @Body final ApiConfirmActionRequest request) {
         String tenant = tenantService.resolveTenant();
         requireProvider(null);
-        requireThreadExists(tenant, threadId);
+        AgentThread thread = requireThread(tenant, threadId);
 
         SuspendedTurn turn = confirmationRegistry.take(request.confirmationId())
             .filter(t -> t.threadId().equals(threadId) && t.tenant().equals(tenant))
             .orElseThrow(() -> new NotFoundException("No pending action for confirmationId '" + request.confirmationId() + "'"));
 
+        // Atomically claim the awaiting thread (AWAITING_CONFIRMATION -> RUNNING) before scheduling the
+        // resumed turn, mirroring the chat path so a concurrent turn is rejected here rather than racing.
+        AgentThread running = threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'"));
+
         boolean approve = request.decision() == ApiDecision.APPROVE;
-        return stream(sink -> orchestrator.resume(turn, approve, request.reason(), sink));
+        return stream(sink -> orchestrator.resume(turn, running, approve, request.reason(), sink));
     }
 
     private Flux<Event<Object>> stream(final Consumer<TurnEventSink> work) {
@@ -167,12 +172,6 @@ public class AiAgentController {
     private AgentThread requireThread(final String tenant, final String threadId) {
         return threadStore.find(tenant, threadId)
             .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));
-    }
-
-    private void requireThreadExists(final String tenant, final String threadId) {
-        if (!threadStore.exists(tenant, threadId)) {
-            throw new NotFoundException("Thread not found: '" + threadId + "'");
-        }
     }
 
     private void requireProvider(final String providerId) {

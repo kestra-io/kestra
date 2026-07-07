@@ -173,6 +173,23 @@ class HttpClientTest {
     }
 
     @Test
+    void shouldOfferGzipButNeverBrotli() throws IllegalVariableEvaluationException, HttpClientException, IOException {
+        // Given / When: the client advertises its accepted encodings to the server
+        try (HttpClient client = client()) {
+            HttpResponse<String> response = client.request(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/accept-encoding")),
+                String.class
+            );
+
+            // Then: gzip/deflate are offered (compression preserved) but Brotli (br) is never negotiated,
+            // so httpclient5 never invokes brotli4j and cannot throw UnsatisfiedLinkError.
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).contains("gzip");
+            assertThat(response.getBody()).doesNotContain("br");
+        }
+    }
+
+    @Test
     void getJsonMap() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         try (HttpClient client = client()) {
             HttpResponse<Map<String, String>> response = client.request(
@@ -543,6 +560,13 @@ class HttpClientTest {
         @Produces(MediaType.TEXT_PLAIN)
         public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request) {
             return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
+        }
+
+        @Get("accept-encoding")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> acceptEncoding(io.micronaut.http.HttpRequest<?> request) {
+            String encoding = request.getHeaders().get(HttpHeaders.ACCEPT_ENCODING);
+            return io.micronaut.http.HttpResponse.ok(encoding == null ? "" : encoding);
         }
 
         @Get("json")

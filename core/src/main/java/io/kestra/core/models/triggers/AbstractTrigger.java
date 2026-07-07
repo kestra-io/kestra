@@ -69,11 +69,12 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @Schema(
         title = "The labels to pass to the execution created.",
+        description = "Label values are dynamic and can reference trigger variables.",
         implementation = Object.class, oneOf = { List.class, Map.class }
     )
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @PluginProperty(hidden = true, group = "advanced")
+    @PluginProperty(hidden = true, group = "advanced", dynamic = true)
     private List<@NoSystemLabelValidation Label> labels;
 
     @PluginProperty(group = "reliability")

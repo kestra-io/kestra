@@ -838,6 +838,7 @@
       },
       "filter": "フィルター",
       "new_file": "新規ファイル",
+      "read_only": "この namespace のファイルを管理する権限がありません",
       "no_items": {
         "heading": "まだnamespaceにファイルが見つかりません。",
         "paragraph": "フロー間でコードを共有するためにファイルを作成またはインポートします。"

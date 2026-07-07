@@ -29,7 +29,10 @@ public class InMemoryExecutionStateStore implements ExecutionStateStore {
             return Optional.empty();
         }
         if (result.getExecution() != null) {
-            executions.put(executionId, result.getExecution());
+            // persist under the RETURNED execution's id: the callback may return a different
+            // execution (replay/CREATE_NEW_EXECUTION retry) — JDBC INSERTs it and leaves the
+            // locked row untouched (AbstractJdbcExecutionRepository#lock)
+            executions.put(result.getExecution().getId(), result.getExecution());
         }
         return Optional.of(result);
     }

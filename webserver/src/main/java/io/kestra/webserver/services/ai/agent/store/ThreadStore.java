@@ -2,14 +2,14 @@ package io.kestra.webserver.services.ai.agent.store;
 
 import java.util.Optional;
 
-import io.kestra.webserver.services.ai.agent.domain.Thread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 
 public interface ThreadStore {
-    Thread create(Thread thread);
+    AgentThread create(AgentThread thread);
 
-    Optional<Thread> find(String tenant, String uid);
+    Optional<AgentThread> find(String tenant, String uid);
 
     boolean exists(String tenant, String uid);
 
-    Thread save(Thread thread);
+    AgentThread save(AgentThread thread);
 }

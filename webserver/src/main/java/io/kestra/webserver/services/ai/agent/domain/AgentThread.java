@@ -7,14 +7,14 @@ import lombok.Builder;
 import lombok.With;
 
 @Builder(toBuilder = true)
-public record Thread(
+public record AgentThread(
     String uid,
     String tenant,
     @With @Nullable String title,
-    @With Mode mode,
-    @Nullable ScopeBinding scope,
+    @With AgentMode mode,
+    @Nullable AgentScopeBinding scope,
     @With @Nullable String ownerNodeId,
-    @With ThreadStatus status,
+    @With AgentThreadStatus status,
     Instant createdAt,
     @With Instant updatedAt,
     @With @Nullable Instant lastTurnAt,

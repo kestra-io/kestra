@@ -1,7 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -10,13 +10,13 @@ import jakarta.inject.Singleton;
 @Singleton
 public class TestMutateTool implements AiPlatformTool {
     @Override
-    public ToolFamily family() {
-        return ToolFamily.MUTATE;
+    public AgentToolFamily family() {
+        return AgentToolFamily.MUTATE;
     }
 
     @Override
-    public WritePolicy writePolicy() {
-        return WritePolicy.CONFIRM;
+    public AgentWritePolicy writePolicy() {
+        return AgentWritePolicy.CONFIRM;
     }
 
     @Override

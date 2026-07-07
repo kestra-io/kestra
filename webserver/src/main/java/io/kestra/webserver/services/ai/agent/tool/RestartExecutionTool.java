@@ -8,8 +8,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -31,13 +31,13 @@ public class RestartExecutionTool implements AiPlatformTool {
     }
 
     @Override
-    public ToolFamily family() {
-        return ToolFamily.ACT;
+    public AgentToolFamily family() {
+        return AgentToolFamily.ACT;
     }
 
     @Override
-    public WritePolicy writePolicy() {
-        return WritePolicy.CONFIRM;
+    public AgentWritePolicy writePolicy() {
+        return AgentWritePolicy.CONFIRM;
     }
 
     @Override

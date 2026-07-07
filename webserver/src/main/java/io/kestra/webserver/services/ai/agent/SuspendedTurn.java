@@ -3,7 +3,7 @@ package io.kestra.webserver.services.ai.agent;
 import java.util.List;
 
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
-import io.kestra.webserver.services.ai.agent.domain.Mode;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.ChatMessage;
@@ -16,7 +16,7 @@ public record SuspendedTurn(
     String threadId,
     String tenant,
     String providerId,
-    Mode mode,
+    AgentMode mode,
     ResolvedProfile profile,
     List<ChatMessage> messages,
     String traceId,

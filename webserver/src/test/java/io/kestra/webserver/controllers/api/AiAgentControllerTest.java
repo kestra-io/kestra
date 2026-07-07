@@ -10,8 +10,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
-import io.kestra.webserver.services.ai.agent.domain.Mode;
-import io.kestra.webserver.services.ai.agent.domain.ThreadStatus;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ConfirmActionRequest;
 import io.kestra.webserver.services.ai.agent.dto.AgentDtos.CreateThreadRequest;
@@ -90,9 +90,9 @@ class AiAgentControllerTest {
         ThreadSummary summary = createThread(new CreateThreadRequest(null, null, null));
 
         // Then
-        assertThat(summary.mode()).isEqualTo(Mode.ASK);
-        assertThat(summary.status()).isEqualTo(ThreadStatus.IDLE);
-        assertThat(getThread(summary.uid()).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(summary.mode()).isEqualTo(AgentMode.ASK);
+        assertThat(summary.status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(getThread(summary.uid()).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
     @Test
@@ -106,17 +106,17 @@ class AiAgentControllerTest {
     @Test
     void shouldStreamAnswerAndFinishIdleWhenChattingInAskMode() {
         // Given
-        ThreadSummary thread = createThread(new CreateThreadRequest(Mode.ASK, "q", null));
+        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.ASK, "q", null));
         scriptedModel.enqueue(AiMessage.from("A trigger starts a flow automatically."));
 
         // When
-        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("what is a trigger?", Mode.ASK, null, null));
+        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("what is a trigger?", AgentMode.ASK, null, null));
 
         // Then
         assertThat(names(events)).contains(AgentEvents.TOKEN, AgentEvents.DONE);
-        assertThat(doneStatus(events)).isEqualTo(ThreadStatus.IDLE.name());
+        assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.IDLE.name());
         ThreadDetail detail = getThread(thread.uid());
-        assertThat(detail.status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(detail.status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(detail.messages())
             .extracting(m -> m.role() + "/" + m.type())
             .contains("USER/TEXT", "ASSISTANT/TEXT");
@@ -125,31 +125,31 @@ class AiAgentControllerTest {
     @Test
     void shouldProposeActionAndAwaitConfirmationWhenModelCallsMutateToolInEditMode() {
         // Given
-        ThreadSummary thread = createThread(new CreateThreadRequest(Mode.EDIT, null, null));
+        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.EDIT, null, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
 
         // When
-        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("update it", Mode.EDIT, null, null));
+        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("update it", AgentMode.EDIT, null, null));
 
         // Then — suspended for confirmation, tool NOT executed
         Map<String, Object> proposed = data(events, AgentEvents.PROPOSED_ACTION);
         assertThat(proposed.get("tool")).isEqualTo("update-artefact");
         assertThat(proposed.get("family")).isEqualTo("MUTATE");
-        assertThat(doneStatus(events)).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION.name());
-        assertThat(getThread(thread.uid()).status()).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION);
+        assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION.name());
+        assertThat(getThread(thread.uid()).status()).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
     @Test
     void shouldReturnConflictWhenChattingWhileTurnAwaitsConfirmation() {
         // Given — a thread suspended awaiting confirmation
-        ThreadSummary thread = createThread(new CreateThreadRequest(Mode.EDIT, null, null));
+        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.EDIT, null, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
-        chat(thread.uid(), new ChatTurnRequest("update it", Mode.EDIT, null, null));
+        chat(thread.uid(), new ChatTurnRequest("update it", AgentMode.EDIT, null, null));
 
         // When / Then — a second turn is rejected with 409
         assertThatThrownBy(() -> client.toBlocking().exchange(
             HttpRequest.POST(BASE + "/" + thread.uid() + "/chat",
-                new ChatTurnRequest("again", Mode.EDIT, null, null))))
+                new ChatTurnRequest("again", AgentMode.EDIT, null, null))))
             .isInstanceOfSatisfying(HttpClientResponseException.class,
                 e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode()));
     }
@@ -157,9 +157,9 @@ class AiAgentControllerTest {
     @Test
     void shouldRecordRejectedResultAndResumeIdleWhenRejectingProposedAction() {
         // Given — a proposed mutate awaiting confirmation, and a closing answer to resume into
-        ThreadSummary thread = createThread(new CreateThreadRequest(Mode.EDIT, null, null));
+        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.EDIT, null, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
-        String confirmationId = confirmationId(chat(thread.uid(), new ChatTurnRequest("update it", Mode.EDIT, null, null)));
+        String confirmationId = confirmationId(chat(thread.uid(), new ChatTurnRequest("update it", AgentMode.EDIT, null, null)));
         scriptedModel.enqueue(AiMessage.from("Understood, I won't update it."));
 
         // When
@@ -167,39 +167,39 @@ class AiAgentControllerTest {
 
         // Then — rejected result surfaced, turn resumed and finished IDLE
         assertThat(data(events, AgentEvents.TOOL_RESULT).get("outcome")).isEqualTo("rejected");
-        assertThat(doneStatus(events)).isEqualTo(ThreadStatus.IDLE.name());
-        assertThat(getThread(thread.uid()).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(getThread(thread.uid()).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
     @Test
     void shouldProposePlanCardWhenChattingInPlanMode() {
         // Given — Plan mode: the first tool-free response is the plan
-        ThreadSummary thread = createThread(new CreateThreadRequest(Mode.PLAN, null, null));
+        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.PLAN, null, null));
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs\n2. restart the flow"));
 
         // When
-        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("fix my failing flow", Mode.PLAN, null, null));
+        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null));
 
         // Then — a plan card (proposed_action with no tool) awaiting confirmation
         assertThat(data(events, AgentEvents.PROPOSED_ACTION).get("tool")).isNull();
-        assertThat(doneStatus(events)).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION.name());
-        assertThat(getThread(thread.uid()).status()).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION);
+        assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION.name());
+        assertThat(getThread(thread.uid()).status()).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
     @Test
     void shouldRunPlanToCompletionWhenApprovingPlanCard() {
         // Given — a plan proposed and awaiting approval, and a closing answer to resume into
-        ThreadSummary thread = createThread(new CreateThreadRequest(Mode.PLAN, null, null));
+        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.PLAN, null, null));
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs\n2. restart the flow"));
-        String confirmationId = confirmationId(chat(thread.uid(), new ChatTurnRequest("fix my failing flow", Mode.PLAN, null, null)));
+        String confirmationId = confirmationId(chat(thread.uid(), new ChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null)));
         scriptedModel.enqueue(AiMessage.from("All steps completed."));
 
         // When
         List<Event<Map>> events = confirm(thread.uid(), new ConfirmActionRequest(confirmationId, Decision.APPROVE, null));
 
         // Then
-        assertThat(doneStatus(events)).isEqualTo(ThreadStatus.IDLE.name());
-        assertThat(getThread(thread.uid()).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(getThread(thread.uid()).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
     // ── HTTP helpers ─────────────────────────────────────────────────────────────────────────────

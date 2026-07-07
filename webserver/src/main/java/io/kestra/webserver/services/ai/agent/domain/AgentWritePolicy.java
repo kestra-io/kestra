@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
-public enum WritePolicy {
+public enum AgentWritePolicy {
     AUTO,
     CONFIRM
 }

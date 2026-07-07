@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import io.kestra.webserver.services.ai.agent.domain.Message;
-import io.kestra.webserver.services.ai.agent.domain.MessageRole;
-import io.kestra.webserver.services.ai.agent.domain.MessageType;
-import io.kestra.webserver.services.ai.agent.domain.Mode;
-import io.kestra.webserver.services.ai.agent.domain.ScopeBinding;
-import io.kestra.webserver.services.ai.agent.domain.Thread;
-import io.kestra.webserver.services.ai.agent.domain.ThreadStatus;
-import io.kestra.webserver.services.ai.agent.domain.ToolCall;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageRole;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentScopeBinding;
+import io.kestra.webserver.services.ai.agent.domain.AgentThread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.core.annotation.Nullable;
@@ -21,13 +21,13 @@ public final class AgentDtos {
     private AgentDtos() {
     }
 
-    public record CreateThreadRequest(@Nullable Mode mode, @Nullable String title, @Nullable ScopeBinding scope) {
+    public record CreateThreadRequest(@Nullable AgentMode mode, @Nullable String title, @Nullable AgentScopeBinding scope) {
     }
 
     public record ChatTurnRequest(
         String prompt,
-        @Nullable Mode mode,
-        @Nullable ScopeBinding inFocus,
+        @Nullable AgentMode mode,
+        @Nullable AgentScopeBinding inFocus,
         @Nullable String providerId
     ) {
     }
@@ -51,14 +51,14 @@ public final class AgentDtos {
     public record ThreadSummary(
         String uid,
         @Nullable String title,
-        Mode mode,
-        @Nullable ScopeBinding scope,
-        ThreadStatus status,
+        AgentMode mode,
+        @Nullable AgentScopeBinding scope,
+        AgentThreadStatus status,
         Instant createdAt,
         Instant updatedAt,
         @Nullable Instant lastTurnAt
     ) {
-        public static ThreadSummary from(final Thread thread) {
+        public static ThreadSummary from(final AgentThread thread) {
             return new ThreadSummary(
                 thread.uid(), thread.title(), thread.mode(), thread.scope(),
                 thread.status(), thread.createdAt(), thread.updatedAt(), thread.lastTurnAt()
@@ -68,14 +68,14 @@ public final class AgentDtos {
 
     public record MessageView(
         String uid,
-        MessageRole role,
-        MessageType type,
+        AgentMessageRole role,
+        AgentMessageType type,
         @Nullable String content,
-        @Nullable ToolCall toolCall,
+        @Nullable AgentToolCall toolCall,
         @Nullable Map<String, Object> toolResult,
         Instant createdAt
     ) {
-        public static MessageView from(final Message message) {
+        public static MessageView from(final AgentMessage message) {
             return new MessageView(
                 message.uid(), message.role(), message.type(), message.content(),
                 message.toolCall(), message.toolResult(), message.createdAt()
@@ -86,12 +86,12 @@ public final class AgentDtos {
     public record ThreadDetail(
         String uid,
         @Nullable String title,
-        Mode mode,
-        @Nullable ScopeBinding scope,
-        ThreadStatus status,
+        AgentMode mode,
+        @Nullable AgentScopeBinding scope,
+        AgentThreadStatus status,
         List<MessageView> messages
     ) {
-        public static ThreadDetail from(final Thread thread, final List<Message> messages) {
+        public static ThreadDetail from(final AgentThread thread, final List<AgentMessage> messages) {
             return new ThreadDetail(
                 thread.uid(), thread.title(), thread.mode(), thread.scope(), thread.status(),
                 messages.stream().map(MessageView::from).toList()

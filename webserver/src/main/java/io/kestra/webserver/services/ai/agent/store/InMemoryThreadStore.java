@@ -5,27 +5,27 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.kestra.webserver.services.ai.agent.domain.Thread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 
 import jakarta.inject.Singleton;
 
 @Singleton
 public class InMemoryThreadStore implements ThreadStore {
-    private final Map<String, Thread> threads = new ConcurrentHashMap<>();
+    private final Map<String, AgentThread> threads = new ConcurrentHashMap<>();
 
     private static String key(final String tenant, final String uid) {
         return tenant + "/" + uid;
     }
 
     @Override
-    public Thread create(final Thread thread) {
+    public AgentThread create(final AgentThread thread) {
         Objects.requireNonNull(thread, "thread");
         threads.put(key(thread.tenant(), thread.uid()), thread);
         return thread;
     }
 
     @Override
-    public Optional<Thread> find(final String tenant, final String uid) {
+    public Optional<AgentThread> find(final String tenant, final String uid) {
         return Optional.ofNullable(threads.get(key(tenant, uid)))
             .filter(thread -> !thread.deleted());
     }
@@ -36,7 +36,7 @@ public class InMemoryThreadStore implements ThreadStore {
     }
 
     @Override
-    public Thread save(final Thread thread) {
+    public AgentThread save(final AgentThread thread) {
         Objects.requireNonNull(thread, "thread");
         threads.put(key(thread.tenant(), thread.uid()), thread);
         return thread;

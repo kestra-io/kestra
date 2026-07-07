@@ -6,11 +6,11 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.core.annotation.Nullable;
 
-public record ToolCall(
+public record AgentToolCall(
     @Nullable String id,
     Kind kind,
     String tool,
-    @Nullable ToolFamily family,
+    @Nullable AgentToolFamily family,
     Map<String, Object> arguments
 ) {
     public enum Kind {
@@ -26,7 +26,7 @@ public record ToolCall(
         }
     }
 
-    public static ToolCall platform(final String id, final String tool, final ToolFamily family, final Map<String, Object> arguments) {
-        return new ToolCall(id, Kind.PLATFORM, tool, family, arguments);
+    public static AgentToolCall platform(final String id, final String tool, final AgentToolFamily family, final Map<String, Object> arguments) {
+        return new AgentToolCall(id, Kind.PLATFORM, tool, family, arguments);
     }
 }

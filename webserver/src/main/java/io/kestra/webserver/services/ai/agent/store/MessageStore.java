@@ -2,11 +2,11 @@ package io.kestra.webserver.services.ai.agent.store;
 
 import java.util.List;
 
-import io.kestra.webserver.services.ai.agent.domain.Message;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
 
 
 public interface MessageStore {
-    Message append(Message message);
+    AgentMessage append(AgentMessage message);
 
-    List<Message> load(String threadId);
+    List<AgentMessage> load(String threadId);
 }

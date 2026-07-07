@@ -9,8 +9,8 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 import io.kestra.webserver.utils.PageableUtils;
 
 import dev.langchain4j.agent.tool.P;
@@ -30,13 +30,13 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
     }
 
     @Override
-    public ToolFamily family() {
-        return ToolFamily.READ;
+    public AgentToolFamily family() {
+        return AgentToolFamily.READ;
     }
 
     @Override
-    public WritePolicy writePolicy() {
-        return WritePolicy.AUTO;
+    public AgentWritePolicy writePolicy() {
+        return AgentWritePolicy.AUTO;
     }
 
     @Override

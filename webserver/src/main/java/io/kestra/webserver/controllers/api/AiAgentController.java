@@ -13,9 +13,9 @@ import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ai.agent.ConfirmationRegistry;
 import io.kestra.webserver.services.ai.agent.SuspendedTurn;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
-import io.kestra.webserver.services.ai.agent.domain.Mode;
-import io.kestra.webserver.services.ai.agent.domain.Thread;
-import io.kestra.webserver.services.ai.agent.domain.ThreadStatus;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentThread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ConfirmActionRequest;
 import io.kestra.webserver.services.ai.agent.dto.AgentDtos.CreateThreadRequest;
@@ -83,13 +83,13 @@ public class AiAgentController {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
         Instant now = Instant.now();
-        Thread thread = Thread.builder()
+        AgentThread thread = AgentThread.builder()
             .uid(IdUtils.create())
             .tenant(tenant)
             .title(request.title())
-            .mode(request.mode() != null ? request.mode() : Mode.ASK)
+            .mode(request.mode() != null ? request.mode() : AgentMode.ASK)
             .scope(request.scope())
-            .status(ThreadStatus.IDLE)
+            .status(AgentThreadStatus.IDLE)
             .createdAt(now)
             .updatedAt(now)
             .deleted(false)
@@ -103,7 +103,7 @@ public class AiAgentController {
     public ThreadDetail get(@PathVariable final String threadId) {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
-        Thread thread = requireThread(tenant, threadId);
+        AgentThread thread = requireThread(tenant, threadId);
         return ThreadDetail.from(thread, messageStore.load(threadId));
     }
 
@@ -114,13 +114,13 @@ public class AiAgentController {
         @Body final ChatTurnRequest request) {
         String tenant = tenantService.resolveTenant();
         requireProvider(request.providerId());
-        Thread thread = requireThread(tenant, threadId);
+        AgentThread thread = requireThread(tenant, threadId);
 
-        if (thread.status() != ThreadStatus.IDLE) {
+        if (thread.status() != AgentThreadStatus.IDLE) {
             throw new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'");
         }
 
-        Mode mode = request.mode() != null ? request.mode() : thread.mode();
+        AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
         return stream(sink -> orchestrator.runTurn(thread, request.prompt(), mode, tenant, request.providerId(), sink));
     }
 
@@ -157,7 +157,7 @@ public class AiAgentController {
         }, FluxSink.OverflowStrategy.BUFFER);
     }
 
-    private Thread requireThread(final String tenant, final String threadId) {
+    private AgentThread requireThread(final String tenant, final String threadId) {
         return threadStore.find(tenant, threadId)
             .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));
     }

@@ -7,13 +7,13 @@ import io.micronaut.core.annotation.Nullable;
 import lombok.Builder;
 
 @Builder
-public record Message(
+public record AgentMessage(
     String uid,
     String threadId,
-    MessageRole role,
-    MessageType type,
+    AgentMessageRole role,
+    AgentMessageType type,
     @Nullable String content,
-    @Nullable ToolCall toolCall,
+    @Nullable AgentToolCall toolCall,
     @Nullable Map<String, Object> toolResult,
     String traceId,
     Instant createdAt

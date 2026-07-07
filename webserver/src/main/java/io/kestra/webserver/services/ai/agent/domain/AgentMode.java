@@ -14,16 +14,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  *     <li>{@link #PLAN} — cumulative over Edit and adds act tools; multi-step, confirmed per step.</li>
  * </ul>
  */
-public enum Mode {
+public enum AgentMode {
     ASK,
     EDIT,
     PLAN;
 
     @JsonCreator
-    public static Mode fromString(final String value) {
+    public static AgentMode fromString(final String value) {
         if (value == null) {
             return null;
         }
-        return Mode.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        return AgentMode.valueOf(value.trim().toUpperCase(Locale.ROOT));
     }
 }

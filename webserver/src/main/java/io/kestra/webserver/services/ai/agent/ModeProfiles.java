@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.kestra.webserver.services.ai.agent.domain.Mode;
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -23,15 +23,15 @@ public class ModeProfiles {
     }
 
     public record ResolvedProfile(
-        Mode mode,
+        AgentMode mode,
         String systemPrompt,
         List<ToolSpecification> toolSpecifications,
         Set<String> allowedToolNames
     ) {
     }
 
-    public ResolvedProfile resolve(final Mode mode) {
-        Set<ToolFamily> families = allowedFamilies(mode);
+    public ResolvedProfile resolve(final AgentMode mode) {
+        Set<AgentToolFamily> families = allowedFamilies(mode);
         List<ToolCatalog.ToolEntry> allowed = catalog.entries().stream()
             .filter(entry -> families.contains(entry.family()))
             .toList();
@@ -45,15 +45,15 @@ public class ModeProfiles {
     }
 
     /** The tool families each mode may use — cumulative: Ask ⊂ Edit ⊂ Plan. */
-    private Set<ToolFamily> allowedFamilies(final Mode mode) {
+    private Set<AgentToolFamily> allowedFamilies(final AgentMode mode) {
         return switch (mode) {
-            case ASK -> EnumSet.of(ToolFamily.READ);
-            case EDIT -> EnumSet.of(ToolFamily.READ, ToolFamily.MUTATE);
-            case PLAN -> EnumSet.of(ToolFamily.READ, ToolFamily.MUTATE, ToolFamily.ACT);
+            case ASK -> EnumSet.of(AgentToolFamily.READ);
+            case EDIT -> EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE);
+            case PLAN -> EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT);
         };
     }
 
-    private String persona(final Mode mode) {
+    private String persona(final AgentMode mode) {
         return switch (mode) {
             case ASK -> """
                 You are Kestra Copilot in ASK mode. Answer the user's questions about Kestra using the \

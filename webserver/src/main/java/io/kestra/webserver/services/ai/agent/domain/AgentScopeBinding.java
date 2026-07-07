@@ -5,7 +5,7 @@ import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.core.annotation.Nullable;
 
-public record ScopeBinding(
+public record AgentScopeBinding(
     Kind kind,
     @Nullable String namespace,
     @Nullable String flowId,

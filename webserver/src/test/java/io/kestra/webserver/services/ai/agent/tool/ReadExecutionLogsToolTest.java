@@ -8,8 +8,8 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import io.micronaut.data.model.Pageable;
 import org.junit.jupiter.api.AfterEach;
@@ -46,8 +46,8 @@ class ReadExecutionLogsToolTest {
     @Test
     void shouldExposeReadOnlyMetadata() {
         // When / Then
-        assertThat(tool.family()).isEqualTo(ToolFamily.READ);
-        assertThat(tool.writePolicy()).isEqualTo(WritePolicy.AUTO);
+        assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
+        assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.AUTO);
         assertThat(tool.permission()).isEqualTo("execution:access_logs");
     }
 

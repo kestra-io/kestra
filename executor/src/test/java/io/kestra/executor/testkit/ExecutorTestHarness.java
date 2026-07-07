@@ -48,6 +48,7 @@ import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.KillSwitchActionService;
+import io.kestra.executor.SLAMonitorProcessor;
 import io.kestra.executor.SLAService;
 import io.kestra.executor.handler.ExecutionCommandMessageHandler;
 import io.kestra.executor.handler.ExecutionEventMessageHandler;
@@ -92,6 +93,7 @@ public final class ExecutorTestHarness {
     private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
     private final ExecutionDelayProcessor executionDelayProcessor;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
+    private final SLAMonitorProcessor slaMonitorProcessor;
 
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
@@ -320,6 +322,16 @@ public final class ExecutorTestHarness {
             executionQueuedStateStore,
             metricRegistry
         );
+        this.slaMonitorProcessor = new SLAMonitorProcessor(
+            slaMonitorStateStore,
+            executionStateStore,
+            flowMetaStore,
+            executionService,
+            executorService,
+            new SLAService(),
+            runContextFactory,
+            metricRegistry
+        );
     }
 
     /**
@@ -432,6 +444,10 @@ public final class ExecutorTestHarness {
 
     public ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor() {
         return concurrencySlotReleaseProcessor;
+    }
+
+    public SLAMonitorProcessor slaMonitorProcessor() {
+        return slaMonitorProcessor;
     }
 
     public ExecutionDelayProcessor executionDelayProcessor() {

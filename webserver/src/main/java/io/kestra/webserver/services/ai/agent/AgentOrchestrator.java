@@ -188,32 +188,57 @@ public class AgentOrchestrator {
                 return;
             }
 
-            ToolExecutionRequest req = ai.toolExecutionRequests().getFirst();
-            ctx.messages().add(AiMessage.from(ai.text(), List.of(req)));
-            Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
+            ctx.messages().add(ai);
+            ToolExecutionRequest heldAction = null;
+            ToolEntry heldEntry = null;
+            Map<String, Object> heldArgs = null;
 
-            if (!ctx.profile().allowedToolNames().contains(req.name())) {
-                String rejected = "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.";
-                ctx.messages().add(ToolExecutionResultMessage.from(req, rejected));
-                threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, null), rejectedResult(rejected));
-                emitToolResult(sink, req.name(), "rejected");
-                continue;
+            for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+                Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
+
+                if (!ctx.profile().allowedToolNames().contains(req.name())) {
+                    rejectTool(ctx, req, null, "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.", sink);
+                    continue;
+                }
+
+                ToolEntry entry = catalog.byName(req.name()).orElseThrow();
+                threadManager.appendToolCall(ctx.thread().uid(), ctx.traceId(), ai.text(), ChatMessageAdaptor.toToolCall(req, entry.family()));
+
+                if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
+                    if (heldAction == null) {
+                        heldAction = req;
+                        heldEntry = entry;
+                        heldArgs = args;
+                    } else {
+                        rejectTool(ctx, req, entry.family(),
+                            "Only one action can be confirmed at a time; propose '" + req.name() + "' again on its own.", sink);
+                    }
+                    continue;
+                }
+
+                executeTool(ctx, req, entry, sink);
             }
 
-            ToolEntry entry = catalog.byName(req.name()).orElseThrow();
-            threadManager.appendToolCall(ctx.thread().uid(), ctx.traceId(), ai.text(), ChatMessageAdaptor.toToolCall(req, entry.family()));
-
-            if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
-                suspendForAction(ctx, req, entry, args, sink);
+            if (heldAction != null) {
+                suspendForAction(ctx, heldAction, heldEntry, heldArgs, sink);
                 return;
             }
-
-            emitToolCall(sink, req, entry.family());
-            String result = catalog.dispatch(req, ctx.tenant());
-            ctx.messages().add(ToolExecutionResultMessage.from(req, result));
-            threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
-            emitToolResult(sink, req.name(), "ok");
         }
+    }
+
+    private void executeTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final ToolEntry entry, final TurnEventSink sink) {
+        emitToolCall(sink, req, entry.family());
+        String result = catalog.dispatch(req, ctx.tenant());
+        ctx.messages().add(ToolExecutionResultMessage.from(req, result));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
+        emitToolResult(sink, req.name(), "ok");
+    }
+
+    private void rejectTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolFamily family,
+                            final String reason, final TurnEventSink sink) {
+        ctx.messages().add(ToolExecutionResultMessage.from(req, reason));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, family), rejectedResult(reason));
+        emitToolResult(sink, req.name(), "rejected");
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {

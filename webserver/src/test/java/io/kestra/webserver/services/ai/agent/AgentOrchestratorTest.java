@@ -263,6 +263,35 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldExecuteEveryToolWhenModelRequestsThemInParallel() {
+        // Given — Ask mode; the model returns two read tool calls in one response (parallel tool calls)
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(
+            toolCall("c1", "read-execution-logs", "exec-1"),
+            toolCall("c2", "read-execution-logs", "exec-2")
+        )));
+        scriptedModel.enqueue(AiMessage.from("Both runs failed on the load task."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 and exec-2 fail?", AgentMode.ASK, TENANT, null), sink);
+
+        // Then — BOTH calls run (neither is silently dropped), then the loop continues to a final answer
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT,
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT,
+            AgentEvents.TOKEN, AgentEvents.DONE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(messageStore.load(thread.uid()))
+            .extracting(m -> m.role() + "/" + m.type())
+            .containsExactly(
+                "USER/TEXT",
+                "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT",
+                "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT",
+                "ASSISTANT/TEXT");
+    }
+
+    @Test
     void shouldNotCallModelWhenClientAlreadyDisconnected() {
         // Given — the client is already gone before the turn starts
         AgentThread thread = newThread(AgentMode.ASK);

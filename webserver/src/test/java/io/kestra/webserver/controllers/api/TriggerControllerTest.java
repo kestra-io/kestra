@@ -24,8 +24,6 @@ import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
-import io.kestra.webserver.models.api.ApiTriggerAndState;
-import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -37,6 +35,8 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -489,8 +489,8 @@ class TriggerControllerTest {
 
         List<TriggerController.ApiTriggerId> triggers = Stream.of(
             jdbcTriggerRepository.save(triggerDisabled),
-                jdbcTriggerRepository.save(triggerNotDisabled)
-            )
+            jdbcTriggerRepository.save(triggerNotDisabled)
+        )
             .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
@@ -531,8 +531,8 @@ class TriggerControllerTest {
         // WHEN
         List<TriggerController.ApiTriggerId> triggers = Stream.of(
             jdbcTriggerRepository.save(triggerDisabled),
-                jdbcTriggerRepository.save(triggerToDisable)
-            ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+            jdbcTriggerRepository.save(triggerToDisable)
+        ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
         HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(

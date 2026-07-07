@@ -29,7 +29,8 @@ import io.kestra.core.utils.ListUtils;
 final class SchedulableExecutionFactory {
 
     // TODO rename and maybe move ?
-    static TriggerEvaluationResult createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate)
+    static TriggerEvaluationResult createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables,
+        ZonedDateTime scheduleDate)
         throws IllegalVariableEvaluationException {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
@@ -87,7 +88,8 @@ final class SchedulableExecutionFactory {
         return inputs;
     }
 
-    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow, Map<String, Object> variables)
+        throws IllegalVariableEvaluationException {
         List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger, Map.of("trigger", variables));
 
         if (backfill != null) {

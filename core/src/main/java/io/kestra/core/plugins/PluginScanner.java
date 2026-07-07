@@ -15,7 +15,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import io.kestra.core.preview.FileRenderer;
 import org.apache.commons.io.IOUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,6 +32,7 @@ import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
@@ -245,7 +245,8 @@ public class PluginScanner {
         String pluginUiSourceHash = null;
         try (InputStream in = classLoader.getResourceAsStream(UI_MANIFEST_PATH)) {
             if (in != null) {
-                var rawManifest = JacksonMapper.ofJson().readValue(in, new TypeReference<Map<String, Object>>() {});
+                var rawManifest = JacksonMapper.ofJson().readValue(in, new TypeReference<Map<String, Object>>() {
+                });
                 var mapper = JacksonMapper.ofJson();
                 for (var entry : rawManifest.entrySet()) {
                     if (SOURCE_HASH_KEY.equals(entry.getKey())) {
@@ -253,7 +254,8 @@ public class PluginScanner {
                     } else {
                         pluginUiManifest.put(
                             entry.getKey(),
-                            mapper.convertValue(entry.getValue(), new TypeReference<List<PluginUiModule>>() {})
+                            mapper.convertValue(entry.getValue(), new TypeReference<List<PluginUiModule>>() {
+                            })
                         );
                     }
                 }

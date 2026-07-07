@@ -37,7 +37,8 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
     /**
      * {@inheritDoc}
      *
-     * <p>Derived from {@link #sqlResources()} so the resource path is declared only once.
+     * <p>
+     * Derived from {@link #sqlResources()} so the resource path is declared only once.
      */
     @Override
     public String checksum() {
@@ -47,7 +48,8 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
     /**
      * {@inheritDoc}
      *
-     * <p>Executes each SQL resource declared by {@link #sqlResources()} against {@link #dataSource()}.
+     * <p>
+     * Executes each SQL resource declared by {@link #sqlResources()} against {@link #dataSource()}.
      */
     @Override
     public void migrate() throws Exception {

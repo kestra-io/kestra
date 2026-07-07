@@ -3,11 +3,8 @@ package io.kestra.webserver.controllers.api;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-import io.kestra.webserver.services.SseConnectionMetrics;
-import io.kestra.webserver.utils.QueryFilterUtils;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.QueryFilter;
@@ -21,7 +18,9 @@ import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -111,7 +110,7 @@ public class LogController {
             .collectList()
             .block();
         InputStream inputStream = new java.io.ByteArrayInputStream(
-            (logs == null ? List.<LogEntry>of() : logs).stream()
+            (logs == null ? List.<LogEntry> of() : logs).stream()
                 .map(LogEntry::toPrettyString)
                 .collect(java.util.stream.Collectors.joining("\n"))
                 .getBytes()
@@ -150,8 +149,10 @@ public class LogController {
         }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
-        return sseConnectionMetrics.track(flux, "logs",
-            () -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
+        return sseConnectionMetrics.track(
+            flux, "logs",
+            () -> logStreamingService.unregisterSubscriber(executionId, subscriberId)
+        );
     }
 
     /**
@@ -166,14 +167,15 @@ public class LogController {
         if (userFilters != null) {
             merged.addAll(userFilters);
         }
-        merged.add(QueryFilter.builder()
-            .field(QueryFilter.Field.EXECUTION_ID)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(executionId)
-            .build());
+        merged.add(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.EXECUTION_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(executionId)
+                .build()
+        );
         return merged;
     }
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}")

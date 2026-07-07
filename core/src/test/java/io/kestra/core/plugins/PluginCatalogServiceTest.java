@@ -49,9 +49,13 @@ class PluginCatalogServiceTest {
     void shouldReturnPluginManifests() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(HttpResponse.ok(List.of(
-                Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE")
-            )));
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE")
+                    )
+                )
+            );
 
         PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
 
@@ -69,11 +73,15 @@ class PluginCatalogServiceTest {
     void shouldFilterCoreAndEEPluginsWhenCommunityOnly() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(HttpResponse.ok(List.of(
-                Map.of("name", "core", "title", "Core", "group", "io.kestra.core", "license", "OPENSOURCE"),
-                Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE"),
-                Map.of("name", "plugin-ee-only", "title", "EE Only", "group", "io.kestra.plugin.ee", "license", "EE")
-            )));
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "core", "title", "Core", "group", "io.kestra.core", "license", "OPENSOURCE"),
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE"),
+                        Map.of("name", "plugin-ee-only", "title", "EE Only", "group", "io.kestra.plugin.ee", "license", "EE")
+                    )
+                )
+            );
 
         PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
 
@@ -89,10 +97,14 @@ class PluginCatalogServiceTest {
     void shouldIncludeEEPluginsWhenNotCommunityOnly() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(HttpResponse.ok(List.of(
-                Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE"),
-                Map.of("name", "plugin-ee-only", "title", "EE Only", "group", "io.kestra.plugin.ee", "license", "EE")
-            )));
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE"),
+                        Map.of("name", "plugin-ee-only", "title", "EE Only", "group", "io.kestra.plugin.ee", "license", "EE")
+                    )
+                )
+            );
 
         PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
 
@@ -124,9 +136,13 @@ class PluginCatalogServiceTest {
     void shouldResolveLatestVersionForKnownArtifact() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(HttpResponse.ok(List.of(
-                new PluginCatalogService.ApiPluginArtifact("io.kestra.plugin", "plugin-serdes", "OPENSOURCE", List.of("0.21.0", "0.20.0"))
-            )));
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        new PluginCatalogService.ApiPluginArtifact("io.kestra.plugin", "plugin-serdes", "OPENSOURCE", List.of("0.21.0", "0.20.0"))
+                    )
+                )
+            );
 
         PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
         PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "LATEST", null);
@@ -145,9 +161,13 @@ class PluginCatalogServiceTest {
     void shouldResolveSpecificVersionWhenAvailable() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(HttpResponse.ok(List.of(
-                new PluginCatalogService.ApiPluginArtifact("io.kestra.plugin", "plugin-serdes", "OPENSOURCE", List.of("0.21.0", "0.20.0"))
-            )));
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        new PluginCatalogService.ApiPluginArtifact("io.kestra.plugin", "plugin-serdes", "OPENSOURCE", List.of("0.21.0", "0.20.0"))
+                    )
+                )
+            );
 
         PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
         PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "0.20.0", null);

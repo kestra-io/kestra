@@ -1,10 +1,11 @@
 package io.kestra.core.services;
 
+import java.util.Optional;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.quota.Quota;
-import jakarta.inject.Singleton;
 
-import java.util.Optional;
+import jakarta.inject.Singleton;
 
 /**
  * Service to manage quotas.

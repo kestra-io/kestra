@@ -4,10 +4,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.Window;
-import io.kestra.core.utils.*;
 import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
@@ -16,18 +12,22 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.models.triggers.Window;
+import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
+import io.kestra.core.utils.*;
 import io.kestra.core.validations.FlowTriggerValidation;
 
 import io.micronaut.core.annotation.Nullable;
@@ -456,7 +456,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             this.minSatisfied = minSatisfied;
         }
 
-
         @Override
         public String getId() {
             return DEPENDS_ON_CONDITION_PREFIX + id;
@@ -506,7 +505,8 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 dependency.flowId,
                 dependency.when != null ? dependency.when.toString() : null,
                 ListUtils.emptyOnNull(dependency.states).stream().map(Enum::name).sorted().collect(Collectors.joining(",")),
-                MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","))
+                MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue())
+                    .collect(Collectors.joining(","))
             );
         }
     }
@@ -527,54 +527,63 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
 
         @Schema(
             title = "The execution labels that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private Map<String, Object> executionLabels;
 
         @Schema(
             title = "The execution state",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private State.Type state;
 
         @Schema(
             title = "The execution start date",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private Instant startDate;
 
         @Schema(
             title = "The execution end date",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private Instant endDate;
 
         @Schema(
             title = "The namespace of the flow that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private String namespace;
 
         @Schema(
             title = "The flow ID whose execution triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private String flowId;
 
         @Schema(
             title = "The flow revision that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private Integer flowRevision;
 
         @Schema(
             title = "The first failed task ID from the execution that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         private String firstFailedTaskId;
 
         @Schema(
             title = "The last task ID from the execution that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         private String lastTaskId;
 
         @Schema(

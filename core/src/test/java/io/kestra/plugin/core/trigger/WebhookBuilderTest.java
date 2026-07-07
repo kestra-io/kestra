@@ -31,9 +31,13 @@ public class WebhookBuilderTest {
     AsyncOperationWaiter asyncOperationWaiter() {
         AsyncOperationWaiter mock = mock(AsyncOperationWaiter.class);
         when(mock.submit(any(), any(), any()))
-            .thenReturn(Mono.just(new AsyncOperationProcessedEvent(
-                "op-id", null, "item-id", AsyncOperationProcessedEvent.Outcome.SUCCEEDED, null, Instant.now()
-            )));
+            .thenReturn(
+                Mono.just(
+                    new AsyncOperationProcessedEvent(
+                        "op-id", null, "item-id", AsyncOperationProcessedEvent.Outcome.SUCCEEDED, null, Instant.now()
+                    )
+                )
+            );
         return mock;
     }
 

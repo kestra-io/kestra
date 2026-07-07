@@ -1,11 +1,14 @@
 package io.kestra.executor.handler;
 
+import java.io.IOException;
+import java.util.*;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
-import java.io.IOException;
-
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -20,12 +23,10 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.Loop;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.*;
 
 /**
  * Handles {@link LoopExecutionEvent} messages, propagating loop sub-execution state changes
@@ -196,7 +197,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         );
     }
 
-    private void computeOutputs(TaskRun parentTaskRun, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Integer terminatedIteration, Long offset) throws InternalException {
+    private void computeOutputs(TaskRun parentTaskRun, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Integer terminatedIteration, Long offset)
+        throws InternalException {
         Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
         outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
         outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, runningIteration);

@@ -14,9 +14,9 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -91,7 +91,8 @@ public class FlowUsage {
         LongAdder hasSlaCount = new LongAdder();
         LongAdder hasChecksCount = new LongAdder();
         LongAdder hasQuotasCount = new LongAdder();
-        filtered.forEach(flow -> {
+        filtered.forEach(flow ->
+        {
             count.increment();
             if (!ListUtils.isEmpty(flow.getInputs())) {
                 hasInputsCount.increment();
@@ -197,9 +198,11 @@ public class FlowUsage {
         }
 
         return inputs.stream()
-            .flatMap(input -> input instanceof FormInput form
-                ? Stream.concat(Stream.of(input.getType().name()), ListUtils.emptyOnNull(form.getInputs()).stream().map(i -> i.getType().name()))
-                : Stream.of(input.getType().name()))
+            .flatMap(
+                input -> input instanceof FormInput form
+                    ? Stream.concat(Stream.of(input.getType().name()), ListUtils.emptyOnNull(form.getInputs()).stream().map(i -> i.getType().name()))
+                    : Stream.of(input.getType().name())
+            )
             .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
     }
 
@@ -255,7 +258,8 @@ public class FlowUsage {
             LongAdder hasAssetsCount = new LongAdder();
             LongAdder hasErrorsCount = new LongAdder();
             LongAdder hasFinallyCount = new LongAdder();
-            allTasks.forEach(task -> {
+            allTasks.forEach(task ->
+            {
                 if (task.getRetry() != null) {
                     hasRetryCount.increment();
                 }
@@ -271,7 +275,7 @@ public class FlowUsage {
                 if (task.isLogToFile()) {
                     hasLogToFileCount.increment();
                 }
-                if (task.getRunIf() != null && ! "true".equals(task.getRunIf())) {
+                if (task.getRunIf() != null && !"true".equals(task.getRunIf())) {
                     hasRunIfCount.increment();
                 }
                 if (task.isAllowWarning()) {
@@ -331,7 +335,8 @@ public class FlowUsage {
             LongAdder hasFailOnErrorCount = new LongAdder();
             LongAdder hasAllowConcurrentCount = new LongAdder();
             LongAdder hasAssetsCount = new LongAdder();
-            allTriggers.forEach(trigger -> {
+            allTriggers.forEach(trigger ->
+            {
                 hasWhenCount.add(trigger.getWhen() != null ? 1 : 0);
                 hasWorkerSelectorCount.add(trigger.getWorkerSelector() != null ? 1 : 0);
                 hasLabelsCount.add(!ListUtils.isEmpty(trigger.getLabels()) ? 1 : 0);

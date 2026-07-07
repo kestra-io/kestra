@@ -8,7 +8,6 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.kestra.core.preview.FileRenderer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -26,6 +25,7 @@ import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.SvgSanitizer;

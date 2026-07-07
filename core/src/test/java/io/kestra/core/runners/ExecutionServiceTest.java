@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.services.FlowService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -24,6 +22,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -31,6 +30,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -133,7 +133,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/replay-loop.yaml"})
+    @LoadFlows({ "flows/valids/replay-loop.yaml" })
     void restartLoop() throws Exception {
         // Given: with the Loop task, parent has only 1_each; loop sub-executions have the child task runs
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
@@ -594,7 +594,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/loop-pause.yaml"})
+    @LoadFlows({ "flows/valids/loop-pause.yaml" })
     void parentExecutionIsPausedWhenLoopIterationIsPaused() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause");
 

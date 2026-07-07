@@ -19,7 +19,6 @@ import io.kestra.core.runners.RunVariables;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.secret.SecretService;
-import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
@@ -36,8 +35,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Used by:
  * <ul>
- *   <li>The {@code POST /flows/expressions} endpoint — No-Code editor autocompletion</li>
- *   <li>AI Copilot prompt builders — format via {@code PebbleExpressionsFormatter.format(context.toDisplayNameMap())}</li>
+ * <li>The {@code POST /flows/expressions} endpoint — No-Code editor autocompletion</li>
+ * <li>AI Copilot prompt builders — format via {@code PebbleExpressionsFormatter.format(context.toDisplayNameMap())}</li>
  * </ul>
  * Expressions are returned <b>without</b> the {@code {{ }}} delimiters.
  */
@@ -122,7 +121,7 @@ public class ExpressionContextService {
      * Builds the full flow-scoped expression context for flow generation and the
      * {@code POST /flows/expressions} No-Code editor endpoint.
      *
-     * @param flow   the parsed flow
+     * @param flow the parsed flow
      * @param taskId optional task ID to scope task outputs to topological predecessors only
      */
     public ExpressionContext buildExpressionContext(Flow flow, @Nullable String taskId) {
@@ -166,10 +165,10 @@ public class ExpressionContextService {
      * Apps render Pebble via {@code DefaultAppContext.renderValue()} backed by {@code VariableRenderer}.
      * The available context is narrower than a full flow execution context:
      * <ul>
-     *   <li>{@link ExpressionCategory#APP_CONTEXT}: app.*, params.*, dispatch/stream, namespace, flowId, flowRevision</li>
-     *   <li>{@link ExpressionCategory#EXECUTION_CONTEXT}: execution.* subset (no task/taskrun/trigger/parents/item/envs/globals)</li>
-     *   <li>{@link ExpressionCategory#FILTERS}: all filters</li>
-     *   <li>{@link ExpressionCategory#FUNCTIONS}: all functions (secret() and kv() work via flow.namespace/tenantId)</li>
+     * <li>{@link ExpressionCategory#APP_CONTEXT}: app.*, params.*, dispatch/stream, namespace, flowId, flowRevision</li>
+     * <li>{@link ExpressionCategory#EXECUTION_CONTEXT}: execution.* subset (no task/taskrun/trigger/parents/item/envs/globals)</li>
+     * <li>{@link ExpressionCategory#FILTERS}: all filters</li>
+     * <li>{@link ExpressionCategory#FUNCTIONS}: all functions (secret() and kv() work via flow.namespace/tenantId)</li>
      * </ul>
      * <p>
      * Notably absent: inputs, vars, labels, task outputs, envs/globals, parents/item.
@@ -320,14 +319,18 @@ public class ExpressionContextService {
         }
     }
 
-    /** Recursively collects UIDs of all transitive predecessors by following edges backward.
+    /**
+     * Recursively collects UIDs of all transitive predecessors by following edges backward.
      * ERROR and FINALLY edges are excluded: those branches only execute on failure,
-     * so their outputs are not available to tasks on the happy path. */
+     * so their outputs are not available to tasks on the happy path.
+     */
     private static void collectBackwardEdges(List<FlowGraph.Edge> edges, String targetUid, Set<String> visited) {
         for (FlowGraph.Edge edge : edges) {
-            if (edge.getTarget().equals(targetUid)
+            if (
+                edge.getTarget().equals(targetUid)
                     && !isErrorOrFinallyEdge(edge)
-                    && visited.add(edge.getSource())) {
+                    && visited.add(edge.getSource())
+            ) {
                 collectBackwardEdges(edges, edge.getSource(), visited);
             }
         }

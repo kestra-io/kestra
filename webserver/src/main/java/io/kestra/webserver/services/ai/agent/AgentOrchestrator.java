@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
@@ -70,32 +71,6 @@ public class AgentOrchestrator {
         this.modelCallTimeout = configuration.modelCallTimeout();
     }
 
-    private static final class LoopContext {
-        private AgentThread thread;
-        private final String tenant;
-        private final String providerId;
-        private final AgentMode mode;
-        private final ResolvedProfile profile;
-        private final StreamingChatModel model;
-        private final List<ChatMessage> messages;
-        private final String traceId;
-        private boolean planApproved;
-
-        private LoopContext(AgentThread thread, String tenant, String providerId, AgentMode mode,
-                            ResolvedProfile profile, StreamingChatModel model, List<ChatMessage> messages,
-                            String traceId, boolean planApproved) {
-            this.thread = thread;
-            this.tenant = tenant;
-            this.providerId = providerId;
-            this.mode = mode;
-            this.profile = profile;
-            this.model = model;
-            this.messages = messages;
-            this.traceId = traceId;
-            this.planApproved = planApproved;
-        }
-    }
-
     public void runTurn(final AgentThread thread, final String prompt, final AgentMode mode,
                         final String tenant, final String providerId, final TurnEventSink sink) {
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.uid()).size() + 1);
@@ -110,7 +85,7 @@ public class AgentOrchestrator {
             messages.add(SystemMessage.from(profile.systemPrompt()));
             messages.addAll(ChatMessageAdaptor.project(threadManager.load(running.uid())));
 
-            runLoop(new LoopContext(running, tenant, providerId, mode, profile, model, messages, traceId, false), sink);
+            runLoop(new AgentLoopContext(running, tenant, providerId, mode, profile, model, messages, traceId, new AtomicBoolean(false)), sink);
         } catch (Exception e) {
             failTurn(thread, sink, e);
         }
@@ -121,9 +96,9 @@ public class AgentOrchestrator {
         try {
             StreamingChatModel model = aiServiceManager.getAiService(turn.providerId()).streamingChatModel(List.of());
             AgentThread running = threadManager.markRunning(thread, turn.mode());
-            LoopContext ctx = new LoopContext(
+            AgentLoopContext ctx = new AgentLoopContext(
                 running, turn.tenant(), turn.providerId(), turn.mode(), turn.profile(),
-                model, turn.messages(), turn.traceId(), turn.planProposal()
+                model, turn.messages(), turn.traceId(), new AtomicBoolean(turn.planProposal())
             );
 
             if (turn.planProposal()) {
@@ -136,33 +111,33 @@ public class AgentOrchestrator {
         }
     }
 
-    private void resumePlan(final LoopContext ctx, final boolean approve, final String reason, final TurnEventSink sink) {
+    private void resumePlan(final AgentLoopContext ctx, final boolean approve, final String reason, final TurnEventSink sink) {
         if (!approve) {
             String summary = "Plan rejected" + (reason != null ? " (" + reason + ")" : "") + ". No actions were taken.";
-            threadManager.appendAssistantText(ctx.thread.uid(), ctx.traceId, summary);
+            threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), summary);
             finishTurn(ctx);
             done(sink, AgentThreadStatus.IDLE);
             return;
         }
-        ctx.planApproved = true;
+        ctx.planApproved().set(true);
         String nudge = "The plan is approved. Carry it out now, one step at a time.";
-        ctx.messages.add(UserMessage.from(nudge));
-        threadManager.appendUser(ctx.thread.uid(), ctx.traceId, nudge);
+        ctx.messages().add(UserMessage.from(nudge));
+        threadManager.appendUser(ctx.thread().uid(), ctx.traceId(), nudge);
         runLoop(ctx, sink);
     }
 
-    private void resumeHeldAction(final LoopContext ctx, final ToolExecutionRequest held,
+    private void resumeHeldAction(final AgentLoopContext ctx, final ToolExecutionRequest held,
                                   final boolean approve, final String reason, final TurnEventSink sink) {
         ToolEntry entry = catalog.byName(held.name()).orElseThrow();
 
         if (!approve) {
             String rejectedText = "REJECTED by user." + (reason != null ? " Reason: " + reason : "");
-            ctx.messages.add(ToolExecutionResultMessage.from(held, rejectedText));
-            threadManager.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(held, entry.family()), rejectedResult(reason));
+            ctx.messages().add(ToolExecutionResultMessage.from(held, rejectedText));
+            threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.family()), rejectedResult(reason));
             emitToolResult(sink, held.name(), "rejected");
 
-            if (ctx.mode == AgentMode.PLAN) {
-                threadManager.appendAssistantText(ctx.thread.uid(), ctx.traceId, "Action rejected; the plan has been aborted.");
+            if (ctx.mode() == AgentMode.PLAN) {
+                threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), "Action rejected; the plan has been aborted.");
                 finishTurn(ctx);
                 done(sink, AgentThreadStatus.IDLE);
                 return;
@@ -172,14 +147,14 @@ public class AgentOrchestrator {
         }
 
         emitToolCall(sink, held, entry.family());
-        String result = catalog.dispatch(held, ctx.tenant);
-        ctx.messages.add(ToolExecutionResultMessage.from(held, result));
-        threadManager.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(held, entry.family()), Map.of("outcome", "ok", "result", result));
+        String result = catalog.dispatch(held, ctx.tenant());
+        ctx.messages().add(ToolExecutionResultMessage.from(held, result));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.family()), Map.of("outcome", "ok", "result", result));
         emitToolResult(sink, held.name(), "ok");
         runLoop(ctx, sink);
     }
 
-    private void runLoop(final LoopContext ctx, final TurnEventSink sink) {
+    private void runLoop(final AgentLoopContext ctx, final TurnEventSink sink) {
         while (true) {
             if (sink.isCancelled()) {
                 abortCancelled(ctx);
@@ -187,11 +162,11 @@ public class AgentOrchestrator {
             }
 
             ChatRequest request = ChatRequest.builder()
-                .messages(ctx.messages)
-                .toolSpecifications(ctx.profile.toolSpecifications())
+                .messages(ctx.messages())
+                .toolSpecifications(ctx.profile().toolSpecifications())
                 .build();
 
-            ChatResponse response = callModel(ctx.model, request, sink);
+            ChatResponse response = callModel(ctx.model(), request, sink);
 
             if (sink.isCancelled()) {
                 abortCancelled(ctx);
@@ -201,33 +176,33 @@ public class AgentOrchestrator {
             AiMessage ai = response.aiMessage();
 
             if (!ai.hasToolExecutionRequests()) {
-                ctx.messages.add(ai);
+                ctx.messages().add(ai);
 
-                if (ctx.mode == AgentMode.PLAN && !ctx.planApproved) {
+                if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get()) {
                     suspendForPlan(ctx, ai.text(), sink);
                     return;
                 }
 
-                threadManager.appendAssistantText(ctx.thread.uid(), ctx.traceId, ai.text());
+                threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), ai.text());
                 finishTurn(ctx);
                 done(sink, AgentThreadStatus.IDLE);
                 return;
             }
 
             ToolExecutionRequest req = ai.toolExecutionRequests().getFirst();
-            ctx.messages.add(AiMessage.from(ai.text(), List.of(req)));
+            ctx.messages().add(AiMessage.from(ai.text(), List.of(req)));
             Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
-            if (!ctx.profile.allowedToolNames().contains(req.name())) {
-                String rejected = "Tool '" + req.name() + "' is not available in " + ctx.mode + " mode.";
-                ctx.messages.add(ToolExecutionResultMessage.from(req, rejected));
-                threadManager.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(req, null), rejectedResult(rejected));
+            if (!ctx.profile().allowedToolNames().contains(req.name())) {
+                String rejected = "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.";
+                ctx.messages().add(ToolExecutionResultMessage.from(req, rejected));
+                threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, null), rejectedResult(rejected));
                 emitToolResult(sink, req.name(), "rejected");
                 continue;
             }
 
             ToolEntry entry = catalog.byName(req.name()).orElseThrow();
-            threadManager.appendToolCall(ctx.thread.uid(), ctx.traceId, ai.text(), ChatMessageAdaptor.toToolCall(req, entry.family()));
+            threadManager.appendToolCall(ctx.thread().uid(), ctx.traceId(), ai.text(), ChatMessageAdaptor.toToolCall(req, entry.family()));
 
             if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                 suspendForAction(ctx, req, entry, args, sink);
@@ -235,26 +210,26 @@ public class AgentOrchestrator {
             }
 
             emitToolCall(sink, req, entry.family());
-            String result = catalog.dispatch(req, ctx.tenant);
-            ctx.messages.add(ToolExecutionResultMessage.from(req, result));
-            threadManager.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
+            String result = catalog.dispatch(req, ctx.tenant());
+            ctx.messages().add(ToolExecutionResultMessage.from(req, result));
+            threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
             emitToolResult(sink, req.name(), "ok");
         }
     }
 
-    private void suspendForPlan(final LoopContext ctx, final String planText, final TurnEventSink sink) {
+    private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
         String confirmationId = IdUtils.create();
-        threadManager.appendProposedAction(ctx.thread.uid(), ctx.traceId, planText, null);
-        ctx.thread = threadManager.markAwaiting(ctx.thread);
+        threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), planText, null);
+        threadManager.markAwaiting(ctx.thread());
         confirmationRegistry.park(SuspendedTurn.builder()
             .confirmationId(confirmationId)
-            .threadId(ctx.thread.uid())
-            .tenant(ctx.tenant)
-            .providerId(ctx.providerId)
-            .mode(ctx.mode)
-            .profile(ctx.profile)
-            .messages(ctx.messages)
-            .traceId(ctx.traceId)
+            .threadId(ctx.thread().uid())
+            .tenant(ctx.tenant())
+            .providerId(ctx.providerId())
+            .mode(ctx.mode())
+            .profile(ctx.profile())
+            .messages(ctx.messages())
+            .traceId(ctx.traceId())
             .planProposal(true)
             .heldRequest(null)
             .build());
@@ -262,20 +237,20 @@ public class AgentOrchestrator {
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
-    private void suspendForAction(final LoopContext ctx, final ToolExecutionRequest req,
+    private void suspendForAction(final AgentLoopContext ctx, final ToolExecutionRequest req,
                                   final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
         String confirmationId = IdUtils.create();
-        threadManager.appendProposedAction(ctx.thread.uid(), ctx.traceId, null, ChatMessageAdaptor.toToolCall(req, entry.family()));
-        ctx.thread = threadManager.markAwaiting(ctx.thread);
+        threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.family()));
+        threadManager.markAwaiting(ctx.thread());
         confirmationRegistry.park(SuspendedTurn.builder()
             .confirmationId(confirmationId)
-            .threadId(ctx.thread.uid())
-            .tenant(ctx.tenant)
-            .providerId(ctx.providerId)
-            .mode(ctx.mode)
-            .profile(ctx.profile)
-            .messages(ctx.messages)
-            .traceId(ctx.traceId)
+            .threadId(ctx.thread().uid())
+            .tenant(ctx.tenant())
+            .providerId(ctx.providerId())
+            .mode(ctx.mode())
+            .profile(ctx.profile())
+            .messages(ctx.messages())
+            .traceId(ctx.traceId())
             .planProposal(false)
             .heldRequest(req)
             .build());
@@ -321,12 +296,12 @@ public class AgentOrchestrator {
         }
     }
 
-    private void finishTurn(final LoopContext ctx) {
-        ctx.thread = threadManager.finish(ctx.thread);
+    private void finishTurn(final AgentLoopContext ctx) {
+        threadManager.finish(ctx.thread());
     }
 
-    private void abortCancelled(final LoopContext ctx) {
-        log.debug("Client disconnected; aborting turn for thread {}", ctx.thread.uid());
+    private void abortCancelled(final AgentLoopContext ctx) {
+        log.debug("Client disconnected; aborting turn for thread {}", ctx.thread().uid());
         finishTurn(ctx);
     }
 

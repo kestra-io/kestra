@@ -42,6 +42,7 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.ExecutionDelayProcessor;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorService;
@@ -90,6 +91,7 @@ public final class ExecutorTestHarness {
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
     private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
     private final ExecutionDelayProcessor executionDelayProcessor;
+    private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
 
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
@@ -313,6 +315,11 @@ public final class ExecutorTestHarness {
             executorService,
             metricRegistry
         );
+        this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
+            concurrencyLimitStateStore,
+            executionQueuedStateStore,
+            metricRegistry
+        );
     }
 
     /**
@@ -421,6 +428,10 @@ public final class ExecutorTestHarness {
 
     public MultipleConditionEventMessageHandler multipleConditionEventMessageHandler() {
         return multipleConditionEventMessageHandler;
+    }
+
+    public ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor() {
+        return concurrencySlotReleaseProcessor;
     }
 
     public ExecutionDelayProcessor executionDelayProcessor() {

@@ -838,6 +838,7 @@
       },
       "filter": "Filtro",
       "new_file": "Nuovo file",
+      "read_only": "Non disponi dell'autorizzazione per gestire i file in questo namespace",
       "no_items": {
         "heading": "Nessun file trovato nel tuo namespace.",
         "paragraph": "Crea o importa file per condividere il codice tra i flow nel tuo namespace."

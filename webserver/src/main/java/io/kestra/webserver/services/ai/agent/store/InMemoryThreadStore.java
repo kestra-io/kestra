@@ -4,8 +4,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 
 import jakarta.inject.Singleton;
 
@@ -40,5 +43,20 @@ public class InMemoryThreadStore implements ThreadStore {
         Objects.requireNonNull(thread, "thread");
         threads.put(key(thread.tenant(), thread.uid()), thread);
         return thread;
+    }
+
+    @Override
+    public Optional<AgentThread> transitionStatus(final String tenant, final String uid,
+                                                  final AgentThreadStatus expected, final UnaryOperator<AgentThread> transform) {
+        AtomicReference<AgentThread> applied = new AtomicReference<>();
+        threads.compute(key(tenant, uid), (k, existing) -> {
+            if (existing == null || existing.deleted() || existing.status() != expected) {
+                return existing;
+            }
+            AgentThread updated = Objects.requireNonNull(transform.apply(existing), "transform must not return null");
+            applied.set(updated);
+            return updated;
+        });
+        return Optional.ofNullable(applied.get());
     }
 }

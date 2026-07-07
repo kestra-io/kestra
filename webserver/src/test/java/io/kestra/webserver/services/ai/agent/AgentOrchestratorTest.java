@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
@@ -56,6 +61,9 @@ class AgentOrchestratorTest {
 
     @Inject
     ConfirmationRegistry confirmationRegistry;
+
+    @Inject
+    AiThreadManager threadManager;
 
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
@@ -260,6 +268,37 @@ class AgentOrchestratorTest {
         // Then — the disallowed call is rejected (not dispatched) and the loop continues to an answer
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldClaimThreadForExactlyOneConcurrentTurn() throws Exception {
+        // Given — an idle thread and many attempts racing to start a turn on it
+        AgentThread thread = newThread(AgentMode.ASK);
+        int attempts = 16;
+        ExecutorService pool = Executors.newFixedThreadPool(attempts);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<Optional<AgentThread>>> claims = new ArrayList<>();
+
+        // When — all attempts try to claim IDLE -> RUNNING at once
+        for (int i = 0; i < attempts; i++) {
+            claims.add(pool.submit(() -> {
+                start.await();
+                return threadManager.startTurn(TENANT, thread.uid(), AgentMode.ASK);
+            }));
+        }
+        start.countDown();
+
+        long winners = 0;
+        for (Future<Optional<AgentThread>> claim : claims) {
+            if (claim.get().isPresent()) {
+                winners++;
+            }
+        }
+        pool.shutdownNow();
+
+        // Then — exactly one attempt claimed the thread; the rest saw a turn already in flight
+        assertThat(winners).isEqualTo(1);
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.RUNNING);
     }
 
     @Test

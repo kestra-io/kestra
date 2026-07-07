@@ -11,6 +11,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ai.agent.AgentTurnContext;
+import io.kestra.webserver.services.ai.agent.AiThreadManager;
 import io.kestra.webserver.services.ai.agent.ConfirmationRegistry;
 import io.kestra.webserver.services.ai.agent.SuspendedTurn;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
@@ -51,6 +52,7 @@ public class AiAgentController {
     private final AiServiceManager aiServiceManager;
     private final ThreadStore threadStore;
     private final MessageStore messageStore;
+    private final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
     private final ConfirmationRegistry confirmationRegistry;
     private final ExecutorService executor;
@@ -61,6 +63,7 @@ public class AiAgentController {
         final AiServiceManager aiServiceManager,
         final ThreadStore threadStore,
         final MessageStore messageStore,
+        final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
         final ConfirmationRegistry confirmationRegistry,
         final ExecutorsUtils executorsUtils) {
@@ -68,6 +71,7 @@ public class AiAgentController {
         this.aiServiceManager = aiServiceManager;
         this.threadStore = threadStore;
         this.messageStore = messageStore;
+        this.threadManager = threadManager;
         this.orchestrator = orchestrator;
         this.confirmationRegistry = confirmationRegistry;
         this.executor = executorsUtils.maxCachedThreadPool(8, "ai-agent-orchestrator");
@@ -117,13 +121,13 @@ public class AiAgentController {
         requireProvider(request.providerId());
         AgentThread thread = requireThread(tenant, threadId);
 
-        if (thread.status() != AgentThreadStatus.IDLE) {
-            throw new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'");
-        }
-
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
+        // Atomically claim the thread (IDLE -> RUNNING) before scheduling the async turn; if a turn is
+        // already in flight the claim fails, so we reject here rather than racing on the executor pool.
+        AgentThread running = threadManager.startTurn(tenant, threadId, mode)
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'"));
         return stream(sink -> orchestrator.runTurn(
-            new AgentTurnContext(thread, request.prompt(), mode, tenant, request.providerId()), sink
+            new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId()), sink
         ));
     }
 

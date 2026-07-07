@@ -77,14 +77,13 @@ public class AgentOrchestrator {
             ResolvedProfile profile = modeProfiles.resolve(context.mode());
             StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
 
-            AgentThread running = threadManager.markRunning(thread, context.mode());
-            threadManager.appendUser(running.uid(), traceId, context.prompt());
+            threadManager.appendUser(thread.uid(), traceId, context.prompt());
 
             List<ChatMessage> messages = new ArrayList<>();
             messages.add(SystemMessage.from(profile.systemPrompt()));
-            messages.addAll(ChatMessageAdaptor.project(threadManager.load(running.uid())));
+            messages.addAll(ChatMessageAdaptor.project(threadManager.load(thread.uid())));
 
-            runLoop(new AgentLoopContext(running, context.tenant(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink);
+            runLoop(new AgentLoopContext(thread, context.tenant(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink);
         } catch (Exception e) {
             failTurn(thread, sink, e);
         }

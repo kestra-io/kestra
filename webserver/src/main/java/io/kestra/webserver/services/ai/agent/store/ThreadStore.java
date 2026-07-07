@@ -9,5 +9,7 @@ public interface ThreadStore {
 
     Optional<Thread> find(String tenant, String uid);
 
+    boolean exists(String tenant, String uid);
+
     Thread save(Thread thread);
 }

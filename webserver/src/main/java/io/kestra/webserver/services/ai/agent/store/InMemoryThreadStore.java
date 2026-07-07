@@ -31,6 +31,11 @@ public class InMemoryThreadStore implements ThreadStore {
     }
 
     @Override
+    public boolean exists(final String tenant, final String uid) {
+        return find(tenant, uid).isPresent();
+    }
+
+    @Override
     public Thread save(final Thread thread) {
         Objects.requireNonNull(thread, "thread");
         threads.put(key(thread.tenant(), thread.uid()), thread);

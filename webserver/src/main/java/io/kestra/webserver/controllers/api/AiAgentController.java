@@ -62,8 +62,7 @@ public class AiAgentController {
         final MessageStore messageStore,
         final AgentOrchestrator orchestrator,
         final ConfirmationRegistry confirmationRegistry,
-        final ExecutorsUtils executorsUtils
-    ) {
+        final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
         this.aiServiceManager = aiServiceManager;
         this.threadStore = threadStore;
@@ -79,7 +78,7 @@ public class AiAgentController {
     }
 
     @Post
-    @Operation(tags = {"AI"}, summary = "Create a Copilot conversation thread")
+    @Operation(tags = { "AI" }, summary = "Create a Copilot conversation thread")
     public ThreadSummary create(@Body final CreateThreadRequest request) {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
@@ -100,7 +99,7 @@ public class AiAgentController {
     }
 
     @Get("/{threadId}")
-    @Operation(tags = {"AI"}, summary = "Fetch a Copilot thread with its full message history")
+    @Operation(tags = { "AI" }, summary = "Fetch a Copilot thread with its full message history")
     public ThreadDetail get(@PathVariable final String threadId) {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
@@ -109,11 +108,10 @@ public class AiAgentController {
     }
 
     @Post(uri = "/{threadId}/chat", produces = MediaType.TEXT_EVENT_STREAM)
-    @Operation(tags = {"AI"}, summary = "Open a streaming agent chat turn (SSE)")
+    @Operation(tags = { "AI" }, summary = "Open a streaming agent chat turn (SSE)")
     public Flux<Event<Object>> chat(
         @PathVariable final String threadId,
-        @Body final ChatTurnRequest request
-    ) {
+        @Body final ChatTurnRequest request) {
         String tenant = tenantService.resolveTenant();
         requireProvider(request.providerId());
         Thread thread = requireThread(tenant, threadId);
@@ -127,14 +125,13 @@ public class AiAgentController {
     }
 
     @Post(uri = "/{threadId}/confirm", produces = MediaType.TEXT_EVENT_STREAM)
-    @Operation(tags = {"AI"}, summary = "Confirm a proposed action and stream the resumed turn (SSE)")
+    @Operation(tags = { "AI" }, summary = "Confirm a proposed action and stream the resumed turn (SSE)")
     public Flux<Event<Object>> confirm(
         @PathVariable final String threadId,
-        @Body final ConfirmActionRequest request
-    ) {
+        @Body final ConfirmActionRequest request) {
         String tenant = tenantService.resolveTenant();
         requireProvider(null);
-        requireThread(tenant, threadId);
+        requireThreadExists(tenant, threadId);
 
         SuspendedTurn turn = confirmationRegistry.take(request.confirmationId())
             .filter(t -> t.threadId().equals(threadId) && t.tenant().equals(tenant))
@@ -145,10 +142,12 @@ public class AiAgentController {
     }
 
     private Flux<Event<Object>> stream(final Consumer<TurnEventSink> work) {
-        return Flux.create(emitter -> {
+        return Flux.create(emitter ->
+        {
             FluxTurnEventSink sink = new FluxTurnEventSink(emitter);
             emitter.onCancel(sink::markCancelled);
-            executor.execute(() -> {
+            executor.execute(() ->
+            {
                 try {
                     work.accept(sink);
                 } catch (Exception e) {
@@ -161,6 +160,12 @@ public class AiAgentController {
     private Thread requireThread(final String tenant, final String threadId) {
         return threadStore.find(tenant, threadId)
             .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));
+    }
+
+    private void requireThreadExists(final String tenant, final String threadId) {
+        if (!threadStore.exists(tenant, threadId)) {
+            throw new NotFoundException("Thread not found: '" + threadId + "'");
+        }
     }
 
     private void requireProvider(final String providerId) {

@@ -7,7 +7,7 @@ test suites (tests that passed without proving what they claimed).
 
 ---
 
-## 1. Production bug
+## 1. Production bugs
 
 ### 1.1 Delayed executions were emitted inside the state-store transaction (the #17246 bug class)
 
@@ -35,12 +35,51 @@ test suites (tests that passed without proving what they claimed).
 - **Note:** `develop` independently merged the minimal inline fix for #17246 (collect-then-emit)
   while this refactor was in flight; the extraction here supersedes it structurally.
 
-### 1.2 Known instance of the same class, documented but intentionally not fixed here
+### 1.2 Queued-execution pop emitted inside the `decrementAndPop` transaction (same class)
 
-The queued-execution pop path has the same shape: `DefaultExecutor#toExecution` emits the popped
-execution (`executionQueue.emit`) and fires `processFlowTriggers` **inside** the
-`ConcurrencyLimitStateStore#decrementAndPop` transaction. Flagged in PR #17264 as a follow-up —
-the same `ExecutionDelayProcessor`-style extraction applies (as it does to the SLA-monitor loop).
+- **Where:** `DefaultExecutor#toExecution` (executor module)
+- **Fixed in:** PR #17264, commit `fix(executions): move concurrency-slot release behind a transactional-outbox seam`
+- **Root cause:** when a terminated execution freed its concurrency slot, the popped queued
+  execution was emitted (`executionQueue.emit`) and its flow triggers fired **inside** the
+  `ConcurrencyLimitStateStore#decrementAndPop` transaction — the same
+  observable-before-commit shape as 1.1.
+- **Fix:** the release guards and the decrement/pop moved verbatim into
+  `ConcurrencySlotReleaseProcessor` (no queue dependency); it returns the popped execution and
+  `DefaultExecutor` emits it only after the transaction commits.
+- **Regression net:** `ConcurrencySlotReleaseProcessorTest` (7 tests, ~ms) — the outbox
+  invariant plus the three release guards (queued-then-killed, concurrency short-circuit
+  termination, duplicate KILLED events) that were previously buried in `DefaultExecutor` and
+  untestable without a full runner.
+
+### 1.3 SLA-monitor loop emitted inside the SLA store's transaction (same class)
+
+- **Where:** `DefaultExecutor#executionSLAMonitorLoop` (executor module)
+- **Fixed in:** PR #17264, commit `fix(executions): move SLA-monitor processing behind a transactional-outbox seam`
+- **Root cause:** the loop called `toExecution()` — which emits the execution's
+  TERMINATED/UPDATED events — from **inside** `SLAMonitorStateStore#processExpired`'s
+  transaction.
+- **Fix:** the per-monitor logic moved verbatim into `SLAMonitorProcessor` (mirrors
+  `ExecutionDelayProcessor`); the loop emits the returned contexts after the transaction
+  commits.
+- **Known residual (documented, pinned by a test, not fixed):** for FAIL/CANCEL SLA behaviors,
+  `ExecutorService#processViolation` → `markAs` emits the `ExecutionKilledExecution` kill
+  request from **inside** the execution lock. That emission is shared with the
+  execution-changed SLA path (`handleExecutionChangedSLA`, called by the event handler), so it
+  needs its own seam — an emission accumulator on `ExecutorContext` — rather than a local fix.
+
+### 1.4 Removing the last SLA from a flow wedged the SLA-monitor loop (NPE)
+
+- **Where:** the SLA-monitor loop (previously `DefaultExecutor#executionSLAMonitorLoop`, now
+  `SLAMonitorProcessor`)
+- **Found by:** writing `SLAMonitorProcessorTest.shouldIgnoreMonitorWhenSlaWasRemovedFromFlow`
+  — the migrated code NPE'd on the first run of the test
+- **Root cause:** the "SLA removed from the flow" guard called `flow.getSla().stream()`
+  directly. It only covered removing *one* SLA while others remain; updating the flow to remove
+  the **last** SLA leaves `getSla()` null → NPE inside `processExpired()`'s transaction. On
+  JDBC the transaction rolls back, the monitor is never consumed, and the loop re-throws on
+  every tick — SLA processing wedges for **all** monitors until the flow is changed back.
+- **Fix:** `ListUtils.emptyOnNull(flow.getSla())`, the same null-safety `SLAService` already
+  uses; the stale monitor is now consumed and skipped.
 
 ---
 

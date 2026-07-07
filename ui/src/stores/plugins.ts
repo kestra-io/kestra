@@ -62,6 +62,12 @@ export interface PluginIconData {
      * directly as a data URI.
      */
     iconUrl?: string;
+    /**
+     * Content hash of the icon bytes, only set for locally-registered icons. KsTaskIcon appends
+     * it as a cache-busting query param so the local `/icon.svg` URL can be cached indefinitely —
+     * it only needs to change when this hash does.
+     */
+    hash?: string;
 }
 
 // Wire shape returned by the backend's PluginIcon DTO. `icon` (base64, kept for the docs
@@ -70,17 +76,28 @@ export interface PluginIconData {
 // regardless of whether it actually ships an icon (other consumers rely on `flowable` being
 // there either way). For the external api.kestra.io catalog, `icon` is embedded as-is (see
 // `iconUrl` above) since there's no local endpoint that could serve it instead.
+//
+// `monochrome` and `hash` only exist on the LOCAL instance's DTO (added for this redesign) — the
+// external api.kestra.io catalog predates them and never sends these fields.
 interface RawPluginIcon {
     icon: string | null;
     flowable: boolean;
-    monochrome: boolean;
+    monochrome?: boolean;
+    hash?: string;
 }
 
 function toPluginIconData(raw: RawPluginIcon, options: {embedAsDataUri?: boolean} = {}): PluginIconData {
+    // The external catalog can't tell us whether an icon is single-color, so derive it ourselves
+    // from the SVG bytes we already have on hand — a one-time decode at fetch time, not per-render.
+    const monochrome = options.embedAsDataUri
+        ? !!raw.icon && atob(raw.icon).includes("currentColor")
+        : raw.monochrome ?? false
+
     return {
         flowable: raw.flowable,
-        monochrome: raw.monochrome,
+        monochrome,
         hasIcon: raw.icon != null,
+        hash: options.embedAsDataUri ? undefined : raw.hash,
         iconUrl: options.embedAsDataUri && raw.icon ? `data:image/svg+xml;base64,${raw.icon}` : undefined,
     }
 }

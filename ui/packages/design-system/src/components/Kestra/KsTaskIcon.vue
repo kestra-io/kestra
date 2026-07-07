@@ -41,6 +41,12 @@
          * Takes priority over the local `/icon.svg` endpoint when present.
          */
         iconUrl?: string;
+        /**
+         * Content hash of the icon bytes, appended as a cache-busting query param to the local
+         * `/icon.svg` URL so the browser can cache it indefinitely — the URL only needs to change
+         * when this hash does.
+         */
+        hash?: string;
     }
 
     const props = defineProps<{
@@ -110,7 +116,10 @@
         // Trim a trailing slash so a root base path ("/") doesn't produce a leading "//", which
         // browsers parse as a protocol-relative URL (host "api") instead of an absolute path.
         const basePath = ((window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? "").replace(/\/$/, "")
-        return `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/icon.svg`
+        const base = `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/icon.svg`
+        // Cache-busting query param — the URL only changes when the icon's bytes do, so the
+        // browser can cache it indefinitely instead of the usual short max-age.
+        return icon.value?.hash ? `${base}?v=${encodeURIComponent(icon.value.hash)}` : base
     })
 
     const isMonochrome = computed(() => {

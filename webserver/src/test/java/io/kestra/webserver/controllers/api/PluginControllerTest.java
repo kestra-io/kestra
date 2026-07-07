@@ -24,6 +24,7 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -123,6 +124,29 @@ class PluginControllerTest {
         assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
         // Log ships a fixed brand-colored SVG, not a single `currentColor` glyph
         assertThat(response.icon().getMonochrome()).isFalse();
+        assertThat(response.icon().getHash()).isNotBlank();
+    }
+
+    @Test
+    void iconHashIsStableAndContentAddressed() {
+        // The frontend appends this hash as a cache-busting query param to cache icon.svg
+        // indefinitely — it must be deterministic across requests and differ between classes
+        // with different icons.
+        PluginController.PluginIconResponse first = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse second = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse other = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Return.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(first.icon().getHash()).isEqualTo(second.icon().getHash());
+        assertThat(first.icon().getHash()).isNotEqualTo(other.icon().getHash());
     }
 
     @Test
@@ -140,6 +164,8 @@ class PluginControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
         assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
+        // content-addressed via the hash query param, so it's safe to cache indefinitely
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).contains("immutable");
     }
 
     @Test

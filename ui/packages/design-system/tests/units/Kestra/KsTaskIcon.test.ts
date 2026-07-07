@@ -61,6 +61,19 @@ describe("KsTaskIcon", () => {
         expect(icon.attributes("src")).toBe(svgUrlFor("io.kestra.plugin.core.log.Log"))
     })
 
+    test("appends the content hash as a cache-busting query param when present", () => {
+        const wrapper = mount(KsTaskIcon, {
+            props: {
+                cls: "io.kestra.plugin.core.log.Log",
+                icons: {"io.kestra.plugin.core.log.Log": {flowable: false, monochrome: false, hasIcon: true, hash: "abc123"}},
+                onlyIcon: true,
+            },
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.attributes("src")).toBe(`${svgUrlFor("io.kestra.plugin.core.log.Log")}?v=abc123`)
+    })
+
     test("falls back to the local asset for a registered class that has no icon at all", () => {
         // Regression: every registered task/trigger class gets an `icons` map entry (other
         // consumers rely on `flowable` being present even without an icon) — being present in the

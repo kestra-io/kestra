@@ -22,6 +22,7 @@ import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -57,6 +58,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
+    // The icon.svg endpoint is content-addressed via the `hash` query param the frontend appends
+    // (see PluginIcon#hash) — the URL only changes when the icon's bytes do, so it's safe to tell
+    // browsers to cache it indefinitely.
+    private static final String ICON_CACHE_DIRECTIVE = "public, max-age=31536000, immutable";
 
     @Inject
     protected JsonSchemaGenerator jsonSchemaGenerator;
@@ -261,7 +266,9 @@ public class PluginController {
         description = "Serves the plugin icon as a real, browser-cacheable `image/svg+xml` resource so it can " +
             "be referenced directly from an `<img src>` or CSS `mask-image` instead of being inlined as a data " +
             "URI. The frontend only points at this endpoint for a class it already knows (via `icons`/`loadIcon`) " +
-            "has an icon, so a missing icon here is a genuine 404 rather than an expected outcome."
+            "has an icon, so a missing icon here is a genuine 404 rather than an expected outcome. Cached " +
+            "indefinitely by the browser — callers append `PluginIcon#hash` as a query param so the URL changes " +
+            "whenever the icon's bytes do."
     )
     public HttpResponse<byte[]> getPluginIconSvg(
         @Parameter(description = "The plugin full class name") @PathVariable String cls) {
@@ -270,7 +277,7 @@ public class PluginController {
             return HttpResponse.notFound();
         }
 
-        return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
     }
 
     private static PluginIcon toPluginIcon(String name, Optional<RegisteredPlugin.IconAndMonochrome> icon, boolean flowable) {
@@ -278,7 +285,8 @@ public class PluginController {
             name,
             icon.map(RegisteredPlugin.IconAndMonochrome::icon).orElse(null),
             flowable,
-            icon.map(RegisteredPlugin.IconAndMonochrome::monochrome).orElse(false)
+            icon.map(RegisteredPlugin.IconAndMonochrome::monochrome).orElse(false),
+            icon.map(i -> Hashing.hashToString(i.icon())).orElse(null)
         );
     }
 

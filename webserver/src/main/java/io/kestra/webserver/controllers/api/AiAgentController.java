@@ -16,12 +16,12 @@ import io.kestra.webserver.services.ai.agent.TurnEventSink;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ChatTurnRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ConfirmActionRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.CreateThreadRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.Decision;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ThreadDetail;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ThreadSummary;
+import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiDecision;
+import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
+import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
 import io.kestra.webserver.services.ai.agent.store.MessageStore;
 import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 
@@ -79,7 +79,7 @@ public class AiAgentController {
 
     @Post
     @Operation(tags = { "AI" }, summary = "Create a Copilot conversation thread")
-    public ThreadSummary create(@Body final CreateThreadRequest request) {
+    public ApiThreadSummary create(@Body final ApiCreateThreadRequest request) {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
         Instant now = Instant.now();
@@ -95,23 +95,23 @@ public class AiAgentController {
             .deleted(false)
             .build();
         threadStore.create(thread);
-        return ThreadSummary.from(thread);
+        return ApiThreadSummary.from(thread);
     }
 
     @Get("/{threadId}")
     @Operation(tags = { "AI" }, summary = "Fetch a Copilot thread with its full message history")
-    public ThreadDetail get(@PathVariable final String threadId) {
+    public ApiThreadDetail get(@PathVariable final String threadId) {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
         AgentThread thread = requireThread(tenant, threadId);
-        return ThreadDetail.from(thread, messageStore.load(threadId));
+        return ApiThreadDetail.from(thread, messageStore.load(threadId));
     }
 
     @Post(uri = "/{threadId}/chat", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = { "AI" }, summary = "Open a streaming agent chat turn (SSE)")
     public Flux<Event<Object>> chat(
         @PathVariable final String threadId,
-        @Body final ChatTurnRequest request) {
+        @Body final ApiChatTurnRequest request) {
         String tenant = tenantService.resolveTenant();
         requireProvider(request.providerId());
         AgentThread thread = requireThread(tenant, threadId);
@@ -128,7 +128,7 @@ public class AiAgentController {
     @Operation(tags = { "AI" }, summary = "Confirm a proposed action and stream the resumed turn (SSE)")
     public Flux<Event<Object>> confirm(
         @PathVariable final String threadId,
-        @Body final ConfirmActionRequest request) {
+        @Body final ApiConfirmActionRequest request) {
         String tenant = tenantService.resolveTenant();
         requireProvider(null);
         requireThreadExists(tenant, threadId);
@@ -137,7 +137,7 @@ public class AiAgentController {
             .filter(t -> t.threadId().equals(threadId) && t.tenant().equals(tenant))
             .orElseThrow(() -> new NotFoundException("No pending action for confirmationId '" + request.confirmationId() + "'"));
 
-        boolean approve = request.decision() == Decision.APPROVE;
+        boolean approve = request.decision() == ApiDecision.APPROVE;
         return stream(sink -> orchestrator.resume(turn, approve, request.reason(), sink));
     }
 

@@ -16,7 +16,7 @@ import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.dto.AgentEvents;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.store.MessageStore;
 import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;

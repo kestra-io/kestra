@@ -12,13 +12,13 @@ import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ChatTurnRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ConfirmActionRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.CreateThreadRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.Decision;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ThreadDetail;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ThreadSummary;
-import io.kestra.webserver.services.ai.agent.dto.AgentEvents;
+import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiDecision;
+import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
+import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -87,7 +87,7 @@ class AiAgentControllerTest {
     @Test
     void shouldCreateIdleThreadWithAskModeWhenModeOmitted() {
         // When
-        ThreadSummary summary = createThread(new CreateThreadRequest(null, null, null));
+        ApiThreadSummary summary = createThread(new ApiCreateThreadRequest(null, null, null));
 
         // Then
         assertThat(summary.mode()).isEqualTo(AgentMode.ASK);
@@ -98,7 +98,7 @@ class AiAgentControllerTest {
     @Test
     void shouldReturnNotFoundWhenGettingUnknownThread() {
         // When / Then
-        assertThatThrownBy(() -> client.toBlocking().retrieve(HttpRequest.GET(BASE + "/does-not-exist"), ThreadDetail.class))
+        assertThatThrownBy(() -> client.toBlocking().retrieve(HttpRequest.GET(BASE + "/does-not-exist"), ApiThreadDetail.class))
             .isInstanceOfSatisfying(HttpClientResponseException.class,
                 e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode()));
     }
@@ -106,16 +106,16 @@ class AiAgentControllerTest {
     @Test
     void shouldStreamAnswerAndFinishIdleWhenChattingInAskMode() {
         // Given
-        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.ASK, "q", null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.ASK, "q", null));
         scriptedModel.enqueue(AiMessage.from("A trigger starts a flow automatically."));
 
         // When
-        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("what is a trigger?", AgentMode.ASK, null, null));
+        List<Event<Map>> events = chat(thread.uid(), new ApiChatTurnRequest("what is a trigger?", AgentMode.ASK, null, null));
 
         // Then
         assertThat(names(events)).contains(AgentEvents.TOKEN, AgentEvents.DONE);
         assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.IDLE.name());
-        ThreadDetail detail = getThread(thread.uid());
+        ApiThreadDetail detail = getThread(thread.uid());
         assertThat(detail.status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(detail.messages())
             .extracting(m -> m.role() + "/" + m.type())
@@ -125,11 +125,11 @@ class AiAgentControllerTest {
     @Test
     void shouldProposeActionAndAwaitConfirmationWhenModelCallsMutateToolInEditMode() {
         // Given
-        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.EDIT, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
 
         // When
-        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("update it", AgentMode.EDIT, null, null));
+        List<Event<Map>> events = chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null));
 
         // Then — suspended for confirmation, tool NOT executed
         Map<String, Object> proposed = data(events, AgentEvents.PROPOSED_ACTION);
@@ -142,14 +142,14 @@ class AiAgentControllerTest {
     @Test
     void shouldReturnConflictWhenChattingWhileTurnAwaitsConfirmation() {
         // Given — a thread suspended awaiting confirmation
-        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.EDIT, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
-        chat(thread.uid(), new ChatTurnRequest("update it", AgentMode.EDIT, null, null));
+        chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null));
 
         // When / Then — a second turn is rejected with 409
         assertThatThrownBy(() -> client.toBlocking().exchange(
             HttpRequest.POST(BASE + "/" + thread.uid() + "/chat",
-                new ChatTurnRequest("again", AgentMode.EDIT, null, null))))
+                new ApiChatTurnRequest("again", AgentMode.EDIT, null, null))))
             .isInstanceOfSatisfying(HttpClientResponseException.class,
                 e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode()));
     }
@@ -157,13 +157,13 @@ class AiAgentControllerTest {
     @Test
     void shouldRecordRejectedResultAndResumeIdleWhenRejectingProposedAction() {
         // Given — a proposed mutate awaiting confirmation, and a closing answer to resume into
-        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.EDIT, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
-        String confirmationId = confirmationId(chat(thread.uid(), new ChatTurnRequest("update it", AgentMode.EDIT, null, null)));
+        String confirmationId = confirmationId(chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null)));
         scriptedModel.enqueue(AiMessage.from("Understood, I won't update it."));
 
         // When
-        List<Event<Map>> events = confirm(thread.uid(), new ConfirmActionRequest(confirmationId, Decision.REJECT, "leave it"));
+        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.REJECT, "leave it"));
 
         // Then — rejected result surfaced, turn resumed and finished IDLE
         assertThat(data(events, AgentEvents.TOOL_RESULT).get("outcome")).isEqualTo("rejected");
@@ -174,11 +174,11 @@ class AiAgentControllerTest {
     @Test
     void shouldProposePlanCardWhenChattingInPlanMode() {
         // Given — Plan mode: the first tool-free response is the plan
-        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.PLAN, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.PLAN, null, null));
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs\n2. restart the flow"));
 
         // When
-        List<Event<Map>> events = chat(thread.uid(), new ChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null));
+        List<Event<Map>> events = chat(thread.uid(), new ApiChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null));
 
         // Then — a plan card (proposed_action with no tool) awaiting confirmation
         assertThat(data(events, AgentEvents.PROPOSED_ACTION).get("tool")).isNull();
@@ -189,13 +189,13 @@ class AiAgentControllerTest {
     @Test
     void shouldRunPlanToCompletionWhenApprovingPlanCard() {
         // Given — a plan proposed and awaiting approval, and a closing answer to resume into
-        ThreadSummary thread = createThread(new CreateThreadRequest(AgentMode.PLAN, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.PLAN, null, null));
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs\n2. restart the flow"));
-        String confirmationId = confirmationId(chat(thread.uid(), new ChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null)));
+        String confirmationId = confirmationId(chat(thread.uid(), new ApiChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null)));
         scriptedModel.enqueue(AiMessage.from("All steps completed."));
 
         // When
-        List<Event<Map>> events = confirm(thread.uid(), new ConfirmActionRequest(confirmationId, Decision.APPROVE, null));
+        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.APPROVE, null));
 
         // Then
         assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.IDLE.name());
@@ -204,19 +204,19 @@ class AiAgentControllerTest {
 
     // ── HTTP helpers ─────────────────────────────────────────────────────────────────────────────
 
-    private ThreadSummary createThread(final CreateThreadRequest request) {
-        return client.toBlocking().retrieve(HttpRequest.POST(BASE, request), ThreadSummary.class);
+    private ApiThreadSummary createThread(final ApiCreateThreadRequest request) {
+        return client.toBlocking().retrieve(HttpRequest.POST(BASE, request), ApiThreadSummary.class);
     }
 
-    private ThreadDetail getThread(final String threadId) {
-        return client.toBlocking().retrieve(HttpRequest.GET(BASE + "/" + threadId), ThreadDetail.class);
+    private ApiThreadDetail getThread(final String threadId) {
+        return client.toBlocking().retrieve(HttpRequest.GET(BASE + "/" + threadId), ApiThreadDetail.class);
     }
 
-    private List<Event<Map>> chat(final String threadId, final ChatTurnRequest request) {
+    private List<Event<Map>> chat(final String threadId, final ApiChatTurnRequest request) {
         return stream(BASE + "/" + threadId + "/chat", request);
     }
 
-    private List<Event<Map>> confirm(final String threadId, final ConfirmActionRequest request) {
+    private List<Event<Map>> confirm(final String threadId, final ApiConfirmActionRequest request) {
         return stream(BASE + "/" + threadId + "/confirm", request);
     }
 

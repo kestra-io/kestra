@@ -18,4 +18,12 @@ public class PluginIcon {
      * endpoint) — the URL only needs to change when this hash does.
      */
     String hash;
+
+    /**
+     * Backward-compatible constructor for callers built against the DTO's shape before
+     * {@link #monochrome} and {@link #hash} were added.
+     */
+    public PluginIcon(String name, String icon, Boolean flowable) {
+        this(name, icon, flowable, false, null);
+    }
 }

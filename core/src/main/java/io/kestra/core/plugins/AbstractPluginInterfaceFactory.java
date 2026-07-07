@@ -84,11 +84,7 @@ public abstract class AbstractPluginInterfaceFactory<T> {
             .findFirst();
 
         if (optional.isEmpty()) {
-            throw new KestraRuntimeException(
-                "No %s can be found for '%s=%s'. Supported types are: %s".formatted(
-                    lookupDisplayName(), typeProperty(), pluginId, getLoggableTypeIds()
-                )
-            );
+            throw notFoundException(pluginId);
         }
 
         // Find the corresponding plugin 'class'.
@@ -134,6 +130,21 @@ public abstract class AbstractPluginInterfaceFactory<T> {
         }
 
         return plugin;
+    }
+
+    /**
+     * Builds the exception thrown when no plugin matches the requested id. Overridable so subclasses
+     * can enrich the message (e.g. EE surfacing a license-gated type as "installed but not enabled").
+     *
+     * @param pluginId the requested (unmatched) plugin id.
+     * @return the exception to throw.
+     */
+    protected KestraRuntimeException notFoundException(final String pluginId) {
+        return new KestraRuntimeException(
+            "No %s can be found for '%s=%s'. Supported types are: %s".formatted(
+                lookupDisplayName(), typeProperty(), pluginId, getLoggableTypeIds()
+            )
+        );
     }
 
     /**

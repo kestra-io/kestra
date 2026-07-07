@@ -187,6 +187,31 @@ class ConcurrencySlotReleaseProcessorTest {
         verifyNotReleased();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = State.Type.class, names = { "FAILED", "CANCELLED" })
+    void shouldReleaseSlotWhenFormerlyQueuedExecutionTerminatesInError(State.Type errorState) {
+        // Given: an execution that was queued, popped, and now holds the slot — its histories
+        // are CREATED → QUEUED → RUNNING, one step away from the short-circuit shape
+        // (CREATED → FAILED/CANCELLED) that must NOT release
+        FlowWithSource flow = queueFlow(1);
+        harness.registerFlow(flow);
+        ExecutorContext started = startExecution(flow);
+        Execution second = Executions.created(flow);
+        harness.executionStateStore().save(second);
+        handleEvent(second);
+        Execution popped = processor.release(terminated(flow, started.getExecution(), State.Type.SUCCESS)).orElseThrow();
+
+        // When: it terminates in error during its actual run
+        Optional<Execution> next = processor.release(
+            new ExecutorContext(popped, flow).withExecution(popped.withState(errorState), "test")
+        );
+
+        // Then: a genuine run failure releases the slot like any termination — the short-circuit
+        // guard only holds when the error state follows CREATED directly
+        assertThat(next).isEmpty();
+        assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(0);
+    }
+
     @Test
     void shouldReleaseTheStampedScopeWhenTheLimitWasRemovedWhileTheExecutionRan() {
         // Given: the flow no longer declares a limit, but the execution was admitted under one —

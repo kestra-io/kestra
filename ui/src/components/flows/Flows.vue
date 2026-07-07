@@ -307,6 +307,7 @@
 
     import {useTableColumns} from "../../composables/useTableColumns"
     import useRouteContext from "../../composables/useRouteContext"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -684,10 +685,10 @@
     function chartFilters() {
         const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
         return [{
-            field: "timeRange",
+            field: "TIME_RANGE",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
-        }]
+        } satisfies QueryFilter]
     }
 
     async function exportFlowsAsStream() {

@@ -15,8 +15,8 @@ import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
 
-import type {Dashboard, Chart, Request, Parameters as ChartParameters} from "../components/dashboard/types.ts"
-import {useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
+import type {Dashboard, Chart} from "../components/dashboard/types.ts"
+import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
@@ -27,6 +27,13 @@ import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useI18n} from "vue-i18n"
 import {RouteLocation} from "vue-router"
+
+export const DEFAULT_DASHBOARD = {
+    id: "default",
+    title: "",
+    deleted: false,
+    charts: [],
+} as const satisfies Dashboard
 
 export const useDashboardStore = defineStore("dashboard", () => {
     const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
@@ -170,13 +177,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id})
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
         } catch {
             return undefined
         }
 
-        // charts is the one field that needs bridging: see the Dashboard type's comment.
-        activeDashboard.value = {...data, charts: data.charts as unknown as Chart[]}
+        activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
 
@@ -203,7 +209,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.validateDashboard({body: source ?? ""})
     }
 
-    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartParameters) {
+    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
             // filters is FilterObject[] here (see ChartParameters' comment); the backend accepts
             // the same field/operation strings the SDK's QueryFilterField/QueryFilterOp enums do.
@@ -220,11 +226,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return data
     }
 
-    async function chartPreview(request: Request) {
+    async function chartPreview(request: Parameters<typeof DashboardsAPI.previewChart>[0]) {
         return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartParameters) {
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides) {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`

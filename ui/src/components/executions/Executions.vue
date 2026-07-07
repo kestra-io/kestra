@@ -72,7 +72,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
+                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts showDefault class="mb-4" />
             </template>
 
             <template #bulk-actions>
@@ -425,6 +425,7 @@
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
+    import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
     const {t} = useI18n()
     const toast = useToast()

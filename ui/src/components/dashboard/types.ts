@@ -1,19 +1,10 @@
-import type {DashboardControllerDashboardResponse, ChartFiltersOverrides, DashboardControllerPreviewRequest} from "@kestra-io/kestra-sdk"
-import type {FilterObject} from "../../utils/filters"
+import {ChartChartOption, DashboardControllerDashboardResponse} from "@kestra-io/kestra-sdk"
 
-// charts is overridden: chart definitions are polymorphic (DataChart, DataChartKPI, ...) and the
-// backend returns the full Chart shape below, but the SDK's generated response type only models
-// the lean common subset (id/type/chartOptions). title/deleted are widened back to optional: a
-// dashboard can be a locally-built preview placeholder that never persisted either field.
-export type Dashboard = Omit<DashboardControllerDashboardResponse, "charts" | "title" | "deleted"> & {
-    title?: string;
-    deleted?: boolean;
-    charts: Chart[];
-};
+export interface Dashboard extends DashboardControllerDashboardResponse {
+    charts: Chart[]
+}
 
-export type Chart = {
-    id: string;
-    type: string;
+export interface Chart extends ChartChartOption {
     chartOptions?: {
         displayName?: string;
         description?: string;
@@ -42,13 +33,4 @@ export type Chart = {
     };
 
     [key: string]: unknown;
-};
-
-export type Request = DashboardControllerPreviewRequest;
-
-// filters is overridden: FilterObject's field/operation are plain strings (as produced by this
-// app's filter bar), not the SDK's strict QueryFilterField/QueryFilterOp enums - the same gap
-// routeQueryToQueryFilters() bridges for other stores' search endpoints.
-export type Parameters = Omit<ChartFiltersOverrides, "filters"> & {
-    filters?: FilterObject[];
 };

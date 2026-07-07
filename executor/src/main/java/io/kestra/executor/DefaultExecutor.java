@@ -24,8 +24,6 @@ import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
-import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -81,13 +79,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final ExecutorService executorService;
     private final ExecutionService executionService;
     private final FlowTriggerService flowTriggerService;
-    private final SLAService slaService;
     private final MaintenanceService maintenanceService;
     private final FlowMetaStoreInterface flowMetaStore;
 
     private final ExecutionStateStore executionStateStore;
     private final ExecutionDelayProcessor executionDelayProcessor;
     private final SLAMonitorStateStore slaMonitorStateStore;
+    private final SLAMonitorProcessor slaMonitorProcessor;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final TriggerEventQueue triggerEventQueue;
 
@@ -149,12 +147,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ExecutorService executorService,
         ExecutionService executionService,
         FlowTriggerService flowTriggerService,
-        SLAService slaService,
         MaintenanceService maintenanceService,
         FlowMetaStoreInterface flowMetaStore,
         ExecutionStateStore executionStateStore,
         ExecutionDelayProcessor executionDelayProcessor,
         SLAMonitorStateStore slaMonitorStateStore,
+        SLAMonitorProcessor slaMonitorProcessor,
         ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor,
         TriggerEventQueue triggerEventQueue,
         MetricRegistry metricRegistry,
@@ -187,12 +185,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.executorService = executorService;
         this.executionService = executionService;
         this.flowTriggerService = flowTriggerService;
-        this.slaService = slaService;
         this.maintenanceService = maintenanceService;
         this.flowMetaStore = flowMetaStore;
         this.executionStateStore = executionStateStore;
         this.executionDelayProcessor = executionDelayProcessor;
         this.slaMonitorStateStore = slaMonitorStateStore;
+        this.slaMonitorProcessor = slaMonitorProcessor;
         this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
@@ -529,52 +527,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         slaMonitorLoopTimer.record(() ->
         {
-            slaMonitorStateStore.processExpired(Instant.now(), slaMonitor ->
-            {
-                Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution ->
-                {
-                    FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                    Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
-                    if (sla.isEmpty()) {
-                        // this can happen in case the flow has been updated and the SLA removed
-                        log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                        return null;
-                    }
-
-                    // There can be a race: a monitor can be found, but the execution terminated.
-                    // This particularly could occur in ElasticSearch due to refresh.
-                    if (executionService.isTerminated(flow, execution)) {
-                        return null;
-                    }
-
-                    metricRegistry
-                        .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
-                        .increment();
-
-                    ExecutorContext executor = new ExecutorContext(execution, flow);
-                    try {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
-                        if (violation.isPresent()) { // should always be true
-                            log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                            executor = executorService.processViolation(runContext, executor, violation.get());
-
-                            metricRegistry
-                                .counter(
-                                    MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION,
-                                    metricRegistry.tags(executor.getExecution())
-                                )
-                                .increment();
-                        }
-                    } catch (Exception e) {
-                        executor = executorService.handleFailedExecutionFromExecutor(executor, e);
-                    }
-
-                    return executor;
-                });
-
-                maybeExecutor.ifPresent(this::toExecution);
-            });
+            // Transactional outbox: the processor evaluates the violations inside the SLA-monitor
+            // state-store transaction; events are emitted only here, after processExpired() has
+            // committed (same rule as executionDelayLoop).
+            slaMonitorProcessor.processExpired(Instant.now()).forEach(this::toExecution);
         });
     }
 

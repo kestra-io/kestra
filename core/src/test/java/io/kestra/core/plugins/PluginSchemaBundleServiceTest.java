@@ -52,21 +52,29 @@ class PluginSchemaBundleServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldMergeMissingDefinitionAndAnyOfBranchWithoutDuplicatingKnownOnes() throws IOException {
-        // Given
+        // Given: a bundle with a shared definitions pool covering both task and trigger roots,
+        // proving no per-type duplicate copy is required to serve either one.
         Files.writeString(tempDir.resolve("plugins-schema.json"), """
             {
-              "task": {
-                "$ref": "#/definitions/io.kestra.core.models.tasks.Task",
-                "definitions": {
-                  "io.kestra.core.models.tasks.Task": {
-                    "anyOf": [
-                      {"$ref": "#/definitions/io.kestra.plugin.core.log.Log"},
-                      {"$ref": "#/definitions/io.kestra.plugin.compress.archive.Compress"}
-                    ]
-                  },
-                  "io.kestra.plugin.core.log.Log": {"type": "object"},
-                  "io.kestra.plugin.compress.archive.Compress": {"type": "object"}
-                }
+              "definitions": {
+                "io.kestra.core.models.tasks.Task": {
+                  "anyOf": [
+                    {"$ref": "#/definitions/io.kestra.plugin.core.log.Log"},
+                    {"$ref": "#/definitions/io.kestra.plugin.compress.archive.Compress"}
+                  ]
+                },
+                "io.kestra.core.models.triggers.AbstractTrigger": {
+                  "anyOf": [
+                    {"$ref": "#/definitions/io.kestra.plugin.core.trigger.Schedule"}
+                  ]
+                },
+                "io.kestra.plugin.core.log.Log": {"type": "object"},
+                "io.kestra.plugin.compress.archive.Compress": {"type": "object"},
+                "io.kestra.plugin.core.trigger.Schedule": {"type": "object"}
+              },
+              "roots": {
+                "task": "#/definitions/io.kestra.core.models.tasks.Task",
+                "trigger": "#/definitions/io.kestra.core.models.triggers.AbstractTrigger"
               }
             }
             """);
@@ -89,7 +97,7 @@ class PluginSchemaBundleServiceTest {
         // When
         Map<String, Object> result = service.mergeWithBundle(SchemaType.TASK, localSchema);
 
-        // Then: the missing task gets added to both $defs and anyOf, the known one is not duplicated
+        // Then: the missing task gets added to both definitions and anyOf, the known one is not duplicated
         Map<String, Object> definitions = (Map<String, Object>) result.get("definitions");
         assertThat(definitions).containsKeys("io.kestra.plugin.core.log.Log", "io.kestra.plugin.compress.archive.Compress");
 
@@ -99,5 +107,25 @@ class PluginSchemaBundleServiceTest {
             "#/definitions/io.kestra.plugin.core.log.Log",
             "#/definitions/io.kestra.plugin.compress.archive.Compress"
         );
+
+        // When: the trigger root is merged from the very same bundle file — proving one shared
+        // pool serves every schema type instead of each carrying its own duplicate copy
+        Map<String, Object> localTriggerSchema = JacksonMapper.ofJson().readValue("""
+            {
+              "$ref": "#/definitions/io.kestra.core.models.triggers.AbstractTrigger",
+              "definitions": {
+                "io.kestra.core.models.triggers.AbstractTrigger": {"anyOf": []}
+              }
+            }
+            """, Map.class);
+        Map<String, Object> triggerResult = service.mergeWithBundle(SchemaType.TRIGGER, localTriggerSchema);
+
+        // Then
+        Map<String, Object> triggerDefinitions = (Map<String, Object>) triggerResult.get("definitions");
+        assertThat(triggerDefinitions).containsKey("io.kestra.plugin.core.trigger.Schedule");
+        Map<String, Object> triggerDefinition = (Map<String, Object>) triggerDefinitions.get("io.kestra.core.models.triggers.AbstractTrigger");
+        assertThat((List<Map<String, Object>>) triggerDefinition.get("anyOf"))
+            .extracting(branch -> branch.get("$ref"))
+            .containsExactly("#/definitions/io.kestra.plugin.core.trigger.Schedule");
     }
 }

@@ -25,11 +25,26 @@ import picocli.CommandLine;
 /**
  * CLI command that generates the per-release plugin schema bundle.
  *
- * <p>The bundle is a single JSON file keyed by {@link SchemaType} name, containing a full
- * Draft-7 JSON Schema for each type (task, trigger, plugindefault, dashboard). It is intended
- * to be uploaded to GCS alongside {@code oss.json} at each release so that running instances
- * can fetch it via {@code kestra.plugins.schema-bundle-url-template} and offer editor
- * autocompletion for plugin types that are not yet locally installed (KIP-45).
+ * <p>Task, trigger, plugindefault and dashboard schemas overlap heavily — they share most of
+ * their nested plugin/property definitions. Generating each with {@code JsonSchemaGenerator}
+ * independently would embed a full, near-duplicate {@code definitions} tree per type. Instead,
+ * this command generates all four, then hoists every definition into one shared pool written
+ * once as {@code definitions}, plus a small {@code roots} map of {@code SchemaType} name → the
+ * {@code $ref} into that pool for that type's root class:
+ * <pre>{@code
+ * {
+ *   "definitions": { "io.kestra.plugin.core.log.Log": {...}, ... },
+ *   "roots": {
+ *     "task": "#/definitions/io.kestra.core.models.tasks.Task",
+ *     "trigger": "#/definitions/io.kestra.core.models.triggers.AbstractTrigger",
+ *     ...
+ *   }
+ * }
+ * }</pre>
+ *
+ * <p>It is intended to be uploaded to GCS alongside {@code oss.json} at each release so that
+ * running instances can fetch it via {@code kestra.plugins.schema-bundle-url-template} and offer
+ * editor autocompletion for plugin types that are not yet locally installed (KIP-45).
  *
  * <p>Run with a {@code --plugins} path pointing at the full-plugin set to capture every
  * available type.
@@ -79,18 +94,24 @@ public class PluginsSchemaCommand extends AbstractCommand {
             ? jsonSchemaGenerator
             : new JsonSchemaGenerator(registry != null ? registry : DefaultPluginRegistry.getOrCreate());
 
-        Map<String, Object> bundle = new LinkedHashMap<>();
+        Map<String, Object> definitions = new LinkedHashMap<>();
+        Map<String, Object> roots = new LinkedHashMap<>();
         for (Map.Entry<SchemaType, Class<?>> entry : SCHEMA_CLASSES.entrySet()) {
             SchemaType schemaType = entry.getKey();
             Class<?> cls = entry.getValue();
             try {
                 Map<String, Object> schema = generator.schemas(cls);
-                bundle.put(schemaType.name().toLowerCase(), schema);
+                mergeDefinitions(definitions, schema);
+                roots.put(schemaType.name().toLowerCase(), schema.get("$ref"));
                 log.debug("Generated schema for type '{}'", schemaType);
             } catch (Exception e) {
                 log.warn("Failed to generate schema for type '{}': {}", schemaType, e.getMessage());
             }
         }
+
+        Map<String, Object> bundle = new LinkedHashMap<>();
+        bundle.put("definitions", definitions);
+        bundle.put("roots", roots);
 
         if (output.getParentFile() != null && !output.getParentFile().mkdirs()
             && !output.getParentFile().isDirectory()) {
@@ -98,8 +119,16 @@ public class PluginsSchemaCommand extends AbstractCommand {
         }
 
         MAPPER.writeValue(output, bundle);
-        stdOut("Plugin schema bundle written to {0} ({1} types)", output.getAbsolutePath(), bundle.size());
+        stdOut("Plugin schema bundle written to {0} ({1} types, {2} shared definitions)", output.getAbsolutePath(), roots.size(), definitions.size());
         return 0;
+    }
+
+    /** Copies {@code schema}'s {@code definitions} into the shared pool, keeping the first (identical) copy of any class already hoisted from another root. */
+    @SuppressWarnings("unchecked")
+    private static void mergeDefinitions(Map<String, Object> sharedDefinitions, Map<String, Object> schema) {
+        if (schema.get("definitions") instanceof Map<?, ?> definitions) {
+            ((Map<String, Object>) definitions).forEach(sharedDefinitions::putIfAbsent);
+        }
     }
 
     @Override

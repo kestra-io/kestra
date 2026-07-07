@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.kestra.core.serializers.JacksonMapper;
@@ -33,10 +34,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Fetches and caches a pre-baked, per-release plugin schema bundle from a remote URL.
  *
- * <p>The bundle is a JSON object keyed by {@link SchemaType} name (lower-case), where each
- * value is a full Draft-7 JSON Schema (as produced by {@code JsonSchemaGenerator.schemas()})
- * covering all tasks/triggers shipped with the official full-plugin Kestra image for the
- * current release.
+ * <p>Task/trigger/plugindefault/dashboard schemas overlap heavily, so the bundle (built by
+ * {@code PluginsSchemaCommand}) stores their {@code definitions} once, in a single shared pool,
+ * plus a {@code roots} map of {@link SchemaType} name (lower-case) → the {@code $ref} into that
+ * pool for that type's root class — see {@code PluginsSchemaCommand}'s Javadoc for the exact
+ * shape.
  *
  * <p>This allows the editor to offer autocompletion for plugin types that are not yet installed
  * locally (KIP-45 auto-install flow). Installed-plugin schemas always take precedence when
@@ -53,13 +55,12 @@ public class PluginSchemaBundleService {
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
-    private static final TypeReference<Map<String, JsonNode>> BUNDLE_TYPE = new TypeReference<>() {};
 
     private final String bundleUrlTemplate;
     private final String resolvedBundleUrl;
 
-    private CompletableFuture<Map<SchemaType, JsonNode>> future;
-    private Map<SchemaType, JsonNode> cached = Map.of();
+    private CompletableFuture<Bundle> future;
+    private Bundle cached = Bundle.EMPTY;
     private Instant cacheLastLoaded = Instant.now();
     private final AtomicBoolean loading = new AtomicBoolean(false);
 
@@ -110,27 +111,28 @@ public class PluginSchemaBundleService {
             return localSchema;
         }
 
-        JsonNode bundleNode = getBundle().get(type);
-        if (bundleNode == null || !bundleNode.isObject()) {
+        Bundle bundle = getBundle();
+        String rootRef = bundle.roots().get(type);
+        if (rootRef == null || bundle.definitions().isEmpty()) {
             return localSchema;
         }
 
         ObjectNode mutable = MAPPER.convertValue(localSchema, ObjectNode.class);
-        mergeDefinitions(mutable, (ObjectNode) bundleNode);
-        mergeRootAnyOf(mutable, (ObjectNode) bundleNode);
+        mergeDefinitions(mutable, bundle.definitions());
+        mergeRootAnyOf(mutable, bundle.definitions(), rootRef);
         return MAPPER.convertValue(mutable, MAP_TYPE);
     }
 
     // ── internal ──────────────────────────────────────────────────────────────
 
-    private synchronized Map<SchemaType, JsonNode> getBundle() {
+    private synchronized Bundle getBundle() {
         if (future == null) {
             loading.set(true);
             future = CompletableFuture.supplyAsync(this::load);
         }
 
         try {
-            Map<SchemaType, JsonNode> result = future.get();
+            Bundle result = future.get();
             if (!result.isEmpty()) {
                 cached = result;
             }
@@ -150,41 +152,41 @@ public class PluginSchemaBundleService {
         return cached;
     }
 
-    private Map<SchemaType, JsonNode> load() {
+    private Bundle load() {
         try {
             log.debug("Fetching plugin schema bundle from {}", resolvedBundleUrl);
             try (InputStream in = URI.create(resolvedBundleUrl).toURL().openStream()) {
-                Map<String, JsonNode> raw = MAPPER.readValue(in, BUNDLE_TYPE);
-                Map<SchemaType, JsonNode> result = new EnumMap<>(SchemaType.class);
-                raw.forEach((key, value) -> {
-                    try {
-                        result.put(SchemaType.fromString(key), value);
-                    } catch (Exception e) {
-                        log.debug("Ignoring unknown schema type '{}' in bundle", key);
-                    }
-                });
+                JsonNode root = MAPPER.readTree(in);
+                ObjectNode definitions = root.get("definitions") instanceof ObjectNode defs ? defs : JsonNodeFactory.instance.objectNode();
+
+                Map<SchemaType, String> roots = new EnumMap<>(SchemaType.class);
+                if (root.get("roots") instanceof ObjectNode rootsNode) {
+                    rootsNode.properties().forEach(entry -> {
+                        try {
+                            roots.put(SchemaType.fromString(entry.getKey()), entry.getValue().asText());
+                        } catch (Exception e) {
+                            log.debug("Ignoring unknown schema type '{}' in bundle", entry.getKey());
+                        }
+                    });
+                }
+
                 cacheLastLoaded = Instant.now();
-                log.debug("Plugin schema bundle loaded ({} types)", result.size());
-                return result;
+                log.debug("Plugin schema bundle loaded ({} shared definitions, {} root types)", definitions.size(), roots.size());
+                return new Bundle(definitions, roots);
             }
         } catch (IOException e) {
             log.warn("Could not fetch plugin schema bundle from '{}': {}", resolvedBundleUrl, e.getMessage());
-            return Map.of();
+            return Bundle.EMPTY;
         } finally {
             loading.set(false);
         }
     }
 
-    private static void mergeDefinitions(ObjectNode local, ObjectNode bundle) {
-        JsonNode bundleDefs = bundle.get("definitions");
-        if (bundleDefs == null || !bundleDefs.isObject()) {
-            return;
-        }
-
+    private static void mergeDefinitions(ObjectNode local, ObjectNode sharedDefinitions) {
         JsonNode localDefs = local.get("definitions");
         ObjectNode targetDefs = localDefs instanceof ObjectNode existing ? existing : local.putObject("definitions");
 
-        bundleDefs.properties().forEach(entry -> {
+        sharedDefinitions.properties().forEach(entry -> {
             if (!targetDefs.has(entry.getKey())) {
                 targetDefs.set(entry.getKey(), entry.getValue());
             }
@@ -197,14 +199,15 @@ public class PluginSchemaBundleService {
      * {@code anyOf} at the schema root — only on that nested definition — so the root type's
      * definition key must be read from {@code $ref} first.
      */
-    private static void mergeRootAnyOf(ObjectNode local, ObjectNode bundle) {
-        String rootKey = rootDefinitionKey(local);
-        if (rootKey == null || !rootKey.equals(rootDefinitionKey(bundle))) {
+    private static void mergeRootAnyOf(ObjectNode local, ObjectNode sharedDefinitions, String bundleRootRef) {
+        String localRootKey = rootDefinitionKey(local);
+        String bundleRootKey = definitionKeyFromRef(bundleRootRef);
+        if (localRootKey == null || !localRootKey.equals(bundleRootKey)) {
             return;
         }
 
-        ObjectNode localRoot = definitionEntry(local, rootKey);
-        ObjectNode bundleRoot = definitionEntry(bundle, rootKey);
+        ObjectNode localRoot = definitionEntry(local.get("definitions"), localRootKey);
+        ObjectNode bundleRoot = definitionEntry(sharedDefinitions, bundleRootKey);
         if (localRoot == null || bundleRoot == null) {
             return;
         }
@@ -234,18 +237,26 @@ public class PluginSchemaBundleService {
 
     private static String rootDefinitionKey(ObjectNode schema) {
         JsonNode ref = schema.get("$ref");
-        if (ref == null) {
-            return null;
-        }
-        String text = ref.asText();
-        return text.substring(text.lastIndexOf('/') + 1);
+        return ref == null ? null : definitionKeyFromRef(ref.asText());
     }
 
-    private static ObjectNode definitionEntry(ObjectNode schema, String key) {
-        JsonNode definitions = schema.get("definitions");
+    private static String definitionKeyFromRef(String ref) {
+        return ref == null ? null : ref.substring(ref.lastIndexOf('/') + 1);
+    }
+
+    private static ObjectNode definitionEntry(JsonNode definitions, String key) {
         if (!(definitions instanceof ObjectNode defs) || !(defs.get(key) instanceof ObjectNode entry)) {
             return null;
         }
         return entry;
+    }
+
+    /** The bundle's shared {@code definitions} pool plus each {@link SchemaType}'s root {@code $ref} into it. */
+    private record Bundle(ObjectNode definitions, Map<SchemaType, String> roots) {
+        static final Bundle EMPTY = new Bundle(JsonNodeFactory.instance.objectNode(), Map.of());
+
+        boolean isEmpty() {
+            return roots.isEmpty();
+        }
     }
 }

@@ -16,12 +16,14 @@ import jakarta.annotation.Nullable;
  * @param id the trigger id.
  * @param type the trigger type.
  * @param evaluation the lightweight trigger evaluation result, or {@code null} if the trigger did not match.
+ * @param dispatchEpoch the dispatch generation echoed from the {@link WorkerTrigger}.
  */
 public record WorkerTriggerResult(
     @JsonProperty
     @JsonDeserialize(as = TriggerId.Default.class) TriggerId id,
     @JsonProperty TriggerType type,
-    @JsonProperty @Nullable TriggerEvaluationResult evaluation) {
+    @JsonProperty @Nullable TriggerEvaluationResult evaluation,
+    @JsonProperty long dispatchEpoch) {
 
     /**
      * Create a new {@link WorkerTriggerResult} from a {@link WorkerTrigger} and a {@link TriggerEvaluationResult}.
@@ -34,7 +36,8 @@ public record WorkerTriggerResult(
         return new WorkerTriggerResult(
             trigger.triggerId(),
             TriggerType.from(trigger.getTrigger()),
-            evaluation
+            evaluation,
+            trigger.getDispatchEpoch()
         );
     }
 }

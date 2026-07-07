@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
 import {reactive} from "vue"
 import KsForm from "../../../src/components/Form/KsForm/KsForm.vue"
 import KsFormItem from "../../../src/components/Form/KsForm/KsFormItem.vue"
@@ -74,6 +75,36 @@ export const InlineForm: Story = {
             </div>
         `,
     }),
+}
+
+/** Inline row – `inline` on a KsFormItem keeps the label on the left and pushes the control to the right edge */
+export const InlineRow: Story = {
+    render: () => ({
+        components: {KsForm, KsFormItem, KsInput},
+        setup() {
+            const form = reactive({name: "", email: ""})
+            return {form}
+        },
+        template: `
+            <div style="padding:24px;max-width:420px">
+                <ks-form :model="form" label-position="top">
+                    <ks-form-item inline label="Name">
+                        <ks-input v-model="form.name" style="width:220px" />
+                    </ks-form-item>
+                    <ks-form-item inline label="Email">
+                        <ks-input v-model="form.email" style="width:220px" />
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const item = canvasElement.querySelector(".kel-form-item.is-inline-row")
+        await expect(item).toBeTruthy()
+        const styles = getComputedStyle(item as Element)
+        await expect(styles.display).toBe("flex")
+        await expect(styles.justifyContent).toBe("space-between")
+    },
 }
 
 /** Size control – form-level size affects all children */

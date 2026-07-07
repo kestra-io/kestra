@@ -2,7 +2,7 @@ import {computed} from "vue"
 import {useI18n} from "vue-i18n"
 import type {Router} from "vue-router"
 import {editor} from "monaco-editor/esm/vs/editor/editor.api"
-import {YamlLanguageConfigurator} from "./yamlLanguageConfigurator"
+import {YamlLanguageConfigurator} from "override/composables/monaco/languages/yamlLanguageConfigurator"
 import {PebbleLanguageConfigurator} from "./pebbleLanguageConfigurator"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
@@ -24,8 +24,9 @@ export default async function configure(
     const mcpStore = useMcpStore()
     let yamlAutocompletion
     if (language === "yaml") {
-        if (domain === "flow" || domain === "testsuites") {
-            // flow completion seems to work fine for testsuites, quickwin
+        if (domain === "flow" || domain === "testsuites" || domain === "reusableinputs") {
+            // flow completion works for testsuites and the reusable-inputs block editor (so `{{ inputs.<sibling> }}`
+            // suggests the block's own inputs); the reusable-inputs-only providers gate on the model URI anyway.
             yamlAutocompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore)
         } else {
             yamlAutocompletion = new YamlAutoCompletion()

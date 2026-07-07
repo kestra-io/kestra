@@ -215,10 +215,12 @@ public class InternalNamespace implements Namespace {
     }
 
     private void purge(NamespaceFile nsFile) throws IOException {
-        // Hard-delete the old entry via storage
-        storage.delete(tenant, namespace, nsFile.storagePath().toUri());
-        // Purge the old metadata entry
+        // Mark the metadata entry deleted before removing the object, so an interrupted purge can never
+        // leave a live index entry pointing at a missing object (which would surface as a 404 on read).
+        // The two stores cannot be updated atomically, so we order them to fail safe: a crash in between
+        // leaves an orphan object (harmless, reclaimable) rather than a dangling index entry.
         stateStore.save(NamespaceFileMetadata.of(tenant, nsFile).toBuilder().deleted(true).build());
+        storage.delete(tenant, namespace, nsFile.storagePath().toUri());
     }
 
     /**
@@ -257,8 +259,32 @@ public class InternalNamespace implements Namespace {
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
-        Path namespaceFilePath = NamespaceFile.of(namespace, normalizedPath, namespaceFileMetadata.getRevision()).storagePath();
-        return storage.get(tenant, namespace, namespaceFilePath.toUri());
+        return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
+    }
+
+    /**
+     * Resolves the storage URI for the given revision of a namespace file, falling back to the most
+     * recent lower revision whose object still exists when the metadata index and the storage have
+     * drifted. This keeps reads resilient to an index entry pointing at a revision whose object was
+     * removed out-of-band (e.g. an object deleted/replaced directly, or a migration that left the
+     * index ahead of storage), serving the latest available revision instead of failing with a 404.
+     *
+     * @throws FileNotFoundException if no revision down to the first has a backing object in storage.
+     */
+    private URI resolveExistingRevisionUri(Path normalizedPath, int revision) throws IOException {
+        for (int candidate = revision; candidate >= 1; candidate--) {
+            URI uri = NamespaceFile.of(namespace, normalizedPath, candidate).storagePath().toUri();
+            if (storage.exists(tenant, namespace, uri)) {
+                if (candidate != revision) {
+                    logger.warn(
+                        "Namespace file '{}' revision {} is missing from storage in namespace '{}' (metadata/storage drift); serving the latest available revision {} instead.",
+                        normalizedPath, revision, namespace, candidate
+                    );
+                }
+                return uri;
+            }
+        }
+        throw fileNotFound(normalizedPath, revision);
     }
 
     /**

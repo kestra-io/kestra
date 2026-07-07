@@ -214,6 +214,114 @@ workerGroups:
 ```
 The **workerGroups** follow exactly the same pattern you see in deployments key **worker**."
 
+## Kestra 2.0 — gRPC worker-controller
+
+> **Breaking change (chart):** Port **50051** (`grpc`) is now exposed on all pods and on the standalone
+> Service by default. Existing deployments will see this port added on their next `helm upgrade`.
+> Update firewall rules or network policies accordingly before upgrading.
+
+Kestra 2.0 introduces a gRPC control plane between the standalone (or controller) server and detached
+worker pods. The chart exposes port **50051** (`grpc`) on all pods and the standalone Service by default.
+
+### Standalone mode (default)
+
+No change needed. The controller runs inside the standalone pod; the default `STATIC localhost:50051`
+config resolves automatically.
+
+### Standalone + detached worker (recommended 2.0 pattern)
+
+Enable the worker deployment and supply the controller endpoint in your application config:
+
+```yaml
+deployments:
+  worker:
+    enabled: true
+
+configurations:
+  application:
+    kestra:
+      worker:
+        controllers:
+          type: STATIC
+          static:
+            endpoints:
+              - host: <release-name>   # Kubernetes Service name, e.g. my-kestra
+                port: 50051
+```
+
+Or via a mounted secret/configmap (recommended for production):
+
+```yaml
+configurations:
+  secrets:
+    - name: kestra-worker-controller
+      key: worker-controller.yaml
+```
+
+```yaml
+# worker-controller.yaml secret content
+kestra:
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: <release-name>
+            port: 50051
+```
+
+### Distributed mode (Kestra 2.0)
+
+In fully distributed mode (no standalone), a dedicated `controller` Deployment must be enabled.
+It hosts the gRPC control plane and gets its own Service at `<release-name>-controller:50051`.
+Workers connect to that Service, not to the webserver/executor.
+
+```yaml
+deployments:
+  standalone:
+    enabled: false
+  webserver:
+    enabled: true
+  executor:
+    enabled: true
+  indexer:
+    enabled: true
+  scheduler:
+    enabled: true
+  controller:
+    enabled: true
+  worker:
+    enabled: true
+
+configurations:
+  application:
+    kestra:
+      worker:
+        controllers:
+          type: STATIC
+          static:
+            endpoints:
+              - host: <release-name>-controller   # dedicated controller Service
+                port: 50051
+```
+
+> **Note:** The webserver pod also starts an embedded controller by default. In distributed mode
+> workers only connect to `<release-name>-controller`, so this embedded controller is unused.
+> This is harmless — Kestra supports multiple controllers for load balancing — but wastes resources.
+> To disable it, add `--no-controller` to the webserver's `extraArgs`:
+>
+> ```yaml
+> deployments:
+>   webserver:
+>     extraArgs:
+>       - --no-controller
+> ```
+
+### Upgrade prerequisite
+
+Instances must be on **>= 1.0.0** before upgrading to 2.0. The 2.0 startup migration drops the old
+JDBC queue tables — this is irreversible. Back up your database before upgrading.
+
 ## Values
 
 ### common settings
@@ -262,6 +370,8 @@ The **workerGroups** follow exactly the same pattern you see in deployments key 
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| deployments.controller.enabled | bool | `false` | Enable the gRPC worker controller in distributed mode (Kestra 2.0). Required when running a detached worker without standalone. Workers must be configured to connect to the controller Service at <release>-controller:50051. |
+| deployments.controller.extraArgs | list | `[]` | Extra arguments to pass to the container. |
 | deployments.executor.enabled | bool | `false` | Enable executor in distributed mode. |
 | deployments.executor.extraArgs | list | `[]` | Extra arguments to pass to the container. |
 | deployments.indexer.enabled | bool | `false` | Enable indexer in distributed mode. |
@@ -326,6 +436,7 @@ The **workerGroups** follow exactly the same pattern you see in deployments key 
 |-----|------|---------|-------------|
 | service.annotations | object | `{}` | Annotations to apply to the Service. |
 | service.labels | object | `{}` | Labels to apply to the Service. |
+| service.ports.grpc | object | `{"containerPort":50051,"port":50051,"protocol":"TCP","targetPort":50051}` | gRPC controller port (Kestra 2.0). Workers connect to the standalone controller at this port. |
 | service.ports.http | object | `{"containerPort":8080,"port":8080,"protocol":"TCP","targetPort":"http"}` | HTTP service port mapping. |
 | service.ports.management | object | `{"containerPort":8081,"port":8081,"protocol":"TCP","targetPort":"management"}` | Management (metrics/health) service port mapping. |
 | service.type | string | `"ClusterIP"` | Kubernetes Service type (ClusterIP, NodePort, LoadBalancer). |

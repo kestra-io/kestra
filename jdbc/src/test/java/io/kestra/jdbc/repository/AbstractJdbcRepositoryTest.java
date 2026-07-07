@@ -63,13 +63,13 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                 DSL.field(columnName).notIn(List.of(assertValue))
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH, null)).isEqualTo(
-                DSL.field(columnName).like(assertValue + "%")
+                DSL.field(columnName).startsWith(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.ENDS_WITH, null)).isEqualTo(
-                DSL.field(columnName).like("%" + assertValue)
+                DSL.field(columnName).endsWith(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.CONTAINS, null)).isEqualTo(
-                DSL.field(columnName).like("%" + assertValue + "%")
+                DSL.field(columnName).contains(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.REGEX, null)).isEqualTo(
                 DSL.field(columnName).likeRegex(assertValue)
@@ -79,6 +79,44 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                     .or(DSL.field(columnName).startsWith(assertValue + "."))
             );
         });
+    }
+
+    @Test
+    void shouldUseIsNullWhenEqualsValueIsNull() {
+        // Given
+        Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
+
+        // When / Then — EQUALS null must generate IS NULL, not col = NULL
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.EQUALS, null))
+            .isEqualTo(DSL.field(columnName).isNull());
+
+        // When / Then — NOT_EQUALS null must generate IS NOT NULL
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_EQUALS, null))
+            .isEqualTo(DSL.field(columnName).isNotNull());
+    }
+
+    @Test
+    void shouldThrowWhenNullValueIsUsedWithGreaterThanOrLessThan() {
+        // Given / When / Then
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.GREATER_THAN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("GREATER_THAN operation requires a non-null value");
+
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.LESS_THAN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("LESS_THAN operation requires a non-null value");
+    }
+
+    @Test
+    void shouldThrowWhenNullValueIsUsedWithInOrNotIn() {
+        // Given / When / Then
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.IN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("IN operation requires a non-null value");
+
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_IN, null))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("NOT_IN operation requires a non-null value");
     }
 
     @Test
@@ -95,6 +133,26 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
             .hasMessageContaining("STARTS_WITH operation requires a string value, got a List");
     }
     
+    @Test
+    void shouldEscapeWildcardCharactersInLikeOperations() {
+        // Given — a value containing SQL LIKE metacharacters
+        String wildcardValue = "%";
+        String underscoreValue = "_";
+        Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
+
+        // When / Then — CONTAINS: metacharacter must be escaped, not treated as a wildcard
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.CONTAINS, null))
+            .isEqualTo(DSL.field(columnName).contains(wildcardValue));
+
+        // When / Then — STARTS_WITH: % in value must not produce an open-ended match
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.STARTS_WITH, null))
+            .isEqualTo(DSL.field(columnName).startsWith(wildcardValue));
+
+        // When / Then — ENDS_WITH: _ in value must not act as a single-char wildcard
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, underscoreValue, QueryFilter.Op.ENDS_WITH, null))
+            .isEqualTo(DSL.field(columnName).endsWith(underscoreValue));
+    }
+
     @Test
     void tagsConditionShouldDelegateToDefaultHandlers() {
         String assertValue = "my-tag";

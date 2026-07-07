@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import io.kestra.core.preview.FileRenderer;
 import org.apache.commons.io.IOUtils;
 
 import com.google.common.collect.ImmutableMap;
@@ -86,6 +87,7 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getDataFilters(), (Class) DataFilter.class, "data-filters"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getApps(), AppPluginInterface.class, "apps"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getAppBlocks(), AppBlockInterface.class, "app-blocks"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getFileRenderers(), FileRenderer.class, "file-renderers"));
 
         result.addAll(guides(registeredPlugin));
 

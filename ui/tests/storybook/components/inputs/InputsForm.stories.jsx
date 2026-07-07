@@ -196,21 +196,23 @@ export const Wizard = {
         expect(can.queryByTestId("inputs-wizard-recap")).toBeNull();
         expect(can.getByTestId("on-recap")).toHaveTextContent("false");
 
-        // Progress stepper (KsSteps): one step per fillable step ("Inputs", "Environment", "Inputs"),
-        // the current one in the "process" state.
-        const stepper = can.getByTestId("wizard-steps");
-        expect(stepper.querySelectorAll(".kel-step")).toHaveLength(3);
-        expect(stepper).toHaveTextContent("Environment");
-        expect(stepper.querySelectorAll(".kel-step__head")[0].className).toContain("is-process");
+        // Progress bar (KsSteps variant="bar"): one label-less segment per fillable step
+        // (name, Environment, team); the current one is "active", the rest "upcoming".
+        const bar = can.getByTestId("wizard-progress");
+        expect(bar.querySelectorAll(".ks-stepbar__seg")).toHaveLength(3);
+        expect(bar.querySelectorAll(".ks-stepbar__seg")[0].className).toContain("is-active");
 
         // Next -> step 2 (the FORM "Environment", showing its dotted child region).
         await userEvent.click(can.getByTestId("wizard-next"));
         await waitFor(() => expect(can.getByTestId("input-form-environment.region")).toBeTruthy());
         expect(can.getByTestId("wizard-back")).toBeTruthy();
+        // The active FORM's displayName shows as a header above its fields.
+        expect(canvasElement.querySelector(".wizard-step-title")).toHaveTextContent("Environment");
 
-        // Stepper tracks progress: step 0 completed (success), step 1 ("Environment") now in process.
-        expect(stepper.querySelectorAll(".kel-step__head")[0].className).toContain("is-success");
-        expect(stepper.querySelectorAll(".kel-step__head")[1].className).toContain("is-process");
+        // Bar tracks progress: step 0 passed (filled), step 1 ("Environment") now active.
+        const segs = can.getByTestId("wizard-progress").querySelectorAll(".ks-stepbar__seg");
+        expect(segs[0].className).toContain("is-filled");
+        expect(segs[1].className).toContain("is-active");
 
         // Next -> step 3 (plain "team").
         await userEvent.click(can.getByTestId("wizard-next"));

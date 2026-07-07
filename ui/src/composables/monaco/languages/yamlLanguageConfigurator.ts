@@ -115,9 +115,9 @@ function filterMissingRequiredTaskProperties({
 }
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
-    private readonly yamlAutoCompletionObject: YamlAutoCompletion
-    private readonly router?: Router
-    private readonly flowStore?: ReturnType<typeof useFlowStore>
+    protected readonly yamlAutoCompletionObject: YamlAutoCompletion
+    protected readonly router?: Router
+    protected readonly flowStore?: ReturnType<typeof useFlowStore>
 
     constructor(yamlAutoCompletion: YamlAutoCompletion, router?: Router, flowStore?: ReturnType<typeof useFlowStore>) {
         super("yaml")
@@ -193,9 +193,24 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             const isTypeValueContext = /^\s*(?:-\s*)?type\s*:\s*$/i.test(
                 beforeWord,
             )
-            // Split plugin class names (`a.b.C`) into lowercase searchable segments.
-            const getLabelSegments = (label: string) =>
-                label.toLowerCase().split(/\.(?=\w)/).filter(Boolean)
+            // Split plugin FQCN (`a.b.C`) into lowercase searchable segments,
+            // plus class name words in the last segment (e.g. `SentryExecution` → `sentry`, `execution`).
+            const getLabelSegments = (label: string) => {
+                const result: string[] = []
+                const dotSegments = label.split(/\.(?=\w)/)
+
+                for (const seg of dotSegments) {
+                    result.push(seg.toLowerCase())
+                }
+
+                const lastSegment = dotSegments[dotSegments.length - 1]
+                const parts = lastSegment.split(/(?=[A-Z])/)
+                if (parts.length > 1) {
+                    result.push(...parts.map((p) => p.toLowerCase()))
+                }
+
+                return result
+            }
             // Match typed input against any segment, while still preferring the last segment.
             const matchesTypeInput = (label: string, input: string) => {
                 if (!input) return true
@@ -622,8 +637,17 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         this.registerSubflowLinks(autoCompletionProviders)
+        this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders
+    }
+
+    /**
+     * Seam for edition-specific Monaco providers (hover/definition/etc.). Empty in open-source; the Enterprise
+     * {@link YamlLanguageConfigurator} subclass overrides it to register the reusable-inputs flow-editor providers.
+     */
+    protected registerEditionProviders(_disposables: IDisposable[], _t: ReturnType<typeof useI18n>["t"]): void {
+        // no-op in open-source
     }
 
     private registerEditorArtifacts(t: ReturnType<typeof useI18n>["t"]): IDisposable[] {

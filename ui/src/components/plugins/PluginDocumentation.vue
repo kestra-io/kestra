@@ -6,7 +6,7 @@
                     class="plugin-icon"
                     :cls="currentPlugin.cls"
                     onlyIcon
-                    :icons="pluginsStore.icons"
+                    :loadIcon="pluginsStore.loadIcon"
                 />
                 <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}
@@ -122,11 +122,6 @@
         color: var(--ks-status-info);
         border: 1px solid var(--ks-border-info);
         white-space: nowrap;
-
-        :deep(.material-design-icon) {
-            position: absolute;
-            bottom: 0;
-        }
 
         @media (max-width: 576px) {
             padding: 6px 12px;

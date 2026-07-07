@@ -13,10 +13,15 @@ public record TriggerExecutionTerminated(
     TriggerId id,
     String executionId,
     State.Type executionState,
+    long dispatchEpoch,
     Instant timestamp,
     EventId eventId) implements TriggerEvent {
 
     public TriggerExecutionTerminated(TriggerId id, String executionId, State.Type executionState) {
-        this(id, executionId, executionState, Instant.now(), EventId.create());
+        this(id, executionId, executionState, 0L);
+    }
+
+    public TriggerExecutionTerminated(TriggerId id, String executionId, State.Type executionState, long dispatchEpoch) {
+        this(id, executionId, executionState, dispatchEpoch, Instant.now(), EventId.create());
     }
 }

@@ -84,8 +84,8 @@
             text: var(--ks-status-error),
         ),
         info: (
-            bg: var(--ks-log-background-info),
-            border: var(--ks-log-border-info),
+            bg: #718BFE1A,
+            border: transparent,
             text: var(--ks-status-info),
         ),
     );
@@ -112,6 +112,10 @@
             .material-design-icon__svg {
                 position: static;
             }
+        }
+
+        &.kel-tag--default.kel-tag--plain [class*="kel-icon"] .material-design-icon {
+            color: var(--ks-icon-muted);
         }
 
         &.kel-tag--plain {
@@ -158,7 +162,7 @@
             &.kel-tag--plain {
                 --kel-tag-bg-color: var(--ks-bg-tag);
                 --kel-tag-text-color: var(--ks-text-primary);
-                --kel-tag-border-color: var(--ks-border-strong);
+                --kel-tag-border-color: transparent;
                 --kel-tag-hover-color: var(--ks-text-primary);
 
                 a {

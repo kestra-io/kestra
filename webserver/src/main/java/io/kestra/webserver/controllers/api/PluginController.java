@@ -11,11 +11,14 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -68,6 +71,9 @@ public class PluginController {
     @Named("PLUGIN")
     protected Searchable<Plugin> pluginSearchable;
 
+    @Inject
+    protected EditionProvider editionProvider;
+
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -105,6 +111,8 @@ public class PluginController {
     )
     public List<InputType> getAllInputTypes() throws ClassNotFoundException {
         return Stream.of(Type.values())
+            // exclude edition-restricted (@EeOnly) input types (e.g. REUSABLE_INPUTS) from the open-source listing
+            .filter(type -> !type.cls().isAnnotationPresent(EeOnly.class))
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
             .toList();
     }
@@ -224,6 +232,29 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
+        return HttpResponse.ok(pluginIconsIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "icons/{cls}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon",
+        description = "Lightweight alternative to `GET /plugins/icons` for resolving one icon at a time, " +
+            "so callers don't have to download the whole plugin catalog just to render one task icon. " +
+            "Not every class has an icon, which is a normal outcome (not every plugin ships one), so this " +
+            "always answers 200 with `icon: null` rather than 404 — a bare 404 here would be indistinguishable, " +
+            "to the frontend's shared HTTP client, from a genuine routing error and trip its global error page."
+    )
+    public HttpResponse<PluginIconResponse> getPluginIcon(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+
+        return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Cacheable("default")
+    protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
             .flatMap(
@@ -269,7 +300,7 @@ public class PluginController {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
         icons.putAll(aliasIcons);
 
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return icons;
     }
 
     @Get(uri = "icons/groups")
@@ -393,7 +424,8 @@ public class PluginController {
                         manifest.put(
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash()))
+                                .filter(module -> isDistributionAllowed(module.distribution()))
+                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()))
                                 .toList()
                         );
                     }
@@ -402,6 +434,13 @@ public class PluginController {
         }
 
         return new PluginUiManifest(manifest);
+    }
+
+    private boolean isDistributionAllowed(PluginDistribution distribution) {
+        if (editionProvider.get() == EditionProvider.Edition.OSS) {
+            return distribution != PluginDistribution.EE;
+        }
+        return true;
     }
 
     @Get(value = "/{group}/pluginUi/{path:.*}")
@@ -495,6 +534,14 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Always-present wrapper around a possibly-absent {@link PluginIcon}, so the response body
+     * itself is never null. Micronaut treats a null response body as a 404, which would defeat
+     * the purpose of {@link #getPluginIcon} always answering 200.
+     */
+    public record PluginIconResponse(@Nullable PluginIcon icon) {
     }
 
     /**

@@ -115,6 +115,7 @@
         width: auto;
         height: calc(100% - 4rem);
         overflow: auto;
+        margin-right: 1rem;
     }
     .namespace-files-no-selection {
         width: 100%;

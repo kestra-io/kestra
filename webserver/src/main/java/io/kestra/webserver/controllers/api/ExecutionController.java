@@ -1,30 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.*;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.reactivestreams.Publisher;
-import org.slf4j.event.Level;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.fasterxml.jackson.databind.SequenceWriter;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
@@ -34,7 +15,6 @@ import io.kestra.core.executor.command.*;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
@@ -47,32 +27,34 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
-import io.kestra.core.services.ExecutionStreamingService;
-import io.kestra.core.storages.*;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.Logs;
-import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.*;
+import io.kestra.plugin.core.preview.TextFileRenderer;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
-import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
@@ -80,7 +62,6 @@ import io.kestra.webserver.models.api.ApiLightExecution;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -88,9 +69,6 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.filepreview.FileRender;
-import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
-
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
@@ -120,6 +98,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -127,12 +106,34 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.reactivestreams.Publisher;
+import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import javax.annotation.CheckReturnValue;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -163,6 +164,9 @@ public class ExecutionController {
 
     @Inject
     private FlowInputOutput flowInputOutput;
+
+    @Inject
+    private io.kestra.core.runners.ReusableInputsExpander reusableInputsExpander;
 
     @Inject
     private StorageInterface storageInterface;
@@ -229,6 +233,8 @@ public class ExecutionController {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -554,7 +560,7 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
+        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
         return webhook(find, key, path, request);
     }
 
@@ -586,7 +592,8 @@ public class ExecutionController {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
                     String webhookKey = runContext.render(w.getKey()).trim();
-                    return webhookKey.equals(key);
+                    // compare via MessageDigest.isEqual to prevent timing attacks
+                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
                     log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
@@ -683,8 +690,36 @@ public class ExecutionController {
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate,
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
         @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind) {
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
+        final String tenantId = tenantService.resolveTenant();
         List<Label> parsedLabels = parseLabels(labels);
+        final Flow flow;
+        try {
+            flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
+        } catch (NoSuchElementException e) {
+            // No non-draft revision was found. If the flow exists but only has draft revisions,
+            // reject the request as unprocessable with an explanation instead of a bare 404, so the
+            // user knows to save a published revision before executing without a revision.
+            if (revision.isEmpty()) {
+                Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
+                if (latestAny.isPresent() && latestAny.get().isDraft()) {
+                    Flow draftFlow = latestAny.get();
+                    throw new IllegalArgumentException("Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision.");
+                }
+            }
+            throw e;
+        }
+
+        // Only drafts need re-validation here: published revisions are already validated at save
+        // time, so re-validating every execution would just add cost to the hot path. A draft can be
+        // saved with constraint violations, so when the user explicitly executes one (by passing its
+        // revision) the request is rejected as unprocessable with the validation error, rather than
+        // starting an execution that cannot run.
+        if (flow.isDraft()) {
+            Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
+            if (violations.isPresent()) {
+                throw new IllegalArgumentException("Flow execution blocked: flow definition is invalid. " + violations.get().getMessage());
+            }
+        }
 
 
         var executionId = IdUtils.create();
@@ -910,11 +945,12 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "/{executionId}/file", produces = {MediaType.APPLICATION_OCTET_STREAM, "application/x-ndjson"})
     @Operation(tags = { "Executions" }, summary = "Download file for an execution")
     public HttpResponse<StreamedFile> downloadFileFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The internal storage uri") @QueryValue URI path) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @QueryValue URI path,
+        @Parameter(description = "The requested file format; RAW returns the raw bytes (default), JSONL converts Ion records to JSON Lines") @QueryValue(defaultValue = "RAW") FileFormat format) throws IOException, URISyntaxException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
@@ -935,6 +971,29 @@ public class ExecutionController {
             }
             default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
         };
+
+        if (format == FileFormat.JSONL) {
+            if (!"ion".equalsIgnoreCase(FilenameUtils.getExtension(path.toString()))) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "JSONL format is only supported for Ion files");
+            }
+            String downloadFilename = FilenameUtils.getBaseName(path.toString()) + ".jsonl";
+            List<Object> records = new ArrayList<>();
+            try (InputStream is = new BufferedInputStream(fileHandler)) {
+                FileSerde.read(is, records::add);
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (Writer writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
+                 SequenceWriter seq = FileSerde.createJsonSequenceWriter(writer, new TypeReference<>() {})) {
+                for (Object record : records) {
+                    seq.write(record);
+                }
+            }
+            return HttpResponse.ok(
+                new StreamedFile(new ByteArrayInputStream(baos.toByteArray()), new MediaType("application/x-ndjson"))
+                    .attach(downloadFilename)
+            );
+        }
+
         return HttpResponse.ok(
             new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
                 .attach(FilenameUtils.getName(path.toString()))
@@ -1772,9 +1831,14 @@ public class ExecutionController {
             );
         }
 
-        return submitBatchAction(executions, (execution, opId) ->
-        {
-            Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+        return submitBatchAction(executions, (execution, opId) -> {
+            // When latestRevision is true the replay starts as a new execution against the
+            // latest non-draft revision; otherwise it stays bound to the execution's original
+            // revision (which may itself be a draft - the user explicitly ran it).
+            Flow flow = (latestRevision
+                ? flowRepository.findByIdForExecution(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())
+                : flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))
+            ).orElseThrow();
             try {
                 innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
             } catch (QueueException e) {
@@ -1892,14 +1956,20 @@ public class ExecutionController {
             return validateResponse;
         }
 
-        String extension = FilenameUtils.getExtension(path.toString());
         Optional<Charset> charset;
-
         try {
             charset = Optional.ofNullable(encoding).map(Charset::forName);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
+
+        String extension = FilenameUtils.getExtension(path.toString());
+        FileRenderer renderer = pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
+            .map(this::instantiate)
+            .filter(fileRenderer -> fileRenderer.supports(extension))
+            .findFirst()
+            .orElseGet(TextFileRenderer::new);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -1913,14 +1983,21 @@ public class ExecutionController {
         };
 
         try (fileStream) {
-            FileRender fileRender = FileRenderBuilder.of(
+            FilePreview preview = renderer.render(
                 extension,
                 fileStream,
                 charset,
-                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows)
-            );
+                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows));
 
-            return HttpResponse.ok(fileRender);
+            return HttpResponse.ok(preview);
+        }
+    }
+
+    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
+        try {
+            return fileRenderer.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -2256,7 +2333,8 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
-        return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2267,7 +2345,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The flow revision") @Nullable Integer revision) {
 
-        return FlowForExecution.of(flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow());
+        Flow flow = flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow();
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)

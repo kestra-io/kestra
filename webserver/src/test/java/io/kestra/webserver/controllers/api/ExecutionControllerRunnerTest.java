@@ -199,6 +199,50 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
+    void executingInvalidDraftIsRejected() {
+        // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty)
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("explicitly executing an invalid draft by revision is rejected as unprocessable")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection surfaces that the flow definition is invalid")
+            .contains("flow definition is invalid");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void executingDraftOnlyFlowWithoutRevisionIsRejected() {
+        // webhook-draft has only draft revisions, so it cannot resolve to a published version
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("running a draft-only flow without a revision is rejected as unprocessable, not with a bare 404")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection explains that a published revision must be saved before executing without a revision")
+            .contains("only has draft revisions");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
@@ -3037,6 +3081,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs.yaml" })
     void commaInOneOfMultiLabels() {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
         String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);

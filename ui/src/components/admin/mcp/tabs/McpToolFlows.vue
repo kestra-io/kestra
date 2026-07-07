@@ -287,7 +287,7 @@
 <style lang="scss" scoped>
     .mono {
         font-family: var(--ks-font-family-mono);
-        font-size: 0.8125rem;
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-text-primary);
         background: transparent;
         padding: 0;

@@ -60,7 +60,7 @@
     "save": "Salva",
     "save_as_draft": "Salva come bozza",
     "draft": "Bozza",
-    "draft_flow_warning": "Questa revisione del flow è una bozza. L'esecuzione verrà eseguita su questa revisione in bozza e potrebbe fallire immediatamente se la definizione del flow non è valida.",
+    "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
     "save task": "Salva Task",
     "saved": "Salvato con successo",
     "saved as draft": "Salvato come bozza con successo",

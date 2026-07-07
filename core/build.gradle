@@ -44,6 +44,23 @@ dependencies {
     implementation 'com.github.ksuid:ksuid:1.1.4'
     api 'org.apache.httpcomponents.client5:httpclient5'
 
+    // httpclient5's content-compression support (DecompressingEntity) detects brotli4j
+    // reflectively whenever it's on the classpath (pulled in by any module/plugin) and turns on
+    // Brotli negotiation for every HTTP request. Without a matching native artifact,
+    // DecoderJNI.nativeCreate throws UnsatisfiedLinkError as soon as a server actually replies
+    // with Content-Encoding: br. Pin base+native to the same version so Brotli either works
+    // end-to-end or isn't silently half-wired.
+    constraints {
+        implementation('com.aayushatharva.brotli4j:brotli4j') {
+            version { strictly '1.23.0' }
+        }
+    }
+    runtimeOnly 'com.aayushatharva.brotli4j:brotli4j:1.23.0'
+    runtimeOnly 'com.aayushatharva.brotli4j:native-linux-x86_64:1.23.0'
+    runtimeOnly 'com.aayushatharva.brotli4j:native-linux-aarch64:1.23.0'
+    runtimeOnly 'com.aayushatharva.brotli4j:native-osx-x86_64:1.23.0'
+    runtimeOnly 'com.aayushatharva.brotli4j:native-osx-aarch64:1.23.0'
+
     // plugins
     implementation 'org.apache.maven.resolver:maven-resolver-impl'
     implementation 'org.apache.maven.resolver:maven-resolver-supplier-mvn3'

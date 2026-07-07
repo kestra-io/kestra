@@ -42,6 +42,7 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.executor.ExecutionDelayProcessor;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
@@ -89,6 +90,7 @@ public final class ExecutorTestHarness {
     private final SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
     private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
+    private final ExecutionDelayProcessor executionDelayProcessor;
 
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
@@ -308,6 +310,14 @@ public final class ExecutorTestHarness {
             multipleConditionStateStore,
             executionCommandQueue
         );
+        this.executionDelayProcessor = new ExecutionDelayProcessor(
+            executionDelayStateStore,
+            executionStateStore,
+            flowMetaStore,
+            executionService,
+            executorService,
+            metricRegistry
+        );
     }
 
     /**
@@ -416,6 +426,10 @@ public final class ExecutorTestHarness {
 
     public MultipleConditionEventMessageHandler multipleConditionEventMessageHandler() {
         return multipleConditionEventMessageHandler;
+    }
+
+    public ExecutionDelayProcessor executionDelayProcessor() {
+        return executionDelayProcessor;
     }
 
     // --- in-memory fakes (state seeding + assertion channels)

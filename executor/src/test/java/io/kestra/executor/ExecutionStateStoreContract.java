@@ -97,6 +97,30 @@ public abstract class ExecutionStateStoreContract {
     }
 
     @Test
+    void shouldInsertReturnedExecutionAndKeepOriginalWhenLockReturnsDifferentId() {
+        // Given: a replay (CREATE_NEW_EXECUTION retry) mints a NEW execution inside the lock
+        Flow flow = flow();
+        Execution original = Execution.newExecution(flow, Collections.emptyList());
+        store().create(original);
+        Execution replayed = Execution.newExecution(flow, Collections.emptyList());
+
+        // When: the lock callback returns an execution with a different id
+        Optional<ExecutorContext> result = store().lock(
+            original.getId(),
+            e -> new ExecutorContext(replayed)
+        );
+
+        // Then: the new execution is inserted under its own id, the locked row is untouched
+        assertThat(result).isPresent();
+        Execution insertedRow = store().findById(replayed.getId());
+        assertThat(insertedRow).isNotNull();
+        assertThat(insertedRow.getId()).isEqualTo(replayed.getId());
+        Execution originalRow = store().findById(original.getId());
+        assertThat(originalRow).isNotNull();
+        assertThat(originalRow.getState().getCurrent()).isEqualTo(original.getState().getCurrent());
+    }
+
+    @Test
     void shouldReturnEmptyWhenLockFunctionReturnsNull() {
         // Given
         Flow flow = flow();

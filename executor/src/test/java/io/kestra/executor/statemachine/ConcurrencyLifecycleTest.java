@@ -1,6 +1,7 @@
 package io.kestra.executor.statemachine;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,8 @@ import static org.mockito.Mockito.doReturn;
  * Layer-1 sagas of the concurrency-limit lifecycle through the real
  * {@code ExecutionEventMessageHandler}: how an execution claims a slot in the running counter,
  * how the QUEUE/CANCEL/FAIL behaviors interact with the counter and the queued store, how the
- * counter is keyed, and how killing a queued execution releases it — no Micronaut, no database.
+ * counter is keyed, how killing a queued execution releases it, and how terminations drain the
+ * queue through the {@code ConcurrencySlotReleaseProcessor} — no Micronaut, no database.
  * The full-runner twins live in {@code FlowConcurrencyCaseTest}/{@code AbstractRunnerConcurrencyTest}
  * (seconds per scenario over a real backend); these run in milliseconds.
  */
@@ -288,6 +290,131 @@ class ConcurrencyLifecycleTest {
         Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
     }
 
+    // --- releasing a slot: claim through the handler, free through the release processor —
+    // the exact pair DefaultExecutor#toExecution orchestrates. These sagas pin the seams a
+    // namespace- or tenant-level concurrency limit would have to preserve: per-flow counter
+    // keying, per-flow pop scope, and unlimited flows being invisible to the machinery.
+
+    @Test
+    void shouldDrainQueueInArrivalOrderAsEachSlotFrees() {
+        // Given: the single slot is held and two executions wait in the queue
+        FlowWithSource flow = queueFlow(1);
+        harness.registerFlow(flow);
+        ExecutorContext first = startExecution(flow);
+        Execution second = Executions.created(flow);
+        harness.executionStateStore().save(second);
+        handleEvent(second);
+        Execution third = Executions.created(flow);
+        harness.executionStateStore().save(third);
+        handleEvent(third);
+
+        // When: the slot holder terminates
+        Optional<Execution> firstPopped = release(terminated(flow, first.getExecution()));
+
+        // Then: the oldest queued execution takes over the freed slot, already marked RUNNING
+        Assertions.assertThat(firstPopped).isPresent();
+        Assertions.assertThat(firstPopped.get().getId()).isEqualTo(second.getId());
+        Assertions.assertThat(firstPopped.get().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued())
+            .extracting(queued -> queued.getExecution().getId())
+            .containsExactly(third.getId());
+
+        // When: the successor terminates in turn
+        Optional<Execution> secondPopped = release(terminated(flow, firstPopped.get()));
+
+        // Then: the last queued execution pops
+        Assertions.assertThat(secondPopped).isPresent();
+        Assertions.assertThat(secondPopped.get().getId()).isEqualTo(third.getId());
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued()).isEmpty();
+
+        // When: the last one terminates with nobody waiting
+        Optional<Execution> nonePopped = release(terminated(flow, secondPopped.get()));
+
+        // Then: the queue is drained and every slot is free again
+        Assertions.assertThat(nonePopped).isEmpty();
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(0);
+    }
+
+    @Test
+    void shouldNotClaimSecondSlotWhenPoppedExecutionResumes() {
+        // Given: the slot holder terminated and handed its slot to the queued execution
+        FlowWithSource flow = queueFlow(1);
+        harness.registerFlow(flow);
+        ExecutorContext first = startExecution(flow);
+        Execution second = Executions.created(flow);
+        harness.executionStateStore().save(second);
+        handleEvent(second);
+        Execution popped = release(terminated(flow, first.getExecution())).orElseThrow();
+
+        // When: DefaultExecutor emits the popped execution and its event comes back through the
+        // executionQueue consumer — which persists the message first (the handler works on the
+        // stored row) and maps a non-CREATED execution to an UPDATED event
+        harness.executionStateStore().create(popped);
+        ExecutorContext resumed = harness.executionEventMessageHandler()
+            .handle(new ExecutionEvent(popped, ExecutionEventType.UPDATED))
+            .orElseThrow();
+
+        // Then: the concurrency gate only guards CREATED (and restarted-failed) executions, so
+        // the resume neither claims a second slot nor parks the execution again
+        Assertions.assertThat(resumed.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued()).isEmpty();
+    }
+
+    @Test
+    void shouldPopOnlyQueuedExecutionsOfTheSameFlow() {
+        // Given: two flows in the SAME namespace, each with its single slot held and one
+        // execution queued behind it
+        Concurrency limitOne = Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(1).build();
+        FlowWithSource flowA = Flows.of(Flows.builder(logTask()).id("drain-a").concurrency(limitOne).build());
+        FlowWithSource flowB = Flows.of(Flows.builder(logTask()).id("drain-b").concurrency(limitOne).build());
+        harness.registerFlow(flowA).registerFlow(flowB);
+        ExecutorContext runnerA = startExecution(flowA);
+        startExecution(flowB);
+        Execution queuedA = Executions.created(flowA);
+        harness.executionStateStore().save(queuedA);
+        handleEvent(queuedA);
+        Execution queuedB = Executions.created(flowB);
+        harness.executionStateStore().save(queuedB);
+        handleEvent(queuedB);
+
+        // When: flow A's slot holder terminates
+        Optional<Execution> popped = release(terminated(flowA, runnerA.getExecution()));
+
+        // Then: only flow A's queued execution pops — the freed slot never bleeds into flow B,
+        // whose execution stays parked behind its own untouched counter
+        Assertions.assertThat(popped).isPresent();
+        Assertions.assertThat(popped.get().getId()).isEqualTo(queuedA.getId());
+        Assertions.assertThat(harness.executionQueuedStateStore().queued())
+            .extracting(queued -> queued.getExecution().getId())
+            .containsExactly(queuedB.getId());
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flowA)).isEqualTo(1);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flowB)).isEqualTo(1);
+    }
+
+    // --- flows without a limit
+
+    @Test
+    void shouldLeaveConcurrencyMachineryUntouchedWhenFlowHasNoLimit() {
+        // Given: a flow with no concurrency configuration
+        FlowWithSource flow = Flows.of(logTask());
+        harness.registerFlow(flow);
+
+        // When: several executions start
+        ExecutorContext first = startExecution(flow);
+        ExecutorContext second = startExecution(flow);
+
+        // Then: all run — an unlimited flow never touches the counter or the queued store, and
+        // its terminations release nothing (DefaultExecutor#toExecution skips the release
+        // processor entirely when the flow defines no concurrency)
+        Assertions.assertThat(first.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(second.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(0);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued()).isEmpty();
+    }
+
     // --- re-entry
 
     @Test
@@ -328,6 +455,14 @@ class ConcurrencyLifecycleTest {
         return harness.executionEventMessageHandler()
             .handle(new ExecutionEvent(execution, ExecutionEventType.CREATED))
             .orElseThrow();
+    }
+
+    private Optional<Execution> release(ExecutorContext terminated) {
+        return harness.concurrencySlotReleaseProcessor().release(terminated);
+    }
+
+    private static ExecutorContext terminated(FlowWithSource flow, Execution running) {
+        return new ExecutorContext(running, flow).withExecution(running.withState(State.Type.SUCCESS), "test");
     }
 
     private static FlowWithSource queueFlow(int limit) {

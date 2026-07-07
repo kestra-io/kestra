@@ -18,6 +18,8 @@ import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
@@ -80,7 +82,12 @@ public abstract class AbstractFeatureUsageReportTest {
             .id(IdUtils.create())
             .namespace(namespace)
             .labels(List.of(new Label("key", "value")))
-            .inputs(List.of(StringInput.builder().id("in").type(Type.STRING).build()))
+            .inputs(List.of(
+                StringInput.builder().id("in").type(Type.STRING).build(),
+                FormInput.builder().id("form").type(Type.FORM).inputs(List.of(
+                    IntInput.builder().id("count").type(Type.INT).build()
+                )).build()
+            ))
             .outputs(List.of(Output.builder().id("out").type(Type.STRING).value("value").build()))
             .variables(Map.of("var", "value"))
             .workerSelector(new WorkerSelector(List.of("tag"), null))
@@ -172,6 +179,9 @@ public abstract class AbstractFeatureUsageReportTest {
             assertThat(after.getFlows().getHasSlaCount()).isEqualTo(before.getFlows().getHasSlaCount() + 1);
             assertThat(after.getFlows().getHasChecksCount()).isEqualTo(before.getFlows().getHasChecksCount() + 1);
             assertThat(after.getFlows().getHasQuotasCount()).isEqualTo(before.getFlows().getHasQuotasCount() + 1);
+            assertThat(after.getFlows().getInputTypeCount().getOrDefault("STRING", 0L)).isEqualTo(before.getFlows().getInputTypeCount().getOrDefault("STRING", 0L) + 1);
+            assertThat(after.getFlows().getInputTypeCount().getOrDefault("FORM", 0L)).isEqualTo(before.getFlows().getInputTypeCount().getOrDefault("FORM", 0L) + 1);
+            assertThat(after.getFlows().getInputTypeCount().getOrDefault("INT", 0L)).isEqualTo(before.getFlows().getInputTypeCount().getOrDefault("INT", 0L) + 1);
 
             assertThat(after.getFlows().getTasks().getHasRetryCount()).isEqualTo(before.getFlows().getTasks().getHasRetryCount() + 1);
             assertThat(after.getFlows().getTasks().getHasTimeoutCount()).isEqualTo(before.getFlows().getTasks().getHasTimeoutCount() + 1);

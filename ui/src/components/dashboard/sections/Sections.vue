@@ -25,28 +25,32 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KsDropdown
+                            <KsTooltip
                                 v-if="isExportableChart(chart.type)"
-                                placement="bottom-end"
-                                trigger="click"
+                                :content="$t('dashboards.export')"
                             >
-                                <KsButton
-                                    :icon="Download"
-                                    :aria-label="$t('dashboards.export')"
-                                    link
-                                    class="ms-2"
-                                />
-                                <template #dropdown>
-                                    <KsDropdownMenu>
-                                        <KsDropdownItem @click="exportChart(chart, 'CSV')">
-                                            {{ $t('dashboards.exportTo.csv') }}
-                                        </KsDropdownItem>
-                                        <KsDropdownItem @click="exportChart(chart, 'ION')">
-                                            {{ $t('dashboards.exportTo.ion') }}
-                                        </KsDropdownItem>
-                                    </KsDropdownMenu>
-                                </template>
-                            </KsDropdown>
+                                <KsDropdown
+                                    placement="bottom-end"
+                                    trigger="click"
+                                >
+                                    <KsButton
+                                        :icon="Download"
+                                        :aria-label="$t('dashboards.export')"
+                                        link
+                                        class="ms-2"
+                                    />
+                                    <template #dropdown>
+                                        <KsDropdownMenu>
+                                            <KsDropdownItem @click="exportChart(chart, 'CSV')">
+                                                {{ $t('dashboards.exportTo.csv') }}
+                                            </KsDropdownItem>
+                                            <KsDropdownItem @click="exportChart(chart, 'ION')">
+                                                {{ $t('dashboards.exportTo.ion') }}
+                                            </KsDropdownItem>
+                                        </KsDropdownMenu>
+                                    </template>
+                                </KsDropdown>
+                            </KsTooltip>
 
                             <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
@@ -92,7 +96,7 @@
     import {useRoute} from "vue-router"
     const route = useRoute()
 
-    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
+    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsTooltip} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()

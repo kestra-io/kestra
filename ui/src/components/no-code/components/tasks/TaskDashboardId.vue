@@ -41,7 +41,7 @@
 
     const dashboardStore = useDashboardStore()
 
-    const dashboards = ref<{ id: string; title: string }[]>([])
+    const dashboards = ref<{ id: string; title?: string }[]>([])
 
     const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
 

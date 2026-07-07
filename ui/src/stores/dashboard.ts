@@ -108,9 +108,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
     // side-effect-free lookups for autocompletion, deliberately not going through
     // list()/load() which mutate dashboardList/activeDashboard and would clobber
     // whatever the user is currently viewing/editing elsewhere in the app.
-    async function searchIds(): Promise<{ id: string; title: string }[]> {
+    async function searchIds(): Promise<{ id: string; title?: string }[]> {
         const res = await axios.get(`${apiUrl()}/dashboards?size=100`)
-        return (res.data as { results: { id: string; title: string }[] }).results
+        return (res.data as { results: { id: string; title?: string }[] }).results
     }
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {

@@ -48,7 +48,7 @@
 
     // chartId autocomplete stays live even when dashboardId is empty: it then
     // falls back to the "_default" sentinel dashboard's charts.
-    const dashboardId = computed(() => (props.task?.dashboardId as string | undefined) || "_default")
+    const dashboardId = computed(() => (props.task?.dashboardId as string | undefined) ?? "_default")
 
     watch(dashboardId, async () => {
         const charts = await dashboardStore.chartsById(dashboardId.value)

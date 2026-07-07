@@ -13,6 +13,14 @@ const mockIcons = {
     // registered (present in the catalog, with a real `flowable` value) but ships no icon file —
     // every task/trigger class gets an entry regardless of icon presence
     "io.kestra.plugin.core.debug.NoIcon": {flowable: false, monochrome: false, hasIcon: false},
+    // sourced from the external ecosystem plugin catalog (not installed locally) — pre-resolved
+    // by the caller since this instance can't serve it via the local /icon.svg endpoint
+    "io.kestra.plugin.scripts.python.Commands": {
+        flowable: false,
+        monochrome: false,
+        hasIcon: true,
+        iconUrl: "data:image/svg+xml;base64,mockbase64",
+    },
 }
 
 function svgUrlFor(cls: string): string {
@@ -63,6 +71,17 @@ describe("KsTaskIcon", () => {
         })
         const icon = wrapper.find(".ks-task-icon__icon")
         expect(icon.attributes("src")).toBe(fallbackIcon)
+    })
+
+    test("uses the pre-resolved iconUrl instead of the local endpoint for ecosystem-catalog icons", () => {
+        // This instance can't serve icons for plugins it doesn't have installed — the caller
+        // (pluginsStore) pre-resolves a data URI for these instead of a local /icon.svg URL.
+        const wrapper = mount(KsTaskIcon, {
+            props: {cls: "io.kestra.plugin.scripts.python.Commands", icons: mockIcons, onlyIcon: true},
+            global: globalConfig,
+        })
+        const icon = wrapper.find(".ks-task-icon__icon")
+        expect(icon.attributes("src")).toBe("data:image/svg+xml;base64,mockbase64")
     })
 
     test("prefixes the svg endpoint with KESTRA_BASE_PATH when the app is served behind a subpath", () => {

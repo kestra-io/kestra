@@ -54,25 +54,40 @@ export interface PluginIconData {
     flowable: boolean;
     monochrome: boolean;
     hasIcon: boolean;
+    /**
+     * Only set for icons resolved from the external api.kestra.io plugin catalog (used to show
+     * icons for ecosystem plugins the local instance doesn't have installed, e.g. in Blueprints).
+     * There's no local endpoint that can serve their bytes, so unlike locally-registered icons
+     * (which KsTaskIcon points at `/api/v1/plugins/icons/{cls}/icon.svg`), these are embedded
+     * directly as a data URI.
+     */
+    iconUrl?: string;
 }
 
 // Wire shape returned by the backend's PluginIcon DTO. `icon` (base64, kept for the docs
-// generator) is never read for its content on the frontend anymore — only whether it's present,
-// since every registered task/trigger class gets an `icons` map entry regardless of whether it
-// actually ships an icon (other consumers rely on `flowable` being there either way).
+// generator) is never read for its content on the frontend anymore for LOCAL icons — only
+// whether it's present, since every registered task/trigger class gets an `icons` map entry
+// regardless of whether it actually ships an icon (other consumers rely on `flowable` being
+// there either way). For the external api.kestra.io catalog, `icon` is embedded as-is (see
+// `iconUrl` above) since there's no local endpoint that could serve it instead.
 interface RawPluginIcon {
     icon: string | null;
     flowable: boolean;
     monochrome: boolean;
 }
 
-function toPluginIconData(raw: RawPluginIcon): PluginIconData {
-    return {flowable: raw.flowable, monochrome: raw.monochrome, hasIcon: raw.icon != null}
+function toPluginIconData(raw: RawPluginIcon, options: {embedAsDataUri?: boolean} = {}): PluginIconData {
+    return {
+        flowable: raw.flowable,
+        monochrome: raw.monochrome,
+        hasIcon: raw.icon != null,
+        iconUrl: options.embedAsDataUri && raw.icon ? `data:image/svg+xml;base64,${raw.icon}` : undefined,
+    }
 }
 
-function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
+function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined, options: {embedAsDataUri?: boolean} = {}): Record<string, PluginIconData> {
     return Object.fromEntries(
-        Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
+        Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon, options)]),
     )
 }
 
@@ -104,7 +119,7 @@ function usePluginsIcons() {
         }
 
         const apiPromise = apiStore.pluginIcons().then(async response => {
-            apiIcons.value = toPluginIconDataMap(response.data)
+            apiIcons.value = toPluginIconDataMap(response.data, {embedAsDataUri: true})
             return apiIcons.value
         })
 

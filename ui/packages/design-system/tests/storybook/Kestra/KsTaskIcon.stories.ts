@@ -1,7 +1,9 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import KsTaskIcon from "../../../src/components/Kestra/KsTaskIcon.vue"
 
-const mockIcons: Record<string, {flowable: boolean; monochrome: boolean; hasIcon: boolean}> = {
+const ecosystemIconDataUri = `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M12 2l9 5v10l-9 5-9-5V7z\" fill=\"#3776AB\"/></svg>")}`
+
+const mockIcons: Record<string, {flowable: boolean; monochrome: boolean; hasIcon: boolean; iconUrl?: string}> = {
     "io.kestra.plugin.core.log.Log": {
         flowable: false,
         monochrome: false,
@@ -23,6 +25,15 @@ const mockIcons: Record<string, {flowable: boolean; monochrome: boolean; hasIcon
         flowable: false,
         monochrome: false,
         hasIcon: false,
+    },
+    // sourced from the external ecosystem plugin catalog (api.kestra.io) rather than this
+    // instance's own registry — pre-resolved to a data URI since there's no local endpoint that
+    // could serve it
+    "io.kestra.plugin.scripts.python.Commands": {
+        flowable: false,
+        monochrome: false,
+        hasIcon: true,
+        iconUrl: ecosystemIconDataUri,
     },
 }
 
@@ -133,6 +144,26 @@ export const RegisteredWithoutIcon: Story = {
         docs: {
             description: {
                 story: "A class can be registered (present in the `icons` map, with a real `flowable` value) without shipping an icon file at all — `hasIcon: false` — in which case KsTaskIcon falls back to the generic icon rather than pointing an `<img>` at a URL that would 404.",
+            },
+        },
+    },
+}
+
+export const EcosystemCatalogIcon: Story = {
+    render: (args) => ({
+        components: {KsTaskIcon},
+        setup() { return {args} },
+        template: "<div style=\"width:32px;height:32px\"><ks-task-icon v-bind=\"args\" /></div>",
+    }),
+    args: {
+        cls: "io.kestra.plugin.scripts.python.Commands",
+        icons: mockIcons,
+        onlyIcon: true,
+    },
+    parameters: {
+        docs: {
+            description: {
+                story: "Icons resolved from the external api.kestra.io plugin catalog (for ecosystem plugins not installed on this instance, e.g. shown in Blueprints) carry a pre-resolved `iconUrl` — this instance has no local endpoint that could serve their bytes, so they're embedded as a data URI instead of pointed at `/icon.svg`.",
             },
         },
     },

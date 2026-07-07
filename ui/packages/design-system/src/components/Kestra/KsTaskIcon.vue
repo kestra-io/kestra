@@ -32,9 +32,15 @@
          * Whether this class actually ships an icon. Every registered task/trigger class gets an
          * entry in the `icons` map regardless (other consumers rely on `flowable` being present
          * even without one), so this is the only reliable signal to fall back to the generic icon
-         * instead of pointing at a `/svg` URL that would 404.
+         * instead of pointing at a `/icon.svg` URL that would 404.
          */
         hasIcon: boolean;
+        /**
+         * Pre-resolved icon source, set by the caller when the class isn't one this instance can
+         * serve locally (e.g. an ecosystem plugin catalog entry) — a data URI or an absolute URL.
+         * Takes priority over the local `/icon.svg` endpoint when present.
+         */
+        iconUrl?: string;
     }
 
     const props = defineProps<{
@@ -94,8 +100,9 @@
 
     // Real, browser-cacheable SVG resource — no more client-side base64 decode/recolor/encode on
     // every reactive change. KESTRA_BASE_PATH keeps this correct when the app is served behind a
-    // reverse-proxy path prefix.
-    const iconUrl = computed(() => {
+    // reverse-proxy path prefix. Only valid for classes this instance can actually serve; see
+    // `KsTaskIconData.iconUrl` for icons that must be pre-resolved by the caller instead.
+    const localIconUrl = computed(() => {
         if (!resolvedCls.value) {
             return undefined
         }
@@ -119,7 +126,11 @@
             return props.customIcon.icon
         }
 
-        return icon.value?.hasIcon ? iconUrl.value : fallbackIcon
+        if (icon.value?.iconUrl) {
+            return icon.value.iconUrl
+        }
+
+        return icon.value?.hasIcon ? localIconUrl.value : fallbackIcon
     })
 
     const maskStyle = computed(() => ({

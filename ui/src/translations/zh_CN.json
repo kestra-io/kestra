@@ -60,7 +60,7 @@
     "save": "保存",
     "save_as_draft": "保存为草稿",
     "draft": "草稿",
-    "draft_flow_warning": "此 flow 修订版本为草稿。执行将基于此草稿修订版本运行，如果 flow 定义无效，可能会立即失败。",
+    "draft_flow_warning": "此 flow 的最新修订版本为草稿。执行将改为基于最新已发布的修订版本运行——发布草稿（或在 Playground 中运行）以执行您的最新更改。",
     "save task": "保存任务",
     "saved": "保存成功",
     "saved as draft": "已成功保存为草稿",

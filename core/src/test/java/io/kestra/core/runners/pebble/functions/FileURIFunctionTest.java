@@ -6,7 +6,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
-import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -17,6 +16,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;

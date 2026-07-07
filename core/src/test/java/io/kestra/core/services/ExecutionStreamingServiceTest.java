@@ -14,10 +14,11 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
+
 import io.micronaut.http.sse.Event;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Flux;
@@ -51,16 +52,20 @@ class ExecutionStreamingServiceTest {
     void shouldCompleteFluxWhenTerminatedEventArrivesAndExecutionIsPersistedInRepository() throws Exception {
         // Given — a flow and a FAILED execution (mimicking what the executor exception path
         // now persists before emitting the follow event)
-        var flow = flowRepositoryInterface.create(GenericFlow.of(
-            Flow.builder()
-                .tenantId(null)
-                .namespace("io.kestra.tests")
-                .id(IdUtils.create())
-                .tasks(Collections.singletonList(
-                    Log.builder().id("log").type(Log.class.getName()).message("test").build()
-                ))
-                .build()
-        ));
+        var flow = flowRepositoryInterface.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .tenantId(null)
+                    .namespace("io.kestra.tests")
+                    .id(IdUtils.create())
+                    .tasks(
+                        Collections.singletonList(
+                            Log.builder().id("log").type(Log.class.getName()).message("test").build()
+                        )
+                    )
+                    .build()
+            )
+        );
 
         var execution = Execution.newExecution(flow, Collections.emptyList())
             .withState(State.Type.FAILED);
@@ -70,16 +75,18 @@ class ExecutionStreamingServiceTest {
         var subscriberId = IdUtils.create();
         CompletableFuture<Void> completed = new CompletableFuture<>();
 
-        Flux.<Event<Execution>>create(sink ->
-            executionStreamingService.registerSubscriber(execution.getId(), subscriberId, sink, flow)
+        Flux.<Event<Execution>> create(
+            sink -> executionStreamingService.registerSubscriber(execution.getId(), subscriberId, sink, flow)
         )
-        .timeout(java.time.Duration.ofSeconds(5))
-        .doFinally(sig -> executionStreamingService.unregisterSubscriber(execution.getId(), subscriberId))
-        .subscribe(
-            event -> { /* progress events — not relevant here */ },
-            completed::completeExceptionally,
-            () -> completed.complete(null)  // sink.complete() unblocks the webhook
-        );
+            .timeout(java.time.Duration.ofSeconds(5))
+            .doFinally(sig -> executionStreamingService.unregisterSubscriber(execution.getId(), subscriberId))
+            .subscribe(
+                event ->
+                {
+                    /* progress events — not relevant here */ },
+                completed::completeExceptionally,
+                () -> completed.complete(null) // sink.complete() unblocks the webhook
+            );
 
         // Persist the execution into the repository — this is what the fixed executor
         // failure path now does (returning a non-null ExecutorContext from the lock lambda

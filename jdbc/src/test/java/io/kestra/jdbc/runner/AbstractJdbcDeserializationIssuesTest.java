@@ -3,7 +3,6 @@ package io.kestra.jdbc.runner;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import io.kestra.queue.QueueService;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -23,6 +22,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import io.kestra.queue.QueueService;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
@@ -79,7 +79,7 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     protected Map<Field<Object>, Object> fields(DeserializationIssuesCaseTest.QueueMessage queueMessage) {
         String queueName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, queueMessage.type().getSimpleName());
         Map<Field<Object>, Object> fields = new HashMap<>();
-        fields.put(AbstractJdbcRepository.field("type"),queueName);
+        fields.put(AbstractJdbcRepository.field("type"), queueName);
         fields.put(AbstractJdbcRepository.field("key"), queueMessage.key() != null ? queueMessage.key() : IdUtils.create());
         fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(queueMessage.value()));
         fields.put(AbstractJdbcRepository.field("created"), LocalDateTime.now());

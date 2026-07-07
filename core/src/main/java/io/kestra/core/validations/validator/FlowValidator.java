@@ -1,5 +1,11 @@
 package io.kestra.core.validations.validator;
 
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -11,6 +17,7 @@ import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -18,12 +25,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.Label.READ_ONLY;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -281,8 +282,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
      * @return the violation formatted message of missing inputs for each schedule trigger
      */
     private Stream<String> findMissingInputsForScheduleTriggers(Flow value) {
-        if (!ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
-            && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()) {
+        if (
+            !ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
+                && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()
+        ) {
             // Find inputs without defaults (expanded to dotted leaf paths; schedules provide values keyed by
             // the same dotted path, matching how FlowInputOutput resolves them).
             Set<String> inputsWithoutDefaults = value.resolvableInputs().stream()
@@ -293,7 +296,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             return value.getTriggers().stream()
                 .filter(Schedule.class::isInstance)
                 .map(Schedule.class::cast)
-                .flatMap(schedule -> {
+                .flatMap(schedule ->
+                {
                     Set<String> violations = new HashSet<>();
                     Map<String, Object> scheduleInputs = schedule.getInputs() != null ? schedule.getInputs() : new HashMap<>();
                     var missingInputs = inputsWithoutDefaults.stream()

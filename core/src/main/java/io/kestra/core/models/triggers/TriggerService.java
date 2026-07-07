@@ -11,7 +11,6 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
 
 public abstract class TriggerService {
 

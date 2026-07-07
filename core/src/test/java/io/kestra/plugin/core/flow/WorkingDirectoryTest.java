@@ -12,11 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -38,6 +33,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -85,7 +81,7 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory-loop.yaml"})
+    @LoadFlows({ "flows/valids/working-directory-loop.yaml" })
     void each() throws TimeoutException, QueueException, InternalException {
         suite.loop(runnerUtils);
     }
@@ -189,7 +185,6 @@ public class WorkingDirectoryTest {
 
             List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst().getTenantId(), subExecutions.getFirst().getId());
             assertThat(subExecutions).hasSize(1);
-
 
             List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst().getTenantId(), subSubExecutions.getFirst().getId());
             assertThat(subSubSubExecutions).hasSize(1);

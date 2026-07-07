@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.TimeWindow;
+
 // FIXME check if we keep it or not, maybe refactor the whole multiple flow handling and simplify it.
 //  At least, if we keep it, we should make it sealed so it's not implemented wildly.
 public interface MultipleCondition {
@@ -51,7 +52,7 @@ public interface MultipleCondition {
             .filter(Map.Entry::getValue)
             .count();
 
-        boolean result = switch(getMode()) {
+        boolean result = switch (getMode()) {
             case Mode.ALL -> getConditions().size() == validatedCount;
             case Mode.ANY -> validatedCount > 0;
             case Mode.AT_LEAST -> validatedCount >= getMinSatisfied();
@@ -93,6 +94,8 @@ public interface MultipleCondition {
     }
 
     enum Mode {
-        ALL, ANY, AT_LEAST
+        ALL,
+        ANY,
+        AT_LEAST
     }
 }

@@ -1,35 +1,30 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
-import io.kestra.core.validations.Regex;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -179,8 +174,7 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
         Flow flow,
         Map<String, Object> input,
         Map<String, Object> additionalInputs,
-        List<Label> additionalLabels
-    ) {
+        List<Label> additionalLabels) {
         Execution execution = Execution.builder()
             .inputs(MapUtils.flattenToNestedMap(input))
             .flowId(flow.getId())
@@ -190,10 +184,12 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
             .namespace(flow.getNamespace())
             .tenantId(flow.getTenantId())
             .kind(null)
-            .trigger(ExecutionTrigger.of(
-                this,
-                (io.kestra.core.models.tasks.Output) new McpToolTrigger.Output(additionalInputs)
-            ))
+            .trigger(
+                ExecutionTrigger.of(
+                    this,
+                    (io.kestra.core.models.tasks.Output) new McpToolTrigger.Output(additionalInputs)
+                )
+            )
             .build();
         List<Label> labels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
         labels.add(new Label(Label.CORRELATION_ID, execution.getId()));
@@ -201,12 +197,11 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
         return execution.withLabels(labels);
     }
 
-    public static class Output extends HashMap<String, Object> implements io.kestra.core.models.tasks.Output  {
+    public static class Output extends HashMap<String, Object> implements io.kestra.core.models.tasks.Output {
         public Output(Map<String, Object> map) {
             super(map);
         }
     }
-
 
     /**
      * Tool behaviour hints following the MCP annotation specification.
@@ -217,31 +212,26 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
         @Schema(
             title = "Whether this tool is read-only.",
             description = "Set to `true` if the tool does not modify any state or produce side effects. When `true`, `destructive` and `idempotent` are not meaningful."
-        )
-        boolean readOnly,
+        ) boolean readOnly,
 
         @Schema(
             title = "Whether this tool may interact with external entities beyond its closed domain.",
             description = "Set to `true` if the tool reaches external systems such as third-party APIs, databases, or file systems outside the Kestra environment."
-        )
-        boolean openWorld,
+        ) boolean openWorld,
 
         @Schema(
             title = "Whether this tool may perform destructive updates.",
             description = "Only meaningful when `readOnly` is `false`. Set to `false` for tools whose effects can be safely undone or are non-destructive (e.g., creating a record). Default is `true`."
-        )
-        boolean destructive,
+        ) boolean destructive,
 
         @Schema(
             title = "Whether calling this tool repeatedly with the same arguments has the same effect as calling it once.",
             description = "Only meaningful when `readOnly` is `false`. Set to `true` for tools whose repeated invocation produces no additional side effects beyond the first call."
-        )
-        boolean idempotent,
+        ) boolean idempotent,
 
         @Schema(
             title = "Whether the tool result should be returned directly to the user without further AI processing.",
             description = "When `true`, the AI agent forwards the raw tool output to the user rather than interpreting or summarising it."
-        )
-        boolean returnDirect
-    ) {}
+        ) boolean returnDirect) {
+    }
 }

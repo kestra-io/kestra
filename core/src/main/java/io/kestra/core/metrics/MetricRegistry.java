@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -14,6 +13,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
@@ -400,7 +400,7 @@ public class MetricRegistry {
      * Return tags for current {@link WorkerTask}.
      * We don't include current state since it will break up the values per state which make no sense.
      *
-     * @param workerTask    the current WorkerTask
+     * @param workerTask the current WorkerTask
      * @param workerGroupId the worker group id, optional
      * @return tags to apply to metrics
      */

@@ -9,5 +9,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 public record ApiAsyncOperationResponse(
     @Schema(description = "The operation identifier used to correlate logs and progress indicators") String operationId,
-    @Schema(description = "The number of domain events submitted for asynchronous processing") int totalItems
-) {}
+    @Schema(description = "The number of domain events submitted for asynchronous processing") int totalItems) {
+}

@@ -374,9 +374,11 @@ class LogControllerTest {
     }
 
     private void seedLogs(String tenant, FiltersTestCase testCase) {
-        testCase.logs().forEach(log -> logRepository.save(
-            log.toBuilder().tenantId(tenant).executionId(testCase.executionId()).build()
-        ));
+        testCase.logs().forEach(
+            log -> logRepository.save(
+                log.toBuilder().tenantId(tenant).executionId(testCase.executionId()).build()
+            )
+        );
     }
 
     private void seedExecution(String tenant, String executionId) {
@@ -388,15 +390,17 @@ class LogControllerTest {
                 .flowId("full")
                 .flowRevision(1)
                 .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-                .taskRunList(Collections.singletonList(
-                    TaskRun.builder()
-                        .id(IdUtils.create())
-                        .namespace("io.kestra.unittest")
-                        .flowId("full")
-                        .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-                        .attempts(Collections.singletonList(TaskRunAttempt.builder().build()))
-                        .build()
-                ))
+                .taskRunList(
+                    Collections.singletonList(
+                        TaskRun.builder()
+                            .id(IdUtils.create())
+                            .namespace("io.kestra.unittest")
+                            .flowId("full")
+                            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+                            .attempts(Collections.singletonList(TaskRunAttempt.builder().build()))
+                            .build()
+                    )
+                )
                 .build()
         );
     }
@@ -436,135 +440,155 @@ class LogControllerTest {
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(infoLog, warnLog, errorLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(traceLog, debugLog, infoLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(warnLog, errorLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("transform")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("transform")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(traceLog, debugLog, infoLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_RUN_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("task-run-1")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_RUN_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("task-run-1")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(errorLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.ATTEMPT_NUMBER)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(1)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.ATTEMPT_NUMBER)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(1)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(infoLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build(),
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("load-data")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("load-data")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(kindLogs)
             .expectedLogs(List.of(playgroundKindLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.KIND)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(ExecutionKind.PLAYGROUND.name())
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(ExecutionKind.PLAYGROUND.name())
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(kindLogs)
             .expectedLogs(List.of(normalKindLog, loopKindLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.KIND)
-                    .operation(QueryFilter.Op.NOT_EQUALS)
-                    .value(ExecutionKind.PLAYGROUND.name())
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.NOT_EQUALS)
+                        .value(ExecutionKind.PLAYGROUND.name())
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(kindLogs)
             .expectedLogs(List.of(playgroundKindLog, loopKindLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.KIND)
-                    .operation(QueryFilter.Op.IN)
-                    .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.IN)
+                        .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(kindLogs)
             .expectedLogs(List.of(normalKindLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.KIND)
-                    .operation(QueryFilter.Op.NOT_IN)
-                    .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.NOT_IN)
+                        .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
+                        .build()
+                )
+            )
             .build()
     );
 
@@ -587,7 +611,6 @@ class LogControllerTest {
         String executionId,
         List<LogEntry> logs,
         List<LogEntry> expectedLogs,
-        List<QueryFilter> filters
-    ) {
+        List<QueryFilter> filters) {
     }
 }

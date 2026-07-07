@@ -65,7 +65,6 @@ import reactor.core.publisher.Flux;
 
 import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -469,11 +468,15 @@ class HttpClientTest {
     @Test
     void shouldSucceedWithTcpExtendedKeepAliveDisabled() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         // Given - extended TCP keep-alive disabled (fix for Windows workers)
-        try (HttpClient client = client(b -> b.configuration(
-            HttpConfiguration.builder()
-                .enabledTcpExtendedKeepAlive(Property.ofValue(false))
-                .build()
-        ))) {
+        try (
+            HttpClient client = client(
+                b -> b.configuration(
+                    HttpConfiguration.builder()
+                        .enabledTcpExtendedKeepAlive(Property.ofValue(false))
+                        .build()
+                )
+            )
+        ) {
             // When
             HttpResponse<String> response = client.request(
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/text")),

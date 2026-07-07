@@ -384,8 +384,10 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             try {
                 listener.onLivenessUpdate(now, instance, newState);
             } catch (Exception e) {
-                log.warn("Liveness listener [{}] threw an exception; ignoring",
-                    listener.getClass().getName(), e);
+                log.warn(
+                    "Liveness listener [{}] threw an exception; ignoring",
+                    listener.getClass().getName(), e
+                );
             }
         }
     }

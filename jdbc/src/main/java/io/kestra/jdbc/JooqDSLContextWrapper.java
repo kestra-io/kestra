@@ -56,7 +56,7 @@ public class JooqDSLContextWrapper {
     }
 
     public void transaction(TransactionalRunnable transactional) {
-        JooqDSLContextWrapper.<Void>retryer().runRetryIf(
+        JooqDSLContextWrapper.<Void> retryer().runRetryIf(
             DEADLOCK_PREDICATE,
             () ->
             {
@@ -67,7 +67,7 @@ public class JooqDSLContextWrapper {
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return JooqDSLContextWrapper.<T>retryer().runRetryIf(
+        return JooqDSLContextWrapper.<T> retryer().runRetryIf(
             DEADLOCK_PREDICATE,
             () -> dslContext.transactionResult(transactional)
         );
@@ -86,7 +86,7 @@ public class JooqDSLContextWrapper {
      * one — keep the work short.
      */
     public void requireNewTransaction(TransactionalRunnable transactional) {
-        JooqDSLContextWrapper.<Void>retryer().runRetryIf(
+        JooqDSLContextWrapper.<Void> retryer().runRetryIf(
             DEADLOCK_PREDICATE,
             () ->
             {
@@ -94,9 +94,11 @@ public class JooqDSLContextWrapper {
                     // Same configuration (dialect, settings, execute listeners), but jOOQ-managed
                     // transactions on this connection instead of the thread-bound ones.
                     ConnectionProvider connectionProvider = new DefaultConnectionProvider(connection);
-                    DSL.using(dslContext.configuration()
+                    DSL.using(
+                        dslContext.configuration()
                             .derive(connectionProvider)
-                            .derive(new DefaultTransactionProvider(connectionProvider)))
+                            .derive(new DefaultTransactionProvider(connectionProvider))
+                    )
                         .transaction(transactional);
                 } catch (SQLException e) {
                     throw new DataAccessException("Unable to run a transaction on a new connection", e);
@@ -125,9 +127,9 @@ public class JooqDSLContextWrapper {
             }
 
             return
-                // standard deadlock
-                "40001".equals(cause.getSQLState()) ||
-                // postgres deadlock
+            // standard deadlock
+            "40001".equals(cause.getSQLState()) ||
+            // postgres deadlock
                 "40P01".equals(cause.getSQLState());
         }
     }

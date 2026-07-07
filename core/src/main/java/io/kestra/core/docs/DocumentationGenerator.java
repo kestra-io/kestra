@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import io.kestra.core.preview.FileRenderer;
 import org.apache.commons.io.IOUtils;
 
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +23,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.AdditionalPlugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.runners.pebble.Extension;
 import io.kestra.core.runners.pebble.JsonWriter;
 import io.kestra.core.runners.pebble.filters.*;

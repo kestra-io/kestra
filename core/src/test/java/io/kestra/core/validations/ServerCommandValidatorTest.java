@@ -19,9 +19,11 @@ class ServerCommandValidatorTest {
         // (and its application-test.yml which sets kestra.server-type), so we
         // can verify the validator is genuinely absent when no server command
         // is issued.
-        try (ApplicationContext context = ApplicationContext.builder()
-            .deduceEnvironment(false)
-            .start()) {
+        try (
+            ApplicationContext context = ApplicationContext.builder()
+                .deduceEnvironment(false)
+                .start()
+        ) {
             Assertions.assertThrows(NoSuchBeanException.class, () -> context.getBean(ServerCommandValidator.class));
         }
     }

@@ -1,5 +1,10 @@
 package io.kestra.core.migration;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
@@ -9,33 +14,31 @@ import jakarta.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-
 /**
  * Orchestrates the execution of all pending {@link MigrationScript}s on startup.
  *
- * <p>This bean is backend-agnostic — it delegates all storage and locking concerns to
+ * <p>
+ * This bean is backend-agnostic — it delegates all storage and locking concerns to
  * {@link MigrationHistoryStore} and {@link MigrationLock}, which are provided by the
  * active repository backend (JDBC or Elasticsearch).
  *
- * <p>This service is {@code @Context} — it is eagerly initialized during
+ * <p>
+ * This service is {@code @Context} — it is eagerly initialized during
  * {@code ApplicationContext.start()}, before any repository or service bean queries the database.
  * {@link #initOnStartup()} runs all pending migrations unconditionally in OSS; EE overrides
  * this method to add opt-in auto-run behavior and fresh-instance detection.
  *
- * <p>Execution flow:
+ * <p>
+ * Execution flow:
  * <ol>
- *   <li>Acquire the {@link MigrationLock} (distributed lock for multi-node safety)</li>
- *   <li>Bootstrap the history store if absent</li>
- *   <li>Detect whether this is a Flyway upgrade (pre-migration-system deployment)</li>
- *   <li>Sort all {@link MigrationScript} beans lexicographically by {@code scriptId}</li>
- *   <li>For each script: if Flyway upgrade and the script is an init script ({@link #INIT_SCRIPT_IDS}),
- *       record it as applied without executing (schema already exists from Flyway, {@code executionMs=0});
- *       otherwise skip if already applied (verify checksum) or execute and record</li>
- *   <li>Release the lock</li>
+ * <li>Acquire the {@link MigrationLock} (distributed lock for multi-node safety)</li>
+ * <li>Bootstrap the history store if absent</li>
+ * <li>Detect whether this is a Flyway upgrade (pre-migration-system deployment)</li>
+ * <li>Sort all {@link MigrationScript} beans lexicographically by {@code scriptId}</li>
+ * <li>For each script: if Flyway upgrade and the script is an init script ({@link #INIT_SCRIPT_IDS}),
+ * record it as applied without executing (schema already exists from Flyway, {@code executionMs=0});
+ * otherwise skip if already applied (verify checksum) or execute and record</li>
+ * <li>Release the lock</li>
  * </ol>
  */
 @Slf4j
@@ -72,8 +75,7 @@ public class MigrationRunner implements MigrationRunnerInterface {
     public MigrationRunner(
         final MigrationLock lock,
         final MigrationHistoryStore historyStore,
-        final Collection<MigrationScript> scripts
-    ) {
+        final Collection<MigrationScript> scripts) {
         this.lock = lock;
         this.historyStore = historyStore;
         this.scripts = scripts;
@@ -153,7 +155,8 @@ public class MigrationRunner implements MigrationRunnerInterface {
      * Returns all scripts that have not yet been applied, sorted by {@code scriptId}.
      * Used by EE to detect pending scripts before deciding whether to run or fail.
      *
-     * <p>This method does <strong>not</strong> acquire the migration lock. It is intended as a
+     * <p>
+     * This method does <strong>not</strong> acquire the migration lock. It is intended as a
      * read-only startup check on a single node (EE {@code auto=false} path) to decide whether to
      * throw {@link MigrationPendingException}. In multi-node deployments, callers should be aware
      * that another node may concurrently apply migrations between this call and any subsequent action.
@@ -245,7 +248,8 @@ public class MigrationRunner implements MigrationRunnerInterface {
      * history already records it as applied. Defaults to {@code false} — override in subclasses
      * to implement config-driven force-rerun behaviour.
      *
-     * <p>When this returns {@code true}, the checksum is still validated before execution, but
+     * <p>
+     * When this returns {@code true}, the checksum is still validated before execution, but
      * {@code markApplied()} is <strong>not</strong> called (history entry already exists).
      *
      * @param scriptId the script ID to check

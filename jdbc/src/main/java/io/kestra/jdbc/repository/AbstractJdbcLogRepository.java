@@ -86,8 +86,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
      * Two log table columns don't line up with the default {@link QueryFilter.Field#name()}
      * lower-cased derivation:
      * <ul>
-     *   <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
-     *   <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
+     * <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
+     * <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
      * </ul>
      * Override the mapping for those; the rest of the column names match.
      */
@@ -258,7 +258,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
         Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
 
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
                 int total = 0;
                 int deleted;

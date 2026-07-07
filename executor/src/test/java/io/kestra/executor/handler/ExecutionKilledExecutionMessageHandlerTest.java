@@ -5,12 +5,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.micronaut.test.annotation.MockBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
@@ -24,6 +23,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.ExecutorContext;
 
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -130,7 +130,8 @@ class ExecutionKilledExecutionMessageHandlerTest {
             .executionState(State.Type.KILLED)
             .build();
         CompletableFuture<AsyncOperationProcessedEvent> future = new CompletableFuture<>();
-        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either -> {
+        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either ->
+        {
             if (either.isLeft() && execution.getId().equals(either.getLeft().itemId())) {
                 future.complete(either.getLeft());
             }
@@ -199,7 +200,8 @@ class ExecutionKilledExecutionMessageHandlerTest {
 
     private CompletableFuture<AsyncOperationProcessedEvent> subscribeForOperation(String operationId) {
         CompletableFuture<AsyncOperationProcessedEvent> future = new CompletableFuture<>();
-        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either -> {
+        QueueSubscriber<AsyncOperationProcessedEvent> subscriber = asyncOperationProcessedEventQueue.subscriber().subscribe(either ->
+        {
             if (either.isLeft() && operationId.equals(either.getLeft().operationId())) {
                 future.complete(either.getLeft());
             }

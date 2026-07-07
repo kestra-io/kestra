@@ -1,16 +1,18 @@
 package io.kestra.plugin.core.preview;
 
-import io.kestra.core.preview.FilePreview;
-import io.kestra.core.preview.FileRenderer;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Base64;
 import java.util.Optional;
+
+import org.apache.commons.io.IOUtils;
+
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
+
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @NoArgsConstructor

@@ -53,7 +53,7 @@ class AuthenticationFilterTest {
         // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /configs which are not the config endpoint
         HttpClientResponseException httpClientResponseException = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs").basicAuth("anonymous", "hacker"))
+                .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs").basicAuth("anonymous", "hacker"))
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
     }
@@ -66,8 +66,10 @@ class AuthenticationFilterTest {
         try {
             HttpClientResponseException httpClientResponseException = assertThrows(
                 HttpClientResponseException.class, () -> client.toBlocking()
-                    .exchange(HttpRequest.POST("/api/v1/main/namespace/basicAuth", new BasicAuthCredentials(IdUtils.create(), "anonymous", "hacker"))
-                        .basicAuth("anonymous", "hacker"))
+                    .exchange(
+                        HttpRequest.POST("/api/v1/main/namespace/basicAuth", new BasicAuthCredentials(IdUtils.create(), "anonymous", "hacker"))
+                            .basicAuth("anonymous", "hacker")
+                    )
             );
             assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
         } finally {

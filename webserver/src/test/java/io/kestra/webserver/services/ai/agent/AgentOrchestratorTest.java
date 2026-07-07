@@ -325,6 +325,8 @@ class AgentOrchestratorTest {
         assertThat(sink.names()).doesNotContain(AgentEvents.DONE);
         assertThat(sink.error).isNull();
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(messageStore.load(thread.uid()))
+            .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
     }
 
     @Test

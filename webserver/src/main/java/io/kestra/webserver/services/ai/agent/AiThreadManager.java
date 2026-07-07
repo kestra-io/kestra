@@ -104,6 +104,10 @@ public class AiThreadManager {
         append(threadId, traceId, AgentMessageRole.TOOL, AgentMessageType.TOOL_RESULT, null, toolCall, result);
     }
 
+    public void appendCancelled(final String threadId, final String traceId) {
+        append(threadId, traceId, AgentMessageRole.SYSTEM, AgentMessageType.CANCELLED, null, null, null);
+    }
+
     // --- Private helpers ---
 
     private String deriveTitle(final String threadId) {

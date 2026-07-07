@@ -4,5 +4,6 @@ public enum AgentMessageType {
     TEXT,
     TOOL_CALL,
     TOOL_RESULT,
-    PROPOSED_ACTION
+    PROPOSED_ACTION,
+    CANCELLED
 }

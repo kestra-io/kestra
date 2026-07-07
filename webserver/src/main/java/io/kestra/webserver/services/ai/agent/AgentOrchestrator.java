@@ -308,6 +308,7 @@ public class AgentOrchestrator {
 
     private void abortCancelled(final AgentLoopContext ctx) {
         log.debug("Client disconnected; aborting turn for thread {}", ctx.thread().uid());
+        threadManager.appendCancelled(ctx.thread().uid(), ctx.traceId());
         finishTurn(ctx);
     }
 

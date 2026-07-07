@@ -50,6 +50,8 @@ public final class ChatMessageAdaptor {
                 }
                 // PROPOSED_ACTION is superseded by the following TOOL_RESULT — never projected.
                 case PROPOSED_ACTION -> { /* omit */ }
+                // CANCELLED is a trace-only marker for an aborted turn — never sent to the model.
+                case CANCELLED -> { /* omit */ }
             }
         }
         return out;

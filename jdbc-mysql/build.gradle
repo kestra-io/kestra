@@ -22,4 +22,9 @@ dependencies {
     testImplementation project(':tests')
     testImplementation project(':queue').sourceSets.test.output
     testImplementation("io.micronaut.validation:micronaut-validation") // MysqlServiceLivenessCoordinatorTest fail to init without that
+    testImplementation "org.junit.platform:junit-platform-launcher"
+    // TC 1.20.x (from Micronaut BOM) defaults to Docker API v1.41; Docker Desktop 29+ requires v1.44+.
+    // Pin to 1.21.4 to match core/build.gradle and support current Docker Desktop.
+    testImplementation platform("org.testcontainers:testcontainers-bom:1.21.4")
+    testImplementation "org.testcontainers:mysql"
 }

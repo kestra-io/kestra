@@ -89,13 +89,16 @@ public interface Fixtures {
     }
 
     static FlowWithSource flowWithEveryMinuteScheduleOnDayWeek(String timeZone, DayOfWeek dayOfWeek) {
-        Schedule schedule = Schedule.builder()
+        return flowWithEveryMinuteScheduleOnDayWeek(timeZone, dayOfWeek, Schedule.ScheduleBuilder::build);
+    }
+
+    static FlowWithSource flowWithEveryMinuteScheduleOnDayWeek(String timeZone, DayOfWeek dayOfWeek, Function<Schedule.ScheduleBuilder<?, ?>, Schedule> builder) {
+        Schedule schedule = builder.apply(Schedule.builder()
             .id(TEST_TRIGGER_ID)
             .type(Schedule.class.getName())
             .cron("*/1 * * * *")
             .timezone(timeZone)
-            .when("{{dayOfWeek(trigger.date) == '" + dayOfWeek.toString() + "'}}")
-            .build();
+            .when("{{dayOfWeek(trigger.date) == '" + dayOfWeek.toString() + "'}}"));
         return flowWithTrigger(schedule);
     }
 }

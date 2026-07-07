@@ -2,6 +2,7 @@ package io.kestra.executor.statemachine;
 
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.Execution;
@@ -16,8 +17,6 @@ import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
 import io.kestra.executor.testkit.Flows;
 import io.kestra.plugin.core.log.Log;
-
-import org.assertj.core.api.Assertions;
 
 import reactor.core.publisher.Flux;
 
@@ -111,6 +110,54 @@ class ConcurrencyLifecycleTest {
         Assertions.assertThat(harness.executionQueuedStateStore().queued()).isEmpty();
     }
 
+    @Test
+    void shouldFillEverySlotBeforeQueueing() {
+        // Given: a limit of 2
+        FlowWithSource flow = queueFlow(2);
+        harness.registerFlow(flow);
+
+        // When: two executions start
+        ExecutorContext first = startExecution(flow);
+        ExecutorContext second = startExecution(flow);
+
+        // Then: both run — the limit does not trip one short of the boundary
+        Assertions.assertThat(first.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(second.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(2);
+
+        // When: a third arrives
+        Execution third = Executions.created(flow);
+        harness.executionStateStore().save(third);
+        ExecutorContext context = handleEvent(third);
+
+        // Then: exactly at the limit it queues
+        assertThat(context).executionInState(State.Type.QUEUED).updatedFrom("handleConcurrencyLimit");
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(2);
+    }
+
+    @Test
+    void shouldKeepQueuedExecutionsInArrivalOrder() {
+        // Given: the single slot is taken
+        FlowWithSource flow = queueFlow(1);
+        harness.registerFlow(flow);
+        startExecution(flow);
+
+        // When: two more executions arrive
+        Execution second = Executions.created(flow);
+        harness.executionStateStore().save(second);
+        handleEvent(second);
+        Execution third = Executions.created(flow);
+        harness.executionStateStore().save(third);
+        handleEvent(third);
+
+        // Then: both park in arrival order — the order decrementAndPop replays them in —
+        // and still only one slot is held
+        Assertions.assertThat(harness.executionQueuedStateStore().queued())
+            .extracting(queued -> queued.getExecution().getId())
+            .containsExactly(second.getId(), third.getId());
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
+    }
+
     // --- how the counter is keyed
 
     @Test
@@ -128,6 +175,27 @@ class ConcurrencyLifecycleTest {
         ExecutorContext startedB = startExecution(flowB);
 
         // Then: B runs — A's full slot does not bleed into B's counter
+        Assertions.assertThat(startedB.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flowA)).isEqualTo(1);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flowB)).isEqualTo(1);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued()).isEmpty();
+    }
+
+    @Test
+    void shouldKeepCountersIndependentAcrossTenants() {
+        // Given: two flows with the same id AND namespace in different tenants, each limited to 1
+        Concurrency limitOne = Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(1).build();
+        FlowWithSource flowA = Flows.of(Flows.builder(logTask()).id("tenant-keyed").concurrency(limitOne).build());
+        FlowWithSource flowB = Flows.of(
+            Flows.builder(logTask()).id("tenant-keyed").tenantId("other-tenant").concurrency(limitOne).build()
+        );
+        harness.registerFlow(flowA).registerFlow(flowB);
+
+        // When: both tenants start an execution
+        startExecution(flowA);
+        ExecutorContext startedB = startExecution(flowB);
+
+        // Then: B runs — a tenant's full slot never bleeds into another tenant's counter
         Assertions.assertThat(startedB.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         Assertions.assertThat(harness.concurrencyLimitStateStore().running(flowA)).isEqualTo(1);
         Assertions.assertThat(harness.concurrencyLimitStateStore().running(flowB)).isEqualTo(1);
@@ -154,6 +222,35 @@ class ConcurrencyLifecycleTest {
         // Then: the counter is keyed without the revision — revision 2 queues behind revision 1
         assertThat(context).executionInState(State.Type.QUEUED);
         Assertions.assertThat(harness.concurrencyLimitStateStore().running(revision2)).isEqualTo(1);
+    }
+
+    @Test
+    void shouldApplyLoweredLimitFromLatestFlowDefinition() {
+        // Given: two executions admitted under revision 1's limit of 3
+        Concurrency limitThree = Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(3).build();
+        FlowWithSource revision1 = Flows.of(Flows.builder(logTask()).id("lowered-limit").concurrency(limitThree).build());
+        harness.registerFlow(revision1);
+        startExecution(revision1);
+        startExecution(revision1);
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(revision1)).isEqualTo(2);
+
+        // When: revision 2 lowers the limit to 1 and a new execution arrives
+        Concurrency limitOne = Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(1).build();
+        FlowWithSource revision2 = Flows.of(
+            Flows.builder(logTask()).id("lowered-limit").revision(2).concurrency(limitOne).build()
+        );
+        harness.registerFlow(revision2);
+        Execution third = Executions.created(revision2);
+        harness.executionStateStore().save(third);
+        ExecutorContext context = handleEvent(third);
+
+        // Then: the latest definition's limit governs — 2 running >= 1 queues the arrival even
+        // though both runs were admitted under the laxer revision, and no slot is reclaimed
+        assertThat(context).executionInState(State.Type.QUEUED).updatedFrom("handleConcurrencyLimit");
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(revision2)).isEqualTo(2);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued())
+            .singleElement()
+            .satisfies(queued -> Assertions.assertThat(queued.getExecution().getId()).isEqualTo(third.getId()));
     }
 
     // --- leaving the queue

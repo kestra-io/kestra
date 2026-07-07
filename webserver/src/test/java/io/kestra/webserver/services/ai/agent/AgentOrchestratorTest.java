@@ -283,7 +283,7 @@ class AgentOrchestratorTest {
         for (int i = 0; i < attempts; i++) {
             claims.add(pool.submit(() -> {
                 start.await();
-                return threadManager.startTurn(TENANT, thread.uid(), AgentMode.ASK);
+                return threadManager.tryMarkRunning(thread, AgentMode.ASK, AgentThreadStatus.IDLE);
             }));
         }
         start.countDown();

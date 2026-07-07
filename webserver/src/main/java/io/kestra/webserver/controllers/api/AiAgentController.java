@@ -124,7 +124,7 @@ public class AiAgentController {
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
         // Atomically claim the thread (IDLE -> RUNNING) before scheduling the async turn; if a turn is
         // already in flight the claim fails, so we reject here rather than racing on the executor pool.
-        AgentThread running = threadManager.startTurn(tenant, threadId, mode)
+        AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
             .orElseThrow(() -> new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'"));
         return stream(sink -> orchestrator.runTurn(
             new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId()), sink

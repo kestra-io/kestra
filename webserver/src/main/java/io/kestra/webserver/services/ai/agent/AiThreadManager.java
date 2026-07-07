@@ -46,18 +46,9 @@ public class AiThreadManager {
         return threadStore.find(tenant, uid);
     }
 
-    public Optional<AgentThread> startTurn(final String tenant, final String uid, final AgentMode mode) {
-        return threadStore.updateIf(tenant, uid, AgentThreadStatus.IDLE,
-            thread -> thread.toBuilder()
-                .status(AgentThreadStatus.RUNNING)
-                .ownerNodeId(nodeId)
-                .mode(mode)
-                .updatedAt(Instant.now())
-                .build());
-    }
 
-    public AgentThread markRunning(final AgentThread thread, final AgentMode mode) {
-        return threadStore.save(thread.toBuilder()
+    public Optional<AgentThread> tryMarkRunning(final AgentThread thread, final AgentMode mode, final AgentThreadStatus expected) {
+        return threadStore.updateIf(thread.tenant(), thread.uid(), expected, t -> t.toBuilder()
             .status(AgentThreadStatus.RUNNING)
             .ownerNodeId(nodeId)
             .mode(mode)

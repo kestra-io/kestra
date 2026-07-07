@@ -93,7 +93,8 @@ public class AgentOrchestrator {
         AgentThread thread = threadManager.find(turn.tenant(), turn.threadId()).orElseThrow();
         try {
             StreamingChatModel model = aiServiceManager.getAiService(turn.providerId()).streamingChatModel(List.of());
-            AgentThread running = threadManager.markRunning(thread, turn.mode());
+            AgentThread running = threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
+                .orElseThrow(() -> new IllegalStateException("Thread '" + thread.uid() + "' is no longer awaiting confirmation"));
             AgentLoopContext ctx = new AgentLoopContext(
                 running, turn.tenant(), turn.providerId(), turn.mode(), turn.profile(),
                 model, turn.messages(), turn.traceId(), new AtomicBoolean(turn.planProposal())

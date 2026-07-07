@@ -6,9 +6,7 @@ import {useApiStore} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
-import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
-import {apiUrlWithoutTenants} from "override/utils/route"
 
 export interface PluginComponent {
     icon?: string;
@@ -58,7 +56,6 @@ export interface PluginIconData {
 
 function usePluginsIcons() {
     const apiStore = useApiStore()
-    const axios = useClient()
 
     const iconsLoaded = ref(false)
 
@@ -103,8 +100,7 @@ function usePluginsIcons() {
 
     // Lazily resolves a single icon instead of preloading the whole (potentially huge) plugin-icons
     // catalog. Meant for views that only ever render a handful of task icons (execution timelines,
-    // trigger lists, ...); catalog-browsing views still use fetchIcons()/icons above. Stays on raw
-    // axios: the SDK only exposes the full-catalog pluginIcons(), no per-class lookup endpoint.
+    // trigger lists, ...); catalog-browsing views still use fetchIcons()/icons above.
     function loadIcon(cls: string): Promise<PluginIconData | undefined> {
         const cached = icons.value[cls]
         if (cached) {
@@ -121,12 +117,12 @@ function usePluginsIcons() {
             return pending
         }
 
-        // Always answers 200 with `{icon: null}` when the class has no icon (a normal outcome,
-        // not every plugin ships one) rather than 404 — a 404 here would trip the shared HTTP
-        // client's global error handling, which takes over the whole page for any 404 response.
-        const request = axios.get<{icon: PluginIconData | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
+        // Answers with `{icon: null}` when the class has no icon (a normal outcome, not every
+        // plugin ships one) rather than 404 — a 404 here would trip the shared HTTP client's
+        // global error handling, which takes over the whole page for any 404 response.
+        const request = PluginsAPI.pluginIcon({cls})
             .then(response => {
-                const icon = response.data.icon ?? undefined
+                const icon = (response.icon ?? undefined) as PluginIconData | undefined
                 if (icon) {
                     pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
                 }

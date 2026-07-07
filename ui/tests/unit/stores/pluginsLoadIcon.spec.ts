@@ -1,10 +1,10 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
-const getMock = vi.fn()
+const pluginIconMock = vi.fn()
 
-vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({get: getMock, post: vi.fn()}),
+vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
+    pluginIcon: pluginIconMock,
 }))
 
 vi.mock("override/utils/route", () => ({
@@ -21,7 +21,7 @@ describe("plugins store loadIcon", () => {
     let store: any
 
     beforeEach(async () => {
-        getMock.mockReset()
+        pluginIconMock.mockReset()
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
@@ -29,20 +29,20 @@ describe("plugins store loadIcon", () => {
 
     it("resolves the icon and caches it when the backend finds one", async () => {
         const icon = {icon: "base64svg", flowable: false}
-        getMock.mockResolvedValueOnce({data: {icon}})
+        pluginIconMock.mockResolvedValueOnce({icon})
 
         const result = await store.loadIcon("io.kestra.plugin.core.log.Log")
 
         expect(result).toEqual(icon)
-        expect(getMock).toHaveBeenCalledTimes(1)
+        expect(pluginIconMock).toHaveBeenCalledTimes(1)
 
         const cached = await store.loadIcon("io.kestra.plugin.core.log.Log")
         expect(cached).toEqual(icon)
-        expect(getMock).toHaveBeenCalledTimes(1)
+        expect(pluginIconMock).toHaveBeenCalledTimes(1)
     })
 
     it("resolves to undefined without throwing when the backend answers 200 with a null icon", async () => {
-        getMock.mockResolvedValueOnce({data: {icon: null}})
+        pluginIconMock.mockResolvedValueOnce({icon: null})
 
         const result = await store.loadIcon("io.kestra.plugin.unknown.Task")
 
@@ -50,7 +50,7 @@ describe("plugins store loadIcon", () => {
     })
 
     it("resolves to undefined without throwing when the request itself fails", async () => {
-        getMock.mockRejectedValueOnce(new Error("network error"))
+        pluginIconMock.mockRejectedValueOnce(new Error("network error"))
 
         const result = await store.loadIcon("io.kestra.plugin.unknown.Task")
 
@@ -59,16 +59,16 @@ describe("plugins store loadIcon", () => {
 
     it("dedupes concurrent requests for the same class", async () => {
         let resolveRequest: (value: any) => void = () => {}
-        getMock.mockReturnValueOnce(new Promise(resolve => {
+        pluginIconMock.mockReturnValueOnce(new Promise(resolve => {
             resolveRequest = resolve
         }))
 
         const first = store.loadIcon("io.kestra.plugin.core.log.Log")
         const second = store.loadIcon("io.kestra.plugin.core.log.Log")
 
-        expect(getMock).toHaveBeenCalledTimes(1)
+        expect(pluginIconMock).toHaveBeenCalledTimes(1)
 
-        resolveRequest({data: {icon: {icon: "base64svg", flowable: false}}})
+        resolveRequest({icon: {icon: "base64svg", flowable: false}})
 
         const [firstResult, secondResult] = await Promise.all([first, second])
         expect(firstResult).toEqual(secondResult)

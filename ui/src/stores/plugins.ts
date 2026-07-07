@@ -3,7 +3,7 @@ import {ref, computed, toRaw, nextTick} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
-import {useApiStore} from "./api"
+import {API_URL, useApiStore} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
@@ -57,9 +57,7 @@ export interface PluginIconData {
     /**
      * Only set for icons resolved from the external api.kestra.io plugin catalog (used to show
      * icons for ecosystem plugins the local instance doesn't have installed, e.g. in Blueprints).
-     * There's no local endpoint that can serve their bytes, so unlike locally-registered icons
-     * (which KsTaskIcon points at `/api/v1/plugins/icons/{cls}/icon.svg`), these are embedded
-     * directly as a data URI.
+     * Points directly at the external per-class endpoint, which serves raw, browser-cacheable SVG.
      */
     iconUrl?: string;
     /**
@@ -71,14 +69,9 @@ export interface PluginIconData {
 }
 
 // Wire shape returned by the backend's PluginIcon DTO. `icon` (base64, kept for the docs
-// generator) is never read for its content on the frontend anymore for LOCAL icons — only
-// whether it's present, since every registered task/trigger class gets an `icons` map entry
-// regardless of whether it actually ships an icon (other consumers rely on `flowable` being
-// there either way). For the external api.kestra.io catalog, `icon` is embedded as-is (see
-// `iconUrl` above) since there's no local endpoint that could serve it instead.
-//
-// `monochrome` and `hash` only exist on the LOCAL instance's DTO (added for this redesign) — the
-// external api.kestra.io catalog predates them and never sends these fields.
+// generator) is never read for its content on the frontend anymore — only whether it's present,
+// since every registered task/trigger class gets an `icons` map entry regardless of whether it
+// actually ships an icon (other consumers rely on `flowable` being there either way).
 interface RawPluginIcon {
     icon: string | null;
     flowable: boolean;
@@ -86,25 +79,18 @@ interface RawPluginIcon {
     hash?: string;
 }
 
-function toPluginIconData(raw: RawPluginIcon, options: {embedAsDataUri?: boolean} = {}): PluginIconData {
-    // The external catalog can't tell us whether an icon is single-color, so derive it ourselves
-    // from the SVG bytes we already have on hand — a one-time decode at fetch time, not per-render.
-    const monochrome = options.embedAsDataUri
-        ? !!raw.icon && atob(raw.icon).includes("currentColor")
-        : raw.monochrome ?? false
-
+function toPluginIconData(raw: RawPluginIcon): PluginIconData {
     return {
         flowable: raw.flowable,
-        monochrome,
+        monochrome: raw.monochrome ?? false,
         hasIcon: raw.icon != null,
-        hash: options.embedAsDataUri ? undefined : raw.hash,
-        iconUrl: options.embedAsDataUri && raw.icon ? `data:image/svg+xml;base64,${raw.icon}` : undefined,
+        hash: raw.hash,
     }
 }
 
-function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined, options: {embedAsDataUri?: boolean} = {}): Record<string, PluginIconData> {
+function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
     return Object.fromEntries(
-        Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon, options)]),
+        Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
     )
 }
 
@@ -126,6 +112,11 @@ function usePluginsIcons() {
         }
     })
 
+    // Loads the LOCAL instance's full icon catalog in one request — this instance's plugin count
+    // is bounded, so a single JSON payload beats one HTTP round-trip per icon for catalog-browsing
+    // views (Blueprints, plugin groups, ...). The external api.kestra.io ecosystem catalog is
+    // *not* preloaded here (it used to be, at ~8MB) — see `loadEcosystemIcon` below, which resolves
+    // those lazily, one class at a time, only for classes actually rendered.
     function fetchIcons() {
         if (iconsLoaded.value) {
             return Promise.resolve(icons.value)
@@ -135,37 +126,44 @@ function usePluginsIcons() {
             return iconsPromiseLocal.value
         }
 
-        const apiPromise = apiStore.pluginIcons().then(async response => {
-            apiIcons.value = toPluginIconDataMap(response.data, {embedAsDataUri: true})
-            return apiIcons.value
-        })
-
-        const iconsPromise =
+        iconsPromiseLocal.value =
             axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
                 pluginsIcons.value = toPluginIconDataMap(response.data)
-                return pluginsIcons.value
+                iconsLoaded.value = true
+                return icons.value
             })
-
-        iconsPromiseLocal.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
-            iconsLoaded.value = true
-            return icons.value
-        })
 
         return iconsPromiseLocal.value
     }
 
-    // Lazily resolves a single icon instead of preloading the whole (potentially huge) plugin-icons
-    // catalog. Meant for views that only ever render a handful of task icons (execution timelines,
-    // trigger lists, ...); catalog-browsing views still use fetchIcons()/icons above.
+    // Resolves an icon for a class the local instance doesn't have registered, from the external
+    // api.kestra.io ecosystem catalog (e.g. a Blueprint referencing a plugin that isn't installed).
+    // That catalog predates the `monochrome`/`hash` fields added for this redesign, and its
+    // per-class endpoint returns raw SVG text rather than JSON, so `monochrome` is derived from a
+    // one-time sniff of the bytes, and the icon is rendered by pointing straight at the
+    // (browser-cacheable) external URL rather than embedding it.
+    function loadEcosystemIcon(cls: string): Promise<PluginIconData | undefined> {
+        return apiStore.pluginIcon(cls)
+            .then(response => {
+                const icon: PluginIconData = {
+                    flowable: false,
+                    monochrome: response.data.includes("currentColor"),
+                    hasIcon: true,
+                    iconUrl: `${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`,
+                }
+                apiIcons.value = {...apiIcons.value, [cls]: icon}
+                return icon
+            })
+            .catch(() => undefined)
+    }
+
+    // Lazily resolves a single icon instead of preloading the whole local catalog. Meant for views
+    // that only ever render a handful of task icons (execution timelines, trigger lists, ...) as
+    // well as the ecosystem fallback for catalog-browsing views (see `loadEcosystemIcon` above).
     function loadIcon(cls: string): Promise<PluginIconData | undefined> {
         const cached = icons.value[cls]
         if (cached) {
             return Promise.resolve(cached)
-        }
-
-        if (iconsLoaded.value) {
-            // the full catalog is already loaded and simply doesn't have this class
-            return Promise.resolve(undefined)
         }
 
         const pending = iconRequests.get(cls)
@@ -173,20 +171,29 @@ function usePluginsIcons() {
             return pending
         }
 
-        // Always answers 200 with `{icon: null}` when the class has no icon (a normal outcome,
-        // not every plugin ships one) rather than 404 — a 404 here would trip the shared HTTP
-        // client's global error handling, which takes over the whole page for any 404 response.
-        const request = axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
-            .then(response => {
-                const raw = response.data.icon
-                if (!raw) {
-                    return undefined
-                }
-                const icon = toPluginIconData(raw)
-                pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
-                return icon
-            })
-            .catch(() => undefined)
+        // Skip the local per-class lookup once the full local catalog is already loaded and
+        // simply doesn't have this class — go straight to the ecosystem fallback instead.
+        //
+        // Otherwise: always answers 200 with `{icon: null}` when the class has no icon (a normal
+        // outcome, not every plugin ships one) rather than 404 — a 404 here would trip the shared
+        // HTTP client's global error handling, which takes over the whole page for any 404
+        // response.
+        const localLookup = iconsLoaded.value
+            ? Promise.resolve(undefined)
+            : axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
+                .then(response => {
+                    const raw = response.data.icon
+                    if (!raw) {
+                        return undefined
+                    }
+                    const icon = toPluginIconData(raw)
+                    pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
+                    return icon
+                })
+                .catch(() => undefined)
+
+        const request = localLookup
+            .then(icon => icon ?? loadEcosystemIcon(cls))
             .finally(() => iconRequests.delete(cls))
 
         iconRequests.set(cls, request)

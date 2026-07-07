@@ -64,7 +64,7 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" />
+                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
                     </KsPluginCard>
                 </div>

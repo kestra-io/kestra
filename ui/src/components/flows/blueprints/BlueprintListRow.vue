@@ -12,6 +12,7 @@
                         :key="task"
                         :cls="task"
                         :icons="pluginsStore.icons"
+                        :loadIcon="pluginsStore.loadIcon"
                     />
                     <span v-if="hiddenTaskCount > 0" class="blueprint-row__overflow">
                         +{{ hiddenTaskCount }}

@@ -20,7 +20,7 @@
                     class="task"
                     :class="{missing: missingTasks.includes(task)}"
                 >
-                    <KsTaskIcon :cls="task" :icons="icons" onlyIcon />
+                    <KsTaskIcon :cls="task" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                     <span>{{ taskName(task) }}</span>
                 </div>
             </div>
@@ -68,11 +68,13 @@
         blueprint?: FlowBlueprint;
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
+        loadIcon?: (cls: string) => Promise<any>;
         columns?: number;
     }>(), {
         blueprint: undefined,
         tags: undefined,
         icons: () => ({}),
+        loadIcon: undefined,
         columns: 1,
     })
 

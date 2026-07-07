@@ -181,6 +181,30 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void taskSchemaCollapsesSingleUseDiscriminatorWrapper() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
+            assertThat("the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-1"), is(false));
+
+            var wrapper = definitions.get(base + "-2");
+            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
+            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+
+            var properties = (Map<String, Object>) wrapper.get("properties");
+            assertThat("the original class's own properties must not be lost in the merge",
+                properties.keySet(), hasItems("username", "password"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void taskRunner() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
         {

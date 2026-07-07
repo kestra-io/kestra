@@ -140,9 +140,17 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
+            // Strip edition-restricted input types before collapsing discriminator wrappers: the
+            // strip logic removes a whole allOf branch (the one carrying the `type` const), which
+            // only works while that branch is still a separate array entry. Collapsing first would
+            // inline it into a flat object, leaving no branch for the strip step to remove.
             Map<String, Object> schema = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
             stripEditionRestrictedInputTypes(schema);
-            return schema;
+
+            objectNode = MAPPER.convertValue(schema, ObjectNode.class);
+            collapseSingleUseDiscriminatorWrappers(objectNode);
+
+            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -196,6 +204,98 @@ public class JsonSchemaGenerator {
             return excluded.contains(String.valueOf(((Map<String, Object>) type).get("const")));
         }
         return false;
+    }
+
+    /**
+     * For a polymorphic property, the generator emits two definitions per subtype: a plain
+     * {@code <Class>} object, and a {@code <Class>-2} wrapper ({@code allOf: [{$ref: <Class>-1}, {
+     * required: ["type"], ...}]}) carrying the discriminator {@code required} needed to use it as
+     * an {@code anyOf} branch. When the plain definition is referenced from nowhere else, keeping
+     * it separate only adds an indirection with no reuse benefit — inline it into its wrapper and
+     * drop it, cutting the schema's definition count without changing what it validates.
+     */
+    private void collapseSingleUseDiscriminatorWrappers(ObjectNode objectNode) {
+        if (!(objectNode.get("definitions") instanceof ObjectNode definitions)) {
+            return;
+        }
+
+        Map<String, Integer> refCounts = new HashMap<>();
+        countRefs(objectNode, refCounts);
+
+        List<String> baseKeysToRemove = new ArrayList<>();
+        definitions.properties().forEach(entry ->
+        {
+            String wrapperKey = entry.getKey();
+            if (
+                !(entry.getValue() instanceof ObjectNode wrapper)
+                    || !(wrapper.get("allOf") instanceof ArrayNode allOf) || allOf.size() != 2
+                    || !(allOf.get(0) instanceof ObjectNode firstBranch) || firstBranch.size() != 1
+                    || !(firstBranch.get("$ref") instanceof TextNode refNode)
+                    || !(allOf.get(1) instanceof ObjectNode extra)
+            ) {
+                return;
+            }
+
+            String ref = refNode.asText();
+            String baseKey = ref.substring(ref.lastIndexOf('/') + 1);
+            if (
+                baseKey.equals(wrapperKey)
+                    || !(definitions.get(baseKey) instanceof ObjectNode base)
+                    || refCounts.getOrDefault(ref, 0) != 1
+            ) {
+                return;
+            }
+
+            definitions.set(wrapperKey, mergeAllOfBranches(base, extra));
+            baseKeysToRemove.add(baseKey);
+        });
+
+        baseKeysToRemove.forEach(definitions::remove);
+    }
+
+    /** Merges {@code extra} onto a copy of {@code base}, unioning {@code properties}/{@code required} instead of overwriting them. */
+    private static ObjectNode mergeAllOfBranches(ObjectNode base, ObjectNode extra) {
+        ObjectNode merged = base.deepCopy();
+        extra.properties().forEach(entry ->
+        {
+            String key = entry.getKey();
+            JsonNode extraValue = entry.getValue();
+
+            if (key.equals("properties") && merged.get("properties") instanceof ObjectNode baseProps && extraValue instanceof ObjectNode extraProps) {
+                ObjectNode mergedProps = baseProps.deepCopy();
+                extraProps.properties().forEach(p -> mergedProps.set(p.getKey(), p.getValue()));
+                merged.set("properties", mergedProps);
+            } else if (key.equals("required") && merged.get("required") instanceof ArrayNode baseRequired && extraValue instanceof ArrayNode extraRequired) {
+                ArrayNode mergedRequired = baseRequired.deepCopy();
+                Set<String> existing = new HashSet<>();
+                mergedRequired.forEach(n -> existing.add(n.asText()));
+                extraRequired.forEach(n ->
+                {
+                    if (existing.add(n.asText())) {
+                        mergedRequired.add(n);
+                    }
+                });
+                merged.set("required", mergedRequired);
+            } else {
+                merged.set(key, extraValue);
+            }
+        });
+        return merged;
+    }
+
+    private static void countRefs(JsonNode node, Map<String, Integer> counts) {
+        if (node instanceof ObjectNode obj) {
+            obj.properties().forEach(entry ->
+            {
+                if (entry.getKey().equals("$ref") && entry.getValue() instanceof TextNode ref) {
+                    counts.merge(ref.asText(), 1, Integer::sum);
+                } else {
+                    countRefs(entry.getValue(), counts);
+                }
+            });
+        } else if (node instanceof ArrayNode arr) {
+            arr.forEach(child -> countRefs(child, counts));
+        }
     }
 
     private void removeRequiredOnPropsWithDefaults(ObjectNode objectNode) {

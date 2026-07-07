@@ -13,6 +13,7 @@ import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import * as ExecutionUtils from "../utils/executionUtils"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
+import {Optional} from "../utils/utils"
 
 export interface Check {
     message: string
@@ -78,14 +79,9 @@ interface LogsState {
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
-
-// tenantId isn't on the SDK's base Execution (only on ApiExecution) - added fresh, not widened.
-// taskRunList's item type is replaced (not widened): ApiTaskRun/TaskRun differ in which fields
-// are present, so it's excluded here and redeclared below with PartialBy<TaskRun, ...> instead.
-export type Execution = Omit<PartialBy<SDKExecution, "deleted">, "taskRunList"> & {
+export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
     tenantId?: string;
-    taskRunList?: PartialBy<TaskRun, "namespace" | "executionId" | "flowId">[];
+    taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, any>;
     variables?: Record<string, any>;
 }

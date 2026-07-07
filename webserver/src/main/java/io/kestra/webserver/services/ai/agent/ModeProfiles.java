@@ -1,6 +1,5 @@
 package io.kestra.webserver.services.ai.agent;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,7 +30,7 @@ public class ModeProfiles {
     }
 
     public ResolvedProfile resolve(final AgentMode mode) {
-        Set<AgentToolFamily> families = allowedFamilies(mode);
+        Set<AgentToolFamily> families = mode.allowedToolFamilies();
         List<ToolCatalog.ToolEntry> allowed = catalog.entries().stream()
             .filter(entry -> families.contains(entry.family()))
             .toList();
@@ -42,15 +41,6 @@ public class ModeProfiles {
             .map(ToolCatalog.ToolEntry::name)
             .collect(Collectors.toSet());
         return new ResolvedProfile(mode, persona(mode), specs, allowedNames);
-    }
-
-    /** The tool families each mode may use — cumulative: Ask ⊂ Edit ⊂ Plan. */
-    private Set<AgentToolFamily> allowedFamilies(final AgentMode mode) {
-        return switch (mode) {
-            case ASK -> EnumSet.of(AgentToolFamily.READ);
-            case EDIT -> EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE);
-            case PLAN -> EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT);
-        };
     }
 
     private String persona(final AgentMode mode) {

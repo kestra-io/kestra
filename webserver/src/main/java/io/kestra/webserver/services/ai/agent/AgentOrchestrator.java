@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
@@ -218,44 +217,22 @@ public class AgentOrchestrator {
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
-        String confirmationId = IdUtils.create();
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), planText, null);
         threadManager.markAwaiting(ctx.thread());
-        confirmationRegistry.park(SuspendedTurn.builder()
-            .confirmationId(confirmationId)
-            .threadId(ctx.thread().uid())
-            .tenant(ctx.tenant())
-            .providerId(ctx.providerId())
-            .mode(ctx.mode())
-            .profile(ctx.profile())
-            .messages(ctx.messages())
-            .traceId(ctx.traceId())
-            .planProposal(true)
-            .heldRequest(null)
-            .build());
-        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(confirmationId, null, null, planText, null));
+        SuspendedTurn turn = SuspendedTurn.forPlan(ctx);
+        confirmationRegistry.park(turn);
+        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(turn.confirmationId(), null, null, planText, null));
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
     private void suspendForAction(final AgentLoopContext ctx, final ToolExecutionRequest req,
                                   final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
-        String confirmationId = IdUtils.create();
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.family()));
         threadManager.markAwaiting(ctx.thread());
-        confirmationRegistry.park(SuspendedTurn.builder()
-            .confirmationId(confirmationId)
-            .threadId(ctx.thread().uid())
-            .tenant(ctx.tenant())
-            .providerId(ctx.providerId())
-            .mode(ctx.mode())
-            .profile(ctx.profile())
-            .messages(ctx.messages())
-            .traceId(ctx.traceId())
-            .planProposal(false)
-            .heldRequest(req)
-            .build());
+        SuspendedTurn turn = SuspendedTurn.forAction(ctx, req);
+        confirmationRegistry.park(turn);
         sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(
-            confirmationId, req.name(), entry.family().name(), summaryFor(req.name(), args), args
+            turn.confirmationId(), req.name(), entry.family().name(), summaryFor(req.name(), args), args
         ));
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }

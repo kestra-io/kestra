@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
@@ -137,7 +138,7 @@ public class AiAgentController {
 
         SuspendedTurn turn = confirmationRegistry.take(request.confirmationId())
             .filter(t -> t.threadId().equals(threadId) && t.tenant().equals(tenant))
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "No pending action for confirmationId '" + request.confirmationId() + "'"));
+            .orElseThrow(() -> new NotFoundException("No pending action for confirmationId '" + request.confirmationId() + "'"));
 
         boolean approve = request.decision() == Decision.APPROVE;
         return stream(sink -> orchestrator.resume(turn, approve, request.reason(), sink));
@@ -159,7 +160,7 @@ public class AiAgentController {
 
     private Thread requireThread(final String tenant, final String threadId) {
         return threadStore.find(tenant, threadId)
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Thread not found: '" + threadId + "'"));
+            .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));
     }
 
     private void requireProvider(final String providerId) {

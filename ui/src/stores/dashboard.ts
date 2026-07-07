@@ -76,7 +76,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return {...dashboard, isDefault: isADefaultForThisRoute}
         })
         if(!isThereADefault){
-            const defaultDashboardBundledInUI = {id: "default", title: t("dashboards.default"), isDefault: true}
+            const defaultDashboardBundledInUI = {...DEFAULT_DASHBOARD, title: t("dashboards.default"), isDefault: true}
             dashboardList.value = [defaultDashboardBundledInUI, ...dashboardList.value]
         }
         return dashboardList.value

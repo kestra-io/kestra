@@ -25,11 +25,11 @@ import lombok.extern.slf4j.Slf4j;
  * This is the core "Save &amp; Fetch" mechanism described in KIP-45: when a user saves a flow that
  * references a plugin not yet present in the plugin registry, this service:
  * <ol>
- *   <li>Parses the flow YAML to extract all task/trigger type FQCNs.</li>
- *   <li>Identifies which ones are absent from the current {@link PluginRegistry}.</li>
- *   <li>Maps each missing FQCN to its Maven artifact via the {@link PluginCatalogService}.</li>
- *   <li>Downloads and installs the missing artifacts via {@link PluginManager}.</li>
- *   <li>Clears the {@link JsonSchemaCache} so the new plugins are immediately reflected in the schema.</li>
+ * <li>Parses the flow YAML to extract all task/trigger type FQCNs.</li>
+ * <li>Identifies which ones are absent from the current {@link PluginRegistry}.</li>
+ * <li>Maps each missing FQCN to its Maven artifact via the {@link PluginCatalogService}.</li>
+ * <li>Downloads and installs the missing artifacts via {@link PluginManager}.</li>
+ * <li>Clears the {@link JsonSchemaCache} so the new plugins are immediately reflected in the schema.</li>
  * </ol>
  * <p>
  * Works transparently with both {@code LocalPluginManager} (OSS standalone — installs to local disk)
@@ -41,7 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PluginAutoInstallService {
 
-    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
+    };
 
     private final PluginCatalogService catalogService;
     private final PluginManager pluginManager;
@@ -55,8 +56,7 @@ public class PluginAutoInstallService {
         final PluginManager pluginManager,
         final PluginRegistry pluginRegistry,
         final JsonSchemaCache jsonSchemaCache,
-        @Value("${kestra.plugins.auto-install.enabled:false}") final boolean enabled
-    ) {
+        @Value("${kestra.plugins.auto-install.enabled:false}") final boolean enabled) {
         this.catalogService = Objects.requireNonNull(catalogService);
         this.pluginManager = Objects.requireNonNull(pluginManager);
         this.pluginRegistry = Objects.requireNonNull(pluginRegistry);

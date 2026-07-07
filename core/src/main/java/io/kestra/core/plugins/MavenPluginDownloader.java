@@ -14,7 +14,6 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.MultiRuntimeException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.Proxy;
@@ -26,6 +25,7 @@ import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
+import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
@@ -122,8 +122,7 @@ public class MavenPluginDownloader implements Closeable {
     public PluginArtifact resolve(
         @NonNull String dependency,
         @NonNull List<MavenPluginRepositoryConfig> repositories,
-        @Nullable TransferListener listener
-    ) {
+        @Nullable TransferListener listener) {
         List<RemoteRepository> allRepositories = new ArrayList<>();
         allRepositories.addAll(buildRemoteRepositories(this.repositoryConfigs));
         allRepositories.addAll(buildRemoteRepositories(repositories));

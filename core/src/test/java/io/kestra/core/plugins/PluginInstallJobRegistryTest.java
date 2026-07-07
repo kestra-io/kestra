@@ -73,7 +73,8 @@ class PluginInstallJobRegistryTest {
         CountDownLatch latch = new CountDownLatch(1);
 
         when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
-            .thenAnswer(invocation -> {
+            .thenAnswer(invocation ->
+            {
                 latch.countDown();
                 return artifacts;
             });
@@ -125,7 +126,8 @@ class PluginInstallJobRegistryTest {
         CountDownLatch latch = new CountDownLatch(1);
 
         when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
-            .thenAnswer(invocation -> {
+            .thenAnswer(invocation ->
+            {
                 TransferListener listener = invocation.getArgument(4);
                 // Simulate a transfer event via the listener's progress map
                 // by writing directly to the job's progress map through the listener
@@ -144,7 +146,8 @@ class PluginInstallJobRegistryTest {
         // After transferProgressed, the entry should be PROGRESSING
         assertThat(job.progress()).hasEntrySatisfying(
             "http://repo/plugin.jar",
-            p -> {
+            p ->
+            {
                 assertThat(p.transferred()).isEqualTo(512L);
                 assertThat(p.total()).isEqualTo(1024L);
             }
@@ -161,7 +164,8 @@ class PluginInstallJobRegistryTest {
         Instant deadline = Instant.now().plus(timeout);
         while (Instant.now().isBefore(deadline)) {
             Optional<PluginInstallJob> job = registry.get(jobId);
-            if (job.isPresent() && job.get().isTerminal()) return;
+            if (job.isPresent() && job.get().isTerminal())
+                return;
             Thread.sleep(50);
         }
         throw new AssertionError("Job " + jobId + " did not reach terminal state within " + timeout);

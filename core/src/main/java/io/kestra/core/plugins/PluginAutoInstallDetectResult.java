@@ -13,5 +13,5 @@ import java.util.Set;
 public record PluginAutoInstallDetectResult(
     boolean enabled,
     Set<String> missingTypes,
-    List<PluginArtifact> artifacts
-) {}
+    List<PluginArtifact> artifacts) {
+}

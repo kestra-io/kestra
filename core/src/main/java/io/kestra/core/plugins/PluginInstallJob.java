@@ -19,8 +19,7 @@ public record PluginInstallJob(
     Map<String, ArtifactProgress> progress,
     Instant startedAt,
     Instant finishedAt,
-    String error
-) {
+    String error) {
 
     /** Overall job lifecycle status. */
     public enum Status {
@@ -35,8 +34,8 @@ public record PluginInstallJob(
         String resource,
         long transferred,
         long total,
-        ArtifactState state
-    ) {}
+        ArtifactState state) {
+    }
 
     /** State of a single artifact transfer. */
     public enum ArtifactState {

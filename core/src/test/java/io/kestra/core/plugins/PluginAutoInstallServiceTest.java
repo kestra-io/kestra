@@ -127,9 +127,11 @@ class PluginAutoInstallServiceTest {
     @Test
     void shouldMatchArtifactByExactGroup() {
         // Given
-        when(catalogService.get()).thenReturn(List.of(
-            manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
-        ));
+        when(catalogService.get()).thenReturn(
+            List.of(
+                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
+            )
+        );
         PluginAutoInstallService service = enabledService();
 
         // When
@@ -145,10 +147,12 @@ class PluginAutoInstallServiceTest {
     void shouldPreferLongestGroupPrefixMatch() {
         // Given — plugin-scripts owns "io.kestra.plugin.scripts" and
         //          plugin-script-python owns the deeper "io.kestra.plugin.scripts.python"
-        when(catalogService.get()).thenReturn(List.of(
-            manifest("io.kestra.plugin", "plugin-scripts", "io.kestra.plugin.scripts"),
-            manifest("io.kestra.plugin", "plugin-script-python", "io.kestra.plugin.scripts.python")
-        ));
+        when(catalogService.get()).thenReturn(
+            List.of(
+                manifest("io.kestra.plugin", "plugin-scripts", "io.kestra.plugin.scripts"),
+                manifest("io.kestra.plugin", "plugin-script-python", "io.kestra.plugin.scripts.python")
+            )
+        );
         PluginAutoInstallService service = enabledService();
 
         // When
@@ -185,9 +189,11 @@ class PluginAutoInstallServiceTest {
                 type: io.kestra.plugin.http.request.Request
             """;
         when(pluginRegistry.findClassByIdentifier("io.kestra.plugin.http.request.Request")).thenReturn(null);
-        when(catalogService.get()).thenReturn(List.of(
-            manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
-        ));
+        when(catalogService.get()).thenReturn(
+            List.of(
+                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
+            )
+        );
         PluginArtifact expectedArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
         when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(expectedArtifact));
 
@@ -258,9 +264,11 @@ class PluginAutoInstallServiceTest {
                 type: io.kestra.plugin.http.request.Options
             """;
         when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
-        when(catalogService.get()).thenReturn(List.of(
-            manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
-        ));
+        when(catalogService.get()).thenReturn(
+            List.of(
+                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
+            )
+        );
         PluginArtifact artifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
         when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(artifact));
 

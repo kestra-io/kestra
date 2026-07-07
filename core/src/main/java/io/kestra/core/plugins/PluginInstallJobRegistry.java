@@ -44,8 +44,7 @@ public class PluginInstallJobRegistry {
     public PluginInstallJobRegistry(
         final PluginManager pluginManager,
         final JsonSchemaCache jsonSchemaCache,
-        @Value("${kestra.plugins.auto-install.concurrency:2}") final int concurrency
-    ) {
+        @Value("${kestra.plugins.auto-install.concurrency:2}") final int concurrency) {
         this.pluginManager = Objects.requireNonNull(pluginManager);
         this.jsonSchemaCache = Objects.requireNonNull(jsonSchemaCache);
         this.installExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(concurrency);
@@ -109,7 +108,8 @@ public class PluginInstallJobRegistry {
 
     private void evictTerminalJobs() {
         Instant cutoff = Instant.now().minusSeconds(TERMINAL_JOB_TTL_SECONDS);
-        jobs.entrySet().removeIf(entry -> {
+        jobs.entrySet().removeIf(entry ->
+        {
             PluginInstallJob job = entry.getValue().get();
             return job.isTerminal() && job.finishedAt() != null && job.finishedAt().isBefore(cutoff);
         });

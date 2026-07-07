@@ -25,12 +25,14 @@ import picocli.CommandLine;
 /**
  * CLI command that generates the per-release plugin schema bundle.
  *
- * <p>Task, trigger, plugindefault and dashboard schemas overlap heavily — they share most of
+ * <p>
+ * Task, trigger, plugindefault and dashboard schemas overlap heavily — they share most of
  * their nested plugin/property definitions. Generating each with {@code JsonSchemaGenerator}
  * independently would embed a full, near-duplicate {@code definitions} tree per type. Instead,
  * this command generates all four, then hoists every definition into one shared pool written
  * once as {@code definitions}, plus a small {@code roots} map of {@code SchemaType} name → the
  * {@code $ref} into that pool for that type's root class:
+ * 
  * <pre>{@code
  * {
  *   "definitions": { "io.kestra.plugin.core.log.Log": {...}, ... },
@@ -42,11 +44,13 @@ import picocli.CommandLine;
  * }
  * }</pre>
  *
- * <p>It is intended to be uploaded to GCS alongside {@code oss.json} at each release so that
+ * <p>
+ * It is intended to be uploaded to GCS alongside {@code oss.json} at each release so that
  * running instances can fetch it via {@code kestra.plugins.schema-bundle-url-template} and offer
  * editor autocompletion for plugin types that are not yet locally installed (KIP-45).
  *
- * <p>Run with a {@code --plugins} path pointing at the full-plugin set to capture every
+ * <p>
+ * Run with a {@code --plugins} path pointing at the full-plugin set to capture every
  * available type.
  */
 @CommandLine.Command(
@@ -68,7 +72,7 @@ public class PluginsSchemaCommand extends AbstractCommand {
         SchemaType.DASHBOARD, Dashboard.class
     );
 
-    @CommandLine.Option(names = {"-o", "--output"}, description = "Output file path", defaultValue = "plugins-schema.json")
+    @CommandLine.Option(names = { "-o", "--output" }, description = "Output file path", defaultValue = "plugins-schema.json")
     private File output;
 
     @Inject
@@ -113,8 +117,10 @@ public class PluginsSchemaCommand extends AbstractCommand {
         bundle.put("definitions", definitions);
         bundle.put("roots", roots);
 
-        if (output.getParentFile() != null && !output.getParentFile().mkdirs()
-            && !output.getParentFile().isDirectory()) {
+        if (
+            output.getParentFile() != null && !output.getParentFile().mkdirs()
+                && !output.getParentFile().isDirectory()
+        ) {
             throw new IOException("Failed to create output directory: " + output.getParentFile());
         }
 

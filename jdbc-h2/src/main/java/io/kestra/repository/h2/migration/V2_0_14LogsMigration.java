@@ -22,14 +22,14 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.logs.type", pattern = "h2|memory")
-public class V2_0LogsMigration extends AbstractSQLMigrationScript {
+public class V2_0_14LogsMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "0-init-logs-h2";
+    private static final String SCRIPT_ID = "2.0.14-logs-h2";
     private static final String SQL_RESOURCE = "/migrations/logs-h2.sql";
 
     private final LogJdbcDataSourceProvider logDataSourceProvider;
 
-    public V2_0LogsMigration(final LogJdbcDataSourceProvider logDataSourceProvider) {
+    public V2_0_14LogsMigration(final LogJdbcDataSourceProvider logDataSourceProvider) {
         this.logDataSourceProvider = logDataSourceProvider;
     }
 

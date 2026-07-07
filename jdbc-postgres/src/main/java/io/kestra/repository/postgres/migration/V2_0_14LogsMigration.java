@@ -22,21 +22,21 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.logs.type", value = "postgres")
-public class V2_0LogsMigration extends AbstractSQLMigrationScript {
+public class V2_0_14LogsMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "0-init-logs-postgres";
+    private static final String SCRIPT_ID = "2.0.14-logs-postgres";
     private static final String SQL_RESOURCE = "/migrations/logs-postgres.sql";
 
     private final LogJdbcDataSourceProvider logDataSourceProvider;
 
-    public V2_0LogsMigration(final LogJdbcDataSourceProvider logDataSourceProvider) {
+    public V2_0_14LogsMigration(final LogJdbcDataSourceProvider logDataSourceProvider) {
         this.logDataSourceProvider = logDataSourceProvider;
     }
 
     @Override
     public String scriptId() {
         // Non-default table name → its own scriptId, so changing kestra.logs.postgres.table auto-applies
-        // a fresh migration. Default 'logs' keeps the bare id. See H2 V2_0LogsMigration for the rationale.
+        // a fresh migration. Default 'logs' keeps the bare id. See H2 V2_0_14LogsMigration for the rationale.
         String table = logDataSourceProvider.table();
         return "logs".equals(table) ? SCRIPT_ID : SCRIPT_ID + "-" + table;
     }

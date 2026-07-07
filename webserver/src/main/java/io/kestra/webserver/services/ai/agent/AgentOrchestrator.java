@@ -267,6 +267,10 @@ public class AgentOrchestrator {
         model.chat(request, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(final String partial) {
+                // The client may disconnect mid-stream; stop emitting tokens once the sink is cancelled.
+                if (sink.isCancelled()) {
+                    return;
+                }
                 if (partial != null && !partial.isEmpty()) {
                     sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(partial));
                 }

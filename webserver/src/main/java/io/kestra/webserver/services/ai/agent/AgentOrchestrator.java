@@ -18,6 +18,7 @@ import io.kestra.webserver.services.ai.agent.domain.ThreadStatus;
 import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
 import io.kestra.webserver.services.ai.agent.dto.AgentEvents;
+import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
 
@@ -39,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * The multi-turn control loop: assembles the mode profile, drives the streaming model, gates
  * confirmation-required tools, and suspends/resumes turns. Persistence, projection and thread-state
- * transitions are delegated to {@link ConversationLog}, {@link ChatMessageProjector} and
+ * transitions are delegated to {@link ConversationLog}, {@link ChatMessageAdaptor} and
  * {@link ThreadLifecycle}.
  */
 @Singleton
@@ -51,7 +52,6 @@ public class AgentOrchestrator {
     private final ModeProfiles modeProfiles;
     private final ThreadLifecycle lifecycle;
     private final ConversationLog conversation;
-    private final ChatMessageProjector projector;
     private final ConfirmationRegistry confirmationRegistry;
     private final Duration modelCallTimeout;
 
@@ -62,7 +62,6 @@ public class AgentOrchestrator {
         final ModeProfiles modeProfiles,
         final ThreadLifecycle lifecycle,
         final ConversationLog conversation,
-        final ChatMessageProjector projector,
         final ConfirmationRegistry confirmationRegistry,
         final AgentConfiguration configuration
     ) {
@@ -71,7 +70,6 @@ public class AgentOrchestrator {
         this.modeProfiles = modeProfiles;
         this.lifecycle = lifecycle;
         this.conversation = conversation;
-        this.projector = projector;
         this.confirmationRegistry = confirmationRegistry;
         this.modelCallTimeout = configuration.modelCallTimeout();
     }
@@ -114,7 +112,7 @@ public class AgentOrchestrator {
 
             List<ChatMessage> messages = new ArrayList<>();
             messages.add(SystemMessage.from(profile.systemPrompt()));
-            messages.addAll(projector.project(conversation.load(running.uid())));
+            messages.addAll(ChatMessageAdaptor.project(conversation.load(running.uid())));
 
             runLoop(new LoopContext(running, tenant, providerId, mode, profile, model, messages, traceId, false), sink);
         } catch (Exception e) {
@@ -164,7 +162,7 @@ public class AgentOrchestrator {
         if (!approve) {
             String rejectedText = "REJECTED by user." + (reason != null ? " Reason: " + reason : "");
             ctx.messages.add(ToolExecutionResultMessage.from(held, rejectedText));
-            conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, projector.toToolCall(held, entry.family()), rejectedResult(reason));
+            conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(held, entry.family()), rejectedResult(reason));
             emitToolResult(sink, held.name(), "rejected");
 
             if (ctx.mode == Mode.PLAN) {
@@ -180,7 +178,7 @@ public class AgentOrchestrator {
         emitToolCall(sink, held, entry.family());
         String result = catalog.dispatch(held, ctx.tenant);
         ctx.messages.add(ToolExecutionResultMessage.from(held, result));
-        conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, projector.toToolCall(held, entry.family()), Map.of("outcome", "ok", "result", result));
+        conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(held, entry.family()), Map.of("outcome", "ok", "result", result));
         emitToolResult(sink, held.name(), "ok");
         runLoop(ctx, sink);
     }
@@ -222,18 +220,18 @@ public class AgentOrchestrator {
 
             ToolExecutionRequest req = ai.toolExecutionRequests().getFirst();
             ctx.messages.add(AiMessage.from(ai.text(), List.of(req)));
-            Map<String, Object> args = projector.parseArguments(req.arguments());
+            Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
             if (!ctx.profile.allowedToolNames().contains(req.name())) {
                 String rejected = "Tool '" + req.name() + "' is not available in " + ctx.mode + " mode.";
                 ctx.messages.add(ToolExecutionResultMessage.from(req, rejected));
-                conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, projector.toToolCall(req, null), rejectedResult(rejected));
+                conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(req, null), rejectedResult(rejected));
                 emitToolResult(sink, req.name(), "rejected");
                 continue;
             }
 
             ToolEntry entry = catalog.byName(req.name()).orElseThrow();
-            conversation.appendToolCall(ctx.thread.uid(), ctx.traceId, ai.text(), projector.toToolCall(req, entry.family()));
+            conversation.appendToolCall(ctx.thread.uid(), ctx.traceId, ai.text(), ChatMessageAdaptor.toToolCall(req, entry.family()));
 
             if (entry.writePolicy() == WritePolicy.CONFIRM) {
                 suspendForAction(ctx, req, entry, args, sink);
@@ -243,7 +241,7 @@ public class AgentOrchestrator {
             emitToolCall(sink, req, entry.family());
             String result = catalog.dispatch(req, ctx.tenant);
             ctx.messages.add(ToolExecutionResultMessage.from(req, result));
-            conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, projector.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
+            conversation.appendToolResult(ctx.thread.uid(), ctx.traceId, ChatMessageAdaptor.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
             emitToolResult(sink, req.name(), "ok");
         }
     }
@@ -271,7 +269,7 @@ public class AgentOrchestrator {
     private void suspendForAction(final LoopContext ctx, final ToolExecutionRequest req,
                                   final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
         String confirmationId = IdUtils.create();
-        conversation.appendProposedAction(ctx.thread.uid(), ctx.traceId, null, projector.toToolCall(req, entry.family()));
+        conversation.appendProposedAction(ctx.thread.uid(), ctx.traceId, null, ChatMessageAdaptor.toToolCall(req, entry.family()));
         ctx.thread = lifecycle.markAwaiting(ctx.thread);
         confirmationRegistry.park(SuspendedTurn.builder()
             .confirmationId(confirmationId)
@@ -348,7 +346,7 @@ public class AgentOrchestrator {
 
     private void emitToolCall(final TurnEventSink sink, final ToolExecutionRequest req, final ToolFamily family) {
         sink.emit(AgentEvents.TOOL_CALL, new AgentEvents.ToolCallEvent(
-            req.name(), family == null ? null : family.name(), projector.parseArguments(req.arguments())
+            req.name(), family == null ? null : family.name(), ChatMessageAdaptor.parseArguments(req.arguments())
         ));
     }
 

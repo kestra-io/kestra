@@ -1,4 +1,4 @@
-package io.kestra.webserver.services.ai.agent;
+package io.kestra.webserver.services.ai.agent.internals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,18 +15,19 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
-import jakarta.inject.Singleton;
 
 /**
  * Converts between the durable {@link Message} log and the LangChain4j {@link ChatMessage} shapes,
  * and parses tool-call argument JSON. Stateless.
  */
-@Singleton
-public class ChatMessageProjector {
+public final class ChatMessageAdaptor {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
+    private ChatMessageAdaptor() {
+    }
+
     /** Project the durable Message log down to the four LangChain4j message kinds for the next request. */
-    public List<ChatMessage> project(final List<Message> rows) {
+    public static List<ChatMessage> project(final List<Message> rows) {
         List<ChatMessage> out = new ArrayList<>();
         for (Message m : rows) {
             switch (m.type()) {
@@ -54,12 +55,12 @@ public class ChatMessageProjector {
         return out;
     }
 
-    public ToolCall toToolCall(final ToolExecutionRequest req, final ToolFamily family) {
+    public static ToolCall toToolCall(final ToolExecutionRequest req, final ToolFamily family) {
         return ToolCall.platform(req.id(), req.name(), family, parseArguments(req.arguments()));
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Object> parseArguments(final String json) {
+    public static Map<String, Object> parseArguments(final String json) {
         if (json == null || json.isBlank()) {
             return Map.of();
         }

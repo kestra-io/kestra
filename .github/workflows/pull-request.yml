@@ -116,13 +116,11 @@ jobs:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # EXPERIMENT (do not merge): inlined from
-  # kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main to run the
-  # Gradle check serially with every task forced to re-run.
+  # kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main.
+  # Phase 2: the usual parallel setup, still with `--rerun-tasks` so the workload is
+  # identical to the serial phase-1 run (all tests execute, nothing from cache).
   # - `needs`/`if` on file-changes are intentionally dropped: the backend filter
   #   excludes `.github/**`, so this workflow-only PR would otherwise skip the job.
-  # - `--no-parallel` is required on top of dropping `--parallel`: gradle.properties
-  #   sets `org.gradle.parallel=true`, which would silently re-enable parallelism.
-  # - `--rerun-tasks` defeats up-to-date checks and the build cache so all tests run.
   backend:
     name: Backend - Tests
     runs-on: ubuntu-latest
@@ -154,10 +152,10 @@ jobs:
         shell: bash
         run: docker compose -f docker-compose-ci.yml up -d
 
-      - name: Gradle - check (serial, rerun all tasks)
+      - name: Gradle - check (parallel, rerun all tasks)
         shell: bash
         run: |
-          ./gradlew check --rerun-tasks --no-parallel
+          ./gradlew check --rerun-tasks --parallel
 
       - name: comment PR with test report
         if: ${{ !cancelled() }}

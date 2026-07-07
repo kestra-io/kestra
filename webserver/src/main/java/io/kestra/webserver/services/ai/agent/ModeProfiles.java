@@ -1,6 +1,12 @@
 package io.kestra.webserver.services.ai.agent;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,11 +20,15 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ModeProfiles {
+    private static final String PROMPT_RESOURCE = "/ai/agent/prompts/%s.md";
+
     private final ToolCatalog catalog;
+    private final Map<AgentMode, String> personas;
 
     @Inject
     public ModeProfiles(final ToolCatalog catalog) {
         this.catalog = catalog;
+        this.personas = loadPersonas();
     }
 
     public record ResolvedProfile(
@@ -40,28 +50,26 @@ public class ModeProfiles {
         Set<String> allowedNames = allowed.stream()
             .map(ToolCatalog.ToolEntry::name)
             .collect(Collectors.toSet());
-        return new ResolvedProfile(mode, persona(mode), specs, allowedNames);
+        return new ResolvedProfile(mode, personas.get(mode), specs, allowedNames);
     }
 
-    private String persona(final AgentMode mode) {
-        return switch (mode) {
-            case ASK -> """
-                You are Kestra Copilot in ASK mode. Answer the user's questions about Kestra using the \
-                documentation tools available to you. You are strictly read-only: you never modify \
-                anything and you have no tools that do. Ground your answers in the documentation and be \
-                concise. If the documentation does not cover the question, say so plainly.""";
-            case EDIT -> """
-                You are Kestra Copilot in EDIT mode. You operate on the single artefact the user is \
-                focused on. When you decide an action is needed (for example, restarting a failed \
-                execution), call the appropriate tool with its exact arguments. The platform will ask \
-                the user to confirm before any action runs, so propose one focused action at a time and \
-                explain what it will do.""";
-            case PLAN -> """
-                You are Kestra Copilot in PLAN mode. First, respond with a short numbered plan of the \
-                steps you intend to take to satisfy the user's request — do NOT call any tools yet. \
-                After the user approves the plan, carry it out one step at a time. Diagnose problems by \
-                reading execution logs before proposing a fix. Each action you take will be shown to \
-                the user for confirmation before it runs.""";
-        };
+    private static Map<AgentMode, String> loadPersonas() {
+        Map<AgentMode, String> map = new EnumMap<>(AgentMode.class);
+        for (AgentMode mode : AgentMode.values()) {
+            map.put(mode, loadPrompt(mode));
+        }
+        return map;
+    }
+
+    private static String loadPrompt(final AgentMode mode) {
+        String resource = String.format(PROMPT_RESOURCE, mode.name().toLowerCase());
+        try (InputStream is = ModeProfiles.class.getResourceAsStream(resource)) {
+            if (is == null) {
+                throw new IllegalStateException("Missing Copilot system-prompt resource: " + resource);
+            }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8).strip().intern();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read Copilot system-prompt resource: " + resource, e);
+        }
     }
 }

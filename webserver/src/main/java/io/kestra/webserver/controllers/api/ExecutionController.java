@@ -709,12 +709,14 @@ public class ExecutionController {
             throw e;
         }
 
-        // Only drafts need re-validation here: published revisions are already validated at save
-        // time, so re-validating every execution would just add cost to the hot path. A draft can be
-        // saved with constraint violations, so when the user explicitly executes one (by passing its
-        // revision) the request is rejected as unprocessable with the validation error, rather than
-        // starting an execution that cannot run.
         if (flow.isDraft()) {
+            controlDraftExecutableAs(flow, kind.orElse(null));
+
+            // Only drafts need re-validation here: published revisions are already validated at save
+            // time, so re-validating every execution would just add cost to the hot path. A draft can be
+            // saved with constraint violations, so when the user explicitly executes one (by passing its
+            // revision) the request is rejected as unprocessable with the validation error, rather than
+            // starting an execution that cannot run.
             Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
             if (violations.isPresent()) {
                 throw new IllegalArgumentException("Flow execution blocked: flow definition is invalid. " + violations.get().getMessage());
@@ -1145,6 +1147,7 @@ public class ExecutionController {
         this.controlRevision(execution, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
+        controlDraftExecutableAs(flow, execution.getKind());
 
         return blockingReplay(execution, taskRunId, revision, breakpoints);
     }
@@ -1188,6 +1191,7 @@ public class ExecutionController {
         this.controlRevision(current, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
+        controlDraftExecutableAs(flow, current.getKind());
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
@@ -1257,6 +1261,19 @@ public class ExecutionController {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
         executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
+    }
+
+    /**
+     * Rejects executing a draft revision as anything but a {@link ExecutionKind#PLAYGROUND} execution,
+     * whether the revision is passed explicitly (create) or inherited from a replayed execution.
+     */
+    private static void controlDraftExecutableAs(Flow flow, @Nullable ExecutionKind kind) {
+        if (flow.isDraft() && ExecutionKind.PLAYGROUND != kind) {
+            throw new IllegalArgumentException(
+                "Flow execution blocked: revision " + flow.getRevision() + " of flow " + flow.uid() +
+                    " is a draft. Draft revisions can only be executed as playground executions."
+            );
+        }
     }
 
     private void controlRevision(Execution execution, Integer revision) {

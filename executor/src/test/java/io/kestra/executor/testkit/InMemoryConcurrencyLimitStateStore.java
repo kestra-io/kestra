@@ -50,7 +50,18 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
     public synchronized void decrementAndPop(FlowInterface flow, ExecutionQueuedStateStore executionQueuedStateStore, BiConsumer<TransactionContext, Execution> consumer) {
         int running = decrement(flow);
         if (flow.getConcurrency() != null && running < flow.getConcurrency().getLimit()) {
-            executionQueuedStateStore.pop(NoopTransactionContext.INSTANCE, flow.getTenantId(), flow.getNamespace(), flow.getId(), consumer);
+            executionQueuedStateStore.pop(
+                NoopTransactionContext.INSTANCE,
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                (txContext, queued) -> {
+                    // the popped execution takes the freed slot: re-increment the counter before
+                    // handing it to the consumer (AbstractJdbcConcurrencyLimitStateStore#decrementAndPop)
+                    increment(txContext, flow);
+                    consumer.accept(txContext, queued);
+                }
+            );
         }
     }
 

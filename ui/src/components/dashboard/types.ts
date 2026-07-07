@@ -1,13 +1,14 @@
-export type Dashboard = {
-    id: string;
-    charts: Chart[];
+import type {DashboardControllerDashboardResponse, ChartFiltersOverrides, DashboardControllerPreviewRequest} from "@kestra-io/kestra-sdk"
+import type {FilterObject} from "../../utils/filters"
+
+// charts is overridden: chart definitions are polymorphic (DataChart, DataChartKPI, ...) and the
+// backend returns the full Chart shape below, but the SDK's generated response type only models
+// the lean common subset (id/type/chartOptions). title/deleted are widened back to optional: a
+// dashboard can be a locally-built preview placeholder that never persisted either field.
+export type Dashboard = Omit<DashboardControllerDashboardResponse, "charts" | "title" | "deleted"> & {
     title?: string;
-    sourceCode?: string;
-    timeWindow?: {
-        default?: string;
-        max?: string;
-    };
-    [key: string]: unknown;
+    deleted?: boolean;
+    charts: Chart[];
 };
 
 export type Chart = {
@@ -43,17 +44,11 @@ export type Chart = {
     [key: string]: unknown;
 };
 
-export type Request = {
-    chart: Chart["content"];
-    globalFilter?: Parameters;
-};
+export type Request = DashboardControllerPreviewRequest;
 
-export type Parameters = {
-    pageNumber?: number;
-    pageSize?: number;
-    startDate?: Date;
-    endDate?: Date;
-    namespace?: string;
-    labels?: Record<string, string>;
-    filters?: Record<string, any>;
+// filters is overridden: FilterObject's field/operation are plain strings (as produced by this
+// app's filter bar), not the SDK's strict QueryFilterField/QueryFilterOp enums - the same gap
+// routeQueryToQueryFilters() bridges for other stores' search endpoints.
+export type Parameters = Omit<ChartFiltersOverrides, "filters"> & {
+    filters?: FilterObject[];
 };

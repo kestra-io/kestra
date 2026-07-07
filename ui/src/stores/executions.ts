@@ -78,11 +78,14 @@ interface LogsState {
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type Execution = Omit<SDKExecution, "deleted" | "tenantId" | "taskRunList"> & {
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+
+// tenantId isn't on the SDK's base Execution (only on ApiExecution) - added fresh, not widened.
+// taskRunList's item type is replaced (not widened): ApiTaskRun/TaskRun differ in which fields
+// are present, so it's excluded here and redeclared below with PartialBy<TaskRun, ...> instead.
+export type Execution = Omit<PartialBy<SDKExecution, "deleted">, "taskRunList"> & {
     tenantId?: string;
-    deleted?: boolean;
-    taskRunList?: (Omit<TaskRun, "namespace" | "executionId" | "flowId"> 
-        & Partial<Pick<TaskRun, "namespace" | "executionId" | "flowId">>)[];
+    taskRunList?: PartialBy<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, any>;
     variables?: Record<string, any>;
 }

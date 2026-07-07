@@ -15,7 +15,7 @@ import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
 
-import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts"
+import type {Dashboard, Chart, Request, Parameters as ChartParameters} from "../components/dashboard/types.ts"
 import {useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
@@ -75,10 +75,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return dashboardList.value
     }
 
-    // Tenant-scoped settings, hardcoded to the "main" tenant (this OSS build is single-tenant) —
-    // bypasses normal tenant routing on purpose, same as before this endpoint moved to the SDK.
-    const DEFAULT_DASHBOARDS_TENANT_ID = "main"
-
     async function loadDefaults() {
         defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards()
         return defaultDashboards.value
@@ -88,7 +84,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const loadedDef = await loadDefaults()
         const def = {...loadedDef, ...defaultDashboardsRequest}
 
-        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboards({id: DEFAULT_DASHBOARDS_TENANT_ID, ...def})
+        // TenantController is hardcoded to the "main" tenant (this OSS build is single-tenant),
+        // and its `id` path param isn't the SDK's auto-filled `tenant` param, so it must be passed
+        // explicitly here to match.
+        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboards({id: "main", ...def})
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
@@ -176,8 +175,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return undefined
         }
 
-        activeDashboard.value = data as Dashboard
-        sourceCode.value = (data as Dashboard).sourceCode ?? ""
+        // charts is the one field that needs bridging: see the Dashboard type's comment.
+        activeDashboard.value = {...data, charts: data.charts as unknown as Chart[]}
+        sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
 
         return activeDashboard.value
@@ -203,9 +203,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.validateDashboard({body: source ?? ""})
     }
 
-    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
+    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartParameters) {
         try {
-            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as any)
+            // filters is FilterObject[] here (see ChartParameters' comment); the backend accepts
+            // the same field/operation strings the SDK's QueryFilterField/QueryFilterOp enums do.
+            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
         } catch (e: any) {
             if (e.status === 404) return undefined
             throw e
@@ -214,15 +216,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function validateChart(source: string) {
         const data = await DashboardsAPI.validateChart({body: source})
-        chartErrors.value = data as unknown as string[]
+        chartErrors.value = data.constraints ? [data.constraints] : []
         return data
     }
 
     async function chartPreview(request: Request) {
-        return DashboardsAPI.previewChart(request as any)
+        return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: Parameters) {
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartParameters) {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`

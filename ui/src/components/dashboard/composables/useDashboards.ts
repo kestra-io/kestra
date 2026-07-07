@@ -11,6 +11,7 @@ import {decodeSearchParams} from "@kestra-io/design-system"
 
 import {FilterObject} from "../../../utils/filters"
 import {Chart, Parameters, Request} from "../types.ts"
+import type {ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
 
 
 
@@ -47,7 +48,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[], appendFilters?: FilterObject[]) {
         const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? [])
         const allFilters = appendFilters?.length ? [...(filters as FilterObject[]), ...appendFilters] : filters
-        const parameters: Parameters = {...pagination, filters: (allFilters ?? {})}
+        const parameters: Parameters = {...pagination, filters: allFilters ?? []}
 
         let result
         if (!props.showDefault) {
@@ -60,7 +61,10 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
                 throw new Error("Chart content must exist for preview.")
             }
 
-            const request: Request = {chart: props.chart.content, globalFilter: parameters}
+            // filters' field/operation strings match the SDK's QueryFilterField/QueryFilterOp
+            // enums at runtime; FilterObject just doesn't type them that strictly (see the
+            // Parameters type's comment in dashboard/types.ts).
+            const request: Request = {chart: props.chart.content, globalFilter: parameters as unknown as ChartFiltersOverrides}
             result = await dashboardStore.chartPreview(request)
         }
 

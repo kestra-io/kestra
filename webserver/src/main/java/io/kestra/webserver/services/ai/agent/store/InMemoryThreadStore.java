@@ -46,14 +46,14 @@ public class InMemoryThreadStore implements ThreadStore {
     }
 
     @Override
-    public Optional<AgentThread> transitionStatus(final String tenant, final String uid,
-                                                  final AgentThreadStatus expected, final UnaryOperator<AgentThread> transform) {
+    public Optional<AgentThread> updateIf(final String tenant, final String uid,
+                                          final AgentThreadStatus expected, final UnaryOperator<AgentThread> mutation) {
         AtomicReference<AgentThread> applied = new AtomicReference<>();
         threads.compute(key(tenant, uid), (k, existing) -> {
             if (existing == null || existing.deleted() || existing.status() != expected) {
                 return existing;
             }
-            AgentThread updated = Objects.requireNonNull(transform.apply(existing), "transform must not return null");
+            AgentThread updated = Objects.requireNonNull(mutation.apply(existing), "mutation must not return null");
             applied.set(updated);
             return updated;
         });

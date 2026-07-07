@@ -15,5 +15,5 @@ public interface ThreadStore {
 
     AgentThread save(AgentThread thread);
 
-    Optional<AgentThread> transitionStatus(String tenant, String uid, AgentThreadStatus expected, UnaryOperator<AgentThread> transform);
+    Optional<AgentThread> updateIf(String tenant, String uid, AgentThreadStatus expected, UnaryOperator<AgentThread> mutation);
 }

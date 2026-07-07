@@ -47,7 +47,7 @@ public class AiThreadManager {
     }
 
     public Optional<AgentThread> startTurn(final String tenant, final String uid, final AgentMode mode) {
-        return threadStore.transitionStatus(tenant, uid, AgentThreadStatus.IDLE,
+        return threadStore.updateIf(tenant, uid, AgentThreadStatus.IDLE,
             thread -> thread.toBuilder()
                 .status(AgentThreadStatus.RUNNING)
                 .ownerNodeId(nodeId)

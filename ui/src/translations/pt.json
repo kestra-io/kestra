@@ -60,7 +60,7 @@
     "save": "Salvar",
     "save_as_draft": "Guardar como rascunho",
     "draft": "Rascunho",
-    "draft_flow_warning": "Esta revisão do flow é um rascunho. A execução será feita sobre esta revisão de rascunho e pode falhar imediatamente se a definição do flow for inválida.",
+    "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita sobre a revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar as suas alterações mais recentes.",
     "save task": "Salvar Task",
     "saved": "Salvo com sucesso",
     "saved as draft": "Guardado como rascunho com sucesso",
@@ -836,6 +836,7 @@
       },
       "filter": "Filtro",
       "new_file": "Novo ficheiro",
+      "read_only": "Não tem permissão para gerir ficheiros neste namespace",
       "no_items": {
         "heading": "Nenhum arquivo encontrado no seu namespace ainda.",
         "paragraph": "Crie ou importe arquivos para compartilhar código entre flows no seu namespace."

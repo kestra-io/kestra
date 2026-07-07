@@ -4,8 +4,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -18,7 +21,7 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @Jacksonized
 public class FlowUsage {
@@ -31,6 +34,7 @@ public class FlowUsage {
     private final Map<String, Long> taskTypeCount;
     private final Map<String, Long> triggerTypeCount;
     private final Map<String, Long> taskRunnerTypeCount;
+    private final Map<String, Long> inputTypeCount;
     private final Long hasInputsCount;
     private final Long hasOutputsCount;
     private final Long hasLabelsCount;
@@ -66,6 +70,9 @@ public class FlowUsage {
             .toList();
         List<AbstractTrigger> allTriggers = filtered.stream()
             .flatMap(flow -> ListUtils.emptyOnNull(flow.getTriggers()).stream())
+            .toList();
+        List<Input<?>> allInputs = filtered.stream()
+            .flatMap(flow -> ListUtils.emptyOnNull(flow.getInputs()).stream())
             .toList();
 
         LongAdder count = new LongAdder();
@@ -139,6 +146,7 @@ public class FlowUsage {
             .taskTypeCount(taskTypeCount(allTasks))
             .triggerTypeCount(triggerTypeCount(allTriggers))
             .taskRunnerTypeCount(taskRunnerTypeCount(allTasks))
+            .inputTypeCount(inputTypeCount(allInputs))
             .hasInputsCount(hasInputsCount.longValue())
             .hasOutputsCount(hasOutputsCount.longValue())
             .hasLabelsCount(hasLabelsCount.longValue())
@@ -177,6 +185,22 @@ public class FlowUsage {
         return allTriggers
             .stream()
             .collect(Collectors.groupingBy(f -> f.getType(), Collectors.counting()));
+    }
+
+    /**
+     * Groups {@code inputs} by {@link Input#getType()}, recursing into {@link FormInput#getInputs()}.
+     * Public so EE can reuse it for reusable-inputs block definitions (see {@code FeatureUsageReport}).
+     */
+    public static Map<String, Long> inputTypeCount(List<Input<?>> inputs) {
+        if (ListUtils.isEmpty(inputs)) {
+            return Map.of();
+        }
+
+        return inputs.stream()
+            .flatMap(input -> input instanceof FormInput form
+                ? Stream.concat(Stream.of(input.getType().name()), ListUtils.emptyOnNull(form.getInputs()).stream().map(i -> i.getType().name()))
+                : Stream.of(input.getType().name()))
+            .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
     }
 
     private static Map<String, Long> taskRunnerTypeCount(List<Task> allTask) {

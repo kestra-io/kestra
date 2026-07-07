@@ -89,6 +89,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
+            // Explicit revision so drafts run too - the backend otherwise resolves the latest published one.
+            revision: flow.revision,
         })
     }
 

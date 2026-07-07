@@ -60,7 +60,7 @@
     "save": "Enregistrer",
     "save_as_draft": "Enregistrer comme brouillon",
     "draft": "Brouillon",
-    "draft_flow_warning": "Cette révision du flow est un brouillon. L'exécution utilisera cette révision brouillon et peut échouer immédiatement si la définition du flow est invalide.",
+    "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
     "save task": "Enregistrer la tâche",
     "saved": "Enregistrement réussi",
     "saved as draft": "Enregistré comme brouillon",
@@ -836,6 +836,7 @@
       },
       "filter": "Filtrer",
       "new_file": "Nouveau fichier",
+      "read_only": "Vous n'avez pas la permission de gérer les fichiers dans ce namespace",
       "no_items": {
         "heading": "Aucun fichier trouvé dans votre namespace pour le moment.",
         "paragraph": "Créer ou importer des fichiers pour partager du code entre les flows dans votre namespace."

@@ -384,7 +384,8 @@
                                 newTab: newTab.value,
                                 id: flow.value.id,
                                 namespace: flow.value.namespace,
-                                revision: flow.value.revision,
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
                                 scheduleDate: moment(scheduleDate.value)
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())

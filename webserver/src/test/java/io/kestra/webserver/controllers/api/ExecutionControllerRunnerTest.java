@@ -201,11 +201,12 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
     void executingInvalidDraftIsRejected() {
-        // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty)
+        // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty);
+        // kind=PLAYGROUND so the request passes the playground-only draft gate and reaches validation
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.POST(
-                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1&kind=PLAYGROUND",
                     null
                 ),
                 Execution.class
@@ -240,6 +241,46 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getResponse().getBody(String.class).orElse(""))
             .as("the rejection explains that a published revision must be saved before executing without a revision")
             .contains("only has draft revisions");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void executingDraftAsNonPlaygroundKindIsRejected() {
+        // webhook-draft is a valid draft; executing its revision without kind=PLAYGROUND must be refused
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft?revision=1",
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("explicitly executing a draft revision outside the playground is rejected as unprocessable")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .as("the rejection explains that drafts are playground-only")
+            .contains("playground");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void executingDraftAsPlaygroundKindIsAccepted() {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft?revision=1&kind=PLAYGROUND",
+                null
+            ),
+            Execution.class
+        );
+
+        assertThat(execution.getId()).isNotNull();
+        assertThat(execution.getFlowRevision())
+            .as("the playground execution runs against the draft revision that was requested")
+            .isEqualTo(1);
+        assertThat(execution.getKind()).isEqualTo(ExecutionKind.PLAYGROUND);
     }
 
     @Test

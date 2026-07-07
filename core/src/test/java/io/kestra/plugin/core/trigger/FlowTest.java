@@ -200,4 +200,100 @@ class FlowTest {
         assertThat(evaluate.get().getTrigger()).extracting(ExecutionTrigger::getVariables).hasFieldOrProperty("executionLabels");
         assertThat(evaluate.get().getTrigger().getVariables().get("executionLabels")).isEqualTo(Map.of("execution-label", "execution"));
     }
+
+    @Test
+    void success_withDynamicLabels() {
+        var flow = io.kestra.core.models.flows.Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace("io.kestra.unittest")
+            .revision(1)
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("test")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
+            .build();
+        var triggeringExecution = Execution.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest.upstream")
+            .flowId("upstream-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+        var flowTrigger = Flow.builder()
+            .id("flow")
+            .type(Flow.class.getName())
+            .labels(
+                List.of(
+                    new Label("triggering-execution-id", "{{ trigger.executionId }}"),
+                    new Label("triggering-namespace", "{{ trigger.namespace }}"),
+                    new Label("triggering-flow-id", "{{ trigger.flowId }}")
+                )
+            )
+            .build();
+
+        Optional<Execution> evaluate = flowTrigger.evaluate(
+            Optional.empty(),
+            runContextFactory.of(),
+            flow,
+            triggeringExecution
+        );
+
+        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate.get().getLabels()).hasSize(3);
+        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-execution-id", triggeringExecution.getId()));
+        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-namespace", "io.kestra.unittest.upstream"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-flow-id", "upstream-flow"));
+    }
+
+    @Test
+    void success_withInvalidDynamicLabel() {
+        var flow = io.kestra.core.models.flows.Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace("io.kestra.unittest")
+            .revision(1)
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("test")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
+            .build();
+        var triggeringExecution = Execution.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest.upstream")
+            .flowId("upstream-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+        var flowTrigger = Flow.builder()
+            .id("flow")
+            .type(Flow.class.getName())
+            .labels(
+                List.of(
+                    new Label("triggering-execution-id", "{{ trigger.executionId }}"),
+                    new Label("unknown-trigger-field", "{{ trigger.doesNotExist }}") // should be omitted, not fail the evaluation
+                )
+            )
+            .build();
+
+        Optional<Execution> evaluate = flowTrigger.evaluate(
+            Optional.empty(),
+            runContextFactory.of(),
+            flow,
+            triggeringExecution
+        );
+
+        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate.get().getLabels()).hasSize(1);
+        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-execution-id", triggeringExecution.getId()));
+        assertThat(evaluate.get().getLabels()).noneMatch(label -> label.key().equals("unknown-trigger-field"));
+    }
 }

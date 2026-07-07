@@ -33,6 +33,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
@@ -42,11 +43,13 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.ExecutionDelayProcessor;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.KillSwitchActionService;
+import io.kestra.executor.SLAMonitorProcessor;
 import io.kestra.executor.SLAService;
 import io.kestra.executor.handler.ExecutionCommandMessageHandler;
 import io.kestra.executor.handler.ExecutionEventMessageHandler;
@@ -91,6 +94,8 @@ public final class ExecutorTestHarness {
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
     private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
     private final ExecutionDelayProcessor executionDelayProcessor;
+    private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
+    private final SLAMonitorProcessor slaMonitorProcessor;
 
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
@@ -318,6 +323,23 @@ public final class ExecutorTestHarness {
             executorService,
             metricRegistry
         );
+        this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
+            concurrencyLimitStateStore,
+            new ConcurrencyLimitResolver(),
+            executionQueuedStateStore,
+            flowMetaStore,
+            metricRegistry
+        );
+        this.slaMonitorProcessor = new SLAMonitorProcessor(
+            slaMonitorStateStore,
+            executionStateStore,
+            flowMetaStore,
+            executionService,
+            executorService,
+            new SLAService(),
+            runContextFactory,
+            metricRegistry
+        );
     }
 
     /**
@@ -426,6 +448,14 @@ public final class ExecutorTestHarness {
 
     public MultipleConditionEventMessageHandler multipleConditionEventMessageHandler() {
         return multipleConditionEventMessageHandler;
+    }
+
+    public ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor() {
+        return concurrencySlotReleaseProcessor;
+    }
+
+    public SLAMonitorProcessor slaMonitorProcessor() {
+        return slaMonitorProcessor;
     }
 
     public ExecutionDelayProcessor executionDelayProcessor() {

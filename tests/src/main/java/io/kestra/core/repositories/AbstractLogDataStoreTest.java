@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(transactional = false)
-public abstract class AbstractLogRepositoryTest {
+public abstract class AbstractLogDataStoreTest {
     @Inject
     protected LogDataStoreInterface logRepository;
 

@@ -1,12 +1,14 @@
 package io.kestra.jdbc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.serializers.JacksonMapper;
+import java.util.Map;
+
 import org.jooq.JSONB;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

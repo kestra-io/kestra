@@ -12,6 +12,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.services.McpServerService;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -20,8 +21,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import io.kestra.core.repositories.ArrayListTotal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -116,8 +115,10 @@ public abstract class AbstractMcpServerRepositoryTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpServer original = mcpServerRepository.save(null, createMcpServer(tenant));
-        McpServer updated = new McpServer(tenant,
-            original.id(), "Updated description", null, null, null, null, null, true, false, false, null, null);
+        McpServer updated = new McpServer(
+            tenant,
+            original.id(), "Updated description", null, null, null, null, null, true, false, false, null, null
+        );
 
         // When
         McpServer result = mcpServerRepository.save(original, updated);

@@ -14,12 +14,12 @@ import java.util.concurrent.Callable;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.cli.commands.servers.ServerCommandInterface;
-import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.core.migration.MigrationRunner;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -30,20 +30,6 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.Rethrow;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 

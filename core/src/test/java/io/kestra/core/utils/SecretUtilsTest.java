@@ -1,10 +1,11 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

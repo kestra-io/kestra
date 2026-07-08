@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +24,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.plugin.core.debug.Return;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,8 +77,7 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
 
         // When
-        Either<List<String>, List<Pair<String, String>>> result =
-            FlowableUtils.resolveValues(runContext, "[\"a\", \"b\", \"c\"]");
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "[\"a\", \"b\", \"c\"]");
 
         // Then
         assertThat(result.isLeft()).isTrue();
@@ -91,8 +90,7 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
 
         // When
-        Either<List<String>, List<Pair<String, String>>> result =
-            FlowableUtils.resolveValues(runContext, "[\"a\", \"b\", \"a\"]");
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "[\"a\", \"b\", \"a\"]");
 
         // Then
         assertThat(result.isLeft()).isTrue();
@@ -105,8 +103,7 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
 
         // When
-        Either<List<String>, List<Pair<String, String>>> result =
-            FlowableUtils.resolveValues(runContext, "{\"key1\": \"val1\", \"key2\": \"val2\"}");
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "{\"key1\": \"val1\", \"key2\": \"val2\"}");
 
         // Then
         assertThat(result.isRight()).isTrue();
@@ -122,8 +119,7 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
 
         // When
-        Either<List<String>, List<Pair<String, String>>> result =
-            FlowableUtils.resolveValues(runContext, List.of("x", "y", "z"));
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, List.of("x", "y", "z"));
 
         // Then
         assertThat(result.isLeft()).isTrue();
@@ -136,8 +132,7 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
 
         // When
-        Either<List<String>, List<Pair<String, String>>> result =
-            FlowableUtils.resolveValues(runContext, List.of("x", "y", "x"));
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, List.of("x", "y", "x"));
 
         // Then
         assertThat(result.isLeft()).isTrue();
@@ -164,8 +159,7 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
 
         // When
-        Either<List<String>, List<Pair<String, String>>> result =
-            FlowableUtils.resolveValues(runContext, Map.of("k1", "v1", "k2", "v2"));
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, Map.of("k1", "v1", "k2", "v2"));
 
         // Then
         assertThat(result.isRight()).isTrue();
@@ -256,16 +250,14 @@ class FlowableUtilsTest {
         URI uri = createIonFile(runContext, List.of("value1", "value2", "value3"));
 
         // When
-        FlowableUtils.LoopInitialValuesFromUri result =
-            FlowableUtils.readAndCountLoopValuesFromUri(runContext, uri.toString(), Integer.MAX_VALUE);
+        FlowableUtils.LoopInitialValuesFromUri result = FlowableUtils.readAndCountLoopValuesFromUri(runContext, uri.toString(), Integer.MAX_VALUE);
 
         // Then
         assertThat(result.totalCount()).isEqualTo(3);
         assertThat(result.values()).containsExactly("value1", "value2", "value3");
         // nextOffset must point past the last byte — a subsequent read at that position returns nothing
         assertThat(result.nextOffset()).isGreaterThan(0);
-        Pair<List<String>, Long> followUp =
-            FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), result.nextOffset(), 1);
+        Pair<List<String>, Long> followUp = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), result.nextOffset(), 1);
         assertThat(followUp.getLeft()).isEmpty();
     }
 
@@ -276,8 +268,7 @@ class FlowableUtilsTest {
         URI uri = createIonFile(runContext, List.of("v1", "v2", "v3", "v4", "v5"));
 
         // When
-        FlowableUtils.LoopInitialValuesFromUri result =
-            FlowableUtils.readAndCountLoopValuesFromUri(runContext, uri.toString(), 2);
+        FlowableUtils.LoopInitialValuesFromUri result = FlowableUtils.readAndCountLoopValuesFromUri(runContext, uri.toString(), 2);
 
         // Then
         assertThat(result.totalCount()).isEqualTo(5);
@@ -292,8 +283,7 @@ class FlowableUtilsTest {
         URI uri = createIonFile(runContext, List.of("a", "b", "c", "d"));
 
         // When
-        Pair<List<String>, Long> result =
-            FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 2);
+        Pair<List<String>, Long> result = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 2);
 
         // Then
         assertThat(result.getLeft()).containsExactly("a", "b");
@@ -307,13 +297,11 @@ class FlowableUtilsTest {
         URI uri = createIonFile(runContext, List.of("a", "b", "c", "d"));
 
         // Read the first 2 values to obtain the offset
-        Pair<List<String>, Long> firstRead =
-            FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 2);
+        Pair<List<String>, Long> firstRead = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 2);
         long offset = firstRead.getRight();
 
         // When — read the next 2 values starting at the offset
-        Pair<List<String>, Long> result =
-            FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), offset, 2);
+        Pair<List<String>, Long> result = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), offset, 2);
 
         // Then
         assertThat(result.getLeft()).containsExactly("c", "d");
@@ -326,8 +314,7 @@ class FlowableUtilsTest {
         URI uri = createIonFile(runContext, List.of("x", "y"));
 
         // When — request more values than exist
-        Pair<List<String>, Long> result =
-            FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 10);
+        Pair<List<String>, Long> result = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 10);
 
         // Then
         assertThat(result.getLeft()).containsExactly("x", "y");

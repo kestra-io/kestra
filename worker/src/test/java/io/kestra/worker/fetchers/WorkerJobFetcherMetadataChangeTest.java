@@ -1,5 +1,12 @@
 package io.kestra.worker.fetchers;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.controller.GrpcChannelManager;
+import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.MetadataChangePayload;
@@ -7,12 +14,6 @@ import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
-import io.kestra.controller.GrpcChannelManager;
-import io.kestra.controller.config.GrpcConfiguration;
-import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.doThrow;
@@ -43,7 +44,8 @@ class WorkerJobFetcherMetadataChangeTest {
         WorkerJobFetcher fetcher = newFetcher(List.of(h1, h2));
 
         MetadataChangePayload payload = new MetadataChangePayload(
-            MetadataChangePayload.Type.NAMESPACE, "tenant-a", "prod.team");
+            MetadataChangePayload.Type.NAMESPACE, "tenant-a", "prod.team"
+        );
 
         // When
         fetcher.onBroadcastEvent(new WorkerBroadcastEvent.MetadataChangeEvent(payload));
@@ -59,11 +61,11 @@ class WorkerJobFetcherMetadataChangeTest {
         WorkerJobFetcher fetcher = newFetcher(List.of());
 
         MetadataChangePayload payload = new MetadataChangePayload(
-            MetadataChangePayload.Type.TENANT, "tenant-a", null);
+            MetadataChangePayload.Type.TENANT, "tenant-a", null
+        );
 
         // When / Then — must not throw
-        assertThatNoException().isThrownBy(() ->
-            fetcher.onBroadcastEvent(new WorkerBroadcastEvent.MetadataChangeEvent(payload)));
+        assertThatNoException().isThrownBy(() -> fetcher.onBroadcastEvent(new WorkerBroadcastEvent.MetadataChangeEvent(payload)));
     }
 
     @Test
@@ -75,7 +77,8 @@ class WorkerJobFetcherMetadataChangeTest {
         WorkerJobFetcher fetcher = newFetcher(List.of(failing, healthy));
 
         MetadataChangePayload payload = new MetadataChangePayload(
-            MetadataChangePayload.Type.FLOW, "tenant-a", "prod.team");
+            MetadataChangePayload.Type.FLOW, "tenant-a", "prod.team"
+        );
 
         // When
         fetcher.onBroadcastEvent(new WorkerBroadcastEvent.MetadataChangeEvent(payload));

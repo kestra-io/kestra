@@ -7,6 +7,13 @@
                 :class="{'without-backdrop': !props.backdrop}"
             >
                 <div class="onboarding-success-card">
+                    <KsIconButton
+                        class="onboarding-success-card__close"
+                        :aria-label="$t('close')"
+                        @click="close"
+                    >
+                        <Close />
+                    </KsIconButton>
                     <h3>{{ $t("welcome_copilot.success_popup.title") }}</h3>
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
 
@@ -34,6 +41,7 @@
 <script setup lang="ts">
     import {computed, nextTick} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import Close from "vue-material-design-icons/Close.vue"
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
@@ -56,6 +64,10 @@
         name: "welcome/success",
         params: {tenant: route.params.tenant},
     }))
+
+    function close() {
+        emit("update:modelValue", false)
+    }
 
     async function goToTutorial() {
         if (!props.modelValue) {
@@ -95,6 +107,12 @@
         z-index: 1;
         width: min(100%, 360px);
         padding: 2rem 1.75rem 1.5rem;
+
+        .onboarding-success-card__close {
+            position: absolute;
+            top: var(--ks-spacing-2);
+            right: var(--ks-spacing-2);
+        }
         border: 1px solid var(--ks-border-default);
         border-radius: 14px;
         background: var(--ks-bg-surface);

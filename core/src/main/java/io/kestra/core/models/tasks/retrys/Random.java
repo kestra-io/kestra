@@ -4,9 +4,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -49,21 +48,24 @@ public class Random extends AbstractRetry {
     @AssertTrue(message = "'minInterval' must be less than 'maxDuration'")
     @JsonIgnore
     boolean isMinIntervalLessThanMaxDuration() {
-        if (getMaxDuration() == null || minInterval == null) return true;
+        if (getMaxDuration() == null || minInterval == null)
+            return true;
         return getMaxDuration().compareTo(minInterval) > 0;
     }
 
     @AssertTrue(message = "'maxInterval' must be less than 'maxDuration'")
     @JsonIgnore
     boolean isMaxIntervalLessThanMaxDuration() {
-        if (getMaxDuration() == null || maxInterval == null) return true;
+        if (getMaxDuration() == null || maxInterval == null)
+            return true;
         return getMaxDuration().compareTo(maxInterval) > 0;
     }
 
     @AssertTrue(message = "'minInterval' must be less than 'maxInterval'")
     @JsonIgnore
     boolean isMinIntervalLessThanMaxInterval() {
-        if (maxInterval == null || minInterval == null) return true;
+        if (maxInterval == null || minInterval == null)
+            return true;
         return maxInterval.compareTo(minInterval) > 0;
     }
 }

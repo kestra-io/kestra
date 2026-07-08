@@ -105,11 +105,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             return new ArrayList<>();
         }
 
-        String progress = event.getKeyValuePairs() == null ? null : event.getKeyValuePairs().stream()
-            .filter(kv -> kv.key.equals(PROGRESS_KEY))
-            .map(kv -> (String) kv.value)
-            .findFirst()
-            .orElse(null);
+        String progress = event.getKeyValuePairs() == null ? null
+            : event.getKeyValuePairs().stream()
+                .filter(kv -> kv.key.equals(PROGRESS_KEY))
+                .map(kv -> (String) kv.value)
+                .findFirst()
+                .orElse(null);
 
         if (message.length() > MAX_MESSAGE_LENGTH) {
             split = Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(message);

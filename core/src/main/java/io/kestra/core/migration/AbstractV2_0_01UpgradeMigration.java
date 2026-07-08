@@ -19,6 +19,17 @@ public abstract class AbstractV2_0_01UpgradeMigration implements MigrationScript
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Derived from {@link #sqlResources()} so the resource path is declared only once.
+     */
+    @Override
+    public String checksum() {
+        return MigrationScript.checksumOfResources(sqlResources().toArray(String[]::new));
+    }
+
+    /**
      * Applies the backend-specific schema changes for the 2.0 upgrade.
      */
     protected abstract void doSchemaUpgrade() throws Exception;

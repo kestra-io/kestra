@@ -28,8 +28,8 @@ public class DefaultWorkerConfigsProvider implements WorkerConfigsProvider {
     public Map<String, Object> get() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(UsageReportConfig.ANONYMOUS_USAGE_REPORT, usageReportConfig);
-        encryptionConfig.asOptional().ifPresent(key ->
-            configs.put(EncryptionConfig.WORKER_CONFIG_KEY, key)
+        encryptionConfig.asOptional().ifPresent(
+            key -> configs.put(EncryptionConfig.WORKER_CONFIG_KEY, key)
         );
         return Map.copyOf(configs);
     }

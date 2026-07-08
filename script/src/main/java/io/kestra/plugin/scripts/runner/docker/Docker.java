@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -40,7 +41,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.UnixModeToPosixFilePermissions;
@@ -55,7 +56,6 @@ import lombok.experimental.SuperBuilder;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
-import io.kestra.core.utils.Await;
 
 @SuperBuilder(toBuilder = true)
 @ToString

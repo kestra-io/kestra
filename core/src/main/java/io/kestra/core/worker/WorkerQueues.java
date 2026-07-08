@@ -8,7 +8,8 @@ import java.util.stream.Collectors;
 /**
  * Utility helpers for Worker Queue identifiers and human-friendly log formatting.
  *
- * <p>These helpers operate on a queue uid (and optionally the {@code using} tags the user
+ * <p>
+ * These helpers operate on a queue uid (and optionally the {@code using} tags the user
  * typed in their flow) to decide whether it refers to the default queue and to render
  * readable log messages, without depending on any concrete Worker Queue entity.
  */
@@ -23,7 +24,8 @@ public final class WorkerQueues {
 
     /**
      * Reserved Worker Queue id for jobs marked with {@link io.kestra.core.models.tasks.SystemTask}.
-     * <p>This id cannot be created by users; it is always reported as available so that
+     * <p>
+     * This id cannot be created by users; it is always reported as available so that
      * {@code SystemTask} jobs are dispatched to the SystemWorker hosted in the
      * webserver / standalone process.
      */
@@ -84,7 +86,8 @@ public final class WorkerQueues {
      * Format a Worker Queue id for log display. Returns {@code default} for the global
      * default queue and the id otherwise.
      *
-     * <p>This accepts both representations of the default queue: the {@link #DEFAULT_ID}
+     * <p>
+     * This accepts both representations of the default queue: the {@link #DEFAULT_ID}
      * sentinel and the dispatch-side routing key (see
      * {@link QueueSubscription#normalizedWorkerQueueId()}), which renders the default queue
      * as {@code null} or the empty string.

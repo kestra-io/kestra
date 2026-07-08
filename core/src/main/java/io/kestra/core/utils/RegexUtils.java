@@ -11,9 +11,11 @@ import com.google.common.annotations.VisibleForTesting;
  * Utilities for running regex operations with a timeout guard to prevent ReDoS
  * (catastrophic backtracking) attacks.
  *
- * <p>All methods wrap the input {@link CharSequence} so that every {@code charAt()} call
+ * <p>
+ * All methods wrap the input {@link CharSequence} so that every {@code charAt()} call
  * checks a deadline. If the deadline is exceeded, a {@link RegexTimeoutException} is thrown,
- * terminating the backtracking without needing a separate thread.</p>
+ * terminating the backtracking without needing a separate thread.
+ * </p>
  */
 public final class RegexUtils {
 
@@ -69,8 +71,8 @@ public final class RegexUtils {
     /**
      * Tests whether the input matches the given regex pattern with an explicit timeout.
      *
-     * @param regex   the regex pattern string.
-     * @param input   the input to test.
+     * @param regex the regex pattern string.
+     * @param input the input to test.
      * @param timeout the maximum duration for this operation.
      * @return {@code true} if the full input matches the pattern.
      * @throws RegexTimeoutException if the operation exceeds the given timeout.
@@ -84,7 +86,7 @@ public final class RegexUtils {
      * Tests whether the input matches the given compiled pattern.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to test.
+     * @param input the input to test.
      * @return {@code true} if the full input matches the pattern.
      * @throws RegexTimeoutException if the operation exceeds the configured timeout.
      */
@@ -96,7 +98,7 @@ public final class RegexUtils {
      * Tests whether the input matches the given compiled pattern with an explicit timeout.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to test.
+     * @param input the input to test.
      * @param timeout the maximum duration for this operation.
      * @return {@code true} if the full input matches the pattern.
      * @throws RegexTimeoutException if the operation exceeds the given timeout.
@@ -109,7 +111,7 @@ public final class RegexUtils {
      * Creates a {@link Matcher} with timeout protection on the input.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to match against.
+     * @param input the input to match against.
      * @return a matcher that will throw {@link RegexTimeoutException} if the timeout is exceeded.
      */
     public static Matcher matcher(Pattern pattern, CharSequence input) {
@@ -120,7 +122,7 @@ public final class RegexUtils {
      * Creates a {@link Matcher} with timeout protection on the input using an explicit timeout.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to match against.
+     * @param input the input to match against.
      * @param timeout the maximum duration for this operation.
      * @return a matcher that will throw {@link RegexTimeoutException} if the given timeout is exceeded.
      */
@@ -131,8 +133,8 @@ public final class RegexUtils {
     /**
      * Replaces all occurrences of the regex in the input string.
      *
-     * @param input       the input string.
-     * @param regex       the regex pattern string.
+     * @param input the input string.
+     * @param regex the regex pattern string.
      * @param replacement the replacement string.
      * @return the result with all matches replaced.
      * @throws RegexTimeoutException if the operation exceeds the configured timeout.
@@ -144,10 +146,10 @@ public final class RegexUtils {
     /**
      * Replaces all occurrences of the regex in the input string with an explicit timeout.
      *
-     * @param input       the input string.
-     * @param regex       the regex pattern string.
+     * @param input the input string.
+     * @param regex the regex pattern string.
      * @param replacement the replacement string.
-     * @param timeout     the maximum duration for this operation.
+     * @param timeout the maximum duration for this operation.
      * @return the result with all matches replaced.
      * @throws RegexTimeoutException if the operation exceeds the given timeout.
      */
@@ -161,8 +163,10 @@ public final class RegexUtils {
      */
     public static class RegexTimeoutException extends RuntimeException {
         public RegexTimeoutException(Duration timeout) {
-            super("Regex operation timed out after " + timeout.toMillis() + "ms. " +
-                "The pattern may be vulnerable to catastrophic backtracking (ReDoS).");
+            super(
+                "Regex operation timed out after " + timeout.toMillis() + "ms. " +
+                    "The pattern may be vulnerable to catastrophic backtracking (ReDoS)."
+            );
         }
     }
 

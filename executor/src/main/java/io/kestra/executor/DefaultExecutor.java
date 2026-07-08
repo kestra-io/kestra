@@ -1,10 +1,22 @@
 package io.kestra.executor;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Concurrency;
@@ -32,27 +44,17 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
-import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.trigger.Webhook;
+
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.*;
 
@@ -434,6 +436,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         executionDelayLoopTimer.record(() ->
         {
+            // Collect the resulting executors during the transaction and emit them only AFTER
+            // processExpired() commits. Emitting inside the transaction races the queue consumer:
+            // on a non-transactional queue (Kafka) a new execution created by replay
+            // (CREATE_NEW_EXECUTION / RESTART_FAILED_FLOW) can be consumed before its INSERT is
+            // visible, so the executor's lock finds no row, silently skips it ("not ready for now"),
+            // and the new execution is dropped — the retry chain never runs.
+            List<ExecutorContext> toEmit = new ArrayList<>();
             executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
             {
                 Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
@@ -450,9 +459,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     try {
                         // Handle paused tasks and scheduledAt
                         // Also skip if the execution is being killed (KILLING is not yet terminated but must not be resumed).
-                        if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
+                        if (
+                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
                                 && !execution.getState().isTerminated()
-                                && execution.getState().getCurrent() != State.Type.KILLING) {
+                                && execution.getState().getCurrent() != State.Type.KILLING
+                        ) {
                             if (executionDelay.getTaskRunId() == null) {
                                 // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                                 Execution markAsExecution = execution.withState(executionDelay.getState());
@@ -471,8 +482,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             }
                         }
                         // Handle failed task retries — skip if the execution is being killed so the retry does not race the kill
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
-                                && execution.getState().getCurrent() != State.Type.KILLING) {
+                        else if (
+                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+                                && execution.getState().getCurrent() != State.Type.KILLING
+                        ) {
                             FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                             Execution newAttempt = executionService.retryTask(
                                 execution,
@@ -482,8 +495,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             executor = executor.withExecution(newAttempt, "retryFailedTask");
                         }
                         // Handle failed flow retries — skip if the execution is being killed so the retry does not race the kill
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
-                                && execution.getState().getCurrent() != State.Type.KILLING) {
+                        else if (
+                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
+                                && execution.getState().getCurrent() != State.Type.KILLING
+                        ) {
                             FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                             Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
                             executor = executor.withExecution(newExecution, "retryFailedFlow");
@@ -500,8 +515,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     return executor;
                 });
 
-                maybeExecutor.ifPresent(this::toExecution);
+                maybeExecutor.ifPresent(toEmit::add);
             });
+
+            // Transaction has committed here: the new/updated executions are now durably visible,
+            // so emitting their events cannot be consumed before the state store can see them.
+            toEmit.forEach(this::toExecution);
         });
     }
 

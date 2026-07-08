@@ -229,7 +229,8 @@ class DefaultSchedulerTest {
             maintenanceService.setMaintenanceMode(true);
 
             // THEN — loops stop asynchronously, poll until they're all stopped
-            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
                 assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
                 assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
             });
@@ -238,7 +239,8 @@ class DefaultSchedulerTest {
             maintenanceService.setMaintenanceMode(false);
 
             // THEN — loops restart asynchronously, poll until they're all running
-            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
                 assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
                 assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
             });

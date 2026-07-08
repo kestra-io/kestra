@@ -1,15 +1,5 @@
 package io.kestra.plugin.core.preview;
 
-import io.kestra.core.preview.FilePreview;
-import io.kestra.core.preview.FileRenderer;
-import io.kestra.core.serializers.FileSerde;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +7,17 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
+import io.kestra.core.serializers.FileSerde;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -78,7 +79,7 @@ public class TextFileRenderer implements FileRenderer {
 
     private FilePreview.Type computeType(String extension) {
         return switch (extension.toLowerCase()) {
-            case "md"-> FilePreview.Type.MARKDOWN;
+            case "md" -> FilePreview.Type.MARKDOWN;
             default -> FilePreview.Type.TEXT;
         };
     }

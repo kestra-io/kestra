@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.TimeWindow;
-import io.kestra.core.models.triggers.TimeWindow.Type;
 import io.kestra.core.models.triggers.Window;
 import io.kestra.core.utils.TestsUtils;
 

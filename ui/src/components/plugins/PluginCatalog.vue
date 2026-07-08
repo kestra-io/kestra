@@ -293,6 +293,7 @@
 
     onMounted(() => {
         loadPluginIcons()
+        pluginsStore.fetchIcons()
         miscStore.loadConfigs()
         pluginsStore.ensurePlugins().catch((err) => {
             console.error("Failed to load plugins", err)

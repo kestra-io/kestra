@@ -22,6 +22,7 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -45,7 +46,6 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -250,9 +250,11 @@ class TriggerEventHandlerTest {
     @Test
     void shouldResetTriggerAndRecomputeNextEvaluationDateWhenFlowExists() {
         // GIVEN
-        triggerStateStore.save(triggerState
-            .locked(Clock.systemDefaultZone(), true)
-            .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15)));
+        triggerStateStore.save(
+            triggerState
+                .locked(Clock.systemDefaultZone(), true)
+                .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15))
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -983,9 +985,11 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerUpdated() {
         // GIVEN a trigger evaluated once before the update event fires
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+        );
         FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
         handler = newTriggerEventHandler(List.of(flow));
         TriggerUpdated event = new TriggerUpdated(triggerId, flow.getRevision());
@@ -1003,9 +1007,11 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReset() {
         // GIVEN
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -1022,10 +1028,12 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReEnabled() {
         // GIVEN a trigger evaluated once before being disabled and re-enabled
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
-            .disabled(clock, true));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+                .disabled(clock, true)
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
 

@@ -27,8 +27,7 @@ public class DirectQueueWorkerIOSenderFactory {
     @Singleton
     public DirectQueueWorkerIOSender<WorkerTaskResult> taskResultSender(
         final WorkerQueueRegistry workerQueueRegistry,
-        final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue
-    ) {
+        final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue) {
         return new DirectQueueWorkerIOSender<>(
             workerQueueRegistry,
             workerTaskResultQueue,
@@ -40,8 +39,7 @@ public class DirectQueueWorkerIOSenderFactory {
     @Singleton
     public DirectQueueWorkerIOSender<LogEntry> logEntrySender(
         final WorkerQueueRegistry workerQueueRegistry,
-        final DispatchQueueInterface<LogEntry> logQueue
-    ) {
+        final DispatchQueueInterface<LogEntry> logQueue) {
         return new DirectQueueWorkerIOSender<>(
             workerQueueRegistry,
             logQueue,
@@ -53,8 +51,7 @@ public class DirectQueueWorkerIOSenderFactory {
     @Singleton
     public DirectQueueWorkerIOSender<MetricEntry> metricsSender(
         final WorkerQueueRegistry workerQueueRegistry,
-        final DispatchQueueInterface<MetricEntry> metricQueue
-    ) {
+        final DispatchQueueInterface<MetricEntry> metricQueue) {
         return new DirectQueueWorkerIOSender<>(
             workerQueueRegistry,
             metricQueue,

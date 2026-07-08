@@ -37,8 +37,7 @@ public class WorkerAgent extends AbstractWorker implements Worker {
         List<GrpcWorkerIOSender<?>> workerIOSenders,
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
-        ServerConfig serverConfig
-    ) {
+        ServerConfig serverConfig) {
         super(
             ServiceType.WORKER,
             eventPublisher,
@@ -62,8 +61,7 @@ public class WorkerAgent extends AbstractWorker implements Worker {
      */
     @Override
     protected String resolveWorkerGroupId() {
-        WorkerConnectionService.ConnectionResult connectionResult =
-            workerConnectionService.connect(getId());
+        WorkerConnectionService.ConnectionResult connectionResult = workerConnectionService.connect(getId());
         return connectionResult.workerGroupId();
     }
 }

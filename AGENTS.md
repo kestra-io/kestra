@@ -95,6 +95,8 @@ public class MyService {
 * Use static methods only
 * Use existing utility classes (e.g., `ListUtils`, `MapUtils`) instead of creating new ones (`io.kestra.core.utils.*`)
 
+**MANDATORY — never hand-roll Pebble delimiter detection.** Pebble has two block delimiter pairs — print blocks (`{{ ... }}`) and execute/statement blocks (`{% ... %}`) — and code that only checks for `{{`/`}}` silently misses `{%`/`%}` blocks. Use `io.kestra.core.utils.PebbleUtil` (`containsOpeningBlockDelimiter`, `startsWithOpeningBlockDelimiter`, `endsWithClosingBlockDelimiter`, `openingBlockDelimiters()`/`closingBlockDelimiters()`) instead of writing a new delimiter regex or literal — it derives the delimiter pairs from Pebble's own `Syntax.Builder` defaults, so it never drifts from what Pebble actually parses.
+
 ### Enums
 - Use enums for fixed sets of constants
 - Use `@JsonValue` for custom serialization if needed
@@ -375,6 +377,8 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
 
 ## UI Translations
+
+**MANDATORY — never hardcode user-facing strings.** Every label, button, tooltip, placeholder, dialog/section title, table-column header, and toast/confirm message rendered to the user MUST go through vue-i18n: `t("key")` (or `:label`/`:tooltip` bindings) in components, and `<i18n-t keypath="...">` with named slots when the string embeds markup or a component (e.g. a `<code>` fragment). Never write a literal user-facing string in a template, a `:tooltip`/`:label` attribute, or a `toast.*` call. Reuse existing generic keys (`cancel`, `delete`, `edit`, `save`, `add`, `id`, `description`, `namespace`, `revision`, …) instead of duplicating them; put feature-specific strings under one namespaced object (e.g. `"reusableInputs": { … }`). After adding keys to `en.json`, propagate them to every language (translation generation script) so the missing-keys check stays clean — a key present only in `en.json` fails the check.
 
 Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
 

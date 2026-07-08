@@ -1,13 +1,14 @@
 package io.kestra.plugin.core.preview;
 
-import io.kestra.core.preview.FilePreview;
-import io.kestra.core.serializers.FileSerde;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-
 import java.io.*;
 import java.util.Map;
 import java.util.Optional;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.serializers.FileSerde;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

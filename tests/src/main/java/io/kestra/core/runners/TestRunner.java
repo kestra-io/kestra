@@ -94,7 +94,8 @@ public class TestRunner implements Runnable, AutoCloseable {
         // so test runs that don't exercise SystemTasks don't pay for the
         // SystemWorker's thread pool and queue subscriptions.
         if (systemWorkerEnabled) {
-            systemWorkerProvider.ifPresent(worker -> {
+            systemWorkerProvider.ifPresent(worker ->
+            {
                 poolExecutor.execute(worker::start);
                 servers.add(worker);
             });

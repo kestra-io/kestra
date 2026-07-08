@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.utils.Await;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -13,8 +11,10 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.utils.Await;
 
 import jakarta.inject.Inject;
 
@@ -188,7 +188,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/finally-loop.yaml"}, tenantId = "loopwithouterrors")
+    @LoadFlows(value = { "flows/valids/finally-loop.yaml" }, tenantId = "loopwithouterrors")
     void loopWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "loopwithouterrors",
@@ -208,7 +208,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/finally-loop.yaml"}, tenantId = "loopwitherrors")
+    @LoadFlows(value = { "flows/valids/finally-loop.yaml" }, tenantId = "loopwitherrors")
     void loopWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "loopwitherrors",
@@ -238,7 +238,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/finally-loop-parallel.yaml"}, tenantId = "loopparallelwithouterrors")
+    @LoadFlows(value = { "flows/valids/finally-loop-parallel.yaml" }, tenantId = "loopparallelwithouterrors")
     void loopParallelWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "loopparallelwithouterrors",

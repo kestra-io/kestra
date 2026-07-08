@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import io.kestra.core.models.triggers.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -25,6 +24,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -110,7 +110,6 @@ class TriggerSchedulerTest {
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
         // endregion [GIVEN]
-
         // WHEN
         SchedulerClock.offset(Duration.ofMinutes(15));
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
@@ -335,7 +334,8 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(Clock.fixed(friday.toInstant(), ZoneId.systemDefault()));
 
         FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
-            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY
+        );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
@@ -726,7 +726,10 @@ class TriggerSchedulerTest {
     }
 
     private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows, TriggerWorkerJobPublisher workerJobPublisher) {
-        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, flows);
+        return newTriggerScheduler(new InMemoryFlowMetaStore(1, flows), workerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(InMemoryFlowMetaStore flowMetaStore, TriggerWorkerJobPublisher workerJobPublisher) {
         return new TriggerScheduler(
             triggerStateStore,
             flowMetaStore,

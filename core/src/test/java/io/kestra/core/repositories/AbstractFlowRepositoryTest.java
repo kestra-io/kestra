@@ -546,6 +546,79 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByNamespaceExecutable_shouldReturnFlowWhenEnabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        try {
+            List<FlowForExecution> executable = flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE);
+
+            assertThat(executable).hasSize(1);
+            assertThat(executable.getFirst().getId()).isEqualTo(flow.getId());
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findByNamespaceExecutable_shouldExcludeFlowWhenDisabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).disabled(true).build()));
+
+        try {
+            assertThat(flow.isDisabled()).isTrue();
+            assertThat(flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE)).isEmpty();
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findByNamespaceExecutable_shouldExcludeFlowWhenDeleted() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        deleteFlow(flow);
+
+        assertThat(flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE)).isEmpty();
+    }
+
+    @Test
+    void findDistinctNamespaceExecutable_shouldReturnNamespaceWhenEnabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        try {
+            assertThat(flowRepository.findDistinctNamespaceExecutable(tenant)).containsExactly(TEST_NAMESPACE);
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findDistinctNamespaceExecutable_shouldExcludeNamespaceWhenOnlyFlowIsDisabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).disabled(true).build()));
+
+        try {
+            assertThat(flow.isDisabled()).isTrue();
+            assertThat(flowRepository.findDistinctNamespaceExecutable(tenant)).isEmpty();
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findDistinctNamespaceExecutable_shouldExcludeNamespaceWhenOnlyFlowIsDeleted() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        deleteFlow(flow);
+
+        assertThat(flowRepository.findDistinctNamespaceExecutable(tenant)).isEmpty();
+    }
+
+    @Test
     void delete() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Flow flow = builder(tenant).tenantId(tenant).build();

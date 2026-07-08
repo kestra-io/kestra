@@ -84,7 +84,7 @@ dependencies {
         // Other libs
         api "org.projectlombok:lombok:1.18.46"
         api "org.codehaus.janino:janino:3.1.12"
-        api "org.apache.logging.log4j:log4j-to-slf4j:2.26.0"
+        api "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
         api "org.slf4j:jul-to-slf4j:$slf4jVersion"
         api "org.slf4j:jcl-over-slf4j:$slf4jVersion"
         api "org.fusesource.jansi:jansi:2.4.3"

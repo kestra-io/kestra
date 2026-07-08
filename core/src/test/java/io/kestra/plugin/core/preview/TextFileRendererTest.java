@@ -1,15 +1,16 @@
 package io.kestra.plugin.core.preview;
 
-import io.kestra.core.preview.FilePreview;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import io.kestra.core.preview.FilePreview;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +18,7 @@ class TextFileRendererTest {
     private final TextFileRenderer renderer = new TextFileRenderer();
 
     @ParameterizedTest
-    @CsvSource({"0, false", "100, false", "101, true"})
+    @CsvSource({ "0, false", "100, false", "101, true" })
     void shouldTruncateByLineCount(int lineCount, boolean expectedTruncated) throws IOException {
         // Given
         String content = "line\n".repeat(lineCount);

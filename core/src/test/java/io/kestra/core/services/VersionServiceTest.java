@@ -2,7 +2,6 @@ package io.kestra.core.services;
 
 import java.util.Optional;
 
-import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -176,7 +176,8 @@ public class PluginCatalogService {
                     .toList();
 
                 List<CompletableFuture<Map.Entry<String, String>>> iconFutures = groups.stream()
-                    .map(group -> CompletableFuture.supplyAsync(() -> {
+                    .map(group -> CompletableFuture.supplyAsync(() ->
+                    {
                         try {
                             HttpResponse<String> response = httpClient
                                 .toBlocking()
@@ -203,7 +204,8 @@ public class PluginCatalogService {
 
             Map<String, String> finalIconsByGroup = iconsByGroup;
             List<PluginManifest> artifacts = filteredPlugins.stream()
-                .map(plugin -> {
+                .map(plugin ->
+                {
                     String groupId = "EE".equals(plugin.get("license")) ? "io.kestra.plugin.ee" : "io.kestra.plugin";
                     String artifactId = (String) plugin.get("name");
                     String icon = finalIconsByGroup.getOrDefault((String) plugin.get("group"), null);

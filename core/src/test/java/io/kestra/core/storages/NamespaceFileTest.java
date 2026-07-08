@@ -178,7 +178,7 @@ class NamespaceFileTest {
         // Regression: "a b.txt" (space) and "a+b.txt" (literal '+') must map to distinct storage URIs.
         // Previously, URLEncoder.encode(space) = '+', causing both names to collide on the same object.
         NamespaceFile spaceFile = NamespaceFile.of(NAMESPACE, Path.of("/a b.txt"));
-        NamespaceFile plusFile  = NamespaceFile.of(NAMESPACE, Path.of("/a+b.txt"));
+        NamespaceFile plusFile = NamespaceFile.of(NAMESPACE, Path.of("/a+b.txt"));
 
         // Space must be percent-encoded in the URI (URI-illegal → %20); '+' must remain '+' (URI-legal).
         assertThat(spaceFile.uri().toString()).contains("%20");

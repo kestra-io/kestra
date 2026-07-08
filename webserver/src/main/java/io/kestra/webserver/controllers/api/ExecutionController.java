@@ -1,8 +1,35 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.CheckReturnValue;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.reactivestreams.Publisher;
+import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
+
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
@@ -69,6 +96,7 @@ import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
@@ -106,34 +134,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.reactivestreams.Publisher;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import javax.annotation.CheckReturnValue;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.StandardCharsets;
-import java.nio.charset.UnsupportedCharsetException;
-import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.*;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -164,6 +168,9 @@ public class ExecutionController {
 
     @Inject
     private FlowInputOutput flowInputOutput;
+
+    @Inject
+    private io.kestra.core.runners.ReusableInputsExpander reusableInputsExpander;
 
     @Inject
     private StorageInterface storageInterface;
@@ -269,8 +276,11 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "List distinct values for one of the executions filter fields, optionally narrowed by additional query filters")
     public List<String> findDistinctFieldValues(
         @Parameter(description = "The field whose distinct values to return. Must be a field supported by the EXECUTION resource.") @QueryValue QueryFilter.Field field,
-        @Parameter(description = "Additional filters to narrow the distinct values. PHP-style nested query is used - examples: `filters[flowId][CONTAINS]=test`, `filters[state][IN]=FAILED,WARNING`", in = ParameterIn.QUERY)
-            @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+        @Parameter(
+            description = "Additional filters to narrow the distinct values. PHP-style nested query is used - examples: `filters[flowId][CONTAINS]=test`, `filters[state][IN]=FAILED,WARNING`",
+            in = ParameterIn.QUERY
+        )
+        @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) int size) {
         if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
@@ -700,24 +710,27 @@ public class ExecutionController {
                 Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
                 if (latestAny.isPresent() && latestAny.get().isDraft()) {
                     Flow draftFlow = latestAny.get();
-                    throw new IllegalArgumentException("Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision.");
+                    throw new IllegalArgumentException(
+                        "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
+                    );
                 }
             }
             throw e;
         }
 
-        // Only drafts need re-validation here: published revisions are already validated at save
-        // time, so re-validating every execution would just add cost to the hot path. A draft can be
-        // saved with constraint violations, so when the user explicitly executes one (by passing its
-        // revision) the request is rejected as unprocessable with the validation error, rather than
-        // starting an execution that cannot run.
         if (flow.isDraft()) {
+            controlDraftExecutableAs(flow, kind.orElse(null));
+
+            // Only drafts need re-validation here: published revisions are already validated at save
+            // time, so re-validating every execution would just add cost to the hot path. A draft can be
+            // saved with constraint violations, so when the user explicitly executes one (by passing its
+            // revision) the request is rejected as unprocessable with the validation error, rather than
+            // starting an execution that cannot run.
             Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
             if (violations.isPresent()) {
                 throw new IllegalArgumentException("Flow execution blocked: flow definition is invalid. " + violations.get().getMessage());
             }
         }
-
 
         var executionId = IdUtils.create();
         return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
@@ -743,62 +756,63 @@ public class ExecutionController {
                     .withKind(kind.orElse(null))
                     .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
-                    if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
-                        Logs.logExecutionId(createCommand.executionFullId(), log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
-                        createCommand = createCommand.withStateType(State.Type.FAILED);
-                    }
+                if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
+                    Logs.logExecutionId(createCommand.executionFullId(), log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                    createCommand = createCommand.withStateType(State.Type.FAILED);
+                }
 
-                    // inject the traceparent from the current OTel context into the command so it's propagated to the execution
-                    // TODO see if we can replicate ExecutionTextMapSetter logic
-                    Map<String, String> traceCarrier = new HashMap<>();
-                    openTelemetry
-                        .map(OpenTelemetry::getPropagators)
-                        .map(ContextPropagators::getTextMapPropagator)
-                        .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
-                    if (traceCarrier.containsKey("traceparent")) {
-                        createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
-                    }
+                // inject the traceparent from the current OTel context into the command so it's propagated to the execution
+                // TODO see if we can replicate ExecutionTextMapSetter logic
+                Map<String, String> traceCarrier = new HashMap<>();
+                openTelemetry
+                    .map(OpenTelemetry::getPropagators)
+                    .map(ContextPropagators::getTextMapPropagator)
+                    .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
+                if (traceCarrier.containsKey("traceparent")) {
+                    createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
+                }
 
-                    Create finalCreateCommand = createCommand;
-                    return awaitBlockingAction(
-                        executionId, "Create",
-                        operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
-                    ).flatMap(res -> {
-                        var executionUrl = executionUrl(finalCreateCommand.executionFullId());
-                        if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
-                            return Mono.just(
-                                ExecutionResponse.fromExecution(
-                                    res.body(),
-                                    executionUrl
-                                )
-                            );
-                        }
-
-                        // SSE subscribe
-                        String subscriberId = UUID.randomUUID().toString();
-                        // Use Flux to wait for completion using the streaming service
-                        return Flux.<Event<Execution>> create(emitter ->
-                            {
-                                streamingService.registerSubscriber(
-                                    executionId,
-                                    subscriberId,
-                                    emitter,
-                                    flow
-                                );
-                            })
-                            .last()
-                            .map(Event::getData)
-                            .map(
-                                execution -> ExecutionResponse.fromExecution(
-                                    execution,
-                                    executionUrl
-                                )
+                Create finalCreateCommand = createCommand;
+                return awaitBlockingAction(
+                    executionId, "Create",
+                    operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
+                ).flatMap(res ->
+                {
+                    var executionUrl = executionUrl(finalCreateCommand.executionFullId());
+                    if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
+                        return Mono.just(
+                            ExecutionResponse.fromExecution(
+                                res.body(),
+                                executionUrl
                             )
-                            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-                            .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
-                    });
+                        );
+                    }
 
-//                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
+                    // SSE subscribe
+                    String subscriberId = UUID.randomUUID().toString();
+                    // Use Flux to wait for completion using the streaming service
+                    return Flux.<Event<Execution>> create(emitter ->
+                    {
+                        streamingService.registerSubscriber(
+                            executionId,
+                            subscriberId,
+                            emitter,
+                            flow
+                        );
+                    })
+                        .last()
+                        .map(Event::getData)
+                        .map(
+                            execution -> ExecutionResponse.fromExecution(
+                                execution,
+                                executionUrl
+                            )
+                        )
+                        .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
+                        .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
+                });
+
+                //                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
 
             });
     }
@@ -942,12 +956,13 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/{executionId}/file", produces = {MediaType.APPLICATION_OCTET_STREAM, "application/x-ndjson"})
+    @Get(uri = "/{executionId}/file", produces = { MediaType.APPLICATION_OCTET_STREAM, "application/x-ndjson" })
     @Operation(tags = { "Executions" }, summary = "Download file for an execution")
     public HttpResponse<StreamedFile> downloadFileFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue URI path,
-        @Parameter(description = "The requested file format; RAW returns the raw bytes (default), JSONL converts Ion records to JSON Lines") @QueryValue(defaultValue = "RAW") FileFormat format) throws IOException, URISyntaxException {
+        @Parameter(description = "The requested file format; RAW returns the raw bytes (default), JSONL converts Ion records to JSON Lines")
+        @QueryValue(defaultValue = "RAW") FileFormat format) throws IOException, URISyntaxException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
@@ -979,8 +994,11 @@ public class ExecutionController {
                 FileSerde.read(is, records::add);
             }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (Writer writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
-                 SequenceWriter seq = FileSerde.createJsonSequenceWriter(writer, new TypeReference<>() {})) {
+            try (
+                Writer writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
+                SequenceWriter seq = FileSerde.createJsonSequenceWriter(writer, new TypeReference<>() {
+                })
+            ) {
                 for (Object record : records) {
                     seq.write(record);
                 }
@@ -1142,6 +1160,7 @@ public class ExecutionController {
         this.controlRevision(execution, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
+        controlDraftExecutableAs(flow, execution.getKind());
 
         return blockingReplay(execution, taskRunId, revision, breakpoints);
     }
@@ -1185,6 +1204,7 @@ public class ExecutionController {
         this.controlRevision(current, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
+        controlDraftExecutableAs(flow, current.getKind());
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
@@ -1233,8 +1253,10 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
         }
 
-        return HttpResponse.ok(executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation")));
+        return HttpResponse.ok(
+            executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
+                .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"))
+        );
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId) throws Exception {
@@ -1254,6 +1276,19 @@ public class ExecutionController {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
         executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
+    }
+
+    /**
+     * Rejects executing a draft revision as anything but a {@link ExecutionKind#PLAYGROUND} execution,
+     * whether the revision is passed explicitly (create) or inherited from a replayed execution.
+     */
+    private static void controlDraftExecutableAs(Flow flow, @Nullable ExecutionKind kind) {
+        if (flow.isDraft() && ExecutionKind.PLAYGROUND != kind) {
+            throw new IllegalArgumentException(
+                "Flow execution blocked: revision " + flow.getRevision() + " of flow " + flow.uid() +
+                    " is a draft. Draft revisions can only be executed as playground executions."
+            );
+        }
     }
 
     private void controlRevision(Execution execution, Integer revision) {
@@ -1828,14 +1863,14 @@ public class ExecutionController {
             );
         }
 
-        return submitBatchAction(executions, (execution, opId) -> {
+        return submitBatchAction(executions, (execution, opId) ->
+        {
             // When latestRevision is true the replay starts as a new execution against the
             // latest non-draft revision; otherwise it stays bound to the execution's original
             // revision (which may itself be a draft - the user explicitly ran it).
             Flow flow = (latestRevision
                 ? flowRepository.findByIdForExecution(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())
-                : flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))
-            ).orElseThrow();
+                : flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))).orElseThrow();
             try {
                 innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
             } catch (QueueException e) {
@@ -1928,8 +1963,10 @@ public class ExecutionController {
         }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
-        return sseConnectionMetrics.track(flux, "execution",
-            () -> streamingService.unregisterSubscriber(executionId, subscriberId));
+        return sseConnectionMetrics.track(
+            flux, "execution",
+            () -> streamingService.unregisterSubscriber(executionId, subscriberId)
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1984,7 +2021,8 @@ public class ExecutionController {
                 extension,
                 fileStream,
                 charset,
-                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows));
+                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows)
+            );
 
             return HttpResponse.ok(preview);
         }
@@ -2330,7 +2368,8 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
-        return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2341,7 +2380,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The flow revision") @Nullable Integer revision) {
 
-        return FlowForExecution.of(flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow());
+        Flow flow = flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow();
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2468,8 +2508,10 @@ public class ExecutionController {
         }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
-        return sseConnectionMetrics.track(flux, "dependencies",
-            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
+        return sseConnectionMetrics.track(
+            flux, "dependencies",
+            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId)
+        );
     }
 
     public String getTenant() {
@@ -2641,7 +2683,7 @@ public class ExecutionController {
 
     /**
      * Returns an HTTP 400 response typed as {@code MutableHttpResponse<T>} so callers with a
-     * specific return type do not need to declare a wildcard.  The cast is safe at runtime.
+     * specific return type do not need to declare a wildcard. The cast is safe at runtime.
      */
     @SuppressWarnings("unchecked")
     private static <T> MutableHttpResponse<T> bulkValidationError(BulkErrorResponse errorResponse) {

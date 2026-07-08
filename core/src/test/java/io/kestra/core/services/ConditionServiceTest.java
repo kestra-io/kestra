@@ -4,12 +4,6 @@ package io.kestra.core.services;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.triggers.multipleflows.Condition;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.triggers.TimeWindow;
-import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +11,16 @@ import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.TimeWindow;
+import io.kestra.core.models.triggers.multipleflows.Condition;
+import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -169,25 +169,39 @@ class ConditionServiceTest {
         RunContext runContext = runContextFactory.of(flow, execution);
         MultipleCondition multipleCondition = new MultipleCondition() {
             @Override
-            public String getId() { return "test"; }
+            public String getId() {
+                return "test";
+            }
 
             @Override
-            public TimeWindow getTimeWindow() { return null; }
+            public TimeWindow getTimeWindow() {
+                return null;
+            }
 
             @Override
-            public Boolean getResetOnSuccess() { return null; }
+            public Boolean getResetOnSuccess() {
+                return null;
+            }
 
             @Override
-            public Map<String, Condition> getConditions() { return null; }
+            public Map<String, Condition> getConditions() {
+                return null;
+            }
 
             @Override
-            public Logger logger() { return LoggerFactory.getLogger(ConditionServiceTest.class); }
+            public Logger logger() {
+                return LoggerFactory.getLogger(ConditionServiceTest.class);
+            }
 
             @Override
-            public Mode getMode() { return Mode.ALL; }
+            public Mode getMode() {
+                return Mode.ALL;
+            }
 
             @Override
-            public Integer getMinSatisfied() { return null; }
+            public Integer getMinSatisfied() {
+                return null;
+            }
         };
 
         // When
@@ -208,13 +222,19 @@ class ConditionServiceTest {
         RunContext runContext = runContextFactory.of(flow, execution);
         MultipleCondition throwingCondition = new MultipleCondition() {
             @Override
-            public String getId() { return "test"; }
+            public String getId() {
+                return "test";
+            }
 
             @Override
-            public TimeWindow getTimeWindow() { return null; }
+            public TimeWindow getTimeWindow() {
+                return null;
+            }
 
             @Override
-            public Boolean getResetOnSuccess() { return null; }
+            public Boolean getResetOnSuccess() {
+                return null;
+            }
 
             @Override
             public Map<String, Condition> getConditions() {
@@ -225,13 +245,19 @@ class ConditionServiceTest {
             }
 
             @Override
-            public Logger logger() { return LoggerFactory.getLogger(ConditionServiceTest.class); }
+            public Logger logger() {
+                return LoggerFactory.getLogger(ConditionServiceTest.class);
+            }
 
             @Override
-            public Mode getMode() { return Mode.ALL; }
+            public Mode getMode() {
+                return Mode.ALL;
+            }
 
             @Override
-            public Integer getMinSatisfied() { return null; }
+            public Integer getMinSatisfied() {
+                return null;
+            }
 
             @Override
             public boolean test(ConditionContext conditionContext, Optional<MultipleConditionWindow> multipleConditionWindow) throws InternalException {

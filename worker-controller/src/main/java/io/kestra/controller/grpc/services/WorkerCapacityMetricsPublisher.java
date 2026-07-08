@@ -18,7 +18,8 @@ import lombok.extern.slf4j.Slf4j;
  * {@link WorkerJobDispatcher} state, so the webserver can serve a live capacity snapshot
  * without a separate cross-process RPC.
  *
- * <p>Lifecycle-driven: this class implements {@link WorkerLifecycleListener} and is
+ * <p>
+ * Lifecycle-driven: this class implements {@link WorkerLifecycleListener} and is
  * wired into the dispatcher by Micronaut DI as a constructor argument. The dispatcher
  * invokes {@link #init(WorkerJobDispatcher)} at the end of its own constructor, which
  * captures the reference used by gauge suppliers. Gauges are added on the first observed
@@ -26,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
  * {@link MetricRegistry#removeMeter} when the last contributor disappears, so cardinality
  * tracks the <em>currently active</em> fleet rather than the historical one.
  *
- * <p>The five metrics — see {@link MetricRegistry#METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED}
+ * <p>
+ * The five metrics — see {@link MetricRegistry#METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED}
  * and siblings — are pull-based: each {@link Supplier} reads live state from
  * {@link WorkerJobDispatcher#activeStreams()} at scrape time.
  */
@@ -99,7 +101,8 @@ public class WorkerCapacityMetricsPublisher implements WorkerLifecycleListener {
 
     private void incrementSubscription(String groupId, String queueId) {
         SubKey key = new SubKey(groupId, queueId);
-        subscriptionRefCounts.compute(key, (k, prev) -> {
+        subscriptionRefCounts.compute(key, (k, prev) ->
+        {
             int next = (prev == null ? 0 : prev) + 1;
             if (prev == null) {
                 registerSubscriptionGauges(groupId, queueId);
@@ -110,7 +113,8 @@ public class WorkerCapacityMetricsPublisher implements WorkerLifecycleListener {
 
     private void decrementSubscription(String groupId, String queueId) {
         SubKey key = new SubKey(groupId, queueId);
-        subscriptionRefCounts.compute(key, (k, prev) -> {
+        subscriptionRefCounts.compute(key, (k, prev) ->
+        {
             if (prev == null) {
                 // Defensive: should not happen if register/unregister are balanced.
                 log.warn("Subscription refcount underflow for group='{}' queue='{}'", groupId, queueId);
@@ -126,7 +130,8 @@ public class WorkerCapacityMetricsPublisher implements WorkerLifecycleListener {
     }
 
     private void incrementGroup(String groupId) {
-        groupRefCounts.compute(groupId, (k, prev) -> {
+        groupRefCounts.compute(groupId, (k, prev) ->
+        {
             int next = (prev == null ? 0 : prev) + 1;
             if (prev == null) {
                 registerGroupGauges(groupId);
@@ -136,7 +141,8 @@ public class WorkerCapacityMetricsPublisher implements WorkerLifecycleListener {
     }
 
     private void decrementGroup(String groupId) {
-        groupRefCounts.compute(groupId, (k, prev) -> {
+        groupRefCounts.compute(groupId, (k, prev) ->
+        {
             if (prev == null) {
                 log.warn("Group refcount underflow for group='{}'", groupId);
                 return null;

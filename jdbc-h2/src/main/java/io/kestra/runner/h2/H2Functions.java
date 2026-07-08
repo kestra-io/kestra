@@ -20,7 +20,9 @@ import net.thisptr.jackson.jq.Versions;
 
 public final class H2Functions {
 
-    private H2Functions() {}
+    private H2Functions() {
+    }
+
     private static final Scope scope = Scope.newEmptyScope();
     private static final ConcurrentHashMap<String, JsonQuery> QUERY_CACHE = new ConcurrentHashMap<>();
 

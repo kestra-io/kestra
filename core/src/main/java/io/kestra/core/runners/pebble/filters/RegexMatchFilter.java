@@ -1,25 +1,30 @@
 package io.kestra.core.runners.pebble.filters;
 
-import io.kestra.core.utils.RegexUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Filter;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import io.kestra.core.utils.RegexUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.Filter;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble filter that checks if the input string contains a substring matching a given regular expression.
  *
- * <p>This filter uses {@code find()} semantics (partial match), not {@code matches()} (full-string match).
+ * <p>
+ * This filter uses {@code find()} semantics (partial match), not {@code matches()} (full-string match).
  * For example, {@code {{ "abc-123" | regexMatch(regex="\d+") }}} returns {@code true} because a
- * substring matches, even though the entire string does not.</p>
+ * substring matches, even though the entire string does not.
+ * </p>
  *
- * <p>Usage: {@code {{ "hello world" | regexMatch(regex="hello.*") }}}</p>
+ * <p>
+ * Usage: {@code {{ "hello world" | regexMatch(regex="hello.*") }}}
+ * </p>
  *
  * @see RegexReplaceFilter
  * @see RegexExtractFilter

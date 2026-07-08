@@ -1,24 +1,27 @@
 package io.kestra.cli.commands.migrations;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
+
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * CLI command that lists the pending database migration scripts without applying them.
  *
- * <p>This is the read-only counterpart of {@code kestra migrate run}: it reports the migrations
+ * <p>
+ * This is the read-only counterpart of {@code kestra migrate run}: it reports the migrations
  * that would be applied (e.g. what an upgrade would run) and then exits without touching the data.
  * It is useful to prepare an upgrade by knowing exactly which migrations are planned.
  *
- * <p>Usage: {@code kestra migrate plan} (add {@code --sql} to also print the SQL of each migration).
+ * <p>
+ * Usage: {@code kestra migrate plan} (add {@code --sql} to also print the SQL of each migration).
  */
 @Slf4j
 @CommandLine.Command(

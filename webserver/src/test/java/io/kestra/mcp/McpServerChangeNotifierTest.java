@@ -1,30 +1,32 @@
 package io.kestra.mcp;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.GenericTrigger;
-import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
-import org.awaitility.Awaitility;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,9 +56,15 @@ class McpServerChangeNotifierTest {
     @Test
     void shouldRemoveStaleToolFromServerWhenTriggerRemovedFromFlow() throws DeserializationException {
         // Given — v1 has a trigger on serverId; init the server so it holds v1's tool
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverId)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverId)
+                    )
+                )
+            )
+        );
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
         awaitToolCount(serverId, 1);
 
@@ -77,9 +85,15 @@ class McpServerChangeNotifierTest {
         String serverB = UUID.randomUUID().toString();
 
         // Given — v1 has a trigger on server-a; init both server handlers
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverA)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverA)
+                    )
+                )
+            )
+        );
         mcpServerHandlerTransport.getServerHandler(contextFor(serverA));
         mcpServerHandlerTransport.getServerHandler(contextFor(serverB));
         awaitToolCount(serverA, 1);
@@ -103,9 +117,15 @@ class McpServerChangeNotifierTest {
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
 
         // When — revision 1 of a brand-new flow arrives
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverId)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverId)
+                    )
+                )
+            )
+        );
         notifier.handleFlowChange(asQueueEvent(v1, List.of(buildGenericMcpTrigger("t1", serverId))));
 
         // Then — the new tool is registered on the server
@@ -115,9 +135,15 @@ class McpServerChangeNotifierTest {
     @Test
     void shouldRemoveToolFromServerWhenFlowIsDisabled() throws DeserializationException {
         // Given — v1 has a trigger on serverId; init the server
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverId)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverId)
+                    )
+                )
+            )
+        );
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
         awaitToolCount(serverId, 1);
 
@@ -135,9 +161,15 @@ class McpServerChangeNotifierTest {
     @Test
     void shouldEvictServerWhenServerIsDeleted() throws DeserializationException {
         // Given — server is initialised with one tool
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverId)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverId)
+                    )
+                )
+            )
+        );
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
         awaitToolCount(serverId, 1);
 
@@ -147,17 +179,23 @@ class McpServerChangeNotifierTest {
         // Then — server is evicted; listToolsForServer returns empty (key removed from servers map)
         Awaitility.await()
             .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() ->
-                assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).isEmpty()
+            .untilAsserted(
+                () -> assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).isEmpty()
             );
     }
 
     @Test
     void shouldEvictServerWhenServerIsDisabled() throws DeserializationException {
         // Given — server is initialised with one tool
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverId)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverId)
+                    )
+                )
+            )
+        );
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
         awaitToolCount(serverId, 1);
 
@@ -167,17 +205,23 @@ class McpServerChangeNotifierTest {
         // Then — server is evicted
         Awaitility.await()
             .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() ->
-                assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).isEmpty()
+            .untilAsserted(
+                () -> assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).isEmpty()
             );
     }
 
     @Test
     void shouldNotEvictServerWhenServerIsUpdatedAndStillEnabled() throws Exception {
         // Given — server is initialised with one tool
-        FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
-            buildMcpTrigger("t1", serverId)
-        ))));
+        FlowWithSource v1 = flowRepository.create(
+            GenericFlow.of(
+                buildFlow(
+                    List.of(
+                        buildMcpTrigger("t1", serverId)
+                    )
+                )
+            )
+        );
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
         awaitToolCount(serverId, 1);
 
@@ -188,8 +232,8 @@ class McpServerChangeNotifierTest {
         Awaitility.await()
             .pollDelay(Duration.ofMillis(500))
             .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() ->
-                assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).hasSize(1)
+            .untilAsserted(
+                () -> assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).hasSize(1)
             );
     }
 
@@ -211,7 +255,8 @@ class McpServerChangeNotifierTest {
     private void awaitToolCount(String serverIdToCheck, int expectedCount) {
         Awaitility.await()
             .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 List<McpSchema.Tool> tools = mcpServerHandlerTransport
                     .listToolsForServer(null, serverIdToCheck)
                     .collectList()
@@ -252,13 +297,15 @@ class McpServerChangeNotifierTest {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.mcp.test")
-            .tasks(List.of(
-                Return.builder()
-                    .id("return")
-                    .type(Return.class.getName())
-                    .format(Property.ofValue("ok"))
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id("return")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("ok"))
+                        .build()
+                )
+            )
             .triggers(triggers)
             .build();
     }
@@ -267,13 +314,15 @@ class McpServerChangeNotifierTest {
         return Flow.builder()
             .id(previous.getId())
             .namespace(previous.getNamespace())
-            .tasks(List.of(
-                Return.builder()
-                    .id("return")
-                    .type(Return.class.getName())
-                    .format(Property.ofValue("ok"))
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id("return")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("ok"))
+                        .build()
+                )
+            )
             .triggers(triggers)
             .build();
     }

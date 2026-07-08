@@ -1,9 +1,10 @@
 package io.kestra.core.worker;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.serializers.JacksonMapper;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,7 +14,8 @@ class WorkerBroadcastEventTest {
     void shouldRoundTripMetadataChangeEvent() throws Exception {
         // Given
         MetadataChangePayload payload = new MetadataChangePayload(
-            MetadataChangePayload.Type.NAMESPACE, "tenant-a", "prod.team");
+            MetadataChangePayload.Type.NAMESPACE, "tenant-a", "prod.team"
+        );
         WorkerBroadcastEvent event = new WorkerBroadcastEvent.MetadataChangeEvent(payload);
 
         // When

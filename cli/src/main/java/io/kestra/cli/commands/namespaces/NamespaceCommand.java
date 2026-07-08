@@ -2,8 +2,8 @@ package io.kestra.cli.commands.namespaces;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
-
 import io.kestra.cli.commands.namespaces.kv.KvCommand;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;

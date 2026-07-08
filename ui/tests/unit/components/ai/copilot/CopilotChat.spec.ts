@@ -16,8 +16,11 @@ const state = {
     sendChat: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
+    reset: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
+// The provider list is fetched on mount — stub the SDK so no real request fires.
+vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 
@@ -32,6 +35,7 @@ describe("CopilotChat", () => {
         state.streaming.value = false
         state.sendChat.mockReset()
         state.confirm.mockReset()
+        state.reset.mockReset()
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -85,5 +89,15 @@ describe("CopilotChat", () => {
         state.canSend.value = false
         const w = mountChat()
         expect(w.findComponent({name: "CopilotComposer"}).props("disabled")).toBe(true)
+    })
+
+    it("starts a new chat via the top bar", async () => {
+        const w = mountChat()
+        await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
+        expect(state.reset).toHaveBeenCalled()
+    })
+
+    it("shows the recents placeholder control", () => {
+        expect(mountChat().find("[data-test=\"copilot-recents\"]").exists()).toBe(true)
     })
 })

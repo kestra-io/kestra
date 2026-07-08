@@ -145,4 +145,18 @@ describe("useAiChat", () => {
         expect(chat.messages.value.map((m) => m.content)).toEqual(["first", "second"])
         expect(chat.status.value).toBe("IDLE")
     })
+
+    it("reset() clears the transcript and thread back to the empty state", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "token", data: {text: "hi"}}, {event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hello"})
+        expect(chat.messages.value.length).toBeGreaterThan(0)
+        expect(chat.thread.value).not.toBeNull()
+
+        chat.reset()
+        expect(chat.messages.value).toEqual([])
+        expect(chat.thread.value).toBeNull()
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.pendingConfirmation.value).toBeNull()
+    })
 })

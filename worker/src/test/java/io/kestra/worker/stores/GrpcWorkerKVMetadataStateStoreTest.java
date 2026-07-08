@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.controller.grpc.KVMetadataServiceGrpc.KVMetadataServiceBlockingStub;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.micronaut.context.annotation.Property;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.utils.TestsUtils;
 
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

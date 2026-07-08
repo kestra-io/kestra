@@ -838,6 +838,7 @@
       },
       "filter": "Filtr",
       "new_file": "Nowy plik",
+      "read_only": "Nie masz uprawnień do zarządzania plikami w tym namespace",
       "no_items": {
         "heading": "Nie znaleziono jeszcze plików w twoim namespace.",
         "paragraph": "Utwórz lub zaimportuj pliki, aby udostępniać kod między flow w twoim namespace."

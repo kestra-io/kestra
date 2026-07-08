@@ -132,8 +132,10 @@ class McpServerControllerTest {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
-        ApiMcpServer update = new ApiMcpServer(created.id(), created.description(),
-            null, null, null, null, null, true, false, null, null);
+        ApiMcpServer update = new ApiMcpServer(
+            created.id(), created.description(),
+            null, null, null, null, null, true, false, null, null
+        );
 
         // When
         ApiMcpServer result = client.toBlocking().retrieve(PUT(MCP_PATH + "/" + created.id(), update), ApiMcpServer.class);
@@ -187,8 +189,10 @@ class McpServerControllerTest {
     @Test
     void shouldReturnValidationErrorWhenCreatingMcpWithReservedId() {
         // Given — "default" is a reserved id
-        ApiMcpServer mcp = new ApiMcpServer(McpServer.DEFAULT_ID,
-            "A description", null, null, null, null, null, true, false, null, null);
+        ApiMcpServer mcp = new ApiMcpServer(
+            McpServer.DEFAULT_ID,
+            "A description", null, null, null, null, null, true, false, null, null
+        );
 
         // When / Then
         HttpClientResponseException e = Assertions.assertThrows(
@@ -203,8 +207,10 @@ class McpServerControllerTest {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
-        ApiMcpServer renamed = new ApiMcpServer(McpServer.DEFAULT_ID,
-            created.description(), null, null, null, null, null, true, false, null, null);
+        ApiMcpServer renamed = new ApiMcpServer(
+            McpServer.DEFAULT_ID,
+            created.description(), null, null, null, null, null, true, false, null, null
+        );
 
         // When / Then
         HttpClientResponseException e = Assertions.assertThrows(
@@ -236,7 +242,8 @@ class McpServerControllerTest {
 
         // When
         ApiMcpServer toggled = client.toBlocking().retrieve(
-            PATCH(MCP_PATH + "/" + created.id() + "/toggle", ""), ApiMcpServer.class);
+            PATCH(MCP_PATH + "/" + created.id() + "/toggle", ""), ApiMcpServer.class
+        );
 
         // Then
         assertThat(toggled.disabled()).isTrue();
@@ -258,8 +265,10 @@ class McpServerControllerTest {
     @Test
     void shouldReturnForbiddenWhenCreatingMcpWithEnterpriseAuthType() {
         // Given — API_TOKEN requires EE; OSS edition is active in tests
-        ApiMcpServer mcp = new ApiMcpServer("test-mcp-" + IdUtils.create().toLowerCase(),
-            "A description", null, null, McpServer.AuthType.API_TOKEN, null, null, true, false, null, null);
+        ApiMcpServer mcp = new ApiMcpServer(
+            "test-mcp-" + IdUtils.create().toLowerCase(),
+            "A description", null, null, McpServer.AuthType.API_TOKEN, null, null, true, false, null, null
+        );
 
         // When / Then
         HttpClientResponseException e = Assertions.assertThrows(
@@ -272,8 +281,10 @@ class McpServerControllerTest {
     @Test
     void shouldCreateMcpWhenUsingBasicAuthType() {
         // Given — BASIC is the only auth type permitted in OSS
-        ApiMcpServer mcp = new ApiMcpServer("test-mcp-" + IdUtils.create().toLowerCase(),
-            "A description", null, null, McpServer.AuthType.BASIC, null, null, true, false, null, null);
+        ApiMcpServer mcp = new ApiMcpServer(
+            "test-mcp-" + IdUtils.create().toLowerCase(),
+            "A description", null, null, McpServer.AuthType.BASIC, null, null, true, false, null, null
+        );
 
         // When
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -288,8 +299,10 @@ class McpServerControllerTest {
         // Given — create a valid MCP server first, then try to switch to an EE-only auth type
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
-        ApiMcpServer update = new ApiMcpServer(created.id(), created.description(),
-            null, null, McpServer.AuthType.API_TOKEN, null, null,true, false, null, null);
+        ApiMcpServer update = new ApiMcpServer(
+            created.id(), created.description(),
+            null, null, McpServer.AuthType.API_TOKEN, null, null, true, false, null, null
+        );
 
         // When / Then
         HttpClientResponseException e = Assertions.assertThrows(
@@ -301,7 +314,9 @@ class McpServerControllerTest {
 
     /** Builds a valid {@link ApiMcpServer} request payload with a unique id. */
     private static ApiMcpServer buildMcp(String uniqueSuffix) {
-        return new ApiMcpServer("test-mcp-" + uniqueSuffix.toLowerCase(),
-            "A test description", null, null, null, null, null, false, false, null, null);
+        return new ApiMcpServer(
+            "test-mcp-" + uniqueSuffix.toLowerCase(),
+            "A test description", null, null, null, null, null, false, false, null, null
+        );
     }
 }

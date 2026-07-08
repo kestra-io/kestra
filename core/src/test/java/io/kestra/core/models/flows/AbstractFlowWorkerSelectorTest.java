@@ -3,15 +3,17 @@ package io.kestra.core.models.flows;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerQueueFallback;
 import io.kestra.core.models.tasks.WorkerSelector;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.plugin.core.log.Log;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,7 +29,7 @@ class AbstractFlowUsingTest {
             .id("test")
             .namespace("io.kestra.tests")
             .workerSelector(new WorkerSelector(List.of("docker", "linux-amd64"), null))
-            .tasks(List.<Task>of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);
@@ -40,7 +42,7 @@ class AbstractFlowUsingTest {
             .id("test")
             .namespace("io.kestra.tests")
             .workerSelector(new WorkerSelector(List.of("Docker"), null))
-            .tasks(List.<Task>of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);
@@ -53,7 +55,7 @@ class AbstractFlowUsingTest {
             .id("test")
             .namespace("io.kestra.tests")
             .workerSelector(new WorkerSelector(List.of("linux_amd64"), null))
-            .tasks(List.<Task>of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);
@@ -66,7 +68,7 @@ class AbstractFlowUsingTest {
             .id("test")
             .namespace("io.kestra.tests")
             .workerSelector(new WorkerSelector(List.of("-docker"), null))
-            .tasks(List.<Task>of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);
@@ -80,7 +82,7 @@ class AbstractFlowUsingTest {
             .id("test")
             .namespace("io.kestra.tests")
             .workerSelector(new WorkerSelector(tags, null))
-            .tasks(List.<Task>of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);
@@ -93,7 +95,7 @@ class AbstractFlowUsingTest {
             .id("test")
             .namespace("io.kestra.tests")
             .workerSelector(new WorkerSelector(List.of(), WorkerQueueFallback.WAIT))
-            .tasks(List.<Task>of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .tasks(List.<Task> of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
             .build();
 
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);

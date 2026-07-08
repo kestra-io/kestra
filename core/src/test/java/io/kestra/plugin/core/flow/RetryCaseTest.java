@@ -104,7 +104,8 @@ public class RetryCaseTest {
         );
         Await.until(
             () -> "flow should have ended in Failed state",
-            () -> {
+            () ->
+            {
                 try {
                     return executionRepository.findLatestForStates(flow.getTenantId(), flow.getNamespace(), flow.getId(), List.of(State.Type.FAILED)).isPresent();
                 } catch (Exception e) {

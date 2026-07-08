@@ -1,5 +1,8 @@
 package io.kestra.core.async;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.utils.MapUtils;
@@ -10,9 +13,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.FluxSink;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Fan-out service for {@link AsyncOperationProcessedEvent}.
@@ -71,8 +71,10 @@ public class AsyncEventStreamingService {
                 sink.next(event);
                 sink.complete();
             } catch (Exception e) {
-                log.error("Error dispatching AsyncOperationProcessedEvent for op {} item {}",
-                    event.operationId(), event.itemId(), e);
+                log.error(
+                    "Error dispatching AsyncOperationProcessedEvent for op {} item {}",
+                    event.operationId(), event.itemId(), e
+                );
                 sink.error(e);
             }
         });

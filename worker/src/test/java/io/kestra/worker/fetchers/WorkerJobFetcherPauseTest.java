@@ -1,5 +1,10 @@
 package io.kestra.worker.fetchers;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
@@ -11,12 +16,9 @@ import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
+
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,7 +68,8 @@ class WorkerJobFetcherPauseTest {
         WorkerJobFetcher fetcher = newFetcher(stub, queue);
 
         ClientCallStreamObserver<WorkerJobRequest> requestStream = mock(ClientCallStreamObserver.class);
-        doAnswer(invocation -> {
+        doAnswer(invocation ->
+        {
             ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = invocation.getArgument(0);
             responseObserver.beforeStart(requestStream);
             return null;
@@ -95,7 +98,8 @@ class WorkerJobFetcherPauseTest {
         WorkerJobFetcher fetcher = newFetcher(stub, queue);
 
         ClientCallStreamObserver<WorkerJobRequest> requestStream = mock(ClientCallStreamObserver.class);
-        doAnswer(invocation -> {
+        doAnswer(invocation ->
+        {
             ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = invocation.getArgument(0);
             responseObserver.beforeStart(requestStream);
             return null;
@@ -126,7 +130,8 @@ class WorkerJobFetcherPauseTest {
         WorkerJobFetcher fetcher = newFetcher(stub, queue);
 
         ClientCallStreamObserver<WorkerJobRequest> requestStream = mock(ClientCallStreamObserver.class);
-        doAnswer(invocation -> {
+        doAnswer(invocation ->
+        {
             ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = invocation.getArgument(0);
             responseObserver.beforeStart(requestStream);
             return null;

@@ -7,14 +7,12 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Scheduler;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "scheduler",

@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.preview;
 
 import io.kestra.core.preview.FilePreview;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

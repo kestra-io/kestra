@@ -18,11 +18,11 @@ import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
-import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.Hashing;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -161,8 +161,7 @@ public class PluginController {
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10000") int size,
         @Parameter(description = "A list of sort fields") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters
-    ) {
+        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters) {
         List<Plugin> items = pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
@@ -182,14 +181,17 @@ public class PluginController {
     )
     public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
         List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
-                .filter(c -> !isInternal(c))
-                .filter(c -> !c.getName().startsWith("org.kestra."))
-                .map(c -> toApiTriggerPlugin(registeredPlugin, c))
+            .flatMap(
+                registeredPlugin -> registeredPlugin.getTriggers().stream()
+                    .filter(c -> !isInternal(c))
+                    .filter(c -> !c.getName().startsWith("org.kestra."))
+                    .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
-            .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
-                .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
+            .sorted(
+                Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
+                    .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER)
+            )
             .toList();
 
         return PagedResults.of(new ArrayListTotal<>(all, all.size()));
@@ -458,7 +460,11 @@ public class PluginController {
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
                                 .filter(module -> isDistributionAllowed(module.distribution()))
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()))
+                                .map(
+                                    module -> new PluginUiModuleWithGroup(
+                                        module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()
+                                    )
+                                )
                                 .toList()
                         );
                     }
@@ -557,9 +563,12 @@ public class PluginController {
 
     @SuppressWarnings("unchecked")
     private List<Object> applyAlertReplacementToList(List<Object> list) {
-        return list.stream().map(item -> {
-            if (item instanceof Map<?, ?> m) return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
-            if (item instanceof List<?> l) return (Object) applyAlertReplacementToList((List<Object>) l);
+        return list.stream().map(item ->
+        {
+            if (item instanceof Map<?, ?> m)
+                return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
+            if (item instanceof List<?> l)
+                return (Object) applyAlertReplacementToList((List<Object>) l);
             return item;
         }).toList();
     }
@@ -595,7 +604,6 @@ public class PluginController {
         TriggerPluginCategory group,
         boolean ee,
         String icon,
-        Boolean deprecated
-    ) {
+        Boolean deprecated) {
     }
 }

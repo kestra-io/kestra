@@ -48,7 +48,6 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.BDDAssertions.within;
 
 @KestraTest(resolveParameters = false)
 class KVControllerTest {

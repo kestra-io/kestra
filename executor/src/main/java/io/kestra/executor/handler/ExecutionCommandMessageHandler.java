@@ -15,7 +15,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionEvent;
-import io.kestra.executor.KillSwitchActionService;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
@@ -24,6 +23,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
+import io.kestra.executor.KillSwitchActionService;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -220,8 +220,10 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * Evaluates the kill switch on a brand-new (not yet persisted) execution and writes it to the state
      * store in the appropriate terminal state if kill-switched.
      *
-     * <p>A brand-new execution has no running tasks, so it can be written directly in a terminal state
-     * without going through the KILLING intermediate state or the kill queue.</p>
+     * <p>
+     * A brand-new execution has no running tasks, so it can be written directly in a terminal state
+     * without going through the KILLING intermediate state or the kill queue.
+     * </p>
      *
      * @return {@code Optional.of(execution)} if the execution should proceed to normal processing;
      *         {@code Optional.empty()} if it was kill-switched (already persisted in its terminal state).

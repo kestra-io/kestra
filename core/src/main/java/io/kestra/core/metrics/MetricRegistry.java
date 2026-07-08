@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -14,6 +13,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
@@ -182,6 +182,29 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION = "The duration spent processing individual events within the event-loop.";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT = "scheduler.assigned.vnodes.count";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION = "The number of virtual nodes assigned to the scheduler";
+
+    public static final String METRIC_WEBSERVER_EXECUTION_RESTART_TOTAL = "webserver.execution.restart.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESTART_TOTAL_DESCRIPTION = "The total number of execution restarted from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_REPLAY_TOTAL = "webserver.execution.replay.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_REPLAY_TOTAL_DESCRIPTION = "The total number of execution replayed from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_PAUSE_TOTAL = "webserver.execution.pause.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_PAUSE_TOTAL_DESCRIPTION = "The total number of execution paused from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL = "webserver.execution.resume.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL_DESCRIPTION = "The total number of execution resumed from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL = "webserver.execution.resumefrombreakpoint.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION = "The total number of execution resumed from a breakpoint from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL = "webserver.execution.forcerun.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION = "The total number of execution force run from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_KILL_TOTAL = "webserver.execution.kill.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_KILL_TOTAL_DESCRIPTION = "The total number of execution kill from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL = "webserver.execution.changestatus.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL_DESCRIPTION = "The total number of execution changed status from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL = "webserver.execution.updatelabels.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL_DESCRIPTION = "The total number of execution updated labels from the API.";
+    public static final String METRIC_WEBSERVER_EXECUTION_UNQUEUE_TOTAL = "webserver.execution.unqueue.total";
+    public static final String METRIC_WEBSERVER_EXECUTION_UNQUEUE_TOTAL_DESCRIPTION = "The total number of execution unqueued from the API.";
+    public static final String METRIC_WEBSERVER_TASKRUN_CHANGE_STATE_TOTAL = "webserver.taskrun.changestate.total";
+    public static final String METRIC_WEBSERVER_TASKRUN_CHANGE_STATE_TOTAL_DESCRIPTION = "The total number of taskrun changed state from the API.";
 
     public static final String METRIC_MAINTENANCE_ENTER_COUNT = "server.maintenance.enter.count";
     public static final String METRIC_MAINTENANCE_ENTER_COUNT_DESCRIPTION = "The total number of times maintenance mode was entered";
@@ -400,7 +423,7 @@ public class MetricRegistry {
      * Return tags for current {@link WorkerTask}.
      * We don't include current state since it will break up the values per state which make no sense.
      *
-     * @param workerTask    the current WorkerTask
+     * @param workerTask the current WorkerTask
      * @param workerGroupId the worker group id, optional
      * @return tags to apply to metrics
      */

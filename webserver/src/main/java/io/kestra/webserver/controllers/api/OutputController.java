@@ -1,5 +1,8 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -18,9 +21,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
-
-import java.util.List;
-import java.util.Map;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -41,8 +41,10 @@ public class OutputController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{executionId}/{taskRunId}")
     @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
-    @ApiResponse(responseCode = "200", description = "The task run outputs as a map of output names to their values",
-        content = { @Content(schema = @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.TRUE)) })
+    @ApiResponse(
+        responseCode = "200", description = "The task run outputs as a map of output names to their values",
+        content = { @Content(schema = @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.TRUE)) }
+    )
     public Map<String, Object> getTaskRunOutputs(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The task run id") @PathVariable String taskRunId) throws InternalException {
@@ -57,18 +59,21 @@ public class OutputController {
     public List<TaskOutputInformation> getTaskOutputsInformation(@Parameter(description = "The execution id") @PathVariable String executionId) throws InternalException {
         var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         return taskOutputRepository.findByExecution(execution).stream()
-            .map(throwFunction(taskOutput -> {
+            .map(throwFunction(taskOutput ->
+            {
                 var taskRun = execution.findTaskRunByTaskRunId(taskOutput.taskRunId());
                 return new TaskOutputInformation(
-                        taskRun.getTaskId(),
-                        taskRun.getId(),
-                        taskRun.getValue(),
-                        taskRun.getIteration(),
-                        taskOutput.value() != null);
-                }
+                    taskRun.getTaskId(),
+                    taskRun.getId(),
+                    taskRun.getValue(),
+                    taskRun.getIteration(),
+                    taskOutput.value() != null
+                );
+            }
             ))
             .toList();
     }
 
-    public record TaskOutputInformation(String taskId, String taskRunId, String value, Integer iteration, boolean inline) {}
+    public record TaskOutputInformation(String taskId, String taskRunId, String value, Integer iteration, boolean inline) {
+    }
 }

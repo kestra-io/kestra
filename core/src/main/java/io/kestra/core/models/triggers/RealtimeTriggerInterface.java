@@ -4,6 +4,7 @@ import org.reactivestreams.Publisher;
 
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+
 import reactor.core.publisher.Flux;
 
 public interface RealtimeTriggerInterface extends WorkerTriggerInterface {

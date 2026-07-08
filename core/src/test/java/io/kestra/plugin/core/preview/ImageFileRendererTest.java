@@ -1,15 +1,16 @@
 package io.kestra.plugin.core.preview;
 
-import io.kestra.core.preview.FilePreview;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import io.kestra.core.preview.FilePreview;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,7 +21,7 @@ class ImageFileRendererTest {
     @Test
     void shouldRenderAsBase64() throws IOException {
         // Given
-        byte[] imageBytes = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}; // PNG header
+        byte[] imageBytes = new byte[] { (byte) 0x89, 0x50, 0x4E, 0x47 }; // PNG header
         InputStream inputStream = new ByteArrayInputStream(imageBytes);
 
         // When
@@ -33,7 +34,7 @@ class ImageFileRendererTest {
     @Test
     void shouldReturnImageTypeAndExtension() throws IOException {
         // Given
-        InputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
+        InputStream inputStream = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 
         // When
         FilePreview rendered = renderer.render("png", inputStream, Optional.empty(), 100);
@@ -46,7 +47,7 @@ class ImageFileRendererTest {
     @Test
     void shouldNeverBeTruncated() throws IOException {
         // Given
-        InputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
+        InputStream inputStream = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 
         // When
         FilePreview rendered = renderer.render("jpg", inputStream, Optional.empty(), 100);
@@ -56,10 +57,10 @@ class ImageFileRendererTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"png", "jpg", "jpeg", "svg", "gif", "bmp", "webp"})
+    @ValueSource(strings = { "png", "jpg", "jpeg", "svg", "gif", "bmp", "webp" })
     void shouldSupportImageExtensions(String extension) throws IOException {
         // Given
-        InputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
+        InputStream inputStream = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 
         // When
         FilePreview rendered = renderer.render(extension, inputStream, Optional.empty(), 100);
@@ -69,7 +70,7 @@ class ImageFileRendererTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"PNG", "JPG", "JPEG", "SVG", "GIF", "BMP", "WEBP"})
+    @ValueSource(strings = { "PNG", "JPG", "JPEG", "SVG", "GIF", "BMP", "WEBP" })
     void shouldSupportUppercaseExtensions(String extension) {
         assertThat(renderer.supports(extension)).isTrue();
     }

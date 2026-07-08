@@ -75,8 +75,7 @@ public class PluginDefaultService {
     public PluginDefaultService(
         @Nullable PluginGlobalDefaultConfiguration pluginGlobalDefault,
         RunContextLoggerFactory runContextLoggerFactory,
-        PluginRegistry pluginRegistry
-    ) {
+        PluginRegistry pluginRegistry) {
         this.pluginGlobalDefault = pluginGlobalDefault;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.pluginRegistry = pluginRegistry;
@@ -132,8 +131,8 @@ public class PluginDefaultService {
         if (hasForced) {
             log.warn(
                 "Flow '{}' in namespace '{}' uses 'forced: true' in pluginDefaults." +
-                " The 'forced' flag is not supported at flow level and will be ignored." +
-                " Remove it from the flow to suppress this warning.",
+                    " The 'forced' flag is not supported at flow level and will be ignored." +
+                    " Remove it from the flow to suppress this warning.",
                 flow.get("id"),
                 flow.get("namespace")
             );

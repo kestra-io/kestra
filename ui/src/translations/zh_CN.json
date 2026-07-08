@@ -838,6 +838,7 @@
       },
       "filter": "过滤",
       "new_file": "新建文件",
+      "read_only": "您没有权限管理此 namespace 中的文件",
       "no_items": {
         "heading": "尚未在您的namespace中找到文件。",
         "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"

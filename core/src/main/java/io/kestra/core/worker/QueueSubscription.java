@@ -2,7 +2,9 @@ package io.kestra.core.worker;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.kestra.core.utils.Enums;
+
 import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -12,14 +14,17 @@ import jakarta.validation.constraints.NotBlank;
  * A worker's subscription to a Worker Queue, identified by the queue's
  * {@code workerQueueId} (or {@link WorkerQueues#DEFAULT_ID} for the global default queue).
  *
- * <p>{@code reservedPercent} is the minimum percentage of a worker's slots guaranteed
+ * <p>
+ * {@code reservedPercent} is the minimum percentage of a worker's slots guaranteed
  * to this Worker Queue, in {@code [1, 100]}, or {@link #NO_RESERVATION} ({@code -1}) to
  * consume only unreserved (shared) capacity.
  *
- * <p>The sum of reserved percentages across a worker's subscriptions must be
+ * <p>
+ * The sum of reserved percentages across a worker's subscriptions must be
  * {@code <= 100}; the remainder forms a shared pool any subscribed Worker Queue may use.
  *
- * <p>{@code mode} controls how this subscription's reserved slots interact with other
+ * <p>
+ * {@code mode} controls how this subscription's reserved slots interact with other
  * subscriptions on the same worker — see {@link Mode}.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,10 +39,12 @@ public record QueueSubscription(
     /**
      * Reservation interaction mode — lender-only semantics.
      *
-     * <p>{@link #STRICT} (default): the subscription's reserved slots are exclusive —
+     * <p>
+     * {@link #STRICT} (default): the subscription's reserved slots are exclusive —
      * no other subscription on the same worker may use them, even when idle.
      *
-     * <p>{@link #ELASTIC}: the subscription's idle reserved slots may be borrowed by
+     * <p>
+     * {@link #ELASTIC}: the subscription's idle reserved slots may be borrowed by
      * any other subscription on the same worker. The reserved percentage becomes a
      * soft floor — borrowed slots are not preempted, so a busy lender may temporarily
      * fall short of its full floor until borrowed jobs complete naturally. Whether
@@ -64,7 +71,8 @@ public record QueueSubscription(
         }
         if (reservedPercent != NO_RESERVATION && (reservedPercent < 1 || reservedPercent > 100)) {
             throw new IllegalArgumentException(
-                "reservedPercent must be -1 (no reservation) or in [1, 100], got " + reservedPercent);
+                "reservedPercent must be -1 (no reservation) or in [1, 100], got " + reservedPercent
+            );
         }
         // null (legacy payload) or UNKNOWN — degrade safely to STRICT.
         if (mode == null || mode == Mode.UNKNOWN) {

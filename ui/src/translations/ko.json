@@ -838,6 +838,7 @@
       },
       "filter": "필터",
       "new_file": "새 파일",
+      "read_only": "이 namespace의 파일을 관리할 권한이 없습니다",
       "no_items": {
         "heading": "아직 namespace에 파일이 없습니다.",
         "paragraph": "파일을 생성하거나 가져와서 namespace 내의 flow 간에 코드를 공유하세요."

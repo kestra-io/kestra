@@ -4,9 +4,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -61,14 +60,16 @@ public class Exponential extends AbstractRetry {
     @AssertTrue(message = "'interval' must be less than 'maxDuration'")
     @JsonIgnore
     boolean isIntervalLessThanMaxDuration() {
-        if (getMaxDuration() == null || interval == null) return true;
+        if (getMaxDuration() == null || interval == null)
+            return true;
         return getMaxDuration().compareTo(interval) > 0;
     }
 
     @AssertTrue(message = "'interval' must be less than 'maxInterval'")
     @JsonIgnore
     boolean isIntervalLessThanMaxInterval() {
-        if (interval == null || maxInterval == null) return true;
+        if (interval == null || maxInterval == null)
+            return true;
         return interval.compareTo(maxInterval) < 0;
     }
 }

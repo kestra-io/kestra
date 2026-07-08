@@ -20,9 +20,11 @@
         <div class="copilot-composer-actions">
             <KsDropdown trigger="click" data-test="copilot-mode-selector">
                 <KsButton size="small" class="copilot-mode-trigger">
-                    <component :is="currentMode?.icon" :size="16" />
-                    {{ currentMode?.label }}
-                    <ChevronDown class="copilot-mode-chevron" />
+                    <span class="copilot-mode-item">
+                        <component :is="currentMode?.icon" :size="16" />
+                        {{ currentMode?.label }}
+                        <ChevronDown class="copilot-mode-chevron" />
+                    </span>
                 </KsButton>
                 <template #dropdown>
                     <KsDropdownMenu>
@@ -182,6 +184,6 @@
     .copilot-mode-item {
         display: inline-flex;
         align-items: center;
-        gap: var(--ks-spacing-2);
+        gap: var(--ks-spacing-3);
     }
 </style>

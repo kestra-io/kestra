@@ -7,6 +7,8 @@ const {isOnline} = useNetwork()
 
 import ContextNews from "../../components/layout/ContextNews.vue"
 import ContextDocs from "../../components/docs/ContextDocs.vue"
+import CopilotChat from "../../components/ai/copilot/CopilotChat.vue"
+import AiIcon from "../../components/ai/AiIcon.vue"
 
 import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
 import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -30,6 +32,12 @@ export function useContextButtons() {
 
     const buttons: Record<string, Button> = isOnline.value
         ? {
+              ai: {
+                  title: t("contextBar.ai"),
+                  icon: AiIcon,
+
+                  component: CopilotChat,
+              },
               news: {
                   title: t("contextBar.news"),
                   icon: MessageOutline,

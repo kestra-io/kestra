@@ -255,7 +255,7 @@ public class PluginController {
     )
     public HttpResponse<PluginIconResponse> getPluginIcon(
         @Parameter(description = "The plugin full class name") @PathVariable String cls) {
-        PluginIcon icon = pluginIconsIndex().get(cls);
+        PluginIcon icon = resolvePluginIcon(cls);
 
         return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
@@ -274,12 +274,22 @@ public class PluginController {
     )
     public HttpResponse<byte[]> getPluginIconSvg(
         @Parameter(description = "The plugin full class name") @PathVariable String cls) {
-        PluginIcon icon = pluginIconsIndex().get(cls);
+        PluginIcon icon = resolvePluginIcon(cls);
         if (icon == null || icon.getIcon() == null) {
             return HttpResponse.notFound();
         }
 
         return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
+    }
+
+    /**
+     * Resolves a plugin icon by its map key, trying the per-class/alias index first and falling back
+     * to the group/subgroup icon index. The catalog references icons by group name (e.g.
+     * {@code io.kestra.plugin.foo}), which only exist in the latter, so both must be consulted.
+     */
+    private PluginIcon resolvePluginIcon(String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+        return icon != null ? icon : loadPluginsIcon().get(cls);
     }
 
     private static PluginIcon toPluginIcon(String name, Optional<RegisteredPlugin.IconAndMonochrome> icon, boolean flowable) {

@@ -903,7 +903,11 @@
     let keyListener: ((e: KeyboardEvent) => void) | null = null
 
     // Initialization
+    // A REUSABLE_INPUTS reference is resolved server-side (the execute-form endpoint inlines it into the referenced
+    // block's inputs), so the form normally never sees the raw node. Filter it out defensively anyway, so a caller
+    // that passes un-inlined inputs renders nothing for it rather than a broken field.
     inputsMetaData.value = JSON.parse(JSON.stringify(flattenInputs(props.initialInputs)))
+        .filter((input: InputMetaData) => (input.type as string) !== "REUSABLE_INPUTS")
 
     if (props.selectedTrigger?.inputs) {
         Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs))

@@ -5,7 +5,6 @@ import com.google.common.base.Suppliers;
 
 import io.kestra.core.runners.Worker;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;

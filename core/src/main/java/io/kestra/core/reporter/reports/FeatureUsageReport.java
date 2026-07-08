@@ -3,9 +3,11 @@ package io.kestra.core.reporter.reports;
 import java.time.Instant;
 import java.util.Objects;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.models.collectors.MetricUsage;
 import io.kestra.core.reporter.AbstractReportable;
 import io.kestra.core.reporter.Schedules;
 import io.kestra.core.reporter.Types;
@@ -30,17 +32,20 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     private final ExecutionRepositoryInterface executionRepository;
     private final DashboardRepositoryInterface dashboardRepository;
     private final ServerType serverType;
+    private final MetricRegistry metricRegistry;
 
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
         ExecutionRepositoryInterface executionRepository,
         DashboardRepositoryInterface dashboardRepository,
-        @Value("${kestra.server-type}") ServerType serverType) {
+        @Value("${kestra.server-type}") ServerType serverType,
+        MetricRegistry metricRegistry) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;
         this.dashboardRepository = dashboardRepository;
         this.serverType = serverType;
+        this.metricRegistry = metricRegistry;
     }
 
     @Override
@@ -55,6 +60,7 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
             .flows(FlowUsage.of(flowRepository))
             .executions(ExecutionUsage.of(executionRepository, interval.from(), interval.to()))
             .dashboards(new Count(dashboardRepository.countAllForAllTenants()))
+            .metrics(MetricUsage.of(metricRegistry))
             .build();
     }
 
@@ -66,6 +72,7 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
             .builder()
             .flows(FlowUsage.of(tenant, flowRepository))
             .executions(ExecutionUsage.of(tenant, executionRepository, interval.from(), interval.to()))
+            .metrics(MetricUsage.of(metricRegistry))
             .build();
     }
 
@@ -76,5 +83,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
         private ExecutionUsage executions;
         private FlowUsage flows;
         private Count dashboards;
+        private MetricUsage metrics;
     }
 }

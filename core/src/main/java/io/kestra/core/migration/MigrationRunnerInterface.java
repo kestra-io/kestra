@@ -3,7 +3,8 @@ package io.kestra.core.migration;
 /**
  * Common interface for migration runners, shared by the JDBC and Elasticsearch implementations.
  *
- * <p>Implementations are Micronaut {@code @Context} beans that run eagerly on
+ * <p>
+ * Implementations are Micronaut {@code @Context} beans that run eagerly on
  * {@code ApplicationContext.start()} via {@code @PostConstruct}, before any repository or
  * service bean is initialized.
  */

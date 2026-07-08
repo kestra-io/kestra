@@ -2,7 +2,6 @@ package io.kestra.executor;
 
 import java.util.List;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESPACE;
@@ -158,6 +158,36 @@ class FlowTriggerServiceTest {
         );
 
         assertThat(resultingExecutionsToRun).size().isEqualTo(0);
+    }
+
+    @Test
+    void computeExecutionsFromFlowTriggers_filteringOutDraftFlows() {
+        // A draft flow must never be triggered implicitly. A Flow trigger defined on a flow whose
+        // latest revision is a draft should not fire, mirroring webhooks/schedules/subflows which
+        // all resolve to the latest non-draft revision. Reproduces the gap: FlowTriggerService
+        // filters disabled flows but not drafts, so a draft's Flow trigger currently fires.
+        var simpleFlow = aSimpleFlow();
+        var draftFlowWithFlowTrigger = Flow.builder()
+            .id("draft-flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .draft(true)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(
+                List.of(
+                    flowTriggerWithNoConditions()
+                )
+            )
+            .build();
+
+        var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            simpleFlowExecution,
+            draftFlowWithFlowTrigger
+        );
+
+        assertThat(resultingExecutionsToRun).isEmpty();
     }
 
     private static Flow aSimpleFlow() {

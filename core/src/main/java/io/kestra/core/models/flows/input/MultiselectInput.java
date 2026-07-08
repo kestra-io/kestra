@@ -11,9 +11,9 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.MultiselectInputValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;

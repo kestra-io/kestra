@@ -72,10 +72,12 @@ class SubflowFunctionTest {
     @LoadFlows("flows/valids/subflow-function-child.yaml")
     void shouldThrowWhenSettingReservedSystemLabel() {
         // The caller may not set reserved system.* labels via the 'labels' argument
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child', labels={'system.test': 'x'}) }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child', labels={'system.test': 'x'}) }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("system label");
     }
 
@@ -105,20 +107,24 @@ class SubflowFunctionTest {
 
     @Test
     void shouldThrowWhenFlowNotFound() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='does-not-exist') }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='does-not-exist') }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("does-not-exist");
     }
 
     @Test
     @LoadFlows("flows/valids/subflow-function-failing.yaml")
     void shouldThrowWhenSubflowFails() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-failing') }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-failing') }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("FAILED");
     }
 
@@ -128,40 +134,48 @@ class SubflowFunctionTest {
         // The flow's input default calls subflow() on its own id. Input resolution is synchronous and on
         // the same thread (Execution.newExecution applies the input resolver inline), so the per-thread
         // depth cap catches the self-recursion without a dedicated self-call check.
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-recursive') }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-recursive') }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("depth");
     }
 
     @Test
-    @LoadFlows({"flows/valids/subflow-function-mutual-a.yaml", "flows/valids/subflow-function-mutual-b.yaml"})
+    @LoadFlows({ "flows/valids/subflow-function-mutual-a.yaml", "flows/valids/subflow-function-mutual-b.yaml" })
     void shouldThrowWhenMaxDepthExceeded() {
         // a -> b -> a -> ... mutual recursion across two flows, also bounded by the depth cap
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-mutual-a') }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-mutual-a') }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("depth");
     }
 
     @Test
     void shouldThrowWhenNamespaceOrIdMissing() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(id='subflow-function-child') }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(id='subflow-function-child') }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("'namespace' and 'id'");
     }
 
     @Test
     void shouldThrowWhenNoFlowContext() {
         // Rendering outside a flow context (no 'flow' variable) must fail clearly
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child') }}",
-            Map.of()
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child') }}",
+                Map.of()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("flow context");
     }
 
@@ -171,10 +185,12 @@ class SubflowFunctionTest {
         Map<String, Object> variables = new HashMap<>(getVariables(MAIN_TENANT, NAMESPACE));
         variables.put("taskrun", Map.of("id", "abc"));
 
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child') }}",
-            variables
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child') }}",
+                variables
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("task or trigger");
     }
 
@@ -184,20 +200,24 @@ class SubflowFunctionTest {
         Map<String, Object> variables = new HashMap<>(getVariables(MAIN_TENANT, NAMESPACE));
         variables.put("trigger", Map.of("id", "schedule"));
 
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child') }}",
-            variables
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child') }}",
+                variables
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("task or trigger");
     }
 
     @Test
     void shouldThrowWhenTimeoutExceedsMax() {
         // The configured maxTimeout (PT5M) is a hard cap; a larger 'timeout' argument is rejected
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child', timeout='PT10M') }}",
-            getVariables(MAIN_TENANT, NAMESPACE)
-        )).isInstanceOf(IllegalVariableEvaluationException.class)
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ subflow(namespace='" + NAMESPACE + "', id='subflow-function-child', timeout='PT10M') }}",
+                getVariables(MAIN_TENANT, NAMESPACE)
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("exceeds the maximum");
     }
 }

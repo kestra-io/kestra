@@ -1,9 +1,10 @@
 package io.kestra.cli.commands.servers;
 
+import java.util.Map;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.contexts.KestraContext;
 
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

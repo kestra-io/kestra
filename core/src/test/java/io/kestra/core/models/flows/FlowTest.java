@@ -181,14 +181,16 @@ class FlowTest {
         Flow flow = Flow.builder()
             .id("a")
             .namespace("a")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("environment")
-                    .type(Type.FORM)
-                    .inputs(List.of(StringInput.builder().id("region").type(Type.STRING).build()))
-                    .build(),
-                StringInput.builder().id("api_key").type(Type.STRING).build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("environment")
+                        .type(Type.FORM)
+                        .inputs(List.of(StringInput.builder().id("region").type(Type.STRING).build()))
+                        .build(),
+                    StringInput.builder().id("api_key").type(Type.STRING).build()
+                )
+            )
             .build();
 
         // resolvableInputs() must flatten the FORM into a dotted leaf and leave the ungrouped input untouched;

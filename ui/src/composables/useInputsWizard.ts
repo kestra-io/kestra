@@ -179,7 +179,12 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
 
     function persistValues(): void {
         if (!isWizard.value || !formValuesStorageKey.value) return
-        localStorage.setItem(formValuesStorageKey.value, JSON.stringify({...inputsValues}))
+        // SECRET values must never be written to localStorage, even transiently - they are masked
+        // in the recap (see recapDisplayValue) but that has no bearing on what gets persisted here.
+        const safeValues = Object.fromEntries(
+            Object.entries(inputsValues).filter(([id]) => inputsMetaData.value.find(m => m.id === id)?.type !== "SECRET"),
+        )
+        localStorage.setItem(formValuesStorageKey.value, JSON.stringify(safeValues))
     }
 
     onBeforeUnmount(() => {

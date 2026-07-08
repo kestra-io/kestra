@@ -6,15 +6,13 @@ import java.util.List;
 
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.services.InstanceService;
-import io.kestra.core.utils.VersionProvider;
 import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.InstanceService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
-
-import io.micronaut.core.annotation.Nullable;
 import io.kestra.webserver.utils.HttpClientUtils;
 
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
@@ -23,6 +21,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -33,7 +32,10 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         PosthogService posthogService, @Nullable NamespaceContextTool namespaceContextTool,
         String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration, ExpressionContextService expressionContextService,
         PluginDefaultService pluginDefaultService) {
-        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration, expressionContextService, pluginDefaultService);
+        super(
+            pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration,
+            expressionContextService, pluginDefaultService
+        );
     }
 
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";

@@ -40,9 +40,11 @@ class ReplaceFilterTest {
             RegexTestUtils.resetAndSetTimeout(Duration.ofMillis(200));
             String evilInput = "a".repeat(25) + "b";
 
-            assertThatThrownBy(() -> variableRenderer.render(
-                "{{ '" + evilInput + "' | replace({'(.*a){25}': 'x'}, regexp=true) }}", Map.of()
-            ))
+            assertThatThrownBy(
+                () -> variableRenderer.render(
+                    "{{ '" + evilInput + "' | replace({'(.*a){25}': 'x'}, regexp=true) }}", Map.of()
+                )
+            )
                 .isInstanceOf(IllegalVariableEvaluationException.class)
                 .hasMessageContaining("timed out");
         } finally {

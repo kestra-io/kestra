@@ -11,24 +11,34 @@ import org.jooq.Record;
 import org.jooq.SelectConditionStep;
 import org.slf4j.event.Level;
 
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.plugins.ApplicationContextInitializable;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
+import io.kestra.jdbc.repository.AbstractJdbcLogDataStore;
 import io.kestra.jdbc.services.JdbcFilterService;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
+import io.micronaut.context.ApplicationContext;
 
-@RepositoryBean
-@PostgresRepositoryEnabled
-public class PostgresLogRepository extends AbstractJdbcLogRepository {
+/**
+ * PostgreSQL {@link LogDataStoreInterface} log store, selected by {@code kestra.logs.type: postgres}.
+ * <p>
+ * Deserialized from configuration by {@code LogDataStoreInterfaceFactory}, then wires its runtime
+ * dependencies in {@link #init(ApplicationContext)}: a dedicated Postgres repository when
+ * {@code kestra.logs.postgres.url} is set, otherwise the shared {@code @Named("logs")} repository.
+ */
+@Plugin
+@Plugin.Id("postgres")
+public class PostgresLogDataStore extends AbstractJdbcLogDataStore implements ApplicationContextInitializable {
 
-    @Inject
-    public PostgresLogRepository(@Named("logs") PostgresRepository<LogEntry> repository,
-        JdbcFilterService filterService) {
-        super(repository, filterService);
+    public PostgresLogDataStore() {
+        super();
+    }
+
+    @Override
+    public void init(ApplicationContext applicationContext) {
+        initFrom(applicationContext, (tableConfig, wrapper) -> new PostgresRepository<>(tableConfig, wrapper));
     }
 
     @Override
@@ -51,5 +61,4 @@ public class PostgresLogRepository extends AbstractJdbcLogRepository {
         Map<F, String> fieldsMapping) {
         return PostgresLogRepositoryService.where(selectConditionStep, jdbcFilterService, filters, fieldsMapping);
     }
-
 }

@@ -1,8 +1,16 @@
 package io.kestra.core.validations;
 
+import java.io.File;
+import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
@@ -16,15 +24,10 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.log.Log;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.net.URL;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -355,6 +358,28 @@ class FlowValidationTest {
             """, Flow.class);
 
         assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void eeOnlyInputFailsValidationOnOpenSource() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: cfg
+                type: REUSABLE_INPUTS
+                ref: my_block
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.");
     }
 
     @Test

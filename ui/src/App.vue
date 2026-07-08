@@ -11,6 +11,7 @@
     </div>
     <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
+    <DrillDownDrawer />
 </template>
 
 <script lang="ts" setup>
@@ -34,7 +35,7 @@
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
-    import {usePluginsStore} from "./stores/plugins"
+    import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
 
     const loaded = ref(false)
@@ -56,8 +57,6 @@
         document.title = document.title.replace(/( - .+)?$/, envSuffix)
     }
 
-    const pluginsStore = usePluginsStore()
-
     async function loadGeneralResources() {
         const config = await miscStore.loadConfigs()
         const uid = localStorage.getItem("uid") || (() => {
@@ -69,8 +68,6 @@
         if (!config.isBasicAuthInitialized || !BasicAuth.isLoggedIn()) {
             return null
         }
-
-        pluginsStore.fetchIcons()
 
         await docStore.initResourceUrlTemplate(config.version)
 

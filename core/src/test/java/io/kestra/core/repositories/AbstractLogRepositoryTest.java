@@ -14,8 +14,6 @@ import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
-import lombok.Builder;
-
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -35,6 +33,7 @@ import io.kestra.plugin.core.dashboard.data.LogsKPI;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import lombok.Builder;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
@@ -45,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest(transactional = false)
 public abstract class AbstractLogRepositoryTest {
     @Inject
-    protected LogRepositoryInterface logRepository;
+    protected LogDataStoreInterface logRepository;
 
     protected static LogEntry.LogEntryBuilder logEntry(String tenantId, Level level) {
         return logEntry(tenantId, level, IdUtils.create());
@@ -219,13 +218,15 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         // An explicit KIND filter overrides the NORMAL default and selects the requested kind.
-        find = logRepository.find(Pageable.UNPAGED, tenant, List.of(
-            QueryFilter.builder()
-                .field(Field.KIND)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(ExecutionKind.TEST.name())
-                .build()
-        ));
+        find = logRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder()
+                    .field(Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.TEST.name())
+                    .build()
+            )
+        );
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.TEST);
 
@@ -519,120 +520,150 @@ public abstract class AbstractLogRepositoryTest {
         FiltersTestCase.builder()
             .logs(allLevels)
             .expectedLogs(List.of(infoLog, warnLog, errorLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LEVEL).value(Level.INFO).operation(Op.GREATER_THAN_OR_EQUAL_TO)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.INFO).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(allLevels)
             .expectedLogs(List.of(traceLog, debugLog, infoLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LEVEL).value(Level.INFO).operation(Op.LESS_THAN_OR_EQUAL_TO)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.INFO).operation(Op.LESS_THAN_OR_EQUAL_TO)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(allLevels)
             .expectedLogs(allLevels)
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LEVEL).value(Level.TRACE).operation(Op.GREATER_THAN_OR_EQUAL_TO)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.TRACE).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(allLevels)
             .expectedLogs(allLevels)
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LEVEL).value(Level.ERROR).operation(Op.LESS_THAN_OR_EQUAL_TO)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.ERROR).operation(Op.LESS_THAN_OR_EQUAL_TO)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(allLevels)
             .expectedLogs(List.of(errorLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LEVEL).value(Level.ERROR).operation(Op.GREATER_THAN_OR_EQUAL_TO)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.ERROR).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(allLevels)
             .expectedLogs(List.of(traceLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LEVEL).value(Level.TRACE).operation(Op.LESS_THAN_OR_EQUAL_TO)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.TRACE).operation(Op.LESS_THAN_OR_EQUAL_TO)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(loadDataLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TASK_ID).value("load-data").operation(Op.EQUALS)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_ID).value("load-data").operation(Op.EQUALS)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(transformLog, sinkLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TASK_ID).value("load-data").operation(Op.NOT_EQUALS)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_ID).value("load-data").operation(Op.NOT_EQUALS)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(loadDataLog, transformLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TASK_ID).value(List.of("load-data", "transform")).operation(Op.IN)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_ID).value(List.of("load-data", "transform")).operation(Op.IN)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(transformLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TASK_RUN_ID).value("tr-transform").operation(Op.EQUALS)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_RUN_ID).value("tr-transform").operation(Op.EQUALS)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(loadDataLog, sinkLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TASK_RUN_ID).value(List.of("tr-load-data", "tr-sink")).operation(Op.IN)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_RUN_ID).value(List.of("tr-load-data", "tr-sink")).operation(Op.IN)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(transformLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.ATTEMPT_NUMBER).value(1).operation(Op.EQUALS)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(1).operation(Op.EQUALS)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(loadDataLog, sinkLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.ATTEMPT_NUMBER).value(1).operation(Op.NOT_EQUALS)
-                .build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(1).operation(Op.NOT_EQUALS)
+                    .build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(loadDataLog, transformLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.ATTEMPT_NUMBER).value(List.of(0, 1)).operation(Op.IN)
-                .build()).build(),
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(List.of(0, 1)).operation(Op.IN)
+                    .build()
+            ).build(),
 
         FiltersTestCase.builder()
             .logs(taskVariedLogs)
             .expectedLogs(List.of(transformLog))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.ATTEMPT_NUMBER).value(List.of(0, 2)).operation(Op.NOT_IN)
-                .build()).build(),
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(List.of(0, 2)).operation(Op.NOT_IN)
+                    .build()
+            ).build(),
 
         FiltersTestCase.builder()
             .logs(distinctLogs).expectedLogs(List.of(alphaLog))
@@ -842,7 +873,8 @@ public abstract class AbstractLogRepositoryTest {
         testCase.logs().forEach(log -> logRepository.save(log.toBuilder().tenantId(tenant).build()));
 
         ArrayListTotal<LogEntry> results = logRepository.find(
-            Pageable.UNPAGED, tenant, List.of(testCase.queryFilter()));
+            Pageable.UNPAGED, tenant, List.of(testCase.queryFilter())
+        );
 
         assertThat(results)
             .extracting(LogEntry::getExecutionId)

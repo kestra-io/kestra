@@ -21,7 +21,7 @@
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 onlyIcon
-                :icons="pluginsStore.icons"
+                :loadIcon="pluginsStore.loadIcon"
             />
         </div>
 

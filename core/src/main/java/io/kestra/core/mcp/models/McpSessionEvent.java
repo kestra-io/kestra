@@ -1,6 +1,7 @@
 package io.kestra.core.mcp.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.IdUtils;
 
@@ -9,7 +10,7 @@ import io.kestra.core.utils.IdUtils;
  * do not need to infer intent from session properties.
  *
  * @param session the session this event refers to
- * @param type    the kind of change that occurred
+ * @param type the kind of change that occurred
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record McpSessionEvent(McpSession session, McpSessionEventType type) implements BroadcastEvent {

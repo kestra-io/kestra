@@ -68,6 +68,7 @@ class AiAgentControllerTest {
         when(service.streamingChatModel(any())).thenReturn(scriptedModel);
         AiServiceManager manager = mock(AiServiceManager.class);
         when(manager.getAiService(any())).thenReturn(service);
+        when(manager.hasConfiguredProvider()).thenReturn(true);
         return manager;
     }
 

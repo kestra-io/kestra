@@ -80,6 +80,7 @@ public class AiAgentController {
     @Post
     @Operation(tags = {"AI"}, summary = "Create a Copilot conversation thread")
     public ThreadSummary create(@Body final CreateThreadRequest request) {
+        requireProvider(null);
         String tenant = tenantService.resolveTenant();
         Instant now = Instant.now();
         Thread thread = Thread.builder()
@@ -100,6 +101,7 @@ public class AiAgentController {
     @Get("/{threadId}")
     @Operation(tags = {"AI"}, summary = "Fetch a Copilot thread with its full message history")
     public ThreadDetail get(@PathVariable final String threadId) {
+        requireProvider(null);
         String tenant = tenantService.resolveTenant();
         Thread thread = requireThread(tenant, threadId);
         return ThreadDetail.from(thread, messageStore.load(threadId));
@@ -112,8 +114,8 @@ public class AiAgentController {
         @Body final ChatTurnRequest request
     ) {
         String tenant = tenantService.resolveTenant();
-        Thread thread = requireThread(tenant, threadId);
         requireProvider(request.providerId());
+        Thread thread = requireThread(tenant, threadId);
 
         if (thread.status() != ThreadStatus.IDLE) {
             throw new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'");
@@ -130,6 +132,7 @@ public class AiAgentController {
         @Body final ConfirmActionRequest request
     ) {
         String tenant = tenantService.resolveTenant();
+        requireProvider(null);
         requireThread(tenant, threadId);
 
         SuspendedTurn turn = confirmationRegistry.take(request.confirmationId())
@@ -160,7 +163,10 @@ public class AiAgentController {
     }
 
     private void requireProvider(final String providerId) {
-        if (aiServiceManager.getAiService(providerId) == null) {
+        // The agentic loop needs a real, streaming-capable provider. Without one, the manager
+        // falls back to a non-streaming ApiAiService, so a null-check alone lets the turn start
+        // and fail mid-stream — check hasConfiguredProvider() so we reject up front with 503.
+        if (!aiServiceManager.hasConfiguredProvider() || aiServiceManager.getAiService(providerId) == null) {
             throw new HttpStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI Copilot is not available: no AI provider is configured or reachable.");
         }
     }

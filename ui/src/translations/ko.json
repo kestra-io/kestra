@@ -1524,6 +1524,7 @@
     "documentationMenu": "문서 메뉴",
     "item": "항목",
     "items": "항목",
+    "iterations": "반복",
     "cron": "크론",
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",

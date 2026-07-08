@@ -1524,6 +1524,7 @@
     "documentationMenu": "Menú de documentación",
     "item": "elemento",
     "items": "elementos",
+    "iterations": "Iteraciones",
     "cron": "Cron",
     "execution_started": "¡La ejecución ha comenzado!",
     "execution_failed": "¡Ejecución fallida!",

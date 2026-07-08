@@ -1524,6 +1524,7 @@
     "documentationMenu": "Меню документации",
     "item": "элемент",
     "items": "элементы",
+    "iterations": "Итерации",
     "cron": "Крон",
     "execution_started": "Выполнение началось!",
     "execution_failed": "Выполнение не удалось!",

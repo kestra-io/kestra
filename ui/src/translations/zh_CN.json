@@ -1524,6 +1524,7 @@
     "documentationMenu": "文档菜单",
     "item": "项目",
     "items": "项目",
+    "iterations": "迭代次数",
     "cron": "定时任务",
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",

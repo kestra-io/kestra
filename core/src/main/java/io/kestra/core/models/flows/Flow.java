@@ -128,7 +128,7 @@ public class Flow extends AbstractFlow implements HasUID {
     List<Check> checks;
 
     @Schema(
-        title = "Quotas evaluated before the flow is executed.",
+        title = "Quotas evaluated before the flow is executed (EE only).",
         description = "A list of quotas that are evaluated before the flow is executed.  If no quotas are defined, the flow executes normally."
     )
     @Valid

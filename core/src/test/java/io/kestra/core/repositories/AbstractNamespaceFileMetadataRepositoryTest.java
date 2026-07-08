@@ -324,12 +324,18 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
         String namespace2 = TestsUtils.randomNamespace();
         String deletedNamespace = TestsUtils.randomNamespace();
 
-        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace1).path("file1.txt").size(1L).build());
-        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace2).path("file2.txt").size(1L).build());
-        NamespaceFileMetadata deletedEntry = namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build());
+        namespaceFileMetadataRepositoryInterface.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace1).path("file1.txt").size(1L).build()
+        );
+        namespaceFileMetadataRepositoryInterface.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace2).path("file2.txt").size(1L).build()
+        );
+        NamespaceFileMetadata deletedEntry = namespaceFileMetadataRepositoryInterface.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build()
+        );
         namespaceFileMetadataRepositoryInterface.delete(deletedEntry);
 
         Set<String> namespaces = namespaceFileMetadataRepositoryInterface.findDistinctNamespace(tenantId);

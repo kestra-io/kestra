@@ -20,6 +20,5 @@ import io.micronaut.core.bind.annotation.Bindable;
 public record SubflowFunctionConfiguration(
     @Bindable(defaultValue = "PT1M") Duration defaultTimeout,
     @Bindable(defaultValue = "PT5M") Duration maxTimeout,
-    @Bindable(defaultValue = "3") int maxDepth
-) {
+    @Bindable(defaultValue = "3") int maxDepth) {
 }

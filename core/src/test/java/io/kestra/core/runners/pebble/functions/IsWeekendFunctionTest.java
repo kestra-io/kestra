@@ -1,12 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.util.Collections;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,15 +56,19 @@ class IsWeekendFunctionTest {
 
     @Test
     void missingDateThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isWeekend() }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isWeekend() }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidDateFormatThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isWeekend('not-a-date') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isWeekend('not-a-date') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 }

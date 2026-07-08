@@ -11,16 +11,17 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
-import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -110,6 +111,8 @@ public class PluginController {
     )
     public List<InputType> getAllInputTypes() throws ClassNotFoundException {
         return Stream.of(Type.values())
+            // exclude edition-restricted (@EeOnly) input types (e.g. REUSABLE_INPUTS) from the open-source listing
+            .filter(type -> !type.cls().isAnnotationPresent(EeOnly.class))
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
             .toList();
     }
@@ -153,8 +156,7 @@ public class PluginController {
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10000") int size,
         @Parameter(description = "A list of sort fields") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters
-    ) {
+        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters) {
         List<Plugin> items = pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
@@ -174,14 +176,17 @@ public class PluginController {
     )
     public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
         List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
-                .filter(c -> !isInternal(c))
-                .filter(c -> !c.getName().startsWith("org.kestra."))
-                .map(c -> toApiTriggerPlugin(registeredPlugin, c))
+            .flatMap(
+                registeredPlugin -> registeredPlugin.getTriggers().stream()
+                    .filter(c -> !isInternal(c))
+                    .filter(c -> !c.getName().startsWith("org.kestra."))
+                    .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
-            .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
-                .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
+            .sorted(
+                Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
+                    .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER)
+            )
             .toList();
 
         return PagedResults.of(new ArrayListTotal<>(all, all.size()));
@@ -263,6 +268,29 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
+        return HttpResponse.ok(pluginIconsIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "icons/{cls}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon",
+        description = "Lightweight alternative to `GET /plugins/icons` for resolving one icon at a time, " +
+            "so callers don't have to download the whole plugin catalog just to render one task icon. " +
+            "Not every class has an icon, which is a normal outcome (not every plugin ships one), so this " +
+            "always answers 200 with `icon: null` rather than 404 — a bare 404 here would be indistinguishable, " +
+            "to the frontend's shared HTTP client, from a genuine routing error and trip its global error page."
+    )
+    public HttpResponse<PluginIconResponse> getPluginIcon(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+
+        return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Cacheable("default")
+    protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
             .flatMap(
@@ -308,7 +336,7 @@ public class PluginController {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
         icons.putAll(aliasIcons);
 
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return icons;
     }
 
     @Get(uri = "icons/groups")
@@ -433,7 +461,11 @@ public class PluginController {
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
                                 .filter(module -> isDistributionAllowed(module.distribution()))
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()))
+                                .map(
+                                    module -> new PluginUiModuleWithGroup(
+                                        module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()
+                                    )
+                                )
                                 .toList()
                         );
                     }
@@ -532,9 +564,12 @@ public class PluginController {
 
     @SuppressWarnings("unchecked")
     private List<Object> applyAlertReplacementToList(List<Object> list) {
-        return list.stream().map(item -> {
-            if (item instanceof Map<?, ?> m) return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
-            if (item instanceof List<?> l) return (Object) applyAlertReplacementToList((List<Object>) l);
+        return list.stream().map(item ->
+        {
+            if (item instanceof Map<?, ?> m)
+                return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
+            if (item instanceof List<?> l)
+                return (Object) applyAlertReplacementToList((List<Object>) l);
             return item;
         }).toList();
     }
@@ -542,6 +577,14 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Always-present wrapper around a possibly-absent {@link PluginIcon}, so the response body
+     * itself is never null. Micronaut treats a null response body as a 404, which would defeat
+     * the purpose of {@link #getPluginIcon} always answering 200.
+     */
+    public record PluginIconResponse(@Nullable PluginIcon icon) {
     }
 
     /**
@@ -562,7 +605,6 @@ public class PluginController {
         TriggerPluginCategory group,
         boolean ee,
         String icon,
-        Boolean deprecated
-    ) {
+        Boolean deprecated) {
     }
 }

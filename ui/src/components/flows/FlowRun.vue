@@ -4,6 +4,10 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </KsAlert>
+        <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
+            <strong>{{ $t('draft') }}</strong><br>
+            {{ $t('draft_flow_warning') }}
+        </KsAlert>
         <div class="flow-execution-checks-alerts">
             <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
                 {{ alert.message }}
@@ -381,6 +385,8 @@
                                 newTab: newTab.value,
                                 id: flow.value.id,
                                 namespace: flow.value.namespace,
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
                                 scheduleDate: moment(scheduleDate.value)
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())

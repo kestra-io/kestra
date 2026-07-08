@@ -1,6 +1,7 @@
 package io.kestra.webserver.services;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -18,15 +19,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.github.tomakehurst.wiremock.client.CountMatchingStrategy;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
-import java.util.Base64;
-
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.InMemorySettingRepository;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.webserver.models.events.Event;
@@ -484,11 +482,13 @@ class BasicAuthServiceTest {
         // original YAML password still verifies correctly against it.
         assertThat(actualConfiguration.getUsername()).isEqualTo(basicAuthService.basicAuthConfiguration.getUsername());
         assertThat(actualConfiguration.getPassword()).startsWith("$2");
-        assertThat(AuthUtils.matches(
-            actualConfiguration.getSalt(),
-            basicAuthService.basicAuthConfiguration.getPassword(),
-            actualConfiguration.getPassword()
-        )).as("stored bcrypt hash must verify against the YAML password").isTrue();
+        assertThat(
+            AuthUtils.matches(
+                actualConfiguration.getSalt(),
+                basicAuthService.basicAuthConfiguration.getPassword(),
+                actualConfiguration.getPassword()
+            )
+        ).as("stored bcrypt hash must verify against the YAML password").isTrue();
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(
             BASIC_AUTH_SETTINGS_KEY

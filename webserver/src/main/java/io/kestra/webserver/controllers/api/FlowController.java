@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -31,6 +30,9 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.ExpressionCategory;
+import io.kestra.core.services.ExpressionContext;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.GraphService;
 import io.kestra.core.services.PluginDefaultService;
@@ -40,11 +42,9 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.core.services.ExpressionCategory;
-import io.kestra.core.services.ExpressionContext;
-import io.kestra.core.services.ExpressionContextService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
@@ -233,8 +233,7 @@ public class FlowController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters
-    ) throws HttpStatusException {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws HttpStatusException {
         return PagedResults.of(
             flowRepository.find(
                 PageableUtils.from(page, size, sort),
@@ -268,8 +267,48 @@ public class FlowController {
     @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = { "Flows" }, summary = "Create a flow from yaml source")
     public HttpResponse<FlowWithSource> createFlow(
-        @RequestBody(description = "The flow source code") @Body String flow) throws ConstraintViolationException {
-        return HttpResponse.ok(doCreate(parseFlowSource(flow)));
+        @RequestBody(description = "The flow source code") @Body String flow,
+        @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")
+        @QueryValue(defaultValue = "false") boolean draft) throws ConstraintViolationException {
+        final String tenantId = tenantService.resolveTenant();
+
+        // Draft is metadata about the revision, not part of the YAML body, so it comes from the
+        // request parameter (similar to how `revision` is excluded). A draft may be saved with a
+        // constraint-invalid body (unknown properties, missing tasks, ...): we fall back to reading
+        // the identity from the raw source. Unlike updateFlow, the create path has no path variables,
+        // so the body must still be parseable enough to extract `namespace` and `id` - a flow cannot
+        // be persisted without them, so a syntactically unparsable create is still rejected.
+        GenericFlow genericFlow;
+        try {
+            genericFlow = parseFlowSource(flow).toBuilder().draft(draft).build();
+        } catch (ConstraintViolationException e) {
+            if (!draft) {
+                throw e;
+            }
+            Map<String, Object> raw = YamlParser.parse(flow, Map.class, false);
+            genericFlow = draftFromSource(
+                tenantId,
+                Objects.toString(raw.get("namespace"), null),
+                Objects.toString(raw.get("id"), null),
+                flow
+            );
+        }
+        return HttpResponse.ok(doCreate(genericFlow));
+    }
+
+    /**
+     * Builds a draft {@link GenericFlow} from a source that failed constraint validation, keeping
+     * the provided identity. Drafts are deliberately allowed to be invalid since the backend is
+     * the authoritative validator.
+     */
+    private static GenericFlow draftFromSource(final String tenantId, final String namespace, final String id, final String source) {
+        return GenericFlow.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .id(id)
+            .source(source)
+            .draft(true)
+            .build();
     }
 
     @SneakyThrows
@@ -424,7 +463,9 @@ public class FlowController {
     public HttpResponse<FlowWithSource> updateFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @RequestBody(description = "The flow source code") @Body String source) throws ConstraintViolationException, FlowProcessingException, QueueException {
+        @RequestBody(description = "The flow source code") @Body String source,
+        @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")
+        @QueryValue(defaultValue = "false") boolean draft) throws ConstraintViolationException, FlowProcessingException, QueueException {
         final String tenantId = tenantService.resolveTenant();
         Optional<Flow> existingFlow = flowRepository.findById(tenantId, namespace, id);
 
@@ -432,8 +473,19 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        // Parse source as RawFlow.
-        GenericFlow genericFlow = GenericFlow.fromYaml(tenantId, source);
+        // Parse source as RawFlow. Draft is metadata about the revision, not part of the YAML
+        // the user wrote (similar to how `revision` is excluded), so it comes from the request
+        // parameter rather than from the YAML body.
+        // For draft saves, tolerate unparsable YAML by falling back to the path-variable identity.
+        GenericFlow genericFlow;
+        try {
+            genericFlow = GenericFlow.fromYaml(tenantId, source).toBuilder().draft(draft).build();
+        } catch (ConstraintViolationException e) {
+            if (!draft) {
+                throw e;
+            }
+            genericFlow = draftFromSource(tenantId, namespace, id, source);
+        }
 
         try {
             return HttpResponse.ok(doUpdateFlow(genericFlow, existingFlow.get()));

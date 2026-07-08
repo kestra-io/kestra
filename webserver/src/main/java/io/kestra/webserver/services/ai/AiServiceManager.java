@@ -134,7 +134,7 @@ public class AiServiceManager {
         if (!"gemini".equals(type)) {
             throw new IllegalArgumentException(
                 "Unsupported AI provider type '" + type + "' for Kestra OSS. Only 'gemini' is supported. " +
-                "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
+                    "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
             );
         }
 
@@ -144,7 +144,8 @@ public class AiServiceManager {
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
             AiService<?> service = new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig, expressionContextService, pluginDefaultService
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig,
+                expressionContextService, pluginDefaultService
             );
             if (this.kestraDocsContextTool != null) {
                 service.setKestraDocsContextTool(this.kestraDocsContextTool);

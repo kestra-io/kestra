@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 
-import io.micronaut.test.annotation.MockBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,11 +23,11 @@ import io.kestra.core.services.QuotaService;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.KillSwitchActionService;
 
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

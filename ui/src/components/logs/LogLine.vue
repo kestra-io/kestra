@@ -21,7 +21,7 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "HH:mm:ss.SSS") }}</time>
+                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>

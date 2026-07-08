@@ -32,30 +32,42 @@ export function useFlowEditorActions() {
         }
     }
 
+    async function persistAll(draft?: boolean) {
+        const isCreating = flowStore.isCreating
+        const outcome = await flowStore.saveAll(draft)
+        if (isSuccessfulFlowSaveOutcome(outcome)) {
+            onboardingStore.recordSave()
+        }
+
+        if (isCreating && outcome === "redirect_to_update") {
+            await router.push({
+                name: "flows/update",
+                params: {
+                    id: flowStore.flow?.id,
+                    namespace: flowStore.flow?.namespace,
+                    tab: "edit",
+                    tenant: tenant.value,
+                },
+                query: route.query,
+            })
+        }
+
+        await flushDirtyFiles()
+    }
+
     async function save() {
         try {
-            // Save the isCreating before saving.
-            // saveAll can change its value.
-            const isCreating = flowStore.isCreating
-            const outcome = await flowStore.saveAll()
-            if (isSuccessfulFlowSaveOutcome(outcome)) {
-                onboardingStore.recordSave()
+            await persistAll(false)
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
             }
+        }
+    }
 
-            if (isCreating && outcome === "redirect_to_update") {
-                await router.push({
-                    name: "flows/update",
-                    params: {
-                        id: flowStore.flow?.id,
-                        namespace: flowStore.flow?.namespace,
-                        tab: "edit",
-                        tenant: tenant.value,
-                    },
-                    query: route.query,
-                })
-            }
-
-            await flushDirtyFiles()
+    async function saveAsDraft() {
+        try {
+            await persistAll(true)
         } catch (error: any) {
             if (error?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000})
@@ -82,6 +94,9 @@ export function useFlowEditorActions() {
                 const response = await executionsStore.triggerExecution({
                     namespace: flowStore.flow.namespace,
                     id: flowStore.flow.id,
+                    // Run the revision we just saved - except drafts, which are playground-only:
+                    // omit the revision so the backend runs the latest published one.
+                    revision: flowStore.flow.draft ? undefined : flowStore.flow.revision,
                     formData: undefined,
                     kind: "NORMAL",
                     labels: ["system.from:ui"],
@@ -188,6 +203,7 @@ export function useFlowEditorActions() {
         isPlaygroundAllowed,
         // actions
         save,
+        saveAsDraft,
         saveAndExecute,
         exportYaml,
         copyFlow,

@@ -47,7 +47,8 @@ public class DateUtils {
     /**
      * Parses an ISO 8601 date or datetime string to an {@link Instant}.
      *
-     * <p>Parsing order: {@link ZonedDateTime} → {@link LocalDateTime} (treated as UTC) →
+     * <p>
+     * Parsing order: {@link ZonedDateTime} → {@link LocalDateTime} (treated as UTC) →
      * {@link LocalDate} (treated as midnight UTC). Throws {@link InternalException} if none match.
      */
     public static Instant parseInstant(String render) throws InternalException {

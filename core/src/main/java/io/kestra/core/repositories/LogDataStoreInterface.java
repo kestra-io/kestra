@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.slf4j.event.Level;
 
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -15,7 +16,7 @@ import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
-public interface LogRepositoryInterface extends IndexingRepository<LogEntry>, QueryBuilderInterface<Logs.Fields> {
+public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, QueryBuilderInterface<Logs.Fields>, Plugin {
     /**
      * Finds all the log entries for the given tenant, execution and min log-level.
      * <p>

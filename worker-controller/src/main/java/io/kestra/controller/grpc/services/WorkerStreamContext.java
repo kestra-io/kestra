@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.worker.QueueSubscription;
 
 import io.grpc.stub.StreamObserver;
 import lombok.Getter;
@@ -80,13 +80,13 @@ public class WorkerStreamContext<T> {
      *
      * @param workerId unique identifier for this worker instance
      * @param workerGroupId the resolved worker group ID; the controller normalizes the
-     *                      absent case to {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}
-     *                      before the worker echoes it here, so the value is always set.
+     *        absent case to {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}
+     *        before the worker echoes it here, so the value is always set.
      * @param queueSubscriptions the Worker Queue subscriptions with reservedPercent values
      * @param maxConcurrency maximum concurrent jobs this worker can handle
      * @param responseObserver gRPC stream observer for sending jobs to the worker
      * @param capacityPolicy slot reservation policy; must already reflect
-     *                       {@code maxConcurrency} and {@code queueSubscriptions}
+     *        {@code maxConcurrency} and {@code queueSubscriptions}
      */
     public WorkerStreamContext(String workerId,
         String workerGroupId,
@@ -113,8 +113,10 @@ public class WorkerStreamContext<T> {
         List<QueueSubscription> queueSubscriptions,
         int maxConcurrency,
         StreamObserver<T> responseObserver) {
-        this(workerId, workerGroupId, queueSubscriptions, maxConcurrency, responseObserver,
-            new SinglePoolCapacityPolicy(maxConcurrency));
+        this(
+            workerId, workerGroupId, queueSubscriptions, maxConcurrency, responseObserver,
+            new SinglePoolCapacityPolicy(maxConcurrency)
+        );
     }
 
     /**
@@ -232,7 +234,8 @@ public class WorkerStreamContext<T> {
         int current;
         do {
             current = availablePermits.get();
-            if (current <= 0) return false;
+            if (current <= 0)
+                return false;
         } while (!availablePermits.compareAndSet(current, current - 1));
         return true;
     }

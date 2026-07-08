@@ -411,6 +411,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         breakpoints?: string[];
         labels?: string[];
         scheduleDate?: string,
+        revision?: number,
     }) => {
         return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
@@ -422,6 +423,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 scheduleDate: options.scheduleDate,
                 kind: options.kind,
                 breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+                revision: options.revision,
             },
         })
     }

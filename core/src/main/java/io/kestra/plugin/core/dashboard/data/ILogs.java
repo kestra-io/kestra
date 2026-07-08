@@ -49,10 +49,12 @@ public interface ILogs extends IData<ILogs.Fields> {
                         case LESS_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMax(level);
                         default -> throw new IllegalArgumentException("Unsupported operation for LEVEL: " + f.operation());
                     };
-                    updatedWhere.add(In.<Fields>builder()
-                        .field(Fields.LEVEL)
-                        .values(levels.stream().map(Enum::name).map(Object.class::cast).toList())
-                        .build());
+                    updatedWhere.add(
+                        In.<Fields> builder()
+                            .field(Fields.LEVEL)
+                            .values(levels.stream().map(Enum::name).map(Object.class::cast).toList())
+                            .build()
+                    );
                 });
             }
         }

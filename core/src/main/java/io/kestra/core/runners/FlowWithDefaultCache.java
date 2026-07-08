@@ -14,8 +14,10 @@ import jakarta.inject.Singleton;
 /**
  * A cache for flows with plugin defaults already injected, keyed by flow UID (including revision).
  *
- * <p>Cache entries can be selectively expired at tenant or namespace granularity, which is useful
- * when plugin defaults change at those levels.</p>
+ * <p>
+ * Cache entries can be selectively expired at tenant or namespace granularity, which is useful
+ * when plugin defaults change at those levels.
+ * </p>
  */
 @Singleton
 public class FlowWithDefaultCache {
@@ -56,7 +58,7 @@ public class FlowWithDefaultCache {
      * Expires all cache entries belonging to the given namespace within a tenant.
      * Useful when namespace-level plugin defaults change.
      *
-     * @param tenantId  the tenant identifier, may be {@code null} for single-tenant deployments
+     * @param tenantId the tenant identifier, may be {@code null} for single-tenant deployments
      * @param namespace the namespace
      */
     public void flush(String tenantId, String namespace) {

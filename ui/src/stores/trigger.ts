@@ -138,10 +138,10 @@ export const useTriggerStore = defineStore("trigger", () => {
     }
 
     async function exportTriggersAsCSV(options: any) {
-        const response:unknown = await TriggersAPI.exportTriggers({
+        const response: unknown = await TriggersAPI.exportTriggers({
             filters: options.filters,
         }, {
-            headers: {Accept: "text/csv"}
+            headers: {Accept: "text/csv"},
         })
         const url = window.URL.createObjectURL(new Blob([response as string], {type: "text/csv"}))
         const link = document.createElement("a")

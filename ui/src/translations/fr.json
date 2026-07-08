@@ -175,6 +175,7 @@
     "last execution status": "Statut de la dernière exécution",
     "jump to...": "Aller à...",
     "contextBar": {
+      "ai": "AI",
       "news": "Nouvelles",
       "docs": "Docs",
       "help": "Aide",
@@ -2002,6 +2003,37 @@
       },
       "dashboard": {
         "prompt_placeholder": "Posez une question sur vos données. Exemple de demande : Montrez-moi le taux de réussite de mes flows au cours des 7 derniers jours."
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "Tell me what to build…",
+        "send": "Send",
+        "mode": {
+          "ask": "Ask",
+          "edit": "Build",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Turn your idea into a workflow"
+        },
+        "toolCall": "Running {tool}",
+        "toolResult": {
+          "ok": "{tool} completed",
+          "rejected": "{tool} rejected"
+        },
+        "confirm": {
+          "planTitle": "Proposed plan",
+          "actionTitle": "Proposed action",
+          "approve": "Approve",
+          "approveExecute": "Approve & execute",
+          "reject": "Reject",
+          "reasonPlaceholder": "Reply to revise…"
+        },
+        "error": {
+          "turnInProgress": "A turn is already in progress.",
+          "request": "The request failed. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        }
       }
     },
     "playground": {

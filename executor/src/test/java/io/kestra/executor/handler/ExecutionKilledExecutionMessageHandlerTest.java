@@ -78,7 +78,8 @@ class ExecutionKilledExecutionMessageHandlerTest {
         assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         // Exactly one kill event: the EXECUTED broadcast to the workers (no cascade children).
         assertThat(harness.kills()).hasSize(1);
-        assertThat(harness.kills().getFirst()).isInstanceOfSatisfying(ExecutionKilledExecution.class, killed -> {
+        assertThat(harness.kills().getFirst()).isInstanceOfSatisfying(ExecutionKilledExecution.class, killed ->
+        {
             assertThat(killed.getExecutionId()).isEqualTo(execution.getId());
             assertThat(killed.getTenantId()).isEqualTo(execution.getTenantId());
             assertThat(killed.getState()).isEqualTo(ExecutionKilled.State.EXECUTED);

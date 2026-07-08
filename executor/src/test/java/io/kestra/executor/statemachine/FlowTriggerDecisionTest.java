@@ -227,7 +227,8 @@ class FlowTriggerDecisionTest {
 
         // When: only upstream A terminates
         List<Execution> afterA = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
 
         // Then: nothing fires yet, but the window persisted A's satisfied condition
         assertThat(afterA).isEmpty();
@@ -236,7 +237,8 @@ class FlowTriggerDecisionTest {
 
         // When: upstream B terminates within the same window
         List<Execution> afterB = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamB, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamB, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
 
         // Then: the trigger fires once, and with no explicit window the default is fire-once —
         // the satisfied window is reset (deleted) so the same pair must succeed again to re-fire
@@ -254,9 +256,11 @@ class FlowTriggerDecisionTest {
 
         // When: upstream A succeeds twice, B never runs
         flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
         List<Execution> afterSecondA = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
 
         // Then: still waiting on B, single accumulated window
         assertThat(afterSecondA).isEmpty();
@@ -271,13 +275,16 @@ class FlowTriggerDecisionTest {
         Flow upstreamA = upstreamFlow();
         Flow upstreamB = upstreamFlow();
         Flow listening = listeningFlow(
-            dependsOnTrigger(upstreamA, upstreamB).window(Window.builder().build()).build());
+            dependsOnTrigger(upstreamA, upstreamB).window(Window.builder().build()).build()
+        );
 
         // When: both dependencies succeed
         flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
         List<Execution> afterB = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamB, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamB, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
 
         // Then: fires, and the fully-satisfied window survives
         assertThat(afterB).hasSize(1);
@@ -303,7 +310,8 @@ class FlowTriggerDecisionTest {
 
         // When: any dependsOn evaluation runs
         flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
-            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore);
+            executionOf(upstreamA, State.Type.SUCCESS), listening, multipleConditionStateStore
+        );
 
         // Then: the expired window is gone; only the freshly-created one remains
         assertThat(multipleConditionStateStore.all()).hasSize(1);
@@ -332,12 +340,16 @@ class FlowTriggerDecisionTest {
 
     private static io.kestra.plugin.core.trigger.Flow.FlowBuilder<?, ?> dependsOnTrigger(Flow... upstreams) {
         return flowTrigger()
-            .dependsOn(java.util.Arrays.stream(upstreams)
-                .map(upstream -> io.kestra.plugin.core.trigger.Flow.Dependency.builder()
-                    .namespace(upstream.getNamespace())
-                    .flowId(upstream.getId())
-                    .build())
-                .toList());
+            .dependsOn(
+                java.util.Arrays.stream(upstreams)
+                    .map(
+                        upstream -> io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+                            .namespace(upstream.getNamespace())
+                            .flowId(upstream.getId())
+                            .build()
+                    )
+                    .toList()
+            );
     }
 
     private static Execution executionOf(Flow flow, State.Type state) {

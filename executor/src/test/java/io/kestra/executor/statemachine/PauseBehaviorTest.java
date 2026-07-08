@@ -68,7 +68,8 @@ class PauseBehaviorTest {
             .executionInState(State.Type.PAUSED)
             .hasTaskRunInState(PAUSE_TASK_ID, State.Type.PAUSED)
             .updatedFrom("handlePausedDelay")
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESUME_FLOW);
                 Assertions.assertThat(delay.getState()).isEqualTo(State.Type.RUNNING);
                 Assertions.assertThat(delay.getExecutionId()).isEqualTo(paused.getExecution().getId());
@@ -102,7 +103,8 @@ class PauseBehaviorTest {
         // Then: behavior FAIL maps to a FAILED target state on the RESUME_FLOW delay
         assertThat(paused)
             .executionInState(State.Type.PAUSED)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESUME_FLOW);
                 Assertions.assertThat(delay.getState()).isEqualTo(State.Type.FAILED);
                 Assertions.assertThat(delay.getExecutionId()).isEqualTo(paused.getExecution().getId());
@@ -132,7 +134,8 @@ class PauseBehaviorTest {
         // Then: behavior CANCEL maps to a CANCELLED target state
         assertThat(paused)
             .executionInState(State.Type.PAUSED)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESUME_FLOW);
                 Assertions.assertThat(delay.getState()).isEqualTo(State.Type.CANCELLED);
             });
@@ -165,7 +168,8 @@ class PauseBehaviorTest {
         assertThat(paused)
             .executionInState(State.Type.PAUSED)
             .hasTaskRunInState(PAUSE_TASK_ID, State.Type.PAUSED)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESUME_FLOW);
                 Assertions.assertThat(delay.getState()).isEqualTo(State.Type.FAILED);
                 Assertions.assertThat(delay.getExecutionId()).isEqualTo(paused.getExecution().getId());
@@ -196,7 +200,8 @@ class PauseBehaviorTest {
         // Then
         assertThat(paused)
             .executionInState(State.Type.PAUSED)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESUME_FLOW);
                 Assertions.assertThat(delay.getState()).isEqualTo(State.Type.WARNING);
             });
@@ -300,9 +305,11 @@ class PauseBehaviorTest {
         TaskRun taskRun = emitted.workerTask().getTaskRun();
         return new WorkerTaskResult(
             taskRun
-                .withAttempts(List.of(
-                    TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()
-                ))
+                .withAttempts(
+                    List.of(
+                        TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()
+                    )
+                )
                 .withState(State.Type.RUNNING)
         );
     }

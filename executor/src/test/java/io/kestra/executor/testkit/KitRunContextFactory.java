@@ -40,8 +40,7 @@ public class KitRunContextFactory extends RunContextFactory {
         RunContextLoggerFactory loggerFactory,
         MetricRegistry meterRegistry,
         TaskOutputService taskOutputService,
-        io.micronaut.context.ApplicationContext applicationContext
-    ) {
+        io.micronaut.context.ApplicationContext applicationContext) {
         this.renderer = renderer;
         this.loggerFactory = loggerFactory;
         this.meterRegistry = meterRegistry;
@@ -56,12 +55,12 @@ public class KitRunContextFactory extends RunContextFactory {
         return newKitBuilder(runContextLogger)
             .withVariables(
                 runVariableModifier.apply(
-                        new RunVariables.DefaultBuilder()
-                            .withFlow(flow)
-                            .withExecution(execution)
-                            .withOutputs(taskOutputService.computeOutputs(execution))
-                            .withDecryptVariables(decryptVariables)
-                    )
+                    new RunVariables.DefaultBuilder()
+                        .withFlow(flow)
+                        .withExecution(execution)
+                        .withOutputs(taskOutputService.computeOutputs(execution))
+                        .withDecryptVariables(decryptVariables)
+                )
                     .build(runContextLogger, PropertyContext.create(renderer))
             )
             .build();

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.mockito.Mockito;
+
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.encryption.EncryptionConfig;
@@ -57,8 +59,6 @@ import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import jakarta.validation.Validator;
-import org.mockito.Mockito;
-
 
 /**
  * Composition root for executor unit tests: wires the real {@link ExecutorService} and all
@@ -172,7 +172,8 @@ public final class ExecutorTestHarness {
             new EncryptionConfig(null),
             new DisabledReusableInputsExpander()
         );
-        ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation -> {
+        ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
+        {
             if ("getBean".equals(invocation.getMethod().getName()) && invocation.getArguments().length == 1) {
                 Object beanType = invocation.getArgument(0);
                 if (TracerFactory.class.equals(beanType)) {

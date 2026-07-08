@@ -123,13 +123,15 @@ class SubflowExecutionEndMessageHandlerTest {
         harness.registerFlow(Flows.of(childFlow));
         childExecution = Execution.newExecution(childFlow, Collections.emptyList());
 
-        subflowTask = spy(Subflow.builder()
-            .id("subflow-task")
-            .type(Subflow.class.getName())
-            .namespace(childFlow.getNamespace())
-            .flowId(childFlow.getId())
-            .wait(waitForExecution)
-            .build());
+        subflowTask = spy(
+            Subflow.builder()
+                .id("subflow-task")
+                .type(Subflow.class.getName())
+                .namespace(childFlow.getNamespace())
+                .flowId(childFlow.getId())
+                .wait(waitForExecution)
+                .build()
+        );
         var parentFlow = Flows.of(subflowTask);
         harness.registerFlow(parentFlow);
 

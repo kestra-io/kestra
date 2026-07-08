@@ -33,7 +33,8 @@ public class InMemoryExecutionQueuedStateStore implements ExecutionQueuedStateSt
             .filter(entry -> entry.getTenantId().equals(tenantId) && entry.getNamespace().equals(namespace) && entry.getFlowId().equals(flowId))
             .min(Comparator.comparing(ExecutionQueued::getDate));
 
-        next.ifPresent(entry -> {
+        next.ifPresent(entry ->
+        {
             queued.remove(entry);
             consumer.accept(txContext, entry.getExecution());
         });

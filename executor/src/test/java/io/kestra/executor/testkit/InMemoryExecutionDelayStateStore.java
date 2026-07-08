@@ -20,7 +20,8 @@ public class InMemoryExecutionDelayStateStore implements ExecutionDelayStateStor
         List<ExecutionDelay> expired = delays.stream()
             .filter(delay -> !delay.getDate().isAfter(now))
             .toList();
-        expired.forEach(delay -> {
+        expired.forEach(delay ->
+        {
             consumer.accept(delay);
             delays.remove(delay);
         });

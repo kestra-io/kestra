@@ -468,9 +468,11 @@ class FlowableTraversalTest {
     private ExecutorContext startFlowable(FlowWithSource flow, ExecutorContext previous, String taskId) throws Exception {
         TaskRun created = emittedWorkerTask(previous, taskId).workerTask().getTaskRun();
         TaskRun running = created
-            .withAttempts(List.of(
-                TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()
-            ))
+            .withAttempts(
+                List.of(
+                    TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()
+                )
+            )
             .withState(State.Type.RUNNING);
         return harness.processResult(flow, previous, new WorkerTaskResult(running));
     }
@@ -479,9 +481,11 @@ class FlowableTraversalTest {
         return context.getWorkerTasks().stream()
             .filter(workerTask -> taskId.equals(workerTask.workerTask().getTaskRun().getTaskId()))
             .findFirst()
-            .orElseThrow(() -> new AssertionError(
-                "no worker task emitted for <" + taskId + "> (emitted: " + emittedTaskIds(context) + ")"
-            ));
+            .orElseThrow(
+                () -> new AssertionError(
+                    "no worker task emitted for <" + taskId + "> (emitted: " + emittedTaskIds(context) + ")"
+                )
+            );
     }
 
     private static List<String> emittedTaskIds(ExecutorContext context) {

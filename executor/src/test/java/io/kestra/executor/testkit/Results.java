@@ -31,12 +31,18 @@ public final class Results {
         List<TaskRunAttempt> attempts = new java.util.ArrayList<>(attemptCount);
         for (int i = attemptCount - 1; i >= 0; i--) {
             Instant end = lastAttemptEnd.minusSeconds(60L * i);
-            attempts.add(TaskRunAttempt.builder()
-                .state(new State(State.Type.FAILED, List.of(
-                    new State.History(State.Type.CREATED, end.minusSeconds(1)),
-                    new State.History(State.Type.FAILED, end)
-                )))
-                .build());
+            attempts.add(
+                TaskRunAttempt.builder()
+                    .state(
+                        new State(
+                            State.Type.FAILED, List.of(
+                                new State.History(State.Type.CREATED, end.minusSeconds(1)),
+                                new State.History(State.Type.FAILED, end)
+                            )
+                        )
+                    )
+                    .build()
+            );
         }
 
         TaskRun taskRun = emitted.workerTask().getTaskRun()
@@ -57,10 +63,14 @@ public final class Results {
         TaskRun taskRun = emitted.workerTask().getTaskRun();
 
         TaskRunAttempt attempt = TaskRunAttempt.builder()
-            .state(new State(state, List.of(
-                new State.History(State.Type.CREATED, attemptEnd.minusSeconds(1)),
-                new State.History(state, attemptEnd)
-            )))
+            .state(
+                new State(
+                    state, List.of(
+                        new State.History(State.Type.CREATED, attemptEnd.minusSeconds(1)),
+                        new State.History(state, attemptEnd)
+                    )
+                )
+            )
             .build();
 
         TaskRun terminated = taskRun

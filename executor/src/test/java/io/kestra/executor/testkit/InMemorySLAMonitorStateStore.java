@@ -29,7 +29,8 @@ public class InMemorySLAMonitorStateStore implements SLAMonitorStateStore {
         List<SLAMonitor> expired = monitors.stream()
             .filter(monitor -> !monitor.getDeadline().isAfter(now))
             .toList();
-        expired.forEach(monitor -> {
+        expired.forEach(monitor ->
+        {
             consumer.accept(monitor);
             monitors.remove(monitor);
         });

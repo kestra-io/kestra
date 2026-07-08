@@ -2,9 +2,9 @@ package io.kestra.executor.testkit;
 
 import java.util.List;
 
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;

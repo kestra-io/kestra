@@ -391,13 +391,15 @@ class SubflowDecisionTest {
         // the child terminates: production emits a SubflowExecutionEnd carrying the child execution
         Execution child = started.getSubflowExecutions().getFirst().getExecution().withState(childState);
         TaskRun parentTaskRun = started.getExecution().findTaskRunsByTaskId(SUBFLOW_TASK).getFirst();
-        harness.subflowExecutionEndMessageHandler().handle(new SubflowExecutionEnd(
-            child,
-            started.getExecution().getId(),
-            parentTaskRun.getId(),
-            SUBFLOW_TASK,
-            childState
-        ));
+        harness.subflowExecutionEndMessageHandler().handle(
+            new SubflowExecutionEnd(
+                child,
+                started.getExecution().getId(),
+                parentTaskRun.getId(),
+                SUBFLOW_TASK,
+                childState
+            )
+        );
 
         // the handler produced exactly one result via the real createSubflowExecutionResult
         Assertions.assertThat(harness.subflowExecutionResultQueue().emitted()).hasSize(1);

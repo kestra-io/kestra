@@ -1,0 +1,49 @@
+import {describe, it, expect} from "vitest"
+import {mount} from "@vue/test-utils"
+import CopilotMessage from "../../../../../src/components/ai/copilot/CopilotMessage.vue"
+import {mountGlobal} from "./_helpers"
+import type {ChatMessage} from "../../../../../src/components/ai/copilot/useAiChat"
+
+const mountMessage = (message: ChatMessage) =>
+    mount(CopilotMessage, {props: {message}, global: mountGlobal})
+
+describe("CopilotMessage", () => {
+    it("renders a user prompt in a right-aligned bubble", () => {
+        const w = mountMessage({id: "1", role: "USER", type: "TEXT", content: "hello there"})
+        expect(w.find(".copilot-msg-user").exists()).toBe(true)
+        expect(w.text()).toContain("hello there")
+    })
+
+    it("renders assistant text through the markdown renderer", () => {
+        const w = mountMessage({id: "2", role: "ASSISTANT", type: "TEXT", content: "**bold** answer"})
+        const md = w.find(".ks-markdown")
+        expect(md.exists()).toBe(true)
+        expect(md.text()).toContain("**bold** answer")
+    })
+
+    it("renders a collapsible tool_call with its name in the title and args as JSON", () => {
+        const w = mountMessage({
+            id: "3", role: "TOOL", type: "TOOL_CALL",
+            toolCall: {tool: "read-execution", family: "READ", arguments: {id: "exec-1"}},
+        })
+        expect(w.find(".collapse-title").text()).toContain("read-execution")
+        expect(w.find(".copilot-tool-args").text()).toContain("\"id\": \"exec-1\"")
+    })
+
+    it("renders an ok tool_result with a success message", () => {
+        const w = mountMessage({
+            id: "4", role: "TOOL", type: "TOOL_RESULT",
+            toolResult: {tool: "restart-execution", outcome: "ok"},
+        })
+        expect(w.find(".copilot-tool-result").exists()).toBe(true)
+        expect(w.text()).toContain("completed")
+    })
+
+    it("renders a rejected tool_result with the rejected message", () => {
+        const w = mountMessage({
+            id: "5", role: "TOOL", type: "TOOL_RESULT",
+            toolResult: {tool: "restart-execution", outcome: "rejected"},
+        })
+        expect(w.text()).toContain("rejected")
+    })
+})

@@ -4,7 +4,7 @@
         <div v-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
                 <div class="copilot-artwork">
-                    <img :src="monogram" alt="" class="copilot-artwork-img" >
+                    <img :src="logo" alt="" class="copilot-artwork-img" >
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
                 <CopilotComposer
@@ -57,7 +57,7 @@
 <script setup lang="ts">
     import {ref, computed, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
-    import monogram from "../../../assets/monogram.svg"
+    import logo from "../../../assets/copilot-illustration.png"
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
@@ -130,18 +130,11 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: var(--ks-spacing-16);
-        height: var(--ks-spacing-16);
-        padding: var(--ks-spacing-3);
-        border-radius: var(--ks-radius-xl);
-        background: var(--ks-bg-surface);
-        box-shadow: var(--ks-shadow-surface);
-        overflow: hidden;
     }
 
     .copilot-artwork-img {
-        width: var(--ks-spacing-10);
-        height: var(--ks-spacing-10);
+        width: var(--ks-spacing-16);
+        height: var(--ks-spacing-16);
     }
 
     .copilot-empty-title {

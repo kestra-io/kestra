@@ -60,6 +60,16 @@ public class NamespaceControllerTest {
         assertThat(namespace.getId()).isEqualTo("my.ns");
     }
 
+    @Test
+    void effectivePluginDefaultsReturnsWrappedList() {
+        NamespaceController.EffectivePluginDefaultsResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/my.ns/effective-plugindefaults"),
+            NamespaceController.EffectivePluginDefaultsResponse.class
+        );
+
+        assertThat(response.pluginDefaults()).isEmpty();
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void list() {

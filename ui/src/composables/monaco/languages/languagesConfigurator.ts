@@ -31,7 +31,7 @@ export default async function configure(
         } else {
             yamlAutocompletion = new YamlAutoCompletion()
         }
-        await new YamlLanguageConfigurator(yamlAutocompletion, router, flowStore).configure(pluginsStore, t, editorInstance)
+        await new YamlLanguageConfigurator(yamlAutocompletion, router, flowStore, namespacesStore).configure(pluginsStore, t, editorInstance)
     } else if(language.endsWith("-pebble")) {
         const autoCompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, computed(() => flowStore.flowYaml))
         await new PebbleLanguageConfigurator(language, autoCompletion, computed(() => flowStore.flowYaml))

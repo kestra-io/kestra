@@ -1,5 +1,6 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
+import type {EffectiveDefault} from "./monaco/languages/pluginDefaultsMarkers"
 import * as Utils from "../utils/utils"
 import {useClient, type PagedResultsNamespace} from "@kestra-io/kestra-sdk"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
@@ -186,6 +187,22 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
+    // Effective plugin defaults (namespace-level + global) applicable to a namespace.
+    // Used by the flow editor to avoid flagging required properties supplied by a plugin default.
+    // Returns [] on any non-200 (e.g. 403 when the user lacks namespace read access), so the
+    // editor degrades gracefully to showing the warning.
+    async function loadEffectivePluginDefaults({id}: {id: string}): Promise<EffectiveDefault[]> {
+        try {
+            const response = await axios.get(`${apiUrl()}/namespaces/${id}/effective-plugindefaults`, VALIDATE)
+            if (response.status !== 200) {
+                return []
+            }
+            return response.data?.pluginDefaults ?? []
+        } catch {
+            return []
+        }
+    }
+
     async function createDirectory(payload: {namespace: string; path: string}) {
         const URL = `${base(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`
         await axios.post(URL)
@@ -319,6 +336,7 @@ export const useBaseNamespacesStore = () => {
         deleteSecrets,
         loadInheritedVariables,
         loadInheritedPluginDefaults,
+        loadEffectivePluginDefaults,
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,

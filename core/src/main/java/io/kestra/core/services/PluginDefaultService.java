@@ -95,6 +95,24 @@ public class PluginDefaultService {
     }
 
     /**
+     * Resolves the effective plugin defaults (flow-level, namespace-level, and global) that apply to a flow.
+     * <p>
+     * Public entry point over {@link #getAllDefaults(String, String, Map)} so callers such as the webserver can
+     * expose the effective defaults without injecting them into a flow. Relies on virtual dispatch: the Enterprise
+     * override of {@code getAllDefaults} contributes namespace-level defaults.
+     *
+     * @param tenantId the tenant
+     * @param namespace the flow namespace, used to resolve namespace-level defaults
+     * @param flow the flow as a map (its {@code pluginDefaults} section provides flow-level defaults); may be empty
+     * @return list of {@code PluginDefault} ordered by most important first
+     */
+    public List<PluginDefault> resolveEffectiveDefaults(final String tenantId,
+        final String namespace,
+        final Map<String, Object> flow) {
+        return getAllDefaults(tenantId, namespace, flow);
+    }
+
+    /**
      * Gets all the defaults values for the given flow.
      *
      * @param flow the flow to extract default

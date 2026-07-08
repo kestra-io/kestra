@@ -33,6 +33,7 @@ import {
     filterExistingSubflowLinks,
     SUBFLOW_LINK_SCHEME,
 } from "./subflowLinkProvider"
+import {filterDefaultsCoveredMarkers, type EffectiveDefault} from "./pluginDefaultsMarkers"
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
@@ -118,12 +119,23 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     protected readonly yamlAutoCompletionObject: YamlAutoCompletion
     protected readonly router?: Router
     protected readonly flowStore?: ReturnType<typeof useFlowStore>
+    protected readonly namespacesStore?: {loadEffectivePluginDefaults: (payload: {id: string}) => Promise<EffectiveDefault[]>}
 
-    constructor(yamlAutoCompletion: YamlAutoCompletion, router?: Router, flowStore?: ReturnType<typeof useFlowStore>) {
+    // Session cache of effective namespace + global plugin defaults, keyed by namespace.
+    private readonly inheritedDefaultsCache = new Map<string, EffectiveDefault[]>()
+    private readonly inheritedDefaultsPending = new Set<string>()
+
+    constructor(
+        yamlAutoCompletion: YamlAutoCompletion,
+        router?: Router,
+        flowStore?: ReturnType<typeof useFlowStore>,
+        namespacesStore?: {loadEffectivePluginDefaults: (payload: {id: string}) => Promise<EffectiveDefault[]>},
+    ) {
         super("yaml")
         this.yamlAutoCompletionObject = yamlAutoCompletion
         this.router = router
         this.flowStore = flowStore
+        this.namespacesStore = namespacesStore
     }
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
@@ -637,9 +649,109 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         this.registerSubflowLinks(autoCompletionProviders)
+        this.registerPluginDefaultsMarkerFilter(autoCompletionProviders)
         this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders
+    }
+
+    /**
+     * Effective namespace-level and global plugin defaults for a namespace, from
+     * a session cache. On a cache miss, kicks off a fetch (deduplicated) and
+     * re-filters the given model once it resolves; a failed fetch (e.g. 403 for a
+     * user without namespace read access) caches `[]` so the editor degrades to
+     * showing the warning. Flow-level defaults are read from the buffer, not here.
+     */
+    private inheritedPluginDefaults(namespace: string | undefined, resource: monaco.Uri): EffectiveDefault[] {
+        if (!namespace) {
+            return []
+        }
+        const cached = this.inheritedDefaultsCache.get(namespace)
+        if (cached !== undefined) {
+            return cached
+        }
+        const store = this.namespacesStore
+        if (store && !this.inheritedDefaultsPending.has(namespace)) {
+            this.inheritedDefaultsPending.add(namespace)
+            store
+                .loadEffectivePluginDefaults({id: namespace})
+                .then((defaults) => this.inheritedDefaultsCache.set(namespace, defaults ?? []))
+                .catch(() => this.inheritedDefaultsCache.set(namespace, []))
+                .finally(() => {
+                    this.inheritedDefaultsPending.delete(namespace)
+                    this.filterModelMarkers(resource)
+                })
+        }
+        return []
+    }
+
+    /**
+     * Suppress `Missing property "x"` warnings that monaco-yaml raises for
+     * required task properties actually supplied by a plugin default. monaco-yaml
+     * validates the raw buffer against a static JSON schema and cannot know about
+     * `pluginDefaults`, so we post-filter its markers (issue #14471).
+     *
+     * Registered once (the listener is global); it inspects every changed flow
+     * model. The filter is idempotent, so re-publishing the filtered set does not
+     * loop — a re-run removes nothing more and we skip the redundant write.
+     */
+    private registerPluginDefaultsMarkerFilter(disposables: IDisposable[]) {
+        disposables.push(
+            monaco.editor.onDidChangeMarkers((resources) => {
+                for (const resource of resources) {
+                    this.filterModelMarkers(resource)
+                }
+            }),
+        )
+    }
+
+    private filterModelMarkers(resource: monaco.Uri) {
+        const YAML_MARKER_OWNER = "yaml"
+
+        if (!resource.path.includes("flow-")) {
+            return
+        }
+        const model = monaco.editor.getModel(resource)
+        if (!model || model.isDisposed()) {
+            return
+        }
+
+        const markers = monaco.editor.getModelMarkers({
+            owner: YAML_MARKER_OWNER,
+            resource,
+        })
+        if (!markers.length) {
+            return
+        }
+
+        const source = model.getValue()
+        let flowDefaults: EffectiveDefault[] = []
+        let namespace: string | undefined
+        try {
+            const parsed = YAML_UTILS.parse(source, false) as {
+                namespace?: string;
+                pluginDefaults?: EffectiveDefault[];
+            }
+            namespace = parsed?.namespace
+            flowDefaults = Array.isArray(parsed?.pluginDefaults) ? parsed.pluginDefaults : []
+        } catch {
+            return
+        }
+
+        const effectiveDefaults = [
+            ...flowDefaults,
+            ...this.inheritedPluginDefaults(namespace, resource),
+        ]
+        if (!effectiveDefaults.length) {
+            return
+        }
+
+        const filtered = filterDefaultsCoveredMarkers(markers, source, effectiveDefaults)
+        // Only rewrite when we actually removed something — avoids a needless
+        // re-publish (and the change event it would trigger).
+        if (filtered.length !== markers.length) {
+            monaco.editor.setModelMarkers(model, YAML_MARKER_OWNER, filtered)
+        }
     }
 
     /**

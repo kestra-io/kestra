@@ -8,11 +8,13 @@ import org.apache.commons.lang3.Strings;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.converters.QueryFilterFormat;
@@ -53,6 +55,9 @@ public class NamespaceController<N extends Namespace> {
 
     @Inject
     private Searchable<Namespace> namespaceSearchable;
+
+    @Inject
+    protected PluginDefaultService pluginDefaultService;
 
     protected Comparator<String> sorter(Pageable pageable) {
         return Optional.of(pageable.getSort().getOrderBy())
@@ -158,5 +163,29 @@ public class NamespaceController<N extends Namespace> {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly) {
         return flowTopologyService.namespaceGraph(tenantService.resolveTenant(), namespace);
+    }
+
+    @Get(uri = "{id}/effective-plugindefaults")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Namespaces" },
+        summary = "Get the effective plugin defaults applicable to a namespace",
+        description = "Returns the namespace-level and global plugin defaults that apply to flows in this namespace. " +
+            "Used by the flow editor to avoid flagging required properties that are actually supplied by a plugin default."
+    )
+    public EffectivePluginDefaultsResponse effectivePluginDefaults(
+        @Parameter(description = "The namespace id") @PathVariable String id) {
+        List<PluginDefault> defaults = pluginDefaultService.resolveEffectiveDefaults(
+            tenantService.resolveTenant(),
+            id,
+            Collections.emptyMap()
+        );
+        return new EffectivePluginDefaultsResponse(defaults);
+    }
+
+    /**
+     * Wraps the effective plugin defaults in a JSON object so the response stays backwards-compatibly evolvable.
+     */
+    public record EffectivePluginDefaultsResponse(List<PluginDefault> pluginDefaults) {
     }
 }

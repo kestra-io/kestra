@@ -1,11 +1,21 @@
 <template>
     <div class="copilot-composer">
+        <!-- While dictating, the live waveform replaces the textarea. -->
+        <div v-if="isListening" ref="wavesContainer" class="copilot-voice" data-test="copilot-voice">
+            <span
+                v-for="(value, index) in volumeBuffer"
+                :key="index"
+                class="copilot-wave-bar"
+                :style="{height: `${barHeight(value)}px`}"
+            />
+        </div>
         <!--
             Native borderless textarea inside the bordered wrapper so the composer reads as a
             single box (Figma). KsInput/el-textarea can't be made borderless without overriding
             its `.el-textarea__inner` inset-shadow border, which the design-system rules forbid.
         -->
         <textarea
+            v-else
             ref="textareaEl"
             v-model="draft"
             class="copilot-textarea"
@@ -43,24 +53,57 @@
                 </template>
             </KsDropdown>
 
-            <KsButton
-                circle
-                type="primary"
-                :icon="ArrowUp"
-                :disabled="!canSubmit"
-                :aria-label="t('ai.copilot.send')"
-                data-test="copilot-send"
-                @click="submit"
-            />
+            <div class="copilot-composer-right">
+                <template v-if="isListening">
+                    <KsButton
+                        text
+                        :icon="Close"
+                        :aria-label="t('ai.copilot.voice.cancel')"
+                        data-test="copilot-voice-cancel"
+                        @click="cancelVoice"
+                    />
+                    <KsButton
+                        circle
+                        type="primary"
+                        :icon="Check"
+                        :aria-label="t('ai.copilot.voice.stop')"
+                        data-test="copilot-voice-confirm"
+                        @click="stopAndValidateVoice"
+                    />
+                </template>
+                <template v-else>
+                    <KsButton
+                        v-if="speechSupported"
+                        text
+                        :icon="Microphone"
+                        :disabled="disabled"
+                        :aria-label="t('ai.copilot.voice.start')"
+                        data-test="copilot-mic"
+                        @click="toggleVoiceInput"
+                    />
+                    <KsButton
+                        circle
+                        type="primary"
+                        :icon="ArrowUp"
+                        :disabled="!canSubmit"
+                        :aria-label="t('ai.copilot.send')"
+                        data-test="copilot-send"
+                        @click="submit"
+                    />
+                </template>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, type Component} from "vue"
+    import {ref, computed, nextTick, watch, onMounted, onBeforeUnmount, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import Microphone from "vue-material-design-icons/Microphone.vue"
+    import Check from "vue-material-design-icons/Check.vue"
+    import Close from "vue-material-design-icons/Close.vue"
     // Per-mode icons taken from the UI-2.0 Figma: Build → wrench ("build"), Plan → map.
     // Ask isn't shown in that file, so we use a Q&A chat icon to match its read-only intent.
     import ChatQuestionOutline from "vue-material-design-icons/ChatQuestionOutline.vue"
@@ -124,6 +167,161 @@
             submit()
         }
     }
+
+    /* ── Voice input (Web Speech API + Web Audio waveform), ported from AiCopilot ── */
+    const speechSupported = ref(false)
+    const isListening = ref(false)
+    // Transcript captured before this dictation started, so interim results append cleanly.
+    const baseDraft = ref("")
+    const draftBeforeListening = ref("")
+    let recognition: any = null
+
+    // Waveform visualizer.
+    const wavesContainer = ref<HTMLElement | null>(null)
+    const volumeBuffer = ref<number[]>([])
+    const BAR_WIDTH = 4
+    const MIN_BAR_H = 2
+    const MAX_BAR_H = 28
+    let barCount = 0
+    let audioContext: AudioContext | null = null
+    let analyser: AnalyserNode | null = null
+    let animationFrame: number | null = null
+    let stream: MediaStream | null = null
+
+    function barHeight(value: number): number {
+        if (value < 8) return MIN_BAR_H
+        const n = (value - 8) / 247
+        return MIN_BAR_H + n * n * (MAX_BAR_H - MIN_BAR_H)
+    }
+
+    async function startAudioAnalysis(): Promise<void> {
+        try {
+            await nextTick()
+            barCount = Math.floor((wavesContainer.value?.clientWidth ?? 600) / BAR_WIDTH)
+            volumeBuffer.value = Array(barCount).fill(0)
+
+            stream = await navigator.mediaDevices.getUserMedia({audio: true})
+            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            analyser = audioContext.createAnalyser()
+            analyser.fftSize = 256
+            analyser.smoothingTimeConstant = 0.3
+            audioContext.createMediaStreamSource(stream).connect(analyser)
+
+            const data = new Uint8Array(analyser.frequencyBinCount)
+            let lastPush = 0
+            let peak = 0
+            const PUSH_INTERVAL = 50
+
+            const update = (now: number) => {
+                if (!analyser) return
+                analyser.getByteFrequencyData(data)
+                peak = Math.max(peak, data[1] ?? 0, data[3] ?? 0, data[5] ?? 0, data[8] ?? 0, data[12] ?? 0)
+                if (now - lastPush >= PUSH_INTERVAL) {
+                    const buf = volumeBuffer.value
+                    buf.push(peak)
+                    if (buf.length > barCount) buf.shift()
+                    peak = 0
+                    lastPush = now
+                }
+                animationFrame = requestAnimationFrame(update)
+            }
+            animationFrame = requestAnimationFrame(update)
+        } catch (error) {
+            // Mic permission denied / unavailable — drop out of listening gracefully.
+            console.error("Audio analysis failed", error)
+            isListening.value = false
+        }
+    }
+
+    function stopAudioAnalysis(): void {
+        if (animationFrame) cancelAnimationFrame(animationFrame)
+        stream?.getTracks().forEach((track) => track.stop())
+        audioContext?.close()
+        animationFrame = null
+        stream = null
+        audioContext = null
+        analyser = null
+        volumeBuffer.value = []
+        barCount = 0
+    }
+
+    function startRecognitionSafely(): void {
+        try {
+            recognition?.abort()
+        } catch {
+            // abort throws if not started — ignore.
+        }
+        setTimeout(() => {
+            try {
+                recognition?.start()
+            } catch {
+                isListening.value = false
+                stopAudioAnalysis()
+            }
+        }, 100)
+    }
+
+    function toggleVoiceInput(): void {
+        if (isListening.value) {
+            stopAndValidateVoice()
+            return
+        }
+        draftBeforeListening.value = draft.value
+        baseDraft.value = draft.value.trim()
+        isListening.value = true
+        volumeBuffer.value = []
+        startRecognitionSafely()
+        startAudioAnalysis()
+    }
+
+    function stopAndValidateVoice(): void {
+        recognition?.stop()
+        isListening.value = false
+        stopAudioAnalysis()
+        nextTick(() => textareaEl.value?.focus())
+    }
+
+    function cancelVoice(): void {
+        recognition?.abort()
+        isListening.value = false
+        stopAudioAnalysis()
+        draft.value = draftBeforeListening.value
+    }
+
+    // If the composer gets disabled mid-dictation (turn started), bail out of voice.
+    watch(() => props.disabled, (value) => {
+        if (value && isListening.value) cancelVoice()
+    })
+
+    onMounted(() => {
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+        if (!SR) return
+        speechSupported.value = true
+        recognition = new SR()
+        recognition.continuous = true
+        recognition.interimResults = true
+        recognition.onresult = (event: any) => {
+            let interim = ""
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i]
+                if (result.isFinal) baseDraft.value += (baseDraft.value ? " " : "") + result[0].transcript
+                else interim = result[0].transcript
+            }
+            draft.value = (baseDraft.value + (interim ? ` ${interim}` : "")).trim()
+        }
+        recognition.onend = () => {
+            if (isListening.value) startRecognitionSafely()
+        }
+    })
+
+    onBeforeUnmount(() => {
+        try {
+            recognition?.abort()
+        } catch {
+            // ignore
+        }
+        stopAudioAnalysis()
+    })
 </script>
 
 <style scoped>
@@ -156,11 +354,35 @@
         color: var(--ks-text-secondary);
     }
 
+    /* Live dictation waveform — occupies the textarea's slot. */
+    .copilot-voice {
+        display: flex;
+        align-items: center;
+        gap: 1.5px;
+        height: var(--ks-spacing-8);
+        overflow: hidden;
+    }
+
+    .copilot-wave-bar {
+        flex: 1 1 0;
+        min-width: 1.5px;
+        max-width: 2.5px;
+        min-height: 2px;
+        border-radius: 1px;
+        background: var(--ks-text-secondary);
+    }
+
     .copilot-composer-actions {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: var(--ks-spacing-2);
+    }
+
+    .copilot-composer-right {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
     }
 
     /* Figma mode control: a subtle bg-tag pill (label + chevron), not a solid button. */

@@ -119,6 +119,7 @@
         encodeFiltersToQuery,
         getUniqueFilters,
         isValidFilter,
+        isRelativeDuration,
         keyOfComparator,
     } from "@kestra-io/design-system"
     import type {AppliedFilter} from "@kestra-io/design-system"
@@ -237,7 +238,8 @@
         }
 
         const decodedParams = decodeSearchParams(route.query)
-        const timeRangeFilter = decodedParams.find(item => item?.field === "timeRange")
+        // A relative time range is now carried as an ISO-8601 duration on a date field (e.g. startDate=PT24H).
+        const timeRangeFilter = decodedParams.find(item => isRelativeDuration(item?.value))
         const rawValue = timeRangeFilter?.value
 
         if (Array.isArray(rawValue)) {

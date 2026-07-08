@@ -312,7 +312,7 @@ class QueryFilterFormatBinderTest {
         // GIVEN — a real production URL using the legacy flat format (no [and]/[or] prefix)
         HttpRequest<?> request = HttpRequest.GET(
             UriBuilder.of("/")
-                .queryParam("filters[timeRange][EQUALS]", "PT24H")
+                .queryParam("filters[startDate][GREATER_THAN_OR_EQUAL_TO]", "P7D")
                 .queryParam("filters[flowId][IN]", "after-execution-error,after-execution-finally,avoidinfiniteexecutionloop")
                 .build()
         );
@@ -321,15 +321,15 @@ class QueryFilterFormatBinderTest {
         List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(request.getParameters().asMap());
 
         // THEN — two flat leaves, no node wrapping (identical to pre-OR-support behavior)
-        // Equivalent SQL: WHERE timeRange = 'PT24H'
+        // Equivalent SQL: WHERE startDate >= '<now - 7 days>'
         //                   AND flowId IN ('after-execution-error', 'after-execution-finally', 'avoidinfiniteexecutionloop')
         assertEquals(2, filters.size());
         assertTrue(filters.stream().allMatch(QueryFilter::isLeaf), "All filters should be leaves (no node wrapping)");
 
-        QueryFilter timeRange = filters.stream()
-            .filter(f -> f.field() == QueryFilter.Field.TIME_RANGE).findFirst().orElseThrow();
-        assertEquals(QueryFilter.Op.EQUALS, timeRange.operation());
-        assertEquals("PT24H", timeRange.value());
+        QueryFilter startDate = filters.stream()
+            .filter(f -> f.field() == QueryFilter.Field.START_DATE).findFirst().orElseThrow();
+        assertEquals(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO, startDate.operation());
+        assertEquals("P7D", startDate.value());
 
         QueryFilter flowId = filters.stream()
             .filter(f -> f.field() == QueryFilter.Field.FLOW_ID).findFirst().orElseThrow();

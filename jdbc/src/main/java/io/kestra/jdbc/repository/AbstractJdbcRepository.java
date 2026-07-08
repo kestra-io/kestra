@@ -404,10 +404,6 @@ public abstract class AbstractJdbcRepository {
             return nextExecutionDateCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.TIME_RANGE) {
-            return timeRangeCondition(value, operation);
-        }
-
         return defaultHandlers(field, value, operation);
     }
 
@@ -565,10 +561,6 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition nextExecutionDateCondition(Object value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported field: NEXT_EXECUTION_DATE");
-    }
-
-    protected Condition timeRangeCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported field: TIME_RANGE");
     }
 
     protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {

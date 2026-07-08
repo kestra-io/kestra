@@ -6,12 +6,6 @@
 /** Route query key for the freeform search input (the `q` chip). */
 export const SEARCH_QUERY_KEY = "filters[q][EQUALS]"
 
-/** Filter-key shorthand for the timeRange chip (split into startDate/endDate on the wire). */
-export const TIME_RANGE_KEY = "timeRange"
-
-/** Route query key that carries the dateFilter meta selector for timeRange. */
-export const DATE_FILTER_KEY = "dateFilter"
-
 /**
  * Maximum number of `[and|or][N]` prefix segments the chip UI can render.
  * The chip UI supports a top-level group plus one wrapper inside it (2 segments).
@@ -19,6 +13,11 @@ export const DATE_FILTER_KEY = "dateFilter"
  */
 export const MAX_RENDERABLE_NESTING_DEPTH = 2
 
-/** Date-field keys that are encoded separately on the wire from the timeRange chip. */
-export const START_DATE_FIELD = "startDate"
-export const END_DATE_FIELD = "endDate"
+/**
+ * True when a value is a relative ISO-8601 duration (e.g. `PT24H`, `P7D`) rather than an
+ * absolute instant. Durations start with an optional sign then `P` followed by `T` or a digit;
+ * an absolute ISO date-time starts with a year digit, so the two never collide. Date-field chips
+ * ({@code valueType: "time-range"}) carry such a duration for a relative window, resolved server-side.
+ */
+export const isRelativeDuration = (value: unknown): value is string =>
+    typeof value === "string" && /^-?P(?=[T\d])/i.test(value)

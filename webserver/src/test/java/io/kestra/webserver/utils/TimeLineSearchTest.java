@@ -7,25 +7,23 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.QueryFilter.Field;
-import io.kestra.core.models.QueryFilter.Op;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TimeLineSearchTest {
 
     @Test
-    void testExtractFrom() {
+    void testExtractFrom_absoluteStartAndEndDate() {
         // GIVEN
         ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
         ZonedDateTime endDate = ZonedDateTime.parse("2024-01-02T10:00:00Z");
-        Duration timeRange = Duration.ofHours(24);
 
         List<QueryFilter> filters = List.of(
             QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.EQUALS).value(startDate.toString()).build(),
             QueryFilter.builder().field(QueryFilter.Field.END_DATE).operation(QueryFilter.Op.EQUALS).value(endDate.toString()).build()
         );
+
         // WHEN
         TimeLineSearch result = TimeLineSearch.extractFrom(filters);
 
@@ -33,22 +31,45 @@ class TimeLineSearchTest {
         assertThat(result).isNotNull();
         assertThat(result.getStartDate()).isEqualTo(startDate);
         assertThat(result.getEndDate()).isEqualTo(endDate);
+    }
 
-        filters = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value(timeRange.toString()).build()
+    @Test
+    void testExtractFrom_relativeStartDate_computesNowMinusDuration() {
+        // GIVEN — a relative duration on the (past-oriented) START_DATE field
+        Duration range = Duration.ofHours(24);
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO).value(range.toString()).build()
         );
-        // WHEN
-        result = TimeLineSearch.extractFrom(filters);
 
-        // THEN
-        assertThat(result).isNotNull();
-        assertThat(result.getTimeRange()).isEqualTo(timeRange);
+        // WHEN
+        ZonedDateTime before = ZonedDateTime.now();
+        TimeLineSearch result = TimeLineSearch.extractFrom(filters);
+        ZonedDateTime after = ZonedDateTime.now();
+
+        // THEN — startDate resolves to ~ now - 24h
+        assertThat(result.getStartDate()).isBetween(before.minus(range), after.minus(range));
+    }
+
+    @Test
+    void testExtractFrom_noDateFilter_defaultsToEightDaysAgo() {
+        // GIVEN — no date boundary at all
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value("foo:bar").build()
+        );
+
+        // WHEN
+        ZonedDateTime before = ZonedDateTime.now();
+        TimeLineSearch result = TimeLineSearch.extractFrom(filters);
+        ZonedDateTime after = ZonedDateTime.now();
+
+        // THEN — flood-guard default of now - 8 days is applied
+        assertThat(result.getStartDate()).isBetween(before.minusDays(8), after.minusDays(8));
+        assertThat(result.getEndDate()).isNull();
     }
 
     @Test
     void testExtractFrom_nestedInsideOrNode_findsDateBoundaries() {
-        // Given — TIME_RANGE leaf nested inside an OR node (the shape the frontend sends when a
-        // conditional group is added alongside the default time-range chip)
+        // Given — START_DATE leaf nested inside an OR node
         ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
         var startDateLeaf = QueryFilter.builder()
             .field(QueryFilter.Field.START_DATE)
@@ -73,105 +94,13 @@ class TimeLineSearchTest {
     }
 
     @Test
-    void testExtractFrom_timeRangeNestedInsideOrNode_computesStartDate() {
-        // Given — TIME_RANGE inside a node
-        Duration duration = Duration.ofHours(24);
-        var timeRangeLeaf = QueryFilter.builder()
-            .field(QueryFilter.Field.TIME_RANGE)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(duration.toString())
-            .build();
-        var orNode = QueryFilter.builder()
-            .logical(QueryFilter.Logical.OR)
-            .children(List.of(timeRangeLeaf))
-            .build();
-
-        // When
-        TimeLineSearch result = TimeLineSearch.extractFrom(List.of(orNode));
-
-        // Then — time range is found and startDate is computed
-        assertThat(result.getTimeRange()).isEqualTo(duration);
-        assertThat(result.getStartDate()).isNotNull();
-        assertThat(result.getStartDate()).isBefore(ZonedDateTime.now());
-    }
-
-    @Test
-    void testExtractFromWithInvalidDuration() {
-        // GIVEN
+    void testExtractFrom_invalidValue_throws() {
+        // GIVEN — a value that is neither a duration nor an absolute date
         List<QueryFilter> filters = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("invalid-duration").build()
+            QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.EQUALS).value("invalid-value").build()
         );
-        // WHEN
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> TimeLineSearch.extractFrom(filters));
-        // THEN
-        assertThat(exception.getMessage()).contains("Cannot convert value 'invalid-duration' to Duration");
-    }
 
-    @Test
-    void testUpdateFiltersRemovesTimeRange() {
-        // GIVEN
-        ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
-        ZonedDateTime newStartDate = ZonedDateTime.parse("2024-01-02T10:00:00Z");
-
-        List<QueryFilter> filters = List.of(
-            QueryFilter.builder().field(Field.START_DATE).operation(Op.EQUALS).value(startDate.toString()).build(),
-            QueryFilter.builder().field(Field.TIME_RANGE).operation(Op.EQUALS).value(Duration.ofHours(24).toString()).build()
-        );
-        // WHEN
-        List<QueryFilter> updatedFilters = QueryFilterUtils.updateFilters(filters, newStartDate);
-        // THEN
-        assertThat(updatedFilters).hasSize(2)
-            .satisfiesExactly(
-                filter ->
-                {
-                    assertThat(filter.field()).isEqualTo(Field.START_DATE);
-                    assertThat(filter.operation()).isEqualTo(Op.EQUALS);
-                    assertThat(filter.value()).isEqualTo(newStartDate.toString());
-                },
-                filter ->
-                {
-                    assertThat(filter.field()).isEqualTo(Field.START_DATE);
-                    assertThat(filter.operation()).isEqualTo(Op.GREATER_THAN_OR_EQUAL_TO);
-                    assertThat(filter.value()).isEqualTo(newStartDate.toString());
-                }
-            );
-    }
-
-    @Test
-    void testUpdateFiltersKeepsUnrelatedFilters() {
-        // GIVEN
-        ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
-        ZonedDateTime newStartDate = ZonedDateTime.parse("2024-01-02T10:00:00Z");
-        ZonedDateTime endDate = ZonedDateTime.parse("2024-01-03T10:00:00Z");
-
-        List<QueryFilter> filters = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.EQUALS).value(startDate.toString()).build(),
-            QueryFilter.builder().field(QueryFilter.Field.END_DATE).operation(QueryFilter.Op.EQUALS).value(endDate.toString()).build(),
-            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value(Duration.ofHours(24).toString()).build()
-        );
-        // WHEN
-        List<QueryFilter> updatedFilters = QueryFilterUtils.updateFilters(filters, newStartDate);
-        // THEN
-        assertThat(updatedFilters).hasSize(3)
-            .satisfiesExactly(
-                filter ->
-                {
-                    assertThat(filter.field()).isEqualTo(Field.START_DATE);
-                    assertThat(filter.operation()).isEqualTo(Op.EQUALS);
-                    assertThat(filter.value()).isEqualTo(newStartDate.toString());
-                },
-                filter ->
-                {
-                    assertThat(filter.field()).isEqualTo(Field.END_DATE);
-                    assertThat(filter.operation()).isEqualTo(Op.EQUALS);
-                    assertThat(filter.value()).isEqualTo(endDate.toString());
-                },
-                filter ->
-                {
-                    assertThat(filter.field()).isEqualTo(Field.START_DATE);
-                    assertThat(filter.operation()).isEqualTo(Op.GREATER_THAN_OR_EQUAL_TO);
-                    assertThat(filter.value()).isEqualTo(newStartDate.toString());
-                }
-            );
+        // WHEN / THEN
+        assertThrows(IllegalArgumentException.class, () -> TimeLineSearch.extractFrom(filters));
     }
 }

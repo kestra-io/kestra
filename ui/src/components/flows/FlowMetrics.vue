@@ -71,7 +71,7 @@
     import {useI18n} from "vue-i18n"
     import {useFlowStore} from "../../stores/flow"
     import {getFormat} from "../dashboard/composables/charts"
-    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
+    import {cssVar, isRelativeDuration, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useFlowMetricFilter} from "../filter/configurations"
@@ -150,8 +150,8 @@
     })
 
     function getTimeRangeParams(): {startDate?: string; endDate?: string} {
-        const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined
-        if (!timeRange) return {}
+        const timeRange = route.query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] as string | undefined
+        if (!isRelativeDuration(timeRange)) return {}
         const endDate = moment().toISOString()
         const startDate = moment().subtract(moment.duration(timeRange)).toISOString()
         return {startDate, endDate}
@@ -263,7 +263,7 @@
             const metricChanged = newQuery["filters[metric][EQUALS]"] !== oldQuery["filters[metric][EQUALS]"]
             const searchChanged = newQuery["filters[q][EQUALS]"] !== oldQuery["filters[q][EQUALS]"]
             const aggregationChanged = newQuery.aggregation !== oldQuery.aggregation
-            const timeRangeChanged = newQuery["filters[timeRange][EQUALS]"] !== oldQuery["filters[timeRange][EQUALS]"]
+            const timeRangeChanged = newQuery["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] !== oldQuery["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]
 
             if (taskChanged || metricChanged || searchChanged) {
                 loadMetrics()

@@ -107,6 +107,15 @@ public record QueryFilter(
         PREFIX
     }
 
+    /**
+     * Whether a relative duration on a date field resolves backward or forward from {@code now()}.
+     * {@code PAST} → {@code now().minus(duration)}; {@code FUTURE} → {@code now().plus(duration)}.
+     */
+    public enum DateOrientation {
+        PAST,
+        FUTURE
+    }
+
     @SuppressWarnings("unchecked")
     private List<Object> asValues(Object value) {
         if (value instanceof String valueStr) {
@@ -221,11 +230,21 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         UPDATED("updated") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
             }
         },
         START_DATE("startDate") {
@@ -233,17 +252,37 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         END_DATE("endDate") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         EXPIRATION_DATE("expirationDate") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
+
+            @Override
+            public DateOrientation dateOrientation() {
+                return DateOrientation.FUTURE;
             }
         },
         STATE("state") {
@@ -259,12 +298,6 @@ public record QueryFilter(
             }
         },
         EMAIL("email") {
-            @Override
-            public List<Op> supportedOp() {
-                return List.of(Op.EQUALS);
-            }
-        },
-        TIME_RANGE("timeRange") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
@@ -437,11 +470,26 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         NEXT_EXECUTION_DATE("nextExecutionDate") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
+
+            @Override
+            public DateOrientation dateOrientation() {
+                return DateOrientation.FUTURE;
             }
         },
         ARTIFACT_ID("artifactId") {
@@ -455,6 +503,25 @@ public record QueryFilter(
             .collect(Collectors.toMap(Field::value, Function.identity()));
 
         public abstract List<Op> supportedOp();
+
+        /**
+         * Whether this field holds a date/time value — an absolute instant (ISO-8601 date-time) or a
+         * relative ISO-8601 duration (e.g. {@code PT5M}, {@code P7D}) resolved against {@code now()}
+         * before reaching a repository. Non-date fields keep the {@code false} default; date fields
+         * override it.
+         */
+        public boolean isDateField() {
+            return false;
+        }
+
+        /**
+         * The direction a relative duration on this field resolves. Defaults to {@link DateOrientation#PAST}
+         * ({@code now - duration}); inherently-future fields override it to {@link DateOrientation#FUTURE}
+         * ({@code now + duration}). Only meaningful when {@link #isDateField()} is {@code true}.
+         */
+        public DateOrientation dateOrientation() {
+            return DateOrientation.PAST;
+        }
 
         private final String value;
 

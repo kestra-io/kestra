@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 
@@ -60,27 +60,39 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                 },
                 {
-                    key: "timeRange",
-                    label: t("filter.timeRange.label"),
+                    key: "startDate",
+                    label: t("filter.timeRange.dateFilter.startDate"),
                     description: t("filter.timeRange.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                    ],
+                    showComparatorSelection: true,
+                    valueType: "time-range",
                     groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
                         return VALUES.RELATIVE_DATE
                     },
-                    dateFilterOptions: [
-                        {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
-                        {value: "END_DATE", label: t("filter.timeRange.dateFilter.endDate")},
-                        {value: "START_OR_END_DATE", label: t("filter.timeRange.dateFilter.startOrEndDate")},
+                },
+                {
+                    key: "endDate",
+                    label: t("filter.timeRange.dateFilter.endDate"),
+                    description: t("filter.timeRange.description"),
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
                     ],
-                    keyLabelProvider: (meta?: FilterMeta) => {
-                        switch (meta?.dateFilter) {
-                        case "END_DATE": return t("filter.timeRange.chip.end")
-                        case "START_OR_END_DATE": return t("filter.timeRange.chip.startOrEnd")
-                        default: return t("filter.timeRange.chip.start")
-                        }
+                    showComparatorSelection: true,
+                    valueType: "time-range",
+                    groupable: false,
+                    valueProvider: async () => {
+                        const {VALUES} = useValues("executions")
+                        return VALUES.RELATIVE_DATE
                     },
                 },
                 {

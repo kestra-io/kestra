@@ -292,7 +292,7 @@ public class ExecutionController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
@@ -301,7 +301,7 @@ public class ExecutionController {
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+            QueryFilterUtils.applyDefaultWindow(filters, dateFilter),
             dateFilter
         );
         var apiExecution = executions.stream()
@@ -530,7 +530,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
@@ -538,7 +538,7 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return deleteExecutionsByIds(ids, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
     }
@@ -1181,10 +1181,10 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
         return restartExecutionsByIds(ids);
     }
 
@@ -1474,12 +1474,12 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return updateExecutionsStatusByIds(ids, newStatus);
     }
@@ -1760,10 +1760,10 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return resumeExecutionsByIds(ids);
     }
@@ -1850,10 +1850,10 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return pauseExecutionsByIds(ids);
     }
@@ -1865,10 +1865,10 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws QueueException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return killExecutionsByIds(ids);
     }
@@ -1880,12 +1880,12 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return replayExecutionsByIds(ids, latestRevision);
     }
@@ -2224,12 +2224,12 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels) throws QueueException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return setLabelsOnTerminatedExecutionsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }
@@ -2319,12 +2319,12 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return unqueueExecutionsByIds(ids, newState);
     }
@@ -2422,10 +2422,10 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutionsByQuery(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var ids = getExecutionIds(QueryFilterUtils.applyDefaultWindow(filters));
 
         return forceRunByIds(ids);
     }
@@ -2613,13 +2613,13 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
     public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
+                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.applyDefaultWindow(filters))
                     .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )

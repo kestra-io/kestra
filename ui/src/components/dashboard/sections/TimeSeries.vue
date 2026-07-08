@@ -36,7 +36,7 @@
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {KsEchart, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {KsEchart, TooltipType, cssVar, durationUtils, isRelativeDuration} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
@@ -104,10 +104,14 @@
             ),
             ...route.query,
         }
+        const startRaw = (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined
+        const endRaw = (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined
+        // A relative time range now lands as an ISO-8601 duration on startDate; feed it as the duration arg.
+        const relativeTimeRange = isRelativeDuration(startRaw) ? startRaw : undefined
         return date.isValid() ? date.format(getDateFormat(
-            (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            query["filters[timeRange][EQUALS]"] as string | undefined,
+            relativeTimeRange ? undefined : startRaw,
+            endRaw,
+            relativeTimeRange,
         )) : value
     }
 

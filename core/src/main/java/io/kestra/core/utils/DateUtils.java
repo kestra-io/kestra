@@ -96,25 +96,16 @@ public class DateUtils {
         }
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
+        // Extract the bounds regardless of the comparison operation so a contradictory pair
+        // (e.g. startDate == 2024 with endDate == 2023) is still rejected, not just GTE/LTE ranges.
         for (QueryFilter filter : filters) {
-            if (isStartDateFilter(filter)) {
+            if (QueryFilter.Field.START_DATE.equals(filter.field())) {
                 startDate = TypeConverter.toZonedDateTime(filter.value());
-            } else if (isEndDateFilter(filter)) {
+            } else if (QueryFilter.Field.END_DATE.equals(filter.field())) {
                 endDate = TypeConverter.toZonedDateTime(filter.value());
             }
         }
         validateTimeline(startDate, endDate);
     }
 
-    private static boolean isEndDateFilter(QueryFilter filter) {
-        return QueryFilter.Field.END_DATE.equals(filter.field())
-            && (QueryFilter.Op.LESS_THAN.equals(filter.operation())
-                || QueryFilter.Op.LESS_THAN_OR_EQUAL_TO.equals(filter.operation()));
-    }
-
-    private static boolean isStartDateFilter(QueryFilter filter) {
-        return QueryFilter.Field.START_DATE.equals(filter.field())
-            && (QueryFilter.Op.GREATER_THAN.equals(filter.operation())
-                || QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO.equals(filter.operation()));
-    }
 }

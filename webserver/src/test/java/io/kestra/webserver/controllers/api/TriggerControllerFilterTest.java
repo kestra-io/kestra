@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,6 +61,11 @@ class TriggerControllerFilterTest {
     private static final Instant DATE_OLD = Instant.parse("2024-01-01T00:00:00Z");
     private static final Instant DATE_NEW = Instant.parse("2024-06-01T00:00:00Z");
     private static final ZonedDateTime DATE_BETWEEN = ZonedDateTime.of(2024, 3, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+
+    // Absolute bounds equivalent to the PT3H / PT4H relative windows below, resolved once at class load.
+    // A generous margin (hours) makes them robust to the gap between class load and fixture creation.
+    private static final String NOW_MINUS_3H = Instant.now().minus(3, ChronoUnit.HOURS).toString();
+    private static final String NOW_PLUS_4H = Instant.now().plus(4, ChronoUnit.HOURS).toString();
 
     private static final String NS_FILTER = "io.kestra.filter";
     private static final String NS_OTHER = "com.other.ns";
@@ -126,8 +132,8 @@ class TriggerControllerFilterTest {
     private void seedFilterFixtures() throws FlowProcessingException, QueueException {
         List<String> filterTriggers = List.of(
             "alpha-trigger",
-            "nextexec-old", "nextexec-new",
-            "ldt-old", "ldt-new",
+            "nextexec-old", "nextexec-new", "nextexec-soon", "nextexec-far",
+            "ldt-old", "ldt-new", "ldt-recent",
             "source-schedule", "source-polling",
             "locked-true", "locked-false",
             "state-disabled", "state-enabled"
@@ -146,6 +152,12 @@ class TriggerControllerFilterTest {
         // LAST_TRIGGERED_DATE
         jdbcTriggerRepository.save(fixture("ldt-old", NS_FILTER, FLOW_FILTER, "worker").lastTriggeredDate(DATE_OLD).build());
         jdbcTriggerRepository.save(fixture("ldt-new", NS_FILTER, FLOW_FILTER, "worker").lastTriggeredDate(DATE_NEW).build());
+
+        // Now-relative fixtures for the relative-duration cases: nextExecutionDate is future-oriented
+        // (resolves now + duration), lastTriggeredDate is past-oriented (resolves now - duration).
+        jdbcTriggerRepository.save(fixture("nextexec-soon", NS_FILTER, FLOW_FILTER, "worker").nextEvaluationDate(Instant.now().plus(2, ChronoUnit.HOURS)).build());
+        jdbcTriggerRepository.save(fixture("nextexec-far", NS_FILTER, FLOW_FILTER, "worker").nextEvaluationDate(Instant.now().plus(10, ChronoUnit.DAYS)).build());
+        jdbcTriggerRepository.save(fixture("ldt-recent", NS_FILTER, FLOW_FILTER, "worker").lastTriggeredDate(Instant.now().minus(2, ChronoUnit.HOURS)).build());
 
         // SOURCE
         jdbcTriggerRepository.save(fixture("source-schedule", NS_FILTER, FLOW_FILTER, "worker").type(TriggerType.SCHEDULE).build());
@@ -180,7 +192,8 @@ class TriggerControllerFilterTest {
             new FilterTestCase(
                 "filters[namespace][EQUALS]=" + NS_FILTER + "&size=50",
                 List.of(
-                    "alpha-trigger", "nextexec-old", "nextexec-new", "ldt-old", "ldt-new",
+                    "alpha-trigger", "nextexec-old", "nextexec-new", "nextexec-soon", "nextexec-far",
+                    "ldt-old", "ldt-new", "ldt-recent",
                     "source-schedule", "source-polling", "locked-true", "locked-false",
                     "state-disabled", "state-enabled"
                 )
@@ -220,7 +233,7 @@ class TriggerControllerFilterTest {
             "nextExecutionDate GREATER_THAN DATE_BETWEEN",
             new FilterTestCase(
                 "filters[nextExecutionDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new")
+                List.of("nextexec-new", "nextexec-soon", "nextexec-far")
             )
         ),
         Named.of(
@@ -236,7 +249,7 @@ class TriggerControllerFilterTest {
             "lastTriggeredDate GREATER_THAN DATE_BETWEEN",
             new FilterTestCase(
                 "filters[lastTriggeredDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("ldt-new")
+                List.of("ldt-new", "ldt-recent")
             )
         ),
         Named.of(
@@ -247,26 +260,60 @@ class TriggerControllerFilterTest {
             )
         ),
 
+        // --- Relative durations vs. absolute instants on date fields (resolved server-side) ---
+        // Past-oriented field: a relative duration resolves to `now - duration`. `>= PT3H` keeps only
+        // the now-relative fixture; the 2024 fixtures fall outside the window.
+        Named.of(
+            "lastTriggeredDate GREATER_THAN_OR_EQUAL_TO relative PT3H",
+            new FilterTestCase(
+                "filters[lastTriggeredDate][GREATER_THAN_OR_EQUAL_TO]=PT3H",
+                List.of("ldt-recent")
+            )
+        ),
+        Named.of(
+            "lastTriggeredDate GREATER_THAN_OR_EQUAL_TO absolute (now - 3h) — same result as PT3H",
+            new FilterTestCase(
+                "filters[lastTriggeredDate][GREATER_THAN_OR_EQUAL_TO]=" + NOW_MINUS_3H,
+                List.of("ldt-recent")
+            )
+        ),
+        // Future-oriented field: a relative duration resolves to `now + duration`. `<= PT4H` keeps the
+        // near-future and past fixtures but excludes the far-future one — proving the forward resolution.
+        Named.of(
+            "nextExecutionDate LESS_THAN_OR_EQUAL_TO relative PT4H",
+            new FilterTestCase(
+                "filters[nextExecutionDate][LESS_THAN_OR_EQUAL_TO]=PT4H",
+                List.of("nextexec-old", "nextexec-new", "nextexec-soon")
+            )
+        ),
+        Named.of(
+            "nextExecutionDate LESS_THAN_OR_EQUAL_TO absolute (now + 4h) — same result as PT4H",
+            new FilterTestCase(
+                "filters[nextExecutionDate][LESS_THAN_OR_EQUAL_TO]=" + NOW_PLUS_4H,
+                List.of("nextexec-old", "nextexec-new", "nextexec-soon")
+            )
+        ),
+
         // --- UI-style URL: startDate/endDate are rewritten by the controller to the chosen target field ---
         Named.of(
             "startDate (no dateFilter) rewrites to nextExecutionDate",
             new FilterTestCase(
                 "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new")
+                List.of("nextexec-new", "nextexec-soon", "nextexec-far")
             )
         ),
         Named.of(
             "startDate with dateFilter=NEXT_EXECUTION_DATE rewrites to nextExecutionDate",
             new FilterTestCase(
                 "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=NEXT_EXECUTION_DATE",
-                List.of("nextexec-new")
+                List.of("nextexec-new", "nextexec-soon", "nextexec-far")
             )
         ),
         Named.of(
             "startDate with dateFilter=LAST_TRIGGERED_DATE rewrites to lastTriggeredDate",
             new FilterTestCase(
                 "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=LAST_TRIGGERED_DATE",
-                List.of("ldt-new")
+                List.of("ldt-new", "ldt-recent")
             )
         )
     );

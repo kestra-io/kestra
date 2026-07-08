@@ -1,6 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -363,19 +362,13 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     private Condition triggerDateFieldCondition(Object value, QueryFilter.Op operation, String column, QueryFilter.Field field) {
-        // Accept ISO-8601 durations (e.g. PT24H) as "last N hours" — same semantics as TIME_RANGE
-        try {
-            Duration duration = TypeConverter.toDuration(value);
-            ZonedDateTime threshold = ZonedDateTime.now().minus(duration);
-            return applyDateCondition(threshold.toOffsetDateTime(), QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO, column);
-        } catch (TypeConversionException ignored) {
-            // Not a duration — fall through to absolute date parsing
-        }
+        // Relative durations are resolved to an absolute instant upstream (QueryFilterUtils/binder), so the
+        // repository only ever sees absolute date values here.
         try {
             OffsetDateTime dateTime = TypeConverter.toZonedDateTime(value).toOffsetDateTime();
             return applyDateCondition(dateTime, operation, column);
         } catch (TypeConversionException e) {
-            throw new InvalidQueryFiltersException("Invalid date or duration value for " + field + ": " + value);
+            throw new InvalidQueryFiltersException("Invalid date value for " + field + ": " + value);
         }
     }
 

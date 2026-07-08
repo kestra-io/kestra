@@ -683,10 +683,11 @@
 
     function chartFilters() {
         const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+        // Relative default window: a duration on startDate, resolved server-side against now().
         return [{
-            field: "timeRange",
+            field: "startDate",
             value: DEFAULT_DURATION,
-            operation: "EQUALS",
+            operation: "GREATER_THAN_OR_EQUAL_TO",
         }]
     }
 

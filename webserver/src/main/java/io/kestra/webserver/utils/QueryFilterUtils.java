@@ -1,6 +1,8 @@
 package io.kestra.webserver.utils;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -16,6 +18,12 @@ import lombok.Data;
 @Builder
 public class QueryFilterUtils {
 
+    /**
+     * Number of days to look back by default when a query provides no lower time bound. This guards
+     * against flooding the database with an unbounded scan.
+     */
+    private static final int DEFAULT_LOOKBACK_DAYS = 8;
+
     public static void validateTimeline(List<QueryFilter> filters) {
         DateUtils.validateTimeline(filters);
     }
@@ -28,43 +36,73 @@ public class QueryFilterUtils {
         return filter.field() == QueryFilter.Field.END_DATE;
     }
 
-    private static boolean isTimeRangeFilter(QueryFilter filter) {
-        return filter.field() == QueryFilter.Field.TIME_RANGE;
-    }
-
-    private static boolean isDateBoundaryFilter(QueryFilter filter) {
-        return isStartDateFilter(filter) || isEndDateFilter(filter) || isTimeRangeFilter(filter);
-    }
-
     /**
-     * If a time range is provided, then if it's a negative filter, we use the filter LESS_THAN_OR_EQUAL_TO.
-     *
-     * @param filter The query filter.
-     * @return The updated query filter operation.
+     * Resolves a relative ISO-8601 duration value (e.g. {@code PT5M}, {@code P7D}) on a date-typed leaf
+     * into an absolute instant. Past-oriented fields resolve to {@code now().minus(duration)}, future-oriented
+     * fields (see {@link QueryFilter.Field#dateOrientation()}) to {@code now().plus(duration)}.
+     * Absolute values and non-date fields are returned unchanged.
      */
-    private static QueryFilter.Op timeRangeOperation(QueryFilter filter) {
-        return switch (filter.operation()) {
-            case NOT_EQUALS, NOT_IN -> QueryFilter.Op.LESS_THAN_OR_EQUAL_TO;
-            default -> QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO;
-        };
-    }
-
-    private static QueryFilter createUpdatedDateFilter(QueryFilter filter, ZonedDateTime resolvedDate, QueryFilter.Field targetField) {
+    private static QueryFilter resolveRelativeDate(QueryFilter leaf, ZonedDateTime now) {
+        if (leaf == null || leaf.field() == null || !leaf.field().isDateField() || leaf.value() == null
+            || leaf.value() instanceof ZonedDateTime) {
+            return leaf;
+        }
+        String raw = leaf.value().toString();
+        Duration duration = tryParseDuration(raw);
+        if (duration == null) {
+            // Not a relative duration — it must be a valid absolute instant, otherwise reject the input.
+            requireParsableInstant(leaf.field(), raw);
+            return leaf;
+        }
+        ZonedDateTime resolved = leaf.field().dateOrientation() == QueryFilter.DateOrientation.FUTURE
+            ? now.plus(duration) : now.minus(duration);
         return QueryFilter.builder()
-            .field(targetField)
-            .operation(filter != null ? isTimeRangeFilter(filter) ? timeRangeOperation(filter) : filter.operation() : QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-            .value(resolvedDate.toString())
+            .field(leaf.field())
+            .operation(leaf.operation())
+            .value(resolved.toString())
             .build();
     }
 
-    private static QueryFilter createUpdatedStartDateFilter(QueryFilter filter, ZonedDateTime resolvedStartDate) {
-        return createUpdatedDateFilter(filter, resolvedStartDate, QueryFilter.Field.START_DATE);
+    private static void requireParsableInstant(QueryFilter.Field field, String raw) {
+        try {
+            ZonedDateTime.parse(raw);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid date or duration value for " + (field != null ? field.value() : "date") + ": " + raw);
+        }
+    }
+
+    private static Duration tryParseDuration(String value) {
+        try {
+            return Duration.parse(value);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Resolves a raw date-field value to an absolute {@link ZonedDateTime}. A relative ISO-8601 duration is
+     * resolved against {@code now} using the field's orientation; anything else is parsed as an absolute instant.
+     */
+    public static ZonedDateTime resolveDateValue(QueryFilter.Field field, Object value, ZonedDateTime now) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof ZonedDateTime zdt) {
+            return zdt;
+        }
+        Duration duration = tryParseDuration(value.toString());
+        if (duration != null) {
+            return field != null && field.dateOrientation() == QueryFilter.DateOrientation.FUTURE
+                ? now.plus(duration) : now.minus(duration);
+        }
+        requireParsableInstant(field, value.toString());
+        return ZonedDateTime.parse(value.toString());
     }
 
     /**
      * Recursively applies {@code leafMapper} to every leaf in the filter tree, rebuilding any
-     * intermediate nodes so that date-boundary leaves nested inside conditional groups are rewritten
-     * just like top-level leaves.
+     * intermediate nodes so that leaves nested inside conditional groups are rewritten just like
+     * top-level leaves.
      */
     private static QueryFilter mapLeavesRecursively(QueryFilter filter, UnaryOperator<QueryFilter> leafMapper) {
         if (filter.isNode()) {
@@ -84,82 +122,55 @@ public class QueryFilterUtils {
         return filters.stream().anyMatch(f -> f.isNode() ? anyLeafMatches(f.children(), predicate) : predicate.test(f));
     }
 
-    protected static List<QueryFilter> updateFilters(List<QueryFilter> filters, ZonedDateTime resolvedStartDate) {
-        boolean hasDateFilter = anyLeafMatches(filters, filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter));
-
-        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
-            filters.stream()
-                .map(
-                    filter -> mapLeavesRecursively(
-                        filter, leaf -> isStartDateFilter(leaf) || isTimeRangeFilter(leaf)
-                            ? createUpdatedStartDateFilter(leaf, resolvedStartDate)
-                            : leaf
-                    )
-                )
-                .toList()
-        );
-
-        if (!hasDateFilter && resolvedStartDate != null) {
-            updatedFilters.add(createUpdatedStartDateFilter(null, resolvedStartDate));
+    /**
+     * Resolves any relative ISO-8601 duration on a date-typed field into an absolute instant, computed
+     * against a single {@code now()} for the whole filter tree. Absolute date values pass through untouched.
+     */
+    public static List<QueryFilter> resolveRelativeDateFilters(List<QueryFilter> filters) {
+        if (filters == null) {
+            return List.of();
         }
+        ZonedDateTime now = ZonedDateTime.now();
+        return filters.stream()
+            .map(filter -> mapLeavesRecursively(filter, leaf -> resolveRelativeDate(leaf, now)))
+            .toList();
+    }
 
-        return updatedFilters;
+    public static List<QueryFilter> applyDefaultWindow(List<QueryFilter> filters) {
+        return applyDefaultWindow(filters, DateFilter.START_DATE);
     }
 
     /**
-     * Like {@link #updateFilters} but targets {@link QueryFilter.Field#END_DATE} instead of {@code START_DATE}.
-     * Used when {@link DateFilter#END_DATE} mode is active.
+     * When the query carries no lower time bound, injects a default {@code -8 days} boundary to protect the
+     * database from an unbounded scan. The boundary targets {@link QueryFilter.Field#END_DATE} when
+     * {@code dateFilter} is {@link DateFilter#END_DATE}, otherwise {@link QueryFilter.Field#START_DATE}.
+     * <p>
+     * Relative durations are already resolved to absolute instants upstream by
+     * {@code QueryFilterFormatBinder}, so this method only deals with absolute dates.
      */
-    protected static List<QueryFilter> updateFiltersForEndDate(List<QueryFilter> filters, ZonedDateTime resolvedDate) {
-        boolean hasDateFilter = anyLeafMatches(filters, QueryFilterUtils::isDateBoundaryFilter);
-
-        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
-            filters.stream()
-                .map(
-                    filter -> mapLeavesRecursively(
-                        filter, leaf -> isTimeRangeFilter(leaf)
-                            ? createUpdatedDateFilter(leaf, resolvedDate, QueryFilter.Field.END_DATE)
-                            : leaf
-                    )
-                )
-                .toList()
-        );
-
-        if (!hasDateFilter && resolvedDate != null) {
-            updatedFilters.add(createUpdatedDateFilter(null, resolvedDate, QueryFilter.Field.END_DATE));
-        }
-
-        return updatedFilters;
-    }
-
-    public static List<QueryFilter> replaceTimeRangeWithComputedStartDateFilter(List<QueryFilter> filters) {
-        return replaceTimeRangeWithComputedDateFilter(filters, DateFilter.START_DATE);
-    }
-
-    /**
-     * Resolves {@link QueryFilter.Field#TIME_RANGE} into a concrete date boundary filter targeting
-     * the date column(s) selected by {@code dateFilter}.
-     * <ul>
-     * <li>{@link DateFilter#START_DATE} – translates TIME_RANGE to a START_DATE lower bound (existing behavior).</li>
-     * <li>{@link DateFilter#END_DATE} – translates TIME_RANGE to an END_DATE lower bound.</li>
-     * <li>{@link DateFilter#START_OR_END_DATE} – same as START_DATE; the repository handles the OR across both columns.</li>
-     * </ul>
-     */
-    public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter) {
+    public static List<QueryFilter> applyDefaultWindow(List<QueryFilter> filters, DateFilter dateFilter) {
         if (dateFilter == null) {
             dateFilter = DateFilter.START_DATE;
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-        ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
+        List<QueryFilter> resolved = filters == null
+            ? new java.util.ArrayList<>()
+            : new java.util.ArrayList<>(filters);
 
-        List<QueryFilter> updatedFilters = switch (dateFilter) {
-            case END_DATE -> updateFiltersForEndDate(filters, resolvedDate);
-            default -> updateFilters(filters, resolvedDate);
-        };
+        boolean targetsEndDate = dateFilter == DateFilter.END_DATE;
+        boolean hasLowerBound = targetsEndDate
+            ? anyLeafMatches(resolved, f -> isStartDateFilter(f) || isEndDateFilter(f))
+            : anyLeafMatches(resolved, QueryFilterUtils::isStartDateFilter);
 
-        validateTimeline(updatedFilters);
-        return updatedFilters;
+        if (!hasLowerBound) {
+            resolved.add(QueryFilter.builder()
+                .field(targetsEndDate ? QueryFilter.Field.END_DATE : QueryFilter.Field.START_DATE)
+                .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                .value(ZonedDateTime.now().minusDays(DEFAULT_LOOKBACK_DAYS).toString())
+                .build());
+        }
+
+        validateTimeline(resolved);
+        return resolved;
     }
 
     public static final List<QueryFilter.Field> TRIGGER_DATE_FIELDS = List.of(
@@ -167,6 +178,13 @@ public class QueryFilterUtils {
         QueryFilter.Field.LAST_TRIGGERED_DATE
     );
 
+    /**
+     * Backward-compat remap for trigger endpoints: generic {@link QueryFilter.Field#START_DATE} /
+     * {@link QueryFilter.Field#END_DATE} leaves are renamed onto the trigger-specific date column selected by
+     * {@code dateField} (defaulting to {@link QueryFilter.Field#NEXT_EXECUTION_DATE}). Relative durations are
+     * already resolved to absolute instants upstream by {@code QueryFilterFormatBinder}; the new UI sends the
+     * real {@code nextExecutionDate}/{@code lastTriggeredDate} fields directly, in which case this is a no-op.
+     */
     public static List<QueryFilter> rewriteTriggerDateFilters(List<QueryFilter> filters, QueryFilter.Field dateField) {
         if (filters == null) {
             return List.of();
@@ -177,20 +195,9 @@ public class QueryFilterUtils {
             );
         }
         QueryFilter.Field target = dateField == null ? QueryFilter.Field.NEXT_EXECUTION_DATE : dateField;
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-        ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
 
         return filters.stream()
-            .map(f -> mapLeavesRecursively(f, leaf ->
-            {
-                if (isTimeRangeFilter(leaf)) {
-                    return QueryFilter.builder()
-                        .field(target)
-                        .operation(timeRangeOperation(leaf))
-                        .value(resolvedDate.toString())
-                        .build();
-                }
+            .map(f -> mapLeavesRecursively(f, leaf -> {
                 if (isStartDateFilter(leaf) || isEndDateFilter(leaf)) {
                     return QueryFilter.builder()
                         .field(target)

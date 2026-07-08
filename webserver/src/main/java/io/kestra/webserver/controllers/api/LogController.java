@@ -74,7 +74,7 @@ public class LogController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
         ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters)
         throws HttpStatusException {
@@ -82,7 +82,7 @@ public class LogController {
             logRepository.find(
                 PageableUtils.from(page, size, sort),
                 tenantService.resolveTenant(),
-                QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
+                QueryFilterUtils.applyDefaultWindow(filters)
             )
         );
     }

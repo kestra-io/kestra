@@ -2047,7 +2047,10 @@
           "start": "Start voice input",
           "stop": "Stop and insert",
           "cancel": "Cancel voice input"
-        }
+        },
+        "newChat": "New chat",
+        "recents": "Recents",
+        "recentsEmpty": "No recent conversations yet"
       }
     },
     "playground": {

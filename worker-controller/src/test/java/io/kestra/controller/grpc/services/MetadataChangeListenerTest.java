@@ -1,15 +1,16 @@
 package io.kestra.controller.grpc.services;
 
+import java.util.function.Consumer;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.utils.Either;
 import io.kestra.core.worker.MetadataChangePayload;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -80,8 +81,7 @@ class MetadataChangeListenerTest {
 
     @SuppressWarnings("unchecked")
     private Consumer<Either<FlowInterface, io.kestra.core.exceptions.DeserializationException>> captureCallback() {
-        ArgumentCaptor<Consumer<Either<FlowInterface, io.kestra.core.exceptions.DeserializationException>>> cap =
-            ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor<Consumer<Either<FlowInterface, io.kestra.core.exceptions.DeserializationException>>> cap = ArgumentCaptor.forClass(Consumer.class);
         verify(flowSubscriber).subscribe(cap.capture());
         return cap.getValue();
     }

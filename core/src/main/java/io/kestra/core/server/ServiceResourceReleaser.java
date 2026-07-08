@@ -10,7 +10,7 @@ public interface ServiceResourceReleaser {
      * Release resources associated with the given service instance.
      *
      * @param serviceInstance the service instance for which resources are to be released
-     * @param reason          the reason for releasing the resources
+     * @param reason the reason for releasing the resources
      */
     void releaseResources(ServiceInstance serviceInstance, String reason);
 }

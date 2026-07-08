@@ -23,10 +23,12 @@ class FlowUsageTest {
         // Given
         List<Input<?>> inputs = List.of(
             StringInput.builder().id("in").type(Type.STRING).build(),
-            FormInput.builder().id("form").type(Type.FORM).inputs(List.of(
-                IntInput.builder().id("count").type(Type.INT).build(),
-                BoolInput.builder().id("flag").type(Type.BOOL).build()
-            )).build(),
+            FormInput.builder().id("form").type(Type.FORM).inputs(
+                List.of(
+                    IntInput.builder().id("count").type(Type.INT).build(),
+                    BoolInput.builder().id("flag").type(Type.BOOL).build()
+                )
+            ).build(),
             ReusableInputsInput.builder().id("ref").type(Type.REUSABLE_INPUTS).ref("infra").build()
         );
 
@@ -58,10 +60,12 @@ class FlowUsageTest {
         Flow flowB = Flow.builder()
             .id("b")
             .namespace("io.kestra.unittest")
-            .inputs(List.of(
-                StringInput.builder().id("in").type(Type.STRING).build(),
-                ReusableInputsInput.builder().id("ref").type(Type.REUSABLE_INPUTS).ref("infra").build()
-            ))
+            .inputs(
+                List.of(
+                    StringInput.builder().id("in").type(Type.STRING).build(),
+                    ReusableInputsInput.builder().id("ref").type(Type.REUSABLE_INPUTS).ref("infra").build()
+                )
+            )
             .build();
         // excluded from the census: the 'tutorial' namespace is filtered out by FlowUsage.of(...)
         Flow tutorialFlow = Flow.builder()

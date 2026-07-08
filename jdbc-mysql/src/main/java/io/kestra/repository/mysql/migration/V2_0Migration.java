@@ -24,7 +24,6 @@ public class V2_0Migration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init";
 
-
     private final DataSource dataSource;
 
     @Inject

@@ -16,7 +16,8 @@ import lombok.experimental.SuperBuilder;
  * the children resolve under the reference id as a nested path (e.g. {@code {{ inputs.myRef.anInput }}}),
  * exactly like a hand-written {@code FORM}.
  *
- * <p>This is an Enterprise Edition feature: the block storage and resolution live in EE. The type is
+ * <p>
+ * This is an Enterprise Edition feature: the block storage and resolution live in EE. The type is
  * registered here only because the {@code type} discriminator is a closed {@link io.kestra.core.models.flows.Type}
  * enum; the open-source build cannot resolve it (the default expander errors) and it is hidden from the
  * open-source flow schema.

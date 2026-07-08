@@ -12,7 +12,8 @@ import jakarta.inject.Singleton;
  * Builds the per-{@link WorkerStreamContext} {@link WorkerCapacityPolicy} from
  * the worker's initial subscriptions and {@code maxConcurrency}.
  *
- * <p>The {@link Default} factory always returns a
+ * <p>
+ * The {@link Default} factory always returns a
  * {@link SinglePoolCapacityPolicy}. Deployments that need per-queue
  * reservations or capacity borrowing replace this bean with one that returns
  * a richer policy.
@@ -21,7 +22,7 @@ public interface WorkerCapacityPolicyFactory {
 
     /**
      * @param maxConcurrency total slot count the worker advertised
-     * @param subscriptions  the worker's resolved {@link QueueSubscription} list
+     * @param subscriptions the worker's resolved {@link QueueSubscription} list
      * @return a fresh policy instance owned by the calling stream context
      */
     WorkerCapacityPolicy create(int maxConcurrency, List<QueueSubscription> subscriptions);

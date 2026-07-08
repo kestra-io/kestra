@@ -19,26 +19,74 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.log.LogDataStoreAccessControl;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JdbcTableConfigsFactory;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.LogJdbcDataSourceProvider;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Logs;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import reactor.core.publisher.Flux;
 
-public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
+import java.util.function.BiFunction;
+
+public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
 
-    public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
+    public AbstractJdbcLogDataStore(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
         super(jdbcRepository);
 
         this.filterService = filterService;
+    }
+
+    /**
+     * No-arg constructor for log-store plugins that are deserialized from configuration and wire
+     * their {@code jdbcRepository} + {@link #filterService} later, in {@code init(ApplicationContext)}.
+     *
+     * @see io.kestra.core.plugins.ApplicationContextInitializable
+     */
+    protected AbstractJdbcLogDataStore() {
+        super(null);
+    }
+
+    /**
+     * Wires this deserialized log-store plugin's runtime dependencies from the application context:
+     * the {@link JdbcFilterService}, and the {@code jdbcRepository} — either a fresh dialect
+     * repository bound to the dedicated log datasource (when {@code kestra.logs.<type>.url} is set),
+     * or the shared {@code @Named("logs")} repository (the primary datasource) otherwise.
+     *
+     * @param applicationContext      the application context to resolve beans from.
+     * @param dedicatedRepositoryFactory builds the dialect-specific repository for the dedicated
+     *        datasource (e.g. {@code (config, wrapper) -> new H2Repository<>(config, wrapper)}).
+     */
+    @SuppressWarnings("unchecked")
+    protected void initFrom(final ApplicationContext applicationContext,
+        final BiFunction<JdbcTableConfig, JooqDSLContextWrapper, io.kestra.jdbc.AbstractJdbcRepository<LogEntry>> dedicatedRepositoryFactory) {
+        this.filterService = applicationContext.getBean(JdbcFilterService.class);
+        this.accessControl = applicationContext.getBean(LogDataStoreAccessControl.class);
+        // Field-injected on bean-managed repositories; set explicitly here since the plugin is deserialized.
+        this.systemFlowsConfiguration = applicationContext.getBean(io.kestra.core.contexts.configuration.SystemFlowsConfiguration.class);
+
+        LogJdbcDataSourceProvider provider = applicationContext.getBean(LogJdbcDataSourceProvider.class);
+        if (provider.isDedicated()) {
+            JdbcTableConfig tableConfig = new JdbcTableConfigsFactory.InstantiableJdbcTableConfig("logs", LogEntry.class, provider.table());
+            this.jdbcRepository = dedicatedRepositoryFactory.apply(tableConfig, provider.dedicatedWrapper());
+        } else {
+            this.jdbcRepository = (io.kestra.jdbc.AbstractJdbcRepository<LogEntry>) applicationContext
+                .findBean(io.kestra.jdbc.AbstractJdbcRepository.class, Qualifiers.byName("logs"))
+                .orElseThrow(() -> new IllegalStateException("No AbstractJdbcRepository named 'logs' found"));
+        }
     }
 
     abstract protected Condition findCondition(String query);
@@ -48,7 +96,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     }
 
     @Getter
-    protected final JdbcFilterService filterService;
+    protected JdbcFilterService filterService;
+
+    /**
+     * Access-control + delete-audit collaborator. Defaults to the global no-op so legacy beans that
+     * do not call {@link #initFrom} behave exactly as before; log-store plugins set the real bean in
+     * {@code init(ApplicationContext)} (the EE bean enforces namespace ACL + publishes audit events).
+     */
+    protected LogDataStoreAccessControl accessControl = LogDataStoreAccessControl.GLOBAL;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
         return Map.of(
@@ -86,8 +141,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
      * Two log table columns don't line up with the default {@link QueryFilter.Field#name()}
      * lower-cased derivation:
      * <ul>
-     *   <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
-     *   <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
+     * <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
+     * <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
      * </ul>
      * Override the mapping for those; the rest of the column names match.
      */
@@ -211,6 +266,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
+        accessControl.onDeleteByQuery(tenantId, executionId, taskId, taskRunId, minLevel, attempt);
+
         this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
         {
             DSLContext context = DSL.using(configuration);
@@ -258,7 +315,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
         Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
 
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
                 int total = 0;
                 int deleted;
@@ -415,7 +473,28 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     protected Condition defaultFilter(String tenantId) {
-        return defaultFilterWithNoACL(tenantId);
+        return defaultFilterWithNoACL(tenantId).and(aclCondition());
+    }
+
+    /**
+     * Translates the {@link io.kestra.core.models.AccessScope} from {@link #accessControl} into a jOOQ
+     * condition: {@code GLOBAL} → no restriction, {@code DENY_ALL} → match nothing,
+     * {@code NAMESPACES} → the namespace (or its children) is in the allowed set.
+     */
+    protected Condition aclCondition() {
+        io.kestra.core.models.AccessScope scope = accessControl.namespaceScope();
+        return switch (scope.kind()) {
+            case GLOBAL -> DSL.trueCondition();
+            case DENY_ALL -> DSL.falseCondition();
+            case NAMESPACES -> {
+                List<Condition> ors = new ArrayList<>();
+                for (String namespace : scope.namespaces()) {
+                    ors.add(field("namespace").eq(namespace));
+                    ors.add(field("namespace").startsWith(namespace + "."));
+                }
+                yield DSL.or(ors);
+            }
+        };
     }
 
     @Override

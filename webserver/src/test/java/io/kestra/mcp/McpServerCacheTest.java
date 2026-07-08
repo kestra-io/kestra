@@ -1,18 +1,20 @@
 package io.kestra.mcp;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.mcp.models.McpServer;
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.annotation.Property;
-import jakarta.inject.Inject;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.context.annotation.Property;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,7 +86,8 @@ class McpServerCacheTest {
     void shouldNotifyListenerWhenInvalidating() {
         // Given
         AtomicInteger calls = new AtomicInteger();
-        cache.addInvalidationListener((tenantId, sid) -> {
+        cache.addInvalidationListener((tenantId, sid) ->
+        {
             if (sid.equals(serverId)) {
                 calls.incrementAndGet();
             }
@@ -101,12 +104,14 @@ class McpServerCacheTest {
     void shouldStillNotifySubsequentListenersWhenAListenerThrows() {
         // Given
         AtomicInteger reached = new AtomicInteger();
-        cache.addInvalidationListener((t, s) -> {
+        cache.addInvalidationListener((t, s) ->
+        {
             if (s.equals(serverId)) {
                 throw new RuntimeException("boom");
             }
         });
-        cache.addInvalidationListener((t, s) -> {
+        cache.addInvalidationListener((t, s) ->
+        {
             if (s.equals(serverId)) {
                 reached.incrementAndGet();
             }
@@ -126,7 +131,8 @@ class McpServerCacheTest {
         cache.get(TENANT, saved.id()); // populate
 
         AtomicInteger listenerCalls = new AtomicInteger();
-        cache.addInvalidationListener((tenantId, sid) -> {
+        cache.addInvalidationListener((tenantId, sid) ->
+        {
             if (sid.equals(saved.id())) {
                 listenerCalls.incrementAndGet();
             }
@@ -138,7 +144,8 @@ class McpServerCacheTest {
         // Then — the listener is invoked and the cache returns the fresh value
         Awaitility.await()
             .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 assertThat(listenerCalls.get()).isGreaterThanOrEqualTo(1);
                 Optional<McpServer> refreshed = cache.get(TENANT, saved.id());
                 assertThat(refreshed).map(McpServer::description).contains("Updated via cluster event");
@@ -157,8 +164,8 @@ class McpServerCacheTest {
         // Then — once the cluster event is processed, the cache no longer returns the server
         Awaitility.await()
             .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() ->
-                assertThat(cache.get(TENANT, saved.id())).isEmpty()
+            .untilAsserted(
+                () -> assertThat(cache.get(TENANT, saved.id())).isEmpty()
             );
     }
 

@@ -1,5 +1,7 @@
 package io.kestra.cli.services;
 
+import java.util.Optional;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.commands.servers.WorkerCommand;
@@ -9,13 +11,9 @@ import io.kestra.core.services.VersionService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.EditionProvider;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-
-import java.util.Optional;
 
 @Singleton
 public class DefaultStartupHook implements StartupHookInterface {
@@ -43,13 +41,13 @@ public class DefaultStartupHook implements StartupHookInterface {
         }
     }
 
-   private void saveKestraVersion() {
-      versionService.ifPresent(VersionService::maybeSaveOrUpdateInstanceVersion);
-   }
+    private void saveKestraVersion() {
+        versionService.ifPresent(VersionService::maybeSaveOrUpdateInstanceVersion);
+    }
 
     private void createDefaultMcpServerIfNotExist() {
-        mcpServerService.ifPresent(svc ->
-            tenantService.ifPresent(
+        mcpServerService.ifPresent(
+            svc -> tenantService.ifPresent(
                 ts -> ts.listTenants().forEach(svc::createDefaultMcpServerIfNotExist)
             )
         );

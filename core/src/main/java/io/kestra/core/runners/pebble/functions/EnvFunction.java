@@ -9,6 +9,7 @@ import io.kestra.core.runners.RunVariables;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 public class EnvFunction implements KestraFunction {
     public static final String NAME = "env";
 

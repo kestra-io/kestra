@@ -32,8 +32,7 @@ public record ApiTriggerState(
     String workerId,
     Instant lastTriggeredDate,
     String executionId,
-    TriggerType kind
-) {
+    TriggerType kind) {
     public static ApiTriggerState from(TriggerState state) {
         return new ApiTriggerState(
             state.getNamespace(),

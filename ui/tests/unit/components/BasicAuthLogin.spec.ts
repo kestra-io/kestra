@@ -39,7 +39,7 @@ describe("BasicAuthLogin redirect ('from' param) open-redirect protection", () =
         route.query = {from: payload}
         const wrapper = mountLogin()
 
-        const hiddenInput = wrapper.find<HTMLInputElement>('input[name="from"]')
+        const hiddenInput = wrapper.find<HTMLInputElement>("input[name=\"from\"]")
         expect(hiddenInput.exists()).toBe(true)
         expect(hiddenInput.element.value).toBe("")
     })

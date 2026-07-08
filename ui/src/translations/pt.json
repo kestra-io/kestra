@@ -2035,6 +2035,13 @@
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."
+        },
+        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "suggestions": {
+          "errorHandling": "Add error handling",
+          "unitTest": "Generate a unit test",
+          "explain": "Explain this flow",
+          "dbt": "Run a dbt pipeline"
         }
       }
     },

@@ -1,14 +1,26 @@
 package io.kestra.mcp;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.mcp.models.McpSessionEvent.McpSessionEventType;
+import io.kestra.core.mcp.repositories.McpSessionRepositoryInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.mcp.repositories.McpSessionRepositoryInterface;
 import io.kestra.core.server.ServerInstance;
+
 import io.micronaut.http.*;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
@@ -17,18 +29,8 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStreamableServerSession;
 import io.modelcontextprotocol.spec.ProtocolVersions;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -97,7 +99,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — an unsupported HTTP method (PUT) with otherwise valid headers
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         KestraMcpTransportContext context = buildTransportContext();
-        MutableHttpRequest<String> request = HttpRequest.<String>create(HttpMethod.PUT, "/mcp")
+        MutableHttpRequest<String> request = HttpRequest.<String> create(HttpMethod.PUT, "/mcp")
             .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
 
         // When
@@ -129,7 +131,7 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — POST with no body at all
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         KestraMcpTransportContext context = buildTransportContext();
-        MutableHttpRequest<String> request = HttpRequest.<String>create(HttpMethod.POST, "/mcp")
+        MutableHttpRequest<String> request = HttpRequest.<String> create(HttpMethod.POST, "/mcp")
             .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE);
 
         // When
@@ -200,16 +202,17 @@ class KestraFluxStreamableServerTransportProviderTest {
     void shouldAcceptRequestWhenPersistentSseConnectionIsOnSeparateInstance() {
         // Given
         KestraMcpTransportContext context = buildTransportContext();
-        mcpSessionRepository.save(new McpSession(
-            context.getTenantId(),
-            context.getServerId(),
-            context.getSessionId(),
-            "other-server-instance-id",
-            null, false
-        ));
+        mcpSessionRepository.save(
+            new McpSession(
+                context.getTenantId(),
+                context.getServerId(),
+                context.getSessionId(),
+                "other-server-instance-id",
+                null, false
+            )
+        );
 
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
 
         // When
         HttpRequest<String> notifRequest = HttpRequest.POST("/mcp", toJson(NOTIFICATION_REQUEST))
@@ -226,13 +229,14 @@ class KestraFluxStreamableServerTransportProviderTest {
     void shouldHandleToolCallByEphemeralSessionWhenSseConnectionIsOnSeparateInstance() {
         // Given — session exists on another server
         KestraMcpTransportContext context = buildTransportContext();
-        mcpSessionRepository.save(new McpSession(
-            context.getTenantId(), context.getServerId(),
-            context.getSessionId(), "other-server-instance-id", null, false
-        ));
+        mcpSessionRepository.save(
+            new McpSession(
+                context.getTenantId(), context.getServerId(),
+                context.getSessionId(), "other-server-instance-id", null, false
+            )
+        );
 
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
 
         // When — a tools/list request arrives for that cross-server session
@@ -249,8 +253,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     @Test
     void shouldNotifyOnlyLocalSessionsWhenNotifyClientsIsCalled() {
         // Given — a local session initialized on this node
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
         KestraMcpTransportContext localContext = buildTransportContext();
         HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
@@ -270,26 +273,28 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — session exists on another server
         String remoteSseNode = UUID.randomUUID().toString();
         KestraMcpTransportContext context = buildTransportContext();
-        mcpSessionRepository.save(new McpSession(
-            context.getTenantId(), context.getServerId(),
-            context.getSessionId(), remoteSseNode, null, false
-        ));
+        mcpSessionRepository.save(
+            new McpSession(
+                context.getTenantId(), context.getServerId(),
+                context.getSessionId(), remoteSseNode, null, false
+            )
+        );
 
         // Subscribe to the broadcast queue before sending the DELETE
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<McpSessionEvent> received = new AtomicReference<>();
-        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either -> {
+        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either ->
+        {
             if (either.isLeft() && either.getLeft().session().sessionId().equals(context.getSessionId())) {
                 received.set(either.getLeft());
                 latch.countDown();
             }
         });
 
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
 
         // When — DELETE arrives on this server for a session owned by another server
-        HttpRequest<String> deleteRequest = HttpRequest.<String>create(HttpMethod.DELETE, "/mcp")
+        HttpRequest<String> deleteRequest = HttpRequest.<String> create(HttpMethod.DELETE, "/mcp")
             .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE)
             .header(HttpHeaders.MCP_SESSION_ID, context.getSessionId());
         HttpResponse<?> response = provider.handleRequest(deleteRequest, context).block();
@@ -299,9 +304,11 @@ class KestraFluxStreamableServerTransportProviderTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         // And — the session is removed from the repository
-        assertThat(mcpSessionRepository.find(
-            context.getTenantId(), context.getServerId(), context.getSessionId()
-        )).isEmpty();
+        assertThat(
+            mcpSessionRepository.find(
+                context.getTenantId(), context.getServerId(), context.getSessionId()
+            )
+        ).isEmpty();
 
         // And — a delete signal was broadcast so all nodes can clean up their local state
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -316,27 +323,29 @@ class KestraFluxStreamableServerTransportProviderTest {
         // Given — session exists on another server
         String remoteSseNode = UUID.randomUUID().toString();
         KestraMcpTransportContext context = buildTransportContext();
-        mcpSessionRepository.save(new McpSession(
-            context.getTenantId(), context.getServerId(),
-            context.getSessionId(), remoteSseNode, null, false
-        ));
+        mcpSessionRepository.save(
+            new McpSession(
+                context.getTenantId(), context.getServerId(),
+                context.getSessionId(), remoteSseNode, null, false
+            )
+        );
 
         // Subscribe to the broadcast queue before sending the GET
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<McpSessionEvent> received = new AtomicReference<>();
-        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either -> {
+        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either ->
+        {
             if (either.isLeft() && either.getLeft().session().sessionId().equals(context.getSessionId())) {
                 received.set(either.getLeft());
                 latch.countDown();
             }
         });
 
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
 
         // When — GET arrives on this server for a session owned by another server
-        HttpRequest<String> getRequest = HttpRequest.<String>GET("/mcp")
+        HttpRequest<String> getRequest = HttpRequest.<String> GET("/mcp")
             .accept(MediaType.TEXT_EVENT_STREAM_TYPE)
             .header(HttpHeaders.MCP_SESSION_ID, context.getSessionId());
         HttpResponse<?> response = provider.handleRequest(getRequest, context).block();
@@ -346,9 +355,11 @@ class KestraFluxStreamableServerTransportProviderTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         // And — the repository now records this node as the SSE owner
-        assertThat(mcpSessionRepository.find(
-            context.getTenantId(), context.getServerId(), context.getSessionId()
-        )).isPresent().get().extracting(McpSession::sseNode).isEqualTo(ServerInstance.INSTANCE_ID);
+        assertThat(
+            mcpSessionRepository.find(
+                context.getTenantId(), context.getServerId(), context.getSessionId()
+            )
+        ).isPresent().get().extracting(McpSession::sseNode).isEqualTo(ServerInstance.INSTANCE_ID);
 
         // And — a broadcast was emitted so the previous owning node can release its in-memory state
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -362,8 +373,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     @Test
     void shouldRemoveSessionFromLocalStateWhenOwnershipTransferBroadcastReceived() throws Exception {
         // Given — a session initialized on this node (ends up in streamableSessions)
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
         KestraMcpTransportContext context = buildTransportContext();
         HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
@@ -373,10 +383,12 @@ class KestraFluxStreamableServerTransportProviderTest {
         assertThat(mcpSessionService.findMcpStreamableServerSession(context)).isPresent();
 
         // When — another node broadcasts that it has taken ownership of the session
-        mcpSessionQueue.emit(new McpSessionEvent(
-            new McpSession(context.getTenantId(), context.getServerId(), context.getSessionId(), "other-node", null, false),
-            McpSessionEventType.OWNERSHIP_CHANGED
-        ));
+        mcpSessionQueue.emit(
+            new McpSessionEvent(
+                new McpSession(context.getTenantId(), context.getServerId(), context.getSessionId(), "other-node", null, false),
+                McpSessionEventType.OWNERSHIP_CHANGED
+            )
+        );
 
         // Then — this node's subscriber removes the session from local state
         long deadline = System.currentTimeMillis() + 5_000;
@@ -392,8 +404,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     @Test
     void shouldRemoveSessionFromLocalStateWhenDeleteBroadcastReceived() throws Exception {
         // Given — a session initialized on this node
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
         KestraMcpTransportContext context = buildTransportContext();
         HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
@@ -425,17 +436,19 @@ class KestraFluxStreamableServerTransportProviderTest {
         KestraMcpTransportContext context = buildTransportContext();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<McpSessionEvent> received = new AtomicReference<>();
-        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either -> {
-            if (either.isLeft()
-                && either.getLeft().session().sessionId().equals(context.getSessionId())
-                && either.getLeft().type() == McpSessionEventType.CREATED) {
+        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either ->
+        {
+            if (
+                either.isLeft()
+                    && either.getLeft().session().sessionId().equals(context.getSessionId())
+                    && either.getLeft().type() == McpSessionEventType.CREATED
+            ) {
                 received.set(either.getLeft());
                 latch.countDown();
             }
         });
 
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
 
         // When — an initialize request creates a new session
@@ -458,8 +471,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     @Test
     void shouldKeepSessionInLocalStateWhenOwnershipChangedToThisNode() throws InterruptedException, QueueException {
         // Given — a session initialized on this node (ends up in streamableSessions)
-        KestraFluxStreamableServerTransportProvider provider =
-            new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
+        KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
         KestraMcpTransportContext context = buildTransportContext();
         HttpRequest<String> initRequest = HttpRequest.POST("/mcp", toJson(INITIALIZE_REQUEST))
@@ -468,19 +480,24 @@ class KestraFluxStreamableServerTransportProviderTest {
         assertThat(mcpSessionService.findMcpStreamableServerSession(context)).isPresent();
 
         CountDownLatch latch = new CountDownLatch(1);
-        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either -> {
-            if (either.isLeft()
-                && either.getLeft().session().sessionId().equals(context.getSessionId())
-                && either.getLeft().type() == McpSessionEventType.OWNERSHIP_CHANGED) {
+        QueueSubscriber<McpSessionEvent> subscriber = mcpSessionQueue.subscriber().subscribe(either ->
+        {
+            if (
+                either.isLeft()
+                    && either.getLeft().session().sessionId().equals(context.getSessionId())
+                    && either.getLeft().type() == McpSessionEventType.OWNERSHIP_CHANGED
+            ) {
                 latch.countDown();
             }
         });
 
         // When — an OWNERSHIP_CHANGED event arrives with this node as the new SSE owner
-        mcpSessionQueue.emit(new McpSessionEvent(
-            new McpSession(context.getTenantId(), context.getServerId(), context.getSessionId(), ServerInstance.INSTANCE_ID, null, false),
-            McpSessionEventType.OWNERSHIP_CHANGED
-        ));
+        mcpSessionQueue.emit(
+            new McpSessionEvent(
+                new McpSession(context.getTenantId(), context.getServerId(), context.getSessionId(), ServerInstance.INSTANCE_ID, null, false),
+                McpSessionEventType.OWNERSHIP_CHANGED
+            )
+        );
 
         // Then — the subscriber recognises this node is the new owner and does NOT remove the session
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -506,7 +523,8 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     private static McpStreamableServerSession.Factory buildSessionFactory() {
-        return initRequest -> {
+        return initRequest ->
+        {
             McpSchema.InitializeResult result = new McpSchema.InitializeResult(
                 ProtocolVersions.MCP_2025_03_26,
                 new McpSchema.ServerCapabilities(null, null, null, null, null, null),

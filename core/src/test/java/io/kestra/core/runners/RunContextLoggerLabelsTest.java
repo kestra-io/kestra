@@ -17,10 +17,10 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.utils.TestsUtils;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

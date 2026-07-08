@@ -11,6 +11,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class RandomPortFunction implements KestraFunction {
     public static final String NAME = "randomPort";
+
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         try (ServerSocket tempSocket = new ServerSocket(0)) {

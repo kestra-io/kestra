@@ -1,8 +1,10 @@
 package io.kestra.core.worker;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.serializers.JacksonMapper;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

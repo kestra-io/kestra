@@ -45,14 +45,22 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ExecutionCommandMessageHandlerTest {
 
-    @Mock FlowMetaStoreInterface flowMetaStore;
-    @Mock ExecutionService executionService;
-    @Mock ExecutionStateStore executionStateStore;
-    @Mock ExecutionEventMessageHandler executionEventMessageHandler;
-    @Mock AsyncOperationService asyncOperationService;
-    @Mock TaskOutputService taskOutputService;
-    @Mock KillSwitchService killSwitchService;
-    @Mock KillSwitchActionService killSwitchActionService;
+    @Mock
+    FlowMetaStoreInterface flowMetaStore;
+    @Mock
+    ExecutionService executionService;
+    @Mock
+    ExecutionStateStore executionStateStore;
+    @Mock
+    ExecutionEventMessageHandler executionEventMessageHandler;
+    @Mock
+    AsyncOperationService asyncOperationService;
+    @Mock
+    TaskOutputService taskOutputService;
+    @Mock
+    KillSwitchService killSwitchService;
+    @Mock
+    KillSwitchActionService killSwitchActionService;
 
     ExecutionCommandMessageHandler handler;
     Create createCommand;

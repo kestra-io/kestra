@@ -9,8 +9,6 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.Graph2DotService;
 import io.kestra.core.utils.GraphUtils;
 
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

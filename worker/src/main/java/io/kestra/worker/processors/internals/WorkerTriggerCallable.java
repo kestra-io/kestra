@@ -6,9 +6,9 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 
 import lombok.Getter;
 

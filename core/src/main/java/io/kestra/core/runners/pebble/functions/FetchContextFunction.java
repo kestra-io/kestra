@@ -13,6 +13,7 @@ import jakarta.inject.Singleton;
 public class FetchContextFunction implements KestraFunction {
     public static final String NAME = "fetchContext";
     public static final String ALIAS = "printContext";
+
     public List<String> getArgumentNames() {
         return List.of();
     }

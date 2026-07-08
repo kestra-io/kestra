@@ -44,13 +44,13 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -648,7 +648,8 @@ class ExecutionControllerRunnerTest {
         Execution createdChildExec = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
-                    "/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/actions/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
+                    "/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/actions/replay?taskRunId="
+                        + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
                     ImmutableMap.of()
                 ),
             Execution.class
@@ -756,7 +757,8 @@ class ExecutionControllerRunnerTest {
         Execution replay = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
-                    "/api/v1/main/executions/" + parentExecution.getId() + "/actions/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
+                    "/api/v1/main/executions/" + parentExecution.getId() + "/actions/replay-with-inputs?taskRunId="
+                        + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
                     multipartBody
                 )
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
@@ -784,7 +786,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/replay-loop.yaml"})
+    @LoadFlows({ "flows/valids/replay-loop.yaml" })
     void restartExecutionFromTaskIdWithSequential() throws Exception {
         final String flowId = "replay-loop";
         final String referenceTaskId = "2_end";
@@ -1832,8 +1834,8 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
-        Execution execution = awaitExecution(runningExecution.getId(), exec ->
-            exec.getState().getCurrent() == State.Type.KILLED &&
+        Execution execution = awaitExecution(
+            runningExecution.getId(), exec -> exec.getState().getCurrent() == State.Type.KILLED &&
                 exec.findTaskRunsByTaskId("after-if").stream().anyMatch(taskRun -> taskRun.getState().isTerminated()) &&
                 exec.findTaskRunsByTaskId("after-if-log").stream().anyMatch(taskRun -> taskRun.getState().isTerminated()) &&
                 exec.findTaskRunsByTaskId("after-end").stream().anyMatch(taskRun -> taskRun.getState().isTerminated())
@@ -2190,7 +2192,9 @@ class ExecutionControllerRunnerTest {
         // pausing an already completed flow will result in errors
         Execution completed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
 
-        var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + completed.getId() + "/actions/pause", null)));
+        var notRunning = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + completed.getId() + "/actions/pause", null))
+        );
         assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
@@ -2381,7 +2385,8 @@ class ExecutionControllerRunnerTest {
         Execution completed = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         var notRunning = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + completed.getId() + "/actions/force-run", null))
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + completed.getId() + "/actions/force-run", null))
         );
         assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }

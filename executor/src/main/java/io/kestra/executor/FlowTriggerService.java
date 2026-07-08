@@ -20,8 +20,8 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
-
 import io.kestra.core.utils.ListUtils;
+
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -109,18 +109,22 @@ public class FlowTriggerService {
         }
 
         List<Execution> executions = flowWithFlowTriggers.stream()
-            .flatMap(flowWithFlowTrigger -> Optional.ofNullable(flowWithFlowTrigger.getTrigger().dependsOnAsMultipleCondition()).stream()
-                .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
-                    flowWithFlowTrigger.getFlow(),
-                    flowWithFlowTrigger.getTrigger(),
-                    multipleCondition)
-            ))
-            .map(flowWithMultipleCondition ->
-                multipleConditionStorage.process(
+            .flatMap(
+                flowWithFlowTrigger -> Optional.ofNullable(flowWithFlowTrigger.getTrigger().dependsOnAsMultipleCondition()).stream()
+                    .map(
+                        multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
+                            flowWithFlowTrigger.getFlow(),
+                            flowWithFlowTrigger.getTrigger(),
+                            multipleCondition
+                        )
+                    )
+            )
+            .map(
+                flowWithMultipleCondition -> multipleConditionStorage.process(
                     flowWithMultipleCondition.getFlow(),
                     flowWithMultipleCondition.getMultipleCondition(),
                     buildOutputs(execution),
-                        (txContext, multipleConditionWindow) -> processMultipleConditionWindow(txContext, flowWithMultipleCondition, multipleConditionWindow, execution, multipleConditionStorage)
+                    (txContext, multipleConditionWindow) -> processMultipleConditionWindow(txContext, flowWithMultipleCondition, multipleConditionWindow, execution, multipleConditionStorage)
                 )
             )
             .filter(Objects::nonNull)
@@ -132,7 +136,8 @@ public class FlowTriggerService {
         return executions;
     }
 
-    private Execution processMultipleConditionWindow(TransactionContext txContext, FlowWithFlowTriggerAndMultipleCondition flowWithMultipleCondition, MultipleConditionWindow multipleConditionWindow, Execution execution, MultipleConditionStateStore multipleConditionStateStore) {
+    private Execution processMultipleConditionWindow(TransactionContext txContext, FlowWithFlowTriggerAndMultipleCondition flowWithMultipleCondition,
+        MultipleConditionWindow multipleConditionWindow, Execution execution, MultipleConditionStateStore multipleConditionStateStore) {
         if (!multipleConditionWindow.isValid(ZonedDateTime.now())) {
             return null;
         }
@@ -159,8 +164,9 @@ public class FlowTriggerService {
         if (
             // evaluate conditions
             conditionService.isValid(flowWithMultipleCondition.getTrigger(), flowWithMultipleCondition.getFlow(), runContext) &&
-                // evaluate dependsOn against the updated accumulated window
-                conditionService.isValid(flowWithMultipleCondition.getTrigger().dependsOnAsMultipleCondition(), flowWithMultipleCondition.getFlow(), execution, Optional.of(updatedWindow), runContext)
+            // evaluate dependsOn against the updated accumulated window
+                conditionService
+                    .isValid(flowWithMultipleCondition.getTrigger().dependsOnAsMultipleCondition(), flowWithMultipleCondition.getFlow(), execution, Optional.of(updatedWindow), runContext)
         ) {
             Optional<Execution> maybeExecution = flowWithMultipleCondition.getTrigger().evaluate(
                 Optional.of(updatedWindow),
@@ -183,7 +189,8 @@ public class FlowTriggerService {
         return Map.of(
             execution.getNamespace(), Map.of(
                 execution.getFlowId(), execution.getOutputs()
-        ));
+            )
+        );
     }
 
     private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow) {
@@ -191,12 +198,12 @@ public class FlowTriggerService {
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
             // filter out Test Executions
-            (execution.getKind() != null && execution.getKind() != ExecutionKind.NORMAL) ||
-            // ensure flow & triggers are enabled
-            flow.isDisabled() || flow instanceof FlowWithException ||
-            // a draft revision is never picked up implicitly (see withFlowTriggersOnly)
-            flow.isDraft() ||
-            flow.getTriggers() == null || flow.getTriggers().isEmpty()
+                (execution.getKind() != null && execution.getKind() != ExecutionKind.NORMAL) ||
+                // ensure flow & triggers are enabled
+                flow.isDisabled() || flow instanceof FlowWithException ||
+                // a draft revision is never picked up implicitly (see withFlowTriggersOnly)
+                flow.isDraft() ||
+                flow.getTriggers() == null || flow.getTriggers().isEmpty()
         ) {
             return Collections.emptyList();
         }

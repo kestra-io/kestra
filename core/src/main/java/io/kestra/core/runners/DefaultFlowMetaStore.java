@@ -32,7 +32,8 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
 
     private QueueSubscriber<FlowInterface> subscriber;
 
-    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, BroadcastQueueInterface<FlowInterface> flowQueue, FlowWithDefaultCache withDefaultCache) {
+    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, BroadcastQueueInterface<FlowInterface> flowQueue,
+        FlowWithDefaultCache withDefaultCache) {
         this.flowRepository = flowRepository;
         this.pluginDefaultService = pluginDefaultService;
         this.flowQueue = flowQueue;

@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Performs kill-switch actions (KILL, CANCEL, IGNORE) on existing executions.
  *
- * <p>Complements {@link io.kestra.core.killswitch.KillSwitchService}, which evaluates
- * <em>whether</em> a kill switch applies. This service performs the resulting <em>action</em>.</p>
+ * <p>
+ * Complements {@link io.kestra.core.killswitch.KillSwitchService}, which evaluates
+ * <em>whether</em> a kill switch applies. This service performs the resulting <em>action</em>.
+ * </p>
  */
 @Singleton
 @Slf4j
@@ -39,8 +42,8 @@ public class KillSwitchActionService {
      * Dispatches the appropriate kill-switch action for an existing execution.
      *
      * @param evaluationType the kill-switch verdict — must not be {@link EvaluationType#PASS}
-     * @param tenantId       tenant owning the execution
-     * @param executionId    execution to act on
+     * @param tenantId tenant owning the execution
+     * @param executionId execution to act on
      */
     public void handle(EvaluationType evaluationType, String tenantId, String executionId) {
         switch (evaluationType) {
@@ -57,7 +60,8 @@ public class KillSwitchActionService {
     }
 
     private void killExecution(String tenantId, String executionId) {
-        executionStateStore.lock(executionId, execution -> {
+        executionStateStore.lock(executionId, execution ->
+        {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.KILLING).addLabel(new Label(Label.KILL_SWITCH, "killed"));
                 return new ExecutorContext(newExecution);
@@ -79,7 +83,8 @@ public class KillSwitchActionService {
     }
 
     private void cancelExecution(String executionId) {
-        executionStateStore.lock(executionId, execution -> {
+        executionStateStore.lock(executionId, execution ->
+        {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
                 return new ExecutorContext(newExecution);

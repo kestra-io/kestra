@@ -124,10 +124,12 @@ public class FlowTriggerCaseTest {
         assertThat(executionA.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // Then: the listener trigger must NOT fire yet (flow-b not satisfied)
-        assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            MAIN_TENANT, namespace, listenFlowId, Duration.ofSeconds(3)
-        ));
+        assertThrows(
+            RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+                e -> e.getState().getCurrent().equals(Type.SUCCESS),
+                MAIN_TENANT, namespace, listenFlowId, Duration.ofSeconds(3)
+            )
+        );
 
         // When: update the listener flow to invert the conditions order
         FlowWithSource currentListenerFlow = flowRepository.findByIdWithSource(MAIN_TENANT, namespace, listenFlowId).orElseThrow();
@@ -156,7 +158,8 @@ public class FlowTriggerCaseTest {
 
         // the flow metastore is updated async so we wait a little
         await().atMost(Duration.ofSeconds(1))
-            .until(() -> {
+            .until(() ->
+            {
                 var metastoreRevision = flowMetaStore.findById(updated.getTenantId(), updated.getNamespace(), updated.getId(), Optional.empty()).map(it -> it.getRevision());
                 return metastoreRevision.isPresent() && metastoreRevision.get().equals(updated.getRevision());
             });

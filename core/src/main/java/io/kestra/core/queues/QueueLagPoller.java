@@ -8,14 +8,13 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.WorkerQueueMetaStore;
 import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.runners.WorkerQueueMetaStore;
 
-import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
-import jakarta.inject.Provider;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PostConstruct;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 

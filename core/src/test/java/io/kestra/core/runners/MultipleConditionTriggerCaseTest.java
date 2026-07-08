@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import io.kestra.core.models.executions.Execution;
@@ -206,11 +205,13 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS) && !e.getId().equals(triggerExecution.getId()),
-            MAIN_TENANT, "io.kestra.tests.trigger.fire.once.true", "flow-trigger-fire-once-true-flow-listen",
-            Duration.ofSeconds(3)
-        ));
+        assertThrows(
+            RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+                e -> e.getState().getCurrent().equals(Type.SUCCESS) && !e.getId().equals(triggerExecution.getId()),
+                MAIN_TENANT, "io.kestra.tests.trigger.fire.once.true", "flow-trigger-fire-once-true-flow-listen",
+                Duration.ofSeconds(3)
+            )
+        );
     }
 
     public void flowTriggerAnyMode() throws TimeoutException, QueueException {
@@ -241,11 +242,13 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // only one condition: trigger should not have been fired yet
-         assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode", "flow-trigger-at-least-mode-flow-listen",
-             Duration.ofMillis(500)
-        ));
+        assertThrows(
+            RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+                e -> e.getState().getCurrent().equals(Type.SUCCESS),
+                MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode", "flow-trigger-at-least-mode-flow-listen",
+                Duration.ofMillis(500)
+            )
+        );
 
         execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode",

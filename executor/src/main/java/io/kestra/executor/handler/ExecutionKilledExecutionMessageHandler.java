@@ -2,11 +2,11 @@ package io.kestra.executor.handler;
 
 import java.util.Optional;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.async.AsyncOperationProcessedEvent;
-import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;

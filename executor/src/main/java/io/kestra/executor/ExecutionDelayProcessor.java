@@ -47,8 +47,7 @@ public class ExecutionDelayProcessor {
         FlowMetaStoreInterface flowMetaStore,
         ExecutionService executionService,
         ExecutorService executorService,
-        MetricRegistry metricRegistry
-    ) {
+        MetricRegistry metricRegistry) {
         this.executionDelayStateStore = executionDelayStateStore;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
@@ -65,8 +64,8 @@ public class ExecutionDelayProcessor {
     public List<ExecutorContext> processExpired(Instant now) {
         List<ExecutorContext> executors = new ArrayList<>();
 
-        executionDelayStateStore.processExpired(now, executionDelay ->
-            process(executionDelay).ifPresent(executors::add)
+        executionDelayStateStore.processExpired(
+            now, executionDelay -> process(executionDelay).ifPresent(executors::add)
         );
 
         return executors;
@@ -87,9 +86,11 @@ public class ExecutionDelayProcessor {
             try {
                 // Handle paused tasks and scheduledAt
                 // Also skip if the execution is being killed (KILLING is not yet terminated but must not be resumed).
-                if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
+                if (
+                    executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
                         && !execution.getState().isTerminated()
-                        && execution.getState().getCurrent() != State.Type.KILLING) {
+                        && execution.getState().getCurrent() != State.Type.KILLING
+                ) {
                     if (executionDelay.getTaskRunId() == null) {
                         // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                         Execution markAsExecution = execution.withState(executionDelay.getState());
@@ -108,8 +109,10 @@ public class ExecutionDelayProcessor {
                     }
                 }
                 // Handle failed task retries — skip if the execution is being killed so the retry does not race the kill
-                else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
-                        && execution.getState().getCurrent() != State.Type.KILLING) {
+                else if (
+                    executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+                        && execution.getState().getCurrent() != State.Type.KILLING
+                ) {
                     FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                     Execution newAttempt = executionService.retryTask(
                         execution,
@@ -119,8 +122,10 @@ public class ExecutionDelayProcessor {
                     executor = executor.withExecution(newAttempt, "retryFailedTask");
                 }
                 // Handle failed flow retries — skip if the execution is being killed so the retry does not race the kill
-                else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
-                        && execution.getState().getCurrent() != State.Type.KILLING) {
+                else if (
+                    executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
+                        && execution.getState().getCurrent() != State.Type.KILLING
+                ) {
                     FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                     Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
                     executor = executor.withExecution(newExecution, "retryFailedFlow");

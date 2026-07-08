@@ -101,12 +101,14 @@ class ExecutionDelayProcessorTest {
         harness.registerFlow(flow);
         Execution scheduled = Executions.created(flow);
         harness.executionStateStore().save(scheduled);
-        harness.executionDelayStateStore().save(ExecutionDelay.builder()
-            .executionId(scheduled.getId())
-            .date(NOW)
-            .state(State.Type.RUNNING)
-            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-            .build());
+        harness.executionDelayStateStore().save(
+            ExecutionDelay.builder()
+                .executionId(scheduled.getId())
+                .date(NOW)
+                .state(State.Type.RUNNING)
+                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                .build()
+        );
 
         // When
         List<ExecutorContext> toEmit = processor.processExpired(NOW);
@@ -126,12 +128,14 @@ class ExecutionDelayProcessorTest {
         harness.registerFlow(flow);
         Execution killing = Executions.created(flow).withState(State.Type.KILLING);
         harness.executionStateStore().save(killing);
-        harness.executionDelayStateStore().save(ExecutionDelay.builder()
-            .executionId(killing.getId())
-            .date(NOW)
-            .state(State.Type.RUNNING)
-            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-            .build());
+        harness.executionDelayStateStore().save(
+            ExecutionDelay.builder()
+                .executionId(killing.getId())
+                .date(NOW)
+                .state(State.Type.RUNNING)
+                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                .build()
+        );
 
         // When
         List<ExecutorContext> toEmit = processor.processExpired(NOW);
@@ -149,12 +153,14 @@ class ExecutionDelayProcessorTest {
         harness.registerFlow(flow);
         Execution done = Executions.created(flow).withState(State.Type.SUCCESS);
         harness.executionStateStore().save(done);
-        harness.executionDelayStateStore().save(ExecutionDelay.builder()
-            .executionId(done.getId())
-            .date(NOW)
-            .state(State.Type.RUNNING)
-            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-            .build());
+        harness.executionDelayStateStore().save(
+            ExecutionDelay.builder()
+                .executionId(done.getId())
+                .date(NOW)
+                .state(State.Type.RUNNING)
+                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                .build()
+        );
 
         // When
         List<ExecutorContext> toEmit = processor.processExpired(NOW);
@@ -203,12 +209,14 @@ class ExecutionDelayProcessorTest {
     void shouldSkipDelayWhenExecutionDoesNotExist() {
         // Given: a delay pointing at an execution the store has never seen (row not yet
         // committed — the "not ready for now" branch of the lock)
-        harness.executionDelayStateStore().save(ExecutionDelay.builder()
-            .executionId("missing-execution")
-            .date(NOW)
-            .state(State.Type.RUNNING)
-            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-            .build());
+        harness.executionDelayStateStore().save(
+            ExecutionDelay.builder()
+                .executionId("missing-execution")
+                .date(NOW)
+                .state(State.Type.RUNNING)
+                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                .build()
+        );
 
         // When
         List<ExecutorContext> toEmit = processor.processExpired(NOW);

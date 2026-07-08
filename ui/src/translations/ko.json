@@ -60,7 +60,7 @@
     "save": "저장",
     "save_as_draft": "초안으로 저장",
     "draft": "초안",
-    "draft_flow_warning": "이 flow 리비전은 초안입니다. 실행은 이 초안 리비전을 기준으로 수행되며 flow 정의가 유효하지 않으면 즉시 실패할 수 있습니다.",
+    "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
     "save task": "Task 저장",
     "saved": "성공적으로 저장됨",
     "saved as draft": "초안으로 저장되었습니다",
@@ -838,6 +838,7 @@
       },
       "filter": "필터",
       "new_file": "새 파일",
+      "read_only": "이 namespace의 파일을 관리할 권한이 없습니다",
       "no_items": {
         "heading": "아직 namespace에 파일이 없습니다.",
         "paragraph": "파일을 생성하거나 가져와서 namespace 내의 flow 간에 코드를 공유하세요."

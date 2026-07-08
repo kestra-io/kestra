@@ -17,10 +17,10 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.property.Property;
@@ -283,7 +283,7 @@ class RunVariablesTest {
         // Then
         assertThat((Map<String, Object>) variables.get("trigger")).containsEntry("date", "2024-01-01T00:00:00Z");
 
-        Map<String, Object> triggerContext = (Map<String, Object>)((Map<String, Object>) variables.get("trigger")).get("_context");
+        Map<String, Object> triggerContext = (Map<String, Object>) ((Map<String, Object>) variables.get("trigger")).get("_context");
         assertThat(triggerContext).containsEntry("id", "schedule-trigger");
         assertThat(triggerContext).containsEntry("type", "io.kestra.plugin.core.trigger.Schedule");
     }
@@ -311,7 +311,7 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         // Then — trigger._context must be present even without variables
-        Map<String, Object> triggerContext = (Map<String, Object>)((Map<String, Object>) variables.get("trigger")).get("_context");
+        Map<String, Object> triggerContext = (Map<String, Object>) ((Map<String, Object>) variables.get("trigger")).get("_context");
         assertThat(triggerContext).containsEntry("id", "schedule-trigger");
         assertThat(triggerContext).containsEntry("type", "io.kestra.plugin.core.trigger.Schedule");
     }
@@ -390,7 +390,7 @@ class RunVariablesTest {
      * Dynamic top-level keys ({@code inputs}, {@code outputs}, {@code tasks}, etc.) are noted
      * as present but their children are not walked, since their structure varies per flow/execution.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     void contextPathsShouldMatchExplicitRegistry() {
         String parentRunId = IdUtils.create();
@@ -437,8 +437,15 @@ class RunVariablesTest {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(GenericFlow.builder().id("flow").namespace("ns").revision(1).tenantId("tenant").build())
             .withTask(new Task() {
-                @Override public String getId() { return "task-id"; }
-                @Override public String getType() { return "task-type"; }
+                @Override
+                public String getId() {
+                    return "task-id";
+                }
+
+                @Override
+                public String getType() {
+                    return "task-type";
+                }
             })
             .withTaskRun(childRun)
             .withExecution(execution)
@@ -450,8 +457,10 @@ class RunVariablesTest {
 
         // Dynamic top-level keys whose children vary per flow/execution — not walked.
         // "trigger" holds execution-trigger variables (dynamic like inputs/outputs).
-        Set<String> dynamicTopLevel = Set.of("envs", "files", "globals", "inputs", "labels",
-            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
+        Set<String> dynamicTopLevel = Set.of(
+            "envs", "files", "globals", "inputs", "labels",
+            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
+        );
 
         List<String> foundPaths = new ArrayList<>();
         collectStructuralPaths(variables, "", dynamicTopLevel, foundPaths);

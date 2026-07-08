@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
+
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -113,8 +114,6 @@ public final class RunVariables {
     public static List<String> allContextPaths() {
         return EXECUTION_CONTEXT_PATHS;
     }
-
-
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -484,9 +483,11 @@ public final class RunVariables {
                         builder.put("trigger", triggerVariables);
                     } else {
 
-                        builder.put("trigger", Map.of(
-                            "_context", triggerContext
-                        ));
+                        builder.put(
+                            "trigger", Map.of(
+                                "_context", triggerContext
+                            )
+                        );
                     }
                 }
 

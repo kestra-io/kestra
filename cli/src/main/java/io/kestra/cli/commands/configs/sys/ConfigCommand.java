@@ -12,6 +12,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         ConfigPropertiesCommand.class,
+        ConfigValidateCommand.class,
     }
 )
 @Slf4j

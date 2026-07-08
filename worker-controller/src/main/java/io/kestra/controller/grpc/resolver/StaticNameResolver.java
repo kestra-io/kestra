@@ -47,9 +47,11 @@ public class StaticNameResolver extends NameResolver {
 
     private void resolve() {
         if (listener != null) {
-            listener.onResult2(ResolutionResult.newBuilder()
-                .setAddressesOrError(StatusOr.fromValue(addresses))
-                .build());
+            listener.onResult2(
+                ResolutionResult.newBuilder()
+                    .setAddressesOrError(StatusOr.fromValue(addresses))
+                    .build()
+            );
         }
     }
 

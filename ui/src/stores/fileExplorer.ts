@@ -385,7 +385,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 const fileName = pathParts[pathParts.length - 1]
                 const [name, extension] = getFileNameWithExtension(fileName)
                 const content = await readFile(file)
-                namespacesStore.importFileDirectory({
+                await namespacesStore.importFileDirectory({
                     namespace: namespaceId.value,
                     content,
                     path: `${folderPath}/${fileName}`,
@@ -400,12 +400,12 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             } else {
                 const content = await readFile(file)
                 const [name, extension] = getFileNameWithExtension(file.name)
-                namespacesStore.importFileDirectory({
+                await namespacesStore.importFileDirectory({
                     namespace: namespaceId.value,
                     content,
                     path: file.name,
                 })
-                
+
                 fileTree.value.push({
                     id: Utils.uid(),
                     fileName: `${name}${extension ? `.${extension}` : ""}`,

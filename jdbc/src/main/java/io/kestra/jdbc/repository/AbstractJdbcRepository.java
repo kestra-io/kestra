@@ -47,7 +47,9 @@ public abstract class AbstractJdbcRepository {
 
     @Getter
     @Inject
-    private SystemFlowsConfiguration systemFlowsConfiguration;
+    // Micronaut field-injects this for bean-managed repositories; log-store plugins (deserialized,
+    // not bean-managed) set it in AbstractJdbcLogDataStore.initFrom — hence protected, not private.
+    protected SystemFlowsConfiguration systemFlowsConfiguration;
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);
@@ -142,7 +144,8 @@ public abstract class AbstractJdbcRepository {
             .select(
                 Stream.concat(
                     descriptors.entrySet().stream()
-                        .map(entry -> {
+                        .map(entry ->
+                        {
                             ColumnDescriptor<F> col = entry.getValue();
                             String key = entry.getKey();
                             Field<?> field = columnToField(col, fieldsMapping);
@@ -211,7 +214,8 @@ public abstract class AbstractJdbcRepository {
      */
     protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
         List<SortField<?>> orderFields = ListUtils.emptyOnNull(descriptors.getOrderBy()).stream()
-            .map(orderBy -> {
+            .map(orderBy ->
+            {
                 Field<?> field = field(orderBy.getColumn());
                 return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
             })
@@ -704,16 +708,22 @@ public abstract class AbstractJdbcRepository {
             case IN -> {
                 boolean includesUser = flowScopes.contains(FlowScope.USER);
                 boolean includesSystem = flowScopes.contains(FlowScope.SYSTEM);
-                if (includesUser && includesSystem) yield DSL.noCondition();
-                else if (includesUser) yield field("namespace").ne(systemNamespace);
-                else yield field("namespace").eq(systemNamespace);
+                if (includesUser && includesSystem)
+                    yield DSL.noCondition();
+                else if (includesUser)
+                    yield field("namespace").ne(systemNamespace);
+                else
+                    yield field("namespace").eq(systemNamespace);
             }
             case NOT_IN -> {
                 boolean excludesUser = flowScopes.contains(FlowScope.USER);
                 boolean excludesSystem = flowScopes.contains(FlowScope.SYSTEM);
-                if (excludesUser && excludesSystem) yield DSL.falseCondition();
-                else if (excludesUser) yield field("namespace").eq(systemNamespace);
-                else yield field("namespace").ne(systemNamespace);
+                if (excludesUser && excludesSystem)
+                    yield DSL.falseCondition();
+                else if (excludesUser)
+                    yield field("namespace").eq(systemNamespace);
+                else
+                    yield field("namespace").ne(systemNamespace);
             }
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         };
@@ -749,7 +759,8 @@ public abstract class AbstractJdbcRepository {
         @Nullable DateUtils.GroupType groupType) {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
+            .map(entry ->
+            {
                 Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
                 DateUtils.GroupType effectiveGroupType = groupType != null ? groupType : DateUtils.groupByType(duration);
                 return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType).as(entry.getKey());

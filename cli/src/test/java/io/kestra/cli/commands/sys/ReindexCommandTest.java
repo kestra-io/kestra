@@ -8,9 +8,9 @@ import java.net.URL;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.migration.MigrationRunnerInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 
-import io.kestra.core.migration.MigrationRunnerInterface;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -19,7 +21,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -74,16 +75,18 @@ class ExpressionControllerTest {
     void shouldRenderAgainstFlowSource() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 
-        var result = render(Map.of(
-            "flow", FLOW_SOURCE,
-            "expressions", List.of(
-                "{{ vars.region }}",
-                "{{ flow.id }}",
-                "{{ secret('MY_KEY') }}",
-                "{{ now() }}",
-                "prefix-{{ vars.region }}-{{ now() }}"
+        var result = render(
+            Map.of(
+                "flow", FLOW_SOURCE,
+                "expressions", List.of(
+                    "{{ vars.region }}",
+                    "{{ flow.id }}",
+                    "{{ secret('MY_KEY') }}",
+                    "{{ now() }}",
+                    "prefix-{{ vars.region }}-{{ now() }}"
+                )
             )
-        ));
+        );
 
         Map<String, String> rendered = result.rendered();
         // flow-level variables and flow metadata resolve
@@ -98,15 +101,17 @@ class ExpressionControllerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/minimal.yaml"})
+    @LoadFlows({ "flows/valids/minimal.yaml" })
     void shouldRenderAgainstExecution() throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
 
-        var result = render(Map.of(
-            "executionId", execution.getId(),
-            "expressions", List.of("{{ execution.id }}", "{{ flow.id }}")
-        ));
+        var result = render(
+            Map.of(
+                "executionId", execution.getId(),
+                "expressions", List.of("{{ execution.id }}", "{{ flow.id }}")
+            )
+        );
 
         Map<String, String> rendered = result.rendered();
         assertThat(rendered).containsEntry("{{ execution.id }}", execution.getId());
@@ -114,15 +119,17 @@ class ExpressionControllerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/variables.yaml"})
+    @LoadFlows({ "flows/valids/variables.yaml" })
     void shouldRenderAgainstFlowByNamespaceAndId() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 
-        var result = render(Map.of(
-            "namespace", TESTS_FLOW_NS,
-            "flowId", "variables",
-            "expressions", List.of("{{ vars.first }}", "{{ flow.id }}", "{{ now() }}")
-        ));
+        var result = render(
+            Map.of(
+                "namespace", TESTS_FLOW_NS,
+                "flowId", "variables",
+                "expressions", List.of("{{ vars.first }}", "{{ flow.id }}", "{{ now() }}")
+            )
+        );
 
         Map<String, String> rendered = result.rendered();
         assertThat(rendered).containsEntry("{{ vars.first }}", "1");
@@ -134,9 +141,11 @@ class ExpressionControllerTest {
     void shouldReturnEmptyContextWhenNeitherFlowNorExecutionProvided() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
 
-        var result = render(Map.of(
-            "expressions", List.of("literal", "{{ vars.region }}", "{{ now() }}")
-        ));
+        var result = render(
+            Map.of(
+                "expressions", List.of("literal", "{{ vars.region }}", "{{ now() }}")
+            )
+        );
 
         Map<String, String> rendered = result.rendered();
         // no context → literals pass through, everything resolvable-only stays raw

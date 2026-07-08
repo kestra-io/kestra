@@ -10,7 +10,6 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.namespaces.NamespaceInterface;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
 import io.micronaut.data.model.Pageable;

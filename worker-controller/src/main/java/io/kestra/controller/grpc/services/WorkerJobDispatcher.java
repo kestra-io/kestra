@@ -36,8 +36,6 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.worker.QueueSubscription;
-import io.kestra.core.worker.WorkerQueues;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -53,7 +51,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.Either;
 import io.kestra.core.worker.MetadataChangePayload;
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.WorkerBroadcastEvent;
+import io.kestra.core.worker.WorkerQueues;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -507,7 +507,8 @@ public class WorkerJobDispatcher {
             metricRegistry.gauge(
                 MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE,
                 MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_DESCRIPTION,
-                (Supplier<Integer>) () -> {
+                (Supplier<Integer>) () ->
+                {
                     Set<String> ids = workerIdsByWorkerQueue.get(workerQueueId);
                     return ids == null ? 0 : ids.size();
                 },
@@ -589,8 +590,10 @@ public class WorkerJobDispatcher {
                 // Queue, the new stream owns the registration and we must leave it alone.
                 WorkerStreamContext<WorkerJobResponse> current = activeStreams.get(workerId);
                 if (current != null && current.subscribedWorkerQueueIds().contains(workerQueueId)) {
-                    log.debug("Skipping unregister of worker [{}] from Worker Queue '{}': replaced by fresh registration",
-                        workerId, WorkerQueues.forLog(workerQueueId));
+                    log.debug(
+                        "Skipping unregister of worker [{}] from Worker Queue '{}': replaced by fresh registration",
+                        workerId, WorkerQueues.forLog(workerQueueId)
+                    );
                     continue;
                 }
 
@@ -872,7 +875,8 @@ public class WorkerJobDispatcher {
     /**
      * A worker that has reserved a slot in a specific bucket for an incoming job.
      */
-    private record ReservedSlot(WorkerStreamContext<WorkerJobResponse> context, String bucket) {}
+    private record ReservedSlot(WorkerStreamContext<WorkerJobResponse> context, String bucket) {
+    }
 
     /**
      * Dispatches a job to a worker.
@@ -915,8 +919,10 @@ public class WorkerJobDispatcher {
         try {
             persistJobToStateStore(context, job, dispatchWorkerQueueId);
         } catch (Exception e) {
-            log.warn("Failed to persist running state for job {} on worker {}; re-queuing for redelivery: {}",
-                jobId, context.getWorkerId(), e.getMessage());
+            log.warn(
+                "Failed to persist running state for job {} on worker {}; re-queuing for redelivery: {}",
+                jobId, context.getWorkerId(), e.getMessage()
+            );
             handlePersistFailure(context, job, originalEvent, dispatchWorkerQueueId, bucket);
             return;
         }
@@ -1009,8 +1015,10 @@ public class WorkerJobDispatcher {
      */
     private void rejectOversizedJob(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
         String dispatchWorkerQueueId, String bucket, int payloadSize, int workerLimit) {
-        log.error("Job {} payload ({} bytes) exceeds worker {} max inbound gRPC message size ({} bytes); failing the job instead of dispatching",
-            job.uid(), payloadSize, context.getWorkerId(), workerLimit);
+        log.error(
+            "Job {} payload ({} bytes) exceeds worker {} max inbound gRPC message size ({} bytes); failing the job instead of dispatching",
+            job.uid(), payloadSize, context.getWorkerId(), workerLimit
+        );
 
         metricRegistry.counter(
             MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
@@ -1083,7 +1091,8 @@ public class WorkerJobDispatcher {
         for (String metricName : List.of(
             MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE,
             MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE,
-            MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT)) {
+            MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT
+        )) {
             metricRegistry.find(metricName)
                 .tag(MetricRegistry.TAG_WORKER_QUEUE, workerQueueTag)
                 .gauges()
@@ -1333,8 +1342,7 @@ public class WorkerJobDispatcher {
     private void fireWorkerSubscriptionsChanged(
         WorkerStreamContext<WorkerJobResponse> context,
         Set<String> added,
-        Set<String> removed
-    ) {
+        Set<String> removed) {
         if (added.isEmpty() && removed.isEmpty()) {
             return;
         }

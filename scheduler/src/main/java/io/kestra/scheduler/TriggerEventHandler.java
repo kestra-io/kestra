@@ -9,10 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import io.kestra.core.events.EventId;
 import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -135,8 +135,8 @@ public class TriggerEventHandler {
     }
 
     private void emitProcessedIfAsync(TriggerEvent message,
-                                      AsyncOperationProcessedEvent.Outcome outcome,
-                                      String error) {
+        AsyncOperationProcessedEvent.Outcome outcome,
+        String error) {
         if (message instanceof AsyncOperation op) {
             asyncOperationService.emitProcessedIfAsync(op, message.id().getTenantId(), message.uid(), outcome, error);
         }
@@ -262,8 +262,8 @@ public class TriggerEventHandler {
             return;
         }
 
-        findTriggerState(event).ifPresent(state ->
-            triggerStateStore.save(
+        findTriggerState(event).ifPresent(
+            state -> triggerStateStore.save(
                 state
                     .lastEventId(clock, event.eventId())
                     .locked(clock, false)

@@ -23,14 +23,14 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
-import io.kestra.webserver.models.api.ApiTriggerAndState;
-import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.TriggerStateService;
 import io.kestra.webserver.utils.CSVUtils;
@@ -107,10 +107,9 @@ public class TriggerController {
             description = "Which trigger date field the time interval is applied to",
             schema = @Schema(
                 type = "string",
-                allowableValues = {"NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE"}
+                allowableValues = { "NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE" }
             )
-        ) @Nullable @QueryValue QueryFilter.Field dateFilter
-    ) throws HttpStatusException {
+        ) @Nullable @QueryValue QueryFilter.Field dateFilter) throws HttpStatusException {
         ArrayListTotal<TriggerState> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),

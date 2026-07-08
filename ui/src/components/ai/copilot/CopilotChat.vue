@@ -4,7 +4,7 @@
         <div class="copilot-topbar">
             <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ t("ai.copilot.newChat") }}
-                <Plus :size="14" />
+                <Plus :size="16" />
             </KsButton>
             <KsDropdown trigger="click" data-test="copilot-recents">
                 <KsButton size="small" class="copilot-topbar-pill">
@@ -156,19 +156,25 @@
 
     .copilot-topbar {
         display: flex;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        /* Figma: pills sit 4px apart in a p-8 row. */
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
     }
 
-    /* Small bg-tag pills (Figma "New chat" / "Recents"). */
+    /*
+        Figma "New chat" / "Recents": compact bg-tag pills — regular 12px label + 16px icon,
+        4px gap, px-8. Mirrors the composer mode pill so both controls read as the same family.
+    */
     .copilot-topbar-pill {
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
         background: var(--ks-bg-tag);
         border: none;
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-sm);
+        font-weight: 400;
     }
 
     .copilot-empty {

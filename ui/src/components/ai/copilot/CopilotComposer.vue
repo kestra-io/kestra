@@ -113,14 +113,21 @@
         gap: var(--ks-spacing-2);
     }
 
+    /* Figma mode control: a subtle bg-tag pill (icon/label + chevron), not a solid button. */
     .copilot-mode-trigger {
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-1);
+        background: var(--ks-bg-tag);
+        border: none;
+        color: var(--ks-text-primary);
+        border-radius: var(--ks-radius-sm);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
     }
 
     .copilot-mode-chevron {
         display: inline-flex;
         font-size: 1rem;
+        color: var(--ks-text-secondary);
     }
 </style>

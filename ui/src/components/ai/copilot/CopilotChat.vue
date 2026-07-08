@@ -17,6 +17,7 @@
                     <KsButton
                         v-for="suggestion in suggestions"
                         :key="suggestion"
+                        size="small"
                         class="copilot-suggestion"
                         :disabled="!canSend"
                         @click="onSubmit(suggestion)"
@@ -154,9 +155,16 @@
         justify-content: center;
     }
 
+    /* Figma "tag-btn": subtle surface pill, subtle border, semibold secondary label. */
     .copilot-suggestion {
-        /* Fully-rounded "stadium" pill (Figma tag-btn, rounded-111) — a shape, not a theme radius. */
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        color: var(--ks-text-secondary);
+        font-weight: 600;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        /* Fully-rounded "stadium" pill (rounded-111) — a shape, not a theme radius. */
         border-radius: 999px;
+        box-shadow: var(--ks-shadow-element);
     }
 
     .copilot-body {

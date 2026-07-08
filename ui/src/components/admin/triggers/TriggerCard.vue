@@ -2,7 +2,7 @@
     <div class="trigger-card">
         <div class="trigger-body">
             <div class="icon">
-                <KsTaskIcon class="glyph" :cls="trigger.type" :icons="pluginsStore.icons" onlyIcon />
+                <KsTaskIcon class="glyph" :cls="trigger.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
             </div>
             <div class="content">
                 <div class="header">

@@ -2,11 +2,11 @@ package io.kestra.webserver.models.api;
 
 import java.time.Clock;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

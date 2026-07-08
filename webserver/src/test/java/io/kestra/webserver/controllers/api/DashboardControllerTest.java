@@ -23,7 +23,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.settings.DashboardSettings;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -55,7 +55,7 @@ class DashboardControllerTest {
     ReactorHttpClient client;
 
     @Inject
-    LogRepositoryInterface logRepository;
+    LogDataStoreInterface logRepository;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;

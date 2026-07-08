@@ -15,7 +15,8 @@ import static java.lang.annotation.ElementType.*;
  * Constrains a string to a RFC 1123 hostname label: lowercase alphanumerics
  * and hyphens, must start and end with an alphanumeric, max 64 characters.
  *
- * <p>Used as a single source of truth for label-like identifiers such as
+ * <p>
+ * Used as a single source of truth for label-like identifiers such as
  * Worker Queue ids, Worker Group ids, and routing tags.
  */
 @Retention(RetentionPolicy.RUNTIME)

@@ -40,7 +40,7 @@ class FollowLogEventSearchableTest {
     private static final Instant T_FUTURE = Instant.parse("2020-12-31T00:00:00Z");
 
     private static final FollowLogEvent baseEvent = new FollowLogEvent(
-        null,                  // tenantId
+        null, // tenantId
         "io.kestra.demo",
         "demo-flow",
         "load-data",

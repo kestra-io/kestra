@@ -21,8 +21,10 @@ public class GreaterThanExpression extends BinaryExpression<Boolean> {
         try {
             return OperatorUtils.gt(left, right);
         } catch (Exception ex) {
-            throw new PebbleException(ex, "Could not perform greater than comparison", this.getLineNumber(), self
-                .getName());
+            throw new PebbleException(
+                ex, "Could not perform greater than comparison", this.getLineNumber(), self
+                    .getName()
+            );
         }
     }
 }

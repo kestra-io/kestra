@@ -26,7 +26,7 @@ class Rfc1123LabelTest {
 
     @Test
     void shouldAcceptValidLabels() {
-        for (String ok : new String[]{
+        for (String ok : new String[] {
             "a", "ab", "a1", "1a",
             "docker", "linux-amd64", "us-east-1",
             "a" + "-".repeat(62) + "b" // length 64, dashes in middle
@@ -43,16 +43,16 @@ class Rfc1123LabelTest {
     @Test
     void shouldRejectInvalidLabels() {
         String tooLong = "a".repeat(Rfc1123LabelValidator.MAX_LENGTH + 1);
-        for (String bad : new String[]{
-            "",          // empty
-            "-a",        // leading hyphen
-            "a-",        // trailing hyphen
-            "a_b",       // underscore not allowed
-            "A",         // uppercase not allowed
-            "Aa",        // uppercase not allowed
-            "a b",       // space not allowed
-            "a.b",       // dot not allowed
-            tooLong      // > MAX_LENGTH chars
+        for (String bad : new String[] {
+            "", // empty
+            "-a", // leading hyphen
+            "a-", // trailing hyphen
+            "a_b", // underscore not allowed
+            "A", // uppercase not allowed
+            "Aa", // uppercase not allowed
+            "a b", // space not allowed
+            "a.b", // dot not allowed
+            tooLong // > MAX_LENGTH chars
         }) {
             assertThat(modelValidator.isValid(new LabelHolder(bad)))
                 .as("expected '%s' to be rejected", bad)

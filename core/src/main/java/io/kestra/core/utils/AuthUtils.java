@@ -12,7 +12,8 @@ import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 /**
  * Utility class for BasicAuth password hashing.
  *
- * <p>Passwords at rest are stored as {@code bcrypt(sha512(salt|password))}.
+ * <p>
+ * Passwords at rest are stored as {@code bcrypt(sha512(salt|password))}.
  * The SHA-512 pre-hash step normalises input to a fixed-length 128-char hex string,
  * making bcrypt's 72-byte input truncation unexploitable via SHA-512 preimage resistance
  * (two different plaintexts would need to produce hex strings with identical first-72-char
@@ -26,13 +27,14 @@ public final class AuthUtils {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private AuthUtils() {}
+    private AuthUtils() {
+    }
 
     /**
      * Computes the SHA-512 hex digest of {@code salt|password} (inner pre-hash).
      * This value is the input to {@link #bcryptDigest(String)}.
      *
-     * @param salt     the per-user salt (see {@link #generateSalt()})
+     * @param salt the per-user salt (see {@link #generateSalt()})
      * @param password the plaintext password
      * @return 128-char lower-hex SHA-512 digest
      */
@@ -72,7 +74,7 @@ public final class AuthUtils {
     /**
      * Hashes {@code password} for storage: {@code bcrypt(sha512(salt|password))}.
      *
-     * @param salt     the per-user salt
+     * @param salt the per-user salt
      * @param password the plaintext password
      * @return a bcrypt modular-crypt string suitable for storing in the database
      */
@@ -83,9 +85,9 @@ public final class AuthUtils {
     /**
      * Verifies {@code password} against a stored bcrypt hash.
      *
-     * @param salt        the per-user salt used when the hash was created
-     * @param password    the plaintext password to verify
-     * @param storedHash  the bcrypt modular-crypt string from the database
+     * @param salt the per-user salt used when the hash was created
+     * @param password the plaintext password to verify
+     * @param storedHash the bcrypt modular-crypt string from the database
      * @return {@code true} if the password matches, {@code false} otherwise
      *         (including when {@code storedHash} is not a valid bcrypt string)
      */

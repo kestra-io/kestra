@@ -89,18 +89,24 @@ class MonitoredQueueSubscriberTest {
         monitored.resume();
 
         // Then
-        assertThat(meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL)
-            .tag(MetricRegistry.TAG_QUEUE_NAME, QUEUE_NAME)
-            .counter().count()).isEqualTo(1.0);
-        assertThat(meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL)
-            .tag(MetricRegistry.TAG_QUEUE_NAME, QUEUE_NAME)
-            .counter().count()).isEqualTo(1.0);
+        assertThat(
+            meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL)
+                .tag(MetricRegistry.TAG_QUEUE_NAME, QUEUE_NAME)
+                .counter().count()
+        ).isEqualTo(1.0);
+        assertThat(
+            meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL)
+                .tag(MetricRegistry.TAG_QUEUE_NAME, QUEUE_NAME)
+                .counter().count()
+        ).isEqualTo(1.0);
     }
 
     @Test
     void subscribeShouldReturnWrapperNotDelegate() {
         // Given
-        Consumer<Either<TestEvent, DeserializationException>> consumer = e -> {};
+        Consumer<Either<TestEvent, DeserializationException>> consumer = e ->
+        {
+        };
 
         // When
         QueueSubscriber<TestEvent> returned = monitored.subscribe(consumer);
@@ -113,7 +119,9 @@ class MonitoredQueueSubscriberTest {
     @Test
     void subscribeBatchShouldUseDelegateNativeBatchAndReturnWrapper() {
         // Given
-        Consumer<List<Either<TestEvent, DeserializationException>>> batchConsumer = items -> {};
+        Consumer<List<Either<TestEvent, DeserializationException>>> batchConsumer = items ->
+        {
+        };
 
         // When
         QueueSubscriber<TestEvent> returned = monitored.subscribeBatch(batchConsumer);

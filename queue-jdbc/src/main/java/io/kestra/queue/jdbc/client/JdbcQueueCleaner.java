@@ -51,14 +51,13 @@ public class JdbcQueueCleaner {
     @Scheduled(initialDelay = "${kestra.jdbc.queue.cleaner.initial-delay:1h}", fixedDelay = "${kestra.jdbc.queue.cleaner.fixed-delay:1h}")
     public long deleteQueue() {
         LongAdder totalDeleted = new LongAdder();
-        broadcastQueues.forEach(queue ->
-            dslContextWrapper.transaction(configuration ->
-            {
-                var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queue.queueName()));
-                int deleted = delete(configuration, condition);
-                log.info("Cleaned {} records for the '{}' queue", deleted, queue.queueName());
-                totalDeleted.add(deleted);
-            }));
+        broadcastQueues.forEach(queue -> dslContextWrapper.transaction(configuration ->
+        {
+            var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queue.queueName()));
+            int deleted = delete(configuration, condition);
+            log.info("Cleaned {} records for the '{}' queue", deleted, queue.queueName());
+            totalDeleted.add(deleted);
+        }));
 
         return totalDeleted.longValue();
     }

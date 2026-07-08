@@ -3,13 +3,14 @@ package io.kestra.core.models.kv;
 import java.time.Instant;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.utils.IdUtils;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -58,7 +59,8 @@ public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, 
 
     private boolean deleted;
 
-    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, @JsonProperty("version") Integer revision, boolean last, @Nullable Instant expirationDate, @Nullable Instant created,
+    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, @JsonProperty("version") Integer revision, boolean last, @Nullable Instant expirationDate,
+        @Nullable Instant created,
         @Nullable Instant updated, boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;

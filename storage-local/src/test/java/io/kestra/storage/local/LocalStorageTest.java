@@ -62,4 +62,3 @@ class LocalStorageTest extends StorageTestSuite {
         );
     }
 }
-

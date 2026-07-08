@@ -3,17 +3,17 @@ package io.kestra.core.services;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
-
 import io.kestra.core.utils.TruthUtils;
+
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Singleton;
 

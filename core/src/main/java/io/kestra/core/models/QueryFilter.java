@@ -37,7 +37,8 @@ public record QueryFilter(
             && field == null && operation == null && value == null;
         if (!leafShape && !nodeShape) {
             throw new IllegalArgumentException(
-                "QueryFilter must be either a leaf (field + operation) or a node (logical + non-empty children), not both or neither");
+                "QueryFilter must be either a leaf (field + operation) or a node (logical + non-empty children), not both or neither"
+            );
         }
         this.field = field;
         this.operation = operation;
@@ -63,8 +64,7 @@ public record QueryFilter(
         if (filters == null) {
             return false;
         }
-        return filters.stream().anyMatch(filter ->
-            filter.field() == field || (filter.children() != null && hasField(filter.children(), field)));
+        return filters.stream().anyMatch(filter -> filter.field() == field || (filter.children() != null && hasField(filter.children(), field)));
     }
 
     public enum Logical {

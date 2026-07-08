@@ -5,28 +5,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.quota.Quota;
-import io.kestra.core.services.QuotaService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
-import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
-import io.kestra.executor.KillSwitchActionService;
+import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
@@ -34,6 +33,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
+import io.kestra.executor.KillSwitchActionService;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.opentelemetry.api.trace.Span;
@@ -150,7 +150,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     // a quota is exceeded: stop the execution in the desired state
                                     Execution newExecution = switch (quota.get().getBehavior()) {
                                         case FAIL -> {
-                                            var failedExecution = execution.failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
+                                            var failedExecution = execution
+                                                .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
                                             var logger = runContextLoggerFactory.create(execution);
                                             logger.emitLogs(failedExecution.logs());
                                             yield failedExecution.execution();
@@ -159,7 +160,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     };
 
                                     metricRegistry
-                                        .counter(MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
+                                        .counter(
+                                            MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
+                                        )
                                         .increment();
 
                                     return executor.withExecution(newExecution, "processQuotas");
@@ -196,7 +199,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 }
                             }
                         }
-
 
                         // handle execution changed SLA
                         executor = executorService.handleExecutionChangedSLA(executor);

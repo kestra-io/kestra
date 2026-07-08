@@ -1,13 +1,12 @@
 package io.kestra.controller.grpc.services;
 
 import io.kestra.controller.grpc.WorkerControllerService;
-import io.kestra.core.reporter.ServerEventSender;
 import io.kestra.controller.grpc.WorkerReportRequest;
 import io.kestra.controller.grpc.WorkerReportResponse;
 import io.kestra.controller.grpc.WorkerReportingServiceGrpc;
+import io.kestra.core.reporter.ServerEventSender;
 
 import io.grpc.stub.StreamObserver;
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;

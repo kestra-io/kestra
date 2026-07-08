@@ -47,8 +47,7 @@ public class DirectQueueJobFetcher extends WorkerLoop implements JobFetcher {
     @Inject
     public DirectQueueJobFetcher(
         final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobQueue,
-        final WorkerQueueRegistry workerQueueRegistry
-    ) {
+        final WorkerQueueRegistry workerQueueRegistry) {
         super(DirectQueueJobFetcher.class.getSimpleName());
         this.workerJobQueue = workerJobQueue;
         this.workerQueueRegistry = workerQueueRegistry;

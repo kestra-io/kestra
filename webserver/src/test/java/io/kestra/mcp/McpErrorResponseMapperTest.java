@@ -1,10 +1,11 @@
 package io.kestra.mcp;
 
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

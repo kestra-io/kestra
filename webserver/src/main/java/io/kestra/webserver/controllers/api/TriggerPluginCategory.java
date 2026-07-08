@@ -11,12 +11,13 @@ import io.kestra.core.utils.Enums;
 /**
  * Category bucket for the "Add Trigger" catalog in the UI.
  *
- * <p>Derived from the owning {@link RegisteredPlugin}'s provenance and the interfaces the trigger
+ * <p>
+ * Derived from the owning {@link RegisteredPlugin}'s provenance and the interfaces the trigger
  * class implements:
  * <ul>
- *     <li>{@link #CORE} - trigger is bundled with Kestra (no external plugin location).</li>
- *     <li>{@link #REALTIME} - external trigger implementing {@link RealtimeTriggerInterface}.</li>
- *     <li>{@link #APP} - external trigger, typically implementing {@link PollingTriggerInterface}.</li>
+ * <li>{@link #CORE} - trigger is bundled with Kestra (no external plugin location).</li>
+ * <li>{@link #REALTIME} - external trigger implementing {@link RealtimeTriggerInterface}.</li>
+ * <li>{@link #APP} - external trigger, typically implementing {@link PollingTriggerInterface}.</li>
  * </ul>
  *
  * Core precedence wins over realtime/app so a bundled core trigger (for example Webhook) is CORE
@@ -55,8 +56,10 @@ public enum TriggerPluginCategory {
         // plugin jars but are conceptually part of "core" from the user's
         // perspective, so show them in the Core bucket with the EE badge.
         String packageName = triggerClass.getPackageName();
-        if (packageName.startsWith("io.kestra.plugin.core.")
-            || packageName.startsWith("io.kestra.core.")) {
+        if (
+            packageName.startsWith("io.kestra.plugin.core.")
+                || packageName.startsWith("io.kestra.core.")
+        ) {
             return CORE;
         }
 

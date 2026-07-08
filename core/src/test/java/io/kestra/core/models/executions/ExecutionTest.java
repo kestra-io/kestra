@@ -311,10 +311,12 @@ class ExecutionTest {
             .build();
         Execution execution = Execution.builder()
             .id(IdUtils.create())
-            .taskRunList(List.of(
-                TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
-                TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
+                    TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
+                )
+            )
             .build();
 
         // When guessing the final state
@@ -334,13 +336,15 @@ class ExecutionTest {
     private static Execution executionWithTaskRun(String taskId, State.Type state) {
         return Execution.builder()
             .id(IdUtils.create())
-            .taskRunList(List.of(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .taskId(taskId)
-                    .state(new State(state, new State()))
-                    .build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id(IdUtils.create())
+                        .taskId(taskId)
+                        .state(new State(state, new State()))
+                        .build()
+                )
+            )
             .build();
     }
 }

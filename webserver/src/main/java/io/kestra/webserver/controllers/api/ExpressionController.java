@@ -15,7 +15,6 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -49,8 +48,7 @@ public class ExpressionController {
         FlowRepositoryInterface flowRepository,
         PluginDefaultService pluginDefaultService,
         RunContextFactory runContextFactory,
-        DisplayExpressionRenderer displayExpressionRenderer
-    ) {
+        DisplayExpressionRenderer displayExpressionRenderer) {
         this.tenantService = tenantService;
         this.executionRepository = executionRepository;
         this.flowRepository = flowRepository;
@@ -62,7 +60,7 @@ public class ExpressionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/render", consumes = MediaType.APPLICATION_JSON)
     @Operation(
-        tags = {"Expressions"},
+        tags = { "Expressions" },
         summary = "Render Pebble expressions for display",
         description = "Renders a list of Pebble expressions for display purposes only, using a restricted engine: " +
             "secret() is masked as [secret: KEY], env() is kept raw, only a safe allowlist of pure functions is " +
@@ -113,10 +111,10 @@ public class ExpressionController {
         @Nullable @Schema(description = "Resolve against this execution's context") String executionId,
         @Nullable @Schema(description = "Resolve against this flow's context (with flowId)") String namespace,
         @Nullable @Schema(description = "Resolve against this flow's context (with namespace)") String flowId,
-        @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow
-    ) {}
+        @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow) {
+    }
 
     public record RenderedExpressions(
-        @Schema(description = "Rendered values keyed by their raw expression") Map<String, String> rendered
-    ) {}
+        @Schema(description = "Rendered values keyed by their raw expression") Map<String, String> rendered) {
+    }
 }

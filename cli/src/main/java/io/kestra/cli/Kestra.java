@@ -8,12 +8,12 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
+import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
@@ -141,8 +141,10 @@ public class Kestra implements Callable<Integer> {
         }
         // If --config was already parsed on the leaf command (placed after the subcommand), nothing to do.
         CommandLine.ParseResult leafResult = leafCmd.getParseResult();
-        if (leafResult != null && leafResult.matchedOptions().stream()
-                .anyMatch(opt -> opt.longestName().equals("--config"))) {
+        if (
+            leafResult != null && leafResult.matchedOptions().stream()
+                .anyMatch(opt -> opt.longestName().equals("--config"))
+        ) {
             return;
         }
         for (int i = 0; i < args.length - 1; i++) {

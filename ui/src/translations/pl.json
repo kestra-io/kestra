@@ -60,7 +60,7 @@
     "save": "Zapisz",
     "save_as_draft": "Zapisz jako wersję roboczą",
     "draft": "Wersja robocza",
-    "draft_flow_warning": "Ta rewizja flow jest wersją roboczą. Wykonanie zostanie uruchomione na tej roboczej rewizji i może natychmiast zakończyć się niepowodzeniem, jeśli definicja flow jest nieprawidłowa.",
+    "draft_flow_warning": "Najnowsza rewizja tego flow jest wersją roboczą. Wykonanie zostanie uruchomione na najnowszej opublikowanej rewizji – opublikuj wersję roboczą (lub uruchom ją z Playground), aby wykonać najnowsze zmiany.",
     "save task": "Zapisz Task",
     "saved": "Pomyślnie zapisano",
     "saved as draft": "Pomyślnie zapisano jako wersję roboczą",
@@ -838,6 +838,7 @@
       },
       "filter": "Filtr",
       "new_file": "Nowy plik",
+      "read_only": "Nie masz uprawnień do zarządzania plikami w tym namespace",
       "no_items": {
         "heading": "Nie znaleziono jeszcze plików w twoim namespace.",
         "paragraph": "Utwórz lub zaimportuj pliki, aby udostępniać kod między flow w twoim namespace."

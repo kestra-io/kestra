@@ -11,6 +11,7 @@
                     v-model:mode="mode"
                     :disabled="!canSend"
                     :placeholder="t('ai.copilot.emptyHelper')"
+                    :rows="3"
                     @submit="onSubmit"
                 />
                 <div class="copilot-suggestions">
@@ -122,7 +123,7 @@
         align-items: center;
         gap: var(--ks-spacing-4);
         width: 100%;
-        max-width: 24rem;
+        max-width: 30rem;
     }
 
     .copilot-artwork {
@@ -153,6 +154,7 @@
         flex-wrap: wrap;
         gap: var(--ks-spacing-2);
         justify-content: center;
+        width: 100%;
     }
 
     /* Figma "tag-btn": subtle surface pill, subtle border, semibold secondary label. */

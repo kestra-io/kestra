@@ -21,7 +21,7 @@ dependencies {
     def opensearchVersion = "3.9.0"
     def opensearchRestVersion = "3.7.0"
     def flyingSaucerVersion = "10.3.0"
-    def jacksonVersion = "2.22.0"
+    def jacksonVersion = "2.22.1"
     def jacksonAnnotationsVersion = "2.22"
     def jugVersion = "5.2.0"
     def langchain4jVersion = "1.17.1"
@@ -36,7 +36,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.84.0')
     api platform("com.azure:azure-sdk-bom:1.3.7")
-    api platform('software.amazon.awssdk:bom:2.46.19')
+    api platform('software.amazon.awssdk:bom:2.47.1')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
@@ -84,7 +84,7 @@ dependencies {
         // Other libs
         api "org.projectlombok:lombok:1.18.46"
         api "org.codehaus.janino:janino:3.1.12"
-        api "org.apache.logging.log4j:log4j-to-slf4j:2.26.0"
+        api "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
         api "org.slf4j:jul-to-slf4j:$slf4jVersion"
         api "org.slf4j:jcl-over-slf4j:$slf4jVersion"
         api "org.fusesource.jansi:jansi:2.4.3"
@@ -112,10 +112,10 @@ dependencies {
         api "com.github.victools:jsonschema-module-jakarta-validation:$jsonschemaVersion"
         api "com.github.victools:jsonschema-module-jackson:$jsonschemaVersion"
         api "com.github.victools:jsonschema-module-swagger-2:$jsonschemaVersion"
-        api "com.networknt:json-schema-validator:3.0.5"
+        api "com.networknt:json-schema-validator:3.0.6"
         api 'com.h2database:h2:2.4.240'
         api 'com.mysql:mysql-connector-j:9.7.0'
-        api 'org.postgresql:postgresql:42.7.12'
+        api 'org.postgresql:postgresql:42.7.13'
         api 'com.github.docker-java:docker-java:3.7.1'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.7.1'
         api "org.opensearch.client:opensearch-java:$opensearchVersion"

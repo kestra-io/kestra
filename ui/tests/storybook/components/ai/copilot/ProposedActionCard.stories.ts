@@ -20,9 +20,19 @@ const meta: Meta<typeof ProposedActionCard> = {
 export default meta
 type Story = StoryObj<typeof ProposedActionCard>
 
-// Plan-mode card: no concrete tool → "Proposed plan" + "Approve & execute".
+// Plan-mode card: no concrete tool → title + "Pending approval" + numbered steps + "Approve & execute".
 export const PlanCard: Story = {
-    args: {action: {confirmationId: "c1", tool: null, summary: "1. Read the execution logs\n2. Restart the failed execution"}},
+    args: {action: {
+        confirmationId: "c1",
+        tool: null,
+        title: "Add test coverage",
+        summary: "Plan test coverage for this flow with mocked external tasks",
+        steps: [
+            {title: "Mock external task outputs (git, OpenAI, Slack)", detail: "tests/ai-summarize-weekly.test.yml"},
+            {title: "Fixture realistic commit data for the summarizer", detail: "tests/ai-summarize-weekly.test.yml"},
+            {title: "Assert the Slack notification fires on success", detail: "tests/ai-summarize-weekly.test.yml"},
+        ],
+    }},
 }
 
 // Edit-mode card: a concrete mutating tool → "Proposed action" + "Approve" + family tag.

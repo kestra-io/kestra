@@ -4,7 +4,16 @@ import ProposedActionCard from "../../../../../src/components/ai/copilot/Propose
 import {mountGlobal} from "./_helpers"
 import type {ProposedActionEvent} from "../../../../../src/components/ai/copilot/types"
 
-const planAction: ProposedActionEvent = {confirmationId: "c1", tool: null, summary: "Read logs then restart"}
+const planAction: ProposedActionEvent = {
+    confirmationId: "c1",
+    tool: null,
+    title: "Add test coverage",
+    summary: "Plan the tests",
+    steps: [
+        {title: "Mock external task outputs", detail: "tests/ai-summarize.test.yml"},
+        {title: "Assert the Slack notification fires", detail: "tests/ai-summarize.test.yml"},
+    ],
+}
 const mutateAction: ProposedActionEvent = {
     confirmationId: "c2", tool: "restart-execution", family: "MUTATE", summary: "Restart exec-1", arguments: {id: "exec-1"},
 }
@@ -14,38 +23,45 @@ const mountCard = (action: ProposedActionEvent, props = {}) =>
 
 const approve = (w: ReturnType<typeof mountCard>) => w.find("[data-test=\"copilot-approve\"]")
 const reject = (w: ReturnType<typeof mountCard>) => w.find("[data-test=\"copilot-reject\"]")
-const reason = (w: ReturnType<typeof mountCard>) => w.find("[data-test=\"copilot-confirm-reason\"]")
 
 describe("ProposedActionCard", () => {
-    it("renders a Plan card (null tool) with the plan title and Approve & execute", () => {
+    it("renders a Plan card: title, pending status, numbered steps, revise + execute footer", () => {
         const w = mountCard(planAction)
-        expect(w.text()).toContain("Proposed plan")
+        expect(w.text()).toContain("Add test coverage")
+        expect(w.text()).toContain("Pending approval")
+        const steps = w.findAll(".proposed-step")
+        expect(steps).toHaveLength(2)
+        expect(steps[0].text()).toContain("Mock external task outputs")
+        expect(steps[0].text()).toContain("tests/ai-summarize.test.yml")
+        expect(reject(w).text()).toBe("Reply to revise")
         expect(approve(w).text()).toBe("Approve & execute")
-        expect(w.find(".ks-tag").exists()).toBe(false) // no family for a plan
+        expect(w.find(".ks-tag").exists()).toBe(false) // no family tag on a plan
     })
 
-    it("renders an action card (concrete tool) with the action title, Approve, and family tag", () => {
+    it("renders an action card: generic title, family tag, Reject + Approve, and the summary", () => {
         const w = mountCard(mutateAction)
         expect(w.text()).toContain("Proposed action")
-        expect(approve(w).text()).toBe("Approve")
         expect(w.find(".ks-tag").text()).toBe("MUTATE")
         expect(w.text()).toContain("Restart exec-1")
+        expect(w.findAll(".proposed-step")).toHaveLength(0) // no steps → summary text
+        expect(reject(w).text()).toBe("Reject")
+        expect(approve(w).text()).toBe("Approve")
     })
 
-    it("emits approve with an undefined reason when the box is empty", async () => {
+    it("falls back to a generic plan title when none is provided", () => {
+        const w = mountCard({confirmationId: "c3", tool: null, summary: "do things"})
+        expect(w.text()).toContain("Proposed plan")
+    })
+
+    it("emits approve / reject (no reason) on the footer buttons", async () => {
         const w = mountCard(mutateAction)
         await approve(w).trigger("click")
-        expect(w.emitted("approve")?.[0]).toEqual([undefined])
-    })
-
-    it("emits approve/reject with the trimmed steering reason", async () => {
-        const w = mountCard(mutateAction)
-        await reason(w).setValue("  use the staging env  ")
+        expect(w.emitted("approve")).toHaveLength(1)
         await reject(w).trigger("click")
-        expect(w.emitted("reject")?.[0]).toEqual(["use the staging env"])
+        expect(w.emitted("reject")).toHaveLength(1)
     })
 
-    it("disables both buttons while a decision is in flight", () => {
+    it("disables both actions while a decision is in flight", () => {
         const w = mountCard(mutateAction, {disabled: true})
         expect(approve(w).attributes("disabled")).toBeDefined()
         expect(reject(w).attributes("disabled")).toBeDefined()

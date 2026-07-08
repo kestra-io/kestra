@@ -11,7 +11,7 @@ const sendBtn = (w: ReturnType<typeof mountComposer>) => w.find("[data-test=\"co
 
 describe("CopilotComposer", () => {
     it("offers the three modes with Figma labels (Build == EDIT)", () => {
-        const labels = mountComposer().findAll(".ks-segmented button").map((b) => b.text())
+        const labels = mountComposer().findAll(".ks-option").map((b) => b.text())
         expect(labels).toEqual(["Ask", "Build", "Plan"])
     })
 
@@ -46,9 +46,9 @@ describe("CopilotComposer", () => {
         expect(w.emitted("submit")?.[0]).toEqual(["hi"])
     })
 
-    it("relays mode changes via update:mode", async () => {
+    it("relays mode changes from the dropdown via update:mode", async () => {
         const w = mountComposer()
-        await w.find(".ks-segmented button[data-value=\"PLAN\"]").trigger("click")
+        w.findComponent({name: "KsSelect"}).vm.$emit("update:model-value", "PLAN")
         expect(w.emitted("update:mode")?.[0]).toEqual(["PLAN"])
     })
 

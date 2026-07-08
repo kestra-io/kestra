@@ -32,13 +32,16 @@ export const ksStubs = {
         emits: ["click"],
         template: "<button :disabled=\"disabled\" @click=\"$emit('click')\"><slot /></button>",
     },
-    KsSegmented: {
-        name: "KsSegmented",
-        props: ["options", "modelValue", "size"],
-        emits: ["change"],
-        template: `<div class="ks-segmented">
-            <button v-for="o in options" :key="o.value" :data-value="o.value" @click="$emit('change', o.value)">{{ o.label }}</button>
-        </div>`,
+    KsSelect: {
+        name: "KsSelect",
+        props: ["modelValue", "size"],
+        emits: ["update:model-value"],
+        template: "<div class=\"ks-select\"><slot /></div>",
+    },
+    KsOption: {
+        name: "KsOption",
+        props: ["label", "value"],
+        template: "<button class=\"ks-option\" :data-value=\"value\">{{ label }}</button>",
     },
     KsCard: {name: "KsCard", template: "<div><slot /></div>"},
     KsText: {name: "KsText", props: ["size", "type"], template: "<span><slot /></span>"},

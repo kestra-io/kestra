@@ -68,17 +68,17 @@ describe("CopilotChat", () => {
         const w = mountChat()
         const card = w.findComponent({name: "ProposedActionCard"})
         expect(card.exists()).toBe(true)
-        card.vm.$emit("approve", "go")
+        card.vm.$emit("approve")
         await flushPromises()
-        expect(state.confirm).toHaveBeenCalledWith("APPROVE", "go")
+        expect(state.confirm).toHaveBeenCalledWith("APPROVE")
     })
 
     it("rejects via the proposed-action card", async () => {
         state.pendingConfirmation.value = {confirmationId: "c1", tool: null, summary: "Plan"}
         const w = mountChat()
-        w.findComponent({name: "ProposedActionCard"}).vm.$emit("reject", undefined)
+        w.findComponent({name: "ProposedActionCard"}).vm.$emit("reject")
         await flushPromises()
-        expect(state.confirm).toHaveBeenCalledWith("REJECT", undefined)
+        expect(state.confirm).toHaveBeenCalledWith("REJECT")
     })
 
     it("disables the composer when a turn cannot be sent", () => {

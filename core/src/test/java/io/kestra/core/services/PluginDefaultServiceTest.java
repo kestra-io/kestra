@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -27,7 +29,12 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -66,6 +73,74 @@ class PluginDefaultServiceTest {
 
     @Inject
     private PluginDefaultService pluginDefaultService;
+
+    @Inject
+    private KVMetadataStateStore kvMetadataStateStore;
+
+    @Inject
+    private StorageInterface storageInterface;
+
+    @Test
+    void shouldRenderKvExpressionInTaskVersion() throws FlowProcessingException, IOException {
+        // Given
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        var namespace = TestsUtils.randomNamespace();
+        KVStore kv = new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore);
+        kv.put("PLUGIN_VERSION", new KVValueAndMetadata(null, "1.2.3"));
+
+        String source = """
+            id: version-kv-test
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                version: "{{ kv('PLUGIN_VERSION') }}"
+                message: hello
+            """.formatted(namespace);
+
+        // When
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, true);
+
+        // Then
+        assertThat(((Log) injected.getTasks().getFirst()).getVersion(), is("1.2.3"));
+    }
+
+    @Test
+    void shouldFailClearlyWhenVersionExpressionReferencesMissingKv() {
+        // Given
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        var namespace = TestsUtils.randomNamespace();
+        String source = """
+            id: version-kv-missing-test
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                version: "{{ kv('MISSING_KEY') }}"
+                message: hello
+            """.formatted(namespace);
+
+        // When / Then
+        Assertions.assertThrows(KestraRuntimeException.class, () -> pluginDefaultService.parseFlowWithAllDefaults(tenant, source, true));
+    }
+
+    @Test
+    void shouldFailClearlyWhenVersionExpressionReferencesExecutionScopedVariable() {
+        // Given — no execution exists yet at flow parse time, so 'outputs' is not resolvable
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        String source = """
+            id: version-outputs-test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                version: "{{ outputs.previousTask.version }}"
+                message: hello
+            """;
+
+        // When / Then
+        Assertions.assertThrows(KestraRuntimeException.class, () -> pluginDefaultService.parseFlowWithAllDefaults(tenant, source, true));
+    }
 
     @Test
     void shouldInjectGivenFlowWithNullSource() throws FlowProcessingException {

@@ -47,7 +47,7 @@ public class PluginDefaultServiceBenchmark {
 
     @Setup(Level.Trial)
     public void setup() {
-        pluginDefaultService = new PluginDefaultService(null, null, DefaultPluginRegistry.getOrCreate());
+        pluginDefaultService = new PluginDefaultService(null, null, DefaultPluginRegistry.getOrCreate(), null, null);
 
         noDefaults = GenericFlow.fromYaml("main", flowSource(""));
         typeDefaults = GenericFlow.fromYaml("main", flowSource(typeDefaultEntries()));

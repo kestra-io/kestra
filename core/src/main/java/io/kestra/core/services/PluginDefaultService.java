@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -33,12 +34,16 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.flows.PluginDefaultSpec;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.runners.RunContextCache;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.runners.RunContextLoggerFactory;
+import io.kestra.core.runners.RunVariables;
+import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.PebbleUtil;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -71,14 +76,22 @@ public class PluginDefaultService {
 
     protected final PluginRegistry pluginRegistry;
 
+    private final VariableRenderer variableRenderer;
+
+    private final RunContextCache runContextCache;
+
     @Inject
     public PluginDefaultService(
         @Nullable PluginGlobalDefaultConfiguration pluginGlobalDefault,
         RunContextLoggerFactory runContextLoggerFactory,
-        PluginRegistry pluginRegistry) {
+        PluginRegistry pluginRegistry,
+        VariableRenderer variableRenderer,
+        RunContextCache runContextCache) {
         this.pluginGlobalDefault = pluginGlobalDefault;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.pluginRegistry = pluginRegistry;
+        this.variableRenderer = variableRenderer;
+        this.runContextCache = runContextCache;
     }
 
     @PostConstruct
@@ -387,6 +400,7 @@ public class PluginDefaultService {
         revision = revision == null ? (Integer) mapFlow.get("revision") : revision;
 
         mapFlow = innerInjectDefault(tenant, namespace, mapFlow, onlyVersions);
+        mapFlow = renderPluginVersions(tenant, namespace, mapFlow);
 
         FlowWithSource withDefault = YamlParser.parse(mapFlow, FlowWithSource.class, strictParsing);
 
@@ -457,6 +471,61 @@ public class PluginDefaultService {
 
         return flowAsMap;
 
+    }
+
+    /**
+     * Renders Pebble expressions found in the {@code version} field of any plugin node (task, trigger, ...) in the
+     * given flow map, e.g. {@code version: "{{ kv('PLUGIN_VERSION') }}"}.
+     * <p>
+     * This runs once at flow parse/save time, before the plugin classloader is resolved from the raw
+     * {@code type:version} identifier, so no execution exists yet: only {@code kv()}, {@code secret()} and
+     * {@code env()} are resolvable (tenant/namespace-scoped, from the flow's own metadata). Referencing an
+     * execution-scoped variable (outputs, inputs, vars, ...) fails with a clear error rather than being ignored.
+     *
+     * @throws KestraRuntimeException if a {@code version} expression cannot be rendered
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> renderPluginVersions(@Nullable final String tenantId, final String namespace, final Map<String, Object> flowAsMap) {
+        return (Map<String, Object>) recursiveRenderVersion(flowAsMap, tenantId, namespace, flowAsMap.get("id"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object recursiveRenderVersion(final Object object, final String tenantId, final String namespace, final Object flowId) {
+        if (object instanceof Map<?, ?> value) {
+            Map<Object, Object> result = value
+                .entrySet()
+                .stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), recursiveRenderVersion(e.getValue(), tenantId, namespace, flowId)))
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+
+            if (
+                result.get("type") instanceof String && result.get("version") instanceof String versionExpression
+                    && PebbleUtil.containsOpeningBlockDelimiter(versionExpression)
+            ) {
+                result.put("version", renderVersion(versionExpression, tenantId, namespace, flowId));
+            }
+
+            return result;
+        } else if (object instanceof Collection<?> value) {
+            return value.stream().map(item -> recursiveRenderVersion(item, tenantId, namespace, flowId)).toList();
+        }
+
+        return object;
+    }
+
+    private String renderVersion(final String versionExpression, final String tenantId, final String namespace, final Object flowId) {
+        Map<String, Object> flow = new HashMap<>();
+        flow.put("id", flowId);
+        flow.put("namespace", namespace);
+        flow.put("tenantId", tenantId);
+
+        Map<String, Object> renderVariables = Map.of("flow", flow, RunVariables.ENVS, runContextCache.getEnvVars());
+
+        try {
+            return variableRenderer.render(versionExpression, renderVariables);
+        } catch (IllegalVariableEvaluationException e) {
+            throw new KestraRuntimeException("Failed to render plugin 'version' expression '" + versionExpression + "': " + e.getMessage(), e);
+        }
     }
 
     /**

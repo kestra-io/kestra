@@ -20,7 +20,9 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowPluginDefault;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.runners.RunContextCache;
 import io.kestra.core.runners.RunContextLoggerFactory;
+import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.services.PluginDefaultServiceTest.DefaultPrecedenceTester;
 import io.kestra.core.utils.TestsUtils;
 
@@ -41,6 +43,12 @@ class PluginDefaultServiceOverrideTest {
 
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private VariableRenderer variableRenderer;
+
+    @Inject
+    private RunContextCache runContextCache;
 
     /**
      * Tests that:
@@ -129,7 +137,7 @@ class PluginDefaultServiceOverrideTest {
         );
 
         // defaults are ordered most-important-first: flow, then namespace, then global
-        final PluginDefaultService service = new PluginDefaultService(null, runContextLoggerFactory, pluginRegistry) {
+        final PluginDefaultService service = new PluginDefaultService(null, runContextLoggerFactory, pluginRegistry, variableRenderer, runContextCache) {
             @Override
             protected List<PluginDefault> getAllDefaults(String tenantId, String namespace, Map<String, Object> flow) {
                 List<PluginDefault> defaults = new ArrayList<>(getFlowDefaults(flow));

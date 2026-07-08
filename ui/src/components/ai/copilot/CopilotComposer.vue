@@ -72,6 +72,24 @@
                     />
                 </template>
                 <template v-else>
+                    <KsDropdown v-if="providers?.length" trigger="click" data-test="copilot-provider-selector">
+                        <KsButton size="small" text class="copilot-provider-trigger">
+                            {{ currentProviderLabel }}
+                            <ChevronDown class="copilot-mode-chevron" />
+                        </KsButton>
+                        <template #dropdown>
+                            <KsDropdownMenu>
+                                <KsDropdownItem
+                                    v-for="p in providers"
+                                    :key="p.id"
+                                    :class="{'copilot-mode-item--active': p.id === provider}"
+                                    @click="p.id && emit('update:provider', p.id)"
+                                >
+                                    {{ p.displayName }}
+                                </KsDropdownItem>
+                            </KsDropdownMenu>
+                        </template>
+                    </KsDropdown>
                     <KsButton
                         v-if="speechSupported"
                         text
@@ -119,11 +137,16 @@
         placeholder?: string
         /** Initial visible rows (empty state uses more so the helper text wraps); collapses on input. */
         rows?: number
+        /** Available AI providers; the selector is hidden when none are known. */
+        providers?: {id?: string; displayName?: string}[]
+        /** Currently selected provider id (v-model:provider). */
+        provider?: string
     }>()
 
     const emit = defineEmits<{
         (e: "submit", prompt: string): void
         (e: "update:mode", mode: Mode): void
+        (e: "update:provider", provider: string): void
     }>()
 
     const {t} = useI18n()
@@ -140,6 +163,11 @@
     ])
 
     const currentMode = computed(() => modeOptions.value.find((o) => o.value === props.mode))
+
+    const currentProviderLabel = computed(() => {
+        const list = props.providers ?? []
+        return (list.find((p) => p.id === props.provider) ?? list[0])?.displayName
+    })
 
     const canSubmit = computed(() => !props.disabled && draft.value.trim().length > 0)
 
@@ -407,5 +435,13 @@
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-3);
+    }
+
+    /* Provider picker reads as a subdued, secondary control (Figma "gpt-5-nano"). */
+    .copilot-provider-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        color: var(--ks-text-secondary);
     }
 </style>

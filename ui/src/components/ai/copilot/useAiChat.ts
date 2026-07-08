@@ -134,6 +134,18 @@ export function useAiChat() {
         abort?.abort()
     }
 
+    /** Starts a fresh conversation: drops the current thread/transcript back to the empty state. */
+    function reset(): void {
+        cancel()
+        thread.value = null
+        messages.value = []
+        status.value = "IDLE"
+        streaming.value = false
+        error.value = null
+        pendingConfirmation.value = null
+        activeAssistant = null
+    }
+
     /** Shared streaming driver for both chat and confirm turns. */
     async function runStream(url: string, body: unknown): Promise<void> {
         streaming.value = true
@@ -221,6 +233,7 @@ export function useAiChat() {
         sendChat,
         confirm,
         cancel,
+        reset,
     }
 }
 

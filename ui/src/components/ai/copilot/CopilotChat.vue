@@ -1,5 +1,24 @@
 <template>
     <div class="copilot-chat" data-test="copilot-chat">
+        <!-- Thread controls: start a new chat, browse recents (recents is a BE-pending placeholder). -->
+        <div class="copilot-topbar">
+            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+                {{ t("ai.copilot.newChat") }}
+                <Plus :size="14" />
+            </KsButton>
+            <KsDropdown trigger="click" data-test="copilot-recents">
+                <KsButton size="small" class="copilot-topbar-pill">
+                    {{ t("ai.copilot.recents") }}
+                    <ChevronDown :size="16" />
+                </KsButton>
+                <template #dropdown>
+                    <KsDropdownMenu>
+                        <KsDropdownItem disabled>{{ t("ai.copilot.recentsEmpty") }}</KsDropdownItem>
+                    </KsDropdownMenu>
+                </template>
+            </KsDropdown>
+        </div>
+
         <!-- Empty state: artwork + heading + a centered composer + suggestions (Figma Default variant). -->
         <div v-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
@@ -9,6 +28,8 @@
                 <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
                 <CopilotComposer
                     v-model:mode="mode"
+                    v-model:provider="selectedProvider"
+                    :providers="providers"
                     :disabled="!canSend"
                     :placeholder="t('ai.copilot.emptyHelper')"
                     :rows="3"
@@ -48,15 +69,25 @@
             </KsAlert>
 
             <div class="copilot-footer">
-                <CopilotComposer v-model:mode="mode" :disabled="!canSend" @submit="onSubmit" />
+                <CopilotComposer
+                    v-model:mode="mode"
+                    v-model:provider="selectedProvider"
+                    :providers="providers"
+                    :disabled="!canSend"
+                    @submit="onSubmit"
+                />
             </div>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onBeforeUnmount} from "vue"
+    import {ref, computed, onBeforeUnmount, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import * as AiApi from "@kestra-io/kestra-sdk/ai"
+    import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import logo from "../../../assets/copilot-illustration.png"
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
@@ -75,6 +106,21 @@
 
     const mode = ref<Mode>(props.initialMode ?? "ASK")
 
+    // Available AI providers (same endpoint the previous copilot used); the selected one is
+    // sent as providerId on each turn. Falls back to the server default when unset.
+    const providers = ref<AiControllerAiProviderResponse[]>([])
+    const selectedProvider = ref<string>()
+
+    onMounted(async () => {
+        try {
+            const list = await AiApi.providers()
+            providers.value = list ?? []
+            selectedProvider.value = (providers.value.find((p) => p.isDefault) ?? providers.value[0])?.id
+        } catch {
+            // No provider list (e.g. AI unavailable) — the composer just omits the picker.
+        }
+    })
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -83,7 +129,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {messages, status, streaming, error, pendingConfirmation, canSend, sendChat, confirm, cancel} = useAiChat()
+    const {messages, status, streaming, error, pendingConfirmation, canSend, sendChat, confirm, cancel, reset} = useAiChat()
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status
@@ -94,7 +140,7 @@
     )
 
     function onSubmit(prompt: string): void {
-        sendChat({prompt, mode: mode.value, inFocus: props.inFocus})
+        sendChat({prompt, mode: mode.value, inFocus: props.inFocus, providerId: selectedProvider.value})
     }
 
     onBeforeUnmount(cancel)
@@ -106,6 +152,23 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
+    }
+
+    .copilot-topbar {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+    }
+
+    /* Small bg-tag pills (Figma "New chat" / "Recents"). */
+    .copilot-topbar-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        background: var(--ks-bg-tag);
+        border: none;
+        color: var(--ks-text-primary);
+        border-radius: var(--ks-radius-sm);
     }
 
     .copilot-empty {

@@ -8,7 +8,9 @@
 
     <!-- Assistant streamed text -->
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
-        <KsMarkdown v-if="message.content" :content="message.content" />
+        <div class="copilot-bubble copilot-bubble-assistant">
+            <KsMarkdown v-if="message.content" :content="message.content" />
+        </div>
     </div>
 
     <!-- Tool call / tool result — collapsible technical detail -->
@@ -59,11 +61,26 @@
         justify-content: flex-end;
     }
 
+    .copilot-msg-assistant {
+        display: flex;
+        justify-content: flex-start;
+    }
+
     .copilot-bubble-user {
         max-width: 85%;
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-elevated);
+    }
+
+    /* Assistant replies get their own left-aligned bubble (surface fill) so they read as
+       styled responses rather than plain text. */
+    .copilot-bubble-assistant {
+        max-width: 90%;
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border-radius: var(--ks-radius-lg);
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-subtle);
     }
 
     .copilot-tool-args {

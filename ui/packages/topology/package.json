@@ -43,7 +43,7 @@
     "dependencies": {
         "dagre": "^0.8.5",
         "html-to-image": "^1.11.13",
-        "js-yaml": "^4",
+        "js-yaml": "^5",
         "vue-material-design-icons": "^5.3.1",
         "yaml": "^2"
     },

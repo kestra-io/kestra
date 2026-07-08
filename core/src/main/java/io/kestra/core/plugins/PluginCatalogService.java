@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +24,6 @@ import io.kestra.core.utils.Version;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.HttpClient;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +50,11 @@ public class PluginCatalogService {
     private final boolean oss;
 
     private final Version currentStableVersion;
+
+    // Maps a resolved artifact's Maven coordinates back to the internal "group" key the Kestra API
+    // uses to look up its icon (see `load()`), so `icon(groupId, artifactId)` can fetch a single
+    // icon on demand without re-fetching the whole catalog.
+    private final Map<String, String> iconGroupByCoordinates = new ConcurrentHashMap<>();
 
     /**
      * Creates a new {@link PluginCatalogService} instance.
@@ -178,21 +183,10 @@ public class PluginCatalogService {
                 List<CompletableFuture<Map.Entry<String, String>>> iconFutures = groups.stream()
                     .map(group -> CompletableFuture.supplyAsync(() ->
                     {
-                        try {
-                            HttpResponse<String> response = httpClient
-                                .toBlocking()
-                                .exchange(
-                                    HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + group),
-                                    String.class
-                                );
-                            String icon = response.getBody()
-                                .map(svg -> Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8)))
-                                .orElse(null);
-                            return Map.entry(group, icon != null ? icon : "");
-                        } catch (Exception e) {
-                            log.debug("Failed to load icon for plugin group '{}': {}", group, e.getMessage());
-                            return Map.entry(group, "");
-                        }
+                        String icon = fetchIconBytes(group)
+                            .map(svg -> Base64.getEncoder().encodeToString(svg))
+                            .orElse(null);
+                        return Map.entry(group, icon != null ? icon : "");
                     }, iconLoaderExecutor))
                     .toList();
 
@@ -208,7 +202,11 @@ public class PluginCatalogService {
                 {
                     String groupId = "EE".equals(plugin.get("license")) ? "io.kestra.plugin.ee" : "io.kestra.plugin";
                     String artifactId = (String) plugin.get("name");
-                    String icon = finalIconsByGroup.getOrDefault((String) plugin.get("group"), null);
+                    String iconGroup = (String) plugin.get("group");
+                    String icon = finalIconsByGroup.getOrDefault(iconGroup, null);
+                    if (iconGroup != null) {
+                        iconGroupByCoordinates.put(groupId + ":" + artifactId, iconGroup);
+                    }
                     return new PluginManifest(
                         (String) plugin.get("title"),
                         icon,
@@ -228,6 +226,38 @@ public class PluginCatalogService {
             return artifacts;
         } finally {
             isLoaded.set(false);
+        }
+    }
+
+    /**
+     * Lazily fetches a single plugin artifact's icon as raw SVG bytes from the configured Kestra
+     * API, for an artifact whose icon wasn't already resolved locally. Unlike {@link #get()}, this
+     * is a single-artifact, on-demand fetch — not cached beyond the underlying HTTP response.
+     *
+     * @param groupId the plugin artifact's Maven group id.
+     * @param artifactId the plugin artifact's Maven artifact id.
+     * @return the icon's raw SVG bytes, or empty when the coordinates are unresolvable or the
+     * artifact has no icon.
+     */
+    public Optional<byte[]> icon(String groupId, String artifactId) {
+        get(); // ensures the coordinates -> icon-group lookup has been populated at least once
+        String iconGroup = iconGroupByCoordinates.get(groupId + ":" + artifactId);
+        if (iconGroup == null) {
+            return Optional.empty();
+        }
+        return fetchIconBytes(iconGroup);
+    }
+
+    private Optional<byte[]> fetchIconBytes(String group) {
+        try {
+            return httpClient
+                .toBlocking()
+                .exchange(HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + group), String.class)
+                .getBody()
+                .map(svg -> svg.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.debug("Failed to load icon for plugin group '{}': {}", group, e.getMessage());
+            return Optional.empty();
         }
     }
 

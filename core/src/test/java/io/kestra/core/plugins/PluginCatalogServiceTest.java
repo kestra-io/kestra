@@ -1,7 +1,9 @@
 package io.kestra.core.plugins;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +19,7 @@ import io.micronaut.http.client.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -125,6 +128,76 @@ class PluginCatalogServiceTest {
 
         // When
         List<PluginCatalogService.PluginManifest> result = service.get();
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    // -- icon() contract --
+
+    @Test
+    void shouldFetchIconForKnownArtifactCoordinates() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+        when(blockingClient.exchange(any(), eq(String.class)))
+            .thenReturn(HttpResponse.ok("<svg fill=\"currentColor\"></svg>"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
+
+        // When
+        Optional<byte[]> result = service.icon("io.kestra.plugin", "plugin-serdes");
+
+        // Then
+        assertThat(result).isPresent();
+        assertThat(new String(result.get(), StandardCharsets.UTF_8)).isEqualTo("<svg fill=\"currentColor\"></svg>");
+    }
+
+    @Test
+    void shouldReturnEmptyIconWhenArtifactCoordinatesAreUnknown() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
+
+        // When
+        Optional<byte[]> result = service.icon("io.kestra.plugin", "plugin-unknown");
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyIconWhenIconFetchFails() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+        when(blockingClient.exchange(any(), eq(String.class)))
+            .thenThrow(new RuntimeException("API unavailable"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
+
+        // When
+        Optional<byte[]> result = service.icon("io.kestra.plugin", "plugin-serdes");
 
         // Then
         assertThat(result).isEmpty();

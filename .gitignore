@@ -71,4 +71,3 @@ charts/kestra/charts/
 charts/kestra-starter/charts/
 .claude/settings.local.json
 .gstack/
-docker-compose-dev.yml

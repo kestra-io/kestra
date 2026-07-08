@@ -3,7 +3,7 @@ import {ref, computed, toRaw, nextTick} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
-import {API_URL, useApiStore} from "./api"
+import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
@@ -95,8 +95,6 @@ function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Re
 }
 
 function usePluginsIcons() {
-    const apiStore = useApiStore()
-
     const iconsLoaded = ref(false)
 
     const apiIcons = ref<Record<string, PluginIconData>>({})
@@ -136,25 +134,35 @@ function usePluginsIcons() {
         return iconsPromiseLocal.value
     }
 
+    // A plain image load (no `crossOrigin` attribute) never triggers CORS enforcement — only
+    // reading the response body via fetch/XHR does — so this is a CORS-safe way to check whether
+    // the URL actually resolves to an image before committing to it.
+    function probeImageExists(url: string): Promise<boolean> {
+        return new Promise(resolve => {
+            const img = new Image()
+            img.onload = () => resolve(true)
+            img.onerror = () => resolve(false)
+            img.src = url
+        })
+    }
+
     // Resolves an icon for a class the local instance doesn't have registered, from the external
     // api.kestra.io ecosystem catalog (e.g. a Blueprint referencing a plugin that isn't installed).
-    // That catalog predates the `monochrome`/`hash` fields added for this redesign, and its
-    // per-class endpoint returns raw SVG text rather than JSON, so `monochrome` is derived from a
-    // one-time sniff of the bytes, and the icon is rendered by pointing straight at the
-    // (browser-cacheable) external URL rather than embedding it.
+    // The icon is rendered by pointing straight at the (browser-cacheable) external URL rather than
+    // embedding it. `monochrome` can't be determined here: that would require reading the SVG
+    // bytes via fetch/XHR, and api.kestra.io's per-class endpoint doesn't send CORS headers
+    // permitting cross-origin script reads (unlike a plain image load, which needs none) — so
+    // ecosystem icons always render at their native colors instead of a theme-adaptive mask.
     function loadEcosystemIcon(cls: string): Promise<PluginIconData | undefined> {
-        return apiStore.pluginIcon(cls)
-            .then(response => {
-                const icon: PluginIconData = {
-                    flowable: false,
-                    monochrome: response.data.includes("currentColor"),
-                    hasIcon: true,
-                    iconUrl: `${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`,
-                }
-                apiIcons.value = {...apiIcons.value, [cls]: icon}
-                return icon
-            })
-            .catch(() => undefined)
+        const url = `${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`
+        return probeImageExists(url).then(exists => {
+            if (!exists) {
+                return undefined
+            }
+            const icon: PluginIconData = {flowable: false, monochrome: false, hasIcon: true, iconUrl: url}
+            apiIcons.value = {...apiIcons.value, [cls]: icon}
+            return icon
+        })
     }
 
     // Lazily resolves a single icon instead of preloading the whole local catalog. Meant for views

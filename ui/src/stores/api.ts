@@ -218,19 +218,6 @@ export const useApiStore = defineStore("api", {
             capturePosthogEvent(configs, eventName, finalData as Record<string, any>)
         },
 
-        /**
-         * Fetches a single ecosystem-catalog plugin icon as raw SVG text. Used to lazily resolve
-         * icons for plugin classes not registered on the local instance, instead of eagerly
-         * downloading the entire (multi-megabyte) icon catalog up front.
-         */
-        async pluginIcon(cls: string) {
-            return axios.get<string>(`${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`, {
-                withCredentials: true,
-                responseType: "text",
-                transformResponse: response => response,
-            })
-        },
-
         async pluginsInformation() {
             return axios.get<{byPlugin: Record<string, {lastReleasedAt?: string; usageCount?: number}>}>(
                 `${API_URL}/v1/plugins/pluginsInformation?icons=false`,

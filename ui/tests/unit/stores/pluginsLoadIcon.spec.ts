@@ -2,7 +2,6 @@ import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 const getMock = vi.fn()
-const pluginIconMock = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: getMock, post: vi.fn()}),
@@ -16,21 +15,40 @@ vi.mock("override/utils/route", () => ({
 
 vi.mock("../../../src/stores/api", () => ({
     API_URL: "https://api.kestra.io",
-    useApiStore: () => ({pluginIcon: pluginIconMock}),
 }))
 
 vi.mock("../../../src/utils/tabTracking", () => ({
     trackPluginDocumentationView: vi.fn(),
 }))
 
+// A plain image load never triggers CORS enforcement (unlike fetch/XHR), so the ecosystem
+// fallback probes existence via `new Image()` instead of reading the SVG bytes. This fake lets
+// tests control whether that probe "loads" or "errors" without touching the network.
+let nextImageOutcome: "load" | "error" = "error"
+let lastImageSrc: string | undefined
+
+class FakeImage {
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+
+    set src(url: string) {
+        lastImageSrc = url
+        const outcome = nextImageOutcome
+        queueMicrotask(() => {
+            if (outcome === "load") this.onload?.()
+            else this.onerror?.()
+        })
+    }
+}
+
 describe("plugins store loadIcon", () => {
     let store: any
 
     beforeEach(async () => {
         getMock.mockReset()
-        pluginIconMock.mockReset()
-        // Default: the ecosystem catalog doesn't have the class either, unless a test overrides it.
-        pluginIconMock.mockRejectedValue(new Error("not found"))
+        nextImageOutcome = "error"
+        lastImageSrc = undefined
+        vi.stubGlobal("Image", FakeImage)
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
@@ -70,14 +88,14 @@ describe("plugins store loadIcon", () => {
         expect(result).toEqual({flowable: true, monochrome: false, hasIcon: false})
         // Registered-but-iconless is a legitimate, already-known outcome — no need to fall back
         // to the ecosystem catalog for it.
-        expect(pluginIconMock).not.toHaveBeenCalled()
+        expect(lastImageSrc).toBeUndefined()
     })
 
     it("falls back to the ecosystem catalog when the class isn't registered locally", async () => {
         // Top-level `icon: null` means the class isn't registered at all (distinct from a
         // registered-but-iconless class, which nests `icon: null` one level deeper).
         getMock.mockResolvedValueOnce({data: {icon: null}})
-        pluginIconMock.mockResolvedValueOnce({data: "<svg fill=\"blue\"></svg>"})
+        nextImageOutcome = "load"
 
         const result = await store.loadIcon("io.kestra.plugin.scripts.python.Commands")
 
@@ -87,19 +105,24 @@ describe("plugins store loadIcon", () => {
             hasIcon: true,
             iconUrl: "https://api.kestra.io/v1/plugins/icons/io.kestra.plugin.scripts.python.Commands",
         })
+        expect(lastImageSrc).toBe("https://api.kestra.io/v1/plugins/icons/io.kestra.plugin.scripts.python.Commands")
     })
 
-    it("derives monochrome from the ecosystem SVG bytes", async () => {
+    it("never flags ecosystem icons as monochrome", async () => {
+        // Determining monochrome would require reading the SVG bytes via fetch/XHR, which
+        // api.kestra.io's per-class endpoint doesn't allow cross-origin (unlike a plain image
+        // load, which needs no CORS headers at all) — so ecosystem icons always render as-is.
         getMock.mockResolvedValueOnce({data: {icon: null}})
-        pluginIconMock.mockResolvedValueOnce({data: "<svg fill=\"currentColor\"></svg>"})
+        nextImageOutcome = "load"
 
         const result = await store.loadIcon("io.kestra.plugin.anthropic.ChatCompletion")
 
-        expect(result?.monochrome).toBe(true)
+        expect(result?.monochrome).toBe(false)
     })
 
     it("resolves to undefined without throwing when neither the local instance nor the ecosystem catalog has the class", async () => {
         getMock.mockResolvedValueOnce({data: {icon: null}})
+        nextImageOutcome = "error"
 
         const result = await store.loadIcon("io.kestra.plugin.unknown.Task")
 
@@ -108,6 +131,7 @@ describe("plugins store loadIcon", () => {
 
     it("resolves to undefined without throwing when the local request itself fails", async () => {
         getMock.mockRejectedValueOnce(new Error("network error"))
+        nextImageOutcome = "error"
 
         const result = await store.loadIcon("io.kestra.plugin.unknown.Task")
 
@@ -135,7 +159,7 @@ describe("plugins store loadIcon", () => {
         getMock.mockResolvedValueOnce({data: {}})
         await store.fetchIcons()
 
-        pluginIconMock.mockResolvedValueOnce({data: "<svg fill=\"blue\"></svg>"})
+        nextImageOutcome = "load"
 
         const result = await store.loadIcon("io.kestra.plugin.scripts.python.Commands")
 

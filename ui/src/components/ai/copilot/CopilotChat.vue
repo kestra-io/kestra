@@ -170,7 +170,9 @@
         align-items: center;
         gap: var(--ks-spacing-1);
         padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        background: var(--ks-bg-tag);
+        /* Solid raised-surface grey (Figma pill ≈ #1d1d21) — reads darker and more
+           defined than the translucent bg-tag, consistently across dark themes. */
+        background: var(--ks-bg-elevated);
         border: none;
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-sm);

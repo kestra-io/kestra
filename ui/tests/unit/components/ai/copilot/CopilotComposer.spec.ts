@@ -59,4 +59,9 @@ describe("CopilotComposer", () => {
         await input(w).trigger("keydown", {key: "Enter"})
         expect(w.emitted("submit")).toBeUndefined()
     })
+
+    it("hides the mic when the Web Speech API is unavailable (e.g. jsdom)", () => {
+        // No SpeechRecognition in jsdom → voice input degrades gracefully to no mic button.
+        expect(mountComposer().find("[data-test=\"copilot-mic\"]").exists()).toBe(false)
+    })
 })

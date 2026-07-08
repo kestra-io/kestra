@@ -187,10 +187,6 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
-    // Effective plugin defaults (namespace-level + global) applicable to a namespace.
-    // Used by the flow editor to avoid flagging required properties supplied by a plugin default.
-    // Returns [] on any non-200 (e.g. 403 when the user lacks namespace read access), so the
-    // editor degrades gracefully to showing the warning.
     async function loadEffectivePluginDefaults({id}: {id: string}): Promise<EffectiveDefault[]> {
         try {
             const response = await axios.get(`${apiUrl()}/namespaces/${id}/effective-plugindefaults`, VALIDATE)

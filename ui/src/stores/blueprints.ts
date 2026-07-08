@@ -120,8 +120,6 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return data
     }
 
-    // No SDK equivalent exists for the "custom"/internal blueprint graph endpoint -
-    // both branches stay on raw axios.
     const getBlueprintGraph = async (options: Options) => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/graph`
         const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/graph`
@@ -180,9 +178,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         blueprints,
         source,
         graph,
-
         validateYAML,
-
         getBlueprints,
         getBlueprint,
         getBlueprintSource,

@@ -1,7 +1,5 @@
 import {defineStore} from "pinia"
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-import {useClient} from "@kestra-io/kestra-sdk"
-import {apiUrl} from "override/utils/route"
 
 interface TriggerSearchOptions {
     sort?: string;
@@ -14,7 +12,6 @@ interface TriggerFindOptions {
     [key: string]: any;
 }
 
-/** A single trigger's identifying key: `{namespace, flowId, triggerId}`. */
 interface TriggerIdOptions {
     namespace: string;
     flowId: string;
@@ -141,9 +138,12 @@ export const useTriggerStore = defineStore("trigger", () => {
     }
 
     async function exportTriggersAsCSV(options: any) {
-        const axios = useClient()
-        const response = await axios.get(`${apiUrl()}/triggers/export/by-query/csv`, {params: options, responseType: "text", headers: {Accept: "text/csv"}})
-        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const response:unknown = await TriggersAPI.exportTriggers({
+            filters: options.filters,
+        }, {
+            headers: {Accept: "text/csv"}
+        })
+        const url = window.URL.createObjectURL(new Blob([response as string], {type: "text/csv"}))
         const link = document.createElement("a")
         link.href = url
         link.setAttribute("download", "triggers.csv")

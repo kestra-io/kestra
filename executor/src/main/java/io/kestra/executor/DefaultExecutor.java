@@ -63,78 +63,44 @@ import static io.kestra.core.utils.Rethrow.*;
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
 
-    @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
-    @Inject
-    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
-    @Inject
-    private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
-    @Inject
-    private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
-    @Inject
-    private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
-    @Inject
-    private BroadcastQueueInterface<ExecutionKilled> killQueue;
-    @Inject
-    private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
-    @Inject
-    private DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
-    @Inject
-    private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
-    @Inject
-    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-    @Inject
-    private ExecutorService executorService;
-    @Inject
-    private ExecutionService executionService;
-    @Inject
-    private FlowTriggerService flowTriggerService;
-    @Inject
-    private SLAService slaService;
-    @Inject
-    private MaintenanceService maintenanceService;
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
+    private final DispatchQueueInterface<Execution> executionQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    private final KillSwitchService killSwitchService;
+    private final KillSwitchActionService killSwitchActionService;
+    private final DispatchQueueInterface<ExecutionEvent> executionEventQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
+    private final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private final BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private final DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+    private final DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
+    private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
+    private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+    private final ExecutorService executorService;
+    private final ExecutionService executionService;
+    private final FlowTriggerService flowTriggerService;
+    private final SLAService slaService;
+    private final MaintenanceService maintenanceService;
+    private final FlowMetaStoreInterface flowMetaStore;
 
-    @Inject
-    private ExecutionStateStore executionStateStore;
-    @Inject
-    private ExecutionQueuedStateStore executionQueuedStateStore;
-    @Inject
-    private ExecutionDelayStateStore executionDelayStateStore;
-    @Inject
-    private SLAMonitorStateStore slaMonitorStateStore;
-    @Inject
-    private ConcurrencyLimitStateStore concurrencyLimitStateStore;
-    @Inject
-    private TriggerEventQueue triggerEventQueue;
+    private final ExecutionStateStore executionStateStore;
+    private final ExecutionQueuedStateStore executionQueuedStateStore;
+    private final ExecutionDelayStateStore executionDelayStateStore;
+    private final SLAMonitorStateStore slaMonitorStateStore;
+    private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
+    private final TriggerEventQueue triggerEventQueue;
 
-    @Inject
-    private MetricRegistry metricRegistry;
+    private final MetricRegistry metricRegistry;
 
-    @Inject
-    private RunContextFactory runContextFactory;
+    private final RunContextFactory runContextFactory;
 
-    @Inject
-    private ExecutionCommandMessageHandler executionCommandMessageHandler;
-    @Inject
-    private ExecutionEventMessageHandler executionEventMessageHandler;
-    @Inject
-    private WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
-    @Inject
-    private ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
-    @Inject
-    private SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
-    @Inject
-    private SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
-    @Inject
-    private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
-    @Inject
-    private LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
+    private final ExecutionCommandMessageHandler executionCommandMessageHandler;
+    private final ExecutionEventMessageHandler executionEventMessageHandler;
+    private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
+    private final ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
+    private final SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
+    private final SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
+    private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
+    private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
@@ -154,8 +120,80 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private Timer executionDelayLoopTimer;
 
     @Inject
-    public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, ExecutorConfiguration executorConfiguration) {
+    public DefaultExecutor(
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        ExecutorsUtils executorsUtils,
+        ExecutorConfiguration executorConfiguration,
+        DispatchQueueInterface<Execution> executionQueue,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
+        KillSwitchService killSwitchService,
+        KillSwitchActionService killSwitchActionService,
+        DispatchQueueInterface<ExecutionEvent> executionEventQueue,
+        BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
+        DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue,
+        DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue,
+        DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
+        DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
+        ExecutorService executorService,
+        ExecutionService executionService,
+        FlowTriggerService flowTriggerService,
+        SLAService slaService,
+        MaintenanceService maintenanceService,
+        FlowMetaStoreInterface flowMetaStore,
+        ExecutionStateStore executionStateStore,
+        ExecutionQueuedStateStore executionQueuedStateStore,
+        ExecutionDelayStateStore executionDelayStateStore,
+        SLAMonitorStateStore slaMonitorStateStore,
+        ConcurrencyLimitStateStore concurrencyLimitStateStore,
+        TriggerEventQueue triggerEventQueue,
+        MetricRegistry metricRegistry,
+        RunContextFactory runContextFactory,
+        ExecutionCommandMessageHandler executionCommandMessageHandler,
+        ExecutionEventMessageHandler executionEventMessageHandler,
+        WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
+        ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler,
+        SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler,
+        SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler,
+        MultipleConditionEventMessageHandler multipleConditionEventMessageHandler,
+        LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
+
+        this.executionQueue = executionQueue;
+        this.executionCommandQueue = executionCommandQueue;
+        this.killSwitchService = killSwitchService;
+        this.killSwitchActionService = killSwitchActionService;
+        this.executionEventQueue = executionEventQueue;
+        this.followExecutionEventQueue = followExecutionEventQueue;
+        this.workerTaskResultQueue = workerTaskResultQueue;
+        this.killQueue = killQueue;
+        this.subflowExecutionResultQueue = subflowExecutionResultQueue;
+        this.subflowExecutionEndQueue = subflowExecutionEndQueue;
+        this.multipleConditionEventQueue = multipleConditionEventQueue;
+        this.loopExecutionEventQueue = loopExecutionEventQueue;
+        this.executorService = executorService;
+        this.executionService = executionService;
+        this.flowTriggerService = flowTriggerService;
+        this.slaService = slaService;
+        this.maintenanceService = maintenanceService;
+        this.flowMetaStore = flowMetaStore;
+        this.executionStateStore = executionStateStore;
+        this.executionQueuedStateStore = executionQueuedStateStore;
+        this.executionDelayStateStore = executionDelayStateStore;
+        this.slaMonitorStateStore = slaMonitorStateStore;
+        this.concurrencyLimitStateStore = concurrencyLimitStateStore;
+        this.triggerEventQueue = triggerEventQueue;
+        this.metricRegistry = metricRegistry;
+        this.runContextFactory = runContextFactory;
+        this.executionCommandMessageHandler = executionCommandMessageHandler;
+        this.executionEventMessageHandler = executionEventMessageHandler;
+        this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
+        this.executionKilledExecutionMessageHandler = executionKilledExecutionMessageHandler;
+        this.subflowExecutionResultMessageHandler = subflowExecutionResultMessageHandler;
+        this.subflowExecutionEndMessageHandler = subflowExecutionEndMessageHandler;
+        this.multipleConditionEventMessageHandler = multipleConditionEventMessageHandler;
+        this.loopExecutionEventMessageHandler = loopExecutionEventMessageHandler;
 
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.

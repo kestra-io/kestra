@@ -2042,6 +2042,11 @@
           "unitTest": "Generate a unit test",
           "explain": "Explain this flow",
           "dbt": "Run a dbt pipeline"
+        },
+        "voice": {
+          "start": "Start voice input",
+          "stop": "Stop and insert",
+          "cancel": "Cancel voice input"
         }
       }
     },

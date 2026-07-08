@@ -55,7 +55,8 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
                 flow.getTenantId(),
                 flow.getNamespace(),
                 flow.getId(),
-                (txContext, queued) -> {
+                (txContext, queued) ->
+                {
                     // the popped execution takes the freed slot: re-increment the counter before
                     // handing it to the consumer (AbstractJdbcConcurrencyLimitStateStore#decrementAndPop)
                     increment(txContext, flow);

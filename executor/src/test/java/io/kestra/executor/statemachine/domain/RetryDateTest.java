@@ -48,7 +48,7 @@ class RetryDateTest {
             Arguments.of(2, Duration.ofSeconds(2)),
             Arguments.of(3, Duration.ofSeconds(4)),
             Arguments.of(4, Duration.ofSeconds(8)),
-            Arguments.of(7, Duration.ofSeconds(60)),   // 64s capped at maxInterval
+            Arguments.of(7, Duration.ofSeconds(60)), // 64s capped at maxInterval
             Arguments.of(100, Duration.ofSeconds(60)), // overflow-territory exponent stays capped
             Arguments.of(10_000, Duration.ofSeconds(60)) // Double.POSITIVE_INFINITY delay stays capped
         );
@@ -168,12 +168,18 @@ class RetryDateTest {
         List<TaskRunAttempt> attempts = new java.util.ArrayList<>(attemptCount);
         for (int i = 1; i <= attemptCount; i++) {
             Instant start = FIRST_ATTEMPT_START.plusSeconds(60L * (i - 1));
-            attempts.add(TaskRunAttempt.builder()
-                .state(new State(State.Type.FAILED, List.of(
-                    new State.History(State.Type.CREATED, start),
-                    new State.History(State.Type.FAILED, start.plusSeconds(59))
-                )))
-                .build());
+            attempts.add(
+                TaskRunAttempt.builder()
+                    .state(
+                        new State(
+                            State.Type.FAILED, List.of(
+                                new State.History(State.Type.CREATED, start),
+                                new State.History(State.Type.FAILED, start.plusSeconds(59))
+                            )
+                        )
+                    )
+                    .build()
+            );
         }
         return TaskRun.builder().id("taskrun").taskId("task").attempts(attempts).build();
     }
@@ -187,9 +193,11 @@ class RetryDateTest {
             .flowId("flow")
             .state(new State())
             .build()
-            .withMetadata(ExecutionMetadata.builder()
-                .attemptNumber(attemptNumber)
-                .originalCreatedDate(FIRST_ATTEMPT_START)
-                .build());
+            .withMetadata(
+                ExecutionMetadata.builder()
+                    .attemptNumber(attemptNumber)
+                    .originalCreatedDate(FIRST_ATTEMPT_START)
+                    .build()
+            );
     }
 }

@@ -6,7 +6,6 @@ import java.time.Instant;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -59,7 +58,8 @@ class RetryDecisionTest {
         // Then: a RESTART_FAILED_FLOW delay at attemptEnd + interval, the taskrun marked RETRIED,
         // and no other command leaks out of the accumulator
         assertThat(cycle2)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_FLOW);
                 Assertions.assertThat(delay.getDate()).isEqualTo(ATTEMPT_END.plus(INTERVAL));
                 Assertions.assertThat(delay.getExecutionId()).isEqualTo(cycle2.getExecution().getId());
@@ -115,7 +115,8 @@ class RetryDecisionTest {
 
         // Then: the delay restarts the TASK in place — no new execution
         assertThat(cycle2)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                 Assertions.assertThat(delay.getDate()).isEqualTo(ATTEMPT_END.plus(INTERVAL));
             })
@@ -148,11 +149,15 @@ class RetryDecisionTest {
     @Test
     void shouldFailExecutionWhenRetryFailedTaskExceedsMaxDuration() throws Exception {
         // Given: the next retry date (attemptEnd + 10min) would exceed maxDuration (5min)
-        FlowWithSource flow = Flows.of(failingTask(Constant.builder()
-            .interval(Duration.ofMinutes(10))
-            .maxDuration(Duration.ofMinutes(5))
-            .behavior(AbstractRetry.Behavior.RETRY_FAILED_TASK)
-            .build()));
+        FlowWithSource flow = Flows.of(
+            failingTask(
+                Constant.builder()
+                    .interval(Duration.ofMinutes(10))
+                    .maxDuration(Duration.ofMinutes(5))
+                    .behavior(AbstractRetry.Behavior.RETRY_FAILED_TASK)
+                    .build()
+            )
+        );
         harness.registerFlow(flow);
         ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
 
@@ -187,7 +192,8 @@ class RetryDecisionTest {
 
         // Then: flow-level RETRY_FAILED_TASK uses the taskrun attempt dates — exact arithmetic holds
         assertThat(cycle2)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_TASK);
                 Assertions.assertThat(delay.getDate()).isEqualTo(ATTEMPT_END.plus(INTERVAL));
             })
@@ -211,7 +217,8 @@ class RetryDecisionTest {
         // Then: flow-level CREATE_NEW_EXECUTION bases its date on the execution state history
         // (wall-clock stamped) — assert the decision, not the exact timestamp
         assertThat(cycle2)
-            .hasSingleExecutionDelay(delay -> {
+            .hasSingleExecutionDelay(delay ->
+            {
                 Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_FLOW);
                 Assertions.assertThat(delay.getDate()).isAfterOrEqualTo(ATTEMPT_END);
             })
@@ -265,11 +272,15 @@ class RetryDecisionTest {
     // --- fixtures
 
     private FlowWithSource flowWithTaskRetry(AbstractRetry.Behavior behavior, int maxAttempts) {
-        FlowWithSource flow = Flows.of(failingTask(Constant.builder()
-            .interval(INTERVAL)
-            .maxAttempts(maxAttempts)
-            .behavior(behavior)
-            .build()));
+        FlowWithSource flow = Flows.of(
+            failingTask(
+                Constant.builder()
+                    .interval(INTERVAL)
+                    .maxAttempts(maxAttempts)
+                    .behavior(behavior)
+                    .build()
+            )
+        );
         harness.registerFlow(flow);
         return flow;
     }
@@ -277,11 +288,13 @@ class RetryDecisionTest {
     private FlowWithSource flowWithFlowRetry(AbstractRetry.Behavior behavior) {
         FlowWithSource flow = Flows.of(
             Flows.builder(Log.builder().id(TASK_ID).type(Log.class.getName()).message("boom").build())
-                .retry(Constant.builder()
-                    .interval(INTERVAL)
-                    .maxAttempts(3)
-                    .behavior(behavior)
-                    .build())
+                .retry(
+                    Constant.builder()
+                        .interval(INTERVAL)
+                        .maxAttempts(3)
+                        .behavior(behavior)
+                        .build()
+                )
                 .build()
         );
         harness.registerFlow(flow);

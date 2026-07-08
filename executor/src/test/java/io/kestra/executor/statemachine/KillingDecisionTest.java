@@ -242,8 +242,7 @@ class KillingDecisionTest {
         String taskId,
         String parentTaskRunId,
         State state,
-        List<TaskRunAttempt> attempts
-    ) {
+        List<TaskRunAttempt> attempts) {
         return TaskRun.builder()
             .tenantId(flow.getTenantId())
             .id(IdUtils.create())

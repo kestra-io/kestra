@@ -14,7 +14,8 @@ export const useMiscStore = defineStore("misc", () => {
 
     const configs = ref<Record<string, any>>()
     const contextInfoBarOpenTab = ref("")
-    const lastContextTab = ref("news")
+    // AI Copilot is the first / default context-dock tab.
+    const lastContextTab = ref("ai")
     const theme = ref<SelectedTheme>("syncWithSystem")
 
     const axios = useClient()

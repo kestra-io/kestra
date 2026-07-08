@@ -1,21 +1,23 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "./node_modules/.tmp/types",
-    "tsBuildInfoFile": "./node_modules/.tmp/types/tsconfig.app.tsbuildinfo",
+    "noEmit": true,
     "types": []
   },
-  "references": [
-    {"path": "./packages/design-system/tsconfig.app.json"}
-  ],
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
     "src/**/*.json",
+    // vue-tsgo (TypeScript 7) checks imported workspace package sources as part
+    // of this project instead of consuming declarations emitted by project
+    // references, so the package sources and their ambient declarations (env.d.ts)
+    // must be covered by this project too.
+    "packages/design-system/src/**/*.ts",
+    "packages/design-system/src/**/*.vue",
+    "packages/topology/src/**/*.ts",
+    "packages/topology/src/**/*.vue",
+    "packages/slot-contracts/src/**/*.ts",
   ],
   "exclude": [
     // Node scripts (use fs/path/url) — type-checked via tsconfig.test.json, not the browser app build.

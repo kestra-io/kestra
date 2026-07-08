@@ -49,7 +49,7 @@
         >
             <KsSearch
                 v-model="localSearchQuery"
-                @update:modelValue="(v) => debouncedUpdateSearch(v ?? '')"
+                @update:modelValue="(v: string | undefined) => debouncedUpdateSearch(v ?? '')"
                 :placeholder="filter.configuration?.value?.searchPlaceholder"
                 clearable
             />

@@ -1,5 +1,8 @@
 import {computed, provide, ref} from "vue";
-import TaskArray from "../../../../../../src/components/no-code/components/tasks/TaskArray.vue";
+import TaskArrayVue from "../../../../../../src/components/no-code/components/tasks/TaskArray.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskArray = TaskArrayVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import Wrapper from "../../../../../../src/components/no-code/components/tasks/Wrapper.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {expect, within, fireEvent, waitFor} from "storybook/test";
@@ -29,7 +32,7 @@ export const StringArray: Story = {
                         {{
                             tasks: () => <TaskArray
                                 modelValue={model.value}
-                                onUpdate:modelValue={(val) => model.value = val}
+                                onUpdate:modelValue={(val: any) => model.value = val}
                                 schema={args.schema}
                                 root="items"
                             />
@@ -60,7 +63,7 @@ export const EmptyArray: Story = {
                         {{
                             tasks: () => <TaskArray
                                 modelValue={model.value}
-                                onUpdate:modelValue={(val) => model.value = val}
+                                onUpdate:modelValue={(val: any) => model.value = val}
                                 schema={args.schema}
                                 root="tags"
                             />
@@ -98,7 +101,7 @@ export const ObjectArray: Story = {
                         {{
                             tasks: () => <TaskArray
                                 modelValue={model.value}
-                                onUpdate:modelValue={(val) => model.value = val}
+                                onUpdate:modelValue={(val: any) => model.value = val}
                                 schema={args.schema}
                                 root="rows"
                             />

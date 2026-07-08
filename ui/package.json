@@ -13,7 +13,7 @@
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "preview": "vite preview",
-        "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
+        "check:types": "vue-tsgo --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsgo --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsgo --project tsconfig.test.json && echo \"test checked\"",
         "test:lint": "oxlint src packages && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
@@ -24,7 +24,7 @@
         "lint": "oxlint --fix src packages && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "postinstall": "npx patch-package"
+        "postinstall": "npx patch-package && node scripts/link-js-typescript.mjs"
     },
     "dependencies": {
         "@codecov/vite-plugin": "^2.0.1",
@@ -51,6 +51,7 @@
         "@types/path-browserify": "^1.0.3",
         "@types/semver": "^7.7.1",
         "@typescript-eslint/parser": "^8.59.2",
+        "@typescript/native-preview": "7.0.0-dev.20260615.1",
         "@vitejs/plugin-vue": "^6.0.7",
         "@vitejs/plugin-vue-jsx": "^5.1.5",
         "@vitest/browser": "^4.1.7",
@@ -105,7 +106,8 @@
         "storybook": "^10.3.3",
         "storybook-vue3-router": "^7.0.0",
         "ts-node": "^10.9.2",
-        "typescript": "^5.9.3",
+        "typescript": "^7.0.2",
+        "typescript6": "npm:typescript@^6.0.3",
         "uuid": "^14.0.0",
         "vite": "^8.0.14",
         "vitest": "^4.1.5",
@@ -115,7 +117,7 @@
         "vue-i18n": "^11.4.4",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^5.0.6",
-        "vue-tsc": "^3.2.8",
+        "vue-tsgo": "^0.2.2",
         "vue-virtual-scroller": "^3.0.4",
         "xss": "^1.0.15",
         "yaml": "^2.8.3"
@@ -139,6 +141,27 @@
     },
     "overrides": {
         "axios": "1.16.1",
+        "@typescript-eslint/parser": {
+            "typescript": "$typescript"
+        },
+        "@typescript-eslint/typescript-estree": {
+            "typescript": "$typescript"
+        },
+        "@typescript-eslint/project-service": {
+            "typescript": "$typescript"
+        },
+        "@typescript-eslint/tsconfig-utils": {
+            "typescript": "$typescript"
+        },
+        "@typescript-eslint/utils": {
+            "typescript": "$typescript"
+        },
+        "@module-federation/enhanced": {
+            "typescript": "$typescript"
+        },
+        "@module-federation/dts-plugin": {
+            "typescript": "$typescript"
+        },
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"

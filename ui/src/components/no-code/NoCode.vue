@@ -19,7 +19,7 @@
                             <template #tasks>
                                 <TaskObjectField
                                     v-bind="v"
-                                    @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                                    @update:model-value="(val: any) => onTaskUpdateField(v.fieldKey, val)"
                                 />
                             </template>
                         </Wrapper>
@@ -30,7 +30,7 @@
                             <template #tasks>
                                 <TaskObjectField
                                     v-bind="v"
-                                    @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                                    @update:model-value="(val: any) => onTaskUpdateField(v.fieldKey, val)"
                                 />
                             </template>
                         </Wrapper>

@@ -23,7 +23,7 @@
                 :modelValue="modelValue?.[index]"
                 :parentPath="`${root}[${index}]`"
                 :blockSchemaPath="taskSchemaPath"
-                @update:model-value="val => update(index, val)"
+                @update:model-value="(val: any) => update(index, val)"
             />
         </div>
 

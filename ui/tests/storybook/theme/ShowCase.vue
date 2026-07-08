@@ -188,7 +188,7 @@
             </el-select>
         </div>
 
-        <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab) => { if(tab.name) tabChanged({name:tab.name}) }" />
+        <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab: {name?: string}) => { if(tab.name) tabChanged({name:tab.name}) }" />
         <div>
             <div class="sub-title my-2 text-sm text-gray-600">
                 list suggestions when activated

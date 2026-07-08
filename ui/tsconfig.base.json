@@ -19,7 +19,15 @@
     "preserveSymlinks": true,
     "rootDir": ".",
     "paths": {
-      "override/*": ["./src/override/*"]
+      "override/*": ["./src/override/*"],
+      // Resolve the workspace packages to their sources: vue-tsgo (TypeScript 7)
+      // cannot type re-exports that go through the node_modules symlinks because
+      // the .vue files reached that way are not part of the checked project.
+      "@kestra-io/design-system": ["./packages/design-system/src/index.ts"],
+      "@kestra-io/design-system/components/*": ["./packages/design-system/src/components/*"],
+      "@kestra-io/slot-contracts": ["./packages/slot-contracts/src/index.ts"],
+      "@kestra-io/topology": ["./packages/topology/src/index.ts"],
+      "@kestra-io/topology/vue-flow-utils": ["./packages/topology/src/vue-flow-utils.ts"]
     }
   }
 }

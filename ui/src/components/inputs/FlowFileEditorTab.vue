@@ -36,7 +36,7 @@
                 @cursor="updatePluginDocumentation"
                 @save="flow ? saveFlowYaml(): saveFileContent()"
                 @execute="execute"
-                @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+                @mouse-move="(e: any) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
                 :original="hasDraft ? source : undefined"
             >

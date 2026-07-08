@@ -47,7 +47,7 @@
                         @selection-change="selectionChanged"
                         @select="onSelect"
                         @sort-change="onSortChange"
-                        @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
+                        @row-dblclick="(row: any, column: any, event: Event) => emit('row-dblclick', row, column, event)"
                     >
                         <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
                         <slot />

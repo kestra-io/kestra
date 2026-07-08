@@ -12,7 +12,7 @@
             v-if="navigationStack.length === 0"
             class="search-field"
             :router="false"
-            @search="value => searchQuery = value"
+            @search="(value: string) => searchQuery = value"
         />
     </div>
 

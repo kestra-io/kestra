@@ -27,7 +27,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "play": "vite",
-    "typecheck": "vue-tsc --noEmit",
+    "typecheck": "vue-tsgo --build tsconfig.json",
     "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6007 --no-open",
     "test": "npm run lint:test & npm run types:test & npm run unit:test & npm run storybook:test & wait",
@@ -38,7 +38,7 @@
     "storybook:build": "storybook build",
     "lint:fix": "oxlint --fix && eslint --fix",
     "lint:test": "oxlint && eslint",
-    "types:test": "vue-tsc --noEmit",
+    "types:test": "vue-tsgo --build tsconfig.json",
     "generate:palette": "node scripts/generate-palette.mjs"
   },
   "peerDependencies": {
@@ -105,7 +105,7 @@
     "sass": "^1.100.0",
     "sass-embedded": "^1.99.0",
     "storybook": "^10.3.1",
-    "tsdown": "^0.22.1",
+    "tsdown": "0.22.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
     "vite-plugin-dts": "^5.0.1",
@@ -113,7 +113,8 @@
     "vitest-browser-vue": "^2.1.0",
     "vue-material-design-icons": "^5.3.1",
     "vue-router": "^5.0.6",
-    "vue-tsc": "^3.2.8",
+    "vue-tsc": "3.2.9",
+    "vue-tsgo": "^0.2.2",
     "yaml": "^2.8.2"
   }
 }

@@ -19,7 +19,7 @@
                 <InputText
                     :modelValue="pair[0]"
                     :placeholder="$t('key')"
-                    @update:model-value="(changed) => handleKeyInput(index, changed)"
+                    @update:model-value="(changed: string) => handleKeyInput(index, changed)"
                     :haveError="duplicatedKeys.includes(pair[0])"
                 />
             </KsCol>
@@ -28,7 +28,7 @@
                     <InputText
                         :modelValue="pair[1]"
                         :placeholder="$t('value')"
-                        @update:model-value="(changed) => updateValue(index, changed)"
+                        @update:model-value="(changed: string) => updateValue(index, changed)"
                         class="w-100 me-2"
                     />
                 </slot>

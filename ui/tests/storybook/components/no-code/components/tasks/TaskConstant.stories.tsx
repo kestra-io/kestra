@@ -1,5 +1,8 @@
 import {ref} from "vue";
-import TaskConstant from "../../../../../../src/components/no-code/components/tasks/TaskConstant.vue";
+import TaskConstantVue from "../../../../../../src/components/no-code/components/tasks/TaskConstant.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskConstant = TaskConstantVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {expect, within} from "storybook/test";
 
@@ -19,7 +22,7 @@ const render: Story["render"] = (args) => ({
             <div style={{width: "400px"}}>
                 <TaskConstant
                     modelValue={model.value}
-                    onUpdate:modelValue={(val) => model.value = val}
+                    onUpdate:modelValue={(val: any) => model.value = val}
                     schema={args.schema}
                 />
             </div>

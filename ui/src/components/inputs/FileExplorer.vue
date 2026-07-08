@@ -138,7 +138,7 @@
                                 v-if="selectionMode"
                                 class="me-2"
                                 :modelValue="selectedNodes.includes(data.id)"
-                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @update-model-value="(checked: boolean) => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
                                 @click.stop
                             />

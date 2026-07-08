@@ -52,7 +52,7 @@
             :logCursor="logCursor"
             @follow="emit('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
-            @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
+            @log-indices-by-level="Object.entries($event as Record<string, string[]>).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />

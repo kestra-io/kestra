@@ -8,7 +8,7 @@
             >
                 <KsSearch
                     v-model="localSearchQuery"
-                    @update:modelValue="(v) => debouncedUpdateSearch(v ?? '')"
+                    @update:modelValue="(v: string | undefined) => debouncedUpdateSearch(v ?? '')"
                     :placeholder="filter.configuration?.value?.searchPlaceholder"
                     clearable
                 />
@@ -128,7 +128,7 @@
                             :editingFilter="filter.editingFilter?.value"
                             :savedFilters="filter.savedFilters?.value ?? []"
                             @save="onSaveFilter"
-                            @edit="(id, name, desc) => filter.updateSavedFilter(id, name, desc, filter.appliedFilters?.value ?? [])"
+                            @edit="(id: string, name: string, desc: string) => filter.updateSavedFilter(id, name, desc, filter.appliedFilters?.value ?? [])"
                             @close-edit="filter.closeEditFilter"
                         >
                             {{ $t("filter.save") }}

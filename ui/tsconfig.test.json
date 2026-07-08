@@ -25,7 +25,17 @@
     "tests/storybook/**/*.vue",
     "src/utils/global.ts",
     "src/*.d.ts",
-    "packages/design-system/src/env.d.ts",
-    "packages/topology/src/env.d.ts"
+    // vue-tsgo (TypeScript 7) checks every file reachable through imports as part
+    // of this project, so the app and workspace package sources must be covered
+    // here for their ambient declarations and paths to apply to them.
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/**/*.json",
+    "packages/design-system/src/**/*.ts",
+    "packages/design-system/src/**/*.vue",
+    "packages/topology/src/**/*.ts",
+    "packages/topology/src/**/*.vue",
+    "packages/slot-contracts/src/**/*.ts"
   ]
 }

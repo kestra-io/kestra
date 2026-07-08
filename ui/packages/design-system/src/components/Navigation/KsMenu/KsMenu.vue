@@ -1,7 +1,7 @@
 <template>
     <ElMenu
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @select="(index, indexPath) => emit('select', index, indexPath)"
+        @select="(index: string, indexPath: string[]) => emit('select', index, indexPath)"
     >
         <template v-if="$slots.default" #default>
             <slot />

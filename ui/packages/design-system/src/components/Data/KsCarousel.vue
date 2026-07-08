@@ -1,7 +1,7 @@
 <template>
     <ElCarousel
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="(current, prev) => emit('change', current, prev)"
+        @change="(current: number, prev: number) => emit('change', current, prev)"
     >
         <template v-if="$slots.default" #default>
             <slot />

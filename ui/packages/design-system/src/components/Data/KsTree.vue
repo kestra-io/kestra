@@ -2,9 +2,9 @@
     <ElTree
         ref="treeRef"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @node-drag-start="(node, event) => emit('nodeDragStart', node, event)"
-        @node-drop="(draggingNode, dropNode, dropType, event) => emit('nodeDrop', draggingNode, dropNode, dropType, event)"
-        @node-click="(data, node, el, event) => emit('nodeClick', data, node, el, event)"
+        @node-drag-start="(node: any, event: DragEvent) => emit('nodeDragStart', node, event)"
+        @node-drop="(draggingNode: any, dropNode: any, dropType: string, event: DragEvent) => emit('nodeDrop', draggingNode, dropNode, dropType, event)"
+        @node-click="(data: any, node: any, el: any, event: MouseEvent) => emit('nodeClick', data, node, el, event)"
     >
         <template v-if="$slots.default" #default="scope">
             <slot v-bind="scope" />

@@ -39,7 +39,7 @@
                     :modelValue="activeTab"
                     class="tab-select"
                     size="small"
-                    @change="(v) => $emit('tab-change', v as string)"
+                    @change="(v: unknown) => $emit('tab-change', v as string)"
                 >
                     <KsOption
                         v-for="tab in tabs"

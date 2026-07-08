@@ -1,5 +1,8 @@
 import {computed, provide, ref} from "vue";
-import TaskTask from "../../../../../../src/components/no-code/components/tasks/TaskTask.vue";
+import TaskTaskVue from "../../../../../../src/components/no-code/components/tasks/TaskTask.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskTask = TaskTaskVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {

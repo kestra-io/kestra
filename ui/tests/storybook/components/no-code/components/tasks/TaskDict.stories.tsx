@@ -1,5 +1,8 @@
 import {computed, provide, ref} from "vue";
-import TaskDict from "../../../../../../src/components/no-code/components/tasks/TaskDict.vue";
+import TaskDictVue from "../../../../../../src/components/no-code/components/tasks/TaskDict.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskDict = TaskDictVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import Wrapper from "../../../../../../src/components/no-code/components/tasks/Wrapper.vue";
 import {userEvent, waitFor, within, expect} from "storybook/test";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
@@ -30,7 +33,7 @@ const render: Story["render"] = (args) => ({
         const model = ref(args.modelValue || {});
         provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
         return () => <>
-            <TaskDict modelValue={model.value} schema={{}} onUpdate:modelValue={val => model.value = val}/>
+            <TaskDict modelValue={model.value} schema={{}} onUpdate:modelValue={(val: any) => model.value = val}/>
             <pre data-testid="sb-meta-data-result">
                 {JSON.stringify(model.value, null, 2)}
             </pre>
@@ -124,7 +127,7 @@ export const ValuesAsObjects: Story = {
                                         }
                                     }
                                 }
-                            }} onUpdate:modelValue={val => model.value = val}/>
+                            }} onUpdate:modelValue={(val: any) => model.value = val}/>
                         }}
                     </Wrapper>
                     <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-bg-surface)", padding: "10px", borderRadius: "4px", width: "100%"}}>
@@ -182,7 +185,7 @@ export const ValuesAsTaskLists: Story = {
                                         })),
                                     }
                                 }
-                            }} onUpdate:modelValue={val => model.value = val}/>
+                            }} onUpdate:modelValue={(val: any) => model.value = val}/>
                         }}
                     </Wrapper>
                     <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-bg-surface)", padding: "10px", borderRadius: "4px", width: "100%"}}>

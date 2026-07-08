@@ -2,11 +2,11 @@
     <ElTable
         ref="tableRef"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @selection-change="(selection) => emit('selectionChange', selection)"
-        @select="(selection, row) => emit('select', selection, row)"
-        @sort-change="(e) => emit('sortChange', e)"
-        @row-click="(row, column, event) => emit('rowClick', row, column, event)"
-        @row-dblclick="(row, column, event) => emit('rowDblclick', row, column, event)"
+        @selection-change="(selection: any[]) => emit('selectionChange', selection)"
+        @select="(selection: any[], row: any) => emit('select', selection, row)"
+        @sort-change="(e: {column: any; prop: string | null; order: string | null}) => emit('sortChange', e)"
+        @row-click="(row: any, column: any, event: Event) => emit('rowClick', row, column, event)"
+        @row-dblclick="(row: any, column: any, event: Event) => emit('rowDblclick', row, column, event)"
     >
         <template v-if="$slots.default" #default>
             <slot />

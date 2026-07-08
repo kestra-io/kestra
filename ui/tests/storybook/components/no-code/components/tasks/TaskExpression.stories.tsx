@@ -1,5 +1,8 @@
 import {computed, provide, ref} from "vue";
-import TaskExpression from "../../../../../../src/components/no-code/components/tasks/TaskExpression.vue";
+import TaskExpressionVue from "../../../../../../src/components/no-code/components/tasks/TaskExpression.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskExpression = TaskExpressionVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
@@ -24,7 +27,7 @@ const render: Story["render"] = (args) => ({
             <div style={{width: "500px"}}>
                 <TaskExpression
                     modelValue={model.value}
-                    onUpdate:modelValue={(val) => model.value = val}
+                    onUpdate:modelValue={(val: any) => model.value = val}
                     root={args.root}
                 />
             </div>

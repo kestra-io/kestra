@@ -1,7 +1,7 @@
 <template>
     <ElBacktop
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @click="(evt) => emit('click', evt)"
+        @click="(evt: MouseEvent) => emit('click', evt)"
     >
         <template v-if="$slots.default" #default>
             <slot />

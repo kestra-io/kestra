@@ -23,14 +23,14 @@
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",
-        "typecheck": "vue-tsc --noEmit",
+        "typecheck": "vue-tsgo --project tsconfig.json",
         "prepublishOnly": "npm run build"
     },
     "peerDependencies": {
         "@kestra-io/kestra-sdk": "*"
     },
     "devDependencies": {
-        "tsdown": "^0.22.1",
+        "tsdown": "0.22.1",
         "ts-morph": "^28.0.0"
     },
     "dependencies": {

@@ -27,9 +27,9 @@
                         :executeClicked="executeClicked"
                         @confirm="onSubmit"
                         @ready="onInputsFormReady"
-                        @update:model-value-no-default="values => inputsNoDefaults=values"
+                        @update:model-value-no-default="(values: Record<string, unknown>) => inputsNoDefaults=values"
                         @update:checks="onChecksUpdate"
-                        @update:on-recap="value => inputsOnRecap = value"
+                        @update:on-recap="(value: boolean) => inputsOnRecap = value"
                     />
                     <KsText v-else type="info">
                         {{ $t('no inputs') }}

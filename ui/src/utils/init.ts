@@ -140,7 +140,9 @@ export default async (
 
     // moment
     moment.locale(locale)
-    const momentExtended = extendMoment(moment)
+    // TypeScript 7 resolves moment-range's `typeof import("moment")` parameter with a
+    // `default` member that moment-timezone's namespace type does not carry
+    const momentExtended = extendMoment(moment as unknown as Parameters<typeof extendMoment>[0])
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
     setDateFormatter(dateFilter as any) // FIXME: any - dateFilter signature differs from DateFormatterFn

@@ -40,7 +40,7 @@
             <TaskDict
                 :modelValue
                 @update:model-value="
-                    (value) => $emit('update:modelValue', value)
+                    (value: Record<string, any> | undefined) => $emit('update:modelValue', value)
                 "
                 :root
                 :schema="schema ?? {}"

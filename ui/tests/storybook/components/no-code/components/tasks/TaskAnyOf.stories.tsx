@@ -1,5 +1,8 @@
 import {computed, provide, ref} from "vue";
-import TaskAnyOf from "../../../../../../src/components/no-code/components/tasks/TaskAnyOf.vue";
+import TaskAnyOfVue from "../../../../../../src/components/no-code/components/tasks/TaskAnyOf.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskAnyOf = TaskAnyOfVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
@@ -25,7 +28,7 @@ export const SimpleTypes: Story = {
                 <div style={{width: "500px"}}>
                     <TaskAnyOf
                         modelValue={model.value}
-                        onUpdate:modelValue={(val) => model.value = val}
+                        onUpdate:modelValue={(val: any) => model.value = val}
                         schema={args.schema}
                     />
                 </div>
@@ -54,7 +57,7 @@ export const ArrayVariants: Story = {
                 <div style={{width: "500px"}}>
                     <TaskAnyOf
                         modelValue={model.value}
-                        onUpdate:modelValue={(val) => model.value = val}
+                        onUpdate:modelValue={(val: any) => model.value = val}
                         schema={args.schema}
                     />
                 </div>

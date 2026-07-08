@@ -7,7 +7,10 @@ vi.mock("../../../../../../src/stores/playground", () => ({
 }));
 
 import {computed, provide, ref} from "vue";
-import TaskList from "../../../../../../src/components/no-code/components/tasks/TaskList.vue";
+import TaskListVue from "../../../../../../src/components/no-code/components/tasks/TaskList.vue";
+// vue-tsgo (TypeScript 7) does not surface defineModel()-derived props on the
+// component type when it is consumed from TSX, so type the component loosely here.
+const TaskList = TaskListVue as unknown as import("vue").FunctionalComponent<Record<string, any>>;
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {
@@ -60,7 +63,7 @@ export const Default: Story = {
             return () => <div style={{width: "600px"}}>
                 <TaskList
                     modelValue={model.value}
-                    onUpdate:modelValue={(val) => model.value = val}
+                    onUpdate:modelValue={(val: any) => model.value = val}
                     root="tasks"
                 />
             </div>
@@ -88,7 +91,7 @@ export const Merged: Story = {
             return () => <div style={{width: "600px"}}>
                 <TaskList
                     modelValue={model.value}
-                    onUpdate:modelValue={(val) => model.value = val}
+                    onUpdate:modelValue={(val: any) => model.value = val}
                     merge
                 />
             </div>

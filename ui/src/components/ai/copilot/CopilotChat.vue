@@ -1,13 +1,29 @@
 <template>
     <div class="copilot-chat" data-test="copilot-chat">
-        <!-- Empty state: artwork + heading + a centered composer (Figma Default variant). -->
+        <!-- Empty state: artwork + heading + a centered composer + suggestions (Figma Default variant). -->
         <div v-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
                 <div class="copilot-artwork">
-                    <AiIcon />
+                    <img :src="monogram" alt="" class="copilot-artwork-img" >
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
-                <CopilotComposer v-model:mode="mode" :disabled="!canSend" @submit="onSubmit" />
+                <CopilotComposer
+                    v-model:mode="mode"
+                    :disabled="!canSend"
+                    :placeholder="t('ai.copilot.emptyHelper')"
+                    @submit="onSubmit"
+                />
+                <div class="copilot-suggestions">
+                    <KsButton
+                        v-for="suggestion in suggestions"
+                        :key="suggestion"
+                        class="copilot-suggestion"
+                        :disabled="!canSend"
+                        @click="onSubmit(suggestion)"
+                    >
+                        {{ suggestion }}
+                    </KsButton>
+                </div>
             </div>
         </div>
 
@@ -39,7 +55,7 @@
 <script setup lang="ts">
     import {ref, computed, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
-    import AiIcon from "../AiIcon.vue"
+    import monogram from "../../../assets/monogram.svg"
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
@@ -56,6 +72,14 @@
     const {t} = useI18n()
 
     const mode = ref<Mode>(props.initialMode ?? "ASK")
+
+    // Quick-start prompts shown under the empty-state composer (Figma Default variant).
+    const suggestions = computed(() => [
+        t("ai.copilot.suggestions.errorHandling"),
+        t("ai.copilot.suggestions.unitTest"),
+        t("ai.copilot.suggestions.explain"),
+        t("ai.copilot.suggestions.dbt"),
+    ])
 
     const {messages, status, streaming, error, pendingConfirmation, canSend, sendChat, confirm, cancel} = useAiChat()
 
@@ -109,12 +133,27 @@
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-surface);
         box-shadow: var(--ks-shadow-surface);
-        font-size: var(--ks-spacing-7);
+    }
+
+    .copilot-artwork-img {
+        width: var(--ks-spacing-8);
+        height: var(--ks-spacing-8);
     }
 
     .copilot-empty-title {
         font-weight: 600;
         text-align: center;
+    }
+
+    .copilot-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+        justify-content: center;
+    }
+
+    .copilot-suggestion {
+        border-radius: var(--ks-radius-xl);
     }
 
     .copilot-body {

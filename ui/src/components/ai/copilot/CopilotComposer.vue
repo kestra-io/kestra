@@ -4,7 +4,7 @@
             v-model="draft"
             type="textarea"
             :autosize="{minRows: 1, maxRows: 6}"
-            :placeholder="t('ai.copilot.placeholder')"
+            :placeholder="placeholder ?? t('ai.copilot.placeholder')"
             :disabled="disabled"
             data-test="copilot-composer-input"
             @keydown="onKeydown"
@@ -49,6 +49,8 @@
         mode: Mode
         /** Disables input while a turn is streaming or awaiting confirmation. */
         disabled?: boolean
+        /** Overrides the placeholder (e.g. the descriptive helper text in the empty state). */
+        placeholder?: string
     }>()
 
     const emit = defineEmits<{

@@ -165,7 +165,7 @@
     .copilot-mode-trigger {
         display: inline-flex;
         align-items: center;
-        gap: var(--ks-spacing-1);
+        gap: var(--ks-spacing-2);
         background: var(--ks-bg-tag);
         border: none;
         color: var(--ks-text-primary);

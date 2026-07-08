@@ -1,12 +1,12 @@
 package io.kestra.jdbc;
 
 import io.kestra.core.lock.Lock;
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.mcp.models.McpServer;
-import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.flows.FlowInterface;

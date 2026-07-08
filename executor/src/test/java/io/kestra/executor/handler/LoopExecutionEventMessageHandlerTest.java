@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import io.kestra.core.utils.TestsUtils;
-import io.micronaut.test.annotation.MockBean;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,10 +23,13 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.log.Log;
 
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,14 +87,16 @@ class LoopExecutionEventMessageHandlerTest {
         var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
         executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
         // terminatedIteration + 1 = 3 == iterationCount = 3 → terminates with SUCCESS
-        taskOutputService.saveOutputs(loopTaskRun, Map.of(
-            Loop.ITERATION_COUNT_OUTPUT, 3,
-            Loop.RUNNING_ITERATIONS_OUTPUT, 1,
-            Loop.TERMINATED_ITERATIONS_OUTPUT, 2
-        ));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, 2
+            )
+        );
 
         // When
-        var loopRun = new LoopRun(execution, "loop", loopTaskRunId,  2, null, "c", null);
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null);
         var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null);
         var maybeExecutor = handler.handle(message);
 
@@ -133,11 +135,13 @@ class LoopExecutionEventMessageHandlerTest {
         var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
         executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
         // terminatedIteration + 1 = 1 < iterationCount = 3 → emit next, handler returns null
-        taskOutputService.saveOutputs(loopTaskRun, Map.of(
-            Loop.ITERATION_COUNT_OUTPUT, 3,
-            Loop.RUNNING_ITERATIONS_OUTPUT, 1,
-            Loop.TERMINATED_ITERATIONS_OUTPUT, 0
-        ));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, 0
+            )
+        );
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
@@ -203,11 +207,13 @@ class LoopExecutionEventMessageHandlerTest {
             .flowId(execution.getFlowId())
             .taskId("loop")
             .state(new State().withState(State.Type.RUNNING))
-            .attempts(List.of(
-                TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.RUNNING))
-                    .build()
-            ))
+            .attempts(
+                List.of(
+                    TaskRunAttempt.builder()
+                        .state(new State().withState(State.Type.RUNNING))
+                        .build()
+                )
+            )
             .build();
     }
 }

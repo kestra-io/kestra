@@ -22,8 +22,8 @@ public interface WorkerConnectionService {
      * Result of a worker connection attempt.
      *
      * @param workerGroupId the resolved worker group ID; the controller normalizes the
-     *                      absent case to {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}
-     *                      so this value is always set.
+     *        absent case to {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}
+     *        so this value is always set.
      */
     record ConnectionResult(String workerGroupId) {
     }

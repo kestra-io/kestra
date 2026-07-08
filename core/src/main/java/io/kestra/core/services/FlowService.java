@@ -487,8 +487,10 @@ public class FlowService {
             .toList();
         flowTriggers.forEach(flowTrigger ->
         {
-            if (ListUtils.isEmpty(flowTrigger.getDependsOn())
-                && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))) {
+            if (
+                ListUtils.isEmpty(flowTrigger.getDependsOn())
+                    && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))
+            ) {
                 warnings.add(
                     "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the dependsOn property to the Flow trigger '" + flowTrigger.getId()
                         + "'."
@@ -513,12 +515,14 @@ public class FlowService {
         });
 
         // warn when @PluginProperty(secret=true) fields have plain-text values
-        flow.allTasksWithChilds().forEach(task ->
-            SecretUtils.validateSecretFields(task)
-                .forEach(msg -> warnings.add("Task '" + task.getId() + "': " + msg)));
-        ListUtils.emptyOnNull(flow.getTriggers()).forEach(trigger ->
-            SecretUtils.validateSecretFields(trigger)
-                .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg)));
+        flow.allTasksWithChilds().forEach(
+            task -> SecretUtils.validateSecretFields(task)
+                .forEach(msg -> warnings.add("Task '" + task.getId() + "': " + msg))
+        );
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(
+            trigger -> SecretUtils.validateSecretFields(trigger)
+                .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg))
+        );
 
         return warnings;
     }

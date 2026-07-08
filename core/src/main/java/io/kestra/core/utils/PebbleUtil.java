@@ -1,13 +1,13 @@
 package io.kestra.core.utils;
 
-import io.pebbletemplates.pebble.lexer.Syntax;
-
 import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import io.pebbletemplates.pebble.lexer.Syntax;
 
 /**
  * Utility for Pebble template delimiter detection.
@@ -34,7 +34,8 @@ public final class PebbleUtil {
         Pattern.DOTALL
     );
 
-    private PebbleUtil() {}
+    private PebbleUtil() {
+    }
 
     /**
      * Returns the opening block delimiters for Pebble expressions ({@code {{} and {@code {%}).

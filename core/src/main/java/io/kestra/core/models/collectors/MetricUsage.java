@@ -1,12 +1,13 @@
 package io.kestra.core.models.collectors;
 
+import java.util.Optional;
+
 import io.kestra.core.metrics.MetricRegistry;
+
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Optional;
 
 @SuperBuilder
 @Getter
@@ -45,15 +46,13 @@ public class MetricUsage {
         static ExecutorMetric of(MetricRegistry metricRegistry) {
             return ExecutorMetric.builder()
                 .killEventCount(fromCounter(metricRegistry, MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT))
-                .workerJobResubmitCount(fromCounter(metricRegistry,  MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT))
+                .workerJobResubmitCount(fromCounter(metricRegistry, MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT))
                 .slaViolationCount(fromCounter(metricRegistry, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT))
                 .threadCount(fromGauge(metricRegistry, MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT))
                 .executionQueuedCount(fromCounter(metricRegistry, MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT))
                 .build();
         }
     }
-
-
 
     @SuperBuilder
     @Getter

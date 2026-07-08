@@ -16,10 +16,12 @@ import io.kestra.core.serializers.JacksonMapper;
  * {@code {{ inputs.<refId>.<childId> }}}. Inlining (rather than wrapping in a single FORM) lets a block contain a
  * {@code FORM} of its own, since the spliced inputs are flattened by the normal input-resolution machinery.
  *
- * <p>A reference may also sit inside a flow's {@code FORM} input; inlining recurses into FORM children, and the block's
+ * <p>
+ * A reference may also sit inside a flow's {@code FORM} input; inlining recurses into FORM children, and the block's
  * self-references are scoped to their full runtime path (e.g. {@code inputs.<form>.<refId>...}).
  *
- * <p>This is an Enterprise Edition concern: the open-source default ({@code DisabledReusableInputsExpander}) errors, and
+ * <p>
+ * This is an Enterprise Edition concern: the open-source default ({@code DisabledReusableInputsExpander}) errors, and
  * the EE implementation looks the block up from its namespace/tenant-scoped store, walking the namespace hierarchy.
  */
 public interface ReusableInputsExpander {
@@ -32,13 +34,13 @@ public interface ReusableInputsExpander {
     }
 
     /**
-     * @param tenantId      the tenant of the flow being executed
+     * @param tenantId the tenant of the flow being executed
      * @param flowNamespace the namespace of the flow, used as the default when the reference omits one
-     * @param input         the reference to resolve
-     * @param parentPath    ids of the enclosing {@code FORM}(s), root&rarr;leaf; empty at the flow root. Used to scope the
-     *                      inlined block's self-references to their full runtime path when the reference is nested in a
-     *                      FORM (the spliced ids stay FORM-relative, since {@link Input#expandToLeaves} adds the FORM
-     *                      prefix).
+     * @param input the reference to resolve
+     * @param parentPath ids of the enclosing {@code FORM}(s), root&rarr;leaf; empty at the flow root. Used to scope the
+     *        inlined block's self-references to their full runtime path when the reference is nested in a
+     *        FORM (the spliced ids stay FORM-relative, since {@link Input#expandToLeaves} adds the FORM
+     *        prefix).
      * @return the block's inputs, spliced into the flow with each id prefixed by {@code input.getId() + "."}
      */
     List<Input<?>> resolve(String tenantId, String flowNamespace, ReusableInputsInput input, List<String> parentPath);
@@ -60,7 +62,8 @@ public interface ReusableInputsExpander {
         }
 
         return inputs.stream()
-            .flatMap(input -> {
+            .flatMap(input ->
+            {
                 if (input instanceof ReusableInputsInput reusable) {
                     return resolve(tenantId, flowNamespace, reusable, parentPath).stream();
                 }
@@ -68,17 +71,18 @@ public interface ReusableInputsExpander {
                     List<String> childPath = new ArrayList<>(parentPath);
                     childPath.add(form.getId());
                     List<Input<?>> expandedChildren = expandInternal(tenantId, flowNamespace, form.getInputs(), childPath);
-                    return Stream.<Input<?>>of(withFormInputs(form, expandedChildren));
+                    return Stream.<Input<?>> of(withFormInputs(form, expandedChildren));
                 }
-                return Stream.<Input<?>>of(input);
+                return Stream.<Input<?>> of(input);
             })
             .toList();
     }
 
     private static boolean containsReusable(List<Input<?>> inputs) {
-        return inputs != null && inputs.stream().anyMatch(input ->
-            input instanceof ReusableInputsInput
-                || (input instanceof FormInput form && containsReusable(form.getInputs())));
+        return inputs != null && inputs.stream().anyMatch(
+            input -> input instanceof ReusableInputsInput
+                || (input instanceof FormInput form && containsReusable(form.getInputs()))
+        );
     }
 
     /** Re-creates a {@code FORM} with new children via a Jackson round-trip ({@code FormInput} has no {@code toBuilder}). */

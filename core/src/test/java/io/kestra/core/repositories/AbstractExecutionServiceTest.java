@@ -39,7 +39,7 @@ public abstract class AbstractExecutionServiceTest {
     ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    LogRepositoryInterface logRepository;
+    LogDataStoreInterface logRepository;
 
     @Inject
     RunContextFactory runContextFactory;

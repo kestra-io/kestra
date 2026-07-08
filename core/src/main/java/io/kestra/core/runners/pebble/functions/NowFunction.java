@@ -11,6 +11,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class NowFunction extends AbstractDate implements KestraFunction {
     public static final String NAME = "now";
+
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         return format(ZonedDateTime.now(), args, context);

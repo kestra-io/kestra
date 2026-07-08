@@ -1,5 +1,14 @@
 package io.kestra.mcp;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.micronaut.http.*;
 import io.micronaut.http.sse.Event;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -9,21 +18,12 @@ import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.*;
 import io.modelcontextprotocol.spec.HttpHeaders;
 import io.modelcontextprotocol.util.KeepAliveScheduler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 
 public class KestraFluxStreamableServerTransportProvider implements McpStreamableServerTransportProvider {
 
@@ -44,8 +44,6 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
     private final McpErrorResponseMapper mcpErrorResponseMapper;
 
     private final KeepAliveScheduler keepAliveScheduler;
-
-
 
     public KestraFluxStreamableServerTransportProvider(McpErrorResponseMapper mcpErrorResponseMapper, McpSessionService mcpSessionService) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
@@ -68,21 +66,25 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
         logger.debug("Attempting to broadcast message to {} local session(s)", mcpSessionService.listMcpStreamableServerSession().size());
 
         return Flux.fromIterable(mcpSessionService.listMcpStreamableServerSession())
-            .flatMap(session -> session.sendNotification(method, params)
-                .doOnError(e -> logger.error("Failed to send message to session {}: {}", session.getId(), e.getMessage()))
-                .onErrorComplete())
+            .flatMap(
+                session -> session.sendNotification(method, params)
+                    .doOnError(e -> logger.error("Failed to send message to session {}: {}", session.getId(), e.getMessage()))
+                    .onErrorComplete()
+            )
             .then();
     }
 
     @Override
     public Mono<Void> closeGracefully() {
-        return Mono.defer(() -> {
+        return Mono.defer(() ->
+        {
             this.isClosing.set(true);
             return Flux.fromIterable(mcpSessionService.listMcpStreamableServerSession())
                 .doFirst(() -> logger.debug("Initiating graceful shutdown with {} active sessions", mcpSessionService.listMcpStreamableServerSession().size()))
                 .flatMap(McpStreamableServerSession::closeGracefully)
                 .then();
-        }).then().doOnSuccess(v -> {
+        }).then().doOnSuccess(v ->
+        {
             mcpSessionService.clear();
             this.keepAliveScheduler.shutdown();
         });
@@ -90,22 +92,25 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
 
     @Override
     public List<String> protocolVersions() {
-        return List.of(ProtocolVersions.MCP_2024_11_05, ProtocolVersions.MCP_2025_03_26,
-            ProtocolVersions.MCP_2025_06_18);
+        return List.of(
+            ProtocolVersions.MCP_2024_11_05, ProtocolVersions.MCP_2025_03_26,
+            ProtocolVersions.MCP_2025_06_18
+        );
     }
 
     public Mono<? extends HttpResponse<?>> handleRequest(HttpRequest<String> request, KestraMcpTransportContext transportContext) {
         if (isClosing.get()) {
-            return Mono.just(HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(Flux.just(Event.of("Server is shutting down, no new requests are accepted"))));
+            return Mono.just(
+                HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Flux.just(Event.of("Server is shutting down, no new requests are accepted")))
+            );
         }
 
-
         List<MediaType> acceptHeaders = request.getHeaders().accept();
-        if (!(
-            acceptHeaders.contains(MediaType.TEXT_EVENT_STREAM_TYPE) &&
-                (acceptHeaders.contains(MediaType.APPLICATION_JSON_TYPE) || request.getMethod() == HttpMethod.GET)
-        )) {
+        if (
+            !(acceptHeaders.contains(MediaType.TEXT_EVENT_STREAM_TYPE) &&
+                (acceptHeaders.contains(MediaType.APPLICATION_JSON_TYPE) || request.getMethod() == HttpMethod.GET))
+        ) {
             return Mono.just(HttpResponse.badRequest());
         }
 
@@ -158,19 +163,23 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
         }
 
         final McpStreamableServerSession resolvedSession = session.get();
-        Flux<Event<?>> serverSentEvent = Flux.<Event<?>>create(sink -> {
+        Flux<Event<?>> serverSentEvent = Flux.<Event<?>> create(sink ->
+        {
             FluxStreamableMcpSessionTransport sessionTransport = new FluxStreamableMcpSessionTransport(sink);
             McpStreamableServerSession.McpStreamableServerSessionStream listeningStream = resolvedSession
                 .listeningStream(sessionTransport);
-            sink.onDispose(() -> {
+            sink.onDispose(() ->
+            {
                 listeningStream.close();
                 mcpSessionService.deregisterSseSession(transportContext);
             });
         }).contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext));
 
-        return Mono.just(HttpResponse.ok().body(
-            serverSentEvent
-        ));
+        return Mono.just(
+            HttpResponse.ok().body(
+                serverSentEvent
+            )
+        );
     }
 
     private Mono<? extends HttpResponse<?>> handlePost(HttpRequest<String> request, KestraMcpTransportContext transportContext) {
@@ -195,26 +204,31 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
             );
         }
 
-        if (message instanceof McpSchema.JSONRPCRequest jsonrpcRequest
-            && jsonrpcRequest.method().equals(McpSchema.METHOD_INITIALIZE)) {
+        if (
+            message instanceof McpSchema.JSONRPCRequest jsonrpcRequest
+                && jsonrpcRequest.method().equals(McpSchema.METHOD_INITIALIZE)
+        ) {
             var typeReference = new TypeRef<McpSchema.InitializeRequest>() {
             };
-            McpSchema.InitializeRequest initializeRequest = jsonMapper.convertValue(jsonrpcRequest.params(),
-                typeReference);
+            McpSchema.InitializeRequest initializeRequest = jsonMapper.convertValue(
+                jsonrpcRequest.params(),
+                typeReference
+            );
             McpStreamableServerSession.McpStreamableServerSessionInit init = this.sessionFactory
                 .startSession(initializeRequest);
             mcpSessionService.addProxyForMcpStreamableServerSession(transportContext, init.session());
-            return init.initResult().map(initializeResult ->
-                new McpSchema.JSONRPCResponse(
+            return init.initResult().map(
+                initializeResult -> new McpSchema.JSONRPCResponse(
                     McpSchema.JSONRPC_VERSION,
                     jsonrpcRequest.id(),
                     initializeResult,
                     null
                 )
-            ).map(response -> HttpResponse.ok()
-                .header(HttpHeaders.MCP_SESSION_ID, transportContext.getSessionId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(response)
+            ).map(
+                response -> HttpResponse.ok()
+                    .header(HttpHeaders.MCP_SESSION_ID, transportContext.getSessionId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response)
             );
         }
 
@@ -260,11 +274,14 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
                         new McpSchema.Implementation("kestra-proxy-client", "1.0.0")
                     )
                 ).session();
-                return Mono.just(HttpResponse.ok()
-                    .contentType(MediaType.TEXT_EVENT_STREAM)
-                    .body(buildSeeBody(ephemeralSession, jsonrpcRequest)
-                        .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-                    ));
+                return Mono.just(
+                    HttpResponse.ok()
+                        .contentType(MediaType.TEXT_EVENT_STREAM)
+                        .body(
+                            buildSeeBody(ephemeralSession, jsonrpcRequest)
+                                .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+                        )
+                );
             }
             return buildErrorResponse(
                 "Unexpected message type for cross-server session.",
@@ -273,17 +290,19 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
             );
         }
 
-
         Mono<HttpResponse<?>> response = switch (message) {
             case McpSchema.JSONRPCResponse jsonrpcResponse ->
                 session.get().accept(jsonrpcResponse).then(Mono.just(HttpResponse.accepted()));
             case McpSchema.JSONRPCNotification jsonrpcNotification ->
                 session.get().accept(jsonrpcNotification).then(Mono.just(HttpResponse.accepted()));
-            case McpSchema.JSONRPCRequest jsonrpcRequest -> Mono.just( HttpResponse.ok()
-                .contentType(MediaType.TEXT_EVENT_STREAM)
-                .body(buildSeeBody(session.get(), jsonrpcRequest)
-                    .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-                ));
+            case McpSchema.JSONRPCRequest jsonrpcRequest -> Mono.just(
+                HttpResponse.ok()
+                    .contentType(MediaType.TEXT_EVENT_STREAM)
+                    .body(
+                        buildSeeBody(session.get(), jsonrpcRequest)
+                            .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+                    )
+            );
         };
 
         return response
@@ -292,17 +311,18 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
     }
 
     private Flux<Event<?>> buildSeeBody(McpStreamableServerSession session, McpSchema.JSONRPCRequest jsonrpcRequest) {
-        return Flux.create(sink -> {
+        return Flux.create(sink ->
+        {
             FluxStreamableMcpSessionTransport st = new FluxStreamableMcpSessionTransport(sink);
             Mono<Void> stream = session.responseStream(jsonrpcRequest, st);
-            Disposable streamSubscription = stream.onErrorComplete(err -> {
+            Disposable streamSubscription = stream.onErrorComplete(err ->
+            {
                 sink.error(err);
                 return true;
             }).contextWrite(sink.contextView()).subscribe();
             sink.onCancel(streamSubscription);
         });
     }
-
 
     private Mono<MutableHttpResponse<?>> handleDelete(HttpRequest<String> request, KestraMcpTransportContext transportContext) {
         if (!request.getHeaders().contains(HttpHeaders.MCP_SESSION_ID)) {
@@ -335,8 +355,6 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
         );
     }
 
-
-
     public class FluxStreamableMcpSessionTransport implements McpStreamableServerTransport {
         private final FluxSink<Event<?>> sink;
 
@@ -351,19 +369,21 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
 
         @Override
         public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message, String messageId) {
-            return Mono.fromSupplier(() -> {
+            return Mono.fromSupplier(() ->
+            {
                 try {
                     return jsonMapper.writeValueAsString(message);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     throw Exceptions.propagate(e);
                 }
-            }).doOnNext(jsonText -> {
+            }).doOnNext(jsonText ->
+            {
                 Event<String> event = Event.of(jsonText)
                     .name(MESSAGE_EVENT_TYPE)
                     .id(messageId);
                 sink.next(event);
-            }).doOnError(e -> {
+            }).doOnError(e ->
+            {
                 Throwable exception = Exceptions.unwrap(e);
                 sink.error(exception);
             }).then();

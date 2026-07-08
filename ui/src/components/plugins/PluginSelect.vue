@@ -70,6 +70,7 @@
         if (blockType === "pluginDefaults" || isPluginBlock) {
             pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
+        pluginsStore.fetchIcons()
     })
 
     const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {

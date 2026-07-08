@@ -2027,7 +2027,9 @@
           "approve": "Approve",
           "approveExecute": "Approve & execute",
           "reject": "Reject",
-          "reasonPlaceholder": "Reply to revise…"
+          "reasonPlaceholder": "Reply to revise…",
+          "pending": "Pending approval",
+          "revise": "Reply to revise"
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

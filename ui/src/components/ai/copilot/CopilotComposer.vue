@@ -20,7 +20,8 @@
         <div class="copilot-composer-actions">
             <KsDropdown trigger="click" data-test="copilot-mode-selector">
                 <KsButton size="small" class="copilot-mode-trigger">
-                    {{ currentModeLabel }}
+                    <component :is="currentMode?.icon" :size="16" />
+                    {{ currentMode?.label }}
                     <ChevronDown class="copilot-mode-chevron" />
                 </KsButton>
                 <template #dropdown>
@@ -31,7 +32,10 @@
                             :class="{'copilot-mode-item--active': option.value === mode}"
                             @click="emit('update:mode', option.value)"
                         >
-                            {{ option.label }}
+                            <span class="copilot-mode-item">
+                                <component :is="option.icon" :size="16" />
+                                {{ option.label }}
+                            </span>
                         </KsDropdownItem>
                     </KsDropdownMenu>
                 </template>
@@ -51,10 +55,15 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch} from "vue"
+    import {ref, computed, nextTick, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    // Per-mode icons taken from the UI-2.0 Figma: Build → wrench ("build"), Plan → map.
+    // Ask isn't shown in that file, so we use a Q&A chat icon to match its read-only intent.
+    import ChatQuestionOutline from "vue-material-design-icons/ChatQuestionOutline.vue"
+    import Wrench from "vue-material-design-icons/Wrench.vue"
+    import MapOutline from "vue-material-design-icons/MapOutline.vue"
     import type {Mode} from "./types"
 
     const props = defineProps<{
@@ -78,14 +87,14 @@
     const textareaEl = ref<HTMLTextAreaElement>()
 
     // Values are the backend Mode enum; labels follow the Figma wording
-    // (EDIT is surfaced as "Build").
-    const modeOptions = computed<{label: string; value: Mode}[]>(() => [
-        {label: t("ai.copilot.mode.ask"), value: "ASK"},
-        {label: t("ai.copilot.mode.edit"), value: "EDIT"},
-        {label: t("ai.copilot.mode.plan"), value: "PLAN"},
+    // (EDIT is surfaced as "Build"); icons match the Figma mode pills.
+    const modeOptions = computed<{label: string; value: Mode; icon: Component}[]>(() => [
+        {label: t("ai.copilot.mode.ask"), value: "ASK", icon: ChatQuestionOutline},
+        {label: t("ai.copilot.mode.edit"), value: "EDIT", icon: Wrench},
+        {label: t("ai.copilot.mode.plan"), value: "PLAN", icon: MapOutline},
     ])
 
-    const currentModeLabel = computed(() => modeOptions.value.find((o) => o.value === props.mode)?.label)
+    const currentMode = computed(() => modeOptions.value.find((o) => o.value === props.mode))
 
     const canSubmit = computed(() => !props.disabled && draft.value.trim().length > 0)
 
@@ -168,5 +177,11 @@
         display: inline-flex;
         font-size: 1rem;
         color: var(--ks-text-secondary);
+    }
+
+    .copilot-mode-item {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
     }
 </style>

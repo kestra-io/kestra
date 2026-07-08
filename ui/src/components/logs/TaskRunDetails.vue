@@ -234,7 +234,7 @@
                 </KsCard>
                 <div
                     v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive"
-                    style="display:flex; align-items: center; gap: 10px; margin: 12px 0"
+                    class="loop-progress"
                 >
                     <KsButton
                         :tag="RouterLink"
@@ -247,16 +247,14 @@
                         }"
                         size="small"
                     >
-                        Iterations
+                        {{ t("iterations") }}
                     </KsButton>
-                    <KsProgress
-                        :percentage="Math.ceil((loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.iterationCount ?? 1) * 100)"
-                        :strokeWidth="7"
-                        :radius="81"
-                        class="progress-bar"
+                    <KsSegmentedProgress
+                        :segments="loopTerminatedSegments(asTaskRun(currentTaskRun).id)"
+                        :total="loopIterationCount(asTaskRun(currentTaskRun).id)"
                     >
-                        <span>{{ loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[asTaskRun(currentTaskRun).id]?.iterationCount ?? '?' }}</span>
-                    </KsProgress>
+                        <template #default="{value, total}">{{ value }} / {{ total || "?" }}</template>
+                    </KsSegmentedProgress>
                 </div>
             </DynamicScrollerItem>
         </template>
@@ -272,7 +270,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State, levelToRequestParams, KsProgress, type LevelFilterValue} from "@kestra-io/design-system"
+    import {State, levelToRequestParams, type LevelFilterValue, type KsSegmentedProgressSegment} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
     import moment from "moment"
@@ -297,6 +295,9 @@
     const {t} = useI18n()
 
     const $http = useClient()
+
+    // Color for each execution state, used to render the Loop task's per-state progress segments
+    const loopStateColors = State.color()
 
     // The UI taskrun carries a computed `depth` (for nesting) and subflow `outputs`,
     // neither of which the SDK TaskRun type models.
@@ -737,6 +738,22 @@
         } catch {
             // ignore fetch errors
         }
+    }
+
+    function loopIterationCount(taskRunId: string): number {
+        return loopOutputsByTaskRunId.value[taskRunId]?.iterationCount ?? 0
+    }
+
+    // One colored segment per terminal state reached by the Loop's sub-executions.
+    function loopTerminatedSegments(taskRunId: string): KsSegmentedProgressSegment[] {
+        const terminatedIterations: Record<string, number> = loopOutputsByTaskRunId.value[taskRunId]?.terminatedIterations ?? {}
+
+        return Object.entries(terminatedIterations).map(([state, count]) => ({
+            key: state,
+            value: count,
+            color: loopStateColors[state],
+            tooltip: `${count} ${state}`,
+        }))
     }
 
     function fileUrl(path: string): string {
@@ -1205,14 +1222,11 @@
     padding-left: 0;
   }
 
-  .progress-bar {
-    margin-block: .5rem;
-    flex: 1;
-
-    :deep(.kel-progress__text) {
-      font-size: var(--ks-font-size-sm) !important;
-      color: var(--ks-text-secondary);
-    }
+  .loop-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-3);
+    margin-block: var(--ks-spacing-3);
   }
 
   .attempt-wrapper {

@@ -81,7 +81,8 @@ public abstract class ConcurrencyLimitStateStoreContract {
         Execution first = Execution.newExecution(flow, List.of());
         Execution second = Execution.newExecution(flow, List.of());
         Instant now = Instant.now();
-        store().countThenProcess(flow, (txContext, limit) -> {
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
             // queued entries are saved inside the counting transaction, exactly as
             // ExecutionEventMessageHandler does when the QUEUE behavior trips
             queuedStore().save(txContext, queued(flow, first, now.minusSeconds(60)));
@@ -109,7 +110,8 @@ public abstract class ConcurrencyLimitStateStoreContract {
         // Given: the counter was inflated above the limit (over-limit race aftermath), one queued
         Flow flow = flow(1);
         Execution waiting = Execution.newExecution(flow, List.of());
-        store().countThenProcess(flow, (txContext, limit) -> {
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
             queuedStore().save(txContext, queued(flow, waiting, Instant.now()));
             return Pair.of(null, limit.withRunning(3));
         });
@@ -131,7 +133,8 @@ public abstract class ConcurrencyLimitStateStoreContract {
 
     private int currentCount(Flow flow) {
         AtomicInteger count = new AtomicInteger();
-        store().countThenProcess(flow, (txContext, limit) -> {
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
             count.set(limit.getRunning() == null ? 0 : limit.getRunning());
             return Pair.of(null, limit);
         });

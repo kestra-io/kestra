@@ -3,15 +3,14 @@ package io.kestra.core.plugins;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,7 +36,6 @@ public class PluginCatalogService {
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 
     private final HttpClient httpClient;
-    private final ExecutorService iconLoaderExecutor;
 
     private CompletableFuture<List<PluginManifest>> plugins;
 
@@ -46,15 +44,14 @@ public class PluginCatalogService {
     private Instant cacheLastLoaded = Instant.now();
     private final AtomicBoolean isLoaded = new AtomicBoolean(false);
 
+    // Lazily-resolved raw SVG icon bytes, cached per plugin group so the whole catalog of icons is
+    // never fetched/transferred at once — only the icons actually rendered by the UI are proxied.
+    private final Map<String, Optional<byte[]>> iconBytesByGroup = new ConcurrentHashMap<>();
+
     private final boolean icons;
     private final boolean oss;
 
     private final Version currentStableVersion;
-
-    // Maps a resolved artifact's Maven coordinates back to the internal "group" key the Kestra API
-    // uses to look up its icon (see `load()`), so `icon(groupId, artifactId)` can fetch a single
-    // icon on demand without re-fetching the whole catalog.
-    private final Map<String, String> iconGroupByCoordinates = new ConcurrentHashMap<>();
 
     /**
      * Creates a new {@link PluginCatalogService} instance.
@@ -71,12 +68,6 @@ public class PluginCatalogService {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
-        if (icons) {
-            int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
-            this.iconLoaderExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "api-plugin-catalog");
-        } else {
-            this.iconLoaderExecutor = null;
-        }
 
         Version version = Version.of(KestraContext.getContext().getVersion());
         this.currentStableVersion = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
@@ -172,44 +163,14 @@ public class PluginCatalogService {
                 .filter(plugin -> !oss || !"EE".equals(plugin.get("license")))
                 .toList();
 
-            // Load icons in parallel using a dedicated executor to avoid saturating the ForkJoinPool.
-            Map<String, String> iconsByGroup = Map.of();
-            if (icons && iconLoaderExecutor != null) {
-                List<String> groups = filteredPlugins.stream()
-                    .map(plugin -> (String) plugin.get("group"))
-                    .distinct()
-                    .toList();
-
-                List<CompletableFuture<Map.Entry<String, String>>> iconFutures = groups.stream()
-                    .map(group -> CompletableFuture.supplyAsync(() ->
-                    {
-                        String icon = fetchIconBytes(group)
-                            .map(svg -> Base64.getEncoder().encodeToString(svg))
-                            .orElse(null);
-                        return Map.entry(group, icon != null ? icon : "");
-                    }, iconLoaderExecutor))
-                    .toList();
-
-                iconsByGroup = iconFutures.stream()
-                    .map(CompletableFuture::join)
-                    .filter(entry -> !entry.getValue().isEmpty())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            }
-
-            Map<String, String> finalIconsByGroup = iconsByGroup;
             List<PluginManifest> artifacts = filteredPlugins.stream()
                 .map(plugin ->
                 {
                     String groupId = "EE".equals(plugin.get("license")) ? "io.kestra.plugin.ee" : "io.kestra.plugin";
                     String artifactId = (String) plugin.get("name");
-                    String iconGroup = (String) plugin.get("group");
-                    String icon = finalIconsByGroup.getOrDefault(iconGroup, null);
-                    if (iconGroup != null) {
-                        iconGroupByCoordinates.put(groupId + ":" + artifactId, iconGroup);
-                    }
                     return new PluginManifest(
                         (String) plugin.get("title"),
-                        icon,
+                        (String) plugin.get("group"),
                         groupId,
                         artifactId
                     );
@@ -230,30 +191,52 @@ public class PluginCatalogService {
     }
 
     /**
-     * Lazily fetches a single plugin artifact's icon as raw SVG bytes from the configured Kestra
-     * API, for an artifact whose icon wasn't already resolved locally. Unlike {@link #get()}, this
-     * is a single-artifact, on-demand fetch — not cached beyond the underlying HTTP response.
+     * Lazily resolves the raw SVG icon bytes for the given plugin artifact.
+     * <p>
+     * The icon is proxied from the Kestra API on demand and cached per plugin group, so the catalog
+     * of icons is never fetched or transferred as a whole — only icons that are actually requested
+     * (i.e. rendered) are loaded. Returns empty when icon resolution is disabled for this instance,
+     * the artifact/group is unknown, or the Kestra API has no icon for the group.
      *
-     * @param groupId the plugin artifact's Maven group id.
-     * @param artifactId the plugin artifact's Maven artifact id.
-     * @return the icon's raw SVG bytes, or empty when the coordinates are unresolvable or the
-     * artifact has no icon.
+     * @param groupId    the Maven group identifier of the artifact.
+     * @param artifactId the Maven artifact identifier.
+     * @return the raw SVG bytes, or empty if none could be resolved.
      */
-    public Optional<byte[]> icon(String groupId, String artifactId) {
-        get(); // ensures the coordinates -> icon-group lookup has been populated at least once
-        String iconGroup = iconGroupByCoordinates.get(groupId + ":" + artifactId);
-        if (iconGroup == null) {
+    public Optional<byte[]> icon(final String groupId, final String artifactId) {
+        if (!icons) {
             return Optional.empty();
         }
-        return fetchIconBytes(iconGroup);
+
+        String group = get().stream()
+            .filter(manifest -> groupId.equals(manifest.groupId()) && artifactId.equals(manifest.artifactId()))
+            .map(PluginManifest::group)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+
+        if (group == null) {
+            return Optional.empty();
+        }
+
+        // Only successful resolutions are cached, so a transient API failure is retried next time.
+        Optional<byte[]> cached = iconBytesByGroup.get(group);
+        if (cached != null) {
+            return cached;
+        }
+        Optional<byte[]> fetched = fetchGroupIcon(group);
+        if (fetched.isPresent()) {
+            iconBytesByGroup.put(group, fetched);
+        }
+        return fetched;
     }
 
-    private Optional<byte[]> fetchIconBytes(String group) {
+    private Optional<byte[]> fetchGroupIcon(final String group) {
         try {
             return httpClient
                 .toBlocking()
                 .exchange(HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + group), String.class)
                 .getBody()
+                .filter(svg -> !svg.isBlank())
                 .map(svg -> svg.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.debug("Failed to load icon for plugin group '{}': {}", group, e.getMessage());
@@ -283,7 +266,7 @@ public class PluginCatalogService {
 
     public record PluginManifest(
         String title,
-        String icon,
+        String group,
         String groupId,
         String artifactId) {
 

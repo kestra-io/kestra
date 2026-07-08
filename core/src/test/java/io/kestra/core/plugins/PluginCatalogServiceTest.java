@@ -13,6 +13,7 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.utils.ExecutorsUtils;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
@@ -133,76 +134,6 @@ class PluginCatalogServiceTest {
         assertThat(result).isEmpty();
     }
 
-    // -- icon() contract --
-
-    @Test
-    void shouldFetchIconForKnownArtifactCoordinates() {
-        // Given
-        when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(
-                HttpResponse.ok(
-                    List.of(
-                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
-                    )
-                )
-            );
-        when(blockingClient.exchange(any(), eq(String.class)))
-            .thenReturn(HttpResponse.ok("<svg fill=\"currentColor\"></svg>"));
-
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
-
-        // When
-        Optional<byte[]> result = service.icon("io.kestra.plugin", "plugin-serdes");
-
-        // Then
-        assertThat(result).isPresent();
-        assertThat(new String(result.get(), StandardCharsets.UTF_8)).isEqualTo("<svg fill=\"currentColor\"></svg>");
-    }
-
-    @Test
-    void shouldReturnEmptyIconWhenArtifactCoordinatesAreUnknown() {
-        // Given
-        when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(
-                HttpResponse.ok(
-                    List.of(
-                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
-                    )
-                )
-            );
-
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
-
-        // When
-        Optional<byte[]> result = service.icon("io.kestra.plugin", "plugin-unknown");
-
-        // Then
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void shouldReturnEmptyIconWhenIconFetchFails() {
-        // Given
-        when(blockingClient.exchange(any(), any(Argument.class)))
-            .thenReturn(
-                HttpResponse.ok(
-                    List.of(
-                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
-                    )
-                )
-            );
-        when(blockingClient.exchange(any(), eq(String.class)))
-            .thenThrow(new RuntimeException("API unavailable"));
-
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
-
-        // When
-        Optional<byte[]> result = service.icon("io.kestra.plugin", "plugin-serdes");
-
-        // Then
-        assertThat(result).isEmpty();
-    }
-
     // -- resolveVersions() contract --
 
     @Test
@@ -283,5 +214,64 @@ class PluginCatalogServiceTest {
 
         // Then
         assertThat(results).isEmpty();
+    }
+
+    // -- icon() contract --
+
+    @Test
+    void shouldResolveIconLazilyForKnownArtifact() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+        when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))
+            .thenReturn(HttpResponse.ok("<svg>currentColor</svg>"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
+
+        // Then
+        assertThat(icon).isPresent();
+        assertThat(new String(icon.get(), StandardCharsets.UTF_8)).isEqualTo("<svg>currentColor</svg>");
+    }
+
+    @Test
+    void shouldReturnEmptyIconWhenIconResolutionDisabled() {
+        // Given
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
+
+        // Then - icons disabled: resolved to empty without hitting the API
+        assertThat(icon).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyIconForUnknownArtifact() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-unknown");
+
+        // Then
+        assertThat(icon).isEmpty();
     }
 }

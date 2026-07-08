@@ -612,8 +612,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
-                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
-                        // On failure, still attempt to download outputs if VOLUME strategy is used
+                    if (shouldDownloadOutputFiles(hasFilesToDownload, outputDirectoryEnabled, strategy, filesVolumeName)) {
                         downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
                     }
 
@@ -622,7 +621,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
 
-                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
+                if (shouldDownloadOutputFiles(hasFilesToDownload, outputDirectoryEnabled, strategy, filesVolumeName)) {
                     downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
                 }
 
@@ -668,6 +667,17 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
             throw e;
         }
+    }
+
+    /**
+     * Whether output files must be downloaded from the container working directory. The volume is also created for
+     * input-file uploads, but an upload-only task has nothing to retrieve — streaming its (possibly large) working
+     * directory back over the Docker socket would be pointless and may fail with a truncated response.
+     */
+    static boolean shouldDownloadOutputFiles(boolean hasFilesToDownload, boolean outputDirectoryEnabled, FileHandlingStrategy strategy, String filesVolumeName) {
+        return (hasFilesToDownload || outputDirectoryEnabled)
+            && FileHandlingStrategy.VOLUME.equals(strategy)
+            && filesVolumeName != null;
     }
 
     static boolean isDockerSocketAccessError(final Throwable throwable) {

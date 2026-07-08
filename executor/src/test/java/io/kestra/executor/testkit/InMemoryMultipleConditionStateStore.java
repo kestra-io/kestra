@@ -39,9 +39,11 @@ public class InMemoryMultipleConditionStateStore implements MultipleConditionSta
     }
 
     @Override
-    public synchronized Execution process(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs, BiFunction<TransactionContext, MultipleConditionWindow, Execution> consumer) {
+    public synchronized Execution process(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs,
+        BiFunction<TransactionContext, MultipleConditionWindow, Execution> consumer) {
         MultipleConditionWindow window = get(flow, multipleCondition.getId())
-            .orElseGet(() -> {
+            .orElseGet(() ->
+            {
                 MultipleConditionWindow created = create(flow, multipleCondition, outputs);
                 windows.put(created.uid(), created);
                 return created;

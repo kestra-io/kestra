@@ -1,47 +1,43 @@
 <template>
     <div class="copilot-chat" data-test="copilot-chat">
-        <div class="copilot-header">
-            <span class="copilot-title">
-                <AiIcon />&nbsp;<KsText size="default">{{ t("ai.copilot.title") }}</KsText>
-            </span>
-        </div>
-
-        <KsScrollbar class="copilot-body">
-            <!-- Empty state -->
-            <div v-if="messages.length === 0" class="copilot-empty">
-                <KsText size="large">{{ t("ai.copilot.empty.title") }}</KsText>
+        <!-- Empty state: artwork + heading + a centered composer (Figma Default variant). -->
+        <div v-if="isEmpty" class="copilot-empty">
+            <div class="copilot-empty-inner">
+                <div class="copilot-artwork">
+                    <AiIcon />
+                </div>
+                <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
+                <CopilotComposer v-model:mode="mode" :disabled="!canSend" @submit="onSubmit" />
             </div>
-
-            <template v-else>
-                <CopilotMessage v-for="message in messages" :key="message.id" :message="message" />
-            </template>
-
-            <!-- Suspended proposal awaiting a decision -->
-            <ProposedActionCard
-                v-if="pendingConfirmation"
-                :action="pendingConfirmation"
-                :disabled="streaming"
-                @approve="(reason) => confirm('APPROVE', reason)"
-                @reject="(reason) => confirm('REJECT', reason)"
-            />
-        </KsScrollbar>
-
-        <KsAlert v-if="error" type="error" class="copilot-error">
-            {{ t(`ai.copilot.error.${error}`) }}
-        </KsAlert>
-
-        <div class="copilot-footer">
-            <CopilotComposer
-                v-model:mode="mode"
-                :disabled="!canSend"
-                @submit="onSubmit"
-            />
         </div>
+
+        <!-- Active conversation: scrolling transcript + composer pinned to the bottom. -->
+        <template v-else>
+            <KsScrollbar class="copilot-body">
+                <CopilotMessage v-for="message in messages" :key="message.id" :message="message" />
+
+                <ProposedActionCard
+                    v-if="pendingConfirmation"
+                    :action="pendingConfirmation"
+                    :disabled="streaming"
+                    @approve="confirm('APPROVE')"
+                    @reject="confirm('REJECT')"
+                />
+            </KsScrollbar>
+
+            <KsAlert v-if="error" type="error" class="copilot-error">
+                {{ t(`ai.copilot.error.${error}`) }}
+            </KsAlert>
+
+            <div class="copilot-footer">
+                <CopilotComposer v-model:mode="mode" :disabled="!canSend" @submit="onSubmit" />
+            </div>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, onBeforeUnmount} from "vue"
+    import {ref, computed, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import AiIcon from "../AiIcon.vue"
     import CopilotMessage from "./CopilotMessage.vue"
@@ -66,6 +62,11 @@
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status
 
+    // Empty state shows until the first turn produces a message, a proposal, or an error.
+    const isEmpty = computed(
+        () => messages.value.length === 0 && !pendingConfirmation.value && !error.value,
+    )
+
     function onSubmit(prompt: string): void {
         sendChat({prompt, mode: mode.value, inFocus: props.inFocus})
     }
@@ -81,32 +82,45 @@
         min-height: 0;
     }
 
-    .copilot-header {
+    .copilot-empty {
+        flex: 1 1 auto;
+        min-height: 0;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: var(--ks-spacing-3);
-        border-bottom: 1px solid var(--ks-border-subtle);
+        justify-content: center;
+        padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
-    .copilot-title {
-        display: inline-flex;
+    .copilot-empty-inner {
+        display: flex;
+        flex-direction: column;
         align-items: center;
+        gap: var(--ks-spacing-4);
+        width: 100%;
+        max-width: 24rem;
+    }
+
+    .copilot-artwork {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ks-spacing-16);
+        height: var(--ks-spacing-16);
+        border-radius: var(--ks-radius-lg);
+        background: var(--ks-bg-surface);
+        box-shadow: var(--ks-shadow-surface);
+        font-size: var(--ks-spacing-7);
+    }
+
+    .copilot-empty-title {
+        font-weight: 600;
+        text-align: center;
     }
 
     .copilot-body {
         flex: 1 1 auto;
         min-height: 0;
         padding: var(--ks-spacing-3);
-    }
-
-    .copilot-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        text-align: center;
-        color: var(--ks-text-secondary);
     }
 
     .copilot-error {

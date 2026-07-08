@@ -11,7 +11,7 @@
  * Non-streaming calls (create/get) go through the axios client; the `chat` and
  * `confirm` turns are POST SSE streams read via `streamSse`.
  */
-import {ref, computed, readonly} from "vue"
+import {ref, computed} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import {uid} from "../../../utils/utils"
@@ -205,13 +205,15 @@ export function useAiChat() {
     }
 
     return {
-        // state (read-only to consumers)
-        thread: readonly(thread),
-        messages: readonly(messages),
-        status: readonly(status),
-        streaming: readonly(streaming),
-        error: readonly(error),
-        pendingConfirmation: readonly(pendingConfirmation),
+        // State — treat as read-only from consumers (mutated only via the actions below).
+        // Returned as plain refs (not readonly()) so they bind cleanly to child component
+        // props without DeepReadonly friction.
+        thread,
+        messages,
+        status,
+        streaming,
+        error,
+        pendingConfirmation,
         canSend,
         // actions
         ensureThread,

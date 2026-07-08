@@ -130,12 +130,24 @@ export interface ToolResultEvent {
     outcome: string
 }
 
+/** A single step of a Plan-mode plan card. */
+export interface ProposedStep {
+    /** What the step does, e.g. "Mock external task outputs". */
+    title: string
+    /** Optional target/detail line, e.g. the file path "tests/…​.test.yml". */
+    detail?: string | null
+}
+
 export interface ProposedActionEvent {
     confirmationId: string
     /** null for Plan-mode plan cards. */
     tool?: string | null
     family?: ToolFamily | null
+    /** Card heading, e.g. "Add test coverage". Falls back to a generic title when absent. */
+    title?: string | null
     summary: string
+    /** Structured Plan steps, when the backend provides them (rendered as a numbered list). */
+    steps?: ProposedStep[] | null
     arguments?: Record<string, unknown> | null
 }
 

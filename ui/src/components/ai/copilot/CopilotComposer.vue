@@ -11,15 +11,23 @@
         />
 
         <div class="copilot-composer-actions">
-            <KsSegmented
-                :modelValue="mode"
-                :options="modeOptions"
+            <KsSelect
+                class="copilot-mode-select"
                 size="small"
+                :modelValue="mode"
                 data-test="copilot-mode-selector"
-                @change="onModeChange"
-            />
+                @update:model-value="(value) => emit('update:mode', value as Mode)"
+            >
+                <KsOption
+                    v-for="option in modeOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                />
+            </KsSelect>
 
             <KsButton
+                circle
                 type="primary"
                 :icon="ArrowUp"
                 :disabled="!canSubmit"
@@ -75,21 +83,18 @@
             submit()
         }
     }
-
-    function onModeChange(value: unknown): void {
-        emit("update:mode", value as Mode)
-    }
 </script>
 
 <style scoped>
     .copilot-composer {
         display: flex;
         flex-direction: column;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-3);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-4);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-input);
+        box-shadow: var(--ks-shadow-element);
     }
 
     .copilot-composer-actions {
@@ -97,5 +102,10 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--ks-spacing-2);
+    }
+
+    .copilot-mode-select {
+        width: auto;
+        min-width: 7rem;
     }
 </style>

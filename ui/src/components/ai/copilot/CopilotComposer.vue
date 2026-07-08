@@ -11,20 +11,24 @@
         />
 
         <div class="copilot-composer-actions">
-            <KsSelect
-                class="copilot-mode-select"
-                size="small"
-                :modelValue="mode"
-                data-test="copilot-mode-selector"
-                @update:model-value="(value) => emit('update:mode', value as Mode)"
-            >
-                <KsOption
-                    v-for="option in modeOptions"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                />
-            </KsSelect>
+            <KsDropdown trigger="click" data-test="copilot-mode-selector">
+                <KsButton size="small" class="copilot-mode-trigger">
+                    {{ currentModeLabel }}
+                    <ChevronDown class="copilot-mode-chevron" />
+                </KsButton>
+                <template #dropdown>
+                    <KsDropdownMenu>
+                        <KsDropdownItem
+                            v-for="option in modeOptions"
+                            :key="option.value"
+                            :class="{'copilot-mode-item--active': option.value === mode}"
+                            @click="emit('update:mode', option.value)"
+                        >
+                            {{ option.label }}
+                        </KsDropdownItem>
+                    </KsDropdownMenu>
+                </template>
+            </KsDropdown>
 
             <KsButton
                 circle
@@ -43,6 +47,7 @@
     import {ref, computed} from "vue"
     import {useI18n} from "vue-i18n"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import type {Mode} from "./types"
 
     const props = defineProps<{
@@ -69,6 +74,8 @@
         {label: t("ai.copilot.mode.edit"), value: "EDIT"},
         {label: t("ai.copilot.mode.plan"), value: "PLAN"},
     ])
+
+    const currentModeLabel = computed(() => modeOptions.value.find((o) => o.value === props.mode)?.label)
 
     const canSubmit = computed(() => !props.disabled && draft.value.trim().length > 0)
 
@@ -106,8 +113,14 @@
         gap: var(--ks-spacing-2);
     }
 
-    .copilot-mode-select {
-        width: auto;
-        min-width: 7rem;
+    .copilot-mode-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .copilot-mode-chevron {
+        display: inline-flex;
+        font-size: 1rem;
     }
 </style>

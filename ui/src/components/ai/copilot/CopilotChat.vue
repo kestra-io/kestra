@@ -130,14 +130,16 @@
         justify-content: center;
         width: var(--ks-spacing-16);
         height: var(--ks-spacing-16);
-        border-radius: var(--ks-radius-lg);
+        padding: var(--ks-spacing-3);
+        border-radius: var(--ks-radius-xl);
         background: var(--ks-bg-surface);
         box-shadow: var(--ks-shadow-surface);
+        overflow: hidden;
     }
 
     .copilot-artwork-img {
-        width: var(--ks-spacing-8);
-        height: var(--ks-spacing-8);
+        width: var(--ks-spacing-10);
+        height: var(--ks-spacing-10);
     }
 
     .copilot-empty-title {
@@ -153,7 +155,8 @@
     }
 
     .copilot-suggestion {
-        border-radius: var(--ks-radius-xl);
+        /* Fully-rounded "stadium" pill (Figma tag-btn, rounded-111) — a shape, not a theme radius. */
+        border-radius: 999px;
     }
 
     .copilot-body {

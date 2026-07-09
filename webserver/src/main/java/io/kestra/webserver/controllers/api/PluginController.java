@@ -58,9 +58,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
-    // The icon.svg endpoint is content-addressed via the `hash` query param the frontend appends
-    // (see PluginIcon#hash) — the URL only changes when the icon's bytes do, so it's safe to tell
-    // browsers to cache it indefinitely.
     private static final String ICON_CACHE_DIRECTIVE = "public, max-age=31536000, immutable";
 
     @Inject
@@ -282,11 +279,6 @@ public class PluginController {
         return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
     }
 
-    /**
-     * Resolves a plugin icon by its map key, trying the per-class/alias index first and falling back
-     * to the group/subgroup icon index. The catalog references icons by group name (e.g.
-     * {@code io.kestra.plugin.foo}), which only exist in the latter, so both must be consulted.
-     */
     private PluginIcon resolvePluginIcon(String cls) {
         PluginIcon icon = pluginIconsIndex().get(cls);
         return icon != null ? icon : loadPluginsIcon().get(cls);

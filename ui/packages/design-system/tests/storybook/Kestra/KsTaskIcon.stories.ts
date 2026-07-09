@@ -19,16 +19,11 @@ const mockIcons: Record<string, {flowable: boolean; monochrome: boolean; hasIcon
         monochrome: true,
         hasIcon: true,
     },
-    // registered (present in the catalog) but ships no icon file — every task/trigger class gets
-    // an entry regardless of icon presence, since other consumers rely on `flowable` either way
     "io.kestra.plugin.core.debug.NoIcon": {
         flowable: false,
         monochrome: false,
         hasIcon: false,
     },
-    // sourced from the external ecosystem plugin catalog (api.kestra.io) rather than this
-    // instance's own registry — pre-resolved to a data URI since there's no local endpoint that
-    // could serve it
     "io.kestra.plugin.scripts.python.Commands": {
         flowable: false,
         monochrome: false,
@@ -169,7 +164,6 @@ export const EcosystemCatalogIcon: Story = {
     },
 }
 
-// A literal SVG override, provided directly as a data URI rather than resolved from `cls`
 const customSvgDataUri = `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect width=\"24\" height=\"24\" rx=\"4\" fill=\"#8405FF\"/></svg>")}`
 const customMonochromeSvgDataUri = `data:image/svg+xml,${encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></svg>")}`
 

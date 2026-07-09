@@ -54,24 +54,10 @@ export interface PluginIconData {
     flowable: boolean;
     monochrome: boolean;
     hasIcon: boolean;
-    /**
-     * Only set for icons resolved from the external api.kestra.io plugin catalog (used to show
-     * icons for ecosystem plugins the local instance doesn't have installed, e.g. in Blueprints).
-     * Points directly at the external per-class endpoint, which serves raw, browser-cacheable SVG.
-     */
     iconUrl?: string;
-    /**
-     * Content hash of the icon bytes, only set for locally-registered icons. KsTaskIcon appends
-     * it as a cache-busting query param so the local `/icon.svg` URL can be cached indefinitely —
-     * it only needs to change when this hash does.
-     */
     hash?: string;
 }
 
-// Wire shape returned by the backend's PluginIcon DTO. `icon` (base64, kept for the docs
-// generator) is never read for its content on the frontend anymore — only whether it's present,
-// since every registered task/trigger class gets an `icons` map entry regardless of whether it
-// actually ships an icon (other consumers rely on `flowable` being there either way).
 interface RawPluginIcon {
     icon: string | null;
     flowable: boolean;
@@ -110,11 +96,6 @@ function usePluginsIcons() {
         }
     })
 
-    // Loads the LOCAL instance's full icon catalog in one request — this instance's plugin count
-    // is bounded, so a single JSON payload beats one HTTP round-trip per icon for catalog-browsing
-    // views (Blueprints, plugin groups, ...). The external api.kestra.io ecosystem catalog is
-    // *not* preloaded here (it used to be, at ~8MB) — see `loadEcosystemIcon` below, which resolves
-    // those lazily, one class at a time, only for classes actually rendered.
     function fetchIcons() {
         if (iconsLoaded.value) {
             return Promise.resolve(icons.value)
@@ -134,9 +115,6 @@ function usePluginsIcons() {
         return iconsPromiseLocal.value
     }
 
-    // A plain image load (no `crossOrigin` attribute) never triggers CORS enforcement — only
-    // reading the response body via fetch/XHR does — so this is a CORS-safe way to check whether
-    // the URL actually resolves to an image before committing to it.
     function probeImageExists(url: string): Promise<boolean> {
         return new Promise(resolve => {
             const img = new Image()
@@ -146,13 +124,6 @@ function usePluginsIcons() {
         })
     }
 
-    // Resolves an icon for a class the local instance doesn't have registered, from the external
-    // api.kestra.io ecosystem catalog (e.g. a Blueprint referencing a plugin that isn't installed).
-    // The icon is rendered by pointing straight at the (browser-cacheable) external URL rather than
-    // embedding it. `monochrome` can't be determined here: that would require reading the SVG
-    // bytes via fetch/XHR, and api.kestra.io's per-class endpoint doesn't send CORS headers
-    // permitting cross-origin script reads (unlike a plain image load, which needs none) — so
-    // ecosystem icons always render at their native colors instead of a theme-adaptive mask.
     function loadEcosystemIcon(cls: string): Promise<PluginIconData | undefined> {
         const url = `${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`
         return probeImageExists(url).then(exists => {
@@ -165,9 +136,6 @@ function usePluginsIcons() {
         })
     }
 
-    // Lazily resolves a single icon instead of preloading the whole local catalog. Meant for views
-    // that only ever render a handful of task icons (execution timelines, trigger lists, ...) as
-    // well as the ecosystem fallback for catalog-browsing views (see `loadEcosystemIcon` above).
     function loadIcon(cls: string): Promise<PluginIconData | undefined> {
         const cached = icons.value[cls]
         if (cached) {
@@ -179,13 +147,6 @@ function usePluginsIcons() {
             return pending
         }
 
-        // Skip the local per-class lookup once the full local catalog is already loaded and
-        // simply doesn't have this class — go straight to the ecosystem fallback instead.
-        //
-        // Otherwise: always answers 200 with `{icon: null}` when the class has no icon (a normal
-        // outcome, not every plugin ships one) rather than 404 — a 404 here would trip the shared
-        // HTTP client's global error handling, which takes over the whole page for any 404
-        // response.
         const localLookup = iconsLoaded.value
             ? Promise.resolve(undefined)
             : axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)

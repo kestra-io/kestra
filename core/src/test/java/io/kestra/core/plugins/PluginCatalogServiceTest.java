@@ -216,8 +216,6 @@ class PluginCatalogServiceTest {
         assertThat(results).isEmpty();
     }
 
-    // -- icon() contract --
-
     @Test
     void shouldResolveIconLazilyForKnownArtifact() {
         // Given
@@ -250,7 +248,7 @@ class PluginCatalogServiceTest {
         // When
         Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
 
-        // Then - icons disabled: resolved to empty without hitting the API
+        // Then
         assertThat(icon).isEmpty();
     }
 

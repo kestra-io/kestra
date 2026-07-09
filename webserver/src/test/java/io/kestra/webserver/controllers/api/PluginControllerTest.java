@@ -122,16 +122,12 @@ class PluginControllerTest {
         assertThat(response.icon()).isNotNull();
         assertThat(response.icon().getIcon()).isNotNull();
         assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
-        // Log ships a fixed brand-colored SVG, not a single `currentColor` glyph
         assertThat(response.icon().getMonochrome()).isFalse();
         assertThat(response.icon().getHash()).isNotBlank();
     }
 
     @Test
     void iconHashIsStableAndContentAddressed() {
-        // The frontend appends this hash as a cache-busting query param to cache icon.svg
-        // indefinitely — it must be deterministic across requests and differ between classes
-        // with different icons.
         PluginController.PluginIconResponse first = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
             PluginController.PluginIconResponse.class
@@ -164,14 +160,11 @@ class PluginControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
         assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
-        // content-addressed via the hash query param, so it's safe to cache indefinitely
         assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).contains("immutable");
     }
 
     @Test
     void iconSvgNotFound() {
-        // Unlike the JSON icon endpoint, the frontend only ever points an <img>/mask-image at this
-        // endpoint for a class it already confirmed has an icon, so a missing icon here is a genuine 404.
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/icon.svg"),

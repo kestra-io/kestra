@@ -323,11 +323,6 @@ public class RegisteredPlugin {
         return iconAndMonochrome(iconName).map(IconAndMonochrome::icon).orElse(null);
     }
 
-    /**
-     * Resolves, sanitizes and base64-encodes the SVG icon for a class, together with whether the
-     * SVG is a single-color icon (uses {@code currentColor} rather than fixed brand colors) and
-     * can therefore be recolored via CSS instead of shipping a fixed color.
-     */
     @SneakyThrows
     public Optional<IconAndMonochrome> iconAndMonochrome(Class<?> cls) {
         InputStream resourceAsStream = Stream

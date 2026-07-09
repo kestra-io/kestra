@@ -28,24 +28,8 @@
     export interface KsTaskIconData {
         flowable: boolean;
         monochrome: boolean;
-        /**
-         * Whether this class actually ships an icon. Every registered task/trigger class gets an
-         * entry in the `icons` map regardless (other consumers rely on `flowable` being present
-         * even without one), so this is the only reliable signal to fall back to the generic icon
-         * instead of pointing at a `/icon.svg` URL that would 404.
-         */
         hasIcon: boolean;
-        /**
-         * Pre-resolved icon source, set by the caller when the class isn't one this instance can
-         * serve locally (e.g. an ecosystem plugin catalog entry) — a data URI or an absolute URL.
-         * Takes priority over the local `/icon.svg` endpoint when present.
-         */
         iconUrl?: string;
-        /**
-         * Content hash of the icon bytes, appended as a cache-busting query param to the local
-         * `/icon.svg` URL so the browser can cache it indefinitely — the URL only needs to change
-         * when this hash does.
-         */
         hash?: string;
     }
 
@@ -55,12 +39,6 @@
         icons?: Record<string, KsTaskIconData>;
         onlyIcon?: boolean;
         variable?: string;
-        /**
-         * Lazily resolves the icon for `cls` when it isn't already present in `icons`, instead of
-         * requiring the whole plugin-icons catalog to be preloaded. The caller is expected to cache
-         * results (see `pluginsStore.loadIcon`) since several KsTaskIcon instances commonly ask for
-         * the same class.
-         */
         loadIcon?: (cls: string) => Promise<KsTaskIconData | undefined>;
     }>()
 
@@ -104,21 +82,13 @@
         "ks-task-icon--flowable": icon.value?.flowable ?? false,
     }))
 
-    // Real, browser-cacheable SVG resource — no more client-side base64 decode/recolor/encode on
-    // every reactive change. KESTRA_BASE_PATH keeps this correct when the app is served behind a
-    // reverse-proxy path prefix. Only valid for classes this instance can actually serve; see
-    // `KsTaskIconData.iconUrl` for icons that must be pre-resolved by the caller instead.
     const localIconUrl = computed(() => {
         if (!resolvedCls.value) {
             return undefined
         }
 
-        // Trim a trailing slash so a root base path ("/") doesn't produce a leading "//", which
-        // browsers parse as a protocol-relative URL (host "api") instead of an absolute path.
         const basePath = ((window as unknown as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH ?? "").replace(/\/$/, "")
         const base = `${basePath}/api/v1/plugins/icons/${encodeURIComponent(resolvedCls.value)}/icon.svg`
-        // Cache-busting query param — the URL only changes when the icon's bytes do, so the
-        // browser can cache it indefinitely instead of the usual short max-age.
         return icon.value?.hash ? `${base}?v=${encodeURIComponent(icon.value.hash)}` : base
     })
 

@@ -44,8 +44,6 @@ public class PluginCatalogService {
     private Instant cacheLastLoaded = Instant.now();
     private final AtomicBoolean isLoaded = new AtomicBoolean(false);
 
-    // Lazily-resolved raw SVG icon bytes, cached per plugin group so the whole catalog of icons is
-    // never fetched/transferred at once — only the icons actually rendered by the UI are proxied.
     private final Map<String, Optional<byte[]>> iconBytesByGroup = new ConcurrentHashMap<>();
 
     private final boolean icons;
@@ -190,18 +188,6 @@ public class PluginCatalogService {
         }
     }
 
-    /**
-     * Lazily resolves the raw SVG icon bytes for the given plugin artifact.
-     * <p>
-     * The icon is proxied from the Kestra API on demand and cached per plugin group, so the catalog
-     * of icons is never fetched or transferred as a whole — only icons that are actually requested
-     * (i.e. rendered) are loaded. Returns empty when icon resolution is disabled for this instance,
-     * the artifact/group is unknown, or the Kestra API has no icon for the group.
-     *
-     * @param groupId    the Maven group identifier of the artifact.
-     * @param artifactId the Maven artifact identifier.
-     * @return the raw SVG bytes, or empty if none could be resolved.
-     */
     public Optional<byte[]> icon(final String groupId, final String artifactId) {
         if (!icons) {
             return Optional.empty();
@@ -218,7 +204,6 @@ public class PluginCatalogService {
             return Optional.empty();
         }
 
-        // Only successful resolutions are cached, so a transient API failure is retried next time.
         Optional<byte[]> cached = iconBytesByGroup.get(group);
         if (cached != null) {
             return cached;

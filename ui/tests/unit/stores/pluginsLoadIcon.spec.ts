@@ -21,9 +21,6 @@ vi.mock("../../../src/utils/tabTracking", () => ({
     trackPluginDocumentationView: vi.fn(),
 }))
 
-// A plain image load never triggers CORS enforcement (unlike fetch/XHR), so the ecosystem
-// fallback probes existence via `new Image()` instead of reading the SVG bytes. This fake lets
-// tests control whether that probe "loads" or "errors" without touching the network.
 let nextImageOutcome: "load" | "error" = "error"
 let lastImageSrc: string | undefined
 
@@ -78,22 +75,16 @@ describe("plugins store loadIcon", () => {
     })
 
     it("derives hasIcon: false for a registered class that ships no icon file", async () => {
-        // The backend still returns an entry (with a real `flowable`) for every registered
-        // task/trigger class even when it has no icon — only the nested `icon` field is null.
         const raw = {icon: null, flowable: true, monochrome: false}
         getMock.mockResolvedValueOnce({data: {icon: raw}})
 
         const result = await store.loadIcon("io.kestra.plugin.core.debug.NoIcon")
 
         expect(result).toEqual({flowable: true, monochrome: false, hasIcon: false})
-        // Registered-but-iconless is a legitimate, already-known outcome — no need to fall back
-        // to the ecosystem catalog for it.
         expect(lastImageSrc).toBeUndefined()
     })
 
     it("falls back to the ecosystem catalog when the class isn't registered locally", async () => {
-        // Top-level `icon: null` means the class isn't registered at all (distinct from a
-        // registered-but-iconless class, which nests `icon: null` one level deeper).
         getMock.mockResolvedValueOnce({data: {icon: null}})
         nextImageOutcome = "load"
 
@@ -109,9 +100,6 @@ describe("plugins store loadIcon", () => {
     })
 
     it("never flags ecosystem icons as monochrome", async () => {
-        // Determining monochrome would require reading the SVG bytes via fetch/XHR, which
-        // api.kestra.io's per-class endpoint doesn't allow cross-origin (unlike a plain image
-        // load, which needs no CORS headers at all) — so ecosystem icons always render as-is.
         getMock.mockResolvedValueOnce({data: {icon: null}})
         nextImageOutcome = "load"
 

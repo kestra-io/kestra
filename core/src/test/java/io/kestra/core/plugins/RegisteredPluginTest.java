@@ -15,9 +15,6 @@ class RegisteredPluginTest {
 
     @Test
     void shouldDetectMonochromeIconFromCurrentColor() {
-        // "io.kestra.plugin.core.debug.Echo" ships a `fill="currentColor"` SVG resource under
-        // core/src/main/resources/icons/ — resolved here by resource name, not by class, since
-        // icon lookup by name doesn't require a matching registered task/trigger class.
         Optional<RegisteredPlugin.IconAndMonochrome> icon = core().iconAndMonochrome("io.kestra.plugin.core.debug.Echo");
 
         assertThat(icon).isPresent();

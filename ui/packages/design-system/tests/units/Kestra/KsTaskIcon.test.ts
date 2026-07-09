@@ -10,11 +10,7 @@ const mockIcons = {
     "io.kestra.plugin.core.log.Log": {flowable: false, monochrome: false, hasIcon: true},
     "io.kestra.plugin.core.flow.Parallel": {flowable: true, monochrome: false, hasIcon: true},
     "io.kestra.plugin.core.debug.Echo": {flowable: false, monochrome: true, hasIcon: true},
-    // registered (present in the catalog, with a real `flowable` value) but ships no icon file —
-    // every task/trigger class gets an entry regardless of icon presence
     "io.kestra.plugin.core.debug.NoIcon": {flowable: false, monochrome: false, hasIcon: false},
-    // sourced from the external ecosystem plugin catalog (not installed locally) — pre-resolved
-    // by the caller since this instance can't serve it via the local /icon.svg endpoint
     "io.kestra.plugin.scripts.python.Commands": {
         flowable: false,
         monochrome: false,
@@ -75,9 +71,6 @@ describe("KsTaskIcon", () => {
     })
 
     test("falls back to the local asset for a registered class that has no icon at all", () => {
-        // Regression: every registered task/trigger class gets an `icons` map entry (other
-        // consumers rely on `flowable` being present even without an icon) — being present in the
-        // map must NOT be treated as "has an icon", or the <img> points at a URL that 404s.
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.debug.NoIcon", icons: mockIcons, onlyIcon: true},
             global: globalConfig,
@@ -87,8 +80,6 @@ describe("KsTaskIcon", () => {
     })
 
     test("uses the pre-resolved iconUrl instead of the local endpoint for ecosystem-catalog icons", () => {
-        // This instance can't serve icons for plugins it doesn't have installed — the caller
-        // (pluginsStore) pre-resolves a data URI for these instead of a local /icon.svg URL.
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.scripts.python.Commands", icons: mockIcons, onlyIcon: true},
             global: globalConfig,
@@ -108,9 +99,6 @@ describe("KsTaskIcon", () => {
     })
 
     test("does not produce a protocol-relative // url when KESTRA_BASE_PATH is the root path", () => {
-        // A trailing slash on the base path (the default for a root-hosted deployment) must not
-        // survive into the URL — "/" + "/api/..." = "//api/..." is parsed by browsers as a
-        // protocol-relative URL with host "api", not an absolute path.
         (window as any).KESTRA_BASE_PATH = "/"
         const wrapper = mount(KsTaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},

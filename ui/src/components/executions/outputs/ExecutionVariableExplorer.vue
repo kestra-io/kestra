@@ -244,6 +244,7 @@
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
+    const previewedValue = ref<unknown>(undefined)
     // Suggested expression handed to the debugger; follows the current selection.
     const expression = ref<string>("")
 
@@ -252,13 +253,15 @@
     )
 
     const fileSelectedOutput = computed(() => {
+        const value = previewedValue.value
+
         // if an input file is selected, show the contents of the file
-        if(typeof selectedValue.value === "string" && Utils.isFile(selectedValue.value)){
-            return selectedValue.value
+        if(typeof value === "string" && Utils.isFile(value)){
+            return value
         }
-        if (!isExpandableValue.value) return undefined
+        if (value === null || typeof value !== "object") return undefined
         try {
-            const fileMetadata = selectedValue.value as {uri?: string}
+            const fileMetadata = value as {uri?: string}
             if (Utils.isFile(fileMetadata.uri)) {
                 return fileMetadata.uri
             }
@@ -283,6 +286,7 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
+        previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
         const baseExpressionPath = sections.value.find((section) =>
@@ -304,7 +308,7 @@
     function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
         expression.value = `{{ ${path} }}`
-        selectedValue.value = value
+        previewedValue.value = value
     }
 
     /* --------------------------------- Viewer -------------------------------- */

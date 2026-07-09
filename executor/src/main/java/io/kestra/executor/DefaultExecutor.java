@@ -111,8 +111,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
 
-    private final List<Runnable> receiveCancellations = new ArrayList<>();
-    private final List<QueueSubscriber<?>> queueSubscribers = new ArrayList<>();
+    // Thread-safe: populated by run() but iterated from maintenance listener and shutdown threads.
+    private final List<Runnable> receiveCancellations = new CopyOnWriteArrayList<>();
+    private final List<QueueSubscriber<?>> queueSubscribers = new CopyOnWriteArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
@@ -245,6 +246,18 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     @Override
     public void run() {
+        guardedStart(this::doRun, () ->
+        {
+            if (this.maintenanceService.isInMaintenanceMode()) {
+                enterMaintenance();
+            } else {
+                setState(ServiceState.RUNNING);
+            }
+            log.info("Executor started with {} thread(s)", numberOfThreads);
+        });
+    }
+
+    private void doRun() {
         // listen to executor related queues
         this.queueSubscribers.addFirst(this.executionQueue.subscriber().subscribe(this::executionQueue));
         this.queueSubscribers.addFirst(
@@ -299,6 +312,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 DefaultExecutor.this.exitMaintenance();
             }
         })::dispose);
+
+        // A stop may have timed out waiting for this startup and already closed the scheduled
+        // pool — don't schedule the loops or start their watchers on it.
+        if (isStopRequested()) {
+            return;
+        }
 
         // Start delay and monitoring loops
         executionDelayFuture = scheduledExecutorService.scheduleAtFixedRate(
@@ -358,13 +377,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
             }
         );
 
-        // init the service
-        if (this.maintenanceService.isInMaintenanceMode()) {
-            enterMaintenance();
-        } else {
-            setState(ServiceState.RUNNING);
-        }
-        log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -886,9 +898,23 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     @Override
     protected ServiceState doStop() {
-        this.receiveCancellations.forEach(Runnable::run);
-        this.queueSubscribers.forEach(QueueSubscriber::close);
-        ExecutorsUtils.closeScheduledThreadPool(scheduledExecutorService, Duration.ofSeconds(5), List.of(executionDelayFuture, monitorSLAFuture));
+        // AbstractService.stop() already waited for any in-flight startup, so nothing can be
+        // created past this point. Signal the loops and watchers that exceptions from now on are
+        // teardown noise (e.g. closed datasource), not a reason to escalate.
+        this.shutdown.set(true);
+        try {
+            this.receiveCancellations.forEach(Runnable::run);
+            this.queueSubscribers.forEach(QueueSubscriber::close);
+        } finally {
+            // Always stop the scheduled loops: leaving them running after the context is closed makes
+            // them fail on the closed datasource and escalate to an application shutdown.
+            // The futures are null when stop ran before run() scheduled them.
+            ExecutorsUtils.closeScheduledThreadPool(
+                scheduledExecutorService,
+                Duration.ofSeconds(5),
+                Stream.of(executionDelayFuture, monitorSLAFuture).filter(Objects::nonNull).toList()
+            );
+        }
         return ServiceState.TERMINATED_GRACEFULLY;
     }
 }

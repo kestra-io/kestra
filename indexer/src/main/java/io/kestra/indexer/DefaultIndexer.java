@@ -1,7 +1,7 @@
 package io.kestra.indexer;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
@@ -37,7 +37,8 @@ public class DefaultIndexer extends AbstractService implements Indexer {
     private final MetricRepositoryInterface metricRepository;
     private final DispatchQueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
-    private final List<QueueSubscriber<?>> subscribers = new ArrayList<>();
+    // Thread-safe: populated by run() but iterated from doStop() on the context-close thread.
+    private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
 
     private final IgnoreExecutionService ignoreExecutionService;
     private final QueueService queueService;
@@ -67,10 +68,15 @@ public class DefaultIndexer extends AbstractService implements Indexer {
 
     @Override
     public void run() {
-        log.debug("Starting the indexer");
-        startQueues();
-        setState(ServiceState.RUNNING);
-        log.info("Indexer started");
+        guardedStart(() ->
+        {
+            log.debug("Starting the indexer");
+            startQueues();
+        }, () ->
+        {
+            setState(ServiceState.RUNNING);
+            log.info("Indexer started");
+        });
     }
 
     protected void startQueues() {

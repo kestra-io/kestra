@@ -43,6 +43,7 @@ export interface FilterContext {
     setViewMode: (mode: "chip" | "raw") => void;
     addGroup: () => void;
     removeGroup: (groupId: string) => void;
+    replaceTree: (groups: FilterGroup[], topLogical?: LogicalOperator) => void;
     loadSavedFilter: (filter: SavedFilter) => void;
     editSavedFilter: (filter: SavedFilter) => void;
     updateProperties: (columns: string[]) => void;
@@ -51,8 +52,8 @@ export interface FilterContext {
     clearFilters: () => void;
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;
-    updateSavedFilter: (id: string, name: string, description: string, filters: AppliedFilter[]) => void;
-    saveFilter: (name: string, description: string, filters: AppliedFilter[]) => void;
+    updateSavedFilter: (id: string, name: string, description: string, filters: AppliedFilter[], groups?: FilterGroup[], topLogical?: LogicalOperator) => void;
+    saveFilter: (name: string, description: string, filters: AppliedFilter[], groups?: FilterGroup[], topLogical?: LogicalOperator) => void;
 }
 
 export const FILTER_CONTEXT_INJECTION_KEY = Symbol("filter-context-injection-key") as InjectionKey<FilterContext>

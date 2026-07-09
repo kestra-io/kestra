@@ -20,6 +20,8 @@ import {TIME_RANGE_KEY} from "../utils/constants"
 import {
     type AppliedFilter,
     type FilterConfiguration,
+    type FilterGroup,
+    type LogicalOperator,
     Comparators,
 } from "../utils/filterTypes"
 import {createAppliedFilter, createDefaultVisibleFilters} from "../utils/filterChipFactory"
@@ -101,6 +103,12 @@ export function useFilters(
         })
     }
 
+    /** Restores a full group tree (e.g. loading a saved filter) and syncs it to the URL. */
+    const replaceTree = (groups: FilterGroup[], topLogical?: LogicalOperator) => {
+        tree.replaceTree(groups, topLogical)
+        routeSync.updateRoute(false)
+    }
+
     return {
         appliedFilters: tree.appliedFilters,
         groups: tree.groups,
@@ -112,6 +120,7 @@ export function useFilters(
         rawQuery: routeSync.rawQuery,
         applyRawQuery: routeSync.applyRawQuery,
         ...actions,
+        replaceTree,
         resetToDefaults,
         // pre-applied filter tracking
         hasPreApplied: preApplied.hasPreApplied,

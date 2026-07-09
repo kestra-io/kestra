@@ -46,6 +46,7 @@
     } from "./filter/utils/filterTypes"
     import {useFilters} from "./filter/composables/useFilters"
     import {useSavedFilters} from "./filter/composables/useSavedFilters"
+    import {newGroupId} from "./filter/composables/useFilterGroups"
     import {useDataOptions} from "./filter/composables/useDataOptions"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts"
     import MainFilter from "./filter/MainFilter.vue"
@@ -119,6 +120,7 @@
         setWrapperLogical,
         addGroup,
         removeGroup,
+        replaceTree,
         resetToDefaults,
         clearFilters,
         hasPreApplied,
@@ -160,13 +162,12 @@
     const hasAppliedFilters = computed(() => appliedFilters.value?.length > 0)
 
     const loadSavedFilter = (savedFilter: SavedFilter) => {
-        appliedFilters.value.forEach((filter) => {
-            removeFilter(filter.id)
-        })
-
-        savedFilter.filters.forEach((filter) => {
-            addFilter(filter)
-        })
+        // Filters saved before nested groups were supported only carry a flat list.
+        if (savedFilter.groups && savedFilter.groups.length > 0) {
+            replaceTree(savedFilter.groups, savedFilter.topLogical ?? "OR")
+            return
+        }
+        replaceTree([{id: newGroupId(), kind: "leaf", filters: savedFilter.filters}], "OR")
     }
 
     const refreshData = () => {
@@ -208,6 +209,7 @@
         setViewMode,
         addGroup,
         removeGroup,
+        replaceTree,
         saveFilter,
         updateSavedFilter,
         deleteSavedFilter,

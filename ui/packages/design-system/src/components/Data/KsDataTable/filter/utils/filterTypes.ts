@@ -139,6 +139,7 @@ export interface SavedFilter {
     description?: string;
     filters: AppliedFilter[];
     groups?: FilterGroup[];
+    topLogical?: LogicalOperator;
 }
 
 export interface FilterConfiguration {

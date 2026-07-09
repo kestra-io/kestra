@@ -33,6 +33,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
@@ -76,6 +77,7 @@ import jakarta.validation.Validator;
  * <p>
  * Cross-cutting collaborators without executor logic ({@link KillSwitchService} — stubbed to
  * PASS, {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService},
+ * {@link ConcurrencyLimitResolver} — a spy over the real flow-scope-only resolver,
  * {@link KillSwitchActionService}) are Mockito mocks exposed for per-test stubbing.
  */
 public final class ExecutorTestHarness {
@@ -116,6 +118,7 @@ public final class ExecutorTestHarness {
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final QuotaService quotaService;
+    private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final AsyncOperationService asyncOperationService;
     private final FlowTriggerService flowTriggerService;
     private final MultipleConditionStateStore multipleConditionStateStore;
@@ -210,6 +213,8 @@ public final class ExecutorTestHarness {
         );
         this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
         this.quotaService = Mockito.mock(QuotaService.class);
+        // a spy: the real OSS resolver (flow scope only) unless a test stubs namespace/tenant limits
+        this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.asyncOperationService = Mockito.mock(AsyncOperationService.class);
         this.flowTriggerService = Mockito.mock(FlowTriggerService.class);
         this.multipleConditionStateStore = Mockito.mock(MultipleConditionStateStore.class);
@@ -236,6 +241,7 @@ public final class ExecutorTestHarness {
             executionDelayStateStore,
             slaMonitorStateStore,
             concurrencyLimitStateStore,
+            concurrencyLimitResolver,
             executorService,
             workerQueueService,
             quotaService,
@@ -319,7 +325,9 @@ public final class ExecutorTestHarness {
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,
+            concurrencyLimitResolver,
             executionQueuedStateStore,
+            flowMetaStore,
             metricRegistry
         );
         this.slaMonitorProcessor = new SLAMonitorProcessor(
@@ -524,6 +532,10 @@ public final class ExecutorTestHarness {
 
     public QuotaService quotaService() {
         return quotaService;
+    }
+
+    public ConcurrencyLimitResolver concurrencyLimitResolver() {
+        return concurrencyLimitResolver;
     }
 
     public AsyncOperationService asyncOperationService() {

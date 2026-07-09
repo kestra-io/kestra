@@ -58,10 +58,20 @@ export function useFlowEditorActions() {
         await flushDirtyFiles()
     }
 
+    async function waitForInstallJob(jobId: string): Promise<void> {
+        for (;;) {
+            const job = await pluginsStore.getInstallJob(jobId)
+            if (!job || job.status === "SUCCEEDED" || job.status === "FAILED") return
+            await new Promise(resolve => setTimeout(resolve, 500))
+        }
+    }
+
     /**
      * Detects missing plugins for the current flow YAML and, if any are found, enqueues an
-     * async installation job and opens a live-progress notification toast. Returns immediately
-     * — the install runs in the background so the flow save is not blocked.
+     * installation job and opens a live-progress notification toast. Resolves once the install
+     * reaches a terminal state (or immediately if nothing is missing) so callers can await it
+     * before saving — the type the flow references must be registered before the backend
+     * re-validates it, otherwise the save is rejected as an unknown type.
      */
     async function triggerPluginInstallIfNeeded(): Promise<void> {
         const yaml = flowStore.flowYaml
@@ -100,18 +110,24 @@ export function useFlowEditorActions() {
             type: "info",
             duration: 0,
         })
+
+        await waitForInstallJob(job.id)
+    }
+
+    function reportSaveError(error: any) {
+        if (error?.status === 401) {
+            toast.error("401 Unauthorized", undefined, {duration: 2000})
+        } else {
+            toast.error(error?.response?.data?.message ?? t("error"))
+        }
     }
 
     async function save() {
         try {
-            // Fire plugin install in background — does not block the save.
-            void triggerPluginInstallIfNeeded()
-
+            await triggerPluginInstallIfNeeded()
             await persistAll(false)
         } catch (error: any) {
-            if (error?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
-            }
+            reportSaveError(error)
         }
     }
 
@@ -119,9 +135,7 @@ export function useFlowEditorActions() {
         try {
             await persistAll(true)
         } catch (error: any) {
-            if (error?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
-            }
+            reportSaveError(error)
         }
     }
 
@@ -138,8 +152,7 @@ export function useFlowEditorActions() {
 
     async function saveAndExecute() {
         try {
-            // Fire plugin install in background — does not block the save.
-            void triggerPluginInstallIfNeeded()
+            await triggerPluginInstallIfNeeded()
 
             const isCreating = flowStore.isCreating
             const outcome = await flowStore.saveAll()
@@ -202,9 +215,7 @@ export function useFlowEditorActions() {
 
             await flushDirtyFiles()
         } catch (error: any) {
-            if (error?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
-            }
+            reportSaveError(error)
         }
     }
 

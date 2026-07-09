@@ -22,7 +22,7 @@
                         class="icon"
                         :class="{missing: missingTasks.includes(task)}"
                     >
-                        <KsTaskIcon :cls="task" :icons="icons" />
+                        <KsTaskIcon :cls="task" :icons="icons" :loadIcon="loadIcon" />
                     </span>
                     <span v-if="overflowCount" class="overflow">
                         +{{ overflowCount }}
@@ -78,10 +78,12 @@
         embed?: boolean;
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
+        loadIcon?: (cls: string) => Promise<any>;
     }>(), {
         system: false,
         embed: false,
         icons: () => ({}),
+        loadIcon: undefined,
     })
 
     const emit = defineEmits<{

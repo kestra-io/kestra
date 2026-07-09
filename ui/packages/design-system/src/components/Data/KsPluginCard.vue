@@ -15,6 +15,7 @@
                         v-if="iconCls"
                         :cls="iconCls"
                         :icons="icons"
+                        :loadIcon="loadIcon"
                         onlyIcon
                     />
                 </slot>
@@ -61,7 +62,7 @@
     import {useI18n} from "vue-i18n"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import KsTag from "./KsTag/KsTag.vue"
-    import KsTaskIcon from "../Kestra/KsTaskIcon.vue"
+    import KsTaskIcon, {type KsTaskIconData} from "../Kestra/KsTaskIcon.vue"
     import locale from "./KsPluginCard.locale"
 
     const {t} = useI18n({
@@ -74,6 +75,7 @@
     const props = withDefaults(defineProps<{
         iconCls?: string
         icons?: Record<string, any>
+        loadIcon?: (cls: string) => Promise<KsTaskIconData | undefined>
         title: string
         description?: string | null
         categories?: string[]
@@ -83,6 +85,7 @@
     }>(), {
         iconCls: undefined,
         icons: () => ({}),
+        loadIcon: undefined,
         description: null,
         categories: () => [],
         taskCount: null,

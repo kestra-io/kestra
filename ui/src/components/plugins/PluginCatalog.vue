@@ -85,6 +85,7 @@
                 <KsPluginCard
                     :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                     :icons
+                    :loadIcon="pluginsStore.loadIcon"
                     :title="plugin.title.capitalize()"
                     :description="plugin.description"
                     :categories="plugin.categories"

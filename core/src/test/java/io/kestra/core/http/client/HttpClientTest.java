@@ -447,6 +447,28 @@ class HttpClientTest {
     }
 
     @Test
+    void shouldFailWithClearMessageWhenProxyAddressSetWithoutPort() {
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> client(
+                b -> b
+                    .configuration(
+                        HttpConfiguration.builder()
+                            .proxy(
+                                ProxyConfiguration.builder()
+                                    .type(Property.ofValue(Proxy.Type.HTTP))
+                                    .address(Property.ofValue("10.242.3.60"))
+                                    .build()
+                            )
+                            .build()
+                    )
+            )
+        );
+
+        assertThat(exception.getMessage()).contains("proxy port is required");
+    }
+
+    @Test
     void shouldReturnResponseForAllowedResponseCode() throws IOException, IllegalVariableEvaluationException, HttpClientException {
         try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.of(List.of(404))).build()))) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));

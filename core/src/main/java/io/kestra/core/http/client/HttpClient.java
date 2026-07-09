@@ -136,7 +136,8 @@ public class HttpClient implements Closeable {
             String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
 
             if (StringUtils.isNotEmpty(proxyAddress)) {
-                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class).orElseThrow();
+                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
+                    .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
                 SocketAddress proxyAddr = new InetSocketAddress(
                     proxyAddress,
                     port

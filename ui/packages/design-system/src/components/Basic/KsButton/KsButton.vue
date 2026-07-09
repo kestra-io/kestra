@@ -173,6 +173,12 @@
             }
         }
 
+        &.is-link {
+            --kel-button-text-color: var(--ks-text-secondary);
+            --kel-button-hover-link-text-color: var(--ks-text-primary);
+            --kel-button-active-color: var(--ks-text-primary);
+        }
+
         &.is-text {
             &:hover {
                 background-color: var(--ks-bg-hover);

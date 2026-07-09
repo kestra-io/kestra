@@ -34,6 +34,7 @@ import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
+import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
 
 export type MenuItem = {
@@ -267,6 +268,20 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: Monitor,
+                        },
+                    },
+                    {
+                        id: "policies",
+                        title: t("demos.policies.label"),
+                        routes: routeStartWith("admin/policies"),
+                        href: {
+                            name: "admin/policies",
+                        },
+                        icon: {
+                            element: ShieldCheckOutline,
+                        },
+                        attributes: {
+                            locked: true,
                         },
                     },
                     {

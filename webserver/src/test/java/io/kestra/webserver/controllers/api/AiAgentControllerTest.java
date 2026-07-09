@@ -202,8 +202,6 @@ class AiAgentControllerTest {
         assertThat(getThread(thread.uid()).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
-    // ── HTTP helpers ─────────────────────────────────────────────────────────────────────────────
-
     private ApiThreadSummary createThread(final ApiCreateThreadRequest request) {
         return client.toBlocking().retrieve(HttpRequest.POST(BASE, request), ApiThreadSummary.class);
     }

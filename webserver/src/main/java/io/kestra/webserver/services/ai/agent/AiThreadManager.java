@@ -40,8 +40,6 @@ public class AiThreadManager {
         this.messageStore = messageStore;
     }
 
-    // --- Thread lifecycle ---
-
     public Optional<AgentThread> find(final String tenant, final String uid) {
         return threadStore.find(tenant, uid);
     }
@@ -79,8 +77,6 @@ public class AiThreadManager {
         );
     }
 
-    // --- Conversation log ---
-
     public List<AgentMessage> load(final String threadId) {
         return messageStore.load(threadId);
     }
@@ -108,8 +104,6 @@ public class AiThreadManager {
     public void appendCancelled(final String threadId, final String traceId) {
         append(threadId, traceId, AgentMessageRole.SYSTEM, AgentMessageType.CANCELLED, null, null, null);
     }
-
-    // --- Private helpers ---
 
     private String deriveTitle(final String threadId) {
         return messageStore.load(threadId).stream()

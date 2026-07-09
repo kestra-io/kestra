@@ -399,8 +399,6 @@ class AgentOrchestratorTest {
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────────────────────────
-
     private AgentThread newThread(final AgentMode mode) {
         return threadStore.create(AgentThread.builder()
             .uid(IdUtils.create())

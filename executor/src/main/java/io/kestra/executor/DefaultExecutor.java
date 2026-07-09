@@ -91,6 +91,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     private final MetricRegistry metricRegistry;
 
+    // The context captured at construction time.
+    // The static context returned by KestraContext.getContext() might change if the context is restarted inside the same JVM
+    // which can occur at least in tests.
+    private final KestraContext kestraContext;
+
     private final RunContextFactory runContextFactory;
 
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
@@ -124,6 +129,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         ExecutorsUtils executorsUtils,
         ExecutorConfiguration executorConfiguration,
+        KestraContext kestraContext,
         DispatchQueueInterface<Execution> executionQueue,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         KillSwitchService killSwitchService,
@@ -160,6 +166,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
 
+        this.kestraContext = kestraContext;
         this.executionQueue = executionQueue;
         this.executionCommandQueue = executionCommandQueue;
         this.killSwitchService = killSwitchService;
@@ -199,7 +206,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
         int threadCount = executorConfiguration.threadCount() != null ? executorConfiguration.threadCount() : 0;
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, KestraContext.getContext().getAllocatedCpuCores());
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, kestraContext.getAllocatedCpuCores());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
 
@@ -318,11 +325,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
+                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    if (!shutdown.get() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledDelay thread", e);
                         close();
-                        KestraContext.getContext().shutdown();
+                        kestraContext.shutdown();
                     }
                 }
             }
@@ -339,11 +347,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
+                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    if (!shutdown.get() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
                         close();
-                        KestraContext.getContext().shutdown();
+                        kestraContext.shutdown();
                     }
                 }
             }

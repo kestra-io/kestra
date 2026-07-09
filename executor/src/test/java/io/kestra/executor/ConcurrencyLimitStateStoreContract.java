@@ -3,6 +3,7 @@ package io.kestra.executor;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -13,6 +14,7 @@ import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
+import io.kestra.core.runners.ScopedConcurrencyLimit;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
@@ -35,12 +37,16 @@ public abstract class ConcurrencyLimitStateStoreContract {
     protected abstract ExecutionQueuedStateStore queuedStore();
 
     protected static Flow flow(int limit) {
+        return flow(limit, Concurrency.Behavior.QUEUE);
+    }
+
+    protected static Flow flow(int limit, Concurrency.Behavior behavior) {
         return Flow.builder()
             .tenantId("main")
             .namespace("io.kestra.unittest")
             .id(IdUtils.create())
             .revision(1)
-            .concurrency(Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(limit).build())
+            .concurrency(Concurrency.builder().behavior(behavior).limit(limit).build())
             .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("test").build()))
             .build();
     }
@@ -129,6 +135,103 @@ public abstract class ConcurrencyLimitStateStoreContract {
         store().decrementAndPop(flow, queuedStore(), (txContext, execution) -> popped.add(execution));
         assertThat(popped).extracting(Execution::getId).containsExactly(waiting.getId());
         assertThat(currentCount(flow)).isEqualTo(1);
+    }
+
+    // --- scoped operations, single flow scope: the semantics every store gets from the
+    // default adapter methods and that scoped-capable implementations must reproduce
+
+    @Test
+    void shouldClaimSlotThroughScopedGateOnlyWhenConsumerClaims() {
+        // Given
+        Flow flow = flow(2);
+        List<ScopedConcurrencyLimit> limits = List.of(ScopedConcurrencyLimit.ofFlow(flow));
+
+        // When: a first evaluation claims, a second declines
+        List<List<Integer>> seen = new ArrayList<>();
+        store().countThenProcess(flow, limits, (txContext, counts) ->
+        {
+            seen.add(counts);
+            return Pair.of(null, true);
+        });
+        store().countThenProcess(flow, limits, (txContext, counts) ->
+        {
+            seen.add(counts);
+            return Pair.of(null, false);
+        });
+
+        // Then: the consumer saw the running counts in scope order, only the claim incremented
+        assertThat(seen).containsExactly(List.of(0), List.of(1));
+        assertThat(currentCount(flow)).isEqualTo(1);
+    }
+
+    @Test
+    void shouldPopOldestQueuedThroughScopedReleaseAndHandItTheFreedSlot() {
+        // Given: one running execution at the limit, two queued behind it (older first)
+        Flow flow = flow(1);
+        List<ScopedConcurrencyLimit> limits = List.of(ScopedConcurrencyLimit.ofFlow(flow));
+        Execution first = Execution.newExecution(flow, List.of());
+        Execution second = Execution.newExecution(flow, List.of());
+        Instant now = Instant.now();
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(flow, first, now.minusSeconds(60)));
+            queuedStore().save(txContext, queued(flow, second, now));
+            return Pair.of(null, limit.withRunning(1));
+        });
+
+        // When: the running execution terminates and frees its slot
+        Optional<Execution> popped = store().releaseThenPop(
+            flow, limits, queuedStore(),
+            candidate -> limits,
+            (txContext, queued) -> queued
+        );
+
+        // Then: FIFO by date, and the popped execution took over the freed slot
+        assertThat(popped).map(Execution::getId).contains(first.getId());
+        assertThat(currentCount(flow)).isEqualTo(1);
+    }
+
+    @Test
+    void shouldOnlyReleaseSlotThroughScopedReleaseWhenBehaviorIsNotQueue() {
+        // Given: a CANCEL-behavior flow holding one slot (nothing can be queued under CANCEL)
+        Flow flow = flow(1, Concurrency.Behavior.CANCEL);
+        List<ScopedConcurrencyLimit> limits = List.of(ScopedConcurrencyLimit.ofFlow(flow));
+        store().countThenProcess(flow, (txContext, limit) -> Pair.of(null, limit.withRunning(1)));
+
+        // When
+        Optional<Execution> popped = store().releaseThenPop(
+            flow, limits, queuedStore(),
+            candidate -> limits,
+            (txContext, queued) -> queued
+        );
+
+        // Then: the slot is released and nothing is popped
+        assertThat(popped).isEmpty();
+        assertThat(currentCount(flow)).isZero();
+    }
+
+    @Test
+    void shouldNotPopThroughScopedReleaseWhenCounterRemainsAtLimit() {
+        // Given: the counter was inflated above the limit (over-limit race aftermath), one queued
+        Flow flow = flow(1);
+        List<ScopedConcurrencyLimit> limits = List.of(ScopedConcurrencyLimit.ofFlow(flow));
+        Execution waiting = Execution.newExecution(flow, List.of());
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(flow, waiting, Instant.now()));
+            return Pair.of(null, limit.withRunning(3));
+        });
+
+        // When: a termination decrements 3 -> 2, still >= limit
+        Optional<Execution> popped = store().releaseThenPop(
+            flow, limits, queuedStore(),
+            candidate -> limits,
+            (txContext, queued) -> queued
+        );
+
+        // Then: nothing is dequeued (the queued-protection guard)
+        assertThat(popped).isEmpty();
+        assertThat(currentCount(flow)).isEqualTo(2);
     }
 
     private int currentCount(Flow flow) {

@@ -23,7 +23,7 @@
 
         <div class="proposed-action-footer">
             <KsButton
-                type="text"
+                text
                 :disabled="disabled"
                 class="proposed-action-btn proposed-action-reject"
                 data-test="copilot-reject"

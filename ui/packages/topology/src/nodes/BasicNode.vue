@@ -8,7 +8,7 @@
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" />
+                <component :is="iconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" />
             </div>
             <div class="node-content">
                 <slot name="badge" />
@@ -30,7 +30,7 @@
 
 <script lang="ts" setup>
     import {computed, inject} from "vue"
-    import {KsTaskIcon as TaskIcon, KsTooltip} from "@kestra-io/design-system"
+    import {KsTooltip} from "@kestra-io/design-system"
     import {EVENTS} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"

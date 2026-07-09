@@ -360,12 +360,6 @@ If your `<style>` block needs to exist:
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
-### Kestra-specific
-
-| Component | Purpose |
-|-----------|---------|
-| `KsTaskIcon` | Plugin task icon resolver |
-
 ## Utilities (import from the design system)
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors

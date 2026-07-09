@@ -1,31 +1,30 @@
 <template>
     <div
         :class="classes"
-        class="ks-task-icon"
+        class="task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <img v-if="!isMonochrome" class="ks-task-icon__icon" :src="iconSrc" :alt="ariaLabel">
-            <div v-else class="ks-task-icon__icon ks-task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
+            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <div v-else class="task-icon__icon task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </KsTooltip>
 
         <template v-else>
-            <img v-if="!isMonochrome" class="ks-task-icon__icon" :src="iconSrc" :alt="ariaLabel">
-            <div v-else class="ks-task-icon__icon ks-task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
+            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <div v-else class="task-icon__icon task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import KsTooltip from "../Feedback/KsTooltip.vue"
-    import {cssVar} from "../../utils/css"
-    import fallbackIcon from "../../assets/images/plugin-icon-fallback.svg"
+    import {KsTooltip, cssVar} from "@kestra-io/design-system"
+    import fallbackIcon from "../../assets/plugins/plugin-icon-fallback.svg"
 
     defineOptions({
-        name: "KsTaskIcon",
+        name: "TaskIcon",
     })
 
-    export interface KsTaskIconData {
+    export interface TaskIconData {
         flowable: boolean;
         monochrome: boolean;
         hasIcon: boolean;
@@ -36,10 +35,10 @@
     const props = defineProps<{
         customIcon?: {icon: string; monochrome?: boolean};
         cls?: string;
-        icons?: Record<string, KsTaskIconData>;
+        icons?: Record<string, TaskIconData>;
         onlyIcon?: boolean;
         variable?: string;
-        loadIcon?: (cls: string) => Promise<KsTaskIconData | undefined>;
+        loadIcon?: (cls: string) => Promise<TaskIconData | undefined>;
     }>()
 
     function innerClassToParent(cls: string) {
@@ -48,7 +47,7 @@
 
     const resolvedCls = computed(() => props.cls ? innerClassToParent(props.cls) : undefined)
 
-    const providedIcon = computed<KsTaskIconData | undefined>(() => {
+    const providedIcon = computed<TaskIconData | undefined>(() => {
         if (!resolvedCls.value) {
             return undefined
         }
@@ -56,7 +55,7 @@
         return (props.icons ?? {})[resolvedCls.value]
     })
 
-    const lazyIcon = ref<KsTaskIconData>()
+    const lazyIcon = ref<TaskIconData>()
 
     watch(() => props.cls, cls => {
         lazyIcon.value = undefined
@@ -79,7 +78,7 @@
     const ariaLabel = computed(() => props.cls ?? "icon")
 
     const classes = computed(() => ({
-        "ks-task-icon--flowable": icon.value?.flowable ?? false,
+        "task-icon--flowable": icon.value?.flowable ?? false,
     }))
 
     const localIconUrl = computed(() => {
@@ -120,7 +119,7 @@
 </script>
 
 <style lang="scss" scoped>
-    .ks-task-icon {
+    .task-icon {
         display: inline-block;
         width: 100%;
         height: 100%;

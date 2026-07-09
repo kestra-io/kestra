@@ -58,12 +58,28 @@ public class ConcurrencySlotReleaseProcessor {
      * state-store transaction (see the class Javadoc).
      */
     public Optional<Execution> release(ExecutorContext executor) {
-        List<ScopedConcurrencyLimit> limits = concurrencyLimitResolver.resolveLimits(executor.getFlow());
+        Execution execution = executor.getExecution();
+
+        // release the scopes the execution was admitted under — not the currently defined
+        // ones: a namespace/tenant limit removed while it ran must still get its slot back
+        // (current definitions, when still present, are carried along for the pop). Executions
+        // without the claim stamp (admitted before it existed, or never admitted) fall back to
+        // the current definitions.
+        List<ScopedConcurrencyLimit> currentLimits = concurrencyLimitResolver.resolveLimits(executor.getFlow());
+        List<String> admittedScopes = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopes();
+        List<ScopedConcurrencyLimit> limits = admittedScopes == null
+            ? currentLimits
+            : admittedScopes.stream()
+                .map(
+                    uid -> currentLimits.stream()
+                        .filter(limit -> limit.uid().equals(uid))
+                        .findFirst()
+                        .orElseGet(() -> ScopedConcurrencyLimit.fromUid(uid, null))
+                )
+                .toList();
         if (limits.isEmpty()) {
             return Optional.empty();
         }
-
-        Execution execution = executor.getExecution();
 
         // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
         boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
@@ -75,18 +91,30 @@ public class ConcurrencySlotReleaseProcessor {
         // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
         boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
         if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
+            // a flow-scoped-only release pops through the legacy flow-keyed path, which claims
+            // only the popped execution's flow slot; the multi-scope path claims every scope
+            boolean flowScopedRelease = limits.size() == 1 && limits.getFirst().scope() == ScopedConcurrencyLimit.Scope.FLOW;
+
             // Pop the next queued execution atomically with the decrements/increment to avoid race conditions
             // that could leave executions stuck in the queue indefinitely (see issue #13785)
             return concurrencyLimitStateStore.releaseThenPop(
                 executor.getFlow(),
                 limits,
                 executionQueuedStateStore,
-                candidate -> flowMetaStore.findByExecution(candidate)
-                    .map(concurrencyLimitResolver::resolveLimits)
-                    .orElse(List.of()),
+                this::candidateLimits,
                 (txContext, queued) ->
                 {
                     var newExecution = queued.withState(State.Type.RUNNING);
+
+                    // the popped execution claimed one slot in every incremented scope: stamp
+                    // them the same way the gate does for directly admitted executions
+                    if (newExecution.getMetadata() != null) {
+                        List<String> claimedScopes = flowScopedRelease
+                            ? List.of(queued.getTenantId() + "|" + queued.getNamespace() + "|" + queued.getFlowId())
+                            : candidateLimits(queued).stream().map(ScopedConcurrencyLimit::uid).toList();
+                        newExecution = newExecution.withMetadata(newExecution.getMetadata().withConcurrencyScopes(claimedScopes));
+                    }
+
                     metricRegistry.counter(
                         MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION,
                         metricRegistry.tags(newExecution)
@@ -97,5 +125,11 @@ public class ConcurrencySlotReleaseProcessor {
         }
 
         return Optional.empty();
+    }
+
+    private List<ScopedConcurrencyLimit> candidateLimits(Execution candidate) {
+        return flowMetaStore.findByExecution(candidate)
+            .map(concurrencyLimitResolver::resolveLimits)
+            .orElse(List.of());
     }
 }

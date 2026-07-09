@@ -21,14 +21,15 @@ import jakarta.validation.constraints.NotNull;
  * @param tenantId the tenant, never null
  * @param namespace the namespace the limit applies to, null for a tenant-scoped limit
  * @param flowId the flow the limit applies to, null unless the scope is {@link Scope#FLOW}
- * @param concurrency the limit and its behavior
+ * @param concurrency the limit and its behavior — null only for release-time scopes whose
+ *        definition was removed while the admitted execution ran (see {@link #fromUid})
  */
 public record ScopedConcurrencyLimit(
     @NotNull Scope scope,
     @NotNull String tenantId,
     @Nullable String namespace,
     @Nullable String flowId,
-    @NotNull Concurrency concurrency) implements HasUID {
+    @Nullable Concurrency concurrency) implements HasUID {
 
     public enum Scope {
         FLOW,
@@ -46,6 +47,26 @@ public record ScopedConcurrencyLimit(
 
     public static ScopedConcurrencyLimit ofTenant(String tenantId, Concurrency concurrency) {
         return new ScopedConcurrencyLimit(Scope.TENANT, tenantId, null, null, concurrency);
+    }
+
+    /**
+     * Rebuild a scope from its uid — the form persisted on an execution's metadata when it
+     * claims its slots. Tenant, namespace and flow ids cannot contain {@code |}, so the parts
+     * split back unambiguously; blank parts mark the broader scopes.
+     *
+     * @param concurrency the currently defined limit of that scope, or null when its
+     *        definition was removed since the execution was admitted
+     */
+    public static ScopedConcurrencyLimit fromUid(String uid, @Nullable Concurrency concurrency) {
+        String[] parts = uid.split("\\|", -1);
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Invalid concurrency scope uid: " + uid);
+        }
+        String tenantId = parts[0];
+        String namespace = parts[1].isEmpty() ? null : parts[1];
+        String flowId = parts[2].isEmpty() ? null : parts[2];
+        Scope scope = flowId != null ? Scope.FLOW : namespace != null ? Scope.NAMESPACE : Scope.TENANT;
+        return new ScopedConcurrencyLimit(scope, tenantId, namespace, flowId, concurrency);
     }
 
     /**

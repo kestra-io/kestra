@@ -115,6 +115,13 @@ public interface ConcurrencyLimitStateStore {
         Function<Execution, List<ScopedConcurrencyLimit>> candidateLimits,
         BiFunction<TransactionContext, Execution, Execution> consumer) {
         if (limits.size() == 1 && limits.getFirst().scope() == ScopedConcurrencyLimit.Scope.FLOW) {
+            if (limits.getFirst().concurrency() == null) {
+                // the flow limit was removed while the admitted execution ran: still release
+                // the slot it claimed — the counter must not leak
+                decrement(flow);
+                return Optional.empty();
+            }
+
             if (limits.getFirst().concurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                 AtomicReference<Execution> popped = new AtomicReference<>();
                 decrementAndPop(flow, executionQueuedStateStore, (txContext, queued) -> popped.set(consumer.apply(txContext, queued)));

@@ -9,13 +9,18 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ScopedConcurrencyLimit;
+import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
@@ -39,19 +44,24 @@ public abstract class AbstractScopedConcurrencyLimitStateStoreTest {
     @Inject
     protected ExecutionQueuedStateStore queuedStore;
 
+    @Inject
+    protected MetricRegistry metricRegistry;
+
     /** flow uid → the scoped limits of that flow, used as the candidate resolver in pops. */
     private final Map<String, List<ScopedConcurrencyLimit>> limitsByFlow = new HashMap<>();
 
     @Test
     void shouldClaimEverySlotOnlyWhenConsumerClaims() {
-        // Given: a flow with flow + namespace + tenant limits
+        // Given: a flow with flow + namespace + tenant limits (a dedicated tenant: the tenant
+        // counter is shared store-wide and this test leaves its claim in place)
+        String tenant = IdUtils.create().toLowerCase();
         String namespace = "io.kestra." + IdUtils.create().toLowerCase();
-        Flow flow = flow(namespace, queue(5));
+        Flow flow = flow(tenant, namespace, queue(5));
         List<ScopedConcurrencyLimit> limits = register(
             flow,
             ScopedConcurrencyLimit.ofFlow(flow),
-            ScopedConcurrencyLimit.ofNamespace("main", namespace, queue(5)),
-            ScopedConcurrencyLimit.ofTenant("main", queue(5))
+            ScopedConcurrencyLimit.ofNamespace(tenant, namespace, queue(5)),
+            ScopedConcurrencyLimit.ofTenant(tenant, queue(5))
         );
 
         // When: one claim, then one decline
@@ -187,11 +197,48 @@ public abstract class AbstractScopedConcurrencyLimitStateStoreTest {
         assertThat(waitingStillQueued(waitingA2)).isTrue();
     }
 
+    @Test
+    void shouldReleaseTheScopesTheExecutionWasAdmittedUnderWhenTheLimitWasRemovedMidRun() {
+        // Given: an execution admitted under a tenant limit — it claimed the tenant slot
+        // (a dedicated tenant: the release scans queued candidates tenant-wide)
+        String tenant = IdUtils.create().toLowerCase();
+        String namespace = "io.kestra." + IdUtils.create().toLowerCase();
+        ScopedConcurrencyLimit tenantScope = ScopedConcurrencyLimit.ofTenant(tenant, queue(2));
+        Flow flow = flow(tenant, namespace, null);
+        store.countThenProcess(flow, List.of(tenantScope), (txContext, counts) -> Pair.of(null, true));
+        assertThat(counts(flow, List.of(tenantScope))).containsExactly(1);
+
+        // Given: the tenant limit is removed while the execution runs — the resolver now
+        // finds nothing at termination
+        ConcurrencyLimitResolver resolver = Mockito.mock(ConcurrencyLimitResolver.class);
+        Mockito.when(resolver.resolveLimits(Mockito.any())).thenReturn(List.of());
+        ConcurrencySlotReleaseProcessor processor = new ConcurrencySlotReleaseProcessor(
+            store, resolver, queuedStore, Mockito.mock(FlowMetaStoreInterface.class), metricRegistry
+        );
+
+        // When: the execution terminates, carrying the claim stamp the gate persisted at
+        // admission (ExecutionMetadata#concurrencyScopes)
+        Execution terminated = Execution.newExecution(flow, List.of())
+            .withState(State.Type.RUNNING)
+            .withState(State.Type.SUCCESS);
+        terminated = terminated.withMetadata(terminated.getMetadata().withConcurrencyScopes(List.of(tenantScope.uid())));
+        Optional<Execution> popped = processor.release(new ExecutorContext(terminated, io.kestra.core.models.flows.FlowWithSource.of(flow, "")));
+
+        // Then: the slot it was admitted under is released — the counter must not leak and
+        // block the tenant until a manual reset
+        assertThat(popped).isEmpty();
+        assertThat(counts(flow, List.of(tenantScope))).containsExactly(0);
+    }
+
     // --- fixtures
 
     private static Flow flow(String namespace, Concurrency concurrency) {
+        return flow("main", namespace, concurrency);
+    }
+
+    private static Flow flow(String tenantId, String namespace, Concurrency concurrency) {
         return Flow.builder()
-            .tenantId("main")
+            .tenantId(tenantId)
             .namespace(namespace)
             .id(IdUtils.create())
             .revision(1)

@@ -227,6 +227,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     }
                                     return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
                                 }
+
+                                // the execution claimed one slot in every scope: remember them so the release
+                                // decrements exactly these, even if the definitions change while it runs
+                                if (execution.getMetadata() != null) {
+                                    executor.withExecution(
+                                        execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
+                                        "handleConcurrencyLimit"
+                                    );
+                                }
                             }
                         }
 

@@ -248,18 +248,20 @@
         box-shadow: var(--ks-shadow-element);
     }
 
+    /* Wider horizontal breathing room for the transcript; the footer/error keep the same
+       inset so bubbles and the composer stay aligned to one gutter. */
     .copilot-body {
         flex: 1 1 auto;
         min-height: 0;
-        padding: var(--ks-spacing-3);
+        padding: var(--ks-spacing-3) var(--ks-spacing-5);
     }
 
     .copilot-error {
-        margin: 0 var(--ks-spacing-3);
+        margin: 0 var(--ks-spacing-5);
     }
 
     .copilot-footer {
-        padding: var(--ks-spacing-3);
+        padding: var(--ks-spacing-3) var(--ks-spacing-5);
         border-top: 1px solid var(--ks-border-subtle);
     }
 </style>

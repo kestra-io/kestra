@@ -3,6 +3,41 @@ import type {Router} from "vue-router"
 
 import "./utils/monacoEnvironment"
 
+const PRELOAD_ERROR_RELOAD_KEY = "kestra:vite-preload-error-reload-at"
+const PRELOAD_ERROR_RELOAD_WINDOW_MS = 10_000
+
+function getLastPreloadErrorReload() {
+    try {
+        return Number(window.sessionStorage.getItem(PRELOAD_ERROR_RELOAD_KEY) ?? 0)
+    } catch {
+        return undefined
+    }
+}
+
+function setLastPreloadErrorReload(timestamp: number) {
+    try {
+        window.sessionStorage.setItem(PRELOAD_ERROR_RELOAD_KEY, String(timestamp))
+        return true
+    } catch {
+        return false
+    }
+}
+
+window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault()
+
+    const now = Date.now()
+    const lastReload = getLastPreloadErrorReload()
+
+    if (lastReload === undefined || now - lastReload < PRELOAD_ERROR_RELOAD_WINDOW_MS) {
+        return
+    }
+
+    if (setLastPreloadErrorReload(now)) {
+        window.location.reload()
+    }
+})
+
 const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"}) as Record<string, string>
 function loadNodeTypes(tries = 0) {
     import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {

@@ -317,33 +317,30 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    // Stays on raw axios: callers pass either a pre-built FormData (e.g. file inputs) or a plain
-    // object of input values - the SDK's createExecution() only handles the latter (its
-    // formDataBodySerializer does Object.entries(body), which silently yields nothing for an
-    // already-built FormData instance, dropping every input). Utils.toFormData() normalizes both.
     const triggerExecution = (options: {
         namespace: string;
         id: string;
-        formData: any;
+        formData?: Record<string, any>;
         kind: "PLAYGROUND" | "NORMAL"
         breakpoints?: string[];
         labels?: string[];
         scheduleDate?: string,
         revision?: number,
     }) => {
-        return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
-            timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
-            params: {
-                labels: options.labels ?? [],
-                scheduleDate: options.scheduleDate,
-                kind: options.kind,
-                breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-                revision: options.revision,
-            },
-        }).then(response => response.data)
+        // body's generated type is a narrow `Array<Blob | File>` fallback - OpenAPI can't express
+        // a dynamic, per-flow-input-keyed object schema - but the runtime multipart serializer just
+        // does Object.entries(body), so a plain key/value object of input values works correctly
+        // despite the mismatched declared type.
+        return ExecutionsAPI.createExecution({
+            namespace: options.namespace,
+            id: options.id,
+            body: options.formData as unknown as Parameters<typeof ExecutionsAPI.createExecution>[0]["body"],
+            labels: options.labels ?? [],
+            scheduleDate: options.scheduleDate,
+            kind: options.kind,
+            breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+            revision: options.revision,
+        }, {timeout: 60 * 60 * 1000})
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {

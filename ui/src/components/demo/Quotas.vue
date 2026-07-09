@@ -4,7 +4,6 @@
         type="quotas"
         demoCta
         :title="$t('demos.quotas.title')"
-        learnMore="https://kestra.io/docs/enterprise/governance/quotas"
     >
         <template #description>
             {{ $t('demos.quotas.message') }}

@@ -1,12 +1,12 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title" />
     <Empty
-        type="assets"
+        type="policies"
         demoCta
-        :title="t(`demos.assets.title`)"
+        :title="t(`demos.policies.title`)"
     >
         <template #description>
-            {{ $t(`demos.assets.message`) }}
+            {{ $t(`demos.policies.message`) }}
         </template>
     </Empty>
 </template>
@@ -16,6 +16,9 @@
     import {useI18n} from "vue-i18n"
     import useRouteContext from "../../composables/useRouteContext"
 
+    import Empty from "../layout/empty/Empty.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+
     defineProps({
         topbar: {
             type: Boolean,
@@ -23,12 +26,11 @@
         },
     })
 
-    import Empty from "../layout/empty/Empty.vue"
-    import TopNavBar from "../../components/layout/TopNavBar.vue"
-
     const {t} = useI18n()
 
-    const routeInfo = computed(() => ({title: t("demos.assets.header")}))
+    const routeInfo = computed(
+        () => ({title: t("demos.policies.header")}),
+    )
 
     useRouteContext(routeInfo)
 </script>

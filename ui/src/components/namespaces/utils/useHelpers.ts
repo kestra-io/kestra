@@ -49,7 +49,7 @@ export const ORDER = [
     "credentials",
     "assets",
     "variables",
-    "plugin-defaults",
+    "policies",
     "kv",
     "reusable-inputs",
     "files",

@@ -138,7 +138,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     color: var(--ks-text-secondary);
     text-decoration: none;
 

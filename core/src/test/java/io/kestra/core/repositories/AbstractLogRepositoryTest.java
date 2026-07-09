@@ -417,6 +417,21 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void shouldPersistTaskIdLongerThan150Chars() {
+        // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
+        // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String longTaskId = "a".repeat(200);
+        LogEntry log = logEntry(tenant, Level.INFO, "execLongTaskId").taskId(longTaskId).build();
+
+        LogEntry saved = logRepository.save(log);
+
+        List<LogEntry> found = logRepository.findByExecutionIdAndTaskId(tenant, saved.getExecutionId(), longTaskId, null);
+        assertThat(found).hasSize(1);
+        assertThat(found.getFirst().getTaskId()).isEqualTo(longTaskId);
+    }
+
+    @Test
     void purge() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO, "execution1").build());

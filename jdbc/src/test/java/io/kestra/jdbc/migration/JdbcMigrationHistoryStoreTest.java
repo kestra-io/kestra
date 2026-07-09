@@ -1,11 +1,12 @@
 package io.kestra.jdbc.migration;
 
-import io.kestra.core.migration.MigrationScript;
+import java.util.UUID;
+
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
+import io.kestra.core.migration.MigrationScript;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -95,10 +96,24 @@ class JdbcMigrationHistoryStoreTest {
 
     private MigrationScript script(final String scriptId, final String checksum) {
         return new MigrationScript() {
-            @Override public String scriptId() { return scriptId; }
-            @Override public String description() { return "Migration " + scriptId; }
-            @Override public String checksum() { return checksum; }
-            @Override public void migrate() {}
+            @Override
+            public String scriptId() {
+                return scriptId;
+            }
+
+            @Override
+            public String description() {
+                return "Migration " + scriptId;
+            }
+
+            @Override
+            public String checksum() {
+                return checksum;
+            }
+
+            @Override
+            public void migrate() {
+            }
         };
     }
 }

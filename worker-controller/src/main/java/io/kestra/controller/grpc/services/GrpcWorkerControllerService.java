@@ -18,7 +18,6 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
-import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
@@ -28,6 +27,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
 import io.grpc.stub.ServerCallStreamObserver;
@@ -158,11 +158,13 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     workerJobDispatcher.onCompletionsReceived(context, completions);
                 }
 
-                // Process permits
+                // Process permits. The worker advertises its total remaining capacity as a level,
+                // so zero is meaningful: it means "stop dispatching to me" — queue full, or intake
+                // paused for maintenance / cordon. onPermitsReceived pauses the worker's
+                // subscriptions when capacity reaches zero (and ignores negatives), so it must not
+                // be gated out here.
                 int permits = request.getPermits();
-                if (permits > 0) {
-                    workerJobDispatcher.onPermitsReceived(context, permits);
-                }
+                workerJobDispatcher.onPermitsReceived(context, permits);
             }
 
             @Override
@@ -252,7 +254,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                         // The realtime trigger stream ended without producing an execution — clean
                         // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
                         // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
-                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED));
+                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
                     }
                     if (isTerminalRealtimeResult(evaluation)) {
                         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());

@@ -19,6 +19,7 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.assets.AssetManagerFactory;
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
@@ -31,7 +32,6 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -133,7 +133,7 @@ public class DefaultRunContext extends RunContext {
 
         // add it inside variables if not already present to be available in expressions
         if (traceParent != null && !this.variables.containsKey("trace")) {
-            this.variables = ImmutableMap.<String, Object>builder()
+            this.variables = ImmutableMap.<String, Object> builder()
                 .putAll(this.variables)
                 .put("trace", Map.of("parent", traceParent))
                 .build();
@@ -504,6 +504,15 @@ public class DefaultRunContext extends RunContext {
     @Override
     public List<WorkerTaskResult> dynamicWorkerResults() {
         return dynamicWorkerTaskResult;
+    }
+
+    @Override
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerTaskResult.add(workerTaskResult);
+
+        if (logs != null && !logs.isEmpty() && workerTaskResult.getTaskRun() != null) {
+            this.logger.emitDynamicTaskRunLogs(workerTaskResult.getTaskRun(), logs);
+        }
     }
 
     /**

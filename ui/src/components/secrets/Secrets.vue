@@ -198,6 +198,7 @@
 
     .oss-secrets-hint {
         text-align: left;
+        padding-inline-start: var(--ks-spacing-5);
 
         ul,
         li {

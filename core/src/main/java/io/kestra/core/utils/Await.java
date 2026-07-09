@@ -1,19 +1,18 @@
 package io.kestra.core.utils;
 
-import org.awaitility.Awaitility;
-import org.awaitility.core.ConditionFactory;
-
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
 
 public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
 
-    public static ConditionFactory await(){
+    public static ConditionFactory await() {
         return Awaitility
             .await()
             .pollInSameThread()

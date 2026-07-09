@@ -220,6 +220,7 @@ public class CommandsWrapper implements TaskCommands {
                 .stdOutLineCount(e.getStdOutCount())
                 .stdErrLineCount(e.getStdErrCount())
                 .vars(e.getLogConsumer() != null ? e.getLogConsumer().getOutputs() : null)
+                .taskRunner(e.getDetails())
                 .outputFiles(getOutputFiles(taskRunnerRunContext))
                 .build();
             throw new RunnableTaskException(e, output);

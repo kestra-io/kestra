@@ -4,12 +4,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.core.utils.UriProvider;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public final class ExecutionService {
     private ExecutionService() {
@@ -52,7 +54,9 @@ public final class ExecutionService {
         Map<String, Object> executionMap = (Map<String, Object>) runContext.getVariables().get("execution");
         Map<String, Object> triggerVar = (Map<String, Object>) runContext.getVariables().get("trigger");
         if (triggerVar == null || !triggerVar.containsKey("executionId")) {
-            throw new IllegalArgumentException("Trigger variable is missing 'executionId' key, notification plugins can only be used either on the current execution or an execution triggered by a Flow trigger.");
+            throw new IllegalArgumentException(
+                "Trigger variable is missing 'executionId' key, notification plugins can only be used either on the current execution or an execution triggered by a Flow trigger."
+            );
         }
 
         return new ExecutionContext(
@@ -115,14 +119,16 @@ public final class ExecutionService {
         return executionId.equals(executionVars.get("id"));
     }
 
-    private record ExecutionContext(String tenantId, String namespace, String flowId, String id, ExecutionContextState state, ExecutionContextTask firstFailed, ExecutionContextTask lastTask) {}
+    private record ExecutionContext(String tenantId, String namespace, String flowId, String id, ExecutionContextState state, ExecutionContextTask firstFailed, ExecutionContextTask lastTask) {
+    }
 
     private record ExecutionContextState(String current, String startDate, String endDate) {
         public String humanDuration() {
-            Duration duration = Duration.between(Instant.parse(startDate), Optional.ofNullable(endDate).map(d -> Instant.parse(d)).orElse(Instant.now()));
+            Duration duration = Duration.between(TypeConverter.toInstant(startDate), Optional.ofNullable(endDate).map(TypeConverter::toInstant).orElse(Instant.now()));
             return DurationFormatUtils.formatDurationHMS(duration.toMillis());
         }
     }
 
-    private record ExecutionContextTask(String taskId) {}
+    private record ExecutionContextTask(String taskId) {
+    }
 }

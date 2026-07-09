@@ -37,6 +37,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedFileUpload;
@@ -63,15 +64,18 @@ public class FlowInputOutput {
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+    private final ReusableInputsExpander reusableInputsExpander;
 
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         Provider<RunContextFactory> runContextFactory,
-        EncryptionConfig encryptionConfig) {
+        EncryptionConfig encryptionConfig,
+        ReusableInputsExpander reusableInputsExpander) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
+        this.reusableInputsExpander = reusableInputsExpander;
     }
 
     /**
@@ -140,8 +144,8 @@ public class FlowInputOutput {
     }
 
     private Mono<Map<String, Object>> readData(List<Input<?>> rawInputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
-        // Expand FORM inputs so FILE part matching works against dotted leaf ids.
-        final List<Input<?>> inputs = Input.expandToLeaves(rawInputs);
+        // Inline reusable-inputs references, then flatten FORMs so FILE part matching works against dotted leaf ids.
+        final List<Input<?>> inputs = Input.expandToLeaves(reusableInputsExpander.expand(execution.getTenantId(), execution.getNamespace(), rawInputs));
         return Flux.from(data)
             .publishOn(Schedulers.boundedElastic()).<Map.Entry<String, String>> handle((input, sink) ->
             {
@@ -283,9 +287,9 @@ public class FlowInputOutput {
             return Collections.emptyList();
         }
 
-        // Expand FORM inputs into dotted-id leaves so resolution runs on a flat list and the nested
-        // payload reassembles via flattenToNestedMap. Idempotent on already-expanded leaves.
-        final List<Input<?>> leafInputs = Input.expandToLeaves(inputs);
+        // Inline reusable-inputs references, then flatten FORMs into dotted-id leaves so resolution runs on a flat
+        // list and the nested payload reassembles via flattenToNestedMap. Idempotent on leaves.
+        final List<Input<?>> leafInputs = Input.expandToLeaves(reusableInputsExpander.expand(execution.getTenantId(), execution.getNamespace(), inputs));
 
         final Map<String, ResolvableInput> resolvableInputMap = Collections.unmodifiableMap(
             leafInputs.stream()
@@ -358,6 +362,11 @@ public class FlowInputOutput {
 
             Object value = resolvable.get().value();
 
+            // Pebble renders a null reference as ""; treat "" as absent for non-text types.
+            if (value instanceof String s && s.isEmpty() && !isTextType(input.getType())) {
+                value = null;
+            }
+
             // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
             // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
@@ -414,8 +423,19 @@ public class FlowInputOutput {
             case JSON, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
-            case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
+            case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
+    }
+
+    /**
+     * Returns {@code true} for input types that treat an empty string as a valid value.
+     * All other types (INT, FLOAT, BOOL, DATE/TIME variants, DURATION, JSON, YAML, URI, FILE,
+     * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
+     * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
+     */
+    private static boolean isTextType(Type type) {
+        return type == Type.STRING || type == Type.SELECT
+            || type == Type.EMAIL || type == Type.SECRET;
     }
 
     @SuppressWarnings("unchecked")
@@ -437,7 +457,7 @@ public class FlowInputOutput {
         // otherwise cause an exception if a Pebble expression is involved.
         // FORM inputs are expanded to dotted leaves first, and defaults are injected into the flat map
         // before nesting so they end up under the form key (e.g. inputs.environment.region).
-        List<Input<?>> inputs = flow == null ? List.of() : flow.resolvableInputs();
+        List<Input<?>> inputs = flow == null ? List.of() : flow.resolvableInputs(reusableInputsExpander);
         for (Input<?> input : inputs) {
             if (input.getDefaults() != null && !flatInputs.containsKey(input.getId())) {
                 flatInputs.put(input.getId(), null);
@@ -528,14 +548,14 @@ public class FlowInputOutput {
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                     yield EncryptedString.from(encrypted);
                 }
-                case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
+                case INT -> TypeConverter.toInteger(current);
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
-                case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
-                case BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
-                case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
-                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());
-                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(current.toString());
-                case DURATION -> current instanceof Duration ? current : Duration.parse(current.toString());
+                case FLOAT -> TypeConverter.toFloat(current);
+                case BOOL -> TypeConverter.toBoolean(current);
+                case DATETIME -> TypeConverter.toInstant(current);
+                case DATE -> TypeConverter.toLocalDate(current);
+                case TIME -> TypeConverter.toLocalTime(current);
+                case DURATION -> TypeConverter.toDuration(current);
                 case FILE -> {
                     URI uri = URI.create(current.toString().replace(File.separator, "/"));
 
@@ -578,7 +598,7 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
-                case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
+                case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
             throw e;

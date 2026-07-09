@@ -87,7 +87,8 @@ public abstract class AbstractJdbcRepository<T> {
         // So to avoid the case where no record exists and two threads insert concurrently, in H2, we select/insert and if the insert fails, select again.
         // Anyway, this would only occur once in a record lifecycle, so even if it's not elegant, it should work.
         // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in Postgres and MySQL, so we're sure it works there also, and it's better than relying on exception.
-        return fetcher.get().orElseGet(() -> {
+        return fetcher.get().orElseGet(() ->
+        {
             try {
                 T entity = defaultEntity.get();
                 Map<Field<Object>, Object> fields = this.persistFields(entity);
@@ -134,7 +135,6 @@ public abstract class AbstractJdbcRepository<T> {
     public void persist(T entity) {
         this.persist(entity, null);
     }
-
 
     /**
      * Do an insert or update on the table (upsert).
@@ -398,7 +398,11 @@ public abstract class AbstractJdbcRepository<T> {
                 .getOrderBy()
                 .forEach(order ->
                 {
-                    String column = camelToSnake(order.getProperty());
+                    String property = order.getProperty();
+                    if (property == null || property.isBlank()) {
+                        throw new IllegalArgumentException("Invalid sort field");
+                    }
+                    String column = camelToSnake(property);
                     Field<Object> field = DSL.field(DSL.name(column));
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());

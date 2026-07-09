@@ -11,8 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import lombok.Builder;
-
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +36,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import lombok.Builder;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
@@ -538,394 +537,500 @@ public abstract class AbstractTriggerRepositoryTest {
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.QUERY).value("io.kestra.filter").operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.QUERY).value("io.kestra.filter").operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.QUERY).value("io.kestra.filter").operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.QUERY).value("io.kestra.filter").operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         // --- SCOPE ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching, triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of())
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SCOPE).value(List.of(USER)).operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SCOPE).value(List.of(USER)).operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching, triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SCOPE).value(List.of(USER)).operation(Op.IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SCOPE).value(List.of(USER)).operation(Op.IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of())
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SCOPE).value(List.of(USER)).operation(Op.NOT_IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SCOPE).value(List.of(USER)).operation(Op.NOT_IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching, triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SCOPE).value(List.of(USER, SYSTEM)).operation(Op.IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SCOPE).value(List.of(USER, SYSTEM)).operation(Op.IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching, triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_IN).build()
+            )
             .build(),
 
         // --- NAMESPACE ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value("io.kestra.filter").operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value("io.kestra.filter").operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value("io.kestra.filter").operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value("io.kestra.filter").operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value("kestra").operation(Op.CONTAINS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value("kestra").operation(Op.CONTAINS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value("io.kestra").operation(Op.STARTS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value("io.kestra").operation(Op.STARTS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value(".filter").operation(Op.ENDS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value(".filter").operation(Op.ENDS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value(List.of("io.kestra.filter")).operation(Op.IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value(List.of("io.kestra.filter")).operation(Op.IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value(List.of("io.kestra.filter")).operation(Op.NOT_IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value(List.of("io.kestra.filter")).operation(Op.NOT_IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NAMESPACE).value("io.kestra").operation(Op.PREFIX).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NAMESPACE).value("io.kestra").operation(Op.PREFIX).build()
+            )
             .build(),
 
         // --- FLOW_ID ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value("io.match.flow").operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value("io.match.flow").operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value("io.match.flow").operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value("io.match.flow").operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value("match").operation(Op.CONTAINS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value("match").operation(Op.CONTAINS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value("io.match").operation(Op.STARTS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value("io.match").operation(Op.STARTS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value(".flow").operation(Op.ENDS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value(".flow").operation(Op.ENDS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value(List.of("io.match.flow")).operation(Op.IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value(List.of("io.match.flow")).operation(Op.IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value(List.of("io.match.flow")).operation(Op.NOT_IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value(List.of("io.match.flow")).operation(Op.NOT_IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.FLOW_ID).value("io.match").operation(Op.PREFIX).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.FLOW_ID).value("io.match").operation(Op.PREFIX).build()
+            )
             .build(),
 
         // --- NEXT_EXECUTION_DATE ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerEarlyEval, triggerLateEval))
             .expectedTriggers(List.of(triggerEarlyEval))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
-                .operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
+                    .operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerEarlyEval, triggerLateEval))
             .expectedTriggers(List.of(triggerLateEval))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
-                .operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
+                    .operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerEarlyEval, triggerLateEval))
             .expectedTriggers(List.of(triggerLateEval))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NEXT_EXECUTION_DATE).value(DATE_BETWEEN).operation(Op.GREATER_THAN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NEXT_EXECUTION_DATE).value(DATE_BETWEEN).operation(Op.GREATER_THAN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerEarlyEval, triggerLateEval))
             .expectedTriggers(List.of(triggerEarlyEval, triggerLateEval))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
-                .operation(Op.GREATER_THAN_OR_EQUAL_TO).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
+                    .operation(Op.GREATER_THAN_OR_EQUAL_TO).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerEarlyEval, triggerLateEval))
             .expectedTriggers(List.of(triggerEarlyEval))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NEXT_EXECUTION_DATE).value(DATE_BETWEEN).operation(Op.LESS_THAN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NEXT_EXECUTION_DATE).value(DATE_BETWEEN).operation(Op.LESS_THAN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerEarlyEval, triggerLateEval))
             .expectedTriggers(List.of(triggerEarlyEval, triggerLateEval))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_NEW, ZoneId.of("UTC")))
-                .operation(Op.LESS_THAN_OR_EQUAL_TO).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.NEXT_EXECUTION_DATE).value(ZonedDateTime.ofInstant(DATE_NEW, ZoneId.of("UTC")))
+                    .operation(Op.LESS_THAN_OR_EQUAL_TO).build()
+            )
             .build(),
 
         // --- TRIGGER_ID ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value("alpha-trigger").operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value("alpha-trigger").operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value("alpha-trigger").operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value("alpha-trigger").operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value("alpha").operation(Op.CONTAINS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value("alpha").operation(Op.CONTAINS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value("alpha").operation(Op.STARTS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value("alpha").operation(Op.STARTS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value("-trigger").operation(Op.ENDS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value("-trigger").operation(Op.ENDS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value(List.of("alpha-trigger")).operation(Op.IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value(List.of("alpha-trigger")).operation(Op.IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.TRIGGER_ID).value(List.of("alpha-trigger")).operation(Op.NOT_IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_ID).value(List.of("alpha-trigger")).operation(Op.NOT_IN).build()
+            )
             .build(),
 
         // --- WORKER_ID ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value("alpha-worker").operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value("alpha-worker").operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value("alpha-worker").operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value("alpha-worker").operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value("alpha").operation(Op.CONTAINS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value("alpha").operation(Op.CONTAINS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value("alpha").operation(Op.STARTS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value("alpha").operation(Op.STARTS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value("-worker").operation(Op.ENDS_WITH).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value("-worker").operation(Op.ENDS_WITH).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value(List.of("alpha-worker")).operation(Op.IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value(List.of("alpha-worker")).operation(Op.IN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerMatching, triggerNonMatching))
             .expectedTriggers(List.of(triggerNonMatching))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.WORKER_ID).value(List.of("alpha-worker")).operation(Op.NOT_IN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.WORKER_ID).value(List.of("alpha-worker")).operation(Op.NOT_IN).build()
+            )
             .build(),
 
         // --- LAST_TRIGGERED_DATE ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerLdtOld, triggerLdtNew))
             .expectedTriggers(List.of(triggerLdtOld))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
-                .operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
+                    .operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerLdtOld, triggerLdtNew))
             .expectedTriggers(List.of(triggerLdtNew))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
-                .operation(Op.NOT_EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
+                    .operation(Op.NOT_EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerLdtOld, triggerLdtNew))
             .expectedTriggers(List.of(triggerLdtNew))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LAST_TRIGGERED_DATE).value(DATE_BETWEEN)
-                .operation(Op.GREATER_THAN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LAST_TRIGGERED_DATE).value(DATE_BETWEEN)
+                    .operation(Op.GREATER_THAN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerLdtOld, triggerLdtNew))
             .expectedTriggers(List.of(triggerLdtOld, triggerLdtNew))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
-                .operation(Op.GREATER_THAN_OR_EQUAL_TO).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_OLD, ZoneId.of("UTC")))
+                    .operation(Op.GREATER_THAN_OR_EQUAL_TO).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerLdtOld, triggerLdtNew))
             .expectedTriggers(List.of(triggerLdtOld))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LAST_TRIGGERED_DATE).value(DATE_BETWEEN)
-                .operation(Op.LESS_THAN).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LAST_TRIGGERED_DATE).value(DATE_BETWEEN)
+                    .operation(Op.LESS_THAN).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerLdtOld, triggerLdtNew))
             .expectedTriggers(List.of(triggerLdtOld, triggerLdtNew))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_NEW, ZoneId.of("UTC")))
-                .operation(Op.LESS_THAN_OR_EQUAL_TO).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LAST_TRIGGERED_DATE).value(ZonedDateTime.ofInstant(DATE_NEW, ZoneId.of("UTC")))
+                    .operation(Op.LESS_THAN_OR_EQUAL_TO).build()
+            )
             .build(),
 
         // --- SOURCE ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerScheduleSource, triggerPollingSource))
             .expectedTriggers(List.of(triggerScheduleSource))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.SOURCE).value(TriggerType.SCHEDULE)
-                .operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.SOURCE).value(TriggerType.SCHEDULE)
+                    .operation(Op.EQUALS).build()
+            )
             .build(),
 
         // --- LOCKED ---
         FiltersTestCase.builder()
             .triggers(List.of(triggerLocked, triggerUnlocked))
             .expectedTriggers(List.of(triggerLocked))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LOCKED).value(true)
-                .operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LOCKED).value(true)
+                    .operation(Op.EQUALS).build()
+            )
             .build(),
 
         FiltersTestCase.builder()
             .triggers(List.of(triggerLocked, triggerUnlocked))
             .expectedTriggers(List.of(triggerUnlocked))
-            .queryFilter(QueryFilter.builder()
-                .field(Field.LOCKED).value(false)
-                .operation(Op.EQUALS).build())
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LOCKED).value(false)
+                    .operation(Op.EQUALS).build()
+            )
             .build()
     ).map(tc -> Named.of(tc.queryFilter().toString(), tc)).toList();
 
@@ -937,7 +1042,8 @@ public abstract class AbstractTriggerRepositoryTest {
 
         // When
         ArrayListTotal<TriggerState> results = triggerRepository.find(
-            Pageable.UNPAGED, tenant, List.of(testCase.queryFilter()));
+            Pageable.UNPAGED, tenant, List.of(testCase.queryFilter())
+        );
 
         // Then
         assertThat(results)
@@ -953,7 +1059,8 @@ public abstract class AbstractTriggerRepositoryTest {
 
         // When
         List<TriggerState> results = triggerRepository.find(
-            tenant, List.of(testCase.queryFilter())).collectList().block();
+            tenant, List.of(testCase.queryFilter())
+        ).collectList().block();
 
         // Then
         assertThat(results)
@@ -972,5 +1079,96 @@ public abstract class AbstractTriggerRepositoryTest {
         List<TriggerState> triggers,
         List<TriggerState> expectedTriggers,
         QueryFilter queryFilter) {
+    }
+
+    @Test
+    void shouldFindWithCombinedNamespaceAndFlowId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.combined").flowId("combined-flow").triggerId("t1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.combined").flowId("other-flow").triggerId("t2").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.different").flowId("combined-flow").triggerId("t3").build());
+
+        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, "io.kestra.combined", "combined-flow", null);
+
+        assertThat(find).hasSize(1);
+        assertThat(find.getFirst().getTriggerId()).isEqualTo("t1");
+    }
+
+    @Test
+    void shouldFindWithCombinedQueryAndWorkerId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.queryworker").flowId("matchflow").workerId("worker-a").triggerId("t1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.queryworker").flowId("matchflow").workerId("worker-b").triggerId("t2").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.other").flowId("unrelated").workerId("worker-a").triggerId("t3").build());
+
+        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, "matchflow", tenant, null, null, "worker-a");
+
+        assertThat(find).hasSize(1);
+        assertThat(find.getFirst().getTriggerId()).isEqualTo("t1");
+    }
+
+    @Test
+    void shouldFindWithAllFiveParametersCombined() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(
+            trigger(tenant)
+                .namespace("io.kestra.allparams")
+                .flowId("all-flow")
+                .workerId("all-worker")
+                .triggerId("matching-trigger")
+                .build()
+        );
+        triggerStateStore.save(
+            trigger(tenant)
+                .namespace("io.kestra.allparams")
+                .flowId("all-flow")
+                .workerId("different-worker")
+                .triggerId("non-matching-trigger")
+                .build()
+        );
+
+        List<TriggerState> find = triggerRepository.find(
+            TEST_DEFAULT_PAGED, "all-flow", tenant, "io.kestra.allparams", "all-flow", "all-worker"
+        );
+
+        assertThat(find).hasSize(1);
+        assertThat(find.getFirst().getTriggerId()).isEqualTo("matching-trigger");
+    }
+
+    @Test
+    void shouldFindWithAllNullFiltersReturnsEverything() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        triggerStateStore.save(trigger(tenant).triggerId("a").build());
+        triggerStateStore.save(trigger(tenant).triggerId("b").build());
+        triggerStateStore.save(trigger(tenant).triggerId("c").build());
+
+        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, null, null, null);
+
+        assertThat(find).hasSize(3);
+    }
+
+    @Test
+    void shouldPaginateFindWithLegacyParameters() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        for (int i = 0; i < 5; i++) {
+            triggerStateStore.save(trigger(tenant).triggerId("page-trigger-" + i).build());
+        }
+
+        ArrayListTotal<TriggerState> page1 = triggerRepository.find(
+            Pageable.from(1, 2, Sort.of(Sort.Order.asc("triggerId"))), null, tenant, null, null, null
+        );
+        assertThat(page1).hasSize(2);
+        assertThat(page1.getTotal()).isEqualTo(5);
+
+        ArrayListTotal<TriggerState> page3 = triggerRepository.find(
+            Pageable.from(3, 2, Sort.of(Sort.Order.asc("triggerId"))), null, tenant, null, null, null
+        );
+        assertThat(page3).hasSize(1);
+        assertThat(page3.getTotal()).isEqualTo(5);
     }
 }

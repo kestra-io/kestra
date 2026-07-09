@@ -14,7 +14,7 @@
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
-        <template #top>
+        <template #top v-if="!paneView">
             <KSFilter
                 :configuration="kvFilter"
                 :tableOptions="{
@@ -187,7 +187,6 @@
                     :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
-                    :activeActionIcon="Check"
                 />
                 <KsDatePicker
                     v-else-if="kv.type === 'DATETIME'"
@@ -282,7 +281,6 @@
     import _groupBy from "lodash/groupBy"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
-    import Check from "vue-material-design-icons/Check.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
@@ -553,7 +551,7 @@
 
     function durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
         if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
-            callback(new Error("datepicker.error"))
+            callback(new Error(t("datepicker.error")))
         } else {
             callback()
         }
@@ -563,7 +561,7 @@
 
     function kvKeyDuplicate(_rule: any, value: string, callback: (error?: Error) => void) {
         if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
-            return callback(new Error("kv.duplicate"))
+            return callback(new Error(t("kv.duplicate")))
         } else {
             callback()
         }

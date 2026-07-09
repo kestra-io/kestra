@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import io.kestra.core.models.hierarchies.AbstractGraph;
-import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.utils.GraphUtils;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -20,11 +16,16 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.AbstractGraph;
+import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -228,7 +229,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
         );
 
         return Output.builder()
-            .iterationCount(Integer.parseInt(value) + 1)
+            .iterationCount(TypeConverter.toInteger(value) + 1)
             .build();
     }
 

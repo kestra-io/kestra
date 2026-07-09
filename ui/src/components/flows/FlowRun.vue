@@ -4,6 +4,10 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </KsAlert>
+        <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
+            <strong>{{ $t('draft') }}</strong><br>
+            {{ $t('draft_flow_warning') }}
+        </KsAlert>
         <div class="flow-execution-checks-alerts">
             <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
                 {{ alert.message }}
@@ -22,6 +26,7 @@
                         v-model="inputs"
                         :executeClicked="executeClicked"
                         @confirm="onSubmit"
+                        @ready="onInputsFormReady"
                         @update:model-value-no-default="values => inputsNoDefaults=values"
                         @update:checks="onChecksUpdate"
                         @update:on-recap="value => inputsOnRecap = value"
@@ -51,6 +56,23 @@
                             v-model="scheduleDate"
                             type="datetime"
                         />
+                    </KsFormItem>
+                    <KsFormItem
+                        :label="$t('breakpoints')"
+                    >
+                        <KsSelect
+                            v-model="breakpoints"
+                            multiple
+                            filterable
+                            :placeholder="$t('breakpoints')"
+                        >
+                            <KsOption
+                                v-for="taskId in taskIds"
+                                :key="taskId"
+                                :label="taskId"
+                                :value="taskId"
+                            />
+                        </KsSelect>
                     </KsFormItem>
                 </KsTabPane>
                 <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
@@ -106,6 +128,7 @@
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
     import {executeTask} from "../../utils/submitTask"
+    import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {normalize, flattenInputs} from "../../utils/inputs"
@@ -132,6 +155,7 @@
         inputs: Record<string, unknown>
         labels: string[]
         scheduleDate: string | undefined
+        breakpoints?: string[]
     }
 
     export interface SelectedTrigger {
@@ -146,6 +170,7 @@
         buttonText?: string
         buttonIcon?: Component
         buttonTestId?: string
+        autoPrefill?: boolean
     }>(), {
         redirect: true,
         embed: false,
@@ -154,6 +179,7 @@
         buttonText: "launch execution",
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
+        autoPrefill: false,
     })
 
     const emit = defineEmits<{
@@ -177,6 +203,10 @@
     const inputsNoDefaults = ref<Record<string, unknown>>({})
     const executionLabels = ref<Label[]>([])
     const scheduleDate = ref<string | undefined>(undefined)
+    const breakpoints = ref<string[]>([])
+    const taskIds = computed(() => {
+        return getAllTaskIds(flow.value)
+    })
     const newTab = ref(localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB)
     const executeClicked = ref(false)
     const checks = ref<Check[]>([])
@@ -224,6 +254,10 @@
         checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
     )
 
+    // The dialog-footer Execute (FlowRunActions) must follow the wizard: hidden until the recap when
+    // the flow has FORM inputs, so only one primary button shows (Next in-step, Execute on recap).
+    const showExecuteButton = computed(() => !hasFormInputs.value || inputsOnRecap.value)
+
     const canPrefill = computed(() =>
         Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
     )
@@ -240,6 +274,7 @@
         canPrefill,
         flowCanBeExecuted,
         hasBlockingChecks,
+        showExecuteButton,
         buttonText: props.buttonText,
         buttonIcon: props.buttonIcon,
         buttonTestId: props.buttonTestId,
@@ -265,6 +300,14 @@
 
     function onChecksUpdate(values: Check[]) {
         checks.value = values
+    }
+
+    let autoPrefilled = false
+    function onInputsFormReady() {
+        if (props.autoPrefill && !autoPrefilled && canPrefill.value) {
+            autoPrefilled = true
+            fillInputsFromExecution()
+        }
     }
 
     function fillInputsFromExecution() {
@@ -332,6 +375,7 @@
                             inputs: mergedInputs,
                             labels: labelStrings,
                             scheduleDate: scheduleDate.value,
+                            breakpoints: breakpoints.value,
                         })
                     } else {
                         const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
@@ -341,6 +385,8 @@
                                 newTab: newTab.value,
                                 id: flow.value.id,
                                 namespace: flow.value.namespace,
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
                                 scheduleDate: moment(scheduleDate.value)
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
@@ -350,6 +396,7 @@
                                     autoExpandGantt: "true",
                                     onboardingSuccess: "true",
                                 } : undefined,
+                                breakpoints: breakpoints.value,
                             })
                         }
                     }

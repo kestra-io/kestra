@@ -1,10 +1,22 @@
 package io.kestra.executor;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Concurrency;
@@ -32,27 +44,17 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
-import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.trigger.Webhook;
+
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.*;
 
@@ -61,78 +63,44 @@ import static io.kestra.core.utils.Rethrow.*;
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
 
-    @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
-    @Inject
-    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
-    @Inject
-    private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
-    @Inject
-    private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
-    @Inject
-    private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
-    @Inject
-    private BroadcastQueueInterface<ExecutionKilled> killQueue;
-    @Inject
-    private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
-    @Inject
-    private DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
-    @Inject
-    private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
-    @Inject
-    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-    @Inject
-    private ExecutorService executorService;
-    @Inject
-    private ExecutionService executionService;
-    @Inject
-    private FlowTriggerService flowTriggerService;
-    @Inject
-    private SLAService slaService;
-    @Inject
-    private MaintenanceService maintenanceService;
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
+    private final DispatchQueueInterface<Execution> executionQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    private final KillSwitchService killSwitchService;
+    private final KillSwitchActionService killSwitchActionService;
+    private final DispatchQueueInterface<ExecutionEvent> executionEventQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
+    private final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private final BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private final DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+    private final DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
+    private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
+    private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+    private final ExecutorService executorService;
+    private final ExecutionService executionService;
+    private final FlowTriggerService flowTriggerService;
+    private final SLAService slaService;
+    private final MaintenanceService maintenanceService;
+    private final FlowMetaStoreInterface flowMetaStore;
 
-    @Inject
-    private ExecutionStateStore executionStateStore;
-    @Inject
-    private ExecutionQueuedStateStore executionQueuedStateStore;
-    @Inject
-    private ExecutionDelayStateStore executionDelayStateStore;
-    @Inject
-    private SLAMonitorStateStore slaMonitorStateStore;
-    @Inject
-    private ConcurrencyLimitStateStore concurrencyLimitStateStore;
-    @Inject
-    private TriggerEventQueue triggerEventQueue;
+    private final ExecutionStateStore executionStateStore;
+    private final ExecutionQueuedStateStore executionQueuedStateStore;
+    private final ExecutionDelayStateStore executionDelayStateStore;
+    private final SLAMonitorStateStore slaMonitorStateStore;
+    private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
+    private final TriggerEventQueue triggerEventQueue;
 
-    @Inject
-    private MetricRegistry metricRegistry;
+    private final MetricRegistry metricRegistry;
 
-    @Inject
-    private RunContextFactory runContextFactory;
+    private final RunContextFactory runContextFactory;
 
-    @Inject
-    private ExecutionCommandMessageHandler executionCommandMessageHandler;
-    @Inject
-    private ExecutionEventMessageHandler executionEventMessageHandler;
-    @Inject
-    private WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
-    @Inject
-    private ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
-    @Inject
-    private SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
-    @Inject
-    private SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
-    @Inject
-    private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
-    @Inject
-    private LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
+    private final ExecutionCommandMessageHandler executionCommandMessageHandler;
+    private final ExecutionEventMessageHandler executionEventMessageHandler;
+    private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
+    private final ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
+    private final SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
+    private final SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
+    private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
+    private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
@@ -152,8 +120,80 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private Timer executionDelayLoopTimer;
 
     @Inject
-    public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, ExecutorConfiguration executorConfiguration) {
+    public DefaultExecutor(
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        ExecutorsUtils executorsUtils,
+        ExecutorConfiguration executorConfiguration,
+        DispatchQueueInterface<Execution> executionQueue,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
+        KillSwitchService killSwitchService,
+        KillSwitchActionService killSwitchActionService,
+        DispatchQueueInterface<ExecutionEvent> executionEventQueue,
+        BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
+        DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue,
+        DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue,
+        DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
+        DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
+        ExecutorService executorService,
+        ExecutionService executionService,
+        FlowTriggerService flowTriggerService,
+        SLAService slaService,
+        MaintenanceService maintenanceService,
+        FlowMetaStoreInterface flowMetaStore,
+        ExecutionStateStore executionStateStore,
+        ExecutionQueuedStateStore executionQueuedStateStore,
+        ExecutionDelayStateStore executionDelayStateStore,
+        SLAMonitorStateStore slaMonitorStateStore,
+        ConcurrencyLimitStateStore concurrencyLimitStateStore,
+        TriggerEventQueue triggerEventQueue,
+        MetricRegistry metricRegistry,
+        RunContextFactory runContextFactory,
+        ExecutionCommandMessageHandler executionCommandMessageHandler,
+        ExecutionEventMessageHandler executionEventMessageHandler,
+        WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
+        ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler,
+        SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler,
+        SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler,
+        MultipleConditionEventMessageHandler multipleConditionEventMessageHandler,
+        LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
+
+        this.executionQueue = executionQueue;
+        this.executionCommandQueue = executionCommandQueue;
+        this.killSwitchService = killSwitchService;
+        this.killSwitchActionService = killSwitchActionService;
+        this.executionEventQueue = executionEventQueue;
+        this.followExecutionEventQueue = followExecutionEventQueue;
+        this.workerTaskResultQueue = workerTaskResultQueue;
+        this.killQueue = killQueue;
+        this.subflowExecutionResultQueue = subflowExecutionResultQueue;
+        this.subflowExecutionEndQueue = subflowExecutionEndQueue;
+        this.multipleConditionEventQueue = multipleConditionEventQueue;
+        this.loopExecutionEventQueue = loopExecutionEventQueue;
+        this.executorService = executorService;
+        this.executionService = executionService;
+        this.flowTriggerService = flowTriggerService;
+        this.slaService = slaService;
+        this.maintenanceService = maintenanceService;
+        this.flowMetaStore = flowMetaStore;
+        this.executionStateStore = executionStateStore;
+        this.executionQueuedStateStore = executionQueuedStateStore;
+        this.executionDelayStateStore = executionDelayStateStore;
+        this.slaMonitorStateStore = slaMonitorStateStore;
+        this.concurrencyLimitStateStore = concurrencyLimitStateStore;
+        this.triggerEventQueue = triggerEventQueue;
+        this.metricRegistry = metricRegistry;
+        this.runContextFactory = runContextFactory;
+        this.executionCommandMessageHandler = executionCommandMessageHandler;
+        this.executionEventMessageHandler = executionEventMessageHandler;
+        this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
+        this.executionKilledExecutionMessageHandler = executionKilledExecutionMessageHandler;
+        this.subflowExecutionResultMessageHandler = subflowExecutionResultMessageHandler;
+        this.subflowExecutionEndMessageHandler = subflowExecutionEndMessageHandler;
+        this.multipleConditionEventMessageHandler = multipleConditionEventMessageHandler;
+        this.loopExecutionEventMessageHandler = loopExecutionEventMessageHandler;
 
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
@@ -434,6 +474,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         executionDelayLoopTimer.record(() ->
         {
+            // Collect the resulting executors during the transaction and emit them only AFTER
+            // processExpired() commits. Emitting inside the transaction races the queue consumer:
+            // on a non-transactional queue (Kafka) a new execution created by replay
+            // (CREATE_NEW_EXECUTION / RESTART_FAILED_FLOW) can be consumed before its INSERT is
+            // visible, so the executor's lock finds no row, silently skips it ("not ready for now"),
+            // and the new execution is dropped — the retry chain never runs.
+            List<ExecutorContext> toEmit = new ArrayList<>();
             executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
             {
                 Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
@@ -450,9 +497,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     try {
                         // Handle paused tasks and scheduledAt
                         // Also skip if the execution is being killed (KILLING is not yet terminated but must not be resumed).
-                        if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
+                        if (
+                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
                                 && !execution.getState().isTerminated()
-                                && execution.getState().getCurrent() != State.Type.KILLING) {
+                                && execution.getState().getCurrent() != State.Type.KILLING
+                        ) {
                             if (executionDelay.getTaskRunId() == null) {
                                 // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                                 Execution markAsExecution = execution.withState(executionDelay.getState());
@@ -471,8 +520,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             }
                         }
                         // Handle failed task retries — skip if the execution is being killed so the retry does not race the kill
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
-                                && execution.getState().getCurrent() != State.Type.KILLING) {
+                        else if (
+                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+                                && execution.getState().getCurrent() != State.Type.KILLING
+                        ) {
                             FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                             Execution newAttempt = executionService.retryTask(
                                 execution,
@@ -482,8 +533,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             executor = executor.withExecution(newAttempt, "retryFailedTask");
                         }
                         // Handle failed flow retries — skip if the execution is being killed so the retry does not race the kill
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
-                                && execution.getState().getCurrent() != State.Type.KILLING) {
+                        else if (
+                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
+                                && execution.getState().getCurrent() != State.Type.KILLING
+                        ) {
                             FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                             Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
                             executor = executor.withExecution(newExecution, "retryFailedFlow");
@@ -500,8 +553,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     return executor;
                 });
 
-                maybeExecutor.ifPresent(this::toExecution);
+                maybeExecutor.ifPresent(toEmit::add);
             });
+
+            // Transaction has committed here: the new/updated executions are now durably visible,
+            // so emitting their events cannot be consumed before the state store can see them.
+            toEmit.forEach(this::toExecution);
         });
     }
 
@@ -598,7 +655,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     sendTriggerExecutionTerminated(execution);
-                    this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
+                    this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                 }
 
                 return;
@@ -678,7 +735,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
                 }
 
-                // check if there exist a queued execution and submit it to the execution queue
+                // check if there exists a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
                     // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
@@ -732,31 +789,40 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 this.executionEventQueue.emit(event);
 
                 // update all execution followers
-                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
+                // Note that we must use 'emit' here and not emitAsync as we need to emit it inside the same transaction to avoid races,
+                // and transactions are bound to a thread. This is true for all emission of the follow execution event inside an execution lock.
+                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
 
                 // update all execution followers
-                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
+                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
             }
         } catch (QueueException | FlowNotFoundException | InternalException e) {
             if (!ignoreFailure) {
-                // If we cannot add the new worker task result to the execution, we fail it
-                executionStateStore.lock(executor.getExecution().getId(), execution ->
-                {
-                    try {
+                // If we cannot add the new worker task result to the execution, we fail it.
+                // Persist the FAILED state first, then emit the queue events
+                // only after the transaction commits to avoid potential race conditions inside the follow endpoint.
+                Optional<ExecutorContext> failedExecutorOpt = executionStateStore.lock(
+                    executor.getExecution().getId(), execution ->
+                    {
                         Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
-                        ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);
-                        this.executionEventQueue.emit(event);
+                        return new ExecutorContext(execution).withExecution(failed, "toExecutionFailure");
+                    }
+                );
+
+                if (failedExecutorOpt.isPresent()) {
+                    Execution failedExecution = failedExecutorOpt.get().getExecution();
+                    try {
+                        this.executionEventQueue.emit(new ExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
 
                         // update all execution followers
-                        this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(failed, ExecutionEventType.UPDATED));
+                        this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
                     } catch (QueueException ex) {
-                        log.error("Unable to emit the execution {}", execution.getId(), ex);
+                        log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
                     }
-                    return null;
-                });
+                }
             }
         }
     }

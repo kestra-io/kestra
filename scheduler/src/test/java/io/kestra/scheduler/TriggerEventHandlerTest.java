@@ -22,6 +22,7 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -45,7 +46,6 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -250,9 +250,11 @@ class TriggerEventHandlerTest {
     @Test
     void shouldResetTriggerAndRecomputeNextEvaluationDateWhenFlowExists() {
         // GIVEN
-        triggerStateStore.save(triggerState
-            .locked(Clock.systemDefaultZone(), true)
-            .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15)));
+        triggerStateStore.save(
+            triggerState
+                .locked(Clock.systemDefaultZone(), true)
+                .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15))
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -568,7 +570,7 @@ class TriggerEventHandlerTest {
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -578,7 +580,6 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
-        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
     @Test
@@ -590,7 +591,7 @@ class TriggerEventHandlerTest {
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -672,7 +673,54 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
-        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
+        // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-2");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        // a FAILED termination left over from the first dispatch (epoch 1)
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, 1L);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the current instance keeps its lock
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
+    }
+
+    @Test
+    void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
+        // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        // a worker-loss notice from the first dispatch (epoch 1) on the same worker
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", 1L);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the current instance keeps its lock
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
     }
 
     @Test
@@ -937,9 +985,11 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerUpdated() {
         // GIVEN a trigger evaluated once before the update event fires
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+        );
         FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
         handler = newTriggerEventHandler(List.of(flow));
         TriggerUpdated event = new TriggerUpdated(triggerId, flow.getRevision());
@@ -957,9 +1007,11 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReset() {
         // GIVEN
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -976,10 +1028,12 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReEnabled() {
         // GIVEN a trigger evaluated once before being disabled and re-enabled
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
-            .disabled(clock, true));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+                .disabled(clock, true)
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
 

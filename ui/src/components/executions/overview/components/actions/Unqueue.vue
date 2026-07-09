@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: execution.id})" />
+            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
 
             <KsSelect
                 :required="true"
@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+    import escape from "lodash/escape"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"

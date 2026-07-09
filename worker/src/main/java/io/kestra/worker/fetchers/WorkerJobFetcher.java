@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,7 +22,6 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
-
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
@@ -54,8 +54,8 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Receives jobs from the controller and puts them in the local queue</li>
  * <li>Sends updated permit values back to the controller as local capacity changes</li>
  * <li>Piggy-backs job completion signals (job UIDs that reached a terminal state) on
- *     the same stream so the controller can release the per-queue bucket reserved
- *     for the job — see {@link #onJobCompleted(String)}</li>
+ * the same stream so the controller can release the per-queue bucket reserved
+ * for the job — see {@link #onJobCompleted(String)}</li>
  * </ul>
  * <p>
  * The controller only sends jobs when the worker has permits (capacity), providing flow control
@@ -118,6 +118,13 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final AtomicInteger lastSentPermits = new AtomicInteger(-1);
 
     /**
+     * Whether job intake is paused (maintenance mode or cordon). When {@code true},
+     * {@link #calculatePermits()} reports zero so the controller stops dispatching, while the
+     * stream and fetch loop stay alive. Toggled by {@link #pause()} / {@link #resume()}.
+     */
+    private final AtomicBoolean fetchingPaused = new AtomicBoolean(false);
+
+    /**
      * UIDs of jobs that reached a terminal state on this worker and need to be
      * signaled back to the owning controller on the next outgoing
      * {@link WorkerJobRequest}. Drained into the {@code completedJobIds} field;
@@ -156,17 +163,17 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      *
      * @param workerControllerServiceStub the gRPC worker controller service stub.
      * @param channelManager the shared gRPC channel manager, used to confirm a reconnection
-     *                       only once the transport reaches {@code READY}.
+     *        only once the transport reaches {@code READY}.
      * @param workerQueueRegistry the worker queue registry.
      * @param executionKilledManager the execution killed manager.
      * @param clusterEventQueue the worker-local cluster-event broadcast queue used to relay events
-     *                          received from the controller to in-process subscribers. May be {@code null}
-     *                          when the process has direct access to the shared broadcast queue (see
-     *                          {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
+     *        received from the controller to in-process subscribers. May be {@code null}
+     *        when the process has direct access to the shared broadcast queue (see
+     *        {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
      * @param metadataChangeHandlers worker-side handlers invoked for each
-     *                               {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
-     *                               and on stream (re-)connection. Typically one handler per cached metastore;
-     *                               may be empty on workers that do not participate in metastore caching.
+     *        {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
+     *        and on stream (re-)connection. Typically one handler per cached metastore;
+     *        may be empty on workers that do not participate in metastore caching.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
@@ -194,6 +201,53 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     public synchronized void init(final WorkerContext workerContext) {
         this.workerJobQueue = workerQueueRegistry.getOrCreate(workerContext, WorkerJob.class);
         this.workerContext = workerContext;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Pauses job intake <em>without</em> parking the fetch loop or tearing down the stream: the
+     * worker advertises zero permits so the controller stops dispatching, while the long-lived
+     * stream keeps delivering kill commands, metadata changes, the cluster-event relay (including
+     * the uncordon that lifts this pause on a dedicated worker) and completion signals. In-flight
+     * jobs continue running. Unlike {@link WorkerLoop#pause()} the loop thread is never blocked, so
+     * reconnect/backoff stays active while paused.
+     */
+    @Override
+    public void pause() {
+        if (fetchingPaused.compareAndSet(false, true)) {
+            // Tell the controller we have no capacity now; otherwise it keeps dispatching up to the
+            // last advertised permit level. If the stream isn't connected yet, calculatePermits()
+            // reports zero on the next outgoing request (the initial request on connect).
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null && lastSentPermits.get() >= 0) {
+                sendPermits(observer, calculatePermits());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Resumes job intake by re-advertising the worker's current remaining capacity. No-op when the
+     * fetcher is already stopping.
+     */
+    @Override
+    public void resume() {
+        if (fetchingPaused.compareAndSet(true, false) && isRunning()) {
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null && lastSentPermits.get() >= 0) {
+                sendPermits(observer, calculatePermits());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isPaused() {
+        return fetchingPaused.get();
     }
 
     /**
@@ -342,8 +396,10 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             try {
                 handler.onReconnect();
             } catch (Exception e) {
-                log.warn("Metadata-change handler {} failed onReconnect: {}",
-                    handler.getClass().getSimpleName(), e.getMessage());
+                log.warn(
+                    "Metadata-change handler {} failed onReconnect: {}",
+                    handler.getClass().getSimpleName(), e.getMessage()
+                );
             }
         }
     }
@@ -419,16 +475,20 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             }
             case WorkerBroadcastEvent.MetadataChangeEvent metadataChange -> {
                 if (!metadataChangeHandlers.isEmpty()) {
-                    log.debug("Received metadata change via gRPC: type={}, tenantId={}, namespace={}",
+                    log.debug(
+                        "Received metadata change via gRPC: type={}, tenantId={}, namespace={}",
                         metadataChange.payload().type(),
                         metadataChange.payload().tenantId(),
-                        metadataChange.payload().namespace());
+                        metadataChange.payload().namespace()
+                    );
                     for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
                         try {
                             handler.onMetadataChange(metadataChange.payload());
                         } catch (Exception e) {
-                            log.warn("Metadata-change handler {} failed: {}",
-                                handler.getClass().getSimpleName(), e.getMessage());
+                            log.warn(
+                                "Metadata-change handler {} failed: {}",
+                                handler.getClass().getSimpleName(), e.getMessage()
+                            );
                         }
                     }
                 }
@@ -456,9 +516,13 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
     /**
      * Calculates the number of permits to request based on local queue remaining capacity.
+     * <p>
+     * Reports zero while intake is paused (maintenance / cordon) so every outgoing request — the
+     * initial request on (re)connect, periodic updates and completion piggy-backs — advertises no
+     * capacity and the controller stops dispatching. In-flight jobs still drain normally.
      */
     private int calculatePermits() {
-        return workerJobQueue.remainingCapacity();
+        return fetchingPaused.get() ? 0 : workerJobQueue.remainingCapacity();
     }
 
     /**

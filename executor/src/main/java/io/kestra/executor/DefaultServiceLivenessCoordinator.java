@@ -2,6 +2,7 @@ package io.kestra.executor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -13,7 +14,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
-import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
@@ -24,7 +24,6 @@ import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 
 import io.micrometer.core.instrument.Counter;
@@ -63,13 +62,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final ServiceInstanceRepositoryInterface serviceInstanceRepository;
     private final Duration purgeRetention;
 
-    private final LockService lockService;
     private final KillSwitchService killSwitchService;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final TriggerEventQueue triggerEventQueue;
     private final MetricRegistry metricRegistry;
     private final VNodeController vNodeController;
+    private final List<ServiceResourceReleaser> serviceResourceReleasers;
+
     private Counter workerJobResubmitCounter;
     // mutable for testing purpose
     String serverId = ServerInstance.INSTANCE_ID;
@@ -90,14 +90,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final ServiceRegistry serviceRegistry,
         final ServiceLivenessUpdater serviceLivenessUpdater,
         final ServiceInstanceRepositoryInterface serviceInstanceRepository,
-        final LockService lockService,
         final KillSwitchService killSwitchService,
         final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         final WorkerJobRunningStateStore workerJobRunningStateStore,
         final TriggerEventQueue triggerEventQueue,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
-        final VNodeController vNodeController) {
+        final VNodeController vNodeController,
+        final List<ServiceResourceReleaser> serviceResourceReleasers) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
         this.serviceLivenessUpdater = serviceLivenessUpdater;
@@ -107,12 +107,12 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.triggerEventQueue = triggerEventQueue;
-        this.lockService = lockService;
         this.metricRegistry = metricRegistry;
         this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
             ? serverConfig.service().purge().retention()
             : null;
         this.vNodeController = vNodeController;
+        this.serviceResourceReleasers = serviceResourceReleasers;
     }
 
     @PostConstruct
@@ -235,15 +235,11 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     log.info("Trigger task restart for non-responding worker after timeout: {}.", serviceInstance.uid());
                     reEmitWorkerJobsForWorker(txContext, serviceInstance.uid());
                 }
-                mayReleaseLocksForService(serviceInstance, "service disconnected");
+
+                // release service resources
+                serviceResourceReleasers.forEach(releaser -> releaser.releaseResources(serviceInstance, DEFAULT_REASON_FOR_DISCONNECTED));
             }
         });
-    }
-
-    private void mayReleaseLocksForService(ServiceInstance serviceInstance, String reason) {
-        // Eventually release all owned locks
-        lockService.releaseAllLocks(serviceInstance.server().id())
-            .forEach(l -> log.info("Released lock '{}' for service instance '{}'. Reason: {}", IdUtils.fromParts(l.getCategory(), l.getId()), serviceInstance.uid(), reason));
     }
 
     @Scheduled(initialDelay = "${kestra.server.service.purge.initial-delay}", fixedDelay = "${kestra.server.service.purge.fixed-delay}")
@@ -326,7 +322,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             .forEach(instance ->
             {
                 safelyUpdate(instance, Service.ServiceState.INACTIVE, null);
-                mayReleaseLocksForService(instance, "service inactive");
+
+                // release service resources
+                serviceResourceReleasers.forEach(releaser -> releaser.releaseResources(instance, "service inactive"));
             });
     }
 
@@ -447,7 +445,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             workerTriggerRunning.getTrigger().getId()
         );
         workerJobRunningStateStore.deleteByKey(txContext, workerTriggerRunning.uid());
-        triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid()));
+        triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid(), workerTriggerRunning.getDispatchEpoch()));
         Logs.logTrigger(
             triggerId,
             Level.WARN,

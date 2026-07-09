@@ -8,7 +8,7 @@
 
             <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
                 <div class="drawerContent">
-                    <div class="tabBar">
+                    <div v-if="showTabBar" class="tabBar">
                         <KsTabs
                             class="context-tabs"
                             :modelValue="activeTab"
@@ -16,7 +16,7 @@
                             :beforeLeave="handleBeforeLeave"
                         >
                             <KsTabPane
-                                v-for="(button, key) of contextButtons"
+                                v-for="(button, key) of visibleTabButtons"
                                 :key="key"
                                 :name="key as string"
                             >
@@ -25,7 +25,7 @@
                                         <component :is="button.icon" class="tab-icon" />
                                         {{ button.title }}
                                         <OpenInNew v-if="button.url" class="open-in-new" />
-                                        <span v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
+                                        <span v-if="isUnread(button)" class="newsDot" />
                                     </span>
                                 </template>
                             </KsTabPane>
@@ -49,44 +49,40 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, type Component, PropType} from "vue"
-    import {useStorage, useWindowSize} from "@vueuse/core"
+    import {computed, ref, watch, PropType} from "vue"
+    import {useWindowSize} from "@vueuse/core"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {useApiStore} from "../stores/api"
     import {useMiscStore} from "override/stores/misc"
-    import {useContextButtons} from "override/composables/contextButtons"
+    import {useContextButtons, type Button} from "override/composables/contextButtons"
 
     const props = defineProps({
         additionalButtons: {
-            type: Object as PropType<Record<string, {
-                title: string;
-                icon?: Component;
-                component?: Component;
-                url?: string;
-                hasUnreadMarker?: boolean;
-            }>>,
+            type: Object as PropType<Record<string, Button>>,
             default: () => ({}),
         },
     })
 
     const {buttons} = useContextButtons()
-    const apiStore = useApiStore()
     const miscStore = useMiscStore()
 
     const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
     const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}))
     const hasButtons = computed(() => Object.keys(contextButtons.value).length > 0)
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
-    const hasUnread = computed(() => {
-        const feeds = apiStore.feeds
-        return (
-            lastNewsReadDate.value === null ||
-            (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
-        )
-    })
+    // `hidden: true` opts a button out of the tab strip while still letting it resolve panel content.
+    const visibleTabButtons = computed(() => Object.fromEntries(
+        Object.entries(contextButtons.value).filter(([, button]) => !button.hidden),
+    ))
+
+    // Hide the strip entirely while a hidden button's panel is active.
+    const showTabBar = computed(() => contextButtons.value[activeTab.value]?.hidden !== true)
+
+    // Each button supplies its own unread source; the drawer just renders the dot.
+    function isUnread(button: {hasUnreadMarker?: boolean; unread?: {readonly value: boolean}}) {
+        return button.hasUnreadMarker === true && !!button.unread?.value
+    }
 
     const MIN_DRAWER_WIDTH = 200
     const drawerWidth = ref(640)

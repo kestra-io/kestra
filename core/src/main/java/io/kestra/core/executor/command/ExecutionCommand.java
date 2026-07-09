@@ -6,9 +6,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.*;
 
+import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
-import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;

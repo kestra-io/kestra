@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import io.kestra.core.junit.services.TestTenantLifecycle;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -46,6 +47,26 @@ public abstract class AbstractLoaderExtension {
                 );
             }
         }
+    }
+
+    /**
+     * Ensure the tenant a fixture targets exists before loading resources into it. No-op in OSS;
+     * Enterprise replaces {@link TestTenantLifecycle} to actually create the tenant.
+     */
+    protected void createTenant(ExtensionContext extensionContext, String tenantId) {
+        loadApplicationContext(extensionContext);
+        context.getBean(TestTenantLifecycle.class).create(tenantId);
+    }
+
+    /**
+     * Delete a tenant previously created via {@link #createTenant(ExtensionContext, String)}.
+     * No-op in OSS; best-effort in Enterprise (only tenants it created are removed).
+     */
+    protected void deleteTenant(String tenantId) {
+        if (context == null || !context.isRunning()) {
+            return;
+        }
+        context.getBean(TestTenantLifecycle.class).delete(tenantId);
     }
 
     protected void loadFlows(ExtensionContext extensionContext, String tenantId, String[] paths)

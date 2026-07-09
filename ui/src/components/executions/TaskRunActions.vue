@@ -248,8 +248,8 @@
 <style scoped lang="scss">
     .task-run-buttons {
         padding: 0 .5rem;
-        border: 1px solid var(--ks-border-default);
-        background-color: var(--ks-btn-secondary-bg-default) !important;
+        border: none;
+        background: transparent !important;
 
         &:not(:hover) {
             background: var(--ks-btn-secondary-bg-inactive);

@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 
-import jakarta.inject.Singleton;
 import io.kestra.core.utils.Await;
+
+import jakarta.inject.Singleton;
 
 /**
  * Service for registering local service states.

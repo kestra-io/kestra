@@ -2,11 +2,11 @@ package io.kestra.executor.handler;
 
 import java.util.Optional;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.async.AsyncOperationProcessedEvent;
-import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
@@ -29,30 +29,43 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHandler<ExecutionKilledExecution> {
-    @Inject
-    private ExecutorService executorService;
-    @Inject
-    private ExecutionService executionService;
+    private final ExecutorService executorService;
+    private final ExecutionService executionService;
+
+    private final ExecutionStateStore executionStateStore;
+    private final ExecutionQueuedStateStore executionQueuedStateStore;
+
+    private final MetricRegistry metricRegistry;
+
+    private final FlowMetaStoreInterface flowMetaStore;
+
+    private final BroadcastQueueInterface<ExecutionKilled> killQueue;
+
+    private final AsyncOperationService asyncOperationService;
+
+    private final KillSwitchService killSwitchService;
 
     @Inject
-    private ExecutionStateStore executionStateStore;
-    @Inject
-    private ExecutionQueuedStateStore executionQueuedStateStore;
-
-    @Inject
-    private MetricRegistry metricRegistry;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private BroadcastQueueInterface<ExecutionKilled> killQueue;
-
-    @Inject
-    private AsyncOperationService asyncOperationService;
-
-    @Inject
-    private KillSwitchService killSwitchService;
+    public ExecutionKilledExecutionMessageHandler(
+        ExecutorService executorService,
+        ExecutionService executionService,
+        ExecutionStateStore executionStateStore,
+        ExecutionQueuedStateStore executionQueuedStateStore,
+        MetricRegistry metricRegistry,
+        FlowMetaStoreInterface flowMetaStore,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        AsyncOperationService asyncOperationService,
+        KillSwitchService killSwitchService) {
+        this.executorService = executorService;
+        this.executionService = executionService;
+        this.executionStateStore = executionStateStore;
+        this.executionQueuedStateStore = executionQueuedStateStore;
+        this.metricRegistry = metricRegistry;
+        this.flowMetaStore = flowMetaStore;
+        this.killQueue = killQueue;
+        this.asyncOperationService = asyncOperationService;
+        this.killSwitchService = killSwitchService;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionKilledExecution message) {
@@ -142,6 +155,12 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
             }
 
             Execution killing = executionService.kill(execution, flow, afterKillState);
+            // kill() returns the same object unchanged when the execution is already terminal.
+            // Calling withExecution() in that case would set executionUpdated=true and trigger
+            // a spurious toExecution() cycle that re-emits SubflowExecutionEnd for subflows.
+            if (killing == execution) {
+                return null;
+            }
             return new ExecutorContext(execution)
                 .withExecution(killing, "joinKillingExecution");
         });

@@ -8,9 +8,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.TypeConversionException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.core.validations.TestSuiteAssertionValidation;
 
 import jakarta.validation.constraints.NotNull;
@@ -387,14 +389,10 @@ public class Assertion {
     }
 
     private Double tryToParseDouble(Object x) throws IllegalVariableEvaluationException {
-        if (x instanceof Double) {
-            return (Double) x;
-        } else {
-            try {
-                return Double.parseDouble(x.toString());
-            } catch (NumberFormatException e) {
-                throw new IllegalVariableEvaluationException("Could not parse value as a Double");
-            }
+        try {
+            return TypeConverter.toDouble(x);
+        } catch (TypeConversionException e) {
+            throw new IllegalVariableEvaluationException("Could not parse value as a Double");
         }
     }
 

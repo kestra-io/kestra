@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <KsTaskIcon v-if="!isPlaceholder" :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <KsTaskIcon v-if="!isPlaceholder" :cls="element.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
             <PlusBoxOutline v-else class="placeholder-icon" />
         </div>
 
@@ -10,7 +10,7 @@
         </div>
 
         <button v-if="playgroundStore.enabled && element.id && isTask" @click.stop="playgroundStore.runUntilTask(element.id)" type="button" class="playground-run-task">
-            <PlayIcon />
+            <PlayIcon :size="4" />
         </button>
 
         <button
@@ -117,7 +117,7 @@
 
         .placeholder-icon {
             display: inline-flex;
-            font-size: 1.25rem;
+            font-size: var(--ks-font-size-xl);
             color: var(--ks-text-link);
         }
     }
@@ -141,7 +141,6 @@
         background-color: var(--ks-btn-primary-bg-default);
         height: 16px;
         width: 16px;
-        font-size: 4px;
         display: flex;
         align-items: center;
         justify-content: center;

@@ -104,6 +104,7 @@
     import {usePluginsStore} from "../../../stores/plugins"
 
     import useRestoreUrl from "../../../composables/useRestoreUrl"
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import {editorViewTypes} from "../../../utils/constants"
     import * as Utils from "../../../utils/utils"
 
@@ -142,6 +143,7 @@
     const pluginsStore = usePluginsStore()
 
     const {loadInit} = useRestoreUrl()
+    const {ensureInstalledPluginsLoaded} = useBlueprintPlugins()
     const dataTable = useTemplateRef("dataTable")
 
     const initSelectedTags = (): string[] => {
@@ -302,6 +304,8 @@
     onMounted(() => {
         syncFromRoute()
         docStore.docId = `blueprints.${props.blueprintType}`
+        ensureInstalledPluginsLoaded()
+        pluginsStore.fetchIcons()
     })
 
     onActivated(() => {

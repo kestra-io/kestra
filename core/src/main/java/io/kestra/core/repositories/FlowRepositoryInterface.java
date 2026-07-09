@@ -10,7 +10,6 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.namespaces.NamespaceInterface;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
 import io.micronaut.data.model.Pageable;
@@ -123,6 +122,36 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     Optional<FlowWithSource> findByIdWithSourceWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
 
+    /**
+     * Returns the latest non-draft revision of the given flow, or {@link Optional#empty()} if every revision
+     * is a draft (or the flow does not exist). This is the lookup used when starting a new execution without
+     * an explicit revision (webhooks, schedules, subflows, manual triggers).
+     */
+    Optional<Flow> findByIdForExecution(String tenantId, String namespace, String id);
+
+    /**
+     * Same as {@link #findByIdForExecution(String, String, String)} but bypasses ACL checks.
+     * Used in execution paths that have already been authorized at the controller layer.
+     */
+    Optional<Flow> findByIdForExecutionWithoutAcl(String tenantId, String namespace, String id);
+
+    /**
+     * Same as {@link #findByIdForExecution(String, String, String)} but returns the source as well.
+     */
+    Optional<FlowWithSource> findByIdWithSourceForExecution(String tenantId, String namespace, String id);
+
+    /**
+     * Same as {@link #findByIdWithSourceForExecution(String, String, String)} but bypasses ACL checks.
+     * Used by the scheduler and other internal components that have no user context.
+     */
+    Optional<FlowWithSource> findByIdWithSourceForExecutionWithoutAcl(String tenantId, String namespace, String id);
+
+    /**
+     * Returns the latest non-draft revision of every flow across all tenants. Used by the scheduler to
+     * decide which flows have triggers to register.
+     */
+    List<FlowWithSource> findAllWithSourceForExecutionForAllTenants();
+
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted);
 
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
@@ -153,6 +182,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix);
 
+    /**
+     * Lists flows in a namespace that are eligible for execution, i.e., excluding deleted and disabled flows.
+     */
     List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace);
 
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);
@@ -196,6 +228,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<String> findDistinctNamespace(String tenantId);
 
+    /**
+     * Lists distinct namespaces that contain at least one executable flow, i.e., excluding deleted and disabled flows
+     */
     List<String> findDistinctNamespaceExecutable(String tenantId);
 
     default List<String> findDistinctNamespace(String tenantId, String prefix) {

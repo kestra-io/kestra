@@ -12,6 +12,7 @@ import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.serializers.JacksonMapper;
@@ -33,7 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofJson(false);
-    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
+    };
 
     private final ConnectControllerServiceBlockingStub connectControllerService;
     private final WorkerControllersConfiguration workerControllersConfiguration;
@@ -61,6 +63,7 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
         ConnectRequest request = ConnectRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerId))
+            .setWorkerNumThreads(KestraContext.getContext().getWorkerMaxNumThreads().orElse(0))
             .build();
 
         try {

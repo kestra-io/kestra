@@ -20,7 +20,6 @@ import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -35,6 +34,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -44,7 +44,6 @@ import io.kestra.executor.ExecutorContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -52,8 +51,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-
-import static io.kestra.core.models.QueryFilter.Field.KIND;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRepository<Execution> implements ExecutionRepositoryInterface, ExecutionStateStore {
     private static final int FETCH_SIZE = 100;
@@ -186,8 +183,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         Pageable pageable,
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters,
-        @Nullable DateFilter dateFilter
-    ) {
+        @Nullable DateFilter dateFilter) {
         return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter));
     }
 
@@ -963,8 +959,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
                 labelFilters.forEach(labelFilter ->
                 {
-                    if (labelFilter.getLabelKey() != null) {
-                        mergedMap.put(labelFilter.getLabelKey(), labelFilter.getValue().toString());
+                    if (labelFilter.getKey() != null) {
+                        mergedMap.put(labelFilter.getKey(), labelFilter.getValue().toString());
                     } else if (labelFilter.getValue() instanceof String stringLabel) {
                         mergedMap.putAll(Label.from(stringLabel));
                     } else {
@@ -1073,17 +1069,23 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 List<FlowScope> scopes = Enums.fromList(f.getValues(), FlowScope.class);
                 boolean includesUser = scopes.contains(FlowScope.USER);
                 boolean includesSystem = scopes.contains(FlowScope.SYSTEM);
-                if (includesUser && includesSystem) yield DSL.noCondition();
-                else if (includesUser) yield field("namespace").ne(systemNamespace);
-                else yield field("namespace").eq(systemNamespace);
+                if (includesUser && includesSystem)
+                    yield DSL.noCondition();
+                else if (includesUser)
+                    yield field("namespace").ne(systemNamespace);
+                else
+                    yield field("namespace").eq(systemNamespace);
             }
             case NotIn<F> f -> {
                 List<FlowScope> scopes = Enums.fromList(f.getValues(), FlowScope.class);
                 boolean excludesUser = scopes.contains(FlowScope.USER);
                 boolean excludesSystem = scopes.contains(FlowScope.SYSTEM);
-                if (excludesUser && excludesSystem) yield DSL.falseCondition();
-                else if (excludesUser) yield field("namespace").eq(systemNamespace);
-                else yield field("namespace").ne(systemNamespace);
+                if (excludesUser && excludesSystem)
+                    yield DSL.falseCondition();
+                else if (excludesUser)
+                    yield field("namespace").eq(systemNamespace);
+                else
+                    yield field("namespace").ne(systemNamespace);
             }
             default -> throw new IllegalArgumentException("Unsupported SCOPE filter type: " + filter.getClass().getSimpleName());
         };

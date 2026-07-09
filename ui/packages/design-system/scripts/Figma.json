@@ -3912,9 +3912,9 @@
           },
           {
             "name": "ks/dependencies-node-background-assets",
-            "value": "#718bfe",
-            "var": "blue/300",
-            "rootAlias": "blue/300"
+            "value": "#022670",
+            "var": "blue/800",
+            "rootAlias": "blue/800"
           },
           {
             "name": "ks/dependencies-node-background-default",
@@ -3942,9 +3942,9 @@
           },
           {
             "name": "ks/dependencies-node-border-assets",
-            "value": "#a9b5fe",
-            "var": "blue/200",
-            "rootAlias": "blue/200"
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
           },
           {
             "name": "ks/dependencies-node-border-default",

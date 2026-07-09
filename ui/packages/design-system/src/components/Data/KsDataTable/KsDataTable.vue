@@ -49,7 +49,7 @@
                         @sort-change="onSortChange"
                         @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
                     >
-                        <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
+                        <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
                         <slot />
                         <template #empty>
                             <KsNoData :title="noDataText" />
@@ -97,6 +97,7 @@
         pageSize?: number
         loading?: boolean
         selectable?: boolean
+        rowSelectable?: (row: any, index: number) => boolean
         showSelection?: boolean
         rowKey?: string | ((row: any) => string)
         noDataText?: string
@@ -116,6 +117,7 @@
         pageSize: 25,
         loading: false,
         selectable: false,
+        rowSelectable: undefined,
         showSelection: true,
         rowKey: "id",
         noDataText: undefined,

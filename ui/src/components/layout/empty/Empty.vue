@@ -73,9 +73,15 @@
     const resolvedVideo = computed(() => props.video ?? typeLinks.value?.video)
 
     const resolvedLearnMore = computed(() => {
-        if (props.learnMore !== undefined) return props.learnMore
-        if (props.demoCta) return "#"
-        return typeLinks.value?.learnMore
+        if (props.learnMore !== undefined) {
+            return props.learnMore
+        } else if (typeLinks.value?.learnMore) {
+            return typeLinks.value.learnMore
+        } else if (props.demoCta) {
+            return "#"
+        } else {
+            return undefined
+        }
     })
 
     const contactSalesUrl = computed(

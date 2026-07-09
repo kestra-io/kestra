@@ -758,18 +758,17 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
                 }
 
-                // check if there exists a queued execution and submit it to the execution queue
-                if (executor.getFlow().getConcurrency() != null) {
-                    // Transactional outbox: the processor pops inside the concurrency-limit
-                    // store's transaction and only returns the execution; it is emitted here,
-                    // after decrementAndPop() has committed (same rule as executionDelayLoop).
-                    Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor);
-                    if (popped.isPresent()) {
-                        executionQueue.emit(popped.get());
+                // release the concurrency slots (a no-op when no limit applies to the flow),
+                // then check if there exists a queued execution and submit it to the execution queue.
+                // Transactional outbox: the processor pops inside the concurrency-limit
+                // store's transaction and only returns the execution; it is emitted here,
+                // after releaseThenPop() has committed (same rule as executionDelayLoop).
+                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor);
+                if (popped.isPresent()) {
+                    executionQueue.emit(popped.get());
 
-                        // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                        processFlowTriggers(popped.get());
-                    }
+                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                    processFlowTriggers(popped.get());
                 }
 
                 // purge the trigger: reset scheduler trigger at end

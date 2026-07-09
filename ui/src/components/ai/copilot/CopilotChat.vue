@@ -99,7 +99,7 @@
     import type {Mode, ScopeBinding} from "./types"
 
     const props = defineProps<{
-        /** Initial mode; defaults to ASK. */
+        /** Initial mode; defaults to EDIT. */
         initialMode?: Mode
         /** Artefact in focus, passed as `inFocus` on each turn. */
         inFocus?: ScopeBinding | null
@@ -107,7 +107,7 @@
 
     const {t} = useI18n()
 
-    const mode = ref<Mode>(props.initialMode ?? "ASK")
+    const mode = ref<Mode>(props.initialMode ?? "EDIT")
 
     // Available AI providers (same endpoint the previous copilot used); the selected one is
     // sent as providerId on each turn. Falls back to the server default when unset.

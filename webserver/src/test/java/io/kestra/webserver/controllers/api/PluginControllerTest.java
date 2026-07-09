@@ -347,6 +347,19 @@ class PluginControllerTest {
     }
 
     @Test
+    void catalogMergedSchemaUsesAShorterCacheThanTheLocalOnlySchema() {
+        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+
+        // The local-only schema is revalidated on every use via ETag (no-cache, see #12102); the merged
+        // variant is short-cached instead, so it can go stale for at most 60s after a plugin installs.
+        assertThat(local.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("Cache-Control"))
+            .as("a merged response can go stale as soon as a plugin finishes auto-installing, so it must not be cached as long as the local-only schema")
+            .isEqualTo("public, max-age=60");
+    }
+
+    @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/inputs"),

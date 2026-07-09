@@ -78,6 +78,9 @@ public class PluginController {
     // They must therefore be revalidated on every use (via ETag) instead of being cached blindly, otherwise
     // the editor keeps validating/completing against a stale schema after a plugin is added or removed (#12102).
     private static final String REVALIDATE_CACHE_DIRECTIVE = "no-cache";
+    // Merged responses can go stale the moment a plugin finishes auto-installing — a full-hour
+    // cache would hide the newly-installed type from the editor for up to an hour afterwards.
+    private static final String CATALOG_CACHE_DIRECTIVE = "public, max-age=60";
 
     @Inject
     protected JsonSchemaGenerator jsonSchemaGenerator;
@@ -126,19 +129,21 @@ public class PluginController {
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf,
         @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
-        // The catalog-merged response differs from the plain one, so key the ETag on includeCatalog
-        // to keep the two variants from colliding in the browser cache.
-        final String etag = schemaETag(Boolean.TRUE.equals(includeCatalog) ? "schema-catalog" : "schema", type, arrayOf);
+        if (Boolean.TRUE.equals(includeCatalog)) {
+            // Catalog-merged schema: a short browser cache rather than ETag revalidation — the merged
+            // response can go stale the moment a plugin finishes auto-installing, so cap it at 60s.
+            Map<String, Object> merged = pluginSchemaBundleService.mergeWithBundle(type, jsonSchemaCache.getSchemaForType(type, arrayOf));
+            return HttpResponse.ok(merged)
+                .header(HttpHeaders.CACHE_CONTROL, CATALOG_CACHE_DIRECTIVE);
+        }
+
+        // Non-merged schema: revalidate on every use via ETag so the editor never validates against a
+        // stale schema after a plugin is added/removed (#12102).
+        final String etag = schemaETag("schema", type, arrayOf);
         if (etag.equals(ifNoneMatch)) {
             return notModified(etag);
         }
-
-        Map<String, Object> schema = jsonSchemaCache.getSchemaForType(type, arrayOf);
-        if (Boolean.TRUE.equals(includeCatalog)) {
-            schema = pluginSchemaBundleService.mergeWithBundle(type, schema);
-        }
-
-        return HttpResponse.ok(schema)
+        return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }

@@ -4,8 +4,6 @@
         type="apps"
         demoCta
         :title="t(`demos.apps.title`)"
-        video="https://www.youtube.com/embed/KwBO8mcS3kk"
-        learnMore="https://kestra.io/docs/enterprise/scalability/apps"
     >
         <template #description>
             {{ $t(`demos.apps.message`) }}

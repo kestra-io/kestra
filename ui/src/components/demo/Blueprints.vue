@@ -4,8 +4,6 @@
         type="blueprints"
         demoCta
         :title="t(`demos.blueprints.title`)"
-        video="https://www.youtube.com/embed/qbGfK-FJi6s?si=UTeK3V5Cj8FRHH91"
-        learnMore="https://kestra.io/docs/enterprise/governance/custom-blueprints"
     >
         <template #description>
             {{ $t(`demos.blueprints.message`) }}

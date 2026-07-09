@@ -4,8 +4,6 @@
         type="iam"
         demoCta
         :title="$t('demos.IAM.title')"
-        video="https://www.youtube.com/embed/9I87QZJPl1Y"
-        learnMore="https://kestra.io/docs/enterprise/auth"
     >
         <template #description>
             {{ $t('demos.IAM.message') }}

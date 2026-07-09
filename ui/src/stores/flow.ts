@@ -111,6 +111,7 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
+    const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
@@ -1015,6 +1016,7 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        previewSource,
         haveChange,
         expandedSubflows,
         metadata,

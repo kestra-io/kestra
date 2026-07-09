@@ -15,7 +15,6 @@
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
             :icons="pluginsStore.icons"
-            :iconComponent="TaskIcon"
             :execution="executionsStore.execution"
             :subflowsExecutions="executionsStore.subflowsExecutions"
             :playgroundEnabled="playgroundStore.enabled"
@@ -222,7 +221,6 @@
     import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-    import TaskIcon from "../plugins/TaskIcon.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"

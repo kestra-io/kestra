@@ -204,7 +204,7 @@
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
 
     import type {VNode} from "vue"
-    import {computed, h, inject, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
+    import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useStorage, useThrottleFn} from "@vueuse/core"
     import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
@@ -219,7 +219,7 @@
     import uniqBy from "lodash/uniqBy"
 
     import KsDatePicker from "./KsDatePicker.vue"
-    import {EDITOR_TASK_ICON_INJECTION_KEY, EmptyTaskIcon} from "./KsEditorTaskIcon"
+    import {useTaskIcon, type TaskIconProps} from "../../composables/taskIcon"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
@@ -234,7 +234,7 @@
 
     const {t} = useI18n()
 
-    const taskIconComponent = inject(EDITOR_TASK_ICON_INJECTION_KEY, EmptyTaskIcon)
+    const taskIconComponent = useTaskIcon()
 
     const props = withDefaults(defineProps<{
         modelValue?: string
@@ -249,7 +249,7 @@
         inline?: boolean
         navbar?: boolean
         configureLanguage?: (editor: ICodeEditor | undefined, language: string, schemaType?: string) => Promise<void>
-        loadTaskIcon?: (cls: string) => Promise<unknown>
+        loadTaskIcon?: TaskIconProps["loadIcon"]
         options?: KsEditorOptions
     }>(), {
         modelValue: "",
@@ -539,7 +539,7 @@
             if (completionValue.includes(".") && !completionValue.includes("{") && props.loadTaskIcon) {
                 replaceRowIcon(vsCodeIcon, h(taskIconComponent, {
                     cls: completionValue,
-                    "only-icon": true,
+                    onlyIcon: true,
                     loadIcon: props.loadTaskIcon,
                 }))
             } else if ((STATES as any)[completionValue] !== undefined) {

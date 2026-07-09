@@ -332,16 +332,18 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      */
     @Override
     protected ServiceState doStop() {
+        // Dispose the listeners first: their isRunning() guards are check-then-act, so a callback
+        // that passed its guard just before we transitioned to TERMINATING could otherwise
+        // recreate consumers or resubmit scheduling loops concurrently with the teardown below.
+        if (this.maintenanceListener != null) {
+            this.maintenanceListener.dispose();
+        }
         if (rebalanceDisposable != null) {
             rebalanceDisposable.dispose();
         }
 
         // Stop all queues consumption
         stopAllConsumers();
-
-        if (this.maintenanceListener != null) {
-            this.maintenanceListener.dispose();
-        }
 
         // Stop all scheduling loops
         stopAllSchedulingLoop(true);

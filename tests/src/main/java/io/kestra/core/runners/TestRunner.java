@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -102,14 +101,22 @@ public class TestRunner implements Runnable, AutoCloseable {
         }
 
         try {
-            Await.await().atMost(getRunningTimeout()).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
+            Await.await().atMost(getRunningTimeout()).until(() -> servers.stream().allMatch(TestRunner::isStarted));
         } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
-                servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
-                    .map(Service::getClass)
+                servers.stream().filter(s -> !isStarted(s))
+                    .map(s -> s.getClass().getSimpleName() + " (state: " + s.getState() + ")")
                     .toList() + " not started in time"
             );
         }
+    }
+
+    /**
+     * A service is only considered started once it reached RUNNING (or MAINTENANCE).
+     */
+    private static boolean isStarted(Service service) {
+        Service.ServiceState state = service.getState();
+        return Service.ServiceState.RUNNING == state || Service.ServiceState.MAINTENANCE == state;
     }
 
     private Duration getRunningTimeout() {

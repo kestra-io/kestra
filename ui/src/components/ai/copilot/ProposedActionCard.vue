@@ -13,7 +13,7 @@
                 <li v-for="(step, index) in steps" :key="index" class="proposed-step">
                     <span class="proposed-step-number">{{ index + 1 }}</span>
                     <div class="proposed-step-body">
-                        <KsText size="small">{{ step.title }}</KsText>
+                        <KsText size="small" class="proposed-step-title">{{ step.title }}</KsText>
                         <span v-if="step.detail" class="proposed-step-detail">{{ step.detail }}</span>
                     </div>
                 </li>
@@ -25,7 +25,7 @@
             <KsButton
                 type="text"
                 :disabled="disabled"
-                class="proposed-action-reject"
+                class="proposed-action-btn proposed-action-reject"
                 data-test="copilot-reject"
                 @click="emit('reject')"
             >
@@ -34,6 +34,7 @@
             <KsButton
                 type="primary"
                 :disabled="disabled"
+                class="proposed-action-btn"
                 data-test="copilot-approve"
                 @click="emit('approve')"
             >
@@ -87,6 +88,14 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         background: var(--ks-bg-elevated);
         border-bottom: 1px solid var(--ks-border-subtle);
+    }
+
+    /* Card copy sits one step up from the transcript's xs, at sm (12px). */
+    .proposed-action-title,
+    .proposed-action-status,
+    .proposed-action-summary,
+    .proposed-step-title {
+        font-size: var(--ks-font-size-sm);
     }
 
     .proposed-action-title {
@@ -160,6 +169,11 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         background: var(--ks-bg-elevated);
         border-top: 1px solid var(--ks-border-subtle);
+    }
+
+    /* Footer buttons come down from the 14px default to sm (12px) so they sit closer to the copy. */
+    .proposed-action-btn {
+        font-size: var(--ks-font-size-sm);
     }
 
     /* "Reply to revise" reads as a subdued secondary link next to the primary action. */

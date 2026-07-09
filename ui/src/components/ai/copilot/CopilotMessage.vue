@@ -2,7 +2,7 @@
     <!-- User prompt -->
     <div v-if="message.role === 'USER'" class="copilot-msg copilot-msg-user">
         <div class="copilot-bubble copilot-bubble-user">
-            <KsText size="small">{{ message.content }}</KsText>
+            <KsText size="small" class="copilot-bubble-text">{{ message.content }}</KsText>
         </div>
     </div>
 
@@ -88,11 +88,10 @@
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-subtle);
-        /* Match KsText size="small" (= --ks-font-size-xs, 11px) used by user bubbles,
-           tool results and the plan card. .ks-markdown sets no font-size of its own, so
-           this cascades into its paragraphs, list items and inline code — keeping every
-           message the same base size. */
-        font-size: var(--ks-font-size-xs);
+        /* Copilot body copy sits at sm (12px), matching user bubbles / tool strip / plan card.
+           .ks-markdown sets no font-size of its own, so this cascades into its paragraphs,
+           list items and inline code — keeping every message the same base size. */
+        font-size: var(--ks-font-size-sm);
         line-height: 1.5;
     }
 
@@ -104,7 +103,13 @@
         color: var(--ks-text-secondary);
     }
 
-    /* Tool call header + tool result share one subdued treatment (small, secondary),
+    /* Body copy (user bubble) and the tool strip sit at sm (12px), uniform with the rest. */
+    .copilot-bubble-text,
+    .copilot-tool-label {
+        font-size: var(--ks-font-size-sm);
+    }
+
+    /* Tool call header + tool result share one subdued treatment (secondary),
        so the whole "tool activity" strip reads uniformly. Status is carried by the icon. */
     .copilot-tool-label {
         --kel-text-color: var(--ks-text-secondary);

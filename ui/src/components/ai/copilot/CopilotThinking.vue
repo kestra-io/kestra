@@ -24,6 +24,7 @@
 
     .copilot-thinking-label {
         --kel-text-color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
     }
 
     /*
@@ -34,7 +35,7 @@
     .copilot-thinking-dots::after {
         content: ".";
         color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
+        font-size: var(--ks-font-size-sm);
         animation: copilot-thinking-dots 1.2s linear infinite;
     }
 

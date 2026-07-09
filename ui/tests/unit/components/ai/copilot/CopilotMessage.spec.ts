@@ -27,7 +27,7 @@ describe("CopilotMessage", () => {
             id: "3", role: "TOOL", type: "TOOL_CALL",
             toolCall: {tool: "read-execution", family: "READ", arguments: {id: "exec-1"}},
         })
-        expect(w.find(".collapse-title").text()).toContain("read-execution")
+        expect(w.find(".copilot-tool-label").text()).toContain("read-execution")
         expect(w.find(".copilot-tool-args").text()).toContain("\"id\": \"exec-1\"")
     })
 

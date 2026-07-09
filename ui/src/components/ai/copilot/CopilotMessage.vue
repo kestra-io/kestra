@@ -16,18 +16,25 @@
     <!-- Tool call / tool result — collapsible technical detail -->
     <div v-else-if="message.type === 'TOOL_CALL'" class="copilot-msg copilot-tool">
         <KsCollapse v-model="expanded">
-            <KsCollapseItem name="tool" :title="t('ai.copilot.toolCall', {tool: message.toolCall?.tool ?? ''})">
+            <KsCollapseItem name="tool">
+                <!-- Title via slot so it renders at the same small/secondary treatment as the
+                     rest of the transcript (the default collapse header is larger + primary). -->
+                <template #title>
+                    <KsText size="small" class="copilot-tool-label">
+                        {{ t("ai.copilot.toolCall", {tool: message.toolCall?.tool ?? ""}) }}
+                    </KsText>
+                </template>
                 <pre class="copilot-tool-args">{{ argsJson }}</pre>
             </KsCollapseItem>
         </KsCollapse>
     </div>
 
     <div v-else-if="message.type === 'TOOL_RESULT'" class="copilot-msg copilot-tool-result">
-        <KsIcon>
+        <KsIcon class="copilot-tool-result-icon" :class="isOk ? 'is-ok' : 'is-error'">
             <CheckCircleOutline v-if="isOk" />
             <CloseCircleOutline v-else />
         </KsIcon>
-        <KsText size="small" :type="isOk ? 'success' : 'danger'">
+        <KsText size="small" class="copilot-tool-label">
             {{ isOk ? t("ai.copilot.toolResult.ok", {tool: toolName}) : t("ai.copilot.toolResult.rejected", {tool: toolName}) }}
         </KsText>
     </div>
@@ -81,6 +88,12 @@
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-subtle);
+        /* Match KsText size="small" (= --ks-font-size-xs, 11px) used by user bubbles,
+           tool results and the plan card. .ks-markdown sets no font-size of its own, so
+           this cascades into its paragraphs, list items and inline code — keeping every
+           message the same base size. */
+        font-size: var(--ks-font-size-xs);
+        line-height: 1.5;
     }
 
     .copilot-tool-args {
@@ -91,9 +104,23 @@
         color: var(--ks-text-secondary);
     }
 
+    /* Tool call header + tool result share one subdued treatment (small, secondary),
+       so the whole "tool activity" strip reads uniformly. Status is carried by the icon. */
+    .copilot-tool-label {
+        --kel-text-color: var(--ks-text-secondary);
+    }
+
     .copilot-tool-result {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
+    }
+
+    .copilot-tool-result-icon.is-ok {
+        color: var(--ks-text-success);
+    }
+
+    .copilot-tool-result-icon.is-error {
+        color: var(--ks-text-error);
     }
 </style>

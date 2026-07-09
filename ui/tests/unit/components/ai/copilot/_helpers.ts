@@ -43,7 +43,7 @@ export const ksStubs = {
     KsScrollbar: {name: "KsScrollbar", template: "<div><slot /></div>"},
     KsMarkdown: {name: "KsMarkdown", props: ["content"], template: "<div class=\"ks-markdown\">{{ content }}</div>"},
     KsCollapse: {name: "KsCollapse", props: ["modelValue"], template: "<div><slot /></div>"},
-    KsCollapseItem: {name: "KsCollapseItem", props: ["name", "title"], template: "<div><span class=\"collapse-title\">{{ title }}</span><slot /></div>"},
+    KsCollapseItem: {name: "KsCollapseItem", props: ["name", "title"], template: "<div><span class=\"collapse-title\"><slot name=\"title\">{{ title }}</slot></span><slot /></div>"},
 }
 
 /** Common `global` mount option for copilot component tests. */

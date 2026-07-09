@@ -3,7 +3,6 @@ package io.kestra.jdbc.repository;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -13,6 +12,7 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.exceptions.TypeConversionException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -26,6 +26,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
@@ -344,7 +345,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     protected Condition lockedCondition(Object value, QueryFilter.Op operation) {
-        boolean lockedValue = value instanceof Boolean b ? b : Boolean.parseBoolean(value.toString());
+        boolean lockedValue = TypeConverter.toBoolean(value);
         return switch (operation) {
             case EQUALS -> DSL.field(DSL.quotedName("locked")).eq(lockedValue);
             default -> throw new InvalidQueryFiltersException("Unsupported operation for LOCKED: " + operation);
@@ -364,18 +365,16 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private Condition triggerDateFieldCondition(Object value, QueryFilter.Op operation, String column, QueryFilter.Field field) {
         // Accept ISO-8601 durations (e.g. PT24H) as "last N hours" — same semantics as TIME_RANGE
         try {
-            Duration duration = value instanceof Duration d ? d : Duration.parse(value.toString());
+            Duration duration = TypeConverter.toDuration(value);
             ZonedDateTime threshold = ZonedDateTime.now().minus(duration);
             return applyDateCondition(threshold.toOffsetDateTime(), QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO, column);
-        } catch (DateTimeParseException ignored) {
+        } catch (TypeConversionException ignored) {
             // Not a duration — fall through to absolute date parsing
         }
         try {
-            OffsetDateTime dateTime = (value instanceof ZonedDateTime zdt)
-                ? zdt.toOffsetDateTime()
-                : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
+            OffsetDateTime dateTime = TypeConverter.toZonedDateTime(value).toOffsetDateTime();
             return applyDateCondition(dateTime, operation, column);
-        } catch (DateTimeParseException e) {
+        } catch (TypeConversionException e) {
             throw new InvalidQueryFiltersException("Invalid date or duration value for " + field + ": " + value);
         }
     }

@@ -88,17 +88,18 @@ public class FlowTriggerCaseTest {
             );
     }
 
-    public void triggerWithPause() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
+    public void triggerWithPause(String tenantId) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
 
         assertThat(execution.getTaskRunList().size()).isEqualTo(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         List<Execution> triggeredExec = runnerUtils.awaitFlowExecutionNumber(
             4,
-            MAIN_TENANT,
+            tenantId,
             "io.kestra.tests.trigger.pause",
-            "trigger-flow-listener-with-pause"
+            "trigger-flow-listener-with-pause",
+            Duration.ofSeconds(60)
         );
 
         assertThat(triggeredExec.size()).isEqualTo(4);

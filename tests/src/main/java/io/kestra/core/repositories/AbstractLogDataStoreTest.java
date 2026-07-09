@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(transactional = false)
-public abstract class AbstractLogRepositoryTest {
+public abstract class AbstractLogDataStoreTest {
     @Inject
     protected LogDataStoreInterface logRepository;
 
@@ -178,6 +178,21 @@ public abstract class AbstractLogRepositoryTest {
             QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.NOT_EQUALS).build()
         );
+    }
+
+    @Test
+    void shouldPersistTaskIdLongerThan150Chars() {
+        // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
+        // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String longTaskId = "a".repeat(200);
+        LogEntry log = logEntry(tenant, Level.INFO, "execLongTaskId").taskId(longTaskId).build();
+
+        LogEntry saved = logRepository.save(log);
+
+        List<LogEntry> found = logRepository.findByExecutionIdAndTaskId(tenant, saved.getExecutionId(), longTaskId, null);
+        assertThat(found).hasSize(1);
+        assertThat(found.getFirst().getTaskId()).isEqualTo(longTaskId);
     }
 
     @Test

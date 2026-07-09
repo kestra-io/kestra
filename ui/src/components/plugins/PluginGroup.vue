@@ -24,6 +24,7 @@
                         :key="sub.subGroup"
                         :iconCls="sub.subGroup"
                         :icons="allIcons"
+                        :loadIcon="pluginsStore.loadIcon"
                         :title="sub.title"
                         :description="sub.description"
                         :categories="sub.categories"
@@ -44,6 +45,7 @@
                         :key="el.cls"
                         :iconCls="el.cls"
                         :icons="allIcons"
+                        :loadIcon="pluginsStore.loadIcon"
                         :title="shortClassName(el.cls)"
                         :description="el.title"
                         @click="openTask(el.cls)"
@@ -64,7 +66,7 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" />
+                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
                     </KsPluginCard>
                 </div>

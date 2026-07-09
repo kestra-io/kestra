@@ -34,6 +34,9 @@
         <template #actions>
             <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
         </template>
+        <template #panel-toggle>
+            <slot name="panel-toggle" />
+        </template>
     </KsTopNavBar>
 </template>
 

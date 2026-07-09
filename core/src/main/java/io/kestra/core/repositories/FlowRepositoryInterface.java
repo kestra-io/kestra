@@ -182,6 +182,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix);
 
+    /**
+     * Lists flows in a namespace that are eligible for execution, i.e., excluding deleted and disabled flows.
+     */
     List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace);
 
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);
@@ -225,6 +228,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<String> findDistinctNamespace(String tenantId);
 
+    /**
+     * Lists distinct namespaces that contain at least one executable flow, i.e., excluding deleted and disabled flows
+     */
     List<String> findDistinctNamespaceExecutable(String tenantId);
 
     default List<String> findDistinctNamespace(String tenantId, String prefix) {

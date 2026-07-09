@@ -88,7 +88,10 @@
 
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-    const redirectPath = computed(() => route.query.from as string | undefined)
+    const redirectPath = computed(() => {
+        const raw = route.query.from as string | undefined
+        return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined
+    })
 
     const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (!value?.trim()) {

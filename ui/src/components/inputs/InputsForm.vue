@@ -339,6 +339,8 @@
         inputs?: Record<string, unknown>;
     }
 
+    type PrefillInput = Pick<InputMetaData, "id"> & {type?: InputType | string}
+
     const modelValue = defineModel<Record<string, unknown>>()
 
     // Props
@@ -576,6 +578,36 @@
     function onMultiSelectChange(input: InputMetaData, e: unknown[]): void {
         inputsValues[input.id] = JSON.stringify(e)
         onChange(input)
+    }
+
+    function multiSelectComponentValue(value: unknown): unknown[] {
+        if (Array.isArray(value)) {
+            return value
+        }
+        if (typeof value === "string") {
+            try {
+                const parsed = JSON.parse(value)
+                return Array.isArray(parsed) ? parsed : []
+            } catch {
+                return []
+            }
+        }
+        return []
+    }
+
+    function prefillInputValue(input: PrefillInput, value: unknown): void {
+        if (input.type === "MULTISELECT") {
+            const values = multiSelectComponentValue(value)
+            multiSelectInputs[input.id] = values
+            inputsValues[input.id] = normalize(input.type as InputType, values)
+        } else {
+            inputsValues[input.id] = normalize(input.type as InputType, value)
+        }
+
+        const meta = inputsMetaData.value.find(m => m.id === input.id)
+        if (meta) {
+            meta.isDefault = false
+        }
     }
 
     function onFileChange(input: InputMetaData, e: Event): void {
@@ -1003,6 +1035,7 @@
     defineExpose({
         validateInputs,
         inputsValues,
+        multiSelectInputs,
         inputsMetaData,
         inputsValidated,
         isComputingValues,
@@ -1010,6 +1043,7 @@
         isLoadingInput,
         inputError,
         onChange,
+        prefillInputValue,
     })
 </script>
 

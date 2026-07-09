@@ -288,6 +288,25 @@ describe("InputsForm computing-values state", () => {
         expect(wrapper.vm.inputError("datacenter")).toBeUndefined()
     })
 
+    test("prefills MULTISELECT in both component and submission state", async () => {
+        // Given: a MULTISELECT form whose initial validation has settled
+        const store = useExecutionsStore()
+        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+            {enabled: true, input: {id: "choices", type: "MULTISELECT", values: ["a", "b", "c"]}, isDefault: true},
+        ]}})
+
+        const wrapper = mountForm([{id: "choices", type: "MULTISELECT", values: ["a", "b", "c"]}])
+        await flushPromises()
+
+        // When: an execution prefill supplies the previous selected values
+        wrapper.vm.prefillInputValue({id: "choices", type: "MULTISELECT"}, ["a", "b"])
+
+        // Then: the select control sees the array and the submit path sees JSON
+        expect(wrapper.vm.multiSelectInputs.choices).toEqual(["a", "b"])
+        expect(wrapper.vm.inputsValues.choices).toBe("[\"a\",\"b\"]")
+        expect(wrapper.vm.inputsMetaData[0].isDefault).toBe(false)
+    })
+
     test("shows a per-field error once the dynamic input has settled (not computing)", async () => {
         // Given: a dynamic SELECT whose validate resolves carrying a value AND an error
         const store = useExecutionsStore()

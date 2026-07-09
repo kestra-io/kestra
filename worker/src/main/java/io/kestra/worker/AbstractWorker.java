@@ -180,6 +180,12 @@ public abstract class AbstractWorker extends AbstractService {
             jobFetcher.pause();
         }
 
+        // The controller dispatches jobs to any connected stream regardless of the worker's state.
+        // Don't start fetching when a stop is already pending.
+        if (isStopRequested()) {
+            log.info("Worker stop is pending, not starting the job fetcher");
+            return;
+        }
         jobFetcher.init(workerContext);
         workerIOThreadsExecutor.submit(jobFetcher);
     }

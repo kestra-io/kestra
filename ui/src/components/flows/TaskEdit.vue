@@ -440,7 +440,7 @@
         }
         taskBaseline.value = taskYaml.value
         if (props.task?.type) {
-            pluginsStore.load({cls: props.task.type}).catch(() => {})
+            pluginsStore.load({cls: props.task.type, silentOn404: true}).catch(() => {})
         }
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
@@ -511,7 +511,7 @@
         }
         const taskType = newTask?.type ?? YAML_UTILS.parse(incoming)?.type
         if (taskType) {
-            await pluginsStore.load({cls: taskType}).catch(() => {})
+            await pluginsStore.load({cls: taskType, silentOn404: true}).catch(() => {})
         }
     }, {immediate: true})
 

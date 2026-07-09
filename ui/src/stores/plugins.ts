@@ -70,6 +70,10 @@ interface LoadOptions {
     all?: boolean;
     commit?: boolean;
     hash?: number;
+    // Best-effort lookups (e.g. as-you-type task type documentation) expect a 404 as a normal
+    // outcome for a not-yet-known type — set this to avoid tripping the shared HTTP client's
+    // global error handling, which otherwise blanks the whole page for any 404 response.
+    silentOn404?: boolean;
 }
 
 interface JsonSchemaDef {
@@ -351,9 +355,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc
         }
 
+        const requestOptions = options.silentOn404 ? ({ignoreNotFound: true} as any) : undefined
         const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, {ignoreNotFound: true})
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, {ignoreNotFound: true})) as PluginComponent
+            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
+            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, requestOptions)) as PluginComponent
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data

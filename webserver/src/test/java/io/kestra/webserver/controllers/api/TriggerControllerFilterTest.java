@@ -42,11 +42,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Parameterized tests that exercise the {@code /search} trigger endpoint against the full surface
  * of supported filter fields (including the controller-level
- * {@code dateFilter}/{@code startDate}/{@code endDate} rewrite). The scheduler is deliberately
- * disabled so trigger state fixtures (especially {@code nextEvaluationDate} and
- * {@code lastTriggeredDate}) are not mutated under the test.
+ * {@code dateFilter}/{@code startDate}/{@code endDate} rewrite). Neither the runner nor the
+ * scheduler is started: the test only persists fixtures (flows synchronously via
+ * {@code FlowService}, trigger states directly via the repository) and reads them back through
+ * {@code /search}, so no background component is required. Keeping them off also avoids a concurrent
+ * {@code QUEUES} poller racing the per-test {@code drop()} (which caused intermittent
+ * {@code Timeout trying to lock table "QUEUES"} failures), and guarantees trigger state fixtures
+ * (especially {@code nextEvaluationDate} and {@code lastTriggeredDate}) are not mutated under the
+ * test.
  */
-@KestraTest(startRunner = true, startScheduler = false)
+@KestraTest(startRunner = false, startScheduler = false)
 class TriggerControllerFilterTest {
 
     public static final String TENANT_ID = "main";

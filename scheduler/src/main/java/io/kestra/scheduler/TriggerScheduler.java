@@ -50,6 +50,7 @@ import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
@@ -445,7 +446,7 @@ public class TriggerScheduler {
         ) {
             Object nextVariable = evaluationResult.trigger().getVariables().get("next");
 
-            ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;
+            ZonedDateTime next = TypeConverter.toZonedDateTime(nextVariable);
 
             // Exclude backfills
             // FIXME : "late" are not excluded and can increase delay value (false positive)

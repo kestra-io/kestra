@@ -115,7 +115,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final List<Runnable> receiveCancellations = new CopyOnWriteArrayList<>();
     private final List<QueueSubscriber<?>> queueSubscribers = new CopyOnWriteArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
     private final java.util.concurrent.ExecutorService executionExecutorService;
@@ -346,7 +345,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 } catch (ExecutionException | InterruptedException e) {
                     // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (!shutdown.get() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledDelay thread", e);
                         close();
                         kestraContext.shutdown();
@@ -368,7 +367,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 } catch (ExecutionException | InterruptedException e) {
                     // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (!shutdown.get() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
                         close();
                         kestraContext.shutdown();
@@ -489,7 +488,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
      * - Failed flow that will be retried after an interval
      **/
     private void executionDelayLoop() {
-        if (this.shutdown.get() || this.isPaused.get()) {
+        if (isStopRequested() || this.isPaused.get()) {
             return;
         }
 
@@ -584,7 +583,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void executionSLAMonitorLoop() {
-        if (this.shutdown.get() || this.isPaused.get()) {
+        if (isStopRequested() || this.isPaused.get()) {
             return;
         }
 
@@ -899,9 +898,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Override
     protected ServiceState doStop() {
         // AbstractService.stop() already waited for any in-flight startup, so nothing can be
-        // created past this point. Signal the loops and watchers that exceptions from now on are
-        // teardown noise (e.g. closed datasource), not a reason to escalate.
-        this.shutdown.set(true);
+        // created past this point; the loops and watchers see the stop via isStopRequested().
         try {
             this.receiveCancellations.forEach(Runnable::run);
             this.queueSubscribers.forEach(QueueSubscriber::close);

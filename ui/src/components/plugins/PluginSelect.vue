@@ -14,10 +14,8 @@
         >
             <span class="options">
                 <KsTaskIcon
-                    v-if="hasIcons"
                     :cls="item?.cls"
                     :onlyIcon="true"
-                    :icons="pluginsStore.icons"
                     :loadIcon="pluginsStore.loadIcon"
                 />
                 <div class="option-content">
@@ -31,10 +29,9 @@
 
         <template #prefix>
             <KsTaskIcon
-                v-if="modelValue && hasIcons"
+                v-if="modelValue"
                 :cls="modelValue"
                 :onlyIcon="true"
-                :icons="pluginsStore.icons"
                 :loadIcon="pluginsStore.loadIcon"
             />
         </template>
@@ -137,11 +134,6 @@
             return taskModels.value
         }
         return taskModels.value.filter(({cls}) => cls.toLowerCase().includes(q))
-    })
-
-    const hasIcons = computed(() => {
-        const models = taskModels.value.map(m => m.cls)
-        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => models.includes(plugin)).length > 0
     })
 
     const modelValue = defineModel({

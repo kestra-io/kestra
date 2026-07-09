@@ -2,8 +2,6 @@ package io.kestra.indexer;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
@@ -18,7 +16,6 @@ import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -42,12 +39,6 @@ public class DefaultIndexer extends AbstractService implements Indexer {
     private final MetricRegistry metricRegistry;
     private final List<QueueSubscriber<?>> subscribers = new ArrayList<>();
 
-    private final String id = IdUtils.create();
-    private final AtomicReference<ServiceState> state = new AtomicReference<>();
-    private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
-
-    private final AtomicBoolean closed = new AtomicBoolean(false);
-
     private final IgnoreExecutionService ignoreExecutionService;
     private final QueueService queueService;
 
@@ -68,7 +59,6 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         this.metricRepository = metricRepositor;
         this.metricQueue = metricQueue;
         this.metricRegistry = metricRegistry;
-        this.eventPublisher = eventPublisher;
         this.ignoreExecutionService = ignoreExecutionService;
         this.queueService = queueService;
 
@@ -122,24 +112,6 @@ public class DefaultIndexer extends AbstractService implements Indexer {
                 });
             }
         }));
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public ServiceType getType() {
-        return ServiceType.INDEXER;
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public ServiceState getState() {
-        return state.get();
     }
 
     @Override

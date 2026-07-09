@@ -325,6 +325,7 @@
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
     "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
     "outputs": "आउटपुट",
+    "flow_inputs": "Flow Inputs",
     "flow_outputs": "फ्लो Outputs",
     "no_flow_outputs": "कोई output उपलब्ध नहीं है।",
     "output": "आउटपुट",

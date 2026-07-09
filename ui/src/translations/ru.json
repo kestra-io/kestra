@@ -325,6 +325,7 @@
     "no metrics available": "Для этого выполнения task метрики не записаны.",
     "no outputs available": "Для этого выполнения task нет доступных outputs.",
     "outputs": "Выводы",
+    "flow_inputs": "Flow Inputs",
     "flow_outputs": "Выходы Flow",
     "no_flow_outputs": "Нет доступных output.",
     "output": "Вывод",

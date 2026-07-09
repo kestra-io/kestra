@@ -1,5 +1,6 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -18,17 +19,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * </ul>
  */
 public enum AgentMode {
-    ASK,
-    EDIT,
-    PLAN;
+    ASK(EnumSet.of(AgentToolFamily.READ)),
+    EDIT(EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE)),
+    PLAN(EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT));
 
     /** The tool families this mode may use — cumulative: Ask ⊂ Edit ⊂ Plan. */
+    private final Set<AgentToolFamily> allowedToolFamilies;
+
+    AgentMode(final Set<AgentToolFamily> allowedToolFamilies) {
+        this.allowedToolFamilies = Collections.unmodifiableSet(allowedToolFamilies);
+    }
+
     public Set<AgentToolFamily> allowedToolFamilies() {
-        return switch (this) {
-            case ASK -> EnumSet.of(AgentToolFamily.READ);
-            case EDIT -> EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE);
-            case PLAN -> EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT);
-        };
+        return allowedToolFamilies;
     }
 
     @JsonCreator

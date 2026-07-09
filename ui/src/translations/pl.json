@@ -2048,6 +2048,7 @@
           "stop": "Stop and insert",
           "cancel": "Cancel voice input"
         },
+        "thinking": "Myślę",
         "newChat": "New chat",
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet"

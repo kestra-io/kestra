@@ -55,6 +55,8 @@
             <KsScrollbar class="copilot-body">
                 <CopilotMessage v-for="message in messages" :key="message.id" :message="message" />
 
+                <CopilotThinking v-if="thinking" />
+
                 <ProposedActionCard
                     v-if="pendingConfirmation"
                     :action="pendingConfirmation"
@@ -91,6 +93,7 @@
     import logo from "../../../assets/copilot-illustration.png"
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
+    import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import {useAiChat} from "./useAiChat"
     import type {Mode, ScopeBinding} from "./types"
@@ -138,6 +141,18 @@
     const isEmpty = computed(
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value,
     )
+
+    // "Thinking…" placeholder while the model is working but hasn't produced its next output
+    // yet — i.e. right after the user's turn or after a tool result. Hidden while tokens are
+    // actively streaming into an assistant bubble or a tool is running (both have their own UI).
+    const thinking = computed(() => {
+        if (!streaming.value) return false
+        const last = messages.value[messages.value.length - 1]
+        if (!last) return true
+        if (last.role === "ASSISTANT" && last.type === "TEXT") return false
+        if (last.type === "TOOL_CALL") return false
+        return true
+    })
 
     function onSubmit(prompt: string): void {
         sendChat({prompt, mode: mode.value, inFocus: props.inFocus, providerId: selectedProvider.value})

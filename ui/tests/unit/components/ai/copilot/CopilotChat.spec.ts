@@ -91,6 +91,18 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).props("disabled")).toBe(true)
     })
 
+    it("shows the thinking indicator while streaming before the next output", () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        expect(mountChat().find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+    })
+
+    it("hides the thinking indicator while assistant text is streaming", () => {
+        state.messages.value = [{id: "2", role: "ASSISTANT", type: "TEXT", content: "partial"}]
+        state.streaming.value = true
+        expect(mountChat().find("[data-test=\"copilot-thinking\"]").exists()).toBe(false)
+    })
+
     it("starts a new chat via the top bar", async () => {
         const w = mountChat()
         await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")

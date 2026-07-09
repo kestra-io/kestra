@@ -128,4 +128,62 @@ class PluginSchemaBundleServiceTest {
             .extracting(branch -> branch.get("$ref"))
             .containsExactly("#/definitions/io.kestra.plugin.core.trigger.Schedule");
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldExtendNestedTaskDiscriminatorWhenMergingTheFlowSchema() throws IOException {
+        // Given: a bundle whose "flow" root isn't itself polymorphic — only the Task definition
+        // embedded within it is — proving the merge reaches nested discriminators, not just the
+        // schema's own top-level $ref.
+        Files.writeString(tempDir.resolve("plugins-schema.json"), """
+            {
+              "definitions": {
+                "io.kestra.core.models.flows.Flow": {"type": "object"},
+                "io.kestra.core.models.tasks.Task": {
+                  "anyOf": [
+                    {"$ref": "#/definitions/io.kestra.plugin.core.log.Log"},
+                    {"$ref": "#/definitions/io.kestra.plugin.algolia.Search"}
+                  ]
+                },
+                "io.kestra.plugin.core.log.Log": {"type": "object"},
+                "io.kestra.plugin.algolia.Search": {"type": "object"}
+              },
+              "roots": {
+                "flow": "#/definitions/io.kestra.core.models.flows.Flow",
+                "task": "#/definitions/io.kestra.core.models.tasks.Task"
+              }
+            }
+            """);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toUri().toString());
+
+        Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.Flow",
+              "definitions": {
+                "io.kestra.core.models.flows.Flow": {"type": "object"},
+                "io.kestra.core.models.tasks.Task": {
+                  "anyOf": [
+                    {"$ref": "#/definitions/io.kestra.plugin.core.log.Log"}
+                  ]
+                },
+                "io.kestra.plugin.core.log.Log": {"type": "object"}
+              }
+            }
+            """, Map.class);
+
+        // When
+        Map<String, Object> result = service.mergeWithBundle(SchemaType.FLOW, localFlowSchema);
+
+        // Then: the nested Task discriminator (not the Flow root) gets the missing branch
+        Map<String, Object> definitions = (Map<String, Object>) result.get("definitions");
+        assertThat(definitions).containsKey("io.kestra.plugin.algolia.Search");
+
+        Map<String, Object> taskDefinition = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task");
+        assertThat((List<Map<String, Object>>) taskDefinition.get("anyOf"))
+            .extracting(branch -> branch.get("$ref"))
+            .containsExactlyInAnyOrder(
+                "#/definitions/io.kestra.plugin.core.log.Log",
+                "#/definitions/io.kestra.plugin.algolia.Search"
+            );
+    }
 }

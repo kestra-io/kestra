@@ -98,12 +98,17 @@ public class PluginSchemaBundleService {
      * <li>copies bundle {@code definitions} entries not already present locally, keyed by FQCN
      * — the same key a given class always resolves to, whether generated from the local
      * (installed-only) or bundle (full-catalog) plugin registry;</li>
-     * <li>extends the root type's {@code anyOf} with bundle branches whose {@code $ref} isn't
-     * already referenced locally, so autocompletion offers the newly-added definitions.</li>
+     * <li>extends every known polymorphic discriminator definition's {@code anyOf} with bundle
+     * branches whose {@code $ref} isn't already referenced locally — not just the requested
+     * {@code type}'s own root, but any of them found embedded in {@code localSchema} (e.g. the
+     * "flow" schema embeds the same {@code Task} discriminator the "task" schema's root points
+     * at), so autocompletion offers the newly-added definitions wherever they're actually used.</li>
      * </ul>
      * Both steps skip entries the local schema already has, so re-merging is idempotent and never
-     * duplicates a definition or a branch. When the service is not enabled or no bundle data is
-     * available for {@code type}, the original {@code localSchema} is returned unchanged.
+     * duplicates a definition or a branch. When the service is not enabled or the bundle has no
+     * root registered for {@code type}, the original {@code localSchema} is returned unchanged —
+     * {@code type} only gates whether merging happens at all, since a type absent from the bundle
+     * (an old bundle predating a newly-added {@link SchemaType}) means the bundle is stale for it.
      *
      * @param type the schema type to look up in the bundle
      * @param localSchema the locally-generated schema (not modified)
@@ -115,14 +120,13 @@ public class PluginSchemaBundleService {
         }
 
         Bundle bundle = getBundle();
-        String rootRef = bundle.roots().get(type);
-        if (rootRef == null || bundle.definitions().isEmpty()) {
+        if (bundle.roots().get(type) == null || bundle.definitions().isEmpty()) {
             return localSchema;
         }
 
         ObjectNode mutable = MAPPER.convertValue(localSchema, ObjectNode.class);
         mergeDefinitions(mutable, bundle.definitions());
-        mergeRootAnyOf(mutable, bundle.definitions(), rootRef);
+        mergeDiscriminatorAnyOf(mutable, bundle.definitions(), bundle.roots());
         return MAPPER.convertValue(mutable, MAP_TYPE);
     }
 
@@ -199,52 +203,55 @@ public class PluginSchemaBundleService {
     }
 
     /**
-     * Extends the {@code anyOf} of the schema's root polymorphic type (the definition its own
-     * {@code $ref} points at) with bundle branches missing locally. {@code schemas()} never puts
-     * {@code anyOf} at the schema root — only on that nested definition — so the root type's
-     * definition key must be read from {@code $ref} first.
+     * Extends the {@code anyOf} of every known polymorphic discriminator definition present in
+     * {@code local} — whether it's the schema's own root (e.g. requesting the "task" schema
+     * directly) or a definition merely embedded within it (e.g. {@code Task} nested inside the
+     * "flow" schema's {@code tasks} property) — with bundle branches missing locally.
+     * {@code schemas()} never puts {@code anyOf} at the schema root itself, only on the
+     * definition its {@code $ref} points at, so this walks every {@link SchemaType} root key the
+     * bundle knows about rather than just the one matching the requested type: the "flow" schema
+     * has no {@code anyOf} of its own, but its {@code definitions} pool still contains the same
+     * {@code Task} discriminator entry the "task" schema's root points at.
      */
-    private static void mergeRootAnyOf(ObjectNode local, ObjectNode sharedDefinitions, String bundleRootRef) {
-        String localRootKey = rootDefinitionKey(local);
-        String bundleRootKey = definitionKeyFromRef(bundleRootRef);
-        if (localRootKey == null || !localRootKey.equals(bundleRootKey)) {
+    private static void mergeDiscriminatorAnyOf(ObjectNode local, ObjectNode sharedDefinitions, Map<SchemaType, String> bundleRoots) {
+        JsonNode localDefs = local.get("definitions");
+        if (!(localDefs instanceof ObjectNode localDefinitions)) {
             return;
         }
 
-        ObjectNode localRoot = definitionEntry(local.get("definitions"), localRootKey);
-        ObjectNode bundleRoot = definitionEntry(sharedDefinitions, bundleRootKey);
-        if (localRoot == null || bundleRoot == null) {
-            return;
-        }
-
-        JsonNode bundleAnyOf = bundleRoot.get("anyOf");
-        if (!(bundleAnyOf instanceof ArrayNode bundleBranches)) {
-            return;
-        }
-
-        ArrayNode targetAnyOf = localRoot.get("anyOf") instanceof ArrayNode existing ? existing : localRoot.putArray("anyOf");
-
-        Set<String> existingRefs = new HashSet<>();
-        targetAnyOf.forEach(branch ->
+        bundleRoots.values().forEach(bundleRootRef ->
         {
-            JsonNode ref = branch.get("$ref");
-            if (ref != null) {
-                existingRefs.add(ref.asText());
+            String key = definitionKeyFromRef(bundleRootRef);
+            ObjectNode localEntry = definitionEntry(localDefinitions, key);
+            ObjectNode bundleEntry = definitionEntry(sharedDefinitions, key);
+            if (localEntry == null || bundleEntry == null) {
+                return;
             }
-        });
 
-        bundleBranches.forEach(branch ->
-        {
-            JsonNode ref = branch.get("$ref");
-            if (ref != null && existingRefs.add(ref.asText())) {
-                targetAnyOf.add(branch);
+            JsonNode bundleAnyOf = bundleEntry.get("anyOf");
+            if (!(bundleAnyOf instanceof ArrayNode bundleBranches)) {
+                return;
             }
-        });
-    }
 
-    private static String rootDefinitionKey(ObjectNode schema) {
-        JsonNode ref = schema.get("$ref");
-        return ref == null ? null : definitionKeyFromRef(ref.asText());
+            ArrayNode targetAnyOf = localEntry.get("anyOf") instanceof ArrayNode existing ? existing : localEntry.putArray("anyOf");
+
+            Set<String> existingRefs = new HashSet<>();
+            targetAnyOf.forEach(branch ->
+            {
+                JsonNode ref = branch.get("$ref");
+                if (ref != null) {
+                    existingRefs.add(ref.asText());
+                }
+            });
+
+            bundleBranches.forEach(branch ->
+            {
+                JsonNode ref = branch.get("$ref");
+                if (ref != null && existingRefs.add(ref.asText())) {
+                    targetAnyOf.add(branch);
+                }
+            });
+        });
     }
 
     private static String definitionKeyFromRef(String ref) {

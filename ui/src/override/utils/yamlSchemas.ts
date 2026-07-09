@@ -4,7 +4,7 @@ import {SchemasSettings} from "monaco-yaml"
 export const yamlSchemas: () => SchemasSettings[] = () => [
     {
         fileMatch: ["flow-*.yaml"],
-        uri: `${apiUrlWithoutTenants()}/plugins/schemas/flow`,
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/flow?includeCatalog=true`,
     },
     {
         fileMatch: ["task-*.yaml"],

@@ -62,7 +62,7 @@
                     :action="pendingConfirmation"
                     :disabled="streaming"
                     @approve="confirm('APPROVE')"
-                    @reject="confirm('REJECT')"
+                    @reject="onReject"
                 />
             </KsScrollbar>
 
@@ -72,6 +72,7 @@
 
             <div class="copilot-footer">
                 <CopilotComposer
+                    ref="footerComposer"
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
@@ -84,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onBeforeUnmount, onMounted} from "vue"
+    import {ref, computed, nextTick, onBeforeUnmount, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -156,6 +157,17 @@
 
     function onSubmit(prompt: string): void {
         sendChat({prompt, mode: mode.value, inFocus: props.inFocus, providerId: selectedProvider.value})
+    }
+
+    // "Reply to revise": decline the proposal, then hand control back to the composer so the
+    // user can type what to change (the next turn re-plans). Focus once the turn resolves and
+    // the composer is enabled again.
+    const footerComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
+
+    async function onReject(): Promise<void> {
+        await confirm("REJECT")
+        await nextTick()
+        footerComposer.value?.focus()
     }
 
     onBeforeUnmount(cancel)

@@ -185,6 +185,13 @@
         draft.value = ""
     }
 
+    /** Focus the input — used to hand control back to the user after "Reply to revise". */
+    function focus(): void {
+        textareaEl.value?.focus()
+    }
+
+    defineExpose({focus})
+
     // Keep the height in sync when the draft is cleared (e.g. after submit).
     watch(draft, () => nextTick(autosize))
 

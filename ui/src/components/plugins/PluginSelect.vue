@@ -18,6 +18,7 @@
                     :cls="item?.cls"
                     :onlyIcon="true"
                     :icons="pluginsStore.icons"
+                    :loadIcon="pluginsStore.loadIcon"
                 />
                 <div class="option-content">
                     <div class="cls">{{ item?.cls }}</div>
@@ -34,6 +35,7 @@
                 :cls="modelValue"
                 :onlyIcon="true"
                 :icons="pluginsStore.icons"
+                :loadIcon="pluginsStore.loadIcon"
             />
         </template>
     </KsSelect>

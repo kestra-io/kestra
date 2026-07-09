@@ -189,6 +189,21 @@ class PluginControllerTest {
         assertThat(response.body().icon()).isNull();
     }
 
+    @Test
+    void iconByClassFallsBackToPluginDefault() {
+        // A registered class that ships no class- or package-specific icon still resolves one:
+        // it inherits its plugin's default (plugin-icon.svg), so hasIcon is truthful and matches
+        // what the icon.svg endpoint actually serves.
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/io.kestra.core.plugins.test.SuperclassTask"),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo("SuperclassTask");
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void returnTask() {

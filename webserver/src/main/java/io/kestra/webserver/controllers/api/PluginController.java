@@ -304,8 +304,9 @@ public class PluginController {
     protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
-            .flatMap(
-                plugin -> Stream.of(
+            .flatMap(plugin -> {
+                Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
+                return Stream.of(
                     plugin.getTasks().stream(),
                     plugin.getTriggers().stream(),
                     plugin.getTaskRunners().stream(),
@@ -318,27 +319,28 @@ public class PluginController {
                     .map(
                         e -> new AbstractMap.SimpleEntry<>(
                             e.getName(),
-                            toPluginIcon(e.getSimpleName(), plugin.iconAndMonochrome(e), FlowableTask.class.isAssignableFrom(e))
+                            toPluginIcon(e.getSimpleName(), plugin.iconAndMonochrome(e).or(() -> defaultIcon), FlowableTask.class.isAssignableFrom(e))
                         )
-                    )
-            )
+                    );
+            })
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
 
         // add aliases
         Map<String, PluginIcon> aliasIcons = pluginRegistry.plugins().stream()
-            .flatMap(
-                plugin -> plugin.getAliases().values().stream().map(
+            .flatMap(plugin -> {
+                Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
+                return plugin.getAliases().values().stream().map(
                     e -> new AbstractMap.SimpleEntry<>(
                         e.getKey(),
                         toPluginIcon(
                             e.getKey().substring(e.getKey().lastIndexOf('.') + 1),
-                            plugin.iconAndMonochrome(e.getValue()),
+                            plugin.iconAndMonochrome(e.getValue()).or(() -> defaultIcon),
                             FlowableTask.class.isAssignableFrom(e.getValue())
                         )
                     )
-                )
-            )
+                );
+            })
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
         icons.putAll(aliasIcons);

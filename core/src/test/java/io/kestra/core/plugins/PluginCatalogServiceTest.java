@@ -272,4 +272,44 @@ class PluginCatalogServiceTest {
         // Then
         assertThat(icon).isEmpty();
     }
+
+    @Test
+    void shouldResolveIconLazilyByGroup() {
+        // Given
+        when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))
+            .thenReturn(HttpResponse.ok("<svg>currentColor</svg>"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin.serdes");
+
+        // Then
+        assertThat(icon).isPresent();
+        assertThat(new String(icon.get(), StandardCharsets.UTF_8)).isEqualTo("<svg>currentColor</svg>");
+    }
+
+    @Test
+    void shouldReturnEmptyIconByGroupWhenIconResolutionDisabled() {
+        // Given
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin.serdes");
+
+        // Then
+        assertThat(icon).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyIconForNullGroup() {
+        // Given
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon((String) null);
+
+        // Then
+        assertThat(icon).isEmpty();
+    }
 }

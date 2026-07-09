@@ -18,6 +18,7 @@ import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -75,6 +76,10 @@ public class PluginController {
 
     @Inject
     protected EditionProvider editionProvider;
+
+    @Inject
+    @Named("withIcons")
+    protected PluginCatalogService pluginCatalogService;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -264,19 +269,20 @@ public class PluginController {
         summary = "Get a single plugin icon as a raw SVG",
         description = "Serves the plugin icon as a real, browser-cacheable `image/svg+xml` resource so it can " +
             "be referenced directly from an `<img src>` or CSS `mask-image` instead of being inlined as a data " +
-            "URI. The frontend only points at this endpoint for a class it already knows (via `icons`/`loadIcon`) " +
-            "has an icon, so a missing icon here is a genuine 404 rather than an expected outcome. Cached " +
-            "indefinitely by the browser — callers append `PluginIcon#hash` as a query param so the URL changes " +
-            "whenever the icon's bytes do."
+            "URI. Falls back to the Kestra plugin catalog when the class or group isn't locally registered, or " +
+            "is registered but ships no bundled icon. Cached indefinitely by the browser — callers append " +
+            "`PluginIcon#hash` as a query param so the URL changes whenever the icon's bytes do."
     )
     public HttpResponse<byte[]> getPluginIconSvg(
         @Parameter(description = "The plugin full class name") @PathVariable String cls) {
         PluginIcon icon = resolvePluginIcon(cls);
-        if (icon == null || icon.getIcon() == null) {
-            return HttpResponse.notFound();
+        if (icon != null && icon.getIcon() != null) {
+            return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
         }
 
-        return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
+        return pluginCatalogService.icon(cls)
+            .<HttpResponse<byte[]>>map(bytes -> HttpResponse.ok(bytes).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE))
+            .orElseGet(HttpResponse::notFound);
     }
 
     private PluginIcon resolvePluginIcon(String cls) {

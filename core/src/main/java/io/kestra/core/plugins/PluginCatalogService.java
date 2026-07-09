@@ -200,7 +200,11 @@ public class PluginCatalogService {
             .findFirst()
             .orElse(null);
 
-        if (group == null) {
+        return icon(group);
+    }
+
+    public Optional<byte[]> icon(final String group) {
+        if (!icons || group == null) {
             return Optional.empty();
         }
 

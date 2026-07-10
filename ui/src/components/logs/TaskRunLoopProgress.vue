@@ -14,7 +14,7 @@
                 :key="loopTerminatedSegment.state" 
                 size="small"
                 :to="{
-                    // execution list filtered by Parent executuion and state
+                    // execution list filtered by Parent execution and state
                     name: 'executions/list',
                     query: {
                         'filters[parentId][EQUALS]': executionId,

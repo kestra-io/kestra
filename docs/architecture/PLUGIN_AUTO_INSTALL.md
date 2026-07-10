@@ -45,8 +45,10 @@ Kestra up locally or on a single VM. The goal is zero friction between "just sta
 "first flow runs": no need to know which plugins exist, edit a Dockerfile, or restart anything. The
 local plugins directory is the storage target.
 
-Deliberately **out of scope**, which is why auto-download ships **disabled by default** and is meant
-to be gated off outside standalone:
+Auto-download is therefore **on by default only for OSS + standalone**, and off everywhere else.
+The computed default is `edition == OSS && serverType == STANDALONE`; an explicit
+`kestra.plugins.auto-install.enabled` always overrides it (so an operator can still opt in elsewhere).
+These are deliberately **out of scope** and stay off by default:
 
 - **OSS distributed / production** — wants predictable, pre-provisioned plugin sets; on-demand fetch
   at save time is undesirable there.
@@ -181,7 +183,10 @@ When a flow referencing an uninstalled plugin is saved, `PluginAutoInstallServic
 
 ### Feature gating
 
-Disabled by default: `kestra.plugins.auto-install.enabled=true` to enable.
+On by default **only for OSS + standalone** (`edition == OSS && serverType == STANDALONE`), off
+everywhere else. Setting `kestra.plugins.auto-install.enabled` explicitly (`true`/`false`) always
+wins over that computed default. Resolved once in `PluginAutoInstallService` from `EditionProvider`
+and `KestraContext.getServerType()`.
 
 ---
 
@@ -206,7 +211,7 @@ Disabled by default: `kestra.plugins.auto-install.enabled=true` to enable.
 | Property | Default | Effect |
 |----------|---------|--------|
 | `kestra.plugins.schema-bundle-url-template` | empty | Bundle URL (`{version}` placeholder). Empty → bundle disabled, completion falls back to installed-only. |
-| `kestra.plugins.auto-install.enabled` | `false` | Enable auto-download of missing plugins on save. |
+| `kestra.plugins.auto-install.enabled` | unset → `true` on OSS+standalone, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && serverType == STANDALONE`); an explicit value always wins. |
 
 ## Who downloads what
 

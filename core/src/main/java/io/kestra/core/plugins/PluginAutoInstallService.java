@@ -11,8 +11,11 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.JsonSchemaCache;
+import io.kestra.core.models.ServerType;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.EditionProvider;
 
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
@@ -35,7 +38,9 @@ import lombok.extern.slf4j.Slf4j;
  * Works transparently with both {@code LocalPluginManager} (OSS standalone — installs to local disk)
  * and {@code RemotePluginManager} (EE distributed — uploads to internal storage and notifies the cluster).
  * <p>
- * Feature gating: disabled by default; enable with {@code kestra.plugins.auto-install.enabled=true}.
+ * Feature gating: on by default only for OSS standalone (the KIP-45 target persona). Everywhere else
+ * (OSS distributed, Enterprise Edition) it is off unless {@code kestra.plugins.auto-install.enabled}
+ * is set explicitly — an explicit value always wins over the computed default.
  */
 @Singleton
 @Slf4j
@@ -56,7 +61,28 @@ public class PluginAutoInstallService {
         final PluginManager pluginManager,
         final PluginRegistry pluginRegistry,
         final JsonSchemaCache jsonSchemaCache,
-        @Value("${kestra.plugins.auto-install.enabled:false}") final boolean enabled) {
+        final EditionProvider editionProvider,
+        @Value("${kestra.plugins.auto-install.enabled}") final Optional<Boolean> enabledProperty) {
+        // Default on only for OSS standalone; an explicit property value always wins, so an operator
+        // who opts in on a distributed/EE deployment keeps the previous behaviour.
+        this(
+            catalogService,
+            pluginManager,
+            pluginRegistry,
+            jsonSchemaCache,
+            enabledProperty.orElseGet(
+                () -> editionProvider.get() == EditionProvider.Edition.OSS
+                    && KestraContext.getContext().getServerType() == ServerType.STANDALONE
+            )
+        );
+    }
+
+    PluginAutoInstallService(
+        final PluginCatalogService catalogService,
+        final PluginManager pluginManager,
+        final PluginRegistry pluginRegistry,
+        final JsonSchemaCache jsonSchemaCache,
+        final boolean enabled) {
         this.catalogService = Objects.requireNonNull(catalogService);
         this.pluginManager = Objects.requireNonNull(pluginManager);
         this.pluginRegistry = Objects.requireNonNull(pluginRegistry);
@@ -67,7 +93,8 @@ public class PluginAutoInstallService {
     /**
      * Returns whether the auto-install feature is enabled.
      *
-     * @return {@code true} if enabled via {@code kestra.plugins.auto-install.enabled}.
+     * @return {@code true} when auto-install is on — either via an explicit
+     *         {@code kestra.plugins.auto-install.enabled}, or by default on OSS standalone.
      */
     public boolean isEnabled() {
         return enabled;

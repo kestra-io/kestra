@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue"
-    import {isEntryAPluginElementPredicate} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, type PluginIconMap} from "../../utils/pluginUtils"
     import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
     import RowLink from "../misc/RowLink.vue"
     import {usePluginsStore} from "../../stores/plugins"
@@ -79,7 +79,7 @@
     const plugin = ref<any>({})
     const groupedElements = ref<Record<string, Record<string, string[]>>>({})
     const elementsData = ref<Record<string, string[]>>({})
-    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({})
+    const icons = ref<PluginIconMap>({})
     const subgroupTitles = ref<Record<string, string>>({})
 
     const isSubgroupView = computed(() => !!props.subgroup)

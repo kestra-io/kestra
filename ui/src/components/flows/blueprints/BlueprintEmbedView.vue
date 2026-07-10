@@ -39,7 +39,7 @@
 
             <KsMarkdown v-if="blueprint.description" class="markdown" :content="blueprint.description" />
 
-            <BlueprintOverview :blueprint :tags :icons :columns="2">
+            <BlueprintOverview :blueprint :tags :icons :loadIcon :columns="2">
                 <template #missing-plugins-action="slotProps">
                     <slot name="missing-plugins-action" v-bind="slotProps" />
                 </template>
@@ -64,11 +64,13 @@
         blueprint?: FlowBlueprint & {shortDescription?: string};
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
+        loadIcon?: (cls: string) => Promise<any>;
         kind?: string;
     }>(), {
         blueprint: undefined,
         tags: undefined,
         icons: () => ({}),
+        loadIcon: undefined,
         kind: "flow",
     })
 

@@ -35,32 +35,37 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<LoopExecutionEvent> {
-    @Inject
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
+    private final ExecutionService executionService;
+    private final TaskOutputService taskOutputService;
+    private final ExecutionStateStore executionStateStore;
+    private final RunContextFactory runContextFactory;
+    private final FlowMetaStoreInterface flowMetaStore;
+    private final DispatchQueueInterface<Execution> executionQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
+    private final KillSwitchService killSwitchService;
 
     @Inject
-    private ExecutionService executionService;
-
-    @Inject
-    private TaskOutputService taskOutputService;
-
-    @Inject
-    private ExecutionStateStore executionStateStore;
-
-    @Inject
-    private RunContextFactory runContextFactory;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
-
-    @Inject
-    private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
-
-    @Inject
-    private KillSwitchService killSwitchService;
+    public LoopExecutionEventMessageHandler(
+        ExecutorService executorService,
+        ExecutionService executionService,
+        TaskOutputService taskOutputService,
+        ExecutionStateStore executionStateStore,
+        RunContextFactory runContextFactory,
+        FlowMetaStoreInterface flowMetaStore,
+        DispatchQueueInterface<Execution> executionQueue,
+        BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
+        KillSwitchService killSwitchService) {
+        this.executorService = executorService;
+        this.executionService = executionService;
+        this.taskOutputService = taskOutputService;
+        this.executionStateStore = executionStateStore;
+        this.runContextFactory = runContextFactory;
+        this.flowMetaStore = flowMetaStore;
+        this.executionQueue = executionQueue;
+        this.followExecutionEventQueue = followExecutionEventQueue;
+        this.killSwitchService = killSwitchService;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(LoopExecutionEvent message) {

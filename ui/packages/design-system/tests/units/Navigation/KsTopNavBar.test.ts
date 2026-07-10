@@ -188,6 +188,15 @@ describe("KsTopNavBar", () => {
         expect(wrapper.find(".delete-btn").exists()).toBe(true)
     })
 
+    test("renders panel-toggle slot", () => {
+        const wrapper = mount(KsTopNavBar, {
+            props: {title: "Flows"},
+            slots: {"panel-toggle": "<button class=\"bell-btn\">Bell</button>"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".bell-btn").exists()).toBe(true)
+    })
+
     test("description slot is hidden via v-show when showDescription is false", () => {
         const wrapper = mount(KsTopNavBar, {
             props: {title: "Flows", showDescription: false},

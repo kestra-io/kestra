@@ -23,7 +23,7 @@
                     }
                 }"
             >
-                <span :style="{ backgroundColor: loopTerminatedSegment.color }" class="colored-dot"/>
+                <span :style="{backgroundColor: loopTerminatedSegment.color }" class="colored-dot"/>
                 {{ loopTerminatedSegment.count }} {{ loopTerminatedSegment.state.toLowerCase().capitalize() }}
             </KsButton>
         </div>
@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-    import { computed } from 'vue';
-    import { State } from '@kestra-io/design-system';
-    import { RouterLink } from 'vue-router';
+    import {computed } from 'vue';
+    import {State } from '@kestra-io/design-system';
+    import {RouterLink } from 'vue-router';
 
     // Color for each execution state, used to render the Loop task's per-state progress segments
     const loopStateColors = State.color()
@@ -42,11 +42,11 @@
         executionId: string;
         currentTaskRunId: string;
         loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations: Record<string, number> }>;
-    }>();
+    }>()
 
     const loopIterationCount = computed(() => {
         return props.loopOutputsByTaskRunId[props.currentTaskRunId]?.iterationCount ?? 0
-    });
+    })
 
     // One colored segment per terminal state reached by the Loop's sub-executions.
     const loopTerminatedSegments = computed(() => {
@@ -58,13 +58,13 @@
             color: loopStateColors[state],
             tooltip: `${count} ${state}`,
         }))
-    });
+    })
 
     const consolidatedTerminalStates = computed(() => {
         return loopTerminatedSegments.value.reduce((acc, segment) => {
             return acc + segment.count
-        }, 0);
-    });
+        }, 0)
+    })
 </script>
 
 <style>

@@ -228,7 +228,7 @@
         () => props.rowSelectable
             ? pageSelectableCount.value
             : props.total,
-        )
+    )
 
     const selectionChanged = (rawSelection: any[]) => {
         hasSelection.value = rawSelection.length > 0

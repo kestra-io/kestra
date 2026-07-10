@@ -3,6 +3,7 @@ import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
+import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
 
 const globalConfig = {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]}
@@ -175,6 +176,35 @@ describe("KsDataTable", () => {
         }, {global: globalConfig})
         // Table renders correctly with selection enabled
         expect(wrapper.find(".kel-table").exists()).toBe(true)
+    })
+
+    test("select-all count reflects only selectable rows", async () => {
+        const wrapper = mount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table
+                    :data="data"
+                    :total="30"
+                    :selectable="true"
+                    :show-selection="true"
+                    :rowSelectable="rowSelectable"
+                    rowKey="id"
+                >
+                    <ks-table-column prop="id" label="ID" />
+                    <template #bulk-actions><span /></template>
+                </ks-data-table>
+            `,
+            setup: () => ({
+                data: SAMPLE_DATA,
+                rowSelectable: (row: any) => row.status !== "RUNNING",
+            }),
+        }, {global: globalConfig})
+        const table = wrapper.findComponent(KsDataTable)
+        ;(table.vm as any).setSelection([SAMPLE_DATA[0]])
+        await wrapper.vm.$nextTick()
+        const bulk = wrapper.findComponent(KsBulkSelect)
+        expect(bulk.exists()).toBe(true)
+        expect(bulk.props("total")).toBe(2)
     })
 
     test("isLoading updates when loading prop changes", async () => {

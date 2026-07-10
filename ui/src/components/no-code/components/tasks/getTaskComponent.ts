@@ -89,6 +89,10 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         return "namespaces"
     }
 
+    if (key === "tenants" && property.type === "array") {
+        return "tenants"
+    }
+
     const properties = Object.keys(definitions?.properties ?? {})
     const hasNamespaceProperty = properties.includes("namespace")
     if (key === "flowId" && hasNamespaceProperty) {

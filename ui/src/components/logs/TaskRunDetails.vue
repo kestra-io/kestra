@@ -296,9 +296,6 @@
 
     const $http = useClient()
 
-    // Color for each execution state, used to render the Loop task's per-state progress segments
-    const loopStateColors = State.color()
-
     // The UI taskrun carries a computed `depth` (for nesting) and subflow `outputs`,
     // neither of which the SDK TaskRun type models.
     type TaskRunWithDepth = TaskRun & { depth: number; outputs?: Record<string, any> }

@@ -2,7 +2,7 @@ import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
 import {globalI18n} from "../src/translations/i18n";
-import {configureAxios} from "@kestra-io/kestra-sdk";
+import {configureClient} from "@kestra-io/kestra-sdk";
 import axios from "axios";
 import {createMemoryHistory} from "vue-router";
 import {vueRouter} from "storybook-vue3-router";
@@ -94,7 +94,7 @@ setup(async (app) => {
   // this just silences the warning about it, only in Storybook.
   globalI18n.value.missingWarn = false;
   globalI18n.value.fallbackWarn = false;
-  configureAxios({},  {oss:true})
+  configureClient()
   piniaStore.use(({store}) => {
     store.$http = {
         get: () => Promise.resolve({data: []}),

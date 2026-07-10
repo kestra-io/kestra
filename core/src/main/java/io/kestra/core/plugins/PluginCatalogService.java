@@ -256,7 +256,7 @@ public class PluginCatalogService {
 
     public record PluginManifest(
         String title,
-        String group,
+        String icon,
         String groupId,
         String artifactId,
         String group) {

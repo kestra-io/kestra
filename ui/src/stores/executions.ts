@@ -340,7 +340,12 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        }, {timeout: 60 * 60 * 1000})
+        // Content-Type must be forced to multipart here: the shared client's default
+        // "application/json" header makes axios's transformRequest silently JSON-stringify the
+        // FormData body instead of sending it as multipart (utils.isFormData(data) is true, but
+        // axios still re-encodes it whenever the Content-Type header says JSON) - same override
+        // the raw-axios multipart calls elsewhere in this file (resume, validateExecution, ...) need.
+        }, {timeout: 60 * 60 * 1000, headers: {"Content-Type": "multipart/form-data"}})
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {

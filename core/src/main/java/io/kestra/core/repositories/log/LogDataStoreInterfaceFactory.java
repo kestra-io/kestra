@@ -1,5 +1,8 @@
 package io.kestra.core.repositories.log;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.plugins.AbstractPluginInterfaceFactory;
 import io.kestra.core.plugins.ApplicationContextInitializable;
 import io.kestra.core.plugins.PluginRegistry;
@@ -8,9 +11,6 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.validation.Validator;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Factory for constructing {@link LogDataStoreInterface} objects from configuration.
@@ -35,7 +35,7 @@ public class LogDataStoreInterfaceFactory extends AbstractPluginInterfaceFactory
      * Constructs and validates a new {@link LogDataStoreInterface} of the given type with the given
      * configuration.
      *
-     * @param identifier          the ID of the log store, optionally in the form {@code <id>:<version>}.
+     * @param identifier the ID of the log store, optionally in the form {@code <id>:<version>}.
      * @param pluginConfiguration the configuration of the log store. May be {@code null}.
      * @return a new, initialized {@link LogDataStoreInterface}.
      */

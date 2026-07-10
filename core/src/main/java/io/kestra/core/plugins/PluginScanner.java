@@ -33,9 +33,9 @@ import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.preview.FileRenderer;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.storages.StorageInterface;
 
 import io.swagger.v3.oas.annotations.Hidden;

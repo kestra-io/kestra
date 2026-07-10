@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
@@ -457,7 +456,7 @@ class AbstractSubscriberTest {
         var subscriber = createSubscriber();
         subscriber.markReady();
         var noOpContext = new NoOpShutdownContext(new AtomicBoolean(false));
-        KestraContext.setContext(noOpContext);
+        when(queueService.getKestraContext()).thenReturn(noOpContext);
 
         // When
         subscriber.markEnd(new RuntimeException("test error"));
@@ -472,7 +471,7 @@ class AbstractSubscriberTest {
         // Given
         var subscriber = createSubscriber();
         subscriber.markReady();
-        KestraContext.setContext(new NoOpShutdownContext(new AtomicBoolean(false)));
+        when(queueService.getKestraContext()).thenReturn(new NoOpShutdownContext(new AtomicBoolean(false)));
 
         // When
         subscriber.markEnd(new RuntimeException("test error"));
@@ -487,7 +486,7 @@ class AbstractSubscriberTest {
         var subscriber = createSubscriber();
         subscriber.markReady();
         var noOpContext = new NoOpShutdownContext(new AtomicBoolean(false));
-        KestraContext.setContext(noOpContext);
+        when(queueService.getKestraContext()).thenReturn(noOpContext);
 
         // When
         subscriber.markEnd(new RuntimeException("first"));

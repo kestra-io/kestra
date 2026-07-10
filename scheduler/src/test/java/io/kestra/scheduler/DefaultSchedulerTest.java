@@ -147,7 +147,7 @@ class DefaultSchedulerTest {
             // WHEN - THEN
             assertThatThrownBy(() -> scheduler.start(2))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Scheduler already started");
+                .hasMessage("Service already started");
         }
     }
 

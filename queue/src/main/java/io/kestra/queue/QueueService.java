@@ -5,7 +5,9 @@ import java.util.concurrent.ExecutorService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -40,18 +42,33 @@ public class QueueService {
     @Getter
     protected final QueueConfiguration queueConfiguration;
 
+    // The context captured at construction time. Subscribers use it for emergency shutdowns instead of the static context
+    // returned by KestraContext.getContext() might change if the context is restarted inside the same JVM, which can occur at least in tests.
+    @Getter
+    private volatile KestraContext kestraContext; // volatile field as tests swap it
+
     @Inject
-    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration) {
+    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration,
+        KestraContext kestraContext) {
         // this executor service is used to execute subscribers, as subscribers can be CPU bound, it is not a good idea to use a virtual thread here
         this.subscriberExecutorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
         this.queueConfiguration = queueConfiguration;
         this.metricRegistry = metricRegistry;
         this.vNodeCount = schedulerConfiguration.vnodes();
+        this.kestraContext = kestraContext;
     }
 
     @PreDestroy
     void close() {
         this.subscriberExecutorService.shutdown();
+    }
+
+    /**
+     * Allows tests to intercept the emergency shutdown triggered by subscribers on fatal errors.
+     */
+    @VisibleForTesting
+    void setKestraContext(KestraContext kestraContext) {
+        this.kestraContext = kestraContext;
     }
 
     public void execute(Runnable runnable) {

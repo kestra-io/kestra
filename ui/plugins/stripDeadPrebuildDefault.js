@@ -14,6 +14,7 @@ export function stripDeadPrebuildDefault() {
 
     return {
         name: "strip-dead-prebuild-default",
+        apply: "build",
         // Run after @module-federation/vite has produced the shim's source.
         // @ts-expect-error: `enforce` is not in the type, but it works.
         enforce: "post",
@@ -29,8 +30,14 @@ export function stripDeadPrebuildDefault() {
             const resolved = await this.resolve(importSource, id, {skipSelf: true})
             if (!resolved) return
 
-            const info = await this.load(resolved)
-            if (info.exports?.includes("default")) return
+            try {
+                const info = await this.load(resolved)
+                // Only optimize if exports is available (build mode with Rollup/Rolldown)
+                if (info.exports?.includes("default")) return
+            } catch {
+                // In dev mode or if exports is not supported, skip optimization
+                return
+            }
 
             return {
                 code: code.replace(SHIM, "export default __mfPrebuildNamespace"),

@@ -653,6 +653,7 @@ public class ExecutionController {
         }
 
         final AbstractWebhookTrigger webhook = maybeWebhook.get();
+        this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -683,6 +684,15 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    /**
+     * Hook invoked once a webhook trigger has been matched against its key, before it is evaluated.
+     * No-op by default; editions may throw to veto the execution creation. Running after key matching
+     * keeps veto details from callers that failed the key check.
+     */
+    protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
+        // no-op
     }
 
     @ExecuteOn(TaskExecutors.IO)

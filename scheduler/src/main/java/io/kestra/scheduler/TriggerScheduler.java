@@ -45,8 +45,8 @@ import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.LabelService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
@@ -153,7 +153,7 @@ public class TriggerScheduler {
 
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
-            .map(flow -> flowParsingService.parse(flow, log))
+            .map(flow -> flowParsingService.parseForTrigger(flow, log))
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(

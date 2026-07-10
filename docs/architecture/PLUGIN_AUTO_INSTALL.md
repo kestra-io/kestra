@@ -125,26 +125,30 @@ loaded asynchronously, and a **no-op when the property is empty** (the default).
 
 `GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the
 **local** schema (installed plugins) and enriches it with the bundle via
-`PluginSchemaBundleService.mergeWithBundle` — `mergeDiscriminatorBranches`:
+`PluginSchemaBundleService.mergeWithBundle` — `mergeLightweightSubtypes`:
 
 - for **every** polymorphic discriminator present in the local schema — the requested root *and* any
-  embedded one (e.g. the `Task` discriminator nested in the `flow` schema's `tasks`) — it appends,
-  for each catalog subtype not already installed, a **lightweight inline stub**:
-  `{"properties": {"type": {"const": "<fqcn>"}}, "required": ["type"]}` (plus `title` /
-  `markdownDescription` when the bundle carries them).
-- it does **not** copy the bundle's full `definitions` pool. Autocompletion of a `type:` value only
-  needs the `const`; shipping the full property schema of every catalog plugin (thousands of types)
-  would balloon the response past what the browser's YAML language service can process. Property-level
-  completion for a plugin arrives once it is installed and its full definition enters the local schema.
+  embedded one (e.g. the `Task` discriminator nested in the `flow` schema's `tasks`) — it adds, for
+  each catalog subtype not already installed, a **lightweight definition**
+  `{"type": "object", "properties": {"type": {"const": "<fqcn>"}}, "required": ["type"]}` (plus
+  `title` / `markdownDescription` when the bundle carries them) **and a `$ref` branch** to it in the
+  discriminator's `anyOf`.
+- this **mirrors the exact shape of an installed subtype** (a `$ref` to an object definition), only
+  without the plugin's full property schema. The structural parity is load-bearing: the editor's YAML
+  language service offers a `type` const from an `anyOf` branch that resolves to an *object*
+  definition — an inline, type-less stub is silently skipped (that was the first bug: the type never
+  autocompleted). Omitting the heavy property schema keeps the response small — shipping the full
+  property schema of every catalog plugin (thousands of types) would balloon it past what the browser
+  worker can process. Property-level completion for a plugin arrives once it is installed and its full
+  definition enters the local schema.
 
-Dedup is by FQCN, so an installed subtype (already an `anyOf` branch) is never shadowed by a stub and
-re-merging is idempotent. **Installed plugins take precedence** over the bundle. Draft-7 shape
-(`definitions`, not `$defs`).
+Dedup is by FQCN, so an installed subtype is never shadowed and re-merging is idempotent. **Installed
+plugins take precedence** over the bundle. Draft-7 shape (`definitions`, not `$defs`).
 
-> **Size matters.** Copying the whole catalog's definitions produced a ~12 MB schema per flow file
-> that silently broke completion in monaco-yaml. Stubs cut the bundle's contribution to a few hundred
-> KB. On a lean (`-no-plugins`) install — the actual target — the local schema is small too, so the
-> merged result stays light.
+> **Size matters.** Copying the whole catalog's *full* definitions produced a ~12 MB schema per flow
+> file that silently broke completion in monaco-yaml. Lightweight definitions cut the bundle's
+> contribution to a few hundred KB. On a lean (`-no-plugins`) install — the actual target — the local
+> schema is small too, so the merged result stays light.
 
 Merge-by-FQCN works only because both sides come from the same `JsonSchemaGenerator.schemas()` — the
 runtime local schema and the bundle — so a class always resolves to the same definition key and the

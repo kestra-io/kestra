@@ -51,9 +51,10 @@ class PluginSchemaBundleServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldAddLightweightTypeStubsWithoutCopyingDefinitions() throws IOException {
+    void shouldAddLightweightSubtypeDefinitionsWithoutFullProperties() throws IOException {
         // Given: a bundle covering both task and trigger roots. The Compress subtype carries a
-        // type const + title (to exercise metadata extraction); Schedule is bare (fallback to FQCN).
+        // type const + title (to exercise metadata extraction) plus a heavy property block that must
+        // NOT be copied; Schedule is bare (fallback to FQCN).
         Files.writeString(tempDir.resolve("plugins-schema.json"), """
             {
               "definitions": {
@@ -70,9 +71,9 @@ class PluginSchemaBundleServiceTest {
                 },
                 "io.kestra.plugin.core.log.Log": {"type": "object"},
                 "io.kestra.plugin.compress.archive.Compress": {
-                  "properties": {"type": {"const": "io.kestra.plugin.compress.archive.Compress"}},
-                  "title": "Compress",
-                  "properties2": {"level": {"type": "integer"}}
+                  "type": "object",
+                  "properties": {"type": {"const": "io.kestra.plugin.compress.archive.Compress"}, "level": {"type": "integer"}},
+                  "title": "Compress"
                 },
                 "io.kestra.plugin.core.trigger.Schedule": {"type": "object"}
               },
@@ -101,22 +102,25 @@ class PluginSchemaBundleServiceTest {
         // When
         Map<String, Object> result = service.mergeWithBundle(SchemaType.TASK, localSchema);
 
-        // Then: the heavy definition is NOT copied — only a lightweight type stub is appended
+        // Then: a lightweight definition is added for the catalog subtype (referenced via $ref, exactly
+        // like an installed subtype) — but WITHOUT the plugin's heavy property schema.
         Map<String, Object> definitions = (Map<String, Object>) result.get("definitions");
-        assertThat(definitions).containsKey("io.kestra.plugin.core.log.Log");
-        assertThat(definitions).doesNotContainKey("io.kestra.plugin.compress.archive.Compress");
+        assertThat(definitions).containsKeys("io.kestra.plugin.core.log.Log", "io.kestra.plugin.compress.archive.Compress");
 
         Map<String, Object> taskDefinition = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task");
         List<Map<String, Object>> anyOf = (List<Map<String, Object>>) taskDefinition.get("anyOf");
-        assertThat(anyOf).hasSize(2);
-        // the installed branch stays a $ref, untouched
-        assertThat(anyOf.getFirst()).containsEntry("$ref", "#/definitions/io.kestra.plugin.core.log.Log");
-        // the catalog subtype is an inline stub: only the type const, plus its title
-        Map<String, Object> stub = anyOf.get(1);
-        assertThat(stub).doesNotContainKey("$ref");
-        assertThat(typeConst(stub)).isEqualTo("io.kestra.plugin.compress.archive.Compress");
-        assertThat((List<String>) stub.get("required")).containsExactly("type");
-        assertThat(stub).containsEntry("title", "Compress");
+        assertThat(anyOf).extracting(branch -> branch.get("$ref")).containsExactlyInAnyOrder(
+            "#/definitions/io.kestra.plugin.core.log.Log",
+            "#/definitions/io.kestra.plugin.compress.archive.Compress"
+        );
+
+        Map<String, Object> compress = (Map<String, Object>) definitions.get("io.kestra.plugin.compress.archive.Compress");
+        assertThat(compress).containsEntry("type", "object");
+        assertThat(defTypeConst(compress)).isEqualTo("io.kestra.plugin.compress.archive.Compress");
+        assertThat((List<String>) compress.get("required")).containsExactly("type");
+        assertThat(compress).containsEntry("title", "Compress");
+        // the heavy property is stripped — only the discriminator `type` survives
+        assertThat((Map<String, Object>) compress.get("properties")).containsOnlyKeys("type");
 
         // And: the trigger root, merged from the same bundle, falls back to the FQCN as const
         Map<String, Object> localTriggerSchema = JacksonMapper.ofJson().readValue("""
@@ -130,11 +134,12 @@ class PluginSchemaBundleServiceTest {
         Map<String, Object> triggerResult = service.mergeWithBundle(SchemaType.TRIGGER, localTriggerSchema);
 
         Map<String, Object> triggerDefinitions = (Map<String, Object>) triggerResult.get("definitions");
-        assertThat(triggerDefinitions).doesNotContainKey("io.kestra.plugin.core.trigger.Schedule");
+        assertThat(triggerDefinitions).containsKey("io.kestra.plugin.core.trigger.Schedule");
         Map<String, Object> triggerDefinition = (Map<String, Object>) triggerDefinitions.get("io.kestra.core.models.triggers.AbstractTrigger");
         List<Map<String, Object>> triggerAnyOf = (List<Map<String, Object>>) triggerDefinition.get("anyOf");
-        assertThat(triggerAnyOf).hasSize(1);
-        assertThat(typeConst(triggerAnyOf.getFirst())).isEqualTo("io.kestra.plugin.core.trigger.Schedule");
+        assertThat(triggerAnyOf).extracting(branch -> branch.get("$ref")).containsExactly("#/definitions/io.kestra.plugin.core.trigger.Schedule");
+        assertThat(defTypeConst((Map<String, Object>) triggerDefinitions.get("io.kestra.plugin.core.trigger.Schedule")))
+            .isEqualTo("io.kestra.plugin.core.trigger.Schedule");
     }
 
     @Test
@@ -184,21 +189,24 @@ class PluginSchemaBundleServiceTest {
         // When
         Map<String, Object> result = service.mergeWithBundle(SchemaType.FLOW, localFlowSchema);
 
-        // Then: the nested Task discriminator (not the Flow root) gets a lightweight stub, and the
-        // algolia definition itself is NOT copied into the schema.
+        // Then: the nested Task discriminator (not the Flow root) gets a lightweight definition + $ref.
         Map<String, Object> definitions = (Map<String, Object>) result.get("definitions");
-        assertThat(definitions).doesNotContainKey("io.kestra.plugin.algolia.Search");
+        assertThat(definitions).containsKey("io.kestra.plugin.algolia.Search");
+        Map<String, Object> algolia = (Map<String, Object>) definitions.get("io.kestra.plugin.algolia.Search");
+        assertThat(algolia).containsEntry("type", "object");
+        assertThat(defTypeConst(algolia)).isEqualTo("io.kestra.plugin.algolia.Search");
 
         Map<String, Object> taskDefinition = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task");
         List<Map<String, Object>> anyOf = (List<Map<String, Object>>) taskDefinition.get("anyOf");
-        assertThat(anyOf).hasSize(2);
-        assertThat(anyOf.getFirst()).containsEntry("$ref", "#/definitions/io.kestra.plugin.core.log.Log");
-        assertThat(typeConst(anyOf.get(1))).isEqualTo("io.kestra.plugin.algolia.Search");
+        assertThat(anyOf).extracting(branch -> branch.get("$ref")).containsExactlyInAnyOrder(
+            "#/definitions/io.kestra.plugin.core.log.Log",
+            "#/definitions/io.kestra.plugin.algolia.Search"
+        );
     }
 
     @SuppressWarnings("unchecked")
-    private static String typeConst(Map<String, Object> branch) {
-        Map<String, Object> properties = (Map<String, Object>) branch.get("properties");
+    private static String defTypeConst(Map<String, Object> definition) {
+        Map<String, Object> properties = (Map<String, Object>) definition.get("properties");
         Map<String, Object> type = (Map<String, Object>) properties.get("type");
         return (String) type.get("const");
     }

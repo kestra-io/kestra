@@ -98,13 +98,16 @@ public class PluginSchemaBundleService {
      * <p>
      * Autocompletion of a task/trigger {@code type} only needs that {@code const} — not the plugin's
      * full property schema. So rather than copying the bundle's (multi-MB) definitions pool into the
-     * response, the merge appends a <em>minimal inline branch</em> ({@code {properties: {type:
-     * {const: <fqcn>}}, required: [type]}}, plus {@code title}/{@code markdownDescription} when
-     * present) to every discriminator's {@code anyOf} for each catalog subtype not already installed
-     * locally. This keeps the served schema small enough for the editor's YAML language service to
-     * process — the full-catalog definitions pool (thousands of types) would otherwise balloon the
-     * response past what the browser worker can handle. Property-level completion for a given plugin
-     * arrives once it is actually installed and its full definition enters {@code localSchema}.
+     * response, the merge adds, for each catalog subtype not already installed locally, a
+     * <em>lightweight definition</em> ({@code {type: object, properties: {type: {const: <fqcn>}},
+     * required: [type]}}, plus {@code title}/{@code markdownDescription} when present) and a
+     * {@code $ref} branch to it in the discriminator's {@code anyOf}. This mirrors the exact shape of
+     * an installed subtype (the editor's YAML language service only offers a {@code type} const from an
+     * {@code anyOf} branch that resolves to an object definition — an inline, type-less stub is
+     * skipped), while omitting the heavy property schema keeps the response small enough for the
+     * browser worker (the full-catalog pool of thousands of types would otherwise balloon it).
+     * Property-level completion for a given plugin arrives once it is actually installed and its full
+     * definition enters {@code localSchema}.
      *
      * <p>
      * It walks every discriminator the bundle knows about — not just the requested {@code type}'s own
@@ -129,7 +132,7 @@ public class PluginSchemaBundleService {
         }
 
         ObjectNode mutable = MAPPER.convertValue(localSchema, ObjectNode.class);
-        mergeDiscriminatorBranches(mutable, bundle.definitions(), bundle.roots());
+        mergeLightweightSubtypes(mutable, bundle.definitions(), bundle.roots());
         return MAPPER.convertValue(mutable, MAP_TYPE);
     }
 
@@ -194,19 +197,21 @@ public class PluginSchemaBundleService {
     }
 
     /**
-     * Extends the {@code anyOf} of every known polymorphic discriminator definition present in
-     * {@code local} — whether it's the schema's own root (e.g. requesting the "task" schema
-     * directly) or a definition merely embedded within it (e.g. {@code Task} nested inside the
-     * "flow" schema's {@code tasks} property) — with a lightweight {@code type}-only stub branch per
-     * catalog subtype not already installed locally. Dedup is by FQCN (the {@code $ref} target of an
-     * installed branch, or the stub's own resolved subtype), so installed subtypes are never
-     * shadowed and re-merging is idempotent.
+     * For every known polymorphic discriminator definition present in {@code local} — whether it's
+     * the schema's own root (e.g. requesting the "task" schema directly) or a definition merely
+     * embedded within it (e.g. {@code Task} nested inside the "flow" schema's {@code tasks} property)
+     * — adds, for each catalog subtype not already installed locally, a <b>lightweight definition</b>
+     * plus a {@code $ref} branch pointing at it. The added entry mirrors the exact shape of an
+     * installed subtype (a definition with {@code type: object} + a {@code type} {@code const}, referenced
+     * from the discriminator's {@code anyOf}) — only without the plugin's full property schema. That
+     * structural parity matters: the editor's YAML language service offers a {@code type} value from an
+     * {@code anyOf} branch that resolves to an object definition; an inline branch without
+     * {@code type: object} is silently skipped, which is why a type-only stub failed to autocomplete.
+     * Dedup is by FQCN, so an installed subtype is never shadowed and re-merging is idempotent.
      */
-    private static void mergeDiscriminatorBranches(ObjectNode local, ObjectNode bundleDefinitions, Map<SchemaType, String> bundleRoots) {
-        JsonNode localDefs = local.get("definitions");
-        if (!(localDefs instanceof ObjectNode localDefinitions)) {
-            return;
-        }
+    private static void mergeLightweightSubtypes(ObjectNode local, ObjectNode bundleDefinitions, Map<SchemaType, String> bundleRoots) {
+        JsonNode localDefsNode = local.get("definitions");
+        ObjectNode localDefinitions = localDefsNode instanceof ObjectNode existing ? existing : local.putObject("definitions");
 
         bundleRoots.values().forEach(bundleRootRef ->
         {
@@ -240,33 +245,39 @@ public class PluginSchemaBundleService {
                     return;
                 }
                 String subtypeKey = definitionKeyFromRef(ref.asText());
-                if (existingSubtypes.add(subtypeKey)) {
-                    targetAnyOf.add(typeStub(subtypeKey, definitionEntry(bundleDefinitions, subtypeKey)));
+                if (!existingSubtypes.add(subtypeKey)) {
+                    return;
                 }
+                if (!localDefinitions.has(subtypeKey)) {
+                    localDefinitions.set(subtypeKey, lightweightDefinition(subtypeKey, definitionEntry(bundleDefinitions, subtypeKey)));
+                }
+                targetAnyOf.add(JsonNodeFactory.instance.objectNode().put("$ref", "#/definitions/" + subtypeKey));
             });
         });
     }
 
     /**
-     * Builds a minimal {@code anyOf} branch that only pins the discriminator {@code type} to the
-     * subtype's FQCN (plus its {@code title}/{@code markdownDescription} for the completion popup
-     * when the bundle carries them), so the editor can suggest the type without the plugin's full
-     * property schema.
+     * Builds a minimal object definition that only pins the discriminator {@code type} to the
+     * subtype's FQCN (plus its {@code title}/{@code markdownDescription} for the completion popup when
+     * the bundle carries them). Includes {@code type: object} so it matches the shape of an installed
+     * subtype definition — the editor won't offer a {@code type} const from a branch that isn't an
+     * object schema.
      */
-    private static ObjectNode typeStub(String fqcn, @Nullable ObjectNode bundleDefinition) {
+    private static ObjectNode lightweightDefinition(String fqcn, @Nullable ObjectNode bundleDefinition) {
         String typeConst = fqcn;
         if (bundleDefinition != null && bundleDefinition.path("properties").path("type").path("const").isTextual()) {
             typeConst = bundleDefinition.path("properties").path("type").path("const").asText();
         }
 
-        ObjectNode stub = JsonNodeFactory.instance.objectNode();
-        stub.putObject("properties").putObject("type").put("const", typeConst);
-        stub.putArray("required").add("type");
+        ObjectNode definition = JsonNodeFactory.instance.objectNode();
+        definition.put("type", "object");
+        definition.putObject("properties").putObject("type").put("const", typeConst);
+        definition.putArray("required").add("type");
         if (bundleDefinition != null) {
-            copyText(bundleDefinition, stub, "title");
-            copyText(bundleDefinition, stub, "markdownDescription");
+            copyText(bundleDefinition, definition, "title");
+            copyText(bundleDefinition, definition, "markdownDescription");
         }
-        return stub;
+        return definition;
     }
 
     private static void copyText(ObjectNode from, ObjectNode to, String field) {

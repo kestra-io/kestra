@@ -23,7 +23,7 @@
                         <KsBulkSelect
                             :selectAll="queryBulkAction"
                             :selectionCount="mappedSelection.length"
-                            :total
+                            :total="selectableTotal"
                             @toggle-all="toggleAllSelection"
                             @unselect="toggleAllUnselected"
                         >
@@ -216,13 +216,27 @@
     const queryBulkAction = ref(false)
     const mappedSelection = ref<any[]>([])
 
+    const pageSelectableCount = computed(() => {
+        if (!props.rowSelectable) {
+            return props.data?.length ?? 0
+        }
+        return (props.data ?? []).filter((row, index) => props.rowSelectable!(row, index)).length
+    })
+
+    /** With a rowSelectable filter, "select all" only reaches the selectable rows of the current page. */
+    const selectableTotal = computed(
+        () => props.rowSelectable
+            ? pageSelectableCount.value
+            : props.total
+        )
+
     const selectionChanged = (rawSelection: any[]) => {
         hasSelection.value = rawSelection.length > 0
 
         const mapper = props.selectionMapper ?? ((e: any) => e)
         mappedSelection.value = rawSelection.map(mapper)
 
-        if (queryBulkAction.value && props.data && rawSelection.length < props.data.length) {
+        if (queryBulkAction.value && props.data && rawSelection.length < pageSelectableCount.value) {
             queryBulkAction.value = false
         }
 
@@ -289,7 +303,7 @@
 
     const toggleAllSelection = () => {
         const current = getSelectionRows()
-        if (current.length < props.data.length) {
+        if (current.length < pageSelectableCount.value) {
             tableRef.value?.toggleAllSelection()
         }
         queryBulkAction.value = true

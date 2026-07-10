@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Plugin;
@@ -43,6 +44,9 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String description;
 
     protected Map<String, Object> metadata;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<AssetAction> assetActions;
 
     @Nullable
     @Hidden
@@ -101,7 +105,15 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             this.metadata = mergedMetadata;
         }
 
+        this.assetActions = this.assetActions != null
+            ? this.assetActions
+            : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
+
         return (T) this;
+    }
+
+    public void setAssetActions(List<AssetAction> assetActions) {
+        this.assetActions = assetActions;
     }
 
     @Override

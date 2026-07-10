@@ -6,7 +6,7 @@ import {getTheme} from "../utils/utils"
 import {usePluginsStore} from "../stores/plugins"
 import {useFlowStore} from "../stores/flow"
 import configureLanguageFn from "./monaco/languages/languagesConfigurator"
-import type {editor as monacoEditor} from "monaco-editor/esm/vs/editor/editor.api.js"
+import type {editor as monacoEditor} from "monaco-editor/esm/vs/editor/editor.api"
 
 export function useEditorBindings() {
     const miscStore = useMiscStore()

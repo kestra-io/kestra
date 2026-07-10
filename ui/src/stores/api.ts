@@ -218,12 +218,6 @@ export const useApiStore = defineStore("api", {
             capturePosthogEvent(configs, eventName, finalData as Record<string, any>)
         },
 
-        async pluginIcons() {
-            return axios.get(`${API_URL}/v1/plugins/icons`, {
-                withCredentials: true,
-            })
-        },
-
         async pluginsInformation() {
             return axios.get<{byPlugin: Record<string, {lastReleasedAt?: string; usageCount?: number}>}>(
                 `${API_URL}/v1/plugins/pluginsInformation?icons=false`,

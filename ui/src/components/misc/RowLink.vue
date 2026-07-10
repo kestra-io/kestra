@@ -15,11 +15,12 @@
 <script setup lang="ts">
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {KsTaskIcon} from "@kestra-io/design-system"
+    import type {PluginIconMap} from "../../utils/pluginUtils"
 
     interface Props {
         icon?: string;
         text: string;
-        icons?: Record<string, {icon: string; flowable: boolean}>;
+        icons?: PluginIconMap;
         clickable?: boolean;
     }
 

@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.kv;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,6 +11,7 @@ import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.core.validations.KvVersionBehaviorValidation;
 
 import io.micronaut.data.model.Pageable;
@@ -53,7 +53,7 @@ public class Version extends KvPurgeBehavior {
             namespace,
             before == null
                 ? Collections.emptyList()
-                : List.of(QueryFilter.builder().field(QueryFilter.Field.UPDATED).operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO).value(ZonedDateTime.parse(before)).build()),
+                : List.of(QueryFilter.builder().field(QueryFilter.Field.UPDATED).operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO).value(TypeConverter.toZonedDateTime(before)).build()),
             true,
             true,
             before == null ? FetchVersion.ALL : FetchVersion.OLD

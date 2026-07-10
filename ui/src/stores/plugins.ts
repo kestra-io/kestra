@@ -1,11 +1,13 @@
 import {defineStore} from "pinia"
 import {ref, computed, toRaw, nextTick} from "vue"
 import {trackPluginDocumentationView} from "../utils/tabTracking"
+import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
-import {useApiStore} from "./api"
+import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
+import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 
 export interface PluginComponent {
@@ -50,19 +52,46 @@ export function removeRefPrefix(refStr?: string): string {
 }
 
 export interface PluginIconData {
-    icon: string;
     flowable: boolean;
+    monochrome: boolean;
+    hasIcon: boolean;
+    iconUrl?: string;
+    hash?: string;
 }
 
-function usePluginsIcons() {
-    const apiStore = useApiStore()
+interface RawPluginIcon {
+    icon: string | null;
+    flowable: boolean;
+    monochrome?: boolean;
+    hash?: string;
+}
 
+function toPluginIconData(raw: RawPluginIcon): PluginIconData {
+    return {
+        flowable: raw.flowable,
+        monochrome: raw.monochrome ?? false,
+        hasIcon: raw.icon != null,
+        hash: raw.hash,
+    }
+}
+
+function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
+    return Object.fromEntries(
+        Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
+    )
+}
+
+// Icons stay on raw axios rather than the SDK's PluginsAPI: the backend's icon response carries
+// monochrome/hasIcon/hash fields the SDK's generated PluginIcon type doesn't model yet (name/icon/
+// flowable only), so a typed SDK call would silently misrepresent the response shape.
+function usePluginsIcons() {
     const iconsLoaded = ref(false)
 
     const apiIcons = ref<Record<string, PluginIconData>>({})
     const pluginsIcons = ref<Record<string, PluginIconData>>({})
     const iconsPromiseLocal = ref<Promise<Record<string, PluginIconData>>>()
     const iconRequests = new Map<string, Promise<PluginIconData | undefined>>()
+    const axios = useClient()
 
     const icons = computed(() => {
         return {
@@ -80,22 +109,38 @@ function usePluginsIcons() {
             return iconsPromiseLocal.value
         }
 
-        const apiPromise = apiStore.pluginIcons().then(async response => {
-            apiIcons.value = response.data ?? {}
-            return response.data
-        })
-
-        const iconsPromise = PluginsAPI.pluginIcons().then(async data => {
-            pluginsIcons.value = (data as Record<string, PluginIconData>) ?? {}
-            return pluginsIcons.value
-        })
-
-        iconsPromiseLocal.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
-            iconsLoaded.value = true
-            return icons.value
-        })
+        iconsPromiseLocal.value =
+            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+                pluginsIcons.value = toPluginIconDataMap(response.data)
+                iconsLoaded.value = true
+                return icons.value
+            })
 
         return iconsPromiseLocal.value
+    }
+
+    function probeImageExists(url: string): Promise<boolean> {
+        return new Promise(resolve => {
+            const img = new Image()
+            img.onload = () => resolve(true)
+            img.onerror = () => resolve(false)
+            img.src = url
+        })
+    }
+
+    // Falls back to the community ecosystem catalog for plugins that aren't installed locally,
+    // probed via an <img> load (not XHR) - loading an image cross-origin doesn't need CORS,
+    // only reading its pixels would.
+    function loadEcosystemIcon(cls: string): Promise<PluginIconData | undefined> {
+        const url = `${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`
+        return probeImageExists(url).then(exists => {
+            if (!exists) {
+                return undefined
+            }
+            const icon: PluginIconData = {flowable: false, monochrome: false, hasIcon: true, iconUrl: url}
+            apiIcons.value = {...apiIcons.value, [cls]: icon}
+            return icon
+        })
     }
 
     // Lazily resolves a single icon instead of preloading the whole (potentially huge) plugin-icons
@@ -107,28 +152,27 @@ function usePluginsIcons() {
             return Promise.resolve(cached)
         }
 
-        if (iconsLoaded.value) {
-            // the full catalog is already loaded and simply doesn't have this class
-            return Promise.resolve(undefined)
-        }
-
         const pending = iconRequests.get(cls)
         if (pending) {
             return pending
         }
 
-        // Answers with `{icon: null}` when the class has no icon (a normal outcome, not every
-        // plugin ships one) rather than 404 — a 404 here would trip the shared HTTP client's
-        // global error handling, which takes over the whole page for any 404 response.
-        const request = PluginsAPI.pluginIcon({cls})
-            .then(response => {
-                const icon = (response.icon ?? undefined) as PluginIconData | undefined
-                if (icon) {
+        const localLookup = iconsLoaded.value
+            ? Promise.resolve(undefined)
+            : axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
+                .then(response => {
+                    const raw = response.data.icon
+                    if (!raw) {
+                        return undefined
+                    }
+                    const icon = toPluginIconData(raw)
                     pluginsIcons.value = {...pluginsIcons.value, [cls]: icon}
-                }
-                return icon
-            })
-            .catch(() => undefined)
+                    return icon
+                })
+                .catch(() => undefined)
+
+        const request = localLookup
+            .then(icon => icon ?? loadEcosystemIcon(cls))
             .finally(() => iconRequests.delete(cls))
 
         iconRequests.set(cls, request)
@@ -144,6 +188,8 @@ function usePluginsIcons() {
 }
 
 export const usePluginsStore = defineStore("plugins", () => {
+    const axios = useClient()
+
     const plugin = ref<PluginComponent>()
     const versions = ref<string[]>()
     const pluginAllProps = ref<any>()
@@ -405,12 +451,14 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const groupIcons = ref<PluginIconMap>({})
     let groupIconsPending: Promise<PluginIconMap> | null = null
+    // Stays on raw axios like usePluginsIcons() above: same monochrome/hasIcon/hash gap in the
+    // SDK's generated PluginIcon type.
     function ensureGroupIcons(): Promise<PluginIconMap> {
         if (Object.keys(groupIcons.value).length > 0) return Promise.resolve(groupIcons.value)
         if (groupIconsPending) return groupIconsPending
-        groupIconsPending = (PluginsAPI.pluginGroupIcons() as Promise<PluginIconMap>)
-            .then(data => {
-                groupIcons.value = data ?? {}
+        groupIconsPending = axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
+            .then(response => {
+                groupIcons.value = toPluginIconDataMap(response.data)
                 return groupIcons.value
             })
             .finally(() => {

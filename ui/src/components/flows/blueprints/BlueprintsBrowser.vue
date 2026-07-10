@@ -72,6 +72,7 @@
                             :blueprintKind
                             :blueprintType
                             :icons="pluginsStore.icons"
+                            :loadIcon="pluginsStore.loadIcon"
                             @click="goToDetail(blueprint.id)"
                             @use="blueprintToEditor(blueprint.id)"
                         >

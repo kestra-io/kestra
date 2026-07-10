@@ -57,7 +57,7 @@
             </KsSplitter>
         </div>
 
-        <BlueprintOverview :blueprint :tags :icons>
+        <BlueprintOverview :blueprint :tags :icons :loadIcon>
             <template #missing-plugins-action="slotProps">
                 <slot name="missing-plugins-action" v-bind="slotProps" />
             </template>
@@ -98,10 +98,12 @@
         flowGraph?: any;
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
+        loadIcon?: (cls: string) => Promise<any>;
     }>(), {
         flowGraph: undefined,
         tags: undefined,
         icons: () => ({}),
+        loadIcon: undefined,
     })
 
     const emit = defineEmits<{back: []}>()

@@ -99,6 +99,9 @@ public abstract class KestraContext {
 
     /**
      * Shutdowns the Kestra application.
+     * WARNING: this method is not safe to be called from the global KestraContext static instance as in unit test,
+     * this instance may have already been replaced by a fresh one, so you might shut down the next test run!
+     * The safe pattern is to inject a KestraContext instance and call this method on it.
      */
     public void shutdown() {
         // noop

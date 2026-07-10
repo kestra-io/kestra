@@ -47,48 +47,59 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Singleton
 @Slf4j
 public class ExecutionEventMessageHandler implements ExecutorMessageHandler<ExecutionEvent> {
-    @Inject
-    private ExecutionStateStore executionStateStore;
-    @Inject
-    private ExecutionQueuedStateStore executionQueuedStateStore;
-    @Inject
-    private ExecutionDelayStateStore executionDelayStateStore;
-    @Inject
-    private SLAMonitorStateStore slaMonitorStateStore;
-    @Inject
-    private ConcurrencyLimitStateStore concurrencyLimitStateStore;
-
-    @Inject
-    private ExecutorService executorService;
-    @Inject
-    private WorkerQueueService workerGroupService;
-    @Inject
-    private QuotaService quotaService;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
-    @Inject
-    private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
-    @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
-    @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
-
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
-
-    @Inject
-    private MetricRegistry metricRegistry;
-
+    private final ExecutionStateStore executionStateStore;
+    private final ExecutionQueuedStateStore executionQueuedStateStore;
+    private final ExecutionDelayStateStore executionDelayStateStore;
+    private final SLAMonitorStateStore slaMonitorStateStore;
+    private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
+    private final ExecutorService executorService;
+    private final WorkerQueueService workerGroupService;
+    private final QuotaService quotaService;
+    private final FlowMetaStoreInterface flowMetaStore;
+    private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
+    private final DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+    private final DispatchQueueInterface<Execution> executionQueue;
+    private final RunContextLoggerFactory runContextLoggerFactory;
+    private final KillSwitchService killSwitchService;
+    private final KillSwitchActionService killSwitchActionService;
+    private final MetricRegistry metricRegistry;
     private final Tracer tracer;
 
     @Inject
-    public ExecutionEventMessageHandler(TracerFactory tracerFactory) {
+    public ExecutionEventMessageHandler(
+        ExecutionStateStore executionStateStore,
+        ExecutionQueuedStateStore executionQueuedStateStore,
+        ExecutionDelayStateStore executionDelayStateStore,
+        SLAMonitorStateStore slaMonitorStateStore,
+        ConcurrencyLimitStateStore concurrencyLimitStateStore,
+        ExecutorService executorService,
+        WorkerQueueService workerGroupService,
+        QuotaService quotaService,
+        FlowMetaStoreInterface flowMetaStore,
+        KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
+        DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue,
+        DispatchQueueInterface<Execution> executionQueue,
+        RunContextLoggerFactory runContextLoggerFactory,
+        KillSwitchService killSwitchService,
+        KillSwitchActionService killSwitchActionService,
+        MetricRegistry metricRegistry,
+        TracerFactory tracerFactory) {
+        this.executionStateStore = executionStateStore;
+        this.executionQueuedStateStore = executionQueuedStateStore;
+        this.executionDelayStateStore = executionDelayStateStore;
+        this.slaMonitorStateStore = slaMonitorStateStore;
+        this.concurrencyLimitStateStore = concurrencyLimitStateStore;
+        this.executorService = executorService;
+        this.workerGroupService = workerGroupService;
+        this.quotaService = quotaService;
+        this.flowMetaStore = flowMetaStore;
+        this.workerJobEventQueue = workerJobEventQueue;
+        this.subflowExecutionResultQueue = subflowExecutionResultQueue;
+        this.executionQueue = executionQueue;
+        this.runContextLoggerFactory = runContextLoggerFactory;
+        this.killSwitchService = killSwitchService;
+        this.killSwitchActionService = killSwitchActionService;
+        this.metricRegistry = metricRegistry;
         this.tracer = tracerFactory.getTracer(DefaultExecutor.class, "EXECUTOR");
     }
 
@@ -144,29 +155,27 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             }
 
                             // handle quotas
-                            if (!ListUtils.isEmpty(flow.getQuotas())) {
-                                Optional<Quota> quota = quotaService.checkAndIncrement(flow);
-                                if (quota.isPresent()) {
-                                    // a quota is exceeded: stop the execution in the desired state
-                                    Execution newExecution = switch (quota.get().getBehavior()) {
-                                        case FAIL -> {
-                                            var failedExecution = execution
-                                                .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
-                                            var logger = runContextLoggerFactory.create(execution);
-                                            logger.emitLogs(failedExecution.logs());
-                                            yield failedExecution.execution();
-                                        }
-                                        case CANCEL -> execution.withState(State.Type.CANCELLED);
-                                    };
+                            Optional<Quota> quota = quotaService.checkAndIncrement(flow);
+                            if (quota.isPresent()) {
+                                // a quota is exceeded: stop the execution in the desired state
+                                Execution newExecution = switch (quota.get().getBehavior()) {
+                                    case FAIL -> {
+                                        var failedExecution = execution
+                                            .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
+                                        var logger = runContextLoggerFactory.create(execution);
+                                        logger.emitLogs(failedExecution.logs());
+                                        yield failedExecution.execution();
+                                    }
+                                    case CANCEL -> execution.withState(State.Type.CANCELLED);
+                                };
 
-                                    metricRegistry
-                                        .counter(
-                                            MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
-                                        )
-                                        .increment();
+                                metricRegistry
+                                    .counter(
+                                        MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
+                                    )
+                                    .increment();
 
-                                    return executor.withExecution(newExecution, "processQuotas");
-                                }
+                                return executor.withExecution(newExecution, "processQuotas");
                             }
 
                             // handle concurrency limit

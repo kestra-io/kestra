@@ -6,6 +6,7 @@
             class="blueprint-icon-stack__icon"
             :cls="cls"
             :icons="icons"
+            :loadIcon="loadIcon"
             onlyIcon
         />
         <span v-if="overflow > 0" class="blueprint-icon-stack__more">+{{ overflow }}</span>
@@ -20,6 +21,7 @@
     const props = defineProps<{
         clses: string[]
         icons: PluginIconMap
+        loadIcon?: (cls: string) => Promise<any>
     }>()
 
     const ICON_PX = 24

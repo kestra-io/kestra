@@ -87,28 +87,32 @@ public class PluginSchemaBundleService {
     }
 
     /**
-     * Returns a copy of {@code localSchema} enriched with bundle entries for {@code type}.
+     * Returns a copy of {@code localSchema} enriched with lightweight type entries for {@code type}.
      *
      * <p>
-     * {@code JsonSchemaGenerator.schemas()} emits Draft-7 schemas: definitions live under the
-     * root {@code definitions} object (not {@code $defs}, a 2019-09 keyword), and the root
-     * {@code $ref} points at the polymorphic type's own definition, whose {@code anyOf} lists one
-     * branch per registered subtype. The merge therefore:
-     * <ul>
-     * <li>copies bundle {@code definitions} entries not already present locally, keyed by FQCN
-     * — the same key a given class always resolves to, whether generated from the local
-     * (installed-only) or bundle (full-catalog) plugin registry;</li>
-     * <li>extends every known polymorphic discriminator definition's {@code anyOf} with bundle
-     * branches whose {@code $ref} isn't already referenced locally — not just the requested
-     * {@code type}'s own root, but any of them found embedded in {@code localSchema} (e.g. the
-     * "flow" schema embeds the same {@code Task} discriminator the "task" schema's root points
-     * at), so autocompletion offers the newly-added definitions wherever they're actually used.</li>
-     * </ul>
-     * Both steps skip entries the local schema already has, so re-merging is idempotent and never
-     * duplicates a definition or a branch. When the service is not enabled or the bundle has no
-     * root registered for {@code type}, the original {@code localSchema} is returned unchanged —
-     * {@code type} only gates whether merging happens at all, since a type absent from the bundle
-     * (an old bundle predating a newly-added {@link SchemaType}) means the bundle is stale for it.
+     * {@code JsonSchemaGenerator.schemas()} emits Draft-7 schemas: definitions live under the root
+     * {@code definitions} object (not {@code $defs}, a 2019-09 keyword), and each polymorphic
+     * discriminator definition's {@code anyOf} lists one branch per registered subtype, each branch
+     * carrying a {@code type} {@code const} discriminator.
+     *
+     * <p>
+     * Autocompletion of a task/trigger {@code type} only needs that {@code const} — not the plugin's
+     * full property schema. So rather than copying the bundle's (multi-MB) definitions pool into the
+     * response, the merge appends a <em>minimal inline branch</em> ({@code {properties: {type:
+     * {const: <fqcn>}}, required: [type]}}, plus {@code title}/{@code markdownDescription} when
+     * present) to every discriminator's {@code anyOf} for each catalog subtype not already installed
+     * locally. This keeps the served schema small enough for the editor's YAML language service to
+     * process — the full-catalog definitions pool (thousands of types) would otherwise balloon the
+     * response past what the browser worker can handle. Property-level completion for a given plugin
+     * arrives once it is actually installed and its full definition enters {@code localSchema}.
+     *
+     * <p>
+     * It walks every discriminator the bundle knows about — not just the requested {@code type}'s own
+     * root, but any embedded in {@code localSchema} (e.g. the "flow" schema embeds the same
+     * {@code Task} discriminator the "task" schema's root points at). Dedup is by FQCN, so an
+     * installed subtype (already an {@code anyOf} branch) is never shadowed by a stub and re-merging
+     * is idempotent. When the service is disabled or the bundle has no root for {@code type}, the
+     * original {@code localSchema} is returned unchanged.
      *
      * @param type the schema type to look up in the bundle
      * @param localSchema the locally-generated schema (not modified)
@@ -125,8 +129,7 @@ public class PluginSchemaBundleService {
         }
 
         ObjectNode mutable = MAPPER.convertValue(localSchema, ObjectNode.class);
-        mergeDefinitions(mutable, bundle.definitions());
-        mergeDiscriminatorAnyOf(mutable, bundle.definitions(), bundle.roots());
+        mergeDiscriminatorBranches(mutable, bundle.definitions(), bundle.roots());
         return MAPPER.convertValue(mutable, MAP_TYPE);
     }
 
@@ -190,30 +193,16 @@ public class PluginSchemaBundleService {
         }
     }
 
-    private static void mergeDefinitions(ObjectNode local, ObjectNode sharedDefinitions) {
-        JsonNode localDefs = local.get("definitions");
-        ObjectNode targetDefs = localDefs instanceof ObjectNode existing ? existing : local.putObject("definitions");
-
-        sharedDefinitions.properties().forEach(entry ->
-        {
-            if (!targetDefs.has(entry.getKey())) {
-                targetDefs.set(entry.getKey(), entry.getValue());
-            }
-        });
-    }
-
     /**
      * Extends the {@code anyOf} of every known polymorphic discriminator definition present in
      * {@code local} — whether it's the schema's own root (e.g. requesting the "task" schema
      * directly) or a definition merely embedded within it (e.g. {@code Task} nested inside the
-     * "flow" schema's {@code tasks} property) — with bundle branches missing locally.
-     * {@code schemas()} never puts {@code anyOf} at the schema root itself, only on the
-     * definition its {@code $ref} points at, so this walks every {@link SchemaType} root key the
-     * bundle knows about rather than just the one matching the requested type: the "flow" schema
-     * has no {@code anyOf} of its own, but its {@code definitions} pool still contains the same
-     * {@code Task} discriminator entry the "task" schema's root points at.
+     * "flow" schema's {@code tasks} property) — with a lightweight {@code type}-only stub branch per
+     * catalog subtype not already installed locally. Dedup is by FQCN (the {@code $ref} target of an
+     * installed branch, or the stub's own resolved subtype), so installed subtypes are never
+     * shadowed and re-merging is idempotent.
      */
-    private static void mergeDiscriminatorAnyOf(ObjectNode local, ObjectNode sharedDefinitions, Map<SchemaType, String> bundleRoots) {
+    private static void mergeDiscriminatorBranches(ObjectNode local, ObjectNode bundleDefinitions, Map<SchemaType, String> bundleRoots) {
         JsonNode localDefs = local.get("definitions");
         if (!(localDefs instanceof ObjectNode localDefinitions)) {
             return;
@@ -223,7 +212,7 @@ public class PluginSchemaBundleService {
         {
             String key = definitionKeyFromRef(bundleRootRef);
             ObjectNode localEntry = definitionEntry(localDefinitions, key);
-            ObjectNode bundleEntry = definitionEntry(sharedDefinitions, key);
+            ObjectNode bundleEntry = definitionEntry(bundleDefinitions, key);
             if (localEntry == null || bundleEntry == null) {
                 return;
             }
@@ -235,23 +224,56 @@ public class PluginSchemaBundleService {
 
             ArrayNode targetAnyOf = localEntry.get("anyOf") instanceof ArrayNode existing ? existing : localEntry.putArray("anyOf");
 
-            Set<String> existingRefs = new HashSet<>();
+            Set<String> existingSubtypes = new HashSet<>();
             targetAnyOf.forEach(branch ->
             {
                 JsonNode ref = branch.get("$ref");
                 if (ref != null) {
-                    existingRefs.add(ref.asText());
+                    existingSubtypes.add(definitionKeyFromRef(ref.asText()));
                 }
             });
 
             bundleBranches.forEach(branch ->
             {
                 JsonNode ref = branch.get("$ref");
-                if (ref != null && existingRefs.add(ref.asText())) {
-                    targetAnyOf.add(branch);
+                if (ref == null) {
+                    return;
+                }
+                String subtypeKey = definitionKeyFromRef(ref.asText());
+                if (existingSubtypes.add(subtypeKey)) {
+                    targetAnyOf.add(typeStub(subtypeKey, definitionEntry(bundleDefinitions, subtypeKey)));
                 }
             });
         });
+    }
+
+    /**
+     * Builds a minimal {@code anyOf} branch that only pins the discriminator {@code type} to the
+     * subtype's FQCN (plus its {@code title}/{@code markdownDescription} for the completion popup
+     * when the bundle carries them), so the editor can suggest the type without the plugin's full
+     * property schema.
+     */
+    private static ObjectNode typeStub(String fqcn, @Nullable ObjectNode bundleDefinition) {
+        String typeConst = fqcn;
+        if (bundleDefinition != null && bundleDefinition.path("properties").path("type").path("const").isTextual()) {
+            typeConst = bundleDefinition.path("properties").path("type").path("const").asText();
+        }
+
+        ObjectNode stub = JsonNodeFactory.instance.objectNode();
+        stub.putObject("properties").putObject("type").put("const", typeConst);
+        stub.putArray("required").add("type");
+        if (bundleDefinition != null) {
+            copyText(bundleDefinition, stub, "title");
+            copyText(bundleDefinition, stub, "markdownDescription");
+        }
+        return stub;
+    }
+
+    private static void copyText(ObjectNode from, ObjectNode to, String field) {
+        JsonNode value = from.get(field);
+        if (value != null && value.isTextual()) {
+            to.set(field, value);
+        }
     }
 
     private static String definitionKeyFromRef(String ref) {

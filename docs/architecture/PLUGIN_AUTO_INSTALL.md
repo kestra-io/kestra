@@ -125,16 +125,26 @@ loaded asynchronously, and a **no-op when the property is empty** (the default).
 
 `GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the
 **local** schema (installed plugins) and enriches it with the bundle via
-`PluginSchemaBundleService.mergeWithBundle`:
+`PluginSchemaBundleService.mergeWithBundle` — `mergeDiscriminatorBranches`:
 
-- copies bundle `definitions` missing locally, keyed by FQCN (the stable key a class always resolves
-  to, from either registry) — `mergeDefinitions`;
-- extends the `anyOf` of **every** polymorphic discriminator present in the local schema — the
-  requested root *and* any embedded one (e.g. the `Task` discriminator nested in the `flow` schema's
-  `tasks`) — with bundle branches missing locally — `mergeDiscriminatorAnyOf`.
+- for **every** polymorphic discriminator present in the local schema — the requested root *and* any
+  embedded one (e.g. the `Task` discriminator nested in the `flow` schema's `tasks`) — it appends,
+  for each catalog subtype not already installed, a **lightweight inline stub**:
+  `{"properties": {"type": {"const": "<fqcn>"}}, "required": ["type"]}` (plus `title` /
+  `markdownDescription` when the bundle carries them).
+- it does **not** copy the bundle's full `definitions` pool. Autocompletion of a `type:` value only
+  needs the `const`; shipping the full property schema of every catalog plugin (thousands of types)
+  would balloon the response past what the browser's YAML language service can process. Property-level
+  completion for a plugin arrives once it is installed and its full definition enters the local schema.
 
-Idempotent: re-merging never duplicates a definition or a branch. **Installed plugins take
-precedence** over the bundle. Draft-7 shape (`definitions`, not `$defs`).
+Dedup is by FQCN, so an installed subtype (already an `anyOf` branch) is never shadowed by a stub and
+re-merging is idempotent. **Installed plugins take precedence** over the bundle. Draft-7 shape
+(`definitions`, not `$defs`).
+
+> **Size matters.** Copying the whole catalog's definitions produced a ~12 MB schema per flow file
+> that silently broke completion in monaco-yaml. Stubs cut the bundle's contribution to a few hundred
+> KB. On a lean (`-no-plugins`) install — the actual target — the local schema is small too, so the
+> merged result stays light.
 
 Merge-by-FQCN works only because both sides come from the same `JsonSchemaGenerator.schemas()` — the
 runtime local schema and the bundle — so a class always resolves to the same definition key and the

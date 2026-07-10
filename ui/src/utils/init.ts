@@ -140,7 +140,7 @@ export default async (
 
     // moment
     moment.locale(locale)
-    const momentExtended = extendMoment(moment)
+    const momentExtended = extendMoment(moment as any) // FIXME: any - extendMoment signature differs from Moment type
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
     setDateFormatter(dateFilter as any) // FIXME: any - dateFilter signature differs from DateFormatterFn

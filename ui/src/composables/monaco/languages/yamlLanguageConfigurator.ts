@@ -1,8 +1,9 @@
 import {computed, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {configureMonacoYaml} from "monaco-yaml"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {languages} from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js"
+import {languages} from "monaco-editor/esm/vs/editor/editor.api.js"
+import {IPosition, IDisposable, CancellationToken} from "monaco-editor/esm/vs/editor/editor.api.js"
 import {yamlSchemas} from "override/utils/yamlSchemas"
 import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices"
 import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures"
@@ -33,14 +34,11 @@ import {
     filterExistingSubflowLinks,
     SUBFLOW_LINK_SCHEME,
 } from "./subflowLinkProvider"
-import IPosition = monaco.IPosition;
-import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 import CompletionContext = languages.CompletionContext;
-import CancellationToken = monaco.CancellationToken;
 
 type TaskLike = Record<string, unknown>;
 

@@ -45,6 +45,43 @@ import {codecovVitePlugin} from "@codecov/vite-plugin"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
 
+/**
+ * `@module-federation/vite` shims each shared dep with `export default ns.default ?? ns`; when the
+ * source has no default export that `.default` is statically undefined and Rolldown warns
+ * (IMPORT_IS_UNDEFINED). Drop the dead branch in that case only; leave real defaults untouched.
+ * @returns {import("rolldown").Plugin}
+ */
+export function stripDeadPrebuildDefault() {
+    const SHIM = "export default __mfPrebuildNamespace.default ?? __mfPrebuildNamespace"
+
+    return {
+        name: "strip-dead-prebuild-default",
+        // Run after @module-federation/vite has produced the shim's source.
+        // @ts-expect-error: `enforce` is not in the type, but it works.
+        enforce: "post",
+        async transform(code, id) {
+            if (!id.includes("virtual:mf:") || !id.includes("__prebuild__") || !code.includes(SHIM)) {
+                return
+            }
+
+            const importMatch = code.match(/import \* as __mfPrebuildNamespace from "((?:[^"\\]|\\.)*)"/)
+            if (!importMatch) return
+            const importSource = JSON.parse(`"${importMatch[1]}"`)
+
+            const resolved = await this.resolve(importSource, id, {skipSelf: true})
+            if (!resolved) return
+
+            const info = await this.load(resolved)
+            if (info.exports?.includes("default")) return
+
+            return {
+                code: code.replace(SHIM, "export default __mfPrebuildNamespace"),
+                map: null,
+            }
+        },
+    }
+}
+
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
 

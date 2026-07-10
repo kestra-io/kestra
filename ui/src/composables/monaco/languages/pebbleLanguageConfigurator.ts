@@ -1,5 +1,6 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {languages} from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js"
+import { IPosition, IDisposable } from "monaco-editor/esm/vs/editor/editor.api.js"
+import {languages} from "monaco-editor/esm/vs/editor/editor.api.js"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
@@ -8,8 +9,6 @@ import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import {useI18n} from "vue-i18n"
 import {ComputedRef} from "vue"
 
-import IPosition = monaco.IPosition;
-import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import CompletionItem = languages.CompletionItem;
 

@@ -75,7 +75,9 @@
 </template>
 
 <script lang="ts">
-    import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js"
+    import * as monacoTypescript from "monaco-editor/esm/vs/language/typescript/monaco.contribution.js"
+    const ts = monacoTypescript as typeof import("monaco-editor/esm/vs/editor/editor.main.js").typescript
 
     function isOffsetInPebbleBlock(text: string, offset: number): boolean {
         if (offset < 2) return false
@@ -186,22 +188,20 @@
         monaco.editor.defineTheme(themeKey, themeData)
     })
 
-    if (monaco.languages.typescript) {
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-            target: monaco.languages.typescript.ScriptTarget.ES2020,
-            lib: ["es2020"],
-            allowNonTsExtensions: true,
-        })
-    }
+    ts.typescriptDefaults.setCompilerOptions({
+        target: ts.ScriptTarget.ES2020,
+        lib: ["es2020"],
+        allowNonTsExtensions: true,
+    })
 </script>
 
 <script setup lang="ts">
-    import "monaco-editor/esm/vs/editor/editor.all"
-    import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens"
-    import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
-    import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
-    import "monaco-editor/esm/vs/language/json/monaco.contribution"
-    import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
+    import "monaco-editor/esm/vs/editor/editor.all.js"
+    import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js"
+    import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js"
+    import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js"
+    import "monaco-editor/esm/vs/language/json/monaco.contribution.js"
+    import "monaco-editor/esm/vs/basic-languages/_.contribution.js"
 
     import type {VNode} from "vue"
     import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
@@ -212,7 +212,7 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     // @ts-expect-error tab focus path lacks types
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus"
-    import {editor as monacoEditorNs} from "monaco-editor/esm/vs/editor/editor.api"
+    import {editor as monacoEditorNs} from "monaco-editor/esm/vs/editor/editor.api.js"
     import moment from "moment"
     import type {Moment} from "moment"
     import debounce from "lodash/debounce"

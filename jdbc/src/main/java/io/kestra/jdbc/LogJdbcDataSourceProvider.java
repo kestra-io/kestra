@@ -26,9 +26,9 @@ import jakarta.inject.Singleton;
  * A single resolution shared by the log store and the log-table migration so a dedicated log
  * database is described in one place (rather than a separate {@code datasources.logs} block):
  * <ul>
- *     <li>if {@code kestra.logs.<type>.url} is set → build (and own) a dedicated HikariCP
- *         {@link DataSource} + {@link JooqDSLContextWrapper} for it (e.g. Postgres main + MySQL logs);</li>
- *     <li>otherwise → fall back to the primary {@link DataSource} (logs in the main database).</li>
+ * <li>if {@code kestra.logs.<type>.url} is set → build (and own) a dedicated HikariCP
+ * {@link DataSource} + {@link JooqDSLContextWrapper} for it (e.g. Postgres main + MySQL logs);</li>
+ * <li>otherwise → fall back to the primary {@link DataSource} (logs in the main database).</li>
  * </ul>
  * The dedicated pool is built lazily and closed on shutdown.
  */

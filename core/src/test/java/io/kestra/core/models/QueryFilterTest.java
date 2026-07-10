@@ -789,6 +789,36 @@ public class QueryFilterTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenRegexIsCatastrophic() {
+        // Given a REGEX filter prone to catastrophic backtracking
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("(a+)+")
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenRegexIsSafe() {
+        // Given a safe REGEX filter
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("io\\.kestra\\..*")
+            .build();
+
+        // When / Then
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION));
+    }
+
+    @Test
     void shouldReturnPrefixFilterWhenOperationIsPrefix() {
         QueryFilter filter = QueryFilter.builder()
             .field(Field.NAMESPACE)

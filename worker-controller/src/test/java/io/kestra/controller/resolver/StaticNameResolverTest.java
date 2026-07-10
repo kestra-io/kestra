@@ -14,6 +14,7 @@ import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StaticNameResolverTest {
 
@@ -61,23 +62,79 @@ class StaticNameResolverTest {
     }
 
     @Test
-    void providerShouldCreateResolver() {
-        List<EquivalentAddressGroup> addresses = List.of(
-            new EquivalentAddressGroup(new InetSocketAddress("localhost", 9096))
-        );
-
-        StaticNameResolverProvider provider = new StaticNameResolverProvider(addresses);
+    void providerShouldCreateResolverFromEndpointsEncodedInTargetUri() {
+        StaticNameResolverProvider provider = new StaticNameResolverProvider();
 
         assertThat(provider.getDefaultScheme()).isEqualTo("static");
 
-        NameResolver resolver = provider.newNameResolver(URI.create("static:///controllers"), null);
+        NameResolver resolver = provider.newNameResolver(URI.create("static:///localhost:9096"), null);
         assertThat(resolver).isNotNull();
         assertThat(resolver).isInstanceOf(StaticNameResolver.class);
+
+        AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
+        resolver.start(new TestListener(result));
+        assertThat(result.get().getAddresses()).containsExactly(
+            new EquivalentAddressGroup(new InetSocketAddress("localhost", 9096))
+        );
+    }
+
+    @Test
+    void providerShouldRoundTripEndpointsThroughTargetUri() {
+        // Given
+        List<InetSocketAddress> endpoints = List.of(
+            InetSocketAddress.createUnresolved("controller-1.example.com", 9096),
+            InetSocketAddress.createUnresolved("controller-2.example.com", 9097)
+        );
+
+        // When
+        String target = StaticNameResolverProvider.targetFor(endpoints);
+
+        // Then
+        assertThat(target).isEqualTo("static:///controller-1.example.com:9096,controller-2.example.com:9097");
+
+        NameResolver resolver = new StaticNameResolverProvider().newNameResolver(URI.create(target), null);
+        AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
+        resolver.start(new TestListener(result));
+        assertThat(result.get().getAddresses()).containsExactly(
+            new EquivalentAddressGroup(new InetSocketAddress("controller-1.example.com", 9096)),
+            new EquivalentAddressGroup(new InetSocketAddress("controller-2.example.com", 9097))
+        );
+    }
+
+    @Test
+    void providerShouldRoundTripBracketedIpv6Endpoints() {
+        // Given
+        String target = StaticNameResolverProvider.targetFor(List.of(InetSocketAddress.createUnresolved("[::1]", 9096)));
+
+        // Then - brackets are stripped so the target stays a valid URI
+        assertThat(target).isEqualTo("static:///::1:9096");
+
+        NameResolver resolver = new StaticNameResolverProvider().newNameResolver(URI.create(target), null);
+        AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
+        resolver.start(new TestListener(result));
+        assertThat(result.get().getAddresses()).containsExactly(
+            new EquivalentAddressGroup(new InetSocketAddress("::1", 9096))
+        );
+    }
+
+    @Test
+    void providerShouldRejectTargetUriWithoutEndpoints() {
+        StaticNameResolverProvider provider = new StaticNameResolverProvider();
+
+        assertThatThrownBy(() -> provider.newNameResolver(URI.create("static:///"), null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("No controller endpoint");
+        assertThatThrownBy(() -> provider.newNameResolver(URI.create("static:///localhost"), null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid controller endpoint");
+        assertThatThrownBy(() -> provider.newNameResolver(URI.create("static:///localhost:abc"), null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid controller endpoint");
     }
 
     @Test
     void providerShouldReturnNullForWrongScheme() {
-        StaticNameResolverProvider provider = new StaticNameResolverProvider(List.of());
+        StaticNameResolverProvider provider = new StaticNameResolverProvider();
 
         NameResolver resolver = provider.newNameResolver(URI.create("dns:///localhost"), null);
         assertThat(resolver).isNull();

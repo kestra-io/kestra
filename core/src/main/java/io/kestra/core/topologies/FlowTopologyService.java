@@ -12,6 +12,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.input.MultiselectInput;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.hierarchies.Graph;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.topologies.FlowNode;
@@ -25,6 +27,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.PebbleUtil;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -161,6 +164,10 @@ public class FlowTopologyService {
             return FlowRelation.FLOW_TRIGGER;
         }
 
+        if (this.isInputChild(parent, child)) {
+            return FlowRelation.SUBFLOW_FUNCTION;
+        }
+
         return null;
     }
 
@@ -206,6 +213,31 @@ public class FlowTopologyService {
             .anyMatch(flow -> ListUtils.isEmpty(flow.getDependsOn()) || validateDependsOn(flow.getDependsOn(), parent, execution, runContext));
 
         return conditionMatch && dependsOnMatch;
+    }
+
+    /**
+     * Check that any SELECT or MULTISELECT input is using the subflow function configured with the child flow.
+     */
+    protected boolean isInputChild(Flow parent, Flow child) {
+        boolean selectMatch = ListUtils.emptyOnNull(parent.getInputs()).stream()
+            .filter(SelectInput.class::isInstance)
+            .map(SelectInput.class::cast)
+            .anyMatch(selectInput -> isSubflowFunctionFor(selectInput.getExpression(), child));
+
+        boolean multiSelectMatch = ListUtils.emptyOnNull(parent.getInputs()).stream()
+            .filter(MultiselectInput.class::isInstance)
+            .map(MultiselectInput.class::cast)
+            .anyMatch(selectInput -> isSubflowFunctionFor(selectInput.getExpression(), child));
+
+        return selectMatch || multiSelectMatch;
+    }
+
+    // best effort: we use regexes as a substitute for proper parsing of Pebble expressions
+    private boolean isSubflowFunctionFor(String expression, Flow child) {
+        return expression != null && PebbleUtil.containsOpeningBlockDelimiter(expression) &&
+            expression.matches(".*subflow\\s*\\(.*\\).*") &&
+            expression.matches(".*id\\s*=\\s*['\"]?" + child.getId() + "['\"]?\\s*[\\s,)].*") &&
+            expression.matches(".*namespace\\s*=\\s*['\"]?" + child.getNamespace() + "['\"]?\\s*[\\s,)].*");
     }
 
     private boolean validateDependsOn(List<io.kestra.plugin.core.trigger.Flow.Dependency> dependsOn, FlowInterface child, Execution execution, RunContext runContext) {

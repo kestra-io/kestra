@@ -76,6 +76,9 @@
                     @approve="confirm('APPROVE')"
                     @reject="onReject"
                 />
+
+                <!-- Anchor the auto-scroll follows as new content streams in. -->
+                <div ref="bottomAnchor" class="copilot-scroll-anchor" />
             </KsScrollbar>
 
             <KsAlert v-if="error" type="error" class="copilot-error">
@@ -97,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, onBeforeUnmount, onMounted} from "vue"
+    import {ref, computed, nextTick, watch, onBeforeUnmount, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -171,6 +174,18 @@
     function onSubmit(prompt: string): void {
         sendChat({prompt, mode: mode.value, inFocus: props.inFocus, providerId: selectedProvider.value})
     }
+
+    // Keep the transcript pinned to the bottom as content arrives: new messages, streamed
+    // tokens (last message's content grows), the thinking indicator, or a proposed-action card.
+    const bottomAnchor = ref<HTMLElement | null>(null)
+
+    // A primitive that changes on any of those, so the watcher fires without a deep watch.
+    const scrollSignal = computed(() => {
+        const last = messages.value[messages.value.length - 1]
+        return `${messages.value.length}|${last?.content?.length ?? 0}|${pendingConfirmation.value ? 1 : 0}|${thinking.value ? 1 : 0}`
+    })
+
+    watch(scrollSignal, () => nextTick(() => bottomAnchor.value?.scrollIntoView?.({block: "end"})))
 
     // "Reply to revise": decline the proposal, then hand control back to the composer so the
     // user can type what to change (the next turn re-plans). Focus once the turn resolves and

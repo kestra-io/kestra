@@ -130,4 +130,15 @@ describe("CopilotChat", () => {
         await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
         expect(state.retry).toHaveBeenCalled()
     })
+
+    it("auto-scrolls the transcript to the bottom as new content arrives", async () => {
+        // jsdom doesn't implement scrollIntoView — define it so we can assert it's called.
+        const spy = vi.fn()
+        ;(HTMLElement.prototype as unknown as {scrollIntoView: unknown}).scrollIntoView = spy
+        mountChat()
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        await flushPromises()
+        expect(spy).toHaveBeenCalled()
+        delete (HTMLElement.prototype as unknown as {scrollIntoView?: unknown}).scrollIntoView
+    })
 })

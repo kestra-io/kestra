@@ -11,8 +11,8 @@
         </div>
         <!--
             Native borderless textarea inside the bordered wrapper so the composer reads as a
-            single box (Figma). KsInput/el-textarea can't be made borderless without overriding
-            its `.el-textarea__inner` inset-shadow border, which the design-system rules forbid.
+            single box (Figma). A wrapped design-system text input can't be made borderless
+            without overriding its inner inset-shadow border, which the design-system rules forbid.
         -->
         <textarea
             v-else

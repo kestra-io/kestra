@@ -2048,6 +2048,11 @@
           "stop": "Stop and insert",
           "cancel": "Cancel voice input"
         },
+        "unavailable": {
+            "title": "AI Copilot n'est pas disponible",
+            "detail": "Aucun fournisseur d'AI n'est configuré. Demandez à un administrateur d'en configurer un, puis réessayez.",
+            "retry": "Réessayer"
+        },
         "thinking": "Réflexion",
         "newChat": "New chat",
         "recents": "Recents",

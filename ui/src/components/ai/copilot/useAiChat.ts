@@ -61,6 +61,8 @@ export function useAiChat() {
     const error = ref<ErrorCode | null>(null)
     /** The proposal awaiting a confirm/reject decision, if any. */
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
+    /** True when the backend reports no AI provider is configured (503) — render an "unavailable" state. */
+    const unavailable = ref(false)
 
     /** Reference to the assistant bubble currently being streamed into. */
     let activeAssistant: ChatMessage | null = null
@@ -110,12 +112,28 @@ export function useAiChat() {
     /** Sends a user turn and streams the response. Creates the thread if needed. */
     async function sendChat(request: ChatTurnRequest): Promise<void> {
         if (!canSend.value) return
-        const active = await ensureThread({mode: request.mode})
+
+        // Thread creation can fail before any stream starts (e.g. 503 when no AI provider
+        // is configured). Surface that as the dedicated "unavailable" state, not a generic error.
+        let active: ThreadSummary
+        try {
+            active = await ensureThread({mode: request.mode})
+        } catch (e) {
+            if (is503(e)) unavailable.value = true
+            else error.value = toErrorCode(e)
+            return
+        }
 
         error.value = null
         pendingConfirmation.value = null
         push({id: uid(), role: "USER", type: "TEXT", content: request.prompt})
         await runStream(`${base()}/${active.uid}/chat`, request)
+    }
+
+    /** Clears the unavailable state so the user can retry (e.g. after configuring a provider). */
+    function retry(): void {
+        unavailable.value = false
+        error.value = null
     }
 
     /** Resolves a pending proposal. APPROVE resumes & dispatches; REJECT records rejection. */
@@ -143,6 +161,7 @@ export function useAiChat() {
         streaming.value = false
         error.value = null
         pendingConfirmation.value = null
+        unavailable.value = false
         activeAssistant = null
     }
 
@@ -157,7 +176,9 @@ export function useAiChat() {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
         } catch (e) {
             if ((e as Error)?.name === "AbortError") return
-            error.value = toErrorCode(e)
+            // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
+            if (is503(e)) unavailable.value = true
+            else error.value = toErrorCode(e)
             // A stream error never leaves us in RUNNING; fall back to a safe resting state.
             status.value = "IDLE"
         } finally {
@@ -216,6 +237,12 @@ export function useAiChat() {
         return "generic"
     }
 
+    /** True when the failure is a 503 — from the SSE stream or the axios thread-create call. */
+    function is503(e: unknown): boolean {
+        if (e instanceof SseHttpError) return e.status === 503
+        return (e as {response?: {status?: number}})?.response?.status === 503
+    }
+
     return {
         // State — treat as read-only from consumers (mutated only via the actions below).
         // Returned as plain refs (not readonly()) so they bind cleanly to child component
@@ -226,6 +253,7 @@ export function useAiChat() {
         streaming,
         error,
         pendingConfirmation,
+        unavailable,
         canSend,
         // actions
         ensureThread,
@@ -234,6 +262,7 @@ export function useAiChat() {
         confirm,
         cancel,
         reset,
+        retry,
     }
 }
 

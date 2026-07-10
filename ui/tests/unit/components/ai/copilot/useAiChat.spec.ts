@@ -146,6 +146,33 @@ describe("useAiChat", () => {
         expect(chat.status.value).toBe("IDLE")
     })
 
+    it("surfaces the unavailable state when thread creation 503s (no provider)", async () => {
+        const chat = useAiChat()
+        post.mockRejectedValueOnce({response: {status: 503}})
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.unavailable.value).toBe(true)
+        expect(chat.error.value).toBeNull()
+        // No user message is recorded when the turn can't even start.
+        expect(chat.messages.value).toHaveLength(0)
+    })
+
+    it("surfaces the unavailable state on a 503 mid-stream", async () => {
+        const chat = useAiChat()
+        nextError = new SseHttpError(503, "")
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.unavailable.value).toBe(true)
+        expect(chat.status.value).toBe("IDLE")
+    })
+
+    it("retry() clears the unavailable state", async () => {
+        const chat = useAiChat()
+        post.mockRejectedValueOnce({response: {status: 503}})
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.unavailable.value).toBe(true)
+        chat.retry()
+        expect(chat.unavailable.value).toBe(false)
+    })
+
     it("reset() clears the transcript and thread back to the empty state", async () => {
         const chat = useAiChat()
         nextFrames = [{event: "token", data: {text: "hi"}}, {event: "done", data: {status: "IDLE"}}]

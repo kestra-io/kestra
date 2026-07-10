@@ -19,8 +19,20 @@
             </KsDropdown>
         </div>
 
+        <!-- AI unavailable: the backend has no configured provider (503). -->
+        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
+            <KsIcon class="copilot-unavailable-icon">
+                <RobotOffOutline />
+            </KsIcon>
+            <KsText class="copilot-unavailable-title">{{ t("ai.copilot.unavailable.title") }}</KsText>
+            <KsText size="small" class="copilot-unavailable-detail">{{ t("ai.copilot.unavailable.detail") }}</KsText>
+            <KsButton size="small" data-test="copilot-unavailable-retry" @click="retry">
+                {{ t("ai.copilot.unavailable.retry") }}
+            </KsButton>
+        </div>
+
         <!-- Empty state: artwork + heading + a centered composer + suggestions (Figma Default variant). -->
-        <div v-if="isEmpty" class="copilot-empty">
+        <div v-else-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
                 <div class="copilot-artwork">
                     <img :src="logo" alt="" class="copilot-artwork-img" >
@@ -89,6 +101,7 @@
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
     import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import logo from "../../../assets/copilot-illustration.png"
@@ -133,7 +146,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {messages, status, streaming, error, pendingConfirmation, canSend, sendChat, confirm, cancel, reset} = useAiChat()
+    const {messages, status, streaming, error, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry} = useAiChat()
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status
@@ -213,6 +226,33 @@
         align-items: center;
         justify-content: center;
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
+    }
+
+    /* AI-unavailable state (no provider configured): centered message + retry, no composer. */
+    .copilot-unavailable {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-6) var(--ks-spacing-5);
+        text-align: center;
+    }
+
+    .copilot-unavailable-icon {
+        font-size: var(--ks-spacing-8);
+        color: var(--ks-text-secondary);
+    }
+
+    .copilot-unavailable-title {
+        font-weight: 600;
+    }
+
+    .copilot-unavailable-detail {
+        --kel-text-color: var(--ks-text-secondary);
+        max-width: 22rem;
     }
 
     .copilot-empty-inner {

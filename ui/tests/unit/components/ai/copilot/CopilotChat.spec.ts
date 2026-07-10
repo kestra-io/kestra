@@ -12,11 +12,13 @@ const state = {
     streaming: ref(false),
     error: ref<string | null>(null),
     pendingConfirmation: ref<any>(null),
+    unavailable: ref(false),
     canSend: ref(true),
     sendChat: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
     reset: vi.fn(),
+    retry: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
@@ -31,11 +33,13 @@ describe("CopilotChat", () => {
         state.messages.value = []
         state.error.value = null
         state.pendingConfirmation.value = null
+        state.unavailable.value = false
         state.canSend.value = true
         state.streaming.value = false
         state.sendChat.mockReset()
         state.confirm.mockReset()
         state.reset.mockReset()
+        state.retry.mockReset()
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -111,5 +115,19 @@ describe("CopilotChat", () => {
 
     it("shows the recents placeholder control", () => {
         expect(mountChat().find("[data-test=\"copilot-recents\"]").exists()).toBe(true)
+    })
+
+    it("shows the AI-unavailable state (and no composer) when unavailable", () => {
+        state.unavailable.value = true
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
+    })
+
+    it("retries from the unavailable state", async () => {
+        state.unavailable.value = true
+        const w = mountChat()
+        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
+        expect(state.retry).toHaveBeenCalled()
     })
 })

@@ -2048,6 +2048,11 @@
           "stop": "Stop and insert",
           "cancel": "Cancel voice input"
         },
+        "unavailable": {
+            "title": "AI Copilot は利用できません",
+            "detail": "AI プロバイダーが設定されていません。管理者に設定を依頼してから、もう一度お試しください。",
+            "retry": "再試行"
+        },
         "thinking": "思考中",
         "newChat": "New chat",
         "recents": "Recents",

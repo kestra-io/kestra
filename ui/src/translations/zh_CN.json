@@ -2048,6 +2048,11 @@
           "stop": "Stop and insert",
           "cancel": "Cancel voice input"
         },
+        "unavailable": {
+            "title": "AI Copilot 不可用",
+            "detail": "未配置任何 AI 提供程序。请让管理员配置后重试。",
+            "retry": "重试"
+        },
         "thinking": "思考中",
         "newChat": "New chat",
         "recents": "Recents",

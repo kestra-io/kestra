@@ -84,7 +84,7 @@ public class FlowParsingService {
     }
 
     /**
-     * Parses the given abstract flow, returning a parsed {@link FlowWithSource}.
+     * Parses the given abstract flow for trigger evaluation, returning a parsed {@link FlowWithSource}.
      *
      * <p>
      * If an exception occurs during parsing, the original flow is returned unchanged, and the exception is logged.
@@ -92,7 +92,7 @@ public class FlowParsingService {
      *
      * @return a parsed {@link FlowWithSource}, or a {@link FlowWithException} if parsing fails
      */
-    public FlowWithSource parse(FlowInterface flow, Logger logger) {
+    public FlowWithSource parseForTrigger(FlowInterface flow, Logger logger) {
         try {
             return this.parse(flow, false);
         } catch (Exception e) {

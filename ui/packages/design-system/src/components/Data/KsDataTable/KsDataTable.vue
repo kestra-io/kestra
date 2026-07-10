@@ -227,7 +227,7 @@
     const selectableTotal = computed(
         () => props.rowSelectable
             ? pageSelectableCount.value
-            : props.total
+            : props.total,
         )
 
     const selectionChanged = (rawSelection: any[]) => {

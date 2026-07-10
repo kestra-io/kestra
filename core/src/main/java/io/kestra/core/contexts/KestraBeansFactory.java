@@ -20,6 +20,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
@@ -51,6 +52,9 @@ public class KestraBeansFactory {
     @Inject
     RepositoryConfiguration repositoryConfiguration;
 
+    // @Primary so unqualified injections (e.g. PluginAutoInstallService) resolve to this
+    // icon-less catalog rather than the webserver's @Named("withIcons") variant.
+    @Primary
     @Singleton
     public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
         return new PluginCatalogService(httpClient, false, true, executorsUtils);

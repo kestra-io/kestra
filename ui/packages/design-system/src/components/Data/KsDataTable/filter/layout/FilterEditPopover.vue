@@ -140,7 +140,7 @@
 
 .filter-popup-enter-active,
 .filter-popup-leave-active {
-    transition: all 0.1s ease-out;
+    transition: opacity 120ms ease-out, transform 120ms ease-out;
 }
 
 .filter-popup-enter-from {

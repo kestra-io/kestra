@@ -551,7 +551,7 @@
 
     function durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
         if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
-            callback(new Error(t("datepicker.error")))
+            callback(new Error(t("invalid duration")))
         } else {
             callback()
         }

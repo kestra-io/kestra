@@ -67,7 +67,7 @@
     })
 </script>
 
-<style>
+<style lang="scss" scoped>
   .progress-bar {
     margin-block: .3rem;
     flex: 1;

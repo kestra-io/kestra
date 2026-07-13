@@ -77,11 +77,6 @@ interface LogsState {
     results: any[];
 }
 
-export interface Label{
-    key: string;
-    value: string;
-}
-
 export function normalizeFilePreview(data: any) {
     if (data?.extension !== "ion" || !Array.isArray(data.content)) {
         return data
@@ -98,10 +93,6 @@ export function normalizeFilePreview(data: any) {
     return {...data, type: "TEXT", content}
 }
 
-export type Histories = {
-    state: string;
-    date: string;
-}
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
 export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {

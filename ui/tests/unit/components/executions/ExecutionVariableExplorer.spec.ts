@@ -68,21 +68,25 @@ function mountExplorer(variables: Record<string, unknown>) {
     const executionsStore = useExecutionsStore()
     executionsStore.execution = {
         id: "execution-id",
+        originalId: "execution-id",
         namespace: "io.kestra.tests",
         flowId: "flow",
+        flowRevision: 1,
         metadata: {
             originalCreatedDate: "2026-01-01T00:00:00Z",
             attemptNumber: 1,
         },
         variables,
         inputs: {},
-        outputs: {},
         taskRunList: [],
         state: {
             current: "SUCCESS",
-            history: "",
+            histories: [],
             startDate: "2026-01-01T00:00:00Z",
             duration: "PT1S",
+            getStartDate: "2026-01-01T00:00:00Z",
+            getEndDate: "",
+            getDuration: "PT1S",
         },
     }
 

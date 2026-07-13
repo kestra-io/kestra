@@ -87,11 +87,8 @@ const preview = {
 
 setup(async (app) => {
   const {piniaStore} = await initApp(app, [], {}, en);
-  // Stories render components in isolation without every namespaced key they'd
-  // have in the real app (e.g. plugin- or route-specific translations), so
-  // vue-i18n's "[intlify] Not found" warning fires constantly and is not
-  // actionable here. vue-i18n already falls back to returning the key itself;
-  // this just silences the warning about it, only in Storybook.
+  // Isolated stories lack many namespaced i18n keys, so silence vue-i18n's
+  // noisy "Not found" warnings in Storybook (it already falls back to the key).
   globalI18n.value.missingWarn = false;
   globalI18n.value.fallbackWarn = false;
   configureClient()

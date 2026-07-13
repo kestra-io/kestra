@@ -298,8 +298,11 @@
         // specially useful for files
         if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
             const onlyKey = Object.keys(selectedValue.value)[0]
-            const fullExpressionPath = `${baseExpressionPath}${formatStep(onlyKey)}`
-            expression.value = `{{ ${fullExpressionPath} }}`
+            const treePath = `${item.expression}${formatStep(onlyKey)}`
+            const debugPath = `${baseExpressionPath}${formatStep(onlyKey)}`
+            expressionPath.value = treePath
+            previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
+            expression.value = `{{ ${debugPath} }}`
         }else {
             expression.value = `{{ ${baseExpressionPath} }}`
         }

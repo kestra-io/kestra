@@ -98,15 +98,6 @@ export default defineConfig({
                             },
                         ],
                     },
-                    coverage: {
-                        reporter: ["text"],
-                        exclude: [
-                            "**/*.stories.{ts,tsx}",
-                            "**/*.spec.{ts,tsx}",
-                            "**/node_modules/**",
-                            "**/*.json",
-                        ],
-                    },
                 },
             }),
         ],

@@ -3,6 +3,8 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.webserver.converters.QueryFilterFormat;
 
@@ -11,7 +13,6 @@ import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,8 +25,7 @@ class QueryFilterToolTest {
         @Tool(name = "read-execution-logs", value = "Read execution logs, optionally filtered.")
         public String read(
             @P("The execution id") String executionId,
-            @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters
-        ) {
+            @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters) {
             this.capturedExecutionId = executionId;
             this.capturedFilters = filters;
             return "ok:" + executionId + ":" + filters.size();
@@ -43,13 +43,15 @@ class QueryFilterToolTest {
 
     @Test
     void shouldExpandFilterParamIntoPerFieldSchema() {
-        // When
-        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod());
+        // When — OSS spec (tenant targeting not offered)
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod(), false);
 
         // Then — the generic "filters" array is gone; each LOG field is its own {operator,value} object
         JsonObjectSchema params = (JsonObjectSchema) spec.parameters();
         assertThat(params.properties()).containsKey("executionId");
         assertThat(params.properties()).doesNotContainKey("filters");
+        // the hidden @TenantId parameter is not advertised alongside the expanded filters
+        assertThat(params.properties()).doesNotContainKey("tenantId");
         assertThat(params.properties()).containsKeys("TASK_ID", "LEVEL", "NAMESPACE");
         // The per-field operator enum is scoped to that field's supportedOp()
         JsonObjectSchema level = (JsonObjectSchema) params.properties().get("LEVEL");

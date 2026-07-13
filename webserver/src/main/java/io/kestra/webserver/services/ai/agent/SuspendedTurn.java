@@ -24,14 +24,15 @@ public record SuspendedTurn(
     boolean planProposal,
     @Nullable ToolExecutionRequest heldRequest) {
     public static SuspendedTurn forPlan(final AgentLoopContext context) {
-        return build(context, true, null);
+        return base(context, true, null);
     }
 
     public static SuspendedTurn forAction(final AgentLoopContext context, final ToolExecutionRequest heldRequest) {
-        return build(context, false, heldRequest);
+        return base(context, false, heldRequest);
     }
 
-    private static SuspendedTurn build(final AgentLoopContext context, final boolean planProposal, final ToolExecutionRequest heldRequest) {
+    private static SuspendedTurn base(final AgentLoopContext context, final boolean planProposal,
+        @Nullable final ToolExecutionRequest heldRequest) {
         return SuspendedTurn.builder()
             .confirmationId(IdUtils.create())
             .threadId(context.thread().uid())

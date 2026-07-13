@@ -9,6 +9,7 @@ public final class AgentEvents {
     public static final String TOOL_CALL = "tool_call";
     public static final String TOOL_RESULT = "tool_result";
     public static final String PROPOSED_ACTION = "proposed_action";
+    public static final String ARTEFACT_DRAFT = "artefact_draft";
     public static final String DONE = "done";
 
     private AgentEvents() {
@@ -17,7 +18,7 @@ public final class AgentEvents {
     public record TokenEvent(String text) {
     }
 
-    public record ToolCallEvent(String tool, @Nullable String family, Map<String, Object> arguments) {
+    public record ToolCallEvent(String tool, String kind, @Nullable String family, Map<String, Object> arguments) {
     }
 
     public record ToolResultEvent(String tool, String outcome) {
@@ -28,8 +29,15 @@ public final class AgentEvents {
         @Nullable String tool,
         @Nullable String family,
         String summary,
-        @Nullable Map<String, Object> arguments
-    ) {
+        @Nullable Map<String, Object> arguments) {
+    }
+
+    public record ArtefactDraftEvent(
+        String draftId,
+        String kind,
+        String yaml,
+        boolean valid,
+        @Nullable String constraints) {
     }
 
     public record DoneEvent(String status) {

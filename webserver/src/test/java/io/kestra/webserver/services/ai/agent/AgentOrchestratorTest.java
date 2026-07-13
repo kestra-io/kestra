@@ -7,23 +7,31 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
 import io.kestra.webserver.services.ai.agent.store.MessageStore;
 import io.kestra.webserver.services.ai.agent.store.ThreadStore;
+import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
+import io.kestra.webserver.services.ai.agent.tool.DefaultAgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -35,8 +43,6 @@ import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -81,9 +87,17 @@ class AgentOrchestratorTest {
         return provider;
     }
 
+    private final Set<String> deniedTools = ConcurrentHashMap.newKeySet();
+
+    @MockBean(DefaultAgentToolPermissionEvaluator.class)
+    AgentToolPermissionEvaluator permissionEvaluator() {
+        return (entry, tenant, principal) -> !deniedTools.contains(entry.name());
+    }
+
     @BeforeEach
     void resetScript() {
         scriptedModel.clear();
+        deniedTools.clear();
     }
 
     @Test
@@ -94,7 +108,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then
         assertThat(sink.names()).containsExactly(AgentEvents.TOKEN, AgentEvents.DONE);
@@ -113,7 +127,7 @@ class AgentOrchestratorTest {
         scriptedModel.enqueue(AiMessage.from("answer"));
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "How do retries work?", AgentMode.ASK, TENANT, null), new CollectingSink());
+        orchestrator.runTurn(new AgentTurnContext(thread, "How do retries work?", AgentMode.ASK, TENANT, null, null), new CollectingSink());
 
         // Then
         assertThat(reload(thread).title()).isEqualTo("How do retries work?");
@@ -127,18 +141,19 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, claim(thread, turn), true, null, sink);
+        orchestrator.resume(turn, claim(thread, turn), true, null, null, sink);
 
         // Then — the read tool was dispatched (not suspended) and the loop continued to a final answer
         assertThat(sink.names()).containsExactly(
-            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE);
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
         assertThat(toolResultOutcome(sink)).isEqualTo("ok");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         // the durable log spans both turns: prompt, plan card, approval nudge, tool call, result, answer
@@ -146,7 +161,8 @@ class AgentOrchestratorTest {
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly(
                 "USER/TEXT", "ASSISTANT/PROPOSED_ACTION", "USER/TEXT",
-                "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT", "ASSISTANT/TEXT");
+                "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT", "ASSISTANT/TEXT"
+            );
     }
 
     @Test
@@ -157,7 +173,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null), sink);
 
         // Then — suspended before executing; a turn is parked and the thread awaits confirmation
         assertThat(sink.names()).containsExactly(AgentEvents.PROPOSED_ACTION, AgentEvents.DONE);
@@ -174,17 +190,18 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("Done, I restarted it."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, claim(thread, turn), true, null, sink);
+        orchestrator.resume(turn, claim(thread, turn), true, null, null, sink);
 
         // Then — the real restart tool ran and the turn finished IDLE
         assertThat(sink.names()).containsExactly(
-            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE);
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
         assertThat(toolResultOutcome(sink)).isEqualTo("ok");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
@@ -199,13 +216,13 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("Okay, I won't restart it."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, claim(thread, turn), false, "leave it", sink);
+        orchestrator.resume(turn, claim(thread, turn), false, "leave it", null, sink);
 
         // Then — held tool not run; a rejected result is recorded and the loop resumes to IDLE
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
@@ -217,6 +234,95 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldPublishArtefactDraftWhenAuthoringToolProducesDraft() {
+        // Given — ASK mode: authoring tools are non-mutating drafts, so even Ask can draft
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "draft-artefact", "exec-1"))));
+        scriptedModel.enqueue(AiMessage.from("Here is a draft for you to review."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "draft a flow", AgentMode.ASK, TENANT, null, null), sink);
+
+        // Then — the draft is streamed between the tool call and its result, and the turn finishes IDLE
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_CALL, AgentEvents.ARTEFACT_DRAFT, AgentEvents.TOOL_RESULT,
+            AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        AgentEvents.ToolCallEvent call = (AgentEvents.ToolCallEvent) sink.first(AgentEvents.TOOL_CALL);
+        assertThat(call.kind()).isEqualTo("AUTHORING");
+        assertThat(call.family()).isNull();
+        AgentEvents.ArtefactDraftEvent draft = (AgentEvents.ArtefactDraftEvent) sink.first(AgentEvents.ARTEFACT_DRAFT);
+        assertThat(draft.draftId()).isEqualTo("draft-exec-1");
+        assertThat(draft.kind()).isEqualTo("FLOW");
+        assertThat(draft.valid()).isTrue();
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        // the draft is durable: it survives in the message log for history reloads
+        assertThat(messageStore.load(thread.uid()))
+            .extracting(m -> m.role() + "/" + m.type())
+            .containsExactly(
+                "USER/TEXT",
+                "ASSISTANT/TOOL_CALL", "ASSISTANT/ARTEFACT_DRAFT", "TOOL/TOOL_RESULT",
+                "ASSISTANT/TEXT"
+            );
+        // authoring calls are recorded with the AUTHORING discriminator and no family
+        assertThat(messageStore.load(thread.uid()))
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_CALL)
+            .allMatch(m -> m.toolCall().kind() == AgentToolCall.Kind.AUTHORING && m.toolCall().family() == null);
+        assertThat(messageStore.load(thread.uid()))
+            .filteredOn(m -> m.type() == AgentMessageType.ARTEFACT_DRAFT)
+            .allMatch(m -> m.draft() != null && "draft-exec-1".equals(m.draft().draftId()));
+    }
+
+    @Test
+    void shouldRejectToolWhenCallerLacksPermission() {
+        // Given — Ask mode; the caller lacks the logs permission, so the tool is not advertised —
+        // and even when the model calls it anyway, it is rejected without running
+        AgentThread thread = newThread(AgentMode.ASK);
+        deniedTools.add("read-execution-logs");
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
+        scriptedModel.enqueue(AiMessage.from("I don't have access to execution logs."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "read the logs of exec-1", AgentMode.ASK, TENANT, null, null), sink);
+
+        // Then — rejected result recorded, loop continues to an answer
+        assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldRejectHeldActionWhenPermissionRevokedBeforeConfirmation() {
+        // Given — Edit mode; a mutate action is proposed while permitted, then the permission is
+        // revoked before the user approves (the pre-filter passed, so only dispatch can catch it)
+        AgentThread thread = newThread(AgentMode.EDIT);
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
+        CollectingSink first = new CollectingSink();
+        orchestrator.runTurn(new AgentTurnContext(thread, "update it", AgentMode.EDIT, TENANT, null, null), first);
+        SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
+        deniedTools.add("update-artefact");
+        scriptedModel.enqueue(AiMessage.from("I could not perform the update: permission denied."));
+        CollectingSink sink = new CollectingSink();
+
+        // When — the user approves, but dispatch (the enforcement point) denies
+        orchestrator.resume(turn, claim(thread, turn), true, null, null, sink);
+
+        // Then — the tool never ran; a rejected result is recorded and the loop continues to IDLE
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(messageStore.load(thread.uid()))
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
+            .allMatch(
+                m -> "rejected".equals(m.toolResult().get("outcome"))
+                    && String.valueOf(m.toolResult().get("reason")).contains("Permission denied")
+            );
+    }
+
+    @Test
     void shouldSuspendWithPlanCardWhenFirstResponseHasNoToolCallsInPlanMode() {
         // Given — Plan mode; the first tool-free response is the plan
         AgentThread thread = newThread(AgentMode.PLAN);
@@ -224,7 +330,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null, null), sink);
 
         // Then — a plan card (no tool) awaiting confirmation
         AgentEvents.ProposedActionEvent plan = (AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION);
@@ -239,12 +345,12 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read logs\n2. restart"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, claim(thread, turn), false, "not now", sink);
+        orchestrator.resume(turn, claim(thread, turn), false, "not now", null, sink);
 
         // Then — the plan aborts with a closing note and the thread returns IDLE
         assertThat(sink.names()).containsExactly(AgentEvents.DONE);
@@ -263,7 +369,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then — the disallowed call is rejected (not dispatched) and the loop continues to an answer
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
@@ -281,7 +387,8 @@ class AgentOrchestratorTest {
 
         // When — all attempts try to claim IDLE -> RUNNING at once
         for (int i = 0; i < attempts; i++) {
-            claims.add(pool.submit(() -> {
+            claims.add(pool.submit(() ->
+            {
                 start.await();
                 return threadManager.tryMarkRunning(thread, AgentMode.ASK, AgentThreadStatus.IDLE);
             }));
@@ -305,21 +412,26 @@ class AgentOrchestratorTest {
     void shouldExecuteEveryToolWhenModelRequestsThemInParallel() {
         // Given — Ask mode; the model returns two read tool calls in one response (parallel tool calls)
         AgentThread thread = newThread(AgentMode.ASK);
-        scriptedModel.enqueue(AiMessage.from("", List.of(
-            toolCall("c1", "read-execution-logs", "exec-1"),
-            toolCall("c2", "read-execution-logs", "exec-2")
-        )));
+        scriptedModel.enqueue(
+            AiMessage.from(
+                "", List.of(
+                    toolCall("c1", "read-execution-logs", "exec-1"),
+                    toolCall("c2", "read-execution-logs", "exec-2")
+                )
+            )
+        );
         scriptedModel.enqueue(AiMessage.from("Both runs failed on the load task."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 and exec-2 fail?", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 and exec-2 fail?", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then — BOTH calls run (neither is silently dropped), then the loop continues to a final answer
         assertThat(sink.names()).containsExactly(
             AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT,
             AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT,
-            AgentEvents.TOKEN, AgentEvents.DONE);
+            AgentEvents.TOKEN, AgentEvents.DONE
+        );
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(messageStore.load(thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
@@ -327,7 +439,8 @@ class AgentOrchestratorTest {
                 "USER/TEXT",
                 "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT",
                 "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT",
-                "ASSISTANT/TEXT");
+                "ASSISTANT/TEXT"
+            );
     }
 
     @Test
@@ -339,7 +452,7 @@ class AgentOrchestratorTest {
         sink.cancel();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then — nothing is emitted or errored, and the thread is returned to IDLE
         assertThat(sink.names()).isEmpty();
@@ -356,7 +469,7 @@ class AgentOrchestratorTest {
         sink.cancelOnFirstEmit();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then — the streamed token was delivered, but the turn aborts before DONE (without erroring
         // or looping again) and the thread is returned to IDLE
@@ -376,7 +489,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When — the bounded model-call wait (PT1S in tests) elapses
-        orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then — the turn fails cleanly with a timeout and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
@@ -391,7 +504,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "hello", AgentMode.ASK, TENANT, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello", AgentMode.ASK, TENANT, null, null), sink);
 
         // Then — the turn fails cleanly: error surfaced and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
@@ -400,15 +513,17 @@ class AgentOrchestratorTest {
     }
 
     private AgentThread newThread(final AgentMode mode) {
-        return threadStore.create(AgentThread.builder()
-            .uid(IdUtils.create())
-            .tenant(TENANT)
-            .mode(mode)
-            .status(AgentThreadStatus.IDLE)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .deleted(false)
-            .build());
+        return threadStore.create(
+            AgentThread.builder()
+                .uid(IdUtils.create())
+                .tenant(TENANT)
+                .mode(mode)
+                .status(AgentThreadStatus.IDLE)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .deleted(false)
+                .build()
+        );
     }
 
     private AgentThread reload(final AgentThread thread) {

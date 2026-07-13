@@ -4,17 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Converts between the durable {@link AgentMessage} log and the LangChain4j {@link ChatMessage} shapes,
@@ -35,7 +37,8 @@ public final class ChatMessageAdaptor {
                     switch (m.role()) {
                         case USER -> out.add(UserMessage.from(nullToEmpty(m.content())));
                         case ASSISTANT -> out.add(AiMessage.from(nullToEmpty(m.content())));
-                        default -> { /* SYSTEM/TOOL text: skip */ }
+                        default -> {
+                            /* SYSTEM/TOOL text: skip */ }
                     }
                 }
                 case TOOL_CALL -> {
@@ -49,16 +52,24 @@ public final class ChatMessageAdaptor {
                     }
                 }
                 // PROPOSED_ACTION is superseded by the following TOOL_RESULT — never projected.
-                case PROPOSED_ACTION -> { /* omit */ }
+                case PROPOSED_ACTION -> {
+                    /* omit */ }
+                // ARTEFACT_DRAFT is a UI-facing card; the authoring tool's TOOL_RESULT already
+                // carries the draft for the model.
+                case ARTEFACT_DRAFT -> {
+                    /* omit */ }
                 // CANCELLED is a trace-only marker for an aborted turn — never sent to the model.
-                case CANCELLED -> { /* omit */ }
+                case CANCELLED -> {
+                    /* omit */ }
             }
         }
         return out;
     }
 
-    public static AgentToolCall toToolCall(final ToolExecutionRequest req, final AgentToolFamily family) {
-        return AgentToolCall.platform(req.id(), req.name(), family, parseArguments(req.arguments()));
+    public static AgentToolCall toToolCall(final ToolExecutionRequest req, final AgentToolCall.Kind kind, @Nullable final AgentToolFamily family) {
+        return kind == AgentToolCall.Kind.AUTHORING
+            ? AgentToolCall.authoring(req.id(), req.name(), parseArguments(req.arguments()))
+            : AgentToolCall.platform(req.id(), req.name(), family, parseArguments(req.arguments()));
     }
 
     @SuppressWarnings("unchecked")

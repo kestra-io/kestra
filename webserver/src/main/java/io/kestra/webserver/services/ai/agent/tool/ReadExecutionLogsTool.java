@@ -39,17 +39,15 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
-    @Override
-    public String permission() {
-        return "execution:access_logs";
-    }
-
-    @Tool(name = "read-execution-logs", value = "Read the logs of a Kestra execution as timestamped lines. `executionId` scopes to one execution; the optional per-field filters narrow the results (e.g. by task or level). Use this to diagnose why an execution failed or to summarize a run.")
+    @Tool(
+        name = "read-execution-logs",
+        value = "Read the logs of a Kestra execution as timestamped lines. `executionId` scopes to one execution; the optional per-field filters narrow the results (e.g. by task or level). Use this to diagnose why an execution failed or to summarize a run."
+    )
     public String readExecutionLogs(
-        @P(name = "executionId", value = "The id of the execution whose logs to read")String executionId,
-        @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters
-    ) {
-        String tenant = AgentCallContext.requireTenant();
+        @P(name = "executionId", value = "The id of the execution whose logs to read") String executionId,
+        @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters,
+        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
+        String tenant = AgentCallContext.resolveTenant(tenantId);
 
         // executionId is the authoritative scope; ignore any EXECUTION_ID the model added via filters.
         List<QueryFilter> effective = new ArrayList<>();

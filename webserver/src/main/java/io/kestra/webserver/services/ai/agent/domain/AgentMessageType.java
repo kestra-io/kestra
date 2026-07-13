@@ -5,5 +5,6 @@ public enum AgentMessageType {
     TOOL_CALL,
     TOOL_RESULT,
     PROPOSED_ACTION,
+    ARTEFACT_DRAFT,
     CANCELLED
 }

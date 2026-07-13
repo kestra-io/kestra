@@ -14,13 +14,16 @@ import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
+import io.kestra.webserver.services.ai.agent.tool.ToolPermissionDeniedException;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
@@ -73,7 +76,7 @@ public class AgentOrchestrator {
         AgentThread thread = context.thread();
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.uid()).size() + 1);
         try {
-            ResolvedProfile profile = modeProfiles.resolve(context.mode());
+            ResolvedProfile profile = modeProfiles.resolve(context.mode(), context.tenant(), context.principal());
             StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
 
             threadManager.appendUser(thread.uid(), traceId, context.prompt());
@@ -82,17 +85,20 @@ public class AgentOrchestrator {
             messages.add(SystemMessage.from(profile.systemPrompt()));
             messages.addAll(ChatMessageAdaptor.project(threadManager.load(thread.uid())));
 
-            runLoop(new AgentLoopContext(thread, context.tenant(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink);
+            runLoop(
+                new AgentLoopContext(thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink
+            );
         } catch (Exception e) {
             failTurn(thread, sink, e);
         }
     }
 
-    public void resume(final SuspendedTurn turn, final AgentThread running, final boolean approve, final String reason, final TurnEventSink sink) {
+    public void resume(final SuspendedTurn turn, final AgentThread running, final boolean approve, final String reason,
+        final AgentPrincipal principal, final TurnEventSink sink) {
         try {
             StreamingChatModel model = aiServiceManager.getAiService(turn.providerId()).streamingChatModel(List.of());
             AgentLoopContext ctx = new AgentLoopContext(
-                running, turn.tenant(), turn.providerId(), turn.mode(), turn.profile(),
+                running, turn.tenant(), principal, turn.providerId(), turn.mode(), turn.profile(),
                 model, turn.messages(), turn.traceId(), new AtomicBoolean(turn.planProposal())
             );
 
@@ -128,7 +134,7 @@ public class AgentOrchestrator {
         if (!approve) {
             String rejectedText = "REJECTED by user." + (reason != null ? " Reason: " + reason : "");
             ctx.messages().add(ToolExecutionResultMessage.from(held, rejectedText));
-            threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.family()), rejectedResult(reason));
+            threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), rejectedResult(reason));
             emitToolResult(sink, held.name(), "rejected");
 
             if (ctx.mode() == AgentMode.PLAN) {
@@ -141,10 +147,17 @@ public class AgentOrchestrator {
             return;
         }
 
-        emitToolCall(sink, held, entry.family());
-        String result = catalog.dispatch(held, ctx.tenant());
+        emitToolCall(sink, held, entry.kind(), entry.family());
+        String result;
+        try {
+            result = catalog.dispatch(held, callContext(ctx, sink));
+        } catch (ToolPermissionDeniedException e) {
+            rejectTool(ctx, held, entry.kind(), entry.family(), e.getMessage(), sink);
+            runLoop(ctx, sink);
+            return;
+        }
         ctx.messages().add(ToolExecutionResultMessage.from(held, result));
-        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.family()), Map.of("outcome", "ok", "result", result));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
         emitToolResult(sink, held.name(), "ok");
         runLoop(ctx, sink);
     }
@@ -193,12 +206,12 @@ public class AgentOrchestrator {
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
-                    rejectTool(ctx, req, null, "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.", sink);
+                    rejectTool(ctx, req, AgentToolCall.Kind.PLATFORM, null, "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.", sink);
                     continue;
                 }
 
                 ToolEntry entry = catalog.byName(req.name()).orElseThrow();
-                threadManager.appendToolCall(ctx.thread().uid(), ctx.traceId(), ai.text(), ChatMessageAdaptor.toToolCall(req, entry.family()));
+                threadManager.appendToolCall(ctx.thread().uid(), ctx.traceId(), ai.text(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()));
 
                 if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                     if (heldAction == null) {
@@ -207,7 +220,7 @@ public class AgentOrchestrator {
                         heldArgs = args;
                     } else {
                         rejectTool(
-                            ctx, req, entry.family(),
+                            ctx, req, entry.kind(), entry.family(),
                             "Only one action can be confirmed at a time; propose '" + req.name() + "' again on its own.", sink
                         );
                     }
@@ -225,17 +238,23 @@ public class AgentOrchestrator {
     }
 
     private void executeTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final ToolEntry entry, final TurnEventSink sink) {
-        emitToolCall(sink, req, entry.family());
-        String result = catalog.dispatch(req, ctx.tenant());
+        emitToolCall(sink, req, entry.kind(), entry.family());
+        String result;
+        try {
+            result = catalog.dispatch(req, callContext(ctx, sink));
+        } catch (ToolPermissionDeniedException e) {
+            rejectTool(ctx, req, entry.kind(), entry.family(), e.getMessage(), sink);
+            return;
+        }
         ctx.messages().add(ToolExecutionResultMessage.from(req, result));
-        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.family()), Map.of("outcome", "ok", "result", result));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
         emitToolResult(sink, req.name(), "ok");
     }
 
-    private void rejectTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolFamily family,
-        final String reason, final TurnEventSink sink) {
+    private void rejectTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String reason, final TurnEventSink sink) {
         ctx.messages().add(ToolExecutionResultMessage.from(req, reason));
-        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, family), rejectedResult(reason));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), rejectedResult(reason));
         emitToolResult(sink, req.name(), "rejected");
     }
 
@@ -250,7 +269,7 @@ public class AgentOrchestrator {
 
     private void suspendForAction(final AgentLoopContext ctx, final ToolExecutionRequest req,
         final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
-        threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.family()));
+        threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()));
         threadManager.markAwaiting(ctx.thread());
         SuspendedTurn turn = SuspendedTurn.forAction(ctx, req);
         confirmationRegistry.park(turn);
@@ -322,10 +341,22 @@ public class AgentOrchestrator {
         sink.error(e);
     }
 
-    private void emitToolCall(final TurnEventSink sink, final ToolExecutionRequest req, final AgentToolFamily family) {
+    private AgentCallContext.Context callContext(final AgentLoopContext ctx, final TurnEventSink sink) {
+        return new AgentCallContext.Context(ctx.tenant(), ctx.principal(), ctx.providerId(), ctx.thread().uid(), draft ->
+        {
+            threadManager.appendArtefactDraft(ctx.thread().uid(), ctx.traceId(), draft);
+            sink.emit(
+                AgentEvents.ARTEFACT_DRAFT, new AgentEvents.ArtefactDraftEvent(
+                    draft.draftId(), draft.kind().name(), draft.yaml(), draft.valid(), draft.constraints()
+                )
+            );
+        });
+    }
+
+    private void emitToolCall(final TurnEventSink sink, final ToolExecutionRequest req, final AgentToolCall.Kind kind, final AgentToolFamily family) {
         sink.emit(
             AgentEvents.TOOL_CALL, new AgentEvents.ToolCallEvent(
-                req.name(), family == null ? null : family.name(), ChatMessageAdaptor.parseArguments(req.arguments())
+                req.name(), kind.name(), family == null ? null : family.name(), ChatMessageAdaptor.parseArguments(req.arguments())
             )
         );
     }

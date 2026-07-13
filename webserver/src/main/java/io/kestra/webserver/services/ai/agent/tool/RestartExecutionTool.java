@@ -24,8 +24,7 @@ public class RestartExecutionTool implements AiPlatformTool {
     @Inject
     public RestartExecutionTool(
         final ExecutionRepositoryInterface executionRepository,
-        final DispatchQueueInterface<ExecutionCommand> executionCommandQueue
-    ) {
+        final DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
         this.executionRepository = executionRepository;
         this.executionCommandQueue = executionCommandQueue;
     }
@@ -40,17 +39,12 @@ public class RestartExecutionTool implements AiPlatformTool {
         return AgentWritePolicy.CONFIRM;
     }
 
-    @Override
-    public String permission() {
-        return "execution:restart";
-    }
-
     @Tool(name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks, creating a new run. The execution must be in a terminated or paused state.")
     public String restartExecution(
-        @P(name = "executionId", value = "The id of the execution to restart")String executionId,
-        @P(name = "revision", value = "Optional flow revision to restart with; omit to use the execution's own revision", required = false) Integer revision
-    ) {
-        String tenant = AgentCallContext.requireTenant();
+        @P(name = "executionId", value = "The id of the execution to restart") String executionId,
+        @P(name = "revision", value = "Optional flow revision to restart with; omit to use the execution's own revision", required = false) Integer revision,
+        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
+        String tenant = AgentCallContext.resolveTenant(tenantId);
 
         Execution execution = executionRepository.findById(tenant, executionId)
             .orElseThrow(() -> new IllegalArgumentException("Execution not found: '" + executionId + "'"));

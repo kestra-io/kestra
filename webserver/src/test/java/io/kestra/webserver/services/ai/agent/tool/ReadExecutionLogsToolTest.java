@@ -3,6 +3,12 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.time.Instant;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -12,11 +18,6 @@ import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import io.micronaut.data.model.Pageable;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.event.Level;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +36,7 @@ class ReadExecutionLogsToolTest {
     void setUp() {
         logRepository = mock(LogRepositoryInterface.class);
         tool = new ReadExecutionLogsTool(logRepository);
-        AgentCallContext.set(TENANT);
+        AgentCallContext.set(AgentCallContext.Context.ofTenant(TENANT));
     }
 
     @AfterEach
@@ -48,7 +49,6 @@ class ReadExecutionLogsToolTest {
         // When / Then
         assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
         assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.AUTO);
-        assertThat(tool.permission()).isEqualTo("execution:access_logs");
     }
 
     @Test
@@ -64,7 +64,7 @@ class ReadExecutionLogsToolTest {
             .thenReturn(new ArrayListTotal<>(List.of(line), 1));
 
         // When
-        String result = tool.readExecutionLogs("exec-1", null);
+        String result = tool.readExecutionLogs("exec-1", null, null);
 
         // Then
         assertThat(result).isEqualTo("2026-01-01T00:00:00Z [ERROR] load: boom");
@@ -77,7 +77,7 @@ class ReadExecutionLogsToolTest {
             .thenReturn(new ArrayListTotal<>(List.of(), 0));
 
         // When
-        String result = tool.readExecutionLogs("exec-1", null);
+        String result = tool.readExecutionLogs("exec-1", null, null);
 
         // Then
         assertThat(result).isEqualTo("No logs found for execution 'exec-1' with the given filters.");
@@ -95,7 +95,7 @@ class ReadExecutionLogsToolTest {
         );
 
         // When
-        tool.readExecutionLogs("exec-1", modelFilters);
+        tool.readExecutionLogs("exec-1", modelFilters, null);
 
         // Then — exactly one EXECUTION_ID (the authoritative arg); the model's is dropped, TASK_ID kept
         ArgumentCaptor<List<QueryFilter>> captor = ArgumentCaptor.forClass(List.class);

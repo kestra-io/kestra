@@ -15,6 +15,7 @@ import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
+import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 import io.kestra.webserver.services.ai.agent.store.MessageStore;
 import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 
@@ -45,12 +46,14 @@ public class AiThreadManager {
     }
 
     public Optional<AgentThread> tryMarkRunning(final AgentThread thread, final AgentMode mode, final AgentThreadStatus expected) {
-        return threadStore.updateIf(thread.tenant(), thread.uid(), expected, t -> t.toBuilder()
-            .status(AgentThreadStatus.RUNNING)
-            .ownerNodeId(ServerInstance.INSTANCE_ID)
-            .mode(mode)
-            .updatedAt(Instant.now())
-            .build());
+        return threadStore.updateIf(
+            thread.tenant(), thread.uid(), expected, t -> t.toBuilder()
+                .status(AgentThreadStatus.RUNNING)
+                .ownerNodeId(ServerInstance.INSTANCE_ID)
+                .mode(mode)
+                .updatedAt(Instant.now())
+                .build()
+        );
     }
 
     public AgentThread markAwaiting(final AgentThread thread) {
@@ -91,6 +94,20 @@ public class AiThreadManager {
         append(threadId, traceId, AgentMessageRole.TOOL, AgentMessageType.TOOL_RESULT, null, toolCall, result);
     }
 
+    public void appendArtefactDraft(final String threadId, final String traceId, final ArtefactDraft draft) {
+        messageStore.append(
+            AgentMessage.builder()
+                .uid(newMessageUid())
+                .threadId(threadId)
+                .role(AgentMessageRole.ASSISTANT)
+                .type(AgentMessageType.ARTEFACT_DRAFT)
+                .draft(draft)
+                .traceId(traceId)
+                .createdAt(Instant.now())
+                .build()
+        );
+    }
+
     public void appendCancelled(final String threadId, final String traceId) {
         append(threadId, traceId, AgentMessageRole.SYSTEM, AgentMessageType.CANCELLED, null, null, null);
     }
@@ -104,18 +121,20 @@ public class AiThreadManager {
     }
 
     private void append(final String threadId, final String traceId, final AgentMessageRole role, final AgentMessageType type,
-                        final String content, final AgentToolCall toolCall, final Map<String, Object> toolResult) {
-        messageStore.append(AgentMessage.builder()
-            .uid(newMessageUid())
-            .threadId(threadId)
-            .role(role)
-            .type(type)
-            .content(content)
-            .toolCall(toolCall)
-            .toolResult(toolResult)
-            .traceId(traceId)
-            .createdAt(Instant.now())
-            .build());
+        final String content, final AgentToolCall toolCall, final Map<String, Object> toolResult) {
+        messageStore.append(
+            AgentMessage.builder()
+                .uid(newMessageUid())
+                .threadId(threadId)
+                .role(role)
+                .type(type)
+                .content(content)
+                .toolCall(toolCall)
+                .toolResult(toolResult)
+                .traceId(traceId)
+                .createdAt(Instant.now())
+                .build()
+        );
     }
 
     private String newMessageUid() {

@@ -15,7 +15,7 @@ public record AgentMessage(
     @Nullable String content,
     @Nullable AgentToolCall toolCall,
     @Nullable Map<String, Object> toolResult,
+    @Nullable ArtefactDraft draft,
     String traceId,
-    Instant createdAt
-) {
+    Instant createdAt) {
 }

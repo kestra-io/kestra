@@ -11,20 +11,22 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
+import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.AgentTurnContext;
 import io.kestra.webserver.services.ai.agent.AiThreadManager;
 import io.kestra.webserver.services.ai.agent.ConfirmationRegistry;
 import io.kestra.webserver.services.ai.agent.SuspendedTurn;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiDecision;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
+import io.kestra.webserver.services.ai.agent.domain.AgentThread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.store.MessageStore;
 import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 
@@ -56,6 +58,7 @@ public class AiAgentController {
     private final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
     private final ConfirmationRegistry confirmationRegistry;
+    private final AgentPrincipalResolver principalResolver;
     private final ExecutorService executor;
 
     @Inject
@@ -67,6 +70,7 @@ public class AiAgentController {
         final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
         final ConfirmationRegistry confirmationRegistry,
+        final AgentPrincipalResolver principalResolver,
         final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
         this.aiServiceManager = aiServiceManager;
@@ -75,6 +79,7 @@ public class AiAgentController {
         this.threadManager = threadManager;
         this.orchestrator = orchestrator;
         this.confirmationRegistry = confirmationRegistry;
+        this.principalResolver = principalResolver;
         this.executor = executorsUtils.maxCachedThreadPool(8, "ai-agent-orchestrator");
     }
 
@@ -127,9 +132,13 @@ public class AiAgentController {
         // already in flight the claim fails, so we reject here rather than racing on the executor pool.
         AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
             .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
-        return stream(sink -> orchestrator.runTurn(
-            new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId()), sink
-        ));
+
+        AgentPrincipal principal = principalResolver.resolve();
+        return stream(
+            sink -> orchestrator.runTurn(
+                new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal), sink
+            )
+        );
     }
 
     @Post(uri = "/{threadId}/confirm", produces = MediaType.TEXT_EVENT_STREAM)
@@ -151,7 +160,9 @@ public class AiAgentController {
             .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
 
         boolean approve = request.decision() == ApiDecision.APPROVE;
-        return stream(sink -> orchestrator.resume(turn, running, approve, request.reason(), sink));
+
+        AgentPrincipal principal = principalResolver.resolve();
+        return stream(sink -> orchestrator.resume(turn, running, approve, request.reason(), principal, sink));
     }
 
     private Flux<Event<Object>> stream(final Consumer<TurnEventSink> work) {

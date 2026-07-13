@@ -26,10 +26,18 @@ import dev.langchain4j.model.chat.request.json.JsonStringSchema;
  * {@code List<QueryFilter>} array, the model sees one property per filterable field of the resource,
  * each a {@code {operator, value}} object whose {@code operator} is a field-scoped enum.
  *
- * <p>Implementation: reuse langchain4j's derivation for the whole method (name, description,
+ * <p>
+ * It also hides any {@link TenantId}-annotated parameter from the schema unless
+ * {@code exposeTenantId} is set: the parameter stays in the Java signature (bound to {@code null}
+ * when absent) but the model only sees it in editions that offer tenant targeting.
+ * </p>
+ *
+ * <p>
+ * Implementation: reuse langchain4j's derivation for the whole method (name, description,
  * metadata, and every non-filter parameter), then surgically replace the filter parameter's property
- * with the expanded per-field properties. This avoids reimplementing the {@code @Internal}
- * {@code JsonSchemaElementUtils} while giving full control over the filter shape.</p>
+ * with the expanded per-field properties and drop hidden parameters. This avoids reimplementing the
+ * {@code @Internal} {@code JsonSchemaElementUtils} while giving full control over the schema.
+ * </p>
  */
 public final class AiToolSpecifications {
 
@@ -38,10 +46,9 @@ public final class AiToolSpecifications {
      * shape values — in particular the date formats. Mirrors the flow-as-MCP-tool convention
      * ({@code format: date-time} / {@code duration}, i.e. ISO-8601).
      */
-    private static final String FILTER_VALUE_GUIDANCE =
-        "Filter values: each field takes an { operator, value }. For date/time fields (e.g. START_DATE, "
-            + "END_DATE) the value must be either an ISO-8601 date-time (e.g. 2026-07-05T14:30:00Z) or an "
-            + "ISO-8601 duration relative to now (e.g. PT5M, PT1H, P1D).";
+    private static final String FILTER_VALUE_GUIDANCE = "Filter values: each field takes an { operator, value }. For date/time fields (e.g. START_DATE, "
+        + "END_DATE) the value must be either an ISO-8601 date-time (e.g. 2026-07-05T14:30:00Z) or an "
+        + "ISO-8601 duration relative to now (e.g. PT5M, PT1H, P1D).";
 
     private AiToolSpecifications() {
     }
@@ -50,22 +57,37 @@ public final class AiToolSpecifications {
         return field != QueryFilter.Field.TIME_RANGE;
     }
 
-    public static ToolSpecification toolSpecificationFrom(final Method method) {
+    /**
+     * @param method the {@code @Tool}-annotated method
+     * @param exposeTenantId whether {@link TenantId} parameters are shown to the model (EE) or hidden (OSS)
+     */
+    public static ToolSpecification toolSpecificationFrom(final Method method, final boolean exposeTenantId) {
         ToolSpecification base = ToolSpecifications.toolSpecificationFrom(method);
 
         List<Parameter> filterParams = Arrays.stream(method.getParameters())
             .filter(p -> p.isAnnotationPresent(QueryFilterFormat.class))
             .toList();
-        if (filterParams.isEmpty() || !(base.parameters() instanceof JsonObjectSchema params)) {
+        List<Parameter> hiddenParams = exposeTenantId ? List.of()
+            : Arrays.stream(method.getParameters())
+                .filter(p -> p.isAnnotationPresent(TenantId.class))
+                .toList();
+        if ((filterParams.isEmpty() && hiddenParams.isEmpty()) || !(base.parameters() instanceof JsonObjectSchema params)) {
             return base;
         }
 
         Map<String, JsonSchemaElement> properties = new LinkedHashMap<>(params.properties());
         List<String> required = new ArrayList<>(params.required() == null ? List.of() : params.required());
 
+        // hide tenant-targeting parameters from the model; they stay in the signature, bound to null
+        for (Parameter hiddenParam : hiddenParams) {
+            String name = parameterName(hiddenParam);
+            properties.remove(name);
+            required.remove(name);
+        }
+
         for (Parameter filterParam : filterParams) {
             String name = parameterName(filterParam);
-            properties.remove(name);       // drop the generic List<QueryFilter> property
+            properties.remove(name); // drop the generic List<QueryFilter> property
             required.remove(name);
 
             QueryFilter.Resource resource = filterParam.getAnnotation(QueryFilterFormat.class).value();
@@ -73,20 +95,21 @@ public final class AiToolSpecifications {
                 if (!isExposedFilterField(field)) {
                     continue;
                 }
-                properties.put(field.name(), fieldFilterSchema(field));   // optional per-field filter
+                properties.put(field.name(), fieldFilterSchema(field)); // optional per-field filter
             }
         }
 
-        JsonObjectSchema expanded = JsonObjectSchema.builder()
+        JsonObjectSchema reshaped = JsonObjectSchema.builder()
             .addProperties(properties)
             .required(required)
             .definitions(params.definitions())
             .build();
 
-        return base.toBuilder()
-            .description(withFilterValueGuidance(base.description()))
-            .parameters(expanded)
-            .build();
+        ToolSpecification.Builder builder = base.toBuilder().parameters(reshaped);
+        if (!filterParams.isEmpty()) {
+            builder.description(withFilterValueGuidance(base.description()));
+        }
+        return builder.build();
     }
 
     private static JsonObjectSchema fieldFilterSchema(final QueryFilter.Field field) {

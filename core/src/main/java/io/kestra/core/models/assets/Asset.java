@@ -31,7 +31,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String namespace;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
+    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*")
     @Size(min = 1, max = 150)
     protected String id;
 

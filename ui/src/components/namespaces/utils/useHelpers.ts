@@ -107,6 +107,7 @@ export function useHelpers() {
                 namespace: namespace.value,
                 topbar: false,
                 defaultScopeFilter: false,
+                embed: true,
             },
         },
         {
@@ -117,7 +118,7 @@ export function useHelpers() {
                 namespace: namespace.value,
                 topbar: false,
                 visibleCharts: true,
-                embed: false,
+                embed: true,
                 defaultScopeFilter: false,
             },
         },

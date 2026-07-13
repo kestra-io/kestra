@@ -314,11 +314,13 @@
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
+        embed?: boolean;
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
+        embed: false,
     })
 
     const flowStore = useFlowStore()
@@ -398,7 +400,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
-    useRouteContext(routeInfo)
+    useRouteContext(routeInfo, props.embed)
 
     const dataTable = useTemplateRef("dataTable")
 

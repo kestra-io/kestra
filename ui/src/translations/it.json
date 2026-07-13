@@ -326,6 +326,7 @@
     "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
     "no outputs available": "Nessun output disponibile per questa esecuzione del task.",
     "outputs": "Outputs",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
     "eval": {
       "title": "Espressione di Debug",

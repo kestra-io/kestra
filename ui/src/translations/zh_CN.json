@@ -326,6 +326,7 @@
     "no metrics available": "此task运行没有记录任何指标。",
     "no outputs available": "此任务运行没有可用的输出。",
     "outputs": "输出",
+    "flow_inputs": "Flow Inputs",
     "output": "输出",
     "eval": {
       "title": "调试表达式",

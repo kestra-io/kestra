@@ -326,6 +326,7 @@
     "no metrics available": "Für diesen Task-Lauf wurden keine Metriken aufgezeichnet.",
     "no outputs available": "Keine Outputs für diesen Task Run verfügbar.",
     "outputs": "Outputs",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
     "eval": {
       "title": "Debug-Ausdruck",

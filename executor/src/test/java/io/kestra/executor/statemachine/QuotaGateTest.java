@@ -24,14 +24,13 @@ import static io.kestra.executor.testkit.ExecutorContextAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Layer-1 sagas of the quota gate in {@code ExecutionEventMessageHandler}: when the gate is
  * consulted, how the FAIL/CANCEL behaviors stop an execution, and that an exceeded quota
  * short-circuits before the concurrency gate. Quota <em>evaluation</em> is an EE feature — the
- * OSS {@code QuotaService} throws unconditionally — so the harness's Mockito stub plays the EE
- * implementation while the gate logic under test is pure OSS executor code. No Micronaut, no
+ * OSS {@code QuotaService} only accepts quota-less flows — so the harness's Mockito stub plays
+ * the EE implementation while the gate logic under test is pure OSS executor code. No Micronaut, no
  * database. The EE integration twins live in the enterprise repository.
  */
 class QuotaGateTest {
@@ -118,19 +117,21 @@ class QuotaGateTest {
     }
 
     @Test
-    void shouldNotConsultQuotaServiceWhenFlowHasNoQuotas() {
-        // Given: no quotas on the flow — load-bearing because the OSS QuotaService
-        // implementation throws unconditionally: consulting it for quota-less flows would
-        // break every OSS execution
+    void shouldConsultQuotaServiceEvenWhenFlowHasNoQuotas() {
+        // Given: no quotas on the flow. Since namespace/tenant quotas exist, the gate always
+        // consults the service — flow-level quotas are no longer the only source. The OSS
+        // QuotaService is safe for quota-less flows (it only throws when the flow defines
+        // quotas; EE @Replaces it for the rest).
         FlowWithSource flow = Flows.of(logTask());
         harness.registerFlow(flow);
+        doReturn(Optional.empty()).when(harness.quotaService()).checkAndIncrement(any());
 
         // When
         ExecutorContext context = startExecution(flow);
 
-        // Then
+        // Then: consulted, and pass-through when nothing is exceeded
         Assertions.assertThat(context.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        verifyNoInteractions(harness.quotaService());
+        verify(harness.quotaService()).checkAndIncrement(any());
     }
 
     // --- re-entry

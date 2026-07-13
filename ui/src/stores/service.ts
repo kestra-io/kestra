@@ -1,12 +1,9 @@
 import {defineStore} from "pinia"
-import {apiUrlWithoutTenants} from "override/utils/route"
-
-interface Service {
-    id: string;
-}
+import * as ServicesAPI from "@kestra-io/kestra-sdk/services"
+import type {ServiceInstance} from "@kestra-io/kestra-sdk"
 
 interface State {
-    service: Service | undefined;
+    service: ServiceInstance | undefined;
 }
 
 export const useServiceStore = defineStore("service", {
@@ -15,10 +12,10 @@ export const useServiceStore = defineStore("service", {
     }),
 
     actions: {
-        async findServiceById(options: {id: string}): Promise<Service> {
-            const response = await this.$http.get<Service>(`${apiUrlWithoutTenants()}/instance/services/${options.id}`)
-            this.service = response.data
-            return response.data
+        async findServiceById(options: {id: string}): Promise<ServiceInstance> {
+            const service = await ServicesAPI.service(options)
+            this.service = service
+            return service
         },
     },
 })

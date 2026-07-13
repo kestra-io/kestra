@@ -36,20 +36,7 @@
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
-    import {useFlowStore} from "../../stores/flow"
-
-    interface Flow {
-        namespace: string;
-        id: string;
-        triggers?: Trigger[];
-    }
-
-    interface Trigger {
-        id: string;
-        type: string;
-        key?: string;
-        disabled?: boolean;
-    }
+    import {useFlowStore, type Flow, type Trigger} from "../../stores/flow"
 
     const props = defineProps<{
         flow: Flow;

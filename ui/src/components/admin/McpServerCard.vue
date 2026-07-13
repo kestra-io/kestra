@@ -70,7 +70,7 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
 
-    import {type McpAuthType, type McpServer} from "../../stores/mcp"
+    import {type McpServerAuthType, type McpServer} from "../../stores/mcp"
 
     import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue"
     import Lock from "vue-material-design-icons/Lock.vue"
@@ -81,7 +81,7 @@
     const props = defineProps<{
         id: string;
         serverType: McpServer["serverType"];
-        authType: McpAuthType;
+        authType: McpServerAuthType;
         disabled: boolean;
         isDefault?: boolean;
         tenant?: string | null;
@@ -95,7 +95,7 @@
 
     const {t} = useI18n({useScope: "global"})
 
-    const AUTH_LABELS: Record<McpAuthType, string> = {
+    const AUTH_LABELS: Record<McpServerAuthType, string> = {
         BASIC: "mcp.basic_auth",
         API_TOKEN: "mcp.api_token",
         OAUTH: "mcp.oauth",

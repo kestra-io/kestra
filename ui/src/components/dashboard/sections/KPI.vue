@@ -27,16 +27,16 @@
     import {useRoute} from "vue-router"
 
     import {KsProgress} from "@kestra-io/design-system"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {Chart, getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor} from "../composables/charts"
     import {useTheme} from "../../../utils/utils"
-    import {FilterObject} from "../../../utils/filters"
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
     }>(), {
         dashboardId: undefined,

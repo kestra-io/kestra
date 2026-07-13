@@ -2,6 +2,8 @@ import {computed} from "vue"
 import moment from "moment"
 import {useMiscStore} from "override/stores/misc"
 
+export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
 export function uid() {
     return String.fromCharCode(Math.floor(Math.random() * 26) + 97) +
         Math.random().toString(16).slice(2) +

@@ -326,7 +326,7 @@
     "no metrics available": "Brak zarejestrowanych metryk dla tego uruchomienia task.",
     "no outputs available": "Brak dostępnych outputów dla tego uruchomienia task.",
     "outputs": "Wyjścia",
-    "flow_inputs": "Flow Inputs",
+    "flow_inputs": "Wejścia Flow",
     "output": "Wyjście",
     "flow_outputs": "Wyjścia Flow",
     "eval": {

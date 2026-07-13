@@ -42,6 +42,7 @@ logger.warnOnce = (msg, options) => {
 import {commit} from "./plugins/commit"
 import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
+import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
 
@@ -108,6 +109,7 @@ export default defineConfig(({mode}) => {
                     ),
                 },
             }),
+            stripDeadPrebuildDefault(),
             commit(),
             codecovVitePlugin({
                 enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,

@@ -328,6 +328,7 @@
     "outputs": "Outputs",
     "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "디버그 표현식",
       "render": "식 렌더링",

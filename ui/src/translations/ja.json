@@ -326,8 +326,9 @@
     "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
     "no outputs available": "このタスク実行には利用可能なoutputがありません。",
     "outputs": "出力",
-    "flow_inputs": "Flow Inputs",
+    "flow_inputs": "フロー入力",
     "output": "Output",
+    "flow_outputs": "フロー出力",
     "eval": {
       "title": "デバッグ式",
       "render": "式をレンダリング",

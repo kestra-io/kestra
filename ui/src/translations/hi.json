@@ -326,8 +326,9 @@
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
     "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
     "outputs": "आउटपुट",
-    "flow_inputs": "Flow Inputs",
+    "flow_inputs": "फ्लो Inputs",
     "output": "आउटपुट",
+    "flow_outputs": "फ्लो Outputs",
     "eval": {
       "title": "डिबग अभिव्यक्ति",
       "render": "एक्सप्रेशन रेंडर करें",

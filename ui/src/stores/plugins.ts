@@ -300,7 +300,7 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function listTriggers() {
         const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
-        return response.results
+        return response?.results ?? []
     }
 
     async function listWithSubgroup(_options?: Record<string, any>) {

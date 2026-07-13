@@ -113,6 +113,7 @@
     "prev_execution": "Previous execution",
     "next_execution": "Next execution",
     "datepicker": {
+      "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",

@@ -15,6 +15,7 @@
 <script setup lang="ts">
     import {computed,ref,watch} from "vue"
     import TopNavBar from "../layout/TopNavBar.vue"
+    import useRouteContext from "../../composables/useRouteContext"
     import {useDocStore} from "../../stores/doc"
     import DocsLayout from "./DocsLayout.vue"
     import Toc from "./Toc.vue"
@@ -67,6 +68,8 @@
     const routeInfo = computed(() => ({
         title: docStore.pageMetadata?.title ?? t("docs"),
     }))
+
+    useRouteContext(routeInfo)
 
     watch(
         () => route.params.path,

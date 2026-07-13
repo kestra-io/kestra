@@ -11,16 +11,16 @@
         <template #content>
             <span v-if="allowInfinite">{{ $t('datepicker.leave empty for infinite') }}</span>
             <span v-else>{{ $t('datepicker.duration example') }}</span>
-            <div class="mt-2" style="line-height: 1.5;">
+            <div class="mt-2 duration-examples">
                 <strong>Examples:</strong>
-                <table style="margin-top: 4px; border-collapse: collapse;">
+                <table class="duration-table">
                     <tbody>
-                    <tr><td style="padding-right: 12px;">PT30M</td><td>&rarr; 30 minutes</td></tr>
-                    <tr><td style="padding-right: 12px;">PT1H</td><td>&rarr; 1 hour</td></tr>
-                    <tr><td style="padding-right: 12px;">P1D</td><td>&rarr; 1 day</td></tr>
-                    <tr><td style="padding-right: 12px;">P7D</td><td>&rarr; 7 days</td></tr>
-                    <tr><td style="padding-right: 12px;">P30D</td><td>&rarr; 30 days</td></tr>
-                    <tr><td style="padding-right: 12px;">P1DT2H</td><td>&rarr; 1 day 2 hours</td></tr>
+                        <tr><td>PT30M</td><td>&rarr; 30 minutes</td></tr>
+                        <tr><td>PT1H</td><td>&rarr; 1 hour</td></tr>
+                        <tr><td>P1D</td><td>&rarr; 1 day</td></tr>
+                        <tr><td>P7D</td><td>&rarr; 7 days</td></tr>
+                        <tr><td>P30D</td><td>&rarr; 30 days</td></tr>
+                        <tr><td>P1DT2H</td><td>&rarr; 1 day 2 hours</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -115,3 +115,18 @@
         {immediate: true},
     )
 </script>
+
+<style scoped lang="scss">
+.duration-examples {
+    line-height: 1.5;
+}
+
+.duration-table {
+    margin-top: 4px;
+    border-collapse: collapse;
+
+    td:first-child {
+        padding-right: 12px;
+    }
+}
+</style>

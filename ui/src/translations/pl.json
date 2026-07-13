@@ -113,6 +113,7 @@
     "prev_execution": "Poprzednia wykonanie",
     "next_execution": "Następne wykonanie",
     "datepicker": {
+      "invalid duration": "Nieprawidłowy format czasu trwania. Proszę użyć ISO 8601 (np. PT30M, P1D).",
       "leave empty for infinite": "Pozostaw puste dla nieskończonego czasu trwania lub wpisz czas trwania w formacie ISO 8601 (przykład: 'P1DT1H1M1S)'",
       "duration example": "Przykład: 'P1DT1H1M1S'",
       "error": "Nieprawidłowy format czasu trwania, musi być w formacie ISO 8601 (np. P1DT1H1M1S)",

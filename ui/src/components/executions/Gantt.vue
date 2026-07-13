@@ -868,7 +868,7 @@
 
                 .task-progress {
                     position: relative;
-                    transition: all 0.3s;
+                    transition: width 0.3s ease;
                     min-width: 5px;
                 }
             }

@@ -61,10 +61,10 @@ import lombok.extern.slf4j.Slf4j;
  * Defaults come from three levels, ordered most-important-first: <b>flow</b> &gt; <b>namespace</b> (EE, closest
  * namespace first) &gt; <b>global</b> (configuration). Each default is either:
  * <ul>
- *   <li><b>type-matched</b> — applied to every plugin whose {@code type} equals or is prefixed by the default's
- *       {@code type}; or</li>
- *   <li><b>named</b> — carries a {@code ref} id and is applied <i>only</i> to plugins that opt in with
- *       {@code pluginDefaultsRef: <id>}, never by type matching.</li>
+ * <li><b>type-matched</b> — applied to every plugin whose {@code type} equals or is prefixed by the default's
+ * {@code type}; or</li>
+ * <li><b>named</b> — carries a {@code ref} id and is applied <i>only</i> to plugins that opt in with
+ * {@code pluginDefaultsRef: <id>}, never by type matching.</li>
  * </ul>
  *
  * <h2>{@code forced}</h2>
@@ -76,11 +76,11 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>How a single plugin is resolved</h2>
  * <ol>
- *   <li><b>No {@code pluginDefaultsRef}:</b> non-forced then forced type-matched defaults are applied (forced last,
- *       so it wins).</li>
- *   <li><b>With {@code pluginDefaultsRef: id}:</b> non-forced type-matched defaults are skipped. If a <i>forced</i>
- *       type-matched default also applies, <b>it takes over entirely and the referenced default is ignored</b>
- *       (no stacking) — enforcement always wins. Otherwise the referenced default is applied.</li>
+ * <li><b>No {@code pluginDefaultsRef}:</b> non-forced then forced type-matched defaults are applied (forced last,
+ * so it wins).</li>
+ * <li><b>With {@code pluginDefaultsRef: id}:</b> non-forced type-matched defaults are skipped. If a <i>forced</i>
+ * type-matched default also applies, <b>it takes over entirely and the referenced default is ignored</b>
+ * (no stacking) — enforcement always wins. Otherwise the referenced default is applied.</li>
  * </ol>
  *
  * <h2>Resolving a {@code ref}</h2>
@@ -657,22 +657,27 @@ public class PluginDefaultService {
 
     Object recursiveDefaults(Object object, Map<String, List<PluginDefault>> defaults, boolean forcedPass) {
         if (object instanceof Map<?, ?> value) {
-            value = value
-                .entrySet()
-                .stream()
-                .map(
-                    e -> new AbstractMap.SimpleEntry<>(
-                        e.getKey(),
-                        recursiveDefaults(e.getValue(), defaults, forcedPass)
-                    )
-                )
-                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+            // 1. descend into existing children first (post-order), with the full default set
+            Map<String, Object> result = mapChildrenDefaults(value, defaults, forcedPass);
 
-            if (value.containsKey("type")) {
-                value = defaults(value, defaults, forcedPass);
+            if (result.containsKey("type")) {
+                // 2. apply the defaults matching this node
+                DefaultsResult applied = defaults(result, defaults, forcedPass);
+                result = applied.value();
+
+                // 3. a matching default may have injected a new typed child (e.g. a broad `io.kestra`
+                //    default adding a `taskRunner`) that a more specific default should decorate. Re-descend
+                //    to reach it, but drop the defaults already applied here: a default must not recurse into
+                //    the subtree it produced, otherwise a catch-all self-injector would loop forever.
+                if (!applied.applied().isEmpty()) {
+                    Map<String, List<PluginDefault>> remaining = withoutApplied(defaults, applied.applied());
+                    if (!remaining.isEmpty()) {
+                        result = mapChildrenDefaults(result, remaining, forcedPass);
+                    }
+                }
             }
 
-            return value;
+            return result;
         } else if (object instanceof Collection<?> value) {
             return value
                 .stream()
@@ -684,18 +689,47 @@ public class PluginDefaultService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<?, ?> defaults(Map<?, ?> plugin, Map<String, List<PluginDefault>> defaults, boolean forcedPass) {
+    private Map<String, Object> mapChildrenDefaults(Map<?, ?> value, Map<String, List<PluginDefault>> defaults, boolean forcedPass) {
+        return value
+            .entrySet()
+            .stream()
+            .map(
+                e -> new AbstractMap.SimpleEntry<>(
+                    (String) e.getKey(),
+                    recursiveDefaults(e.getValue(), defaults, forcedPass)
+                )
+            )
+            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+    }
+
+    /** Rebuilds the default map without the given instances, compared by identity (the exact ones just applied). */
+    private Map<String, List<PluginDefault>> withoutApplied(Map<String, List<PluginDefault>> all, List<PluginDefault> applied) {
+        Map<String, List<PluginDefault>> remaining = new HashMap<>();
+        all.forEach((key, list) ->
+        {
+            List<PluginDefault> kept = list.stream()
+                .filter(pd -> applied.stream().noneMatch(a -> a == pd))
+                .toList();
+            if (!kept.isEmpty()) {
+                remaining.put(key, kept);
+            }
+        });
+        return remaining;
+    }
+
+    @SuppressWarnings("unchecked")
+    private DefaultsResult defaults(Map<?, ?> plugin, Map<String, List<PluginDefault>> defaults, boolean forcedPass) {
         boolean hasRef = plugin.containsKey(PLUGIN_DEFAULTS_REF_FIELD);
 
         // a plugin opting into a named (ref) default ('pluginDefaultsRef') ignores non-forced type-matched defaults;
         // forced (admin-enforced) defaults are always applied regardless, see below.
         if (hasRef && !forcedPass) {
-            return plugin;
+            return new DefaultsResult((Map<String, Object>) plugin, List.of());
         }
 
         Object type = plugin.get("type");
         if (!(type instanceof String pluginType)) {
-            return plugin;
+            return new DefaultsResult((Map<String, Object>) plugin, List.of());
         }
 
         List<PluginDefault> matching = defaults.entrySet()
@@ -705,7 +739,7 @@ public class PluginDefaultService {
             .toList();
 
         if (matching.isEmpty()) {
-            return plugin;
+            return new DefaultsResult((Map<String, Object>) plugin, List.of());
         }
 
         if (hasRef) {
@@ -736,7 +770,11 @@ public class PluginDefaultService {
             }
         }
 
-        return result;
+        return new DefaultsResult(result, matching);
+    }
+
+    /** Result of applying defaults to a single node: the merged value and the exact default instances applied. */
+    private record DefaultsResult(Map<String, Object> value, List<PluginDefault> applied) {
     }
 
     /**

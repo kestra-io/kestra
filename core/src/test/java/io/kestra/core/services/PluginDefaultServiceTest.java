@@ -11,9 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -38,6 +35,9 @@ import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.AppenderBase;
 import jakarta.inject.Inject;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -132,6 +132,172 @@ class PluginDefaultServiceTest {
                         "id", "my-task",
                         "type", "io.kestra.test",
                         "default-key", "default-value"
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldComposeNonForcedParentAndChildDefaults() {
+        // Given: a broad default injects a taskRunner, a specific default decorates it — both non-forced.
+        // This is the reported bug: without the re-descent fix, the specific default is never applied.
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra",
+            List.of(new PluginDefault("io.kestra", false, Map.of("taskRunner", Map.of("type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes")))),
+            "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+            List.of(new PluginDefault("io.kestra.plugin.ee.kubernetes.runner.Kubernetes", false, Map.of("namespace", "the-namespace")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(Map.of("id", "my-task", "type", "io.kestra.plugin.scripts.python.Commands"))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, defaults);
+
+        // Then: the created taskRunner carries both its type (from the broad default) and the params (from the specific one)
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "taskRunner", Map.of(
+                            "type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+                            "namespace", "the-namespace"
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldComposeNonForcedParentWithForcedChildDefault() {
+        // Given: broad default (non-forced) injects a taskRunner, specific default (forced) decorates it
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra",
+            List.of(new PluginDefault("io.kestra", false, Map.of("taskRunner", Map.of("type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes")))),
+            "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+            List.of(new PluginDefault("io.kestra.plugin.ee.kubernetes.runner.Kubernetes", true, Map.of("namespace", "forced-namespace")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(Map.of("id", "my-task", "type", "io.kestra.plugin.scripts.python.Commands"))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, defaults);
+
+        // Then
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "taskRunner", Map.of(
+                            "type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+                            "namespace", "forced-namespace"
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldApplyForcedDefaultToExistingNestedNode() {
+        // Mirrors the forced pass of innerInjectDefault: the taskRunner already exists (created by the
+        // non-forced pass) and a forced default overrides the user-provided value on it.
+        Map<String, List<PluginDefault>> forced = Map.of(
+            "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+            List.of(new PluginDefault("io.kestra.plugin.ee.kubernetes.runner.Kubernetes", true, Map.of("namespace", "forced-namespace")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(
+                Map.of(
+                    "id", "my-task",
+                    "type", "io.kestra.plugin.scripts.python.Commands",
+                    "taskRunner", Map.of("type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes", "namespace", "user-namespace")
+                )
+            )
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, forced);
+
+        // Then: forced wins over the user value
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "taskRunner", Map.of(
+                            "type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+                            "namespace", "forced-namespace"
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldComposeMultiLevelInjectedDefaultsAndTerminate() {
+        // Three non-forced defaults chaining injected nodes. Child types stay under the `io.kestra` prefix,
+        // so the broad D1 could re-match them — the exclusion must keep it out of the subtrees it produced
+        // (otherwise this would inject forever / not terminate).
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra",
+            List.of(new PluginDefault("io.kestra", false, Map.of("childRunner", Map.of("type", "io.kestra.runner.Level2")))),
+            "io.kestra.runner.Level2",
+            List.of(new PluginDefault("io.kestra.runner.Level2", false, Map.of("p2", "v2", "grandRunner", Map.of("type", "io.kestra.runner.Level3")))),
+            "io.kestra.runner.Level3",
+            List.of(new PluginDefault("io.kestra.runner.Level3", false, Map.of("p3", "v3")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(Map.of("id", "my-task", "type", "io.kestra.plugin.scripts.python.Commands"))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, defaults);
+
+        // Then
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "childRunner", Map.of(
+                            "type", "io.kestra.runner.Level2",
+                            "p2", "v2",
+                            "grandRunner", Map.of(
+                                "type", "io.kestra.runner.Level3",
+                                "p3", "v3"
+                            )
+                        )
                     )
                 )
             ), result

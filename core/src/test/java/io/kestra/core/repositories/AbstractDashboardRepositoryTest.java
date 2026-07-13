@@ -17,15 +17,9 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.chart.KPI;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

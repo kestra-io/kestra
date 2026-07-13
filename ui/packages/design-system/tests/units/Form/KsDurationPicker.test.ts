@@ -28,6 +28,20 @@ describe("KsDurationPicker", () => {
         expect(wrapper.find(".ks-duration-picker__custom").exists()).toBe(true)
     })
 
+    test("disables unit inputs and custom duration input", () => {
+        const wrapper = mount(KsDurationPicker, {
+            props: {disabled: true},
+            global: globalConfig,
+        })
+
+        const unitInputs = wrapper.findAll(".ks-duration-picker__field input")
+        expect(unitInputs).toHaveLength(7)
+        unitInputs.forEach((input) => {
+            expect(input.attributes("disabled")).toBeDefined()
+        })
+        expect(wrapper.find(".ks-duration-picker__custom input").attributes("disabled")).toBeDefined()
+    })
+
     test("parses modelValue on mount and populates fields", async () => {
         const wrapper = mount(KsDurationPicker, {
             props: {modelValue: "P1Y2M3W4DT5H6M7S"},

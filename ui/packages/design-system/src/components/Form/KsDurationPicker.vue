@@ -8,6 +8,7 @@
                     controlsPosition="right"
                     id="ks-duration-years"
                     v-model="years"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -18,6 +19,7 @@
                     controlsPosition="right"
                     id="ks-duration-months"
                     v-model="months"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -28,6 +30,7 @@
                     controlsPosition="right"
                     id="ks-duration-weeks"
                     v-model="weeks"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -38,6 +41,7 @@
                     controlsPosition="right"
                     id="ks-duration-days"
                     v-model="days"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -48,6 +52,7 @@
                     controlsPosition="right"
                     id="ks-duration-hours"
                     v-model="hours"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -58,6 +63,7 @@
                     controlsPosition="right"
                     id="ks-duration-minutes"
                     v-model="minutes"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -68,6 +74,7 @@
                     controlsPosition="right"
                     id="ks-duration-seconds"
                     v-model="seconds"
+                    :disabled="disabled"
                     :min="0"
                 />
             </div>
@@ -76,7 +83,7 @@
             <KsText size="small" :type="durationIssue ? 'danger': ''">
                 {{ durationIssue ?? $t('input_custom_duration') }}
             </KsText>
-            <KsInput type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
+            <KsInput type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :disabled="disabled" :placeholder="$t('datepicker.custom duration')" />
         </div>
     </div>
 </template>
@@ -88,6 +95,7 @@
 
     const props = defineProps<{
         modelValue?: string | null
+        disabled?: boolean
     }>()
 
     const emit = defineEmits<{

@@ -327,6 +327,7 @@
     "no outputs available": "No outputs available for this task run.",
     "outputs": "Outputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug Expression",
       "render": "Render",

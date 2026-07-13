@@ -61,7 +61,7 @@
     import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw"
 
     import {useRoute, useRouter} from "vue-router"
-    import {useDashboardStore} from "../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../stores/dashboard"
     import {useCoreStore} from "../../stores/core.ts"
     import {useI18n} from "vue-i18n"
 
@@ -89,7 +89,7 @@
         }
     })
 
-    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []})
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? DEFAULT_DASHBOARD)
     const isDashboardBundledWithUI = ref<boolean>(false)
     const charts = ref<Chart[]>([])
 
@@ -116,7 +116,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {...DEFAULT_DASHBOARD, ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
         isDashboardBundledWithUI.value = true
     }
 

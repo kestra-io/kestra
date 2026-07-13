@@ -1,17 +1,6 @@
 import {AxiosInstance} from "axios"
 import {apiUrl} from "override/utils/route"
-
-interface Execution {
-    id: string,
-    state: {
-        histories?: any[]
-    },
-    taskRunList: Array<{
-        state?: {
-            current: string
-        }
-    }>
-}
+import type {Execution} from "../stores/executions"
 
 export function waitFor($http: AxiosInstance, execution: {id: string}, predicate: (data: any) => boolean) {
     return new Promise((resolve) => {
@@ -37,7 +26,7 @@ export function waitFor($http: AxiosInstance, execution: {id: string}, predicate
 }
 
 export function findTaskRunsByState(execution: Execution, state: string)  {
-    return execution.taskRunList.filter((taskRun) => taskRun.state?.current === state)
+    return (execution.taskRunList ?? []).filter((taskRun) => taskRun.state?.current === state)
 }
 
 export function statePredicate(execution: Execution, current: {state: {histories?: any[]}}) {

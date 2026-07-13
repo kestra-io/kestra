@@ -23,7 +23,7 @@
                     }
                 }"
             >
-                <span :style="{backgroundColor: loopTerminatedSegment.color }" class="colored-dot"/>
+                <span :style="{backgroundColor: loopTerminatedSegment.color}" class="colored-dot"/>
                 {{ loopTerminatedSegment.count }} {{ loopTerminatedSegment.state.toLowerCase().capitalize() }}
             </KsButton>
         </div>
@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed } from 'vue';
-    import {State } from '@kestra-io/design-system';
-    import {RouterLink } from 'vue-router';
+    import {computed} from 'vue';
+    import {State} from '@kestra-io/design-system';
+    import {RouterLink} from 'vue-router';
 
     // Color for each execution state, used to render the Loop task's per-state progress segments
     const loopStateColors = State.color()

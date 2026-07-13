@@ -2067,8 +2067,6 @@
         },
         "thinking": "思考中",
         "newChat": "New chat",
-        "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet",
         "draft": {
           "title": {
             "flow": "Proposed flow",

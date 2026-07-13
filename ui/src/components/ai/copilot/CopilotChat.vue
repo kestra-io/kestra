@@ -1,22 +1,13 @@
 <template>
     <div class="copilot-chat" data-test="copilot-chat">
-        <!-- Thread controls: start a new chat, browse recents (recents is a BE-pending placeholder). -->
+        <!-- New chat + (EE-only) thread management. Recents/list/rename/delete live entirely in
+             the EE build via the override component; OSS resolves a no-op stub. -->
         <div class="copilot-topbar">
             <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
-            <!-- Thread management (list / switch / rename / delete) is EE-only; OSS runs a
-                 single implicit session, so it gets New chat but no Recents surface. -->
-            <KsDropdown v-if="!isOSS" trigger="click" data-test="copilot-recents">
-                <KsButton size="small" class="copilot-topbar-pill">
-                    {{ t("ai.copilot.recents") }}
-                    <ChevronDown :size="16" />
-                </KsButton>
-                <template #dropdown>
-                    <CopilotThreadList :activeId="thread?.uid" @select="onSelectThread" />
-                </template>
-            </KsDropdown>
+            <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
         <!-- AI unavailable: the backend has no configured provider (503). -->
@@ -106,7 +97,6 @@
     import {ref, computed, nextTick, watch, onBeforeUnmount, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
     import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
@@ -114,8 +104,9 @@
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
     import CopilotThinking from "./CopilotThinking.vue"
-    import CopilotThreadList from "./CopilotThreadList.vue"
-    import {useMiscStore} from "override/stores/misc"
+    // Thread management (Recents list / switch / rename / delete) is EE-only: the OSS build
+    // resolves a no-op stub, the EE build shadows it with the real controls.
+    import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import {useAiChat} from "./useAiChat"
     import type {Mode, ScopeBinding} from "./types"
@@ -130,9 +121,6 @@
 
     const {t} = useI18n()
     const miscStore = useMiscStore()
-
-    // Thread management is EE-only (OSS runs a single implicit session).
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const mode = ref<Mode>(props.initialMode ?? "EDIT")
 

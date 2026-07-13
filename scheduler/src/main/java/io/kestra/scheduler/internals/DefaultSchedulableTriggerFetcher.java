@@ -84,7 +84,11 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     return null;
                 }
 
-                final FlowWithSource flow = flowParsingService.parseForTrigger(maybeFlowTrigger.get(), LOG);
+                final FlowWithSource flow = TriggerFlowParser.parseOrSkip(flowParsingService, maybeFlowTrigger.get(), LOG);
+                if (flow == null) {
+                    // Skip the flow: it is blocked by governance and must not run.
+                    return null;
+                }
 
                 // Validate that the trigger still exists and is enabled before processing. This check covers several cases:
                 // 1. The overall Flow might be disabled 

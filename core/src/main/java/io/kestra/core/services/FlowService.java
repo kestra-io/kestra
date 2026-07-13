@@ -129,8 +129,8 @@ public class FlowService {
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
-            FlowWithSource parsed = flowParsingService.parseForValidation(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(flowParsingService.parseForValidation(parsed, false));
+            FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
+            modelValidator.validate(flowParsingService.parse(parsed, false));
         }
 
         FlowWithSource created = flowRepository.create(flow);
@@ -162,8 +162,8 @@ public class FlowService {
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
-            FlowWithSource parsed = flowParsingService.parseForValidation(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(flowParsingService.parseForValidation(parsed, false));
+            FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
+            modelValidator.validate(flowParsingService.parse(parsed, false));
         }
 
         FlowWithSource updated = flowRepository.update(flow, previous);
@@ -372,7 +372,7 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                FlowWithSource flow = flowParsingService.parseForValidation(tenantId, source, true);
+                FlowWithSource flow = flowParsingService.parse(tenantId, source, true);
 
                 Integer sentRevision = flow.getRevision();
                 if (sentRevision != null) {
@@ -380,7 +380,7 @@ public class FlowService {
                     constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
 
-                FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow, false);
+                FlowWithSource parsedFlow = flowParsingService.parse(flow, false);
                 constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
                 constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
@@ -428,7 +428,7 @@ public class FlowService {
             true
         );
 
-        FlowWithSource flowToImport = flowParsingService.parseForValidation(flow, true);
+        FlowWithSource flowToImport = flowParsingService.parse(flow, true);
 
         if (dryRun) {
             return maybeExisting
@@ -814,7 +814,7 @@ public class FlowService {
      */
     public Optional<ConstraintViolationException> validateForExecution(Flow flow) {
         try {
-            return modelValidator.isValid(flowParsingService.parseForValidation(flow, false));
+            return modelValidator.isValid(flowParsingService.parse(flow, false));
         } catch (FlowProcessingException e) {
             // The flow could not be processed (e.g., unknown plugin). Surface this as a violation
             // so the execution fails with the same error path as other invalid flows.

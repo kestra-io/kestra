@@ -254,7 +254,7 @@ public class FileChangedEventListener {
 
     private Optional<FlowWithSource> parseFlow(String content, Path entry) {
         try {
-            FlowWithSource flow = flowParsingService.parseForValidation(getTenantIdFromPath(entry), content, false);
+            FlowWithSource flow = flowParsingService.parse(getTenantIdFromPath(entry), content, false);
             modelValidator.validate(flow);
             return Optional.of(flow);
         } catch (ConstraintViolationException | FlowProcessingException e) {

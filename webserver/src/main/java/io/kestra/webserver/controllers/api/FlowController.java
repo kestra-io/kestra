@@ -156,7 +156,7 @@ public class FlowController {
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows)
         throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
         try {
-            FlowWithSource flowParsed = flowParsingService.parseFlow(tenantService.resolveTenant(), flow, false);
+            FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), flow, false);
             return graphService.flowGraph(flowParsed, subflows);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {
@@ -903,7 +903,7 @@ public class FlowController {
         @RequestBody(description = "The flow source code") @Body String source,
         @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws ConstraintViolationException {
         try {
-            FlowWithSource flowParsed = flowParsingService.parseFlow(tenantService.resolveTenant(), source, false);
+            FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), source, false);
             return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {

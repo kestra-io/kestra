@@ -54,6 +54,7 @@ import io.kestra.core.utils.TypeConverter;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
+import io.kestra.scheduler.internals.TriggerFlowParser;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -153,7 +154,7 @@ public class TriggerScheduler {
 
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
-            .map(flow -> flowParsingService.parseForTrigger(flow, log))
+            .map(flow -> TriggerFlowParser.parseOrSkip(flowParsingService, flow, log))
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(

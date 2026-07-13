@@ -15,9 +15,10 @@ const KsInput = {
     template: "<input :value=\"modelValue\" :disabled=\"disabled\" @input=\"$emit('update:modelValue', $event.target.value)\"/>",
 }
 
-const mountInput = async (props = {}) => {
+const mountInput = async (props = {}, slots = {}) => {
     const wrapper = mount(LabelInput, {
         props: {labels: [], ...props},
+        slots,
         global: {mocks: {$t: (key: string) => key}, stubs: {KsButton, KsInput}},
     })
     await flushPromises()
@@ -69,5 +70,23 @@ describe("LabelInput", () => {
         const events = wrapper.emitted("update:labels")
         expect(events).toBeTruthy()
         expect(events![events!.length - 1][0]).toHaveLength(2)
+    })
+
+    test("renders the Add label button inside the header actions by default", async () => {
+        const wrapper = await mountInput()
+        expect(wrapper.find(".label-input-header .label-input-header-actions .label-input-add").exists()).toBe(true)
+    })
+
+    test("renders header slot content in the header row", async () => {
+        const wrapper = await mountInput({}, {header: "<span class=\"host-title\">My title</span>"})
+        expect(wrapper.find(".label-input-header-content .host-title").text()).toBe("My title")
+    })
+
+    test("renders header-end slot content after the Add label button", async () => {
+        const wrapper = await mountInput({}, {"header-end": "<button class=\"host-close\"></button>"})
+        const actions = wrapper.find(".label-input-header-actions")
+        const children = Array.from(actions.element.children).map((child) => child.className)
+        expect(children.indexOf("label-input-add")).toBeGreaterThanOrEqual(0)
+        expect(children.indexOf("host-close")).toBeGreaterThan(children.indexOf("label-input-add"))
     })
 })

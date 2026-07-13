@@ -326,6 +326,7 @@
     "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
     "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
     "outputs": "Sorties",
+    "flow_inputs": "Flow Inputs",
     "output": "Sortie",
     "eval": {
       "title": "Expression de débogage",

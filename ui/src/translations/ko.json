@@ -326,6 +326,7 @@
     "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
     "no outputs available": "이 task 실행에 대한 output이 없습니다.",
     "outputs": "Outputs",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
     "eval": {
       "title": "디버그 표현식",

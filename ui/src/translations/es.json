@@ -326,6 +326,7 @@
     "no metrics available": "No se registraron métricas para esta ejecución de task.",
     "no outputs available": "No hay outputs disponibles para esta ejecución de task.",
     "outputs": "Salidas",
+    "flow_inputs": "Flow Inputs",
     "output": "Salida",
     "eval": {
       "title": "Depurar Expresión",

@@ -326,6 +326,7 @@
     "no metrics available": "Для этого выполнения task метрики не записаны.",
     "no outputs available": "Для этого выполнения task нет доступных outputs.",
     "outputs": "Выводы",
+    "flow_inputs": "Flow Inputs",
     "output": "Вывод",
     "eval": {
       "title": "Отладка выражения",

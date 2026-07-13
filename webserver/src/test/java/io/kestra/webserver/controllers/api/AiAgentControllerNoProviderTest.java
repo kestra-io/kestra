@@ -2,13 +2,15 @@ package io.kestra.webserver.controllers.api;
 
 import java.util.Map;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.ai.AiServiceManager;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ChatTurnRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.CreateThreadRequest;
-import io.kestra.webserver.services.ai.agent.dto.AgentDtos.ThreadSummary;
-import io.kestra.webserver.services.ai.agent.domain.Mode;
+import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
+import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import io.micronaut.http.HttpRequest;
@@ -18,7 +20,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,17 +54,27 @@ class AiAgentControllerNoProviderTest {
 
     @Test
     void shouldReturnServiceUnavailableOnCreateWhenNoProviderConfigured() {
-        assertThatThrownBy(() -> client.toBlocking().exchange(
-            HttpRequest.POST(BASE, new CreateThreadRequest(null, null, null)), ThreadSummary.class))
-            .isInstanceOfSatisfying(HttpClientResponseException.class,
-                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.getCode()));
+        assertThatThrownBy(
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(BASE, new ApiCreateThreadRequest(null, null, null)), ApiThreadSummary.class
+            )
+        )
+            .isInstanceOfSatisfying(
+                HttpClientResponseException.class,
+                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.getCode())
+            );
     }
 
     @Test
     void shouldReturnServiceUnavailableOnChatWhenNoProviderConfigured() {
-        assertThatThrownBy(() -> client.toBlocking().exchange(
-            HttpRequest.POST(BASE + "/any-thread/chat", new ChatTurnRequest("hi", Mode.ASK, null, null))))
-            .isInstanceOfSatisfying(HttpClientResponseException.class,
-                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.getCode()));
+        assertThatThrownBy(
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(BASE + "/any-thread/chat", new ApiChatTurnRequest("hi", AgentMode.ASK, null, null))
+            )
+        )
+            .isInstanceOfSatisfying(
+                HttpClientResponseException.class,
+                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.getCode())
+            );
     }
 }

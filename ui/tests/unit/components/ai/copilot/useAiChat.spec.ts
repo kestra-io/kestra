@@ -176,6 +176,26 @@ describe("useAiChat", () => {
         expect(chat.status.value).toBe("IDLE")
     })
 
+    it("resumes a suspended thread by restoring its pending confirmation", async () => {
+        const chat = useAiChat()
+        get.mockResolvedValue({data: {
+            uid: "t5", mode: "PLAN", status: "AWAITING_CONFIRMATION",
+            messages: [{uid: "a", role: "USER", type: "TEXT", content: "restart it"}],
+            pendingConfirmation: {confirmationId: "c9", tool: "restart-execution", family: "MUTATE", summary: "Restart execution"},
+        }})
+        await chat.loadThread("t5")
+        expect(chat.status.value).toBe("AWAITING_CONFIRMATION")
+        expect(chat.pendingConfirmation.value?.confirmationId).toBe("c9")
+        expect(chat.canSend.value).toBe(false) // composer stays gated until confirmed
+    })
+
+    it("leaves no pending confirmation when resuming an idle thread", async () => {
+        const chat = useAiChat()
+        get.mockResolvedValue({data: {uid: "t6", mode: "ASK", status: "IDLE", messages: []}})
+        await chat.loadThread("t6")
+        expect(chat.pendingConfirmation.value).toBeNull()
+    })
+
     it("surfaces the unavailable state when thread creation 503s (no provider)", async () => {
         const chat = useAiChat()
         post.mockRejectedValueOnce({response: {status: 503}})

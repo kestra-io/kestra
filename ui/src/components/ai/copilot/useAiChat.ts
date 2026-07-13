@@ -111,6 +111,14 @@ export function useAiChat() {
                 toolResult: (m.toolResult as unknown as ToolResultEvent) ?? undefined,
                 draft: m.draft ?? undefined,
             }))
+        // Resume a suspended thread: restore the pending proposal so its confirm card
+        // renders again and confirm()/reject works. (Requires the backend to include
+        // `pendingConfirmation` on the thread detail for AWAITING_CONFIRMATION threads.)
+        pendingConfirmation.value = data.status === "AWAITING_CONFIRMATION"
+            ? (data.pendingConfirmation ?? null)
+            : null
+        error.value = null
+        activeAssistant = null
     }
 
     /** Sends a user turn and streams the response. Creates the thread if needed. */

@@ -99,6 +99,13 @@ export interface ThreadDetail {
     scope?: ScopeBinding | null
     status: ThreadStatus
     messages: MessageView[]
+    /**
+     * The proposal awaiting a decision, present when `status` is AWAITING_CONFIRMATION so a
+     * reopened/resumed thread can re-show its confirm card and call `confirm()`.
+     * BACKEND CONTRACT: `GET …/ai/threads/{id}` must include this (with a live `confirmationId`)
+     * for suspended threads — see the Week-3 thread-management plan.
+     */
+    pendingConfirmation?: ProposedActionEvent | null
 }
 
 /* ------------------------------------------------------------------ *

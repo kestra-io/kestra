@@ -6,7 +6,9 @@
                 {{ t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
-            <KsDropdown trigger="click" data-test="copilot-recents">
+            <!-- Thread management (list / switch / rename / delete) is EE-only; OSS runs a
+                 single implicit session, so it gets New chat but no Recents surface. -->
+            <KsDropdown v-if="!isOSS" trigger="click" data-test="copilot-recents">
                 <KsButton size="small" class="copilot-topbar-pill">
                     {{ t("ai.copilot.recents") }}
                     <ChevronDown :size="16" />
@@ -113,6 +115,7 @@
     import CopilotComposer from "./CopilotComposer.vue"
     import CopilotThinking from "./CopilotThinking.vue"
     import CopilotThreadList from "./CopilotThreadList.vue"
+    import {useMiscStore} from "override/stores/misc"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import {useAiChat} from "./useAiChat"
     import type {Mode, ScopeBinding} from "./types"
@@ -127,6 +130,9 @@
 
     const {t} = useI18n()
     const miscStore = useMiscStore()
+
+    // Thread management is EE-only (OSS runs a single implicit session).
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const mode = ref<Mode>(props.initialMode ?? "EDIT")
 

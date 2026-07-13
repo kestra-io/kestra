@@ -1,9 +1,5 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.exceptions.TypeConversionException;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,17 +9,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import io.kestra.core.exceptions.TypeConversionException;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 /**
  * Utility methods for converting raw values (typically {@link Object} or {@link String}) into typed values.
  *
- * <p>General contract for all methods:
+ * <p>
+ * General contract for all methods:
  * <ul>
- *     <li>{@code null} in, {@code null} out.</li>
- *     <li>A value already of the target type is returned as-is (passthrough).</li>
- *     <li>Any other value is strictly parsed from its {@code toString()} representation — no trimming,
- *     no locale handling, no lenient formats.</li>
- *     <li>Conversion failures throw {@link TypeConversionException} (an {@link IllegalArgumentException})
- *     carrying the original parse failure as cause.</li>
+ * <li>{@code null} in, {@code null} out.</li>
+ * <li>A value already of the target type is returned as-is (passthrough).</li>
+ * <li>Any other value is strictly parsed from its {@code toString()} representation — no trimming,
+ * no locale handling, no lenient formats.</li>
+ * <li>Conversion failures throw {@link TypeConversionException} (an {@link IllegalArgumentException})
+ * carrying the original parse failure as cause.</li>
  * </ul>
  */
 public final class TypeConverter {
@@ -31,7 +33,8 @@ public final class TypeConverter {
     /**
      * Converts the given value to a {@link Boolean}.
      *
-     * <p>Uses {@link Boolean#parseBoolean(String)} semantics: only the literal {@code "true"}
+     * <p>
+     * Uses {@link Boolean#parseBoolean(String)} semantics: only the literal {@code "true"}
      * (case-insensitive) is {@code true}; everything else — including {@code "1"} and {@code "yes"} —
      * is {@code false}. Do NOT use for flow-condition truthiness; use {@link TruthUtils} instead.
      *

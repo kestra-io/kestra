@@ -43,7 +43,8 @@ public class AppConfigValidator {
     /**
      * Validates the application-wide configuration and returns the outcome of each check.
      *
-     * <p>This method is side-effect free (it neither logs nor throws) so the same checks can be
+     * <p>
+     * This method is side-effect free (it neither logs nor throws) so the same checks can be
      * reused for on-demand validation.
      *
      * @param environment the configuration environment to validate

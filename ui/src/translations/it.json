@@ -113,6 +113,7 @@
     "prev_execution": "Esecuzione precedente",
     "next_execution": "Prossima esecuzione",
     "datepicker": {
+      "invalid duration": "Formato durata non valido. Utilizzare il formato ISO 8601 (es. PT30M, P1D).",
       "leave empty for infinite": "Lascia vuoto per durata infinita o digita una durata ISO 8601 (esempio: 'P1DT1H1M1S)'",
       "duration example": "Esempio: 'P1DT1H1M1S'",
       "error": "Formato durata non valido, deve essere una durata ISO 8601 (ad es. P1DT1H1M1S)",
@@ -326,8 +327,6 @@
     "no outputs available": "Nessun output disponibile per questa esecuzione del task.",
     "outputs": "Outputs",
     "flow_inputs": "Flow Inputs",
-    "flow_outputs": "Output del Flow",
-    "no_flow_outputs": "Nessun output disponibile.",
     "output": "Output",
     "eval": {
       "title": "Espressione di Debug",

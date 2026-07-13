@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -84,6 +85,14 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(initialSchedulerClock);
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
+    }
+
+    @AfterEach
+    void restoreSchedulerClock() {
+        // SchedulerClock is a JVM-wide static: without a restore, the last fixed clock set by a
+        // test here leaks into every later test class of the fork, whose trigger dates are then
+        // computed against a frozen past instant.
+        SchedulerClock.setClock(Clock.systemDefaultZone());
     }
 
     @Test
@@ -450,7 +459,7 @@ class TriggerSchedulerTest {
                 assertThat(currentTriggerState.isLocked()).isTrue();
                 assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15).toInstant());
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(expectedNextEvaluationNDate);
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
 
                 // Assert NO Execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);

@@ -113,6 +113,7 @@
     "prev_execution": "前回の実行",
     "next_execution": "次回の実行",
     "datepicker": {
+      "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
       "leave empty for infinite": "無限の期間にするには空白のままにするか、ISO 8601期間を入力してください（例：'P1DT1H1M1S'）",
       "duration example": "例：'P1DT1H1M1S'",
       "error": "無効な期間形式です。ISO 8601期間である必要があります（例：P1DT1H1M1S）",
@@ -326,8 +327,6 @@
     "no outputs available": "このタスク実行には利用可能なoutputがありません。",
     "outputs": "出力",
     "flow_inputs": "Flow Inputs",
-    "flow_outputs": "フロー出力",
-    "no_flow_outputs": "出力は利用できません。",
     "output": "Output",
     "eval": {
       "title": "デバッグ式",

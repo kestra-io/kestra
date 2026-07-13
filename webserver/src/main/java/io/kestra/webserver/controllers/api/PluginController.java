@@ -18,10 +18,12 @@ import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -57,6 +59,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
+    private static final String ICON_CACHE_DIRECTIVE = "public, max-age=31536000, immutable";
 
     @Inject
     protected JsonSchemaGenerator jsonSchemaGenerator;
@@ -73,6 +76,10 @@ public class PluginController {
 
     @Inject
     protected EditionProvider editionProvider;
+
+    @Inject
+    @Named("withIcons")
+    protected PluginCatalogService pluginCatalogService;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -250,17 +257,57 @@ public class PluginController {
     )
     public HttpResponse<PluginIconResponse> getPluginIcon(
         @Parameter(description = "The plugin full class name") @PathVariable String cls) {
-        PluginIcon icon = pluginIconsIndex().get(cls);
+        PluginIcon icon = resolvePluginIcon(cls);
 
         return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "icons/{cls}/icon.svg", produces = "image/svg+xml")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon as a raw SVG",
+        description = "Serves the plugin icon as a real, browser-cacheable `image/svg+xml` resource so it can " +
+            "be referenced directly from an `<img src>` or CSS `mask-image` instead of being inlined as a data " +
+            "URI. Falls back to the Kestra plugin catalog when the class or group isn't locally registered, or " +
+            "is registered but ships no bundled icon. Cached indefinitely by the browser — callers append " +
+            "`PluginIcon#hash` as a query param so the URL changes whenever the icon's bytes do."
+    )
+    public HttpResponse<byte[]> getPluginIconSvg(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = resolvePluginIcon(cls);
+        if (icon != null && icon.getIcon() != null) {
+            return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
+        }
+
+        return pluginCatalogService.icon(cls)
+            .<HttpResponse<byte[]>> map(bytes -> HttpResponse.ok(bytes).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE))
+            .orElseGet(HttpResponse::notFound);
+    }
+
+    private PluginIcon resolvePluginIcon(String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+        return icon != null ? icon : loadPluginsIcon().get(cls);
+    }
+
+    private static PluginIcon toPluginIcon(String name, Optional<RegisteredPlugin.IconAndMonochrome> icon, boolean flowable) {
+        return new PluginIcon(
+            name,
+            icon.map(RegisteredPlugin.IconAndMonochrome::icon).orElse(null),
+            flowable,
+            icon.map(RegisteredPlugin.IconAndMonochrome::monochrome).orElse(false),
+            icon.map(i -> Hashing.hashToString(i.icon())).orElse(null)
+        );
     }
 
     @Cacheable("default")
     protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
-            .flatMap(
-                plugin -> Stream.of(
+            .flatMap(plugin ->
+            {
+                Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
+                return Stream.of(
                     plugin.getTasks().stream(),
                     plugin.getTriggers().stream(),
                     plugin.getTaskRunners().stream(),
@@ -273,31 +320,29 @@ public class PluginController {
                     .map(
                         e -> new AbstractMap.SimpleEntry<>(
                             e.getName(),
-                            new PluginIcon(
-                                e.getSimpleName(),
-                                plugin.icon(e),
-                                FlowableTask.class.isAssignableFrom(e)
-                            )
+                            toPluginIcon(e.getSimpleName(), plugin.iconAndMonochrome(e).or(() -> defaultIcon), FlowableTask.class.isAssignableFrom(e))
                         )
-                    )
-            )
+                    );
+            })
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
 
         // add aliases
         Map<String, PluginIcon> aliasIcons = pluginRegistry.plugins().stream()
-            .flatMap(
-                plugin -> plugin.getAliases().values().stream().map(
+            .flatMap(plugin ->
+            {
+                Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
+                return plugin.getAliases().values().stream().map(
                     e -> new AbstractMap.SimpleEntry<>(
                         e.getKey(),
-                        new PluginIcon(
+                        toPluginIcon(
                             e.getKey().substring(e.getKey().lastIndexOf('.') + 1),
-                            plugin.icon(e.getValue()),
+                            plugin.iconAndMonochrome(e.getValue()).or(() -> defaultIcon),
                             FlowableTask.class.isAssignableFrom(e.getValue())
                         )
                     )
-                )
-            )
+                );
+            })
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
         icons.putAll(aliasIcons);
@@ -324,12 +369,12 @@ public class PluginController {
             {
                 String group = plugin.group();
                 if (group != null) {
-                    icons.put(group, new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false));
+                    icons.put(group, toPluginIcon("plugin-icon", plugin.iconAndMonochrome("plugin-icon"), false));
                 }
 
                 plugin.subGroupNames().forEach(subgroup ->
                 {
-                    icons.put(subgroup, new PluginIcon("plugin-icon", plugin.icon(subgroup), false));
+                    icons.put(subgroup, toPluginIcon("plugin-icon", plugin.iconAndMonochrome(subgroup), false));
                 });
             });
 

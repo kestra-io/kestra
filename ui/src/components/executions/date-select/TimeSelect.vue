@@ -7,7 +7,24 @@
         :clearable="clearable"
         @change="onTimeRangeSelect"
     />
-    <KsTooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
+    <KsTooltip v-if="allowCustom && timeRangeSelect === undefined">
+        <template #content>
+            <span v-if="allowInfinite">{{ $t('datepicker.leave empty for infinite') }}</span>
+            <span v-else>{{ $t('datepicker.duration example') }}</span>
+            <div class="mt-2 duration-examples">
+                <strong>Examples:</strong>
+                <table class="duration-table">
+                    <tbody>
+                        <tr><td>PT30M</td><td>&rarr; 30 minutes</td></tr>
+                        <tr><td>PT1H</td><td>&rarr; 1 hour</td></tr>
+                        <tr><td>P1D</td><td>&rarr; 1 day</td></tr>
+                        <tr><td>P7D</td><td>&rarr; 7 days</td></tr>
+                        <tr><td>P30D</td><td>&rarr; 30 days</td></tr>
+                        <tr><td>P1DT2H</td><td>&rarr; 1 day 2 hours</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
         <KsInput class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
     </KsTooltip>
 </template>
@@ -98,3 +115,18 @@
         {immediate: true},
     )
 </script>
+
+<style scoped lang="scss">
+.duration-examples {
+    line-height: 1.5;
+}
+
+.duration-table {
+    margin-top: 4px;
+    border-collapse: collapse;
+
+    td:first-child {
+        padding-right: 12px;
+    }
+}
+</style>

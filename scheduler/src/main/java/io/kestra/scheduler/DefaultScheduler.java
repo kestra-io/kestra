@@ -2,15 +2,14 @@ package io.kestra.scheduler;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,12 +45,12 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
     private static final String EXECUTOR_NAME = "scheduler-scheduling-loop";
 
-    private final AtomicBoolean started = new AtomicBoolean(false);
     private final ExecutorsUtils executorsUtils;
     private final TriggerSchedulingLoopFactory schedulerEventLoopFactory;
 
     private ExecutorService executorService;
-    private List<TriggerSchedulingLoop> schedulingLoops;
+    // Thread-safe: mutated by the vNodes rebalance listener thread and iterated from doStop().
+    private final List<TriggerSchedulingLoop> schedulingLoops = new CopyOnWriteArrayList<>();
     private final VNodesAssigner vNodesAssigner;
     private final Clock clock;
 
@@ -67,7 +66,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private final MaintenanceService maintenanceService;
 
     // Consumers
-    private final List<Disposable> consumerDisposables = new ArrayList<>();
+    // Thread-safe: mutated by the vNodes rebalance listener thread and iterated from doStop().
+    private final List<Disposable> consumerDisposables = new CopyOnWriteArrayList<>();
 
     private Disposable maintenanceListener;
 
@@ -132,15 +132,18 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      */
     @Override
     public void start(int maxThreads) {
-        if (!this.started.compareAndSet(false, true)) {
-            throw new IllegalStateException("Scheduler already started");
-        }
+        guardedStart(() -> doStart(maxThreads), () ->
+        {
+            setState(maintenanceService.isInMaintenanceMode() ? ServiceState.MAINTENANCE : ServiceState.RUNNING);
+            log.info("Scheduler started with {} thread(s) [timezone={}]", maxThreads, SchedulerClock.getClock().getZone());
+        });
+    }
+
+    private void doStart(int maxThreads) {
         this.metricRegistry.gauge(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX_DESCRIPTION, maxThreads);
 
         // Create the scheduling loops
         this.executorService = executorsUtils.maxCachedThreadPool(maxThreads, EXECUTOR_NAME);
-
-        this.schedulingLoops = new ArrayList<>(maxThreads);
 
         final AtomicInteger metricAssignedVNodesCount = this.metricRegistry.gauge(
             MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT,
@@ -205,8 +208,12 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         maintenanceListener = maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
             @Override
             public void onMaintenanceModeEnter() {
+                if (!getState().isRunning()) {
+                    return; // scheduler is either terminating or already terminated.
+                }
+
                 // vNode assignments may change during maintenance mode (e.g., a scheduler leaves or joins the cluster).
-                // it's therefore more reliable to just stop scheduling in a similar way to vNodes revokation. 
+                // it's therefore more reliable to just stop scheduling in a similar way to vNodes revokation.
                 stopAllConsumers();
                 stopAllSchedulingLoop(false);
                 setState(ServiceState.MAINTENANCE);
@@ -214,18 +221,16 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
             @Override
             public void onMaintenanceModeExit() {
+                if (!getState().isRunning()) {
+                    return; // scheduler is either terminating or already terminated.
+                }
+
                 // restart scheduling
                 startScheduling();
                 setState(ServiceState.RUNNING);
             }
         });
 
-        if (maintenanceService.isInMaintenanceMode()) {
-            setState(ServiceState.MAINTENANCE);
-        } else {
-            setState(ServiceState.RUNNING);
-        }
-        log.info("Scheduler started with {} thread(s) [timezone={}]", maxThreads, SchedulerClock.getClock().getZone());
     }
 
     private void startScheduling() {
@@ -327,10 +332,12 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      */
     @Override
     protected ServiceState doStop() {
-        if (!this.started.compareAndSet(true, false)) {
-            return ServiceState.TERMINATED_GRACEFULLY; // Already shut down or not started.
+        // Dispose the listeners first: their isRunning() guards are check-then-act, so a callback
+        // that passed its guard just before we transitioned to TERMINATING could otherwise
+        // recreate consumers or resubmit scheduling loops concurrently with the teardown below.
+        if (this.maintenanceListener != null) {
+            this.maintenanceListener.dispose();
         }
-
         if (rebalanceDisposable != null) {
             rebalanceDisposable.dispose();
         }
@@ -338,12 +345,13 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         // Stop all queues consumption
         stopAllConsumers();
 
-        if (this.maintenanceListener != null) {
-            this.maintenanceListener.dispose();
-        }
-
         // Stop all scheduling loops
         stopAllSchedulingLoop(true);
+
+        if (this.executorService == null) {
+            // the startup was aborted before the executor was created — nothing left to stop
+            return ServiceState.TERMINATED_GRACEFULLY;
+        }
 
         // Initiate graceful shutdown
         this.executorService.shutdown();

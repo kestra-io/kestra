@@ -113,6 +113,7 @@
     "prev_execution": "Ejecución anterior",
     "next_execution": "Próxima ejecución",
     "datepicker": {
+      "invalid duration": "Formato de duración no válido. Utilice ISO 8601 (p. ej., PT30M, P1D).",
       "leave empty for infinite": "Dejar vacío para duración infinita o escribir una duración ISO 8601 (ejemplo: 'P1DT1H1M1S)'",
       "duration example": "Ejemplo: 'P1DT1H1M1S'",
       "error": "Formato de duración inválido, debe ser una duración ISO 8601 (P1DT1H1M1S por ej.)",
@@ -326,8 +327,6 @@
     "no outputs available": "No hay outputs disponibles para esta ejecución de task.",
     "outputs": "Salidas",
     "flow_inputs": "Flow Inputs",
-    "flow_outputs": "Salidas del Flow",
-    "no_flow_outputs": "No hay outputs disponibles.",
     "output": "Salida",
     "eval": {
       "title": "Depurar Expresión",

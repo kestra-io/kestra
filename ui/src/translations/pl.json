@@ -113,6 +113,7 @@
     "prev_execution": "Poprzednia wykonanie",
     "next_execution": "Następne wykonanie",
     "datepicker": {
+      "invalid duration": "Nieprawidłowy format czasu trwania. Proszę użyć ISO 8601 (np. PT30M, P1D).",
       "leave empty for infinite": "Pozostaw puste dla nieskończonego czasu trwania lub wpisz czas trwania w formacie ISO 8601 (przykład: 'P1DT1H1M1S)'",
       "duration example": "Przykład: 'P1DT1H1M1S'",
       "error": "Nieprawidłowy format czasu trwania, musi być w formacie ISO 8601 (np. P1DT1H1M1S)",
@@ -326,8 +327,6 @@
     "no outputs available": "Brak dostępnych outputów dla tego uruchomienia task.",
     "outputs": "Wyjścia",
     "flow_inputs": "Flow Inputs",
-    "flow_outputs": "Wyjścia Flow",
-    "no_flow_outputs": "Brak dostępnych outputów.",
     "output": "Wyjście",
     "eval": {
       "title": "Debugowanie Wyrażenia",

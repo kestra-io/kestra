@@ -2,6 +2,131 @@
   "de": {
     "loading": "Wird geladen...",
     "more actions": "Weitere Aktionen",
+    "new_flow_landing": {
+      "blank": {
+        "id_label": "Flow-id",
+        "id_placeholder": "mein-flow",
+        "namespace_placeholder": "namespace auswählen",
+        "namespaces_error": "namespace konnte nicht geladen werden. Geben Sie einen namespace manuell ein.",
+        "open_editor": "Editor öffnen",
+        "subtitle": "Beginne mit einem Hello-World-Starter und baue von Grund auf.",
+        "title": "Leerer flow"
+      },
+      "blueprints": {
+        "subtitle": "Wähle einen fertigen flow aus dem Community-Katalog.",
+        "title": "blueprints durchsuchen"
+      },
+      "import": {
+        "back": "Zurück",
+        "error": {
+          "empty": "YAML-Inhalt ist leer.",
+          "invalid_mapping": "Ungültiges flow-YAML: erwartet eine Schlüssel-Wert-Zuordnung, keine Liste oder skalaren Wert.",
+          "parse_error": "YAML konnte nicht verarbeitet werden."
+        },
+        "paste_label": "YAML einfügen",
+        "read_error": "Die Datei konnte nicht gelesen werden.",
+        "submit": "flow importieren",
+        "subtitle": "Füge eine vorhandene flow-Definition ein oder lade sie hoch.",
+        "title": "YAML importieren",
+        "upload_button": ".yml / .yaml hochladen",
+        "upload_label": "Oder eine Datei hochladen",
+        "upload_tip": "Akzeptiert .yml- und .yaml-Dateien."
+      },
+      "subtitle": "Starte mit einer leeren Vorlage, durchsuche blueprints oder importiere eine vorhandene YAML.",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "Erstelle einen Alarm- oder Automatisierungsflow für deine Plattform.",
+        "title": "System-flow erstellen"
+      },
+      "title": "Neuen flow erstellen"
+    },
+    "recipe": {
+      "blueprints_section_title": "Oder beginnen Sie mit einem Blueprint",
+      "create_flow": "Flow erstellen",
+      "email": "E-Mail",
+      "execution": {
+        "include_sub": "Unter-namespaces einbeziehen",
+        "include_sub_hint_off": "Nur Flows im genauen namespace lösen diese Benachrichtigung aus.",
+        "include_sub_hint_on": "Flows in untergeordneten namespaces lösen ebenfalls diese Benachrichtigung aus.",
+        "namespace_placeholder": "namespace auswählen",
+        "states": "Bei diesen Zuständen",
+        "states_required": "Wählen Sie mindestens einen Zustand.",
+        "watch_namespace": "namespace überwachen"
+      },
+      "notify": {
+        "email_label": "E-Mail",
+        "email_sub": "E-Mail-Benachrichtigung senden",
+        "email_to_placeholder": "empfaenger@ihre-domain.com",
+        "plugin_unavailable": "Plugin nicht installiert",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Nachricht an einen Slack-Kanal senden",
+        "teams_sub": "Karte an einen Teams-Kanal senden",
+        "teams_webhook_placeholder": "Teams Incoming Webhook URL"
+      },
+      "other": {
+        "no_results": "Keine trigger gefunden.",
+        "search_label": "trigger suchen",
+        "search_placeholder": "Nach Name oder Typ filtern"
+      },
+      "schedule": {
+        "cron": "Cron-Ausdruck",
+        "custom": "Benutzerdefiniert",
+        "daily": "Täglich",
+        "daily_hint": "Läuft jeden Tag um 9:00 Uhr.",
+        "frequency": "Häufigkeit",
+        "hourly": "Stündlich",
+        "hourly_hint": "Läuft jede Stunde zur Minute 0.",
+        "timezone": "Zeitzone",
+        "timezone_placeholder": "Zeitzone auswählen (Standard UTC)",
+        "weekly": "Wöchentlich",
+        "weekly_hint": "Läuft jeden Montag um 9:00 Uhr."
+      },
+      "section_subtitle": "Erstellen Sie einen Flow, der Ihre Plattform überwacht und Ihr Team automatisch benachrichtigt.",
+      "section_title": "Einen System-Flow erstellen",
+      "summary": {
+        "any_namespace": "beliebiger namespace",
+        "empty": "Konfigurieren Sie den trigger und mindestens einen Benachrichtigungskanal, um eine Vorschau Ihres Flows anzuzeigen.",
+        "exact_match": "genaue Übereinstimmung",
+        "execution": "Wenn ein Flow in {ns} ({scope}) den Zustand {states} erreicht, benachrichtige via {channels}.",
+        "including_sub": "und Unter-namespaces",
+        "invalid_hint": "Fügen Sie mindestens einen Benachrichtigungskanal hinzu und vervollständigen Sie die trigger-Konfiguration.",
+        "no_channel": "kein Kanal konfiguriert",
+        "other": "Wenn trigger \"{trigger}\" auslöst, benachrichtige via {channels}.",
+        "schedule": "Nach Zeitplan \"{cron}\", benachrichtige via {channels}.",
+        "selected_trigger": "ausgewählter trigger",
+        "title": "Zusammenfassung",
+        "webhook": "Wenn ein Webhook empfangen wird, benachrichtige via {channels}.",
+        "yaml_preview": "YAML-Vorschau"
+      },
+      "then": {
+        "no_channel_warning": "Wählen Sie mindestens einen Benachrichtigungskanal.",
+        "subtitle": "Wählen Sie, wie Sie Ihr Team benachrichtigen möchten.",
+        "title": "DANN"
+      },
+      "trigger": {
+        "case_sub": "Nur in EE verfügbar",
+        "case_title": "Fallstatus",
+        "execution_sub": "Reagiert auf Flow-Statusänderungen",
+        "execution_title": "Ausführungsstatus",
+        "other_sub": "Beliebiges verfügbares trigger-Plugin",
+        "other_title": "Anderer trigger",
+        "schedule_sub": "Läuft nach einem Zeitplan",
+        "schedule_title": "Zeitplan",
+        "webhook_sub": "Durch eine HTTP-Anfrage ausgelöst",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Senden Sie eine POST-Anfrage an diese URL, um den Flow auszulösen.",
+        "endpoint_url": "Endpunkt-URL",
+        "key_label": "Webhook-Schlüssel",
+        "key_placeholder": "Eindeutigen Schlüssel für diesen Webhook eingeben"
+      },
+      "when": {
+        "subtitle": "Wählen Sie aus, was diesen System-Flow auslöst.",
+        "title": "WANN",
+        "trigger_type": "Trigger-Typ"
+      }
+    },
     "toggle menu": "Menü umschalten",
     "panel actions": "Panelaktionen",
     "playground actions": "Aktionen im Playground",

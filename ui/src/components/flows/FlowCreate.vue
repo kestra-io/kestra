@@ -5,18 +5,32 @@
         </template>
     </TopNavBar>
     <section class="full-container">
-        <MultiPanelFlowEditorView v-if="flowStore.flow" />
+        <template v-if="showLanding">
+            <ImportYaml
+                v-if="showImport"
+                @submit="handleImportSubmit"
+                @back="showImport = false"
+            />
+            <NewFlowLanding
+                v-else
+                @proceed="handleLandingProceed"
+                @import="showImport = true"
+            />
+        </template>
+        <MultiPanelFlowEditorView v-else-if="flowStore.flow" />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount} from "vue"
+    import {computed, onBeforeUnmount, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import Actions from "override/components/flows/Actions.vue"
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"
+    import NewFlowLanding from "./create/NewFlowLanding.vue"
+    import ImportYaml from "./create/ImportYaml.vue"
     import {useBlueprintsStore} from "../../stores/blueprints"
     import {getRandomID} from "../../utils/id"
     import {useFlowStore} from "../../stores/flow"
@@ -28,6 +42,7 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
+    import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -36,7 +51,25 @@
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
-    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
+
+    const PARAM_DRIVEN_QUERY_KEYS = [
+        "blueprintId",
+        "blueprintSource",
+        "blueprintSourceYaml",
+        "copy",
+        "onboarding",
+        "onboardingPreset",
+        "recipePreset",
+        "ai",
+        "createTrigger",
+    ]
+
+    const hasMeaningfulQueryParam = PARAM_DRIVEN_QUERY_KEYS.some(
+        key => route.query[key] !== undefined,
+    )
+
+    const showLanding = ref(!hasMeaningfulQueryParam)
+    const showImport = ref(false)
 
     const defaultFlowTemplate = (id: string, namespace: string) => {
         const configuredTemplate = miscStore.configs?.flowTemplate
@@ -71,12 +104,15 @@ tasks:
         return metadata.length > 0 ? `${metadata.join("\n")}\n\n${source}`.trim() : source
     }
 
-    const setupFlow = async () => {
+    const setupFlow = async (overrideId?: string, overrideNamespace?: string, importYaml?: string) => {
         const blueprintId = route.query.blueprintId as string
         const blueprintSource = route.query.blueprintSource as BlueprintType
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string
         const onboardingPresetFlow = route.query.onboardingPreset === "true"
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
+            : ""
+        const recipePresetFlow = route.query.recipePreset === "true"
+            ? sessionStorage.getItem(RECIPE_PRESET_KEY) ?? ""
             : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             resource.FLOW,
@@ -84,14 +120,20 @@ tasks:
         )[0]
         let flowYaml = ""
         let shouldApplyGeneratedMetadata = false
-        const id = getRandomID()
-        const selectedNamespace = (route.query.namespace as string)
+        const id = overrideId ?? getRandomID()
+        const selectedNamespace = overrideNamespace
+            ?? (route.query.namespace as string)
             ?? defaultNamespace()
             ?? implicitDefaultNamespace
             ?? "company.team"
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source
+        } else if (importYaml) {
+            flowYaml = importYaml
+        } else if (recipePresetFlow) {
+            flowYaml = recipePresetFlow
+            sessionStorage.removeItem(RECIPE_PRESET_KEY)
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
@@ -105,7 +147,7 @@ tasks:
             })
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId)
-            if(flowBlueprint.source){
+            if (flowBlueprint.source) {
                 flowYaml = flowBlueprint.source
             }
         } else {
@@ -135,6 +177,17 @@ tasks:
         flowStore.initYamlSource()
     }
 
+    const handleLandingProceed = async ({id, namespace}: {id: string; namespace: string}) => {
+        showLanding.value = false
+        await setupFlow(id, namespace)
+    }
+
+    const handleImportSubmit = async ({yaml}: {yaml: string}) => {
+        showLanding.value = false
+        showImport.value = false
+        await setupFlow(undefined, undefined, yaml)
+    }
+
     const routeInfo = computed(() => {
         return {
             title: t("flows"),
@@ -144,7 +197,9 @@ tasks:
     useRouteContext(routeInfo)
 
     flowStore.isCreating = true
-    setupFlow()
+    if (!showLanding.value) {
+        setupFlow()
+    }
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined

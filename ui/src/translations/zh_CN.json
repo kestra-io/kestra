@@ -2,6 +2,131 @@
   "zh_CN": {
     "loading": "加载中...",
     "more actions": "更多操作",
+    "new_flow_landing": {
+      "blank": {
+        "id_label": "flow id",
+        "id_placeholder": "我的-flow",
+        "namespace_placeholder": "选择 namespace",
+        "namespaces_error": "无法加载 namespace。请手动输入 namespace。",
+        "open_editor": "打开编辑器",
+        "subtitle": "从 hello-world 示例开始，从头构建。",
+        "title": "空白 flow"
+      },
+      "blueprints": {
+        "subtitle": "从社区目录中选择现成的 flow。",
+        "title": "浏览 blueprints"
+      },
+      "import": {
+        "back": "返回",
+        "error": {
+          "empty": "YAML 内容为空。",
+          "invalid_mapping": "无效的 flow YAML：需要键值映射，而非列表或标量。",
+          "parse_error": "无法解析 YAML。"
+        },
+        "paste_label": "粘贴 YAML",
+        "read_error": "无法读取文件。",
+        "submit": "导入 flow",
+        "subtitle": "粘贴或上传现有的 flow 定义。",
+        "title": "导入 YAML",
+        "upload_button": "上传 .yml / .yaml",
+        "upload_label": "或上传文件",
+        "upload_tip": "接受 .yml 和 .yaml 文件。"
+      },
+      "subtitle": "从空白画布开始，浏览 blueprints，或导入现有 YAML。",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "为您的平台构建警报或自动化 flow。",
+        "title": "创建系统 flow"
+      },
+      "title": "创建新 flow"
+    },
+    "recipe": {
+      "blueprints_section_title": "或从blueprint开始",
+      "create_flow": "创建flow",
+      "email": "电子邮件",
+      "execution": {
+        "include_sub": "包含子namespace",
+        "include_sub_hint_off": "只有精确namespace中的flow才会触发此警报。",
+        "include_sub_hint_on": "子namespace中的flow也会触发此警报。",
+        "namespace_placeholder": "选择namespace",
+        "states": "在这些状态时",
+        "states_required": "请至少选择一个状态。",
+        "watch_namespace": "监控namespace"
+      },
+      "notify": {
+        "email_label": "电子邮件",
+        "email_sub": "发送电子邮件通知",
+        "email_to_placeholder": "recipient@your-domain.com",
+        "plugin_unavailable": "插件未安装",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "向Slack频道发布消息",
+        "teams_sub": "向Teams频道发送卡片",
+        "teams_webhook_placeholder": "Teams incoming webhook URL"
+      },
+      "other": {
+        "no_results": "未找到trigger。",
+        "search_label": "搜索trigger",
+        "search_placeholder": "按名称或类型过滤"
+      },
+      "schedule": {
+        "cron": "Cron表达式",
+        "custom": "自定义",
+        "daily": "每天",
+        "daily_hint": "每天上午9点运行。",
+        "frequency": "频率",
+        "hourly": "每小时",
+        "hourly_hint": "每小时第0分钟运行。",
+        "timezone": "时区",
+        "timezone_placeholder": "选择时区（默认UTC）",
+        "weekly": "每周",
+        "weekly_hint": "每周一上午9点运行。"
+      },
+      "section_subtitle": "创建一个监控您的平台并自动通知团队的flow。",
+      "section_title": "创建系统flow",
+      "summary": {
+        "any_namespace": "任意namespace",
+        "empty": "配置trigger和至少一个通知渠道以预览您的flow。",
+        "exact_match": "精确匹配",
+        "execution": "当{ns} ({scope})中的flow达到状态{states}时，通过{channels}通知。",
+        "including_sub": "及子namespace",
+        "invalid_hint": "至少添加一个通知渠道并完成trigger配置。",
+        "no_channel": "未配置渠道",
+        "other": "当trigger\"{trigger}\"触发时，通过{channels}通知。",
+        "schedule": "按计划\"{cron}\"，通过{channels}通知。",
+        "selected_trigger": "已选trigger",
+        "title": "摘要",
+        "webhook": "收到webhook时，通过{channels}通知。",
+        "yaml_preview": "YAML预览"
+      },
+      "then": {
+        "no_channel_warning": "请至少选择一个通知渠道。",
+        "subtitle": "选择通知团队的方式。",
+        "title": "则"
+      },
+      "trigger": {
+        "case_sub": "仅EE功能",
+        "case_title": "案例状态",
+        "execution_sub": "响应flow状态变化",
+        "execution_title": "execution状态",
+        "other_sub": "任何可用的trigger插件",
+        "other_title": "其他trigger",
+        "schedule_sub": "按时间计划运行",
+        "schedule_title": "计划",
+        "webhook_sub": "由HTTP请求触发",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "向此URL发送POST请求以触发flow。",
+        "endpoint_url": "端点URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "为此webhook输入唯一key"
+      },
+      "when": {
+        "subtitle": "选择触发此系统flow的条件。",
+        "title": "当",
+        "trigger_type": "trigger类型"
+      }
+    },
     "toggle menu": "切换菜单",
     "panel actions": "面板操作",
     "playground actions": "游乐场操作",

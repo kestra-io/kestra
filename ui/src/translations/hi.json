@@ -2,6 +2,131 @@
   "hi": {
     "loading": "लोड हो रहा है...",
     "more actions": "अधिक क्रियाएँ",
+    "new_flow_landing": {
+      "blank": {
+        "id_label": "flow id",
+        "id_placeholder": "mera-flow",
+        "namespace_placeholder": "namespace चुनें",
+        "namespaces_error": "namespace लोड नहीं हो सके। namespace मैन्युअल रूप से टाइप करें।",
+        "open_editor": "संपादक खोलें",
+        "subtitle": "hello-world स्टार्टर से शुरू करें और शुरू से बनाएं।",
+        "title": "रिक्त flow"
+      },
+      "blueprints": {
+        "subtitle": "सामुदायिक कैटलॉग से तैयार flow चुनें।",
+        "title": "blueprints देखें"
+      },
+      "import": {
+        "back": "वापस",
+        "error": {
+          "empty": "YAML सामग्री खाली है।",
+          "invalid_mapping": "अमान्य flow YAML: key-value mapping अपेक्षित था, list या scalar नहीं।",
+          "parse_error": "YAML को parse नहीं किया जा सका।"
+        },
+        "paste_label": "YAML पेस्ट करें",
+        "read_error": "फ़ाइल नहीं पढ़ी जा सकी।",
+        "submit": "flow आयात करें",
+        "subtitle": "मौजूदा flow परिभाषा पेस्ट करें या अपलोड करें।",
+        "title": "YAML आयात करें",
+        "upload_button": ".yml / .yaml अपलोड करें",
+        "upload_label": "या फ़ाइल अपलोड करें",
+        "upload_tip": ".yml और .yaml फ़ाइलें स्वीकार करता है।"
+      },
+      "subtitle": "रिक्त कैनवास से शुरू करें, blueprints देखें, या मौजूदा YAML आयात करें।",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "अपने प्लेटफ़ॉर्म के लिए अलर्ट या स्वचालन flow बनाएं।",
+        "title": "सिस्टम flow बनाएं"
+      },
+      "title": "नया flow बनाएं"
+    },
+    "recipe": {
+      "blueprints_section_title": "या एक blueprint से शुरू करें",
+      "create_flow": "flow बनाएं",
+      "email": "ईमेल",
+      "execution": {
+        "include_sub": "उप-namespaces शामिल करें",
+        "include_sub_hint_off": "केवल सटीक namespace में flows इस अलर्ट को ट्रिगर करेंगे।",
+        "include_sub_hint_on": "चाइल्ड namespaces में flows भी इस अलर्ट को ट्रिगर करेंगे।",
+        "namespace_placeholder": "namespace चुनें",
+        "states": "इन स्थितियों पर",
+        "states_required": "कम से कम एक स्थिति चुनें।",
+        "watch_namespace": "namespace देखें"
+      },
+      "notify": {
+        "email_label": "ईमेल",
+        "email_sub": "ईमेल नोटिफिकेशन भेजें",
+        "email_to_placeholder": "recipient@your-domain.com",
+        "plugin_unavailable": "प्लगइन इंस्टॉल नहीं है",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Slack चैनल पर संदेश पोस्ट करें",
+        "teams_sub": "Teams चैनल पर कार्ड भेजें",
+        "teams_webhook_placeholder": "Teams incoming webhook URL"
+      },
+      "other": {
+        "no_results": "कोई trigger नहीं मिला।",
+        "search_label": "triggers खोजें",
+        "search_placeholder": "नाम या प्रकार से फ़िल्टर करें"
+      },
+      "schedule": {
+        "cron": "Cron एक्सप्रेशन",
+        "custom": "कस्टम",
+        "daily": "दैनिक",
+        "daily_hint": "प्रतिदिन सुबह 9 बजे चलता है।",
+        "frequency": "आवृत्ति",
+        "hourly": "प्रति घंटा",
+        "hourly_hint": "हर घंटे मिनट 0 पर चलता है।",
+        "timezone": "टाइमज़ोन",
+        "timezone_placeholder": "टाइमज़ोन चुनें (डिफ़ॉल्ट UTC)",
+        "weekly": "साप्ताहिक",
+        "weekly_hint": "हर सोमवार सुबह 9 बजे चलता है।"
+      },
+      "section_subtitle": "एक flow बनाएं जो आपके प्लेटफॉर्म की निगरानी करे और आपकी टीम को स्वचालित रूप से सूचित करे।",
+      "section_title": "एक सिस्टम flow बनाएं",
+      "summary": {
+        "any_namespace": "कोई भी namespace",
+        "empty": "अपने flow का पूर्वावलोकन करने के लिए trigger और कम से कम एक नोटिफिकेशन चैनल कॉन्फ़िगर करें।",
+        "exact_match": "सटीक मिलान",
+        "execution": "जब {ns} ({scope}) में एक flow स्थिति {states} पर पहुंचे, {channels} के माध्यम से सूचित करें।",
+        "including_sub": "और उप-namespaces",
+        "invalid_hint": "कम से कम एक नोटिफिकेशन चैनल जोड़ें और trigger कॉन्फ़िगरेशन पूरी करें।",
+        "no_channel": "कोई चैनल कॉन्फ़िगर नहीं",
+        "other": "जब trigger \"{trigger}\" सक्रिय हो, {channels} के माध्यम से सूचित करें।",
+        "schedule": "शेड्यूल \"{cron}\" पर, {channels} के माध्यम से सूचित करें।",
+        "selected_trigger": "चयनित trigger",
+        "title": "सारांश",
+        "webhook": "जब webhook प्राप्त हो, {channels} के माध्यम से सूचित करें।",
+        "yaml_preview": "YAML पूर्वावलोकन"
+      },
+      "then": {
+        "no_channel_warning": "कम से कम एक नोटिफिकेशन चैनल चुनें।",
+        "subtitle": "चुनें कि अपनी टीम को कैसे सूचित करें।",
+        "title": "तब"
+      },
+      "trigger": {
+        "case_sub": "केवल EE सुविधा",
+        "case_title": "केस स्थिति",
+        "execution_sub": "flow स्थिति परिवर्तनों पर प्रतिक्रिया करता है",
+        "execution_title": "execution स्थिति",
+        "other_sub": "कोई भी उपलब्ध trigger प्लगइन",
+        "other_title": "अन्य trigger",
+        "schedule_sub": "एक समय-सारिणी पर चलता है",
+        "schedule_title": "शेड्यूल",
+        "webhook_sub": "HTTP अनुरोध द्वारा ट्रिगर",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "flow ट्रिगर करने के लिए इस URL पर POST अनुरोध भेजें।",
+        "endpoint_url": "एंडपॉइंट URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "इस webhook के लिए एक अद्वितीय key दर्ज करें"
+      },
+      "when": {
+        "subtitle": "चुनें कि इस सिस्टम flow को क्या ट्रिगर करता है।",
+        "title": "जब",
+        "trigger_type": "trigger प्रकार"
+      }
+    },
     "toggle menu": "मेनू टॉगल करें",
     "panel actions": "पैनल क्रियाएँ",
     "playground actions": "प्लेग्राउंड क्रियाएँ",

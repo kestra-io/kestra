@@ -2,6 +2,131 @@
   "it": {
     "loading": "Caricamento...",
     "more actions": "Altre azioni",
+    "new_flow_landing": {
+      "blank": {
+        "id_label": "id del flow",
+        "id_placeholder": "mio-flow",
+        "namespace_placeholder": "Seleziona un namespace",
+        "namespaces_error": "Impossibile caricare i namespace. Digita un namespace manualmente.",
+        "open_editor": "Apri editor",
+        "subtitle": "Inizia con un esempio hello-world e costruisci da zero.",
+        "title": "flow vuoto"
+      },
+      "blueprints": {
+        "subtitle": "Scegli un flow pronto dal catalogo della community.",
+        "title": "Sfoglia i blueprints"
+      },
+      "import": {
+        "back": "Indietro",
+        "error": {
+          "empty": "Il contenuto YAML è vuoto.",
+          "invalid_mapping": "YAML del flow non valido: atteso un mapping chiave-valore, non una lista o scalare.",
+          "parse_error": "Impossibile analizzare il YAML."
+        },
+        "paste_label": "Incolla YAML",
+        "read_error": "Impossibile leggere il file.",
+        "submit": "Importa flow",
+        "subtitle": "Incolla o carica una definizione di flow esistente.",
+        "title": "Importa YAML",
+        "upload_button": "Carica .yml / .yaml",
+        "upload_label": "O carica un file",
+        "upload_tip": "Accetta file .yml e .yaml."
+      },
+      "subtitle": "Inizia da una tela vuota, esplora i blueprints o importa un YAML esistente.",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "Costruisci un flow di allerta o automazione per la tua piattaforma.",
+        "title": "Crea flow di sistema"
+      },
+      "title": "Crea un nuovo flow"
+    },
+    "recipe": {
+      "blueprints_section_title": "O inizia da un blueprint",
+      "create_flow": "Crea flow",
+      "email": "E-mail",
+      "execution": {
+        "include_sub": "Includi sotto-namespaces",
+        "include_sub_hint_off": "Solo i flows nel namespace esatto attiveranno questo alert.",
+        "include_sub_hint_on": "Anche i flows nei namespaces figli attiveranno questo alert.",
+        "namespace_placeholder": "Seleziona un namespace",
+        "states": "Su questi stati",
+        "states_required": "Seleziona almeno uno stato.",
+        "watch_namespace": "Monitorare namespace"
+      },
+      "notify": {
+        "email_label": "E-mail",
+        "email_sub": "Invia una notifica via email",
+        "email_to_placeholder": "destinatario@tuo-dominio.com",
+        "plugin_unavailable": "Plugin non installato",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Invia un messaggio a un canale Slack",
+        "teams_sub": "Invia una scheda a un canale Teams",
+        "teams_webhook_placeholder": "URL webhook in entrata Teams"
+      },
+      "other": {
+        "no_results": "Nessun trigger trovato.",
+        "search_label": "Cerca triggers",
+        "search_placeholder": "Filtra per nome o tipo"
+      },
+      "schedule": {
+        "cron": "Espressione cron",
+        "custom": "Personalizzato",
+        "daily": "Giornaliero",
+        "daily_hint": "Viene eseguito ogni giorno alle 9:00.",
+        "frequency": "Frequenza",
+        "hourly": "Orario",
+        "hourly_hint": "Viene eseguito ogni ora al minuto 0.",
+        "timezone": "Fuso orario",
+        "timezone_placeholder": "Seleziona un fuso orario (predefinito UTC)",
+        "weekly": "Settimanale",
+        "weekly_hint": "Viene eseguito ogni lunedì alle 9:00."
+      },
+      "section_subtitle": "Crea un flow che monitora la tua piattaforma e notifica automaticamente il tuo team.",
+      "section_title": "Creare un flow di sistema",
+      "summary": {
+        "any_namespace": "qualsiasi namespace",
+        "empty": "Configura il trigger e almeno un canale di notifica per visualizzare l'anteprima del tuo flow.",
+        "exact_match": "corrispondenza esatta",
+        "execution": "Quando un flow in {ns} ({scope}) raggiunge lo stato {states}, notifica tramite {channels}.",
+        "including_sub": "e sotto-namespaces",
+        "invalid_hint": "Aggiungi almeno un canale di notifica e completa la configurazione del trigger.",
+        "no_channel": "nessun canale configurato",
+        "other": "Quando il trigger \"{trigger}\" si attiva, notifica tramite {channels}.",
+        "schedule": "Secondo la pianificazione \"{cron}\", notifica tramite {channels}.",
+        "selected_trigger": "trigger selezionato",
+        "title": "Riepilogo",
+        "webhook": "Quando viene ricevuto un webhook, notifica tramite {channels}.",
+        "yaml_preview": "Anteprima YAML"
+      },
+      "then": {
+        "no_channel_warning": "Seleziona almeno un canale di notifica.",
+        "subtitle": "Seleziona come notificare il tuo team.",
+        "title": "ALLORA"
+      },
+      "trigger": {
+        "case_sub": "Funzionalità solo EE",
+        "case_title": "Stato del caso",
+        "execution_sub": "Reagisce ai cambiamenti di stato del flow",
+        "execution_title": "Stato di esecuzione",
+        "other_sub": "Qualsiasi plugin di trigger disponibile",
+        "other_title": "Altro trigger",
+        "schedule_sub": "Viene eseguito secondo un programma",
+        "schedule_title": "Pianificazione",
+        "webhook_sub": "Attivato da una richiesta HTTP",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Invia una richiesta POST a questo URL per attivare il flow.",
+        "endpoint_url": "URL endpoint",
+        "key_label": "Chiave webhook",
+        "key_placeholder": "Inserisci una chiave univoca per questo webhook"
+      },
+      "when": {
+        "subtitle": "Scegli cosa attiva questo flow di sistema.",
+        "title": "QUANDO",
+        "trigger_type": "Tipo di trigger"
+      }
+    },
     "toggle menu": "Attiva/disattiva menu",
     "panel actions": "Azioni del pannello",
     "playground actions": "Azioni del playground",

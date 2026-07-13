@@ -2,6 +2,131 @@
   "ja": {
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
+    "new_flow_landing": {
+      "blank": {
+        "id_label": "flow id",
+        "id_placeholder": "my-flow",
+        "namespace_placeholder": "namespaceを選択",
+        "namespaces_error": "namespaceを読み込めませんでした。namespaceを手動で入力してください。",
+        "open_editor": "エディターを開く",
+        "subtitle": "hello-worldスターターから始めて、最初から構築します。",
+        "title": "空のflow"
+      },
+      "blueprints": {
+        "subtitle": "コミュニティカタログから既製のflowを選択します。",
+        "title": "blueprintsを参照"
+      },
+      "import": {
+        "back": "戻る",
+        "error": {
+          "empty": "YAMLコンテンツが空です。",
+          "invalid_mapping": "flow YAMLが無効です: リストやスカラーではなく、キーと値のマッピングが必要です。",
+          "parse_error": "YAMLを解析できませんでした。"
+        },
+        "paste_label": "YAMLを貼り付け",
+        "read_error": "ファイルを読み込めませんでした。",
+        "submit": "flowをインポート",
+        "subtitle": "既存のflow定義を貼り付けるかアップロードしてください。",
+        "title": "YAMLをインポート",
+        "upload_button": ".yml / .yaml をアップロード",
+        "upload_label": "またはファイルをアップロード",
+        "upload_tip": ".ymlおよび.yamlファイルを受け付けます。"
+      },
+      "subtitle": "空白のキャンバスから始めるか、blueprintsを探索するか、既存のYAMLをインポートしてください。",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "プラットフォーム用のアラートまたは自動化flowを構築します。",
+        "title": "システムflowを作成"
+      },
+      "title": "新しいflowを作成"
+    },
+    "recipe": {
+      "blueprints_section_title": "またはblueprintから開始する",
+      "create_flow": "flowを作成",
+      "email": "メール",
+      "execution": {
+        "include_sub": "サブnamespaceを含める",
+        "include_sub_hint_off": "正確なnamespaceのflowのみがこのアラートをトリガーします。",
+        "include_sub_hint_on": "子namespaceのflowもこのアラートをトリガーします。",
+        "namespace_placeholder": "namespaceを選択",
+        "states": "これらの状態のとき",
+        "states_required": "少なくとも1つの状態を選択してください。",
+        "watch_namespace": "namespaceを監視"
+      },
+      "notify": {
+        "email_label": "メール",
+        "email_sub": "メール通知を送信",
+        "email_to_placeholder": "recipient@your-domain.com",
+        "plugin_unavailable": "プラグインがインストールされていません",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Slackチャンネルにメッセージを投稿",
+        "teams_sub": "Teamsチャンネルにカードを送信",
+        "teams_webhook_placeholder": "Teamsの受信webhookURL"
+      },
+      "other": {
+        "no_results": "triggerが見つかりません。",
+        "search_label": "triggerを検索",
+        "search_placeholder": "名前またはタイプでフィルター"
+      },
+      "schedule": {
+        "cron": "Cron式",
+        "custom": "カスタム",
+        "daily": "毎日",
+        "daily_hint": "毎日9:00に実行されます。",
+        "frequency": "頻度",
+        "hourly": "毎時",
+        "hourly_hint": "毎時0分に実行されます。",
+        "timezone": "タイムゾーン",
+        "timezone_placeholder": "タイムゾーンを選択（デフォルトUTC）",
+        "weekly": "毎週",
+        "weekly_hint": "毎週月曜日9:00に実行されます。"
+      },
+      "section_subtitle": "プラットフォームを監視し、チームに自動的に通知するflowを作成します。",
+      "section_title": "システムflowを作成する",
+      "summary": {
+        "any_namespace": "任意のnamespace",
+        "empty": "flowのプレビューを表示するには、triggerと少なくとも1つの通知チャンネルを設定してください。",
+        "exact_match": "完全一致",
+        "execution": "{ns} ({scope}) のflowが状態 {states} に達したとき、{channels} で通知します。",
+        "including_sub": "およびサブnamespace",
+        "invalid_hint": "少なくとも1つの通知チャンネルを追加し、trigger設定を完了してください。",
+        "no_channel": "チャンネル未設定",
+        "other": "trigger「{trigger}」が発火したとき、{channels} で通知します。",
+        "schedule": "スケジュール「{cron}」で、{channels} で通知します。",
+        "selected_trigger": "選択されたtrigger",
+        "title": "サマリー",
+        "webhook": "webhookを受信したとき、{channels} で通知します。",
+        "yaml_preview": "YAMLプレビュー"
+      },
+      "then": {
+        "no_channel_warning": "少なくとも1つの通知チャンネルを選択してください。",
+        "subtitle": "チームへの通知方法を選択します。",
+        "title": "そのとき"
+      },
+      "trigger": {
+        "case_sub": "EE専用機能",
+        "case_title": "ケースステータス",
+        "execution_sub": "flowの状態変化に反応します",
+        "execution_title": "execution状態",
+        "other_sub": "利用可能な任意のtriggerプラグイン",
+        "other_title": "その他のtrigger",
+        "schedule_sub": "時間スケジュールで実行されます",
+        "schedule_title": "スケジュール",
+        "webhook_sub": "HTTPリクエストによってトリガーされます",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "このURLにPOSTリクエストを送信してflowをトリガーします。",
+        "endpoint_url": "エンドポイントURL",
+        "key_label": "Webhookキー",
+        "key_placeholder": "このwebhookのユニークなキーを入力"
+      },
+      "when": {
+        "subtitle": "このシステムflowをトリガーするものを選択します。",
+        "title": "いつ",
+        "trigger_type": "triggerの種類"
+      }
+    },
     "toggle menu": "メニューを切り替え",
     "panel actions": "パネルアクション",
     "playground actions": "プレイグラウンドアクション",

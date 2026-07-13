@@ -50,16 +50,17 @@
                                 </p>
                             </div>
                         </div>
-                        <KsMarkdown
-                            v-if="longDescription"
-                            class="plugin-header__long"
-                            :content="longDescription"
-                        />
                     </header>
 
                     <div :class="['plugin-detail__body', {'plugin-detail__body--flat': flat}]">
                         <slot />
                     </div>
+
+                    <KsMarkdown
+                        v-if="longDescription"
+                        class="plugin-header__long"
+                        :content="longDescription"
+                    />
                 </div>
                 <aside v-if="hasOverviewContent" class="plugin-detail__aside">
                     <PluginOverview

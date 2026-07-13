@@ -470,10 +470,24 @@
         data: {
             type: string;
             columns: {
-                date: {field: string; displayName: string};
-                state: {field: string};
-                total: {displayName: string; agg: string};
-                duration: {field: string; displayName: string; agg: string};
+                date: {
+                    field: string;
+                    displayName: string;
+                };
+                state: {
+                    field: string;
+                };
+                total: {
+                    displayName: string;
+                    agg: string;
+                    graphStyle: string;
+                };
+                duration: {
+                    field: string;
+                    displayName: string;
+                    agg: string;
+                    graphStyle: string;
+                };
             };
             where: {field: string; type: string; value: string}[];
         };
@@ -495,14 +509,36 @@
         data: {
             type: "io.kestra.plugin.core.dashboard.data.Executions",
             columns: {
-                date: {field: "START_DATE", displayName: "Date"},
-                state: {field: "STATE"},
-                total: {displayName: "Executions", agg: "COUNT"},
-                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
+                date: {
+                    field: "START_DATE",
+                    displayName: "Date",
+                },
+                state: {
+                    field: "STATE",
+                },
+                total: {
+                    displayName: "Executions",
+                    agg: "COUNT",
+                    graphStyle: "BARS",
+                },
+                duration: {
+                    field: "DURATION",
+                    displayName: "Duration",
+                    agg: "SUM",
+                    graphStyle: "LINES",
+                },
             },
             where: [
-                {field: "NAMESPACE", type: "EQUAL_TO", value: "${namespace}"},
-                {field: "FLOW_ID", type: "EQUAL_TO", value: "${flow_id}"},
+                {
+                    field: "NAMESPACE",
+                    type: "EQUAL_TO",
+                    value: "${namespace}",
+                },
+                {
+                    field: "FLOW_ID",
+                    type: "EQUAL_TO",
+                    value: "${flow_id}",
+                },
             ],
         },
     }

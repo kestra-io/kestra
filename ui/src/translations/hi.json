@@ -113,6 +113,7 @@
     "prev_execution": "पिछला निष्पादन",
     "next_execution": "अगली निष्पादन",
     "datepicker": {
+      "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
       "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या एक ISO 8601 अवधि टाइप करें (उदाहरण: 'P1DT1H1M1S)'",
       "duration example": "उदाहरण: 'P1DT1H1M1S'",
       "error": "अमान्य अवधि प्रारूप, एक ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए P1DT1H1M1S)",

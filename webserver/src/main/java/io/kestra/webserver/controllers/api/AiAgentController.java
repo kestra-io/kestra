@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -125,7 +126,7 @@ public class AiAgentController {
         // Atomically claim the thread (IDLE -> RUNNING) before scheduling the async turn; if a turn is
         // already in flight the claim fails, so we reject here rather than racing on the executor pool.
         AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'"));
+            .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
         return stream(sink -> orchestrator.runTurn(
             new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId()), sink
         ));
@@ -147,7 +148,7 @@ public class AiAgentController {
         // Atomically claim the awaiting thread (AWAITING_CONFIRMATION -> RUNNING) before scheduling the
         // resumed turn, mirroring the chat path so a concurrent turn is rejected here rather than racing.
         AgentThread running = threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.CONFLICT, "A turn is already in flight for thread '" + threadId + "'"));
+            .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
 
         boolean approve = request.decision() == ApiDecision.APPROVE;
         return stream(sink -> orchestrator.resume(turn, running, approve, request.reason(), sink));

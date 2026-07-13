@@ -312,7 +312,7 @@ public class AgentOrchestrator {
     private void failTurn(final AgentThread thread, final TurnEventSink sink, final Exception e) {
         log.error("Agent turn failed for thread {}", thread.uid(), e);
         try {
-            threadManager.resetToIdle(thread);
+            threadManager.resetToIdleIfExists(thread.tenant(), thread.uid());
         } catch (Exception ignored) {
             // best-effort reset; the original failure is what we surface
         }

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.kestra.core.server.ServerInstance;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
 import io.kestra.webserver.services.ai.agent.domain.AgentMessageRole;
@@ -31,7 +32,6 @@ public class AiThreadManager {
 
     private final ThreadStore threadStore;
     private final MessageStore messageStore;
-    private final String nodeId = "node-" + IdUtils.create();
     private final AtomicLong sequence = new AtomicLong();
 
     @Inject
@@ -44,11 +44,10 @@ public class AiThreadManager {
         return threadStore.find(tenant, uid);
     }
 
-
     public Optional<AgentThread> tryMarkRunning(final AgentThread thread, final AgentMode mode, final AgentThreadStatus expected) {
         return threadStore.updateIf(thread.tenant(), thread.uid(), expected, t -> t.toBuilder()
             .status(AgentThreadStatus.RUNNING)
-            .ownerNodeId(nodeId)
+            .ownerNodeId(ServerInstance.INSTANCE_ID)
             .mode(mode)
             .updatedAt(Instant.now())
             .build());
@@ -59,22 +58,13 @@ public class AiThreadManager {
     }
 
     public AgentThread finish(final AgentThread thread) {
-        Instant now = Instant.now();
-        AgentThread.AgentThreadBuilder builder = thread.toBuilder()
-            .status(AgentThreadStatus.IDLE)
-            .ownerNodeId(null)
-            .lastTurnAt(now)
-            .updatedAt(now);
-        if (thread.title() == null) {
-            builder.title(deriveTitle(thread.uid()));
-        }
-        return threadStore.save(builder.build());
+        String title = thread.title() != null ? thread.title() : deriveTitle(thread.uid());
+        AgentThread idle = thread.toIdle();
+        return threadStore.save(idle.withLastTurnAt(idle.updatedAt()).withTitle(title));
     }
 
-    public void resetToIdle(final AgentThread thread) {
-        threadStore.find(thread.tenant(), thread.uid()).ifPresent(t ->
-            threadStore.save(t.withStatus(AgentThreadStatus.IDLE).withOwnerNodeId(null).withUpdatedAt(Instant.now()))
-        );
+    public void resetToIdleIfExists(final String tenant, final String uid) {
+        threadStore.find(tenant, uid).ifPresent(t -> threadStore.save(t.toIdle()));
     }
 
     public List<AgentMessage> load(final String threadId) {

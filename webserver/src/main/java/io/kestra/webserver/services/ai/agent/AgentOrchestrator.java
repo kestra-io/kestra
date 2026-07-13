@@ -12,12 +12,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
 import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
-import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
@@ -60,8 +60,7 @@ public class AgentOrchestrator {
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
         final ConfirmationRegistry confirmationRegistry,
-        final AgentConfiguration configuration
-    ) {
+        final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
@@ -123,7 +122,7 @@ public class AgentOrchestrator {
     }
 
     private void resumeHeldAction(final AgentLoopContext ctx, final ToolExecutionRequest held,
-                                  final boolean approve, final String reason, final TurnEventSink sink) {
+        final boolean approve, final String reason, final TurnEventSink sink) {
         ToolEntry entry = catalog.byName(held.name()).orElseThrow();
 
         if (!approve) {
@@ -207,8 +206,10 @@ public class AgentOrchestrator {
                         heldEntry = entry;
                         heldArgs = args;
                     } else {
-                        rejectTool(ctx, req, entry.family(),
-                            "Only one action can be confirmed at a time; propose '" + req.name() + "' again on its own.", sink);
+                        rejectTool(
+                            ctx, req, entry.family(),
+                            "Only one action can be confirmed at a time; propose '" + req.name() + "' again on its own.", sink
+                        );
                     }
                     continue;
                 }
@@ -232,7 +233,7 @@ public class AgentOrchestrator {
     }
 
     private void rejectTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolFamily family,
-                            final String reason, final TurnEventSink sink) {
+        final String reason, final TurnEventSink sink) {
         ctx.messages().add(ToolExecutionResultMessage.from(req, reason));
         threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, family), rejectedResult(reason));
         emitToolResult(sink, req.name(), "rejected");
@@ -248,14 +249,16 @@ public class AgentOrchestrator {
     }
 
     private void suspendForAction(final AgentLoopContext ctx, final ToolExecutionRequest req,
-                                  final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
+        final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.family()));
         threadManager.markAwaiting(ctx.thread());
         SuspendedTurn turn = SuspendedTurn.forAction(ctx, req);
         confirmationRegistry.park(turn);
-        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(
-            turn.confirmationId(), req.name(), entry.family().name(), summaryFor(req.name(), args), args
-        ));
+        sink.emit(
+            AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(
+                turn.confirmationId(), req.name(), entry.family().name(), summaryFor(req.name(), args), args
+            )
+        );
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
@@ -320,9 +323,11 @@ public class AgentOrchestrator {
     }
 
     private void emitToolCall(final TurnEventSink sink, final ToolExecutionRequest req, final AgentToolFamily family) {
-        sink.emit(AgentEvents.TOOL_CALL, new AgentEvents.ToolCallEvent(
-            req.name(), family == null ? null : family.name(), ChatMessageAdaptor.parseArguments(req.arguments())
-        ));
+        sink.emit(
+            AgentEvents.TOOL_CALL, new AgentEvents.ToolCallEvent(
+                req.name(), family == null ? null : family.name(), ChatMessageAdaptor.parseArguments(req.arguments())
+            )
+        );
     }
 
     private void emitToolResult(final TurnEventSink sink, final String tool, final String outcome) {

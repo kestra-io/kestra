@@ -22,23 +22,16 @@ public record SuspendedTurn(
     List<ChatMessage> messages,
     String traceId,
     boolean planProposal,
-    @Nullable ToolExecutionRequest heldRequest
-) {
+    @Nullable ToolExecutionRequest heldRequest) {
     public static SuspendedTurn forPlan(final AgentLoopContext context) {
-        return baseBuilder(context)
-            .planProposal(true)
-            .heldRequest(null)
-            .build();
+        return build(context, true, null);
     }
 
     public static SuspendedTurn forAction(final AgentLoopContext context, final ToolExecutionRequest heldRequest) {
-        return baseBuilder(context)
-            .planProposal(false)
-            .heldRequest(heldRequest)
-            .build();
+        return build(context, false, heldRequest);
     }
 
-    private static SuspendedTurnBuilder baseBuilder(final AgentLoopContext context) {
+    private static SuspendedTurn build(final AgentLoopContext context, final boolean planProposal, final ToolExecutionRequest heldRequest) {
         return SuspendedTurn.builder()
             .confirmationId(IdUtils.create())
             .threadId(context.thread().uid())
@@ -47,6 +40,9 @@ public record SuspendedTurn(
             .mode(context.mode())
             .profile(context.profile())
             .messages(context.messages())
-            .traceId(context.traceId());
+            .traceId(context.traceId())
+            .planProposal(planProposal)
+            .heldRequest(heldRequest)
+            .build();
     }
 }

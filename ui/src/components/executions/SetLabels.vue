@@ -115,8 +115,8 @@
                 executionId: props.execution.id,
             })
 
-            if (response?.data) {
-                executionsStore.execution = response.data
+            if (response) {
+                executionsStore.execution = response as any
             }
 
             toast.success(t("Set labels done"))

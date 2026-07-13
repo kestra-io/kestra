@@ -1,12 +1,9 @@
-import axios from "axios"
+import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import {defineStore} from "pinia"
-import {apiUrl} from "override/utils/route"
 
 export const useKvStore = defineStore("kv", () => {
-    async function find(params: {page: number, size: number, filters: {[key: string]: {EQUALS: string}}}) {
-        const {data} = await axios.get(`${apiUrl()}/kv`, {withCredentials: true, params})
-
-        return data
+    function find(params: Parameters<typeof KvAPI.listAllKeys>[0]) {
+        return KvAPI.listAllKeys(params)
     }
 
     return {find}

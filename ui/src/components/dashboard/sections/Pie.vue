@@ -41,14 +41,14 @@
     import {getConsistentHEXColor} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {FilterObject} from "../../../utils/filters"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
     }>(), {
         dashboardId: undefined,

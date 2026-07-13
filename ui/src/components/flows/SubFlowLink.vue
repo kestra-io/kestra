@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useRouter, useRoute} from "vue-router"
     import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
 
@@ -37,12 +37,6 @@
     const tab = computed(() => {
         return props.executionId ? props.tabExecution : props.tabFlow
     })
-
-    interface Execution {
-        id: string;
-        namespace: string;
-        flowId: string;
-    }
 
     const params = (execution?: Execution) => {
         if (execution) {

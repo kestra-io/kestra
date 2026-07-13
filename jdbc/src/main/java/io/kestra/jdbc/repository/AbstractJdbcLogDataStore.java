@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.jooq.*;
@@ -37,8 +38,6 @@ import jakarta.annotation.Nullable;
 import lombok.Getter;
 import reactor.core.publisher.Flux;
 
-import java.util.function.BiFunction;
-
 public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
@@ -66,7 +65,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
      * repository bound to the dedicated log datasource (when {@code kestra.logs.<type>.url} is set),
      * or the shared {@code @Named("logs")} repository (the primary datasource) otherwise.
      *
-     * @param applicationContext      the application context to resolve beans from.
+     * @param applicationContext the application context to resolve beans from.
      * @param dedicatedRepositoryFactory builds the dialect-specific repository for the dedicated
      *        datasource (e.g. {@code (config, wrapper) -> new H2Repository<>(config, wrapper)}).
      */

@@ -328,6 +328,7 @@
     "outputs": "Outputs",
     "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Saídas do Flow",
     "eval": {
       "title": "Expressão de Depuração",
       "render": "Expressão de Renderização",

@@ -328,6 +328,7 @@
     "outputs": "输出",
     "flow_inputs": "Flow Inputs",
     "output": "输出",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "调试表达式",
       "render": "渲染表达式",

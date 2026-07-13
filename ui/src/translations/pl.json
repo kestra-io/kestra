@@ -328,6 +328,7 @@
     "outputs": "Wyjścia",
     "flow_inputs": "Flow Inputs",
     "output": "Wyjście",
+    "flow_outputs": "Wyjścia Flow",
     "eval": {
       "title": "Debugowanie Wyrażenia",
       "render": "Renderuj Wyrażenie",

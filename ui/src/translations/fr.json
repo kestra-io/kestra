@@ -328,6 +328,7 @@
     "outputs": "Sorties",
     "flow_inputs": "Flow Inputs",
     "output": "Sortie",
+    "flow_outputs": "Sorties du flow",
     "eval": {
       "title": "Expression de débogage",
       "render": "Rendre l'expression",

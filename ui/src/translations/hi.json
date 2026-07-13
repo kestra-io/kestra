@@ -328,6 +328,7 @@
     "outputs": "आउटपुट",
     "flow_inputs": "Flow Inputs",
     "output": "आउटपुट",
+    "flow_outputs": "फ्लो Outputs",
     "eval": {
       "title": "डिबग अभिव्यक्ति",
       "render": "एक्सप्रेशन रेंडर करें",

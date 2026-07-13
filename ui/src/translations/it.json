@@ -328,6 +328,7 @@
     "outputs": "Outputs",
     "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Output del Flow",
     "eval": {
       "title": "Espressione di Debug",
       "render": "Espressione di Render",

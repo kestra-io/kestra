@@ -328,6 +328,7 @@
     "outputs": "Outputs",
     "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug-Ausdruck",
       "render": "Ausdruck rendern",

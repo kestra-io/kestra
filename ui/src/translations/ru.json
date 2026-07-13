@@ -328,6 +328,7 @@
     "outputs": "Выводы",
     "flow_inputs": "Flow Inputs",
     "output": "Вывод",
+    "flow_outputs": "Выходы Flow",
     "eval": {
       "title": "Отладка выражения",
       "render": "Отобразить выражение",

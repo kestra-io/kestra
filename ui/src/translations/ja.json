@@ -328,6 +328,7 @@
     "outputs": "出力",
     "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "フロー出力",
     "eval": {
       "title": "デバッグ式",
       "render": "式をレンダリング",

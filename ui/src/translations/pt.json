@@ -175,6 +175,7 @@
     "last execution status": "Último status de execução",
     "jump to...": "Ir para...",
     "contextBar": {
+      "ai": "AI",
       "news": "Notícias",
       "docs": "Documentos",
       "help": "Ajuda",
@@ -2002,6 +2003,60 @@
       },
       "dashboard": {
         "prompt_placeholder": "Faça uma pergunta sobre seus dados. Exemplo de prompt: Mostre-me a taxa de sucesso dos meus flows nos últimos 7 dias."
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "Tell me what to build…",
+        "send": "Send",
+        "mode": {
+          "ask": "Ask",
+          "edit": "Build",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Turn your idea into a workflow"
+        },
+        "toolCall": "Running {tool}",
+        "toolResult": {
+          "ok": "{tool} completed",
+          "rejected": "{tool} rejected"
+        },
+        "confirm": {
+          "planTitle": "Proposed plan",
+          "actionTitle": "Proposed action",
+          "approve": "Approve",
+          "approveExecute": "Approve & execute",
+          "reject": "Reject",
+          "reasonPlaceholder": "Reply to revise…",
+          "pending": "Pending approval",
+          "revise": "Reply to revise"
+        },
+        "error": {
+          "turnInProgress": "A turn is already in progress.",
+          "request": "The request failed. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        },
+        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "suggestions": {
+          "errorHandling": "Add error handling",
+          "unitTest": "Generate a unit test",
+          "explain": "Explain this flow",
+          "dbt": "Run a dbt pipeline"
+        },
+        "voice": {
+          "start": "Start voice input",
+          "stop": "Stop and insert",
+          "cancel": "Cancel voice input"
+        },
+        "unavailable": {
+            "title": "O AI Copilot não está disponível",
+            "detail": "Nenhum fornecedor de AI está configurado. Peça a um administrador para configurar um e tente novamente.",
+            "retry": "Tentar novamente"
+        },
+        "thinking": "A pensar",
+        "newChat": "New chat",
+        "recents": "Recents",
+        "recentsEmpty": "No recent conversations yet"
       }
     },
     "playground": {

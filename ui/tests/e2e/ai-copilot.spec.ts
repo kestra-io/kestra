@@ -1,0 +1,123 @@
+import {expect, test} from "@playwright/test"
+import {shared} from "./fixtures/shared"
+
+/**
+ * End-to-end coverage for the AI Copilot chat drawer.
+ *
+ * The AI endpoints (`…/ai/threads`, `/chat`, `/confirm`) are stubbed via
+ * `page.route` so the test is deterministic and independent of a configured LLM
+ * provider — it exercises the *frontend* turn machinery (streaming render, mode
+ * selector, proposed-action confirm) end-to-end against the real app shell.
+ *
+ * Uses explicit `[data-test=…]` locators (the repo doesn't set testIdAttribute).
+ */
+
+const sse = (events: [string, unknown][]) =>
+    events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join("")
+
+const THREAD = {uid: "e2e-thread", mode: "ASK", status: "IDLE", createdAt: "", updatedAt: ""}
+
+const D = {
+    chat: "[data-test=\"copilot-chat\"]",
+    input: "[data-test=\"copilot-composer-input\"]",
+    send: "[data-test=\"copilot-send\"]",
+    card: "[data-test=\"copilot-proposed-action\"]",
+    approve: "[data-test=\"copilot-approve\"]",
+}
+
+test.describe("AI Copilot", () => {
+    test.beforeEach(async ({page}) => {
+        // Thread creation is always the same stubbed thread.
+        await page.route("**/api/v1/*/ai/threads", async (route) => {
+            if (route.request().method() === "POST") {
+                await route.fulfill({status: 200, contentType: "application/json", body: JSON.stringify(THREAD)})
+            } else {
+                await route.continue()
+            }
+        })
+
+        await test.step("login", async () => {
+            await page.goto("/ui")
+            await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
+            await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
+            await page.getByRole("button", {name: "Login"}).click()
+            // Reload so the auth cookie applies on a clean load. Let the post-login redirect
+            // settle first, and retry (the redirect can interrupt an eager goto).
+            await page.waitForTimeout(2000)
+            for (let i = 0; i < 3; i++) {
+                try { await page.goto("/ui", {waitUntil: "domcontentloaded"}); break } catch { await page.waitForTimeout(1000) }
+            }
+            await expect(page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible({timeout: 25000})
+        })
+
+        await test.step("open the AI copilot dock tab", async () => {
+            // The right panel is closed after login — toggle it open first, then select AI.
+            const chat = page.locator(D.chat)
+            if (!(await chat.isVisible().catch(() => false))) {
+                await page.getByRole("button", {name: "Toggle panel"}).click().catch(() => {})
+                await page.waitForTimeout(500)
+            }
+            await page.getByRole("tab", {name: "AI"}).click().catch(() => {})
+            await expect(chat).toBeVisible({timeout: 15000})
+        })
+    })
+
+    test("streams an assistant answer", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "A trigger "}],
+                    ["token", {text: "starts a flow automatically."}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("What is a trigger?")
+        await page.locator(D.send).click()
+
+        await expect(page.locator(D.chat)).toContainText("A trigger starts a flow automatically.")
+        await expect(page.locator(D.send)).toBeDisabled() // empty input → disabled
+    })
+
+    test("proposes an action and resumes the turn on approve", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "I'll restart the failed execution."}],
+                    ["proposed_action", {confirmationId: "cf1", tool: "restart-execution", family: "MUTATE", summary: "Run restart-execution on exec-1"}],
+                    ["done", {status: "AWAITING_CONFIRMATION"}],
+                ]),
+            })
+        })
+        await page.route("**/ai/threads/*/confirm", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["tool_call", {tool: "restart-execution", family: "MUTATE", arguments: {id: "exec-1"}}],
+                    ["tool_result", {tool: "restart-execution", outcome: "ok"}],
+                    ["token", {text: "Done — it's running again."}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        // Default mode is already Build (EDIT); the stub returns a proposal regardless of mode.
+        await page.locator(D.input).fill("restart my failed execution")
+        await page.locator(D.send).click()
+
+        const card = page.locator(D.card)
+        await expect(card).toBeVisible()
+        await expect(card).toContainText("Run restart-execution on exec-1")
+        await expect(page.locator(D.input)).toBeDisabled()
+
+        await page.locator(D.approve).click()
+        await expect(page.locator(D.chat)).toContainText("Done — it's running again.")
+        await expect(card).toBeHidden()
+    })
+})

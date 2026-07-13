@@ -175,6 +175,7 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to...": "कूदें...",
     "contextBar": {
+      "ai": "AI",
       "news": "समाचार",
       "docs": "डॉक्स",
       "help": "मदद",
@@ -2002,6 +2003,60 @@
       },
       "dashboard": {
         "prompt_placeholder": "अपने डेटा के बारे में एक प्रश्न पूछें। उदाहरण प्रॉम्प्ट: पिछले 7 दिनों में मेरे flows की सफलता दर दिखाएं।"
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "Tell me what to build…",
+        "send": "Send",
+        "mode": {
+          "ask": "Ask",
+          "edit": "Build",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Turn your idea into a workflow"
+        },
+        "toolCall": "Running {tool}",
+        "toolResult": {
+          "ok": "{tool} completed",
+          "rejected": "{tool} rejected"
+        },
+        "confirm": {
+          "planTitle": "Proposed plan",
+          "actionTitle": "Proposed action",
+          "approve": "Approve",
+          "approveExecute": "Approve & execute",
+          "reject": "Reject",
+          "reasonPlaceholder": "Reply to revise…",
+          "pending": "Pending approval",
+          "revise": "Reply to revise"
+        },
+        "error": {
+          "turnInProgress": "A turn is already in progress.",
+          "request": "The request failed. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        },
+        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "suggestions": {
+          "errorHandling": "Add error handling",
+          "unitTest": "Generate a unit test",
+          "explain": "Explain this flow",
+          "dbt": "Run a dbt pipeline"
+        },
+        "voice": {
+          "start": "Start voice input",
+          "stop": "Stop and insert",
+          "cancel": "Cancel voice input"
+        },
+        "unavailable": {
+            "title": "AI Copilot उपलब्ध नहीं है",
+            "detail": "कोई AI प्रदाता कॉन्फ़िगर नहीं किया गया है। किसी व्यवस्थापक से एक सेट अप करने के लिए कहें, फिर पुनः प्रयास करें।",
+            "retry": "पुनः प्रयास करें"
+        },
+        "thinking": "सोच रहा है",
+        "newChat": "New chat",
+        "recents": "Recents",
+        "recentsEmpty": "No recent conversations yet"
       }
     },
     "playground": {

@@ -175,6 +175,7 @@
     "last execution status": "마지막 실행 상태",
     "jump to...": "이동...",
     "contextBar": {
+      "ai": "AI",
       "news": "뉴스",
       "docs": "문서",
       "help": "도움말",
@@ -2002,6 +2003,60 @@
       },
       "dashboard": {
         "prompt_placeholder": "데이터에 대해 질문하세요. 예시 프롬프트: 지난 7일 동안 내 flows의 성공률을 보여줘."
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "Tell me what to build…",
+        "send": "Send",
+        "mode": {
+          "ask": "Ask",
+          "edit": "Build",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Turn your idea into a workflow"
+        },
+        "toolCall": "Running {tool}",
+        "toolResult": {
+          "ok": "{tool} completed",
+          "rejected": "{tool} rejected"
+        },
+        "confirm": {
+          "planTitle": "Proposed plan",
+          "actionTitle": "Proposed action",
+          "approve": "Approve",
+          "approveExecute": "Approve & execute",
+          "reject": "Reject",
+          "reasonPlaceholder": "Reply to revise…",
+          "pending": "Pending approval",
+          "revise": "Reply to revise"
+        },
+        "error": {
+          "turnInProgress": "A turn is already in progress.",
+          "request": "The request failed. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        },
+        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "suggestions": {
+          "errorHandling": "Add error handling",
+          "unitTest": "Generate a unit test",
+          "explain": "Explain this flow",
+          "dbt": "Run a dbt pipeline"
+        },
+        "voice": {
+          "start": "Start voice input",
+          "stop": "Stop and insert",
+          "cancel": "Cancel voice input"
+        },
+        "unavailable": {
+            "title": "AI Copilot을 사용할 수 없습니다",
+            "detail": "구성된 AI 제공자가 없습니다. 관리자에게 설정을 요청한 후 다시 시도하세요.",
+            "retry": "다시 시도"
+        },
+        "thinking": "생각 중",
+        "newChat": "New chat",
+        "recents": "Recents",
+        "recentsEmpty": "No recent conversations yet"
       }
     },
     "playground": {

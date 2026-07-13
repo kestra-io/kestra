@@ -175,6 +175,7 @@
     "last execution status": "Последний статус выполнения",
     "jump to...": "Перейти к...",
     "contextBar": {
+      "ai": "AI",
       "news": "Новости",
       "docs": "Документация",
       "help": "Помощь",
@@ -2002,6 +2003,60 @@
       },
       "dashboard": {
         "prompt_placeholder": "Задайте вопрос о ваших данных. Пример запроса: Покажите мне уровень успеха моих flows за последние 7 дней."
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "Tell me what to build…",
+        "send": "Send",
+        "mode": {
+          "ask": "Ask",
+          "edit": "Build",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Turn your idea into a workflow"
+        },
+        "toolCall": "Running {tool}",
+        "toolResult": {
+          "ok": "{tool} completed",
+          "rejected": "{tool} rejected"
+        },
+        "confirm": {
+          "planTitle": "Proposed plan",
+          "actionTitle": "Proposed action",
+          "approve": "Approve",
+          "approveExecute": "Approve & execute",
+          "reject": "Reject",
+          "reasonPlaceholder": "Reply to revise…",
+          "pending": "Pending approval",
+          "revise": "Reply to revise"
+        },
+        "error": {
+          "turnInProgress": "A turn is already in progress.",
+          "request": "The request failed. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        },
+        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "suggestions": {
+          "errorHandling": "Add error handling",
+          "unitTest": "Generate a unit test",
+          "explain": "Explain this flow",
+          "dbt": "Run a dbt pipeline"
+        },
+        "voice": {
+          "start": "Start voice input",
+          "stop": "Stop and insert",
+          "cancel": "Cancel voice input"
+        },
+        "unavailable": {
+            "title": "AI Copilot недоступен",
+            "detail": "Не настроен ни один AI-провайдер. Попросите администратора настроить его и повторите попытку.",
+            "retry": "Повторить"
+        },
+        "thinking": "Думаю",
+        "newChat": "New chat",
+        "recents": "Recents",
+        "recentsEmpty": "No recent conversations yet"
       }
     },
     "playground": {

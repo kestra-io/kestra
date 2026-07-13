@@ -2055,6 +2055,16 @@
           "detail": "Не настроен ни один AI-провайдер. Попросите администратора настроить его и повторите попытку.",
           "retry": "Повторить"
         },
+        "threads": {
+            "loading": "Loading…",
+            "empty": "No conversations yet",
+            "untitled": "Untitled conversation",
+            "rename": "Rename",
+            "delete": "Delete",
+            "deleteConfirm": "Delete this conversation?",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
         "thinking": "Думаю",
         "newChat": "New chat",
         "recents": "Recents",

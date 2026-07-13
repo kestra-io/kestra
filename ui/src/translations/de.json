@@ -2055,6 +2055,16 @@
           "detail": "Es ist kein AI-Anbieter konfiguriert. Bitten Sie eine:n Administrator:in, einen einzurichten, und versuchen Sie es erneut.",
           "retry": "Erneut versuchen"
         },
+        "threads": {
+            "loading": "Loading…",
+            "empty": "No conversations yet",
+            "untitled": "Untitled conversation",
+            "rename": "Rename",
+            "delete": "Delete",
+            "deleteConfirm": "Delete this conversation?",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
         "thinking": "Denkt nach",
         "newChat": "New chat",
         "recents": "Recents",

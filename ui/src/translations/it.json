@@ -2055,6 +2055,16 @@
           "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno, poi riprova.",
           "retry": "Riprova"
         },
+        "threads": {
+            "loading": "Loading…",
+            "empty": "No conversations yet",
+            "untitled": "Untitled conversation",
+            "rename": "Rename",
+            "delete": "Delete",
+            "deleteConfirm": "Delete this conversation?",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
         "thinking": "Sto pensando",
         "newChat": "New chat",
         "recents": "Recents",

@@ -12,9 +12,7 @@
                     <ChevronDown :size="16" />
                 </KsButton>
                 <template #dropdown>
-                    <KsDropdownMenu>
-                        <KsDropdownItem disabled>{{ t("ai.copilot.recentsEmpty") }}</KsDropdownItem>
-                    </KsDropdownMenu>
+                    <CopilotThreadList :activeId="thread?.uid" @select="onSelectThread" />
                 </template>
             </KsDropdown>
         </div>
@@ -114,6 +112,7 @@
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
     import CopilotThinking from "./CopilotThinking.vue"
+    import CopilotThreadList from "./CopilotThreadList.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import {useAiChat} from "./useAiChat"
     import type {Mode, ScopeBinding} from "./types"
@@ -159,7 +158,12 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {messages, status, streaming, error, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry} = useAiChat()
+    const {thread, messages, status, streaming, error, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, loadThread} = useAiChat()
+
+    // Switch to a thread picked from the Recents list (rehydrates history + resumes any pending action).
+    function onSelectThread(threadId: string): void {
+        loadThread(threadId)
+    }
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status

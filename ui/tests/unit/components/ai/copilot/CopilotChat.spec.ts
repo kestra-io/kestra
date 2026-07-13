@@ -19,6 +19,7 @@ const state = {
     cancel: vi.fn(),
     reset: vi.fn(),
     retry: vi.fn(),
+    loadThread: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
@@ -30,7 +31,10 @@ vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 
-const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
+// Stub the thread list so it doesn't reach useAiThreads/useClient; we test the wiring.
+const threadListStub = {name: "CopilotThreadList", props: ["activeId"], emits: ["select"], template: "<div class=\"thread-list-stub\" />"}
+const mountChat = (props = {}) =>
+    mount(CopilotChat, {props, global: {...mountGlobal, stubs: {...mountGlobal.stubs, CopilotThreadList: threadListStub}}})
 
 describe("CopilotChat", () => {
     beforeEach(() => {
@@ -44,6 +48,7 @@ describe("CopilotChat", () => {
         state.confirm.mockReset()
         state.reset.mockReset()
         state.retry.mockReset()
+        state.loadThread.mockReset()
         miscStore.copilotPrompt = null
     })
 
@@ -128,8 +133,17 @@ describe("CopilotChat", () => {
         expect(state.reset).toHaveBeenCalled()
     })
 
-    it("shows the recents placeholder control", () => {
-        expect(mountChat().find("[data-test=\"copilot-recents\"]").exists()).toBe(true)
+    it("shows the recents control with the thread list", () => {
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-recents\"]").exists()).toBe(true)
+        expect(w.findComponent({name: "CopilotThreadList"}).exists()).toBe(true)
+    })
+
+    it("switches to a thread selected from the list", async () => {
+        const w = mountChat()
+        w.findComponent({name: "CopilotThreadList"}).vm.$emit("select", "t-42")
+        await flushPromises()
+        expect(state.loadThread).toHaveBeenCalledWith("t-42")
     })
 
     it("shows the AI-unavailable state (and no composer) when unavailable", () => {

@@ -2055,6 +2055,16 @@
           "detail": "구성된 AI 제공자가 없습니다. 관리자에게 설정을 요청한 후 다시 시도하세요.",
           "retry": "다시 시도"
         },
+        "threads": {
+            "loading": "Loading…",
+            "empty": "No conversations yet",
+            "untitled": "Untitled conversation",
+            "rename": "Rename",
+            "delete": "Delete",
+            "deleteConfirm": "Delete this conversation?",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
         "thinking": "생각 중",
         "newChat": "New chat",
         "recents": "Recents",

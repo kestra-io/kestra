@@ -2055,6 +2055,16 @@
           "detail": "कोई AI प्रदाता कॉन्फ़िगर नहीं किया गया है। किसी व्यवस्थापक से एक सेट अप करने के लिए कहें, फिर पुनः प्रयास करें।",
           "retry": "पुनः प्रयास करें"
         },
+        "threads": {
+            "loading": "Loading…",
+            "empty": "No conversations yet",
+            "untitled": "Untitled conversation",
+            "rename": "Rename",
+            "delete": "Delete",
+            "deleteConfirm": "Delete this conversation?",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
         "thinking": "सोच रहा है",
         "newChat": "New chat",
         "recents": "Recents",

@@ -2055,6 +2055,16 @@
           "detail": "AI プロバイダーが設定されていません。管理者に設定を依頼してから、もう一度お試しください。",
           "retry": "再試行"
         },
+        "threads": {
+            "loading": "Loading…",
+            "empty": "No conversations yet",
+            "untitled": "Untitled conversation",
+            "rename": "Rename",
+            "delete": "Delete",
+            "deleteConfirm": "Delete this conversation?",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
         "thinking": "思考中",
         "newChat": "New chat",
         "recents": "Recents",

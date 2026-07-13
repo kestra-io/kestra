@@ -518,7 +518,7 @@ export const useFlowStore = defineStore("flow", () => {
             id,
             body: options.flow,
             draft: options.draft ?? false,
-        } as Parameters<typeof FlowsAPI.updateFlow>[0]).then(data => {
+        }).then(data => {
             flow.value = data as Flow
 
             return flow.value

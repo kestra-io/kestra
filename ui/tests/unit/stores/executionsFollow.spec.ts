@@ -104,8 +104,9 @@ describe("executions store follow stream", () => {
                 aborted = true
             })
             return Promise.resolve({
-                // a stream that never completes on its own
+                // a stream that stays open (never completes on its own) until close() aborts it
                 stream: (async function* () {
+                    yield {id: "exec-1", state: {current: "RUNNING"}}
                     await new Promise(() => {})
                 })(),
             })

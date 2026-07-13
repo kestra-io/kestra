@@ -6,7 +6,6 @@ import io.micronaut.configuration.jdbc.hikari.DatasourceConfiguration;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 

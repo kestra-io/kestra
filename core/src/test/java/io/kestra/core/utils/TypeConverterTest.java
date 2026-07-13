@@ -1,11 +1,5 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.exceptions.TypeConversionException;
-import org.junit.jupiter.api.Named;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -16,13 +10,21 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import io.kestra.core.exceptions.TypeConversionException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TypeConverterTest {
 
     private enum TestEnum {
-        FIRST, SECOND
+        FIRST,
+        SECOND
     }
 
     private static final Function<Object, TestEnum> TO_TEST_ENUM = value -> TypeConverter.toEnum(value, TestEnum.class);

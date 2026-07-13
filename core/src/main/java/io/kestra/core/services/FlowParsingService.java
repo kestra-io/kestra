@@ -2,35 +2,35 @@ package io.kestra.core.services;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.runners.RunContextLogger;
-import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.Logs;
 
 import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for parsing flows from their source.
+ *
+ * <p>
+ * This service only parses and reports failures through typed exceptions — it never chooses how to react to
+ * them. Callers own the reaction: the executor path converts failures into failed executions, the scheduler
+ * path skips or degrades, and validation paths propagate.
+ * </p>
  */
 @Singleton
 @Slf4j
@@ -42,92 +42,14 @@ public class FlowParsingService {
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
 
-    private final RunContextLoggerFactory runContextLoggerFactory;
-
-    @Inject
-    public FlowParsingService(RunContextLoggerFactory runContextLoggerFactory) {
-        this.runContextLoggerFactory = runContextLoggerFactory;
-    }
-
     /**
      * Parses the given abstract flow, returning a parsed {@link FlowWithSource}.
      *
      * <p>
-     * If an exception occurs during parsing, the original flow is returned unchanged, and the exception is logged
-     * for the passed {@code execution}
+     * This parses the flow as authored: plugin versions are injected (required to resolve versioned plugin
+     * classes) but no runtime governance is applied — use {@link #parseForRuntime(FlowInterface)} for the
+     * executor and scheduler paths.
      * </p>
-     *
-     * @return a parsed {@link FlowWithSource}, or a {@link FlowWithException} if parsing fails
-     */
-    public FlowWithSource parseForExecution(FlowInterface flow, Execution execution) {
-        try {
-            return this.parse(flow, false);
-        } catch (Exception e) {
-            var logger = runContextLoggerFactory.create(execution);
-            logger.emitLogs(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
-            return readOrThrow(flow);
-        }
-    }
-
-    /**
-     * Parses the given abstract flow for validation before persistence. Plugin versions are injected (required
-     * to resolve versioned plugin classes) but no execution-time policy enforcement is applied.
-     *
-     * @param flow the flow to be parsed
-     * @param strictParsing specifies if the source must meet strict validation requirements
-     * @return a parsed {@link FlowWithSource}
-     *
-     * @throws FlowProcessingException if an error occurred while processing the flow
-     */
-    public FlowWithSource parseForValidation(final FlowInterface flow, final boolean strictParsing) throws FlowProcessingException {
-        return parse(flow, strictParsing);
-    }
-
-    /**
-     * Parses the given abstract flow for trigger evaluation, returning a parsed {@link FlowWithSource}.
-     *
-     * <p>
-     * If an exception occurs during parsing, the original flow is returned unchanged, and the exception is logged.
-     * </p>
-     *
-     * @return a parsed {@link FlowWithSource}, or a {@link FlowWithException} if parsing fails
-     */
-    public FlowWithSource parseForTrigger(FlowInterface flow, Logger logger) {
-        try {
-            return this.parse(flow, false);
-        } catch (Exception e) {
-            logger.warn(
-                "Can't parse flow on tenant {}, namespace '{}', flow '{}' with errors '{}'",
-                flow.getTenantId(),
-                flow.getNamespace(),
-                flow.getId(),
-                e.getMessage(),
-                e
-            );
-            return readOrThrow(flow);
-        }
-    }
-
-    private static FlowWithSource readOrThrow(final FlowInterface flow) {
-        if (flow instanceof FlowWithSource item) {
-            return item;
-        }
-
-        if (flow instanceof Flow item) {
-            return FlowWithSource.of(item, item.sourceOrGenerateIfNull());
-        }
-
-        // The block below should only be reached during testing for failure scenarios
-        try {
-            Flow parsed = YAML_MAPPER_NON_DEFAULT.readValue(flow.getSource(), Flow.class);
-            return FlowWithSource.of(parsed, flow.getSource());
-        } catch (JsonProcessingException e) {
-            throw new KestraRuntimeException("Failed to read flow from source", e);
-        }
-    }
-
-    /**
-     * Parses the given abstract flow, returning a parsed {@link FlowWithSource}.
      *
      * <p>
      * If {@code strictParsing} is {@code true}, the parsing will fail in the following cases:
@@ -173,50 +95,60 @@ public class FlowParsingService {
     }
 
     /**
-     * Parses the given abstract flow, returning a parsed {@link FlowWithSource}.
+     * Parses the given flow source.
      *
-     * <p>
-     * If the provided flow already represents a concrete {@link FlowWithSource}, it is returned as is.
-     * <p/>
+     * @param tenantId the Tenant ID.
+     * @param source the flow source.
+     * @param strictParsing specifies if the source must meet strict validation requirements
+     * @return a new {@link FlowWithSource}.
      *
-     * <p>
-     * If {@code safe} is set to {@code true} and the given flow cannot be parsed,
-     * this method returns a {@link FlowWithException} instead of throwing an error.
-     * <p/>
+     * @throws FlowProcessingException when parsing flow.
+     */
+    public FlowWithSource parse(@Nullable final String tenantId, final String source, final boolean strictParsing) throws FlowProcessingException {
+        try {
+            return parseFlow(tenantId, null, null, false, source, strictParsing);
+        } catch (ConstraintViolationException e) {
+            throw new FlowProcessingException(e);
+        } catch (JsonProcessingException e) {
+            throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
+        }
+    }
+
+    /**
+     * Parses the given abstract flow for the runtime paths (executor and scheduler), returning a parsed
+     * {@link FlowWithSource}. Editions may override this method to apply governance to the flow about to run;
+     * the open-source edition parses leniently without further processing.
      *
      * @param flow the flow to be parsed
-     * @param safe whether parsing errors should be handled gracefully
-     * @return a parsed {@link FlowWithSource}, or a {@link FlowWithException} if parsing fails and {@code safe} is {@code true}
+     * @return a parsed {@link FlowWithSource}
      *
-     * @throws FlowProcessingException if an error occurred while processing the flow and {@code safe} is {@code false}.
+     * @throws FlowBlockedException if governance rejected the flow — it must not run
+     * @throws FlowProcessingException if an error occurred while processing the flow
      */
-    public FlowWithSource parseSafely(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
-        if (flow instanceof FlowWithSource flowWithSource) {
-            // shortcut - if the flow is already fully parsed return it immediately.
-            return flowWithSource;
+    public FlowWithSource parseForRuntime(final FlowInterface flow) throws FlowProcessingException {
+        return parse(flow, false);
+    }
+
+    /**
+     * Converts the given abstract flow into a {@link FlowWithSource} without re-parsing it. Used by runtime
+     * callers to degrade to the flow as stored when {@link #parseForRuntime(FlowInterface)} fails.
+     */
+    public static FlowWithSource toFlowWithSource(final FlowInterface flow) {
+        if (flow instanceof FlowWithSource item) {
+            return item;
         }
 
-        FlowWithSource result;
+        if (flow instanceof Flow item) {
+            return FlowWithSource.of(item, item.sourceOrGenerateIfNull());
+        }
 
+        // The block below should only be reached during testing for failure scenarios
         try {
-            String source = flow.getSource();
-            if (source == null) {
-                source = YAML_MAPPER.writeValueAsString(flow);
-            }
-
-            result = parseFlow(flow.getTenantId(), flow.getNamespace(), flow.getRevision(), flow.isDeleted(), source, false);
-        } catch (Exception e) {
-            if (safe) {
-                Logs.logExecution(flow, log, Level.ERROR, "Failed to read flow.", e);
-                result = FlowWithException.from(flow, e);
-
-                // deleted is not part of the original 'source'
-                result = result.toBuilder().deleted(flow.isDeleted()).build();
-            } else {
-                throw new FlowProcessingException(e);
-            }
+            Flow parsed = YAML_MAPPER_NON_DEFAULT.readValue(flow.getSource(), Flow.class);
+            return FlowWithSource.of(parsed, flow.getSource());
+        } catch (JsonProcessingException e) {
+            throw new KestraRuntimeException("Failed to read flow from source", e);
         }
-        return result;
     }
 
     /**
@@ -232,41 +164,6 @@ public class FlowParsingService {
         final String namespace,
         final Map<String, Object> mapFlow) throws FlowProcessingException {
         return mapFlow;
-    }
-
-    /**
-     * Parses the given flow source.
-     *
-     * @param tenantId the Tenant ID.
-     * @param source the flow source.
-     * @param strictParsing specifies if the source must meet strict validation requirements
-     * @return a new {@link FlowWithSource}.
-     *
-     * @throws FlowProcessingException when parsing flow.
-     */
-    public FlowWithSource parseFlow(@Nullable final String tenantId, final String source, final boolean strictParsing) throws FlowProcessingException {
-        try {
-            return parseFlow(tenantId, null, null, false, source, strictParsing);
-        } catch (ConstraintViolationException e) {
-            throw new FlowProcessingException(e);
-        } catch (JsonProcessingException e) {
-            throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
-        }
-    }
-
-    /**
-     * Parses the given flow source for validation before persistence. Plugin versions are injected (required
-     * to resolve versioned plugin classes) but no execution-time policy enforcement is applied.
-     *
-     * @param tenantId the Tenant ID.
-     * @param source the flow source.
-     * @param strictParsing specifies if the source must meet strict validation requirements
-     * @return a new {@link FlowWithSource}.
-     *
-     * @throws FlowProcessingException when parsing flow.
-     */
-    public FlowWithSource parseForValidation(@Nullable final String tenantId, final String source, final boolean strictParsing) throws FlowProcessingException {
-        return parseFlow(tenantId, source, strictParsing);
     }
 
     /**

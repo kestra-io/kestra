@@ -39,7 +39,7 @@ class ExpressionContextServiceTest {
 
     @lombok.SneakyThrows
     private Flow parseFlow(String yaml) {
-        return flowParsingService.parseFlow(null, yaml, false);
+        return flowParsingService.parse(null, yaml, false);
     }
 
     @Test

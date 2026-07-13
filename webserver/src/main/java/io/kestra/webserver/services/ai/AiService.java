@@ -184,7 +184,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
         if (flowYaml != null && !flowYaml.isBlank()) {
             try {
-                Flow flow = flowParsingService.parseFlow(tenantId, flowYaml, false);
+                Flow flow = flowParsingService.parse(tenantId, flowYaml, false);
                 return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
             } catch (Exception e) {
                 log.debug("Could not parse flow YAML for pebble expression context, falling back to namespace context: {}", e.getMessage());

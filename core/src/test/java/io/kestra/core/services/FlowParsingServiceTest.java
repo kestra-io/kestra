@@ -61,7 +61,7 @@ class FlowParsingServiceTest {
             """;
 
         // When parsed leniently (read path), the flow still parses but nothing is injected
-        FlowWithSource parsed = flowParsingService.parseFlow(null, source, false);
+        FlowWithSource parsed = flowParsingService.parse(null, source, false);
 
         // Then the task keeps its own default level: the WARN default value is not injected
         Log task = (Log) parsed.getTasks().getFirst();

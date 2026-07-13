@@ -932,10 +932,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         try {
             // For drafts the YAML may be unparsable; if parsing fails we skip all
             // validation since draft revisions are intentionally allowed to carry invalid content.
-            FlowWithSource flowWithDefault = flowParsingService.parseForValidation(flow, false);
+            FlowWithSource flowWithDefault = flowParsingService.parse(flow, false);
             // Drafts are allowed to be saved invalid - they will fail at execution time instead.
             // Read the draft flag from the original GenericFlow (set from the API draft flag) rather
-            // than from flowWithDefault, since `parseForValidation` re-parses the YAML source which
+            // than from flowWithDefault, since `parse` re-parses the YAML source which
             // does not carry the draft field.
             if (!flow.isDraft()) {
                 modelValidator.validate(flowWithDefault);
@@ -945,7 +945,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             if (previous instanceof Flow o) {
                 previousFlow = o;
             } else {
-                previousFlow = flowParsingService.parseForValidation(previous, false);
+                previousFlow = flowParsingService.parse(previous, false);
             }
 
             // Check update
@@ -973,7 +973,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         // still be persisted without throwing.
         FlowWithSource flowWithSource;
         try {
-            flowWithSource = flowParsingService.parseForValidation(flow, false);
+            flowWithSource = flowParsingService.parse(flow, false);
         } catch (FlowProcessingException e) {
             if (!flow.isDraft()) {
                 throw e;

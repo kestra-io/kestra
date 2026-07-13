@@ -85,7 +85,7 @@ public class ExpressionController {
 
         // A flow source (e.g. an unsaved editor draft) takes priority over the persisted flow.
         if (request.flow() != null) {
-            FlowWithSource flow = flowParsingService.parseFlow(tenantService.resolveTenant(), request.flow(), false);
+            FlowWithSource flow = flowParsingService.parse(tenantService.resolveTenant(), request.flow(), false);
 
             return flowVariables(flow);
         }

@@ -97,6 +97,17 @@ describe("NewFlowLanding", () => {
         expect((btn.element as HTMLButtonElement).disabled).toBe(true)
     })
 
+    test("namespace select lets the user type a namespace that does not exist yet", () => {
+        // Given — a fresh instance may have zero namespaces; without allow-create
+        // the blank-flow form is a dead end (nothing to select, button stays disabled)
+        const wrapper = mount(NewFlowLanding, globalConfig)
+
+        // Then
+        const nsSelect = wrapper.find("[data-test='blank-flow-namespace']")
+        expect(nsSelect.attributes("allowcreate")).toBeDefined()
+        expect(nsSelect.attributes("defaultfirstoption")).toBeDefined()
+    })
+
     test("emits proceed with id and namespace when Open editor is clicked", async () => {
         // Given
         const wrapper = mount(NewFlowLanding, globalConfig)

@@ -40,6 +40,8 @@
                         <KsSelect
                             v-model="selectedNamespace"
                             filterable
+                            allowCreate
+                            defaultFirstOption
                             :placeholder="$t('new_flow_landing.blank.namespace_placeholder')"
                             data-test="blank-flow-namespace"
                         >

@@ -4,7 +4,7 @@ import {describe, expect, it, vi} from "vitest";
     getWorker: () => ({postMessage(){}, terminate(){}, addEventListener(){}, removeEventListener(){}}),
 }
 
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js"
 
 vi.mock("@kestra-io/topology", () => ({flowYamlUtils: {parse: () => ({})}}))
 

@@ -43,6 +43,8 @@ import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
 import KsEditor from "./components/Form/KsEditor.vue"
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./components/Form/KsEditor.vue"
+export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
+export type {TaskIconProps} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"
 export type {EditorMarker} from "./utils/yamlValidation"
 export {isOffsetInPebbleBlock} from "./utils/pebbleBlock"
@@ -70,7 +72,6 @@ import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
 import KsOptionGroup from "./components/Form/KsOptionGroup.vue"
 import KsPagination from "./components/Data/KsPagination.vue"
-import KsPluginCard from "./components/Data/KsPluginCard.vue"
 import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
@@ -103,7 +104,6 @@ import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
-import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
@@ -268,7 +268,6 @@ const components: Record<string, Component> = {
     KsOption,
     KsOptionGroup,
     KsPagination,
-    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -296,7 +295,6 @@ const components: Record<string, Component> = {
     KsNoData,
     KsTag,
     KsLogoBadge,
-    KsTaskIcon,
     KsText,
     KsTimeline,
     KsTimelineItem,
@@ -378,7 +376,6 @@ export {
     KsOption,
     KsOptionGroup,
     KsPagination,
-    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -406,7 +403,6 @@ export {
     KsNoData,
     KsTag,
     KsLogoBadge,
-    KsTaskIcon,
     KsText,
     KsTimeline,
     KsTimelineItem,
@@ -535,7 +531,6 @@ declare module "vue" {
         KsNoData: typeof KsNoData
         KsTag: typeof KsTag
         KsLogoBadge: typeof KsLogoBadge
-        KsTaskIcon: typeof KsTaskIcon
         KsText: typeof KsText
         KsTimeline: typeof KsTimeline
         KsTimelineItem: typeof KsTimelineItem

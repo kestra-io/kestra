@@ -7,7 +7,7 @@
 
             <div class="blueprint-row__meta">
                 <div class="blueprint-row__icons">
-                    <KsTaskIcon
+                    <TaskIcon
                         v-for="task in visibleTasks"
                         :key="task"
                         :cls="task"
@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import {usePluginsStore} from "../../../stores/plugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
@@ -137,7 +137,7 @@
             align-items: center;
             gap: var(--ks-spacing-2);
 
-            :deep(.ks-task-icon) {
+            :deep(.task-icon) {
                 width: 1.5rem;
                 height: 1.5rem;
             }

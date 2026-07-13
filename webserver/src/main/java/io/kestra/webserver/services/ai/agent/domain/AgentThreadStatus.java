@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
-public enum ThreadStatus {
+public enum AgentThreadStatus {
     IDLE,
     RUNNING,
     AWAITING_CONFIRMATION

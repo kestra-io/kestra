@@ -6,17 +6,22 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
-import io.kestra.webserver.services.ai.agent.domain.MessageType;
-import io.kestra.webserver.services.ai.agent.domain.Mode;
-import io.kestra.webserver.services.ai.agent.domain.Thread;
-import io.kestra.webserver.services.ai.agent.domain.ThreadStatus;
-import io.kestra.webserver.services.ai.agent.dto.AgentEvents;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentThread;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.store.MessageStore;
 import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
@@ -57,6 +62,9 @@ class AgentOrchestratorTest {
     @Inject
     ConfirmationRegistry confirmationRegistry;
 
+    @Inject
+    AiThreadManager threadManager;
+
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
         AiServiceInterface service = mock(AiServiceInterface.class);
@@ -81,18 +89,18 @@ class AgentOrchestratorTest {
     @Test
     void shouldStreamAnswerAndPersistMessagesWhenTurnHasNoToolCalls() {
         // Given
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("A trigger starts a flow."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "what is a trigger?", Mode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null), sink);
 
         // Then
         assertThat(sink.names()).containsExactly(AgentEvents.TOKEN, AgentEvents.DONE);
         assertThat(sink.completed).isTrue();
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.IDLE.name());
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly("USER/TEXT", "ASSISTANT/TEXT");
@@ -101,11 +109,11 @@ class AgentOrchestratorTest {
     @Test
     void shouldDeriveTitleFromFirstUserMessageWhenTitleAbsent() {
         // Given
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("answer"));
 
         // When
-        orchestrator.runTurn(thread, "How do retries work?", Mode.ASK, TENANT, null, new CollectingSink());
+        orchestrator.runTurn(new AgentTurnContext(thread, "How do retries work?", AgentMode.ASK, TENANT, null), new CollectingSink());
 
         // Then
         assertThat(reload(thread).title()).isEqualTo("How do retries work?");
@@ -116,23 +124,23 @@ class AgentOrchestratorTest {
         // Given — an approved plan; the model then calls the real AUTO read-execution-logs tool and answers.
         // (In Plan mode a read+answer must run *after* approval — pre-approval, any tool-free response
         // is taken as the plan card, so the AUTO path is only reachable once approved.)
-        Thread thread = newThread(Mode.PLAN);
+        AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "why did exec-1 fail?", Mode.PLAN, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, true, null, sink);
+        orchestrator.resume(turn, claim(thread, turn), true, null, sink);
 
         // Then — the read tool was dispatched (not suspended) and the loop continued to a final answer
         assertThat(sink.names()).containsExactly(
             AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE);
         assertThat(toolResultOutcome(sink)).isEqualTo("ok");
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.IDLE.name());
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         // the durable log spans both turns: prompt, plan card, approval nudge, tool call, result, answer
         assertThat(messageStore.load(thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
@@ -144,207 +152,272 @@ class AgentOrchestratorTest {
     @Test
     void shouldSuspendAndParkTurnWhenToolRequiresConfirmation() {
         // Given — Edit mode; the model calls the CONFIRM mutate tool
-        Thread thread = newThread(Mode.EDIT);
+        AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "restart it", Mode.EDIT, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), sink);
 
         // Then — suspended before executing; a turn is parked and the thread awaits confirmation
         assertThat(sink.names()).containsExactly(AgentEvents.PROPOSED_ACTION, AgentEvents.DONE);
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION.name());
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION);
         assertThat(confirmationRegistry.take(confirmationId(sink))).isPresent();
         assertThat(messageStore.load(thread.uid()))
-            .anyMatch(m -> m.type() == MessageType.PROPOSED_ACTION);
+            .anyMatch(m -> m.type() == AgentMessageType.PROPOSED_ACTION);
     }
 
     @Test
     void shouldDispatchHeldToolAndFinishWhenActionApproved() {
         // Given — Edit mode; a suspended mutate action awaiting approval, and a closing answer
-        Thread thread = newThread(Mode.EDIT);
+        AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "restart it", Mode.EDIT, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("Done, I restarted it."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, true, null, sink);
+        orchestrator.resume(turn, claim(thread, turn), true, null, sink);
 
         // Then — the real restart tool ran and the turn finished IDLE
         assertThat(sink.names()).containsExactly(
             AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE);
         assertThat(toolResultOutcome(sink)).isEqualTo("ok");
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.IDLE.name());
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.uid()))
-            .filteredOn(m -> m.type() == MessageType.TOOL_RESULT)
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(m -> "ok".equals(m.toolResult().get("outcome")));
     }
 
     @Test
     void shouldRecordRejectedResultAndResumeWhenActionRejectedInEditMode() {
         // Given — Edit mode; a suspended mutate action, and a closing answer for the resumed loop
-        Thread thread = newThread(Mode.EDIT);
+        AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "restart it", Mode.EDIT, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         scriptedModel.enqueue(AiMessage.from("Okay, I won't restart it."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, false, "leave it", sink);
+        orchestrator.resume(turn, claim(thread, turn), false, "leave it", sink);
 
         // Then — held tool not run; a rejected result is recorded and the loop resumes to IDLE
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.IDLE.name());
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.uid()))
-            .filteredOn(m -> m.type() == MessageType.TOOL_RESULT)
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(m -> "rejected".equals(m.toolResult().get("outcome")));
     }
 
     @Test
     void shouldSuspendWithPlanCardWhenFirstResponseHasNoToolCallsInPlanMode() {
         // Given — Plan mode; the first tool-free response is the plan
-        Thread thread = newThread(Mode.PLAN);
+        AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read logs\n2. restart"));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "fix it", Mode.PLAN, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null), sink);
 
         // Then — a plan card (no tool) awaiting confirmation
         AgentEvents.ProposedActionEvent plan = (AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION);
         assertThat(plan.tool()).isNull();
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION.name());
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.AWAITING_CONFIRMATION);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
     @Test
     void shouldAbortPlanWhenPlanCardRejected() {
         // Given — a plan awaiting approval
-        Thread thread = newThread(Mode.PLAN);
+        AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read logs\n2. restart"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(thread, "fix it", Mode.PLAN, TENANT, null, first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null), first);
         SuspendedTurn turn = confirmationRegistry.take(confirmationId(first)).orElseThrow();
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.resume(turn, false, "not now", sink);
+        orchestrator.resume(turn, claim(thread, turn), false, "not now", sink);
 
         // Then — the plan aborts with a closing note and the thread returns IDLE
         assertThat(sink.names()).containsExactly(AgentEvents.DONE);
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.IDLE.name());
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.uid()))
-            .anyMatch(m -> m.type() == MessageType.TEXT && m.content() != null && m.content().startsWith("Plan rejected"));
+            .anyMatch(m -> m.type() == AgentMessageType.TEXT && m.content() != null && m.content().startsWith("Plan rejected"));
     }
 
     @Test
     void shouldRejectDisallowedToolAndContinueWhenToolNotInMode() {
         // Given — Ask mode exposes no act tools; the model still tries to restart
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "restart-execution", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("I can only answer questions here."));
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "restart it", Mode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the disallowed call is rejected (not dispatched) and the loop continues to an answer
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
-        assertThat(doneStatus(sink)).isEqualTo(ThreadStatus.IDLE.name());
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldClaimThreadForExactlyOneConcurrentTurn() throws Exception {
+        // Given — an idle thread and many attempts racing to start a turn on it
+        AgentThread thread = newThread(AgentMode.ASK);
+        int attempts = 16;
+        ExecutorService pool = Executors.newFixedThreadPool(attempts);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<Optional<AgentThread>>> claims = new ArrayList<>();
+
+        // When — all attempts try to claim IDLE -> RUNNING at once
+        for (int i = 0; i < attempts; i++) {
+            claims.add(pool.submit(() -> {
+                start.await();
+                return threadManager.tryMarkRunning(thread, AgentMode.ASK, AgentThreadStatus.IDLE);
+            }));
+        }
+        start.countDown();
+
+        long winners = 0;
+        for (Future<Optional<AgentThread>> claim : claims) {
+            if (claim.get().isPresent()) {
+                winners++;
+            }
+        }
+        pool.shutdownNow();
+
+        // Then — exactly one attempt claimed the thread; the rest saw a turn already in flight
+        assertThat(winners).isEqualTo(1);
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.RUNNING);
+    }
+
+    @Test
+    void shouldExecuteEveryToolWhenModelRequestsThemInParallel() {
+        // Given — Ask mode; the model returns two read tool calls in one response (parallel tool calls)
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(
+            toolCall("c1", "read-execution-logs", "exec-1"),
+            toolCall("c2", "read-execution-logs", "exec-2")
+        )));
+        scriptedModel.enqueue(AiMessage.from("Both runs failed on the load task."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 and exec-2 fail?", AgentMode.ASK, TENANT, null), sink);
+
+        // Then — BOTH calls run (neither is silently dropped), then the loop continues to a final answer
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT,
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT,
+            AgentEvents.TOKEN, AgentEvents.DONE);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(messageStore.load(thread.uid()))
+            .extracting(m -> m.role() + "/" + m.type())
+            .containsExactly(
+                "USER/TEXT",
+                "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT",
+                "ASSISTANT/TOOL_CALL", "TOOL/TOOL_RESULT",
+                "ASSISTANT/TEXT");
     }
 
     @Test
     void shouldNotCallModelWhenClientAlreadyDisconnected() {
         // Given — the client is already gone before the turn starts
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("should not be consumed"));
         CollectingSink sink = new CollectingSink();
         sink.cancel();
 
         // When
-        orchestrator.runTurn(thread, "hi", Mode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null), sink);
 
         // Then — nothing is emitted or errored, and the thread is returned to IDLE
         assertThat(sink.names()).isEmpty();
         assertThat(sink.error).isNull();
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
     @Test
     void shouldStopTurnWhenClientDisconnectsMidStream() {
         // Given — the client disconnects while the first response is streaming
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("partial answer"));
         CollectingSink sink = new CollectingSink();
         sink.cancelOnFirstEmit();
 
         // When
-        orchestrator.runTurn(thread, "hi", Mode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the streamed token was delivered, but the turn aborts before DONE (without erroring
         // or looping again) and the thread is returned to IDLE
         assertThat(sink.names()).contains(AgentEvents.TOKEN);
         assertThat(sink.names()).doesNotContain(AgentEvents.DONE);
         assertThat(sink.error).isNull();
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(messageStore.load(thread.uid()))
+            .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
     }
 
     @Test
     void shouldFailTurnWhenModelCallTimesOut() {
         // Given — the provider accepts the call but never responds
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.hang();
         CollectingSink sink = new CollectingSink();
 
         // When — the bounded model-call wait (PT1S in tests) elapses
-        orchestrator.runTurn(thread, "hello?", Mode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the turn fails cleanly with a timeout and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
         assertThat(sink.error).hasMessageContaining("timed out");
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
     @Test
     void shouldResetThreadToIdleAndSurfaceErrorWhenModelFails() {
         // Given — no scripted response, so the model errors
-        Thread thread = newThread(Mode.ASK);
+        AgentThread thread = newThread(AgentMode.ASK);
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(thread, "hello", Mode.ASK, TENANT, null, sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello", AgentMode.ASK, TENANT, null), sink);
 
         // Then — the turn fails cleanly: error surfaced and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
         assertThat(sink.completed).isFalse();
-        assertThat(reload(thread).status()).isEqualTo(ThreadStatus.IDLE);
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────────────────────────
-
-    private Thread newThread(final Mode mode) {
-        return threadStore.create(Thread.builder()
+    private AgentThread newThread(final AgentMode mode) {
+        return threadStore.create(AgentThread.builder()
             .uid(IdUtils.create())
             .tenant(TENANT)
             .mode(mode)
-            .status(ThreadStatus.IDLE)
+            .status(AgentThreadStatus.IDLE)
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
             .deleted(false)
             .build());
     }
 
-    private Thread reload(final Thread thread) {
+    private AgentThread reload(final AgentThread thread) {
         return threadStore.find(TENANT, thread.uid()).orElseThrow();
+    }
+
+    /** Claim an awaiting thread for resumption, as the confirm endpoint does before calling resume. */
+    private AgentThread claim(final AgentThread thread, final SuspendedTurn turn) {
+        return threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION).orElseThrow();
     }
 
     private static ToolExecutionRequest toolCall(final String id, final String name, final String executionId) {

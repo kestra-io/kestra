@@ -11,8 +11,8 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,8 +62,8 @@ class RestartExecutionToolTest {
     @Test
     void shouldExposeActConfirmMetadata() {
         // When / Then
-        assertThat(tool.family()).isEqualTo(ToolFamily.ACT);
-        assertThat(tool.writePolicy()).isEqualTo(WritePolicy.CONFIRM);
+        assertThat(tool.family()).isEqualTo(AgentToolFamily.ACT);
+        assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.CONFIRM);
         assertThat(tool.permission()).isEqualTo("execution:restart");
     }
 

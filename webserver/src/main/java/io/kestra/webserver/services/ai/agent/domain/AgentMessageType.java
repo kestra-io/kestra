@@ -1,8 +1,9 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
-public enum MessageType {
+public enum AgentMessageType {
     TEXT,
     TOOL_CALL,
     TOOL_RESULT,
-    PROPOSED_ACTION
+    PROPOSED_ACTION,
+    CANCELLED
 }

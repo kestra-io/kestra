@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
-public enum ToolFamily {
+public enum AgentToolFamily {
     READ,
     MUTATE,
     ACT

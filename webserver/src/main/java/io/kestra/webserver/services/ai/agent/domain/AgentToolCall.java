@@ -1,16 +1,17 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
-import java.util.Locale;
 import java.util.Map;
+
+import io.kestra.core.utils.Enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.core.annotation.Nullable;
 
-public record ToolCall(
+public record AgentToolCall(
     @Nullable String id,
     Kind kind,
     String tool,
-    @Nullable ToolFamily family,
+    @Nullable AgentToolFamily family,
     Map<String, Object> arguments
 ) {
     public enum Kind {
@@ -19,14 +20,11 @@ public record ToolCall(
 
         @JsonCreator
         public static Kind fromString(final String value) {
-            if (value == null) {
-                return null;
-            }
-            return Kind.valueOf(value.trim().toUpperCase(Locale.ROOT));
+            return Enums.getForNameIgnoreCase(value, Kind.class);
         }
     }
 
-    public static ToolCall platform(final String id, final String tool, final ToolFamily family, final Map<String, Object> arguments) {
-        return new ToolCall(id, Kind.PLATFORM, tool, family, arguments);
+    public static AgentToolCall platform(final String id, final String tool, final AgentToolFamily family, final Map<String, Object> arguments) {
+        return new AgentToolCall(id, Kind.PLATFORM, tool, family, arguments);
     }
 }

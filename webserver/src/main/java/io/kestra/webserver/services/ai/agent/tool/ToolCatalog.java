@@ -10,8 +10,8 @@ import java.util.Optional;
 
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * The single source of truth for what the agent can do, and the single dispatch point both front
  * doors converge on. Each {@link AiPlatformTool} is reflected once — name/description/input schema
- * derived from its {@code @Tool}-annotated method — and merged with the docs MCP tools. Mode
+ * derived from its {@code @Tool}-annotated method — and merged with the docs MCP tools. AgentMode
  * profiles select a subset of these specs per turn; every call is routed back through
  * {@link #dispatch} for execution.
  */
@@ -48,8 +48,8 @@ public class ToolCatalog {
         String name,
         ToolSpecification specification,
         ToolExecutor executor,
-        ToolFamily family,
-        WritePolicy writePolicy
+        AgentToolFamily family,
+        AgentWritePolicy writePolicy
     ) {
     }
 
@@ -82,7 +82,7 @@ public class ToolCatalog {
 
             docsMcpToolProvider.tools().forEach((spec, executor) ->
                 built.put(spec.name(), new ToolEntry(
-                    spec.name(), spec, executor, ToolFamily.READ, WritePolicy.AUTO
+                    spec.name(), spec, executor, AgentToolFamily.READ, AgentWritePolicy.AUTO
                 ))
             );
 

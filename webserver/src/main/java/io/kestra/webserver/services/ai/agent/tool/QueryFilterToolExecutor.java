@@ -45,8 +45,9 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
     @Override
     public String execute(final ToolExecutionRequest request, final Object memoryId) {
         Map<String, Object> args = parseArguments(request.arguments());
-        List<QueryFilter> filters = reassembleFilters(args);
-        return invoke(bindArguments(filters, args));
+        List<QueryFilter> filters = reassembleFilters(resource, args);
+        Object[] bound = bindArguments(parameters, filterParamIndex, filters, args);
+        return invoke(method, toolInstance, bound);
     }
 
     /** Locate the single {@code @QueryFilterFormat} parameter; fail if the method declares none. */
@@ -59,15 +60,17 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
         throw new IllegalArgumentException("No @QueryFilterFormat parameter on " + method);
     }
 
-    private Object[] bindArguments(final List<QueryFilter> filters, final Map<String, Object> args) {
+    private static Object[] bindArguments(final Parameter[] parameters, final int filterParamIndex,
+                                          final List<QueryFilter> filters, final Map<String, Object> args) {
         Object[] bound = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
-            bound[i] = bindArgument(i, filters, args);
+            bound[i] = bindArgument(parameters, filterParamIndex, i, filters, args);
         }
         return bound;
     }
 
-    private Object bindArgument(final int index, final List<QueryFilter> filters, final Map<String, Object> args) {
+    private static Object bindArgument(final Parameter[] parameters, final int filterParamIndex,
+                                       final int index, final List<QueryFilter> filters, final Map<String, Object> args) {
         if (index == filterParamIndex) {
             return filters;
         }
@@ -78,7 +81,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
         return MAPPER.convertValue(raw, MAPPER.getTypeFactory().constructType(parameters[index].getParameterizedType()));
     }
 
-    private String invoke(final Object[] bound) {
+    private static String invoke(final Method method, final Object toolInstance, final Object[] bound) {
         try {
             Object result = method.invoke(toolInstance, bound);
             return result == null ? "" : result.toString();
@@ -90,7 +93,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
         }
     }
 
-    private List<QueryFilter> reassembleFilters(final Map<String, Object> args) {
+    private static List<QueryFilter> reassembleFilters(final QueryFilter.Resource resource, final Map<String, Object> args) {
         List<QueryFilter> filters = new ArrayList<>();
         for (QueryFilter.Field field : resource.supportedField()) {
             if (!AiToolSpecifications.isExposedFilterField(field)) {

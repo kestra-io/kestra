@@ -1,12 +1,12 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import io.kestra.webserver.services.ai.agent.domain.ToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.WritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 public interface AiPlatformTool {
-    ToolFamily family();
+    AgentToolFamily family();
 
-    WritePolicy writePolicy();
+    AgentWritePolicy writePolicy();
 
     String permission();
 

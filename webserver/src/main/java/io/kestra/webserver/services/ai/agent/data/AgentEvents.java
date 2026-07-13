@@ -1,4 +1,4 @@
-package io.kestra.webserver.services.ai.agent.dto;
+package io.kestra.webserver.services.ai.agent.data;
 
 import java.util.Map;
 

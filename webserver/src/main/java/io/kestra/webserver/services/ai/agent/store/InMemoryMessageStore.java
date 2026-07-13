@@ -7,16 +7,16 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.kestra.webserver.services.ai.agent.domain.Message;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
 
 import jakarta.inject.Singleton;
 
 @Singleton
 public class InMemoryMessageStore implements MessageStore {
-    private final Map<String, List<Message>> messagesByThread = new ConcurrentHashMap<>();
+    private final Map<String, List<AgentMessage>> messagesByThread = new ConcurrentHashMap<>();
 
     @Override
-    public Message append(final Message message) {
+    public AgentMessage append(final AgentMessage message) {
         Objects.requireNonNull(message, "message");
         messagesByThread
             .computeIfAbsent(message.threadId(), ignored -> new CopyOnWriteArrayList<>())
@@ -25,9 +25,9 @@ public class InMemoryMessageStore implements MessageStore {
     }
 
     @Override
-    public List<Message> load(final String threadId) {
+    public List<AgentMessage> load(final String threadId) {
         return messagesByThread.getOrDefault(threadId, List.of()).stream()
-            .sorted(Comparator.comparing(Message::uid))
+            .sorted(Comparator.comparing(AgentMessage::uid))
             .toList();
     }
 }

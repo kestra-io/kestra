@@ -1,0 +1,28 @@
+package io.kestra.webserver.services.ai.agent.data;
+
+import java.time.Instant;
+import java.util.Map;
+
+import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageRole;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
+import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
+
+import io.micronaut.core.annotation.Nullable;
+
+public record ApiMessageView(
+    String uid,
+    AgentMessageRole role,
+    AgentMessageType type,
+    @Nullable String content,
+    @Nullable AgentToolCall toolCall,
+    @Nullable Map<String, Object> toolResult,
+    Instant createdAt
+) {
+    public static ApiMessageView from(final AgentMessage message) {
+        return new ApiMessageView(
+            message.uid(), message.role(), message.type(), message.content(),
+            message.toolCall(), message.toolResult(), message.createdAt()
+        );
+    }
+}

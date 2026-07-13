@@ -31,7 +31,6 @@
             <TaskNode
                 v-bind="taskProps"
                 :icons="icons"
-                :iconComponent="iconComponent"
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
                 :replayEnabled="replayEnabled"
@@ -64,7 +63,6 @@
             <BasicNode
                 v-bind="taskProps"
                 :icons="icons"
-                :iconComponent="iconComponent"
             />
         </template>
 
@@ -72,7 +70,6 @@
             <TriggerNode
                 v-bind="triggerProps as any"
                 :icons="icons"
-                :iconComponent="iconComponent"
                 :isReadOnly="isReadOnly"
                 :isAllowedEdit="isAllowedEdit"
                 @delete="emit(EVENTS.DELETE, $event)"
@@ -182,7 +179,6 @@
         namespace?: string;
         expandedSubflows?: string[];
         icons?: Record<string, any>;
-        iconComponent?: any;
         enableSubflowInteraction?: boolean;
         execution?: any;
         subflowsExecutions?: Record<string, any[]>;
@@ -206,7 +202,6 @@
         namespace: undefined,
         expandedSubflows: () => [],
         icons: () => ({}),
-        iconComponent: undefined,
         execution: undefined,
         enableSubflowInteraction: true,
         playgroundEnabled: false,

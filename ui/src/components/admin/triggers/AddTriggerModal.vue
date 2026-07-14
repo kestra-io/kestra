@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, provide, ref, watch} from "vue"
     import {useRouter} from "vue-router"
 
     import {KsEditor} from "@kestra-io/design-system"
@@ -142,6 +142,11 @@
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import TaskObject from "../../no-code/components/tasks/TaskObject.vue"
+    import {
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+    } from "../../no-code/injectionKeys"
 
     const visible = defineModel<boolean>("visible", {required: true})
     const props = defineProps<{trigger: TriggerPluginDto}>()
@@ -165,6 +170,14 @@
     const flowOptions = ref<{id: string; namespace: string}[]>([])
     const documentationPlugin = ref<PluginComponent | null>(null)
     const triggerPlugin = ref<PluginComponent | null>(null)
+
+    // Provide schema injection context so TaskObject can resolve $ref fields
+    // (e.g. inherited labels, workerSelector from parent trigger types).
+    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => triggerPlugin.value?.schema ?? {}))
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
+        return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
+    }))
 
     const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
     const formModel = ref({
@@ -197,9 +210,19 @@
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
 
-    const canSubmit = computed(() =>
-        !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),
-    )
+    const canSubmit = computed(() => {
+        if (!formModel.value.namespace || !formModel.value.flowId || !formModel.value.triggerId.trim()) {
+            return false
+        }
+        // Validate that schema-required fields (e.g. cron for Schedule) are filled
+        if (triggerSchema.value?.required) {
+            return triggerSchema.value.required.every((k: string) => {
+                const val = triggerPropertiesModel.value[k]
+                return val !== undefined && val !== null && val !== ""
+            })
+        }
+        return true
+    })
 
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
 

@@ -483,6 +483,7 @@ export const useFlowStore = defineStore("flow", () => {
         flow.value = data
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
+        previewSource.value = undefined
         overallTotal.value = 1
 
         return data

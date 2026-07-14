@@ -1,9 +1,8 @@
 <template>
     <NamespaceSelect
-        data-type="flow"
         v-model="modelValue"
         multiple
-        allowCreate
+        taggable
     />
 </template>
 

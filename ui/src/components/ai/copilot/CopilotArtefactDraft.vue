@@ -27,7 +27,7 @@
 
         <div class="copilot-draft-footer">
             <KsButton
-                type="secondary"
+                type="default"
                 data-test="copilot-draft-copy"
                 @click="copy"
             >

@@ -18,7 +18,7 @@ export type ThreadStatus = "IDLE" | "RUNNING" | "AWAITING_CONFIRMATION"
 
 export type MessageRole = "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
 
-export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION"
+export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT"
 
 export type ToolFamily = "READ" | "MUTATE" | "ACT"
 
@@ -87,6 +87,8 @@ export interface MessageView {
     content?: string | null
     toolCall?: ToolCall | null
     toolResult?: Record<string, unknown> | null
+    /** Present on ARTEFACT_DRAFT messages — the drafted artefact to render. */
+    draft?: ArtefactDraftEvent | null
     createdAt: string
 }
 
@@ -109,6 +111,7 @@ export const AiEvent = {
     TOOL_CALL: "tool_call",
     TOOL_RESULT: "tool_result",
     PROPOSED_ACTION: "proposed_action",
+    ARTEFACT_DRAFT: "artefact_draft",
     DONE: "done",
 } as const
 
@@ -120,8 +123,27 @@ export interface TokenEvent {
 
 export interface ToolCallEvent {
     tool: string
+    /** "PLATFORM" (read/act tools) or "AUTHORING" (draft-producing sub-agents). */
+    kind?: ToolKind | null
     family?: ToolFamily | null
     arguments: Record<string, unknown>
+}
+
+/** Kind of artefact an authoring sub-agent drafts. */
+export type ArtefactKind = "FLOW" | "DASHBOARD" | "APP"
+
+/**
+ * A non-mutating artefact (flow / dashboard / app YAML) drafted by an authoring
+ * sub-agent. Nothing is saved server-side — the user reviews it as a card.
+ */
+export interface ArtefactDraftEvent {
+    draftId: string
+    kind: ArtefactKind
+    yaml: string
+    /** Whether the draft passed platform validation. */
+    valid: boolean
+    /** Validation violations to fix, when `valid` is false. */
+    constraints?: string | null
 }
 
 export interface ToolResultEvent {

@@ -18,6 +18,7 @@ import {uid} from "../../../utils/utils"
 import {streamSse, SseHttpError} from "./streamSse"
 import {
     AiEvent,
+    type ArtefactDraftEvent,
     type ChatTurnRequest,
     type ConfirmActionRequest,
     type CreateThreadRequest,
@@ -42,12 +43,14 @@ export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
     role: "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
-    type: "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION"
+    type: "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     toolCall?: ToolCallEvent
     toolResult?: ToolResultEvent
     proposedAction?: ProposedActionEvent
+    /** The drafted artefact, on ARTEFACT_DRAFT messages. */
+    draft?: ArtefactDraftEvent
 }
 
 export function useAiChat() {
@@ -103,9 +106,10 @@ export function useAiChat() {
                 type: m.type,
                 content: m.content ?? undefined,
                 toolCall: m.toolCall
-                    ? {tool: m.toolCall.tool, family: m.toolCall.family, arguments: m.toolCall.arguments}
+                    ? {tool: m.toolCall.tool, kind: m.toolCall.kind, family: m.toolCall.family, arguments: m.toolCall.arguments}
                     : undefined,
                 toolResult: (m.toolResult as unknown as ToolResultEvent) ?? undefined,
+                draft: m.draft ?? undefined,
             }))
     }
 
@@ -216,6 +220,13 @@ export function useAiChat() {
                 const proposal = frame.data as ProposedActionEvent
                 pendingConfirmation.value = proposal
                 push({id: uid(), role: "ASSISTANT", type: "PROPOSED_ACTION", proposedAction: proposal})
+                break
+            }
+            case AiEvent.ARTEFACT_DRAFT: {
+                // A non-mutating artefact card (flow/dashboard/app YAML) rendered inline
+                // in the transcript. Ends the current assistant bubble like a tool call does.
+                activeAssistant = null
+                push({id: uid(), role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: frame.data as ArtefactDraftEvent})
                 break
             }
             case AiEvent.DONE: {

@@ -2051,14 +2051,25 @@
           "cancel": "Cancel voice input"
         },
         "unavailable": {
-            "title": "AI Copilot non è disponibile",
-            "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno, poi riprova.",
-            "retry": "Riprova"
+          "title": "AI Copilot non è disponibile",
+          "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno, poi riprova.",
+          "retry": "Riprova"
         },
         "thinking": "Sto pensando",
         "newChat": "New chat",
         "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet"
+        "recentsEmpty": "No recent conversations yet",
+        "draft": {
+          "title": {
+            "flow": "Proposed flow",
+            "dashboard": "Proposed dashboard",
+            "app": "Proposed app"
+          },
+          "valid": "Valid",
+          "invalid": "Needs changes",
+          "copy": "Copy YAML",
+          "copied": "Copied"
+        }
       }
     },
     "playground": {

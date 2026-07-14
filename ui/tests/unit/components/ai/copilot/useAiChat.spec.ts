@@ -117,6 +117,36 @@ describe("useAiChat", () => {
         expect(chat.messages.value.find((m) => m.type === "TOOL_CALL")?.toolCall?.tool).toBe("read-execution")
     })
 
+    it("renders an artefact_draft as an inline ARTEFACT_DRAFT message", async () => {
+        const chat = useAiChat()
+        nextFrames = [
+            {event: "token", data: {text: "Here's a draft."}},
+            {event: "artefact_draft", data: {draftId: "d1", kind: "FLOW", yaml: "id: demo", valid: true, constraints: null}},
+            {event: "done", data: {status: "IDLE"}},
+        ]
+        await chat.sendChat({prompt: "make a flow", mode: "EDIT"})
+        const draftMsg = chat.messages.value.find((m) => m.type === "ARTEFACT_DRAFT")
+        expect(draftMsg?.draft?.draftId).toBe("d1")
+        expect(draftMsg?.draft?.kind).toBe("FLOW")
+        expect(draftMsg?.draft?.yaml).toBe("id: demo")
+        // The draft ends the current assistant bubble: a subsequent token starts a new one.
+        expect(chat.messages.value.filter((m) => m.type === "TEXT" && m.role === "ASSISTANT")).toHaveLength(1)
+    })
+
+    it("rehydrates a persisted artefact draft from thread history", async () => {
+        const chat = useAiChat()
+        get.mockResolvedValue({data: {
+            uid: "t7", mode: "EDIT", status: "IDLE",
+            messages: [
+                {uid: "a", role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: {draftId: "d9", kind: "DASHBOARD", yaml: "x: 1", valid: false, constraints: "bad"}},
+            ],
+        }})
+        await chat.loadThread("t7")
+        const draftMsg = chat.messages.value.find((m) => m.type === "ARTEFACT_DRAFT")
+        expect(draftMsg?.draft?.draftId).toBe("d9")
+        expect(draftMsg?.draft?.valid).toBe(false)
+    })
+
     it("maps a 409 to the turnInProgress error code and falls back to IDLE", async () => {
         const chat = useAiChat()
         nextError = new SseHttpError(409, "")

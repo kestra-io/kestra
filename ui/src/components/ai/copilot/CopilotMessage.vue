@@ -38,6 +38,11 @@
             {{ isOk ? t("ai.copilot.toolResult.ok", {tool: toolName}) : t("ai.copilot.toolResult.rejected", {tool: toolName}) }}
         </KsText>
     </div>
+
+    <!-- Artefact draft — a non-mutating flow/dashboard/app the agent generated -->
+    <div v-else-if="message.type === 'ARTEFACT_DRAFT' && message.draft" class="copilot-msg copilot-msg-assistant">
+        <CopilotArtefactDraft :draft="message.draft" />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -45,6 +50,7 @@
     import {useI18n} from "vue-i18n"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
+    import CopilotArtefactDraft from "./CopilotArtefactDraft.vue"
     import type {ChatMessage} from "./useAiChat"
 
     const props = defineProps<{message: ChatMessage}>()

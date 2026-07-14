@@ -28,6 +28,7 @@
     "flows": "流程",
     "flow": "流程",
     "invalid source": "无效的源代码",
+    "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "missingSource": "缺少源",
     "update": "更新",
     "update ok": "已更新",
@@ -113,6 +114,7 @@
     "prev_execution": "先前执行",
     "next_execution": "下一次执行",
     "datepicker": {
+      "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如：PT30M, P1D)。",
       "leave empty for infinite": "留空表示无限持续时间或输入ISO 8601持续时间（例如：'P1DT1H1M1S'）",
       "duration example": "例如：'P1DT1H1M1S'",
       "error": "无效的持续时间格式，必须为ISO 8601持续时间（例如：'P1DT1H1M1S'）",
@@ -325,9 +327,9 @@
     "no metrics available": "此task运行没有记录任何指标。",
     "no outputs available": "此任务运行没有可用的输出。",
     "outputs": "输出",
-    "flow_outputs": "Flow Outputs",
-    "no_flow_outputs": "没有可用的output。",
+    "flow_inputs": "Flow Inputs",
     "output": "输出",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "调试表达式",
       "render": "渲染表达式",

@@ -5,11 +5,15 @@ import * as Utils from "../utils/utils"
 import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
 import {useRoute} from "vue-router"
-import {CLUSTER_PREFIX} from "@kestra-io/design-system"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {CLUSTER_PREFIX, routeQueryToQueryFilters} from "@kestra-io/design-system"
+import {TaskRun, useClient, type Execution as SDKExecution} from "@kestra-io/kestra-sdk"
+import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
+import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
+import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import * as ExecutionUtils from "../utils/executionUtils"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
+import {Optional} from "../utils/utils"
 
 export interface Check {
     message: string
@@ -73,57 +77,14 @@ interface LogsState {
     results: any[];
 }
 
-export interface Label{
-    key: string;
-    value: string;
-}
+export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type Histories = {
-    state: string;
-    date: string;
-}
-
-export interface Execution{
-    id: string;
-    namespace: string;
-    flowId: string;
+export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
     tenantId?: string;
-    taskRunList:  {
-        id: string,
-        taskId: string,
-        value?: string
-        executionId?: string
-        outputs?: Record<string, any>
-        state?: {
-            current: string
-        }
-    }[]
-    state: {
-        current: string;
-        history: string;
-        startDate: string;
-        duration: string;
-        endDate?: string;
-        histories?: Histories[];
-    }
-    trigger?: {
-        id: any;
-        type: string;
-        variables: {
-            executionId: string;
-        }
-    },
-    metadata: {
-        originalCreatedDate: string;
-        attemptNumber: number;
-    },
+    taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, any>;
-    labels?: Label[];
-    variables?: Record<string, any>;
     outputs?: Record<string, any>;
-    originalId?: string;
-    flowRevision?: number;
-    scheduleDate?: string;
+    variables?: Record<string, any>;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {
@@ -162,95 +123,53 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {
-        return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/actions/restart`,
-            null,
-            {
-                params: {
-                    revision: options.revision,
-                },
-            })
+        return ExecutionsAPI.restartExecution({executionId: options.executionId, revision: options.revision}) as unknown as Promise<Execution>
     }
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
-        return axios.post(
-            `${apiUrl()}/executions/restart/by-ids`,
-            options.executionsId,
-        )
+        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId})
     }
 
     const queryRestartExecution = (options: Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/restart/by-query`,
-            {},
-            {params: options},
-        )
+        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.restartExecutionsByQuery>[0])
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
-        return axios.post(
-            `${apiUrl()}/executions/resume/by-ids`,
-            options.executionsId,
-        )
+        return ExecutionsAPI.resumeExecutionsByIds({body: options.executionsId})
     }
 
     const queryResumeExecution = (options: Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/resume/by-query`,
-            {},
-            {params: options},
-        )
+        return ExecutionsAPI.resumeExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.resumeExecutionsByQuery>[0])
     }
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/replay/by-ids`,
-            options.executionsId,
-            {params: options},
-        )
+        return ExecutionsAPI.replayExecutionsByIds({body: options.executionsId, latestRevision: options.latestRevision})
     }
 
     const bulkChangeExecutionStatus = (options: { executionsId: string[]; newStatus: string }) => {
-        return axios.post(
-            `${apiUrl()}/executions/change-status/by-ids`,
-            options.executionsId,
-            {
-                params: {
-                    newStatus: options.newStatus,
-                },
-            },
-        )
+        return ExecutionsAPI.updateExecutionsStatusByIds({body: options.executionsId, newStatus: options.newStatus as Parameters<typeof ExecutionsAPI.updateExecutionsStatusByIds>[0]["newStatus"]})
     }
 
     const queryReplayExecution = (options: Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/replay/by-query`,
-            {},
-            {params: options},
-        )
+        const {latestRevision, ...filterKeys} = options
+        return ExecutionsAPI.replayExecutionsByQuery({filters: routeQueryToQueryFilters(filterKeys), latestRevision} as Parameters<typeof ExecutionsAPI.replayExecutionsByQuery>[0])
     }
 
     const queryChangeExecutionStatus = (options: Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/change-status/by-query`,
-            {},
-            {params: options},
-        )
+        const {newStatus, ...filterKeys} = options
+        return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToQueryFilters(filterKeys), newStatus} as Parameters<typeof ExecutionsAPI.updateExecutionsStatusByQuery>[0])
     }
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
-        return axios.post<Execution>(
-            `${apiUrl()}/executions/${options.executionId}/actions/replay`,
-            null,
-            {
-                params: {
-                    taskRunId: options.taskRunId,
-                    revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-                },
-            })
+        return ExecutionsAPI.replayExecution({
+            executionId: options.executionId,
+            taskRunId: options.taskRunId,
+            revision: options.revision,
+            breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+        }) as unknown as Promise<Execution>
     }
 
+    // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post(
             `${apiUrl()}/executions/${options.executionId}/actions/replay-with-inputs`,
@@ -268,23 +187,15 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const changeExecutionStatus = (options: { executionId: string; state: string }) => {
-        return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/actions/change-status`,
-            null,
-            {
-                params: {
-                    status: options.state,
-                },
-            })
+        return ExecutionsAPI.updateExecutionStatus({executionId: options.executionId, status: options.state as Parameters<typeof ExecutionsAPI.updateExecutionStatus>[0]["status"]}) as unknown as Promise<Execution>
     }
 
     const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
-        return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/actions/state`,
-            {
-                taskRunId: options.taskRunId,
-                state: options.state,
-            })
+        return ExecutionsAPI.updateTaskRunState({
+            executionId: options.executionId,
+            taskRunId: options.taskRunId!,
+            state: options.state as Parameters<typeof ExecutionsAPI.updateTaskRunState>[0]["state"],
+        }) as unknown as Promise<Execution>
     }
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution
@@ -293,17 +204,18 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return axios.delete(`${apiUrl()}/executions/${options.id}/actions/kill?isOnKillCascade=${options.isOnKillCascade}`)
+        return ExecutionsAPI.killExecution({executionId: options.id, isOnKillCascade: options.isOnKillCascade}) as unknown as Promise<Execution>
     }
 
     const bulkKill = (options: { executionsId: string[] }) => {
-        return axios.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId})
+        return ExecutionsAPI.killExecutionsByIds({body: options.executionsId})
     }
 
     const queryKill = (options: Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/kill/by-query`, {params: options})
+        return ExecutionsAPI.killExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.killExecutionsByQuery>[0])
     }
 
+    // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     const resume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
@@ -313,6 +225,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     const validateResume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
@@ -322,6 +235,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
         return axios.post<Execution>(
             `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
@@ -335,43 +249,46 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const pause = (options: { id: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/actions/pause`)
+        return ExecutionsAPI.pauseExecution({executionId: options.id}) as unknown as Promise<Execution>
     }
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
-        return axios.post(
-            `${apiUrl()}/executions/pause/by-ids`,
-            options.executionsId,
-        )
+        return ExecutionsAPI.pauseExecutionsByIds({body: options.executionsId})
     }
 
     const queryPauseExecution = (options: Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/pause/by-query`,
-            {},
-            {params: options},
-        )
+        return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.pauseExecutionsByQuery>[0])
     }
 
     const loadExecution = (options: { id: string }) => {
-        return axios.get(`${apiUrl()}/executions/${options.id}`).then(response => {
-            execution.value = response.data
-            return response.data
+        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
+            execution.value = data
+            return execution.value
         })
     }
 
-    const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
-        return axios.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
+    function toExecutionSearchParams(options: Record<string, any>) {
+        const {sort, page, size, onlyTotal: _onlyTotal, commit: _commit, ...filterKeys} = options
+        return {
+            page,
+            size,
+            sort: sort ? [sort] : undefined,
+            filters: routeQueryToQueryFilters(filterKeys),
+        } as Parameters<typeof ExecutionsAPI.searchExecutions>[0]
+    }
+
+    const findExecutions = (options: { commit?: boolean } & Record<string, any>): Promise<any> => {
+        return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
             if (options.commit !== false) {
-                executions.value = response.data.results
-                total.value = response.data.total
+                executions.value = response.results as unknown as Execution[]
+                total.value = response.total ?? 0
             }
 
             if (options.onlyTotal) {
-                return response.data.total
+                return response.total
             }
 
-            return response.data
+            return response
         })
     }
 
@@ -380,16 +297,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         filters?: Record<string, string>;
         size?: number;
     }): Promise<string[]> => {
-        const response = await axios.get(`${apiUrl()}/executions/distinct-field-values`, {
-            params: {
-                field: options.field,
-                ...(options.filters ?? {}),
-                size: options.size ?? 100,
-            },
-        })
-        return response.data as string[]
+        return ExecutionsAPI.findDistinctFieldValues({
+            field: options.field as Parameters<typeof ExecutionsAPI.findDistinctFieldValues>[0]["field"],
+            filters: options.filters ? routeQueryToQueryFilters(options.filters) : undefined,
+            size: options.size ?? 100,
+        } as Parameters<typeof ExecutionsAPI.findDistinctFieldValues>[0])
     }
 
+    // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
         return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
@@ -406,45 +321,59 @@ export const useExecutionsStore = defineStore("executions", () => {
     const triggerExecution = (options: {
         namespace: string;
         id: string;
-        formData: any;
+        formData?: Record<string, any>;
         kind: "PLAYGROUND" | "NORMAL"
         breakpoints?: string[];
         labels?: string[];
         scheduleDate?: string,
         revision?: number,
     }) => {
-        return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
-            timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
-            params: {
-                labels: options.labels ?? [],
-                scheduleDate: options.scheduleDate,
-                kind: options.kind,
-                breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-                revision: options.revision,
-            },
-        })
+        // body's generated type is a narrow `Array<Blob | File>` fallback - OpenAPI can't express
+        // a dynamic, per-flow-input-keyed object schema - but the runtime multipart serializer just
+        // does Object.entries(body), so a plain key/value object of input values works correctly
+        // despite the mismatched declared type.
+        return ExecutionsAPI.createExecution({
+            namespace: options.namespace,
+            id: options.id,
+            body: options.formData as unknown as Parameters<typeof ExecutionsAPI.createExecution>[0]["body"],
+            labels: options.labels ?? [],
+            scheduleDate: options.scheduleDate,
+            kind: options.kind,
+            breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+            revision: options.revision,
+        // Content-Type must be forced to multipart here: the shared client's default
+        // "application/json" header makes axios's transformRequest silently JSON-stringify the
+        // FormData body instead of sending it as multipart (utils.isFormData(data) is true, but
+        // axios still re-encodes it whenever the Content-Type header says JSON) - same override
+        // the raw-axios multipart calls elsewhere in this file (resume, validateExecution, ...) need.
+        }, {timeout: 60 * 60 * 1000, headers: {"Content-Type": "multipart/form-data"}})
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {
-        const {id, deleteLogs, deleteMetrics, deleteStorage} = options
-        const qs = Object.entries({deleteLogs, deleteMetrics, deleteStorage})
-            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-            .join("&")
-
-        return axios.delete(`${apiUrl()}/executions/${id}?${qs}`).then(() => {
+        return ExecutionsAPI.deleteExecution({
+            executionId: options.id,
+            deleteLogs: options.deleteLogs,
+            deleteMetrics: options.deleteMetrics,
+            deleteStorage: options.deleteStorage,
+        }).then(() => {
             execution.value = undefined
         })
     }
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}})
+        const {executionsId, ...rest} = options
+        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest} as Parameters<typeof ExecutionsAPI.deleteExecutionsByIds>[0])
     }
 
     const queryDeleteExecution = (options: Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/by-query`, {params: options})
+        const {includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage, ...filterKeys} = options
+        return ExecutionsAPI.deleteExecutionsByQuery({
+            filters: routeQueryToQueryFilters(filterKeys),
+            includeNonTerminated,
+            deleteLogs,
+            deleteMetrics,
+            deleteStorage,
+        } as Parameters<typeof ExecutionsAPI.deleteExecutionsByQuery>[0])
     }
 
     const sse = ref<EventSource | undefined>(undefined)
@@ -559,37 +488,37 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean; showMessageOnError?: boolean }) => {
-        return axios.get(`${apiUrl()}/logs/${options.executionId}`, {
-            params: options.params,
-            ...(options.showMessageOnError === false ? {showMessageOnError: false} : {}),
-        }).then(response => {
+        return LogsAPI.listLogsFromExecution(
+            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})} as Parameters<typeof LogsAPI.listLogsFromExecution>[0],
+            options.showMessageOnError === false ? ({showMessageOnError: false} as any) : undefined,
+        ).then(data => {
             if (options.store === false) {
-                return response.data
+                return data
             }
-            logs.value = response.data
-            return response.data
+            logs.value = data as any
+            return data
         })
     }
 
     const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        return axios.get(`${apiUrl()}/metrics/${options.executionId}`, {
-            params: options.params,
-        }).then(response => {
+        const {page, size, sort, taskRunId, taskId} = options.params ?? {}
+        return MetricsAPI.searchByExecution({
+            executionId: options.executionId,
+            page, size,
+            sort: sort ? [sort] : undefined,
+            taskRunId, taskId,
+        }).then(data => {
             if (options.store === false) {
-                return response.data
+                return data
             }
-            metrics.value = response.data.results
-            total.value = response.data.total
-            return response.data
+            metrics.value = data.results
+            total.value = data.total ?? 0
+            return data
         })
     }
 
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return axios.get(`${apiUrl()}/logs/${options.executionId}/download`, {
-            params: options.params,
-        }).then(response => {
-            return response.data
-        })
+        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})} as Parameters<typeof LogsAPI.downloadLogsFromExecution>[0]) as unknown as Promise<string>
     }
 
     const downloadLogsFile = (options: { executionId: string; params?: Record<string, any> }) => {
@@ -602,14 +531,11 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return axios.delete(`${apiUrl()}/logs/${options.executionId}`, {
-            params: options.params,
-        }).then(response => {
-            return response.data
-        })
+        return LogsAPI.deleteLogsFromExecution({executionId: options.executionId, ...options.params} as Parameters<typeof LogsAPI.deleteLogsFromExecution>[0])
     }
 
     const filePreviewB = ref<any | undefined>(undefined)
+    // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options,
@@ -632,89 +558,62 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const setLabels = (options: { executionId: string; labels: any }) => {
-        return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/actions/labels`,
-            options.labels,
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
+        return ExecutionsAPI.setLabelsOnTerminatedExecution({executionId: options.executionId, body: options.labels})
     }
 
     const querySetLabels = (options: { data: any; params: Record<string, any> }) => {
-        return axios.post(`${apiUrl()}/executions/labels/by-query`, options.data, {
-            params: options.params,
-        })
+        return ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery({filters: routeQueryToQueryFilters(options.params), body: options.data} as Parameters<typeof ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery>[0])
     }
 
-    const bulkSetLabels = (options: any) => {
-        return axios.post(`${apiUrl()}/executions/labels/by-ids`, options)
+    const bulkSetLabels = (options: { executionsId: string[]; executionLabels: any[] }) => {
+        return ExecutionsAPI.setLabelsOnTerminatedExecutionsByIds(options)
     }
 
     const unqueue = (options: { id: string; state: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/actions/unqueue?state=${options.state}`)
+        return ExecutionsAPI.unqueueExecution({executionId: options.id, state: options.state as Parameters<typeof ExecutionsAPI.unqueueExecution>[0]["state"]}) as unknown as Promise<Execution>
     }
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: string }) => {
-        return axios.post(
-            `${apiUrl()}/executions/unqueue/by-ids?state=${options.newStatus}`,
-            options.executionsId,
-        )
+        return ExecutionsAPI.unqueueExecutionsByIds({body: options.executionsId, state: options.newStatus as Parameters<typeof ExecutionsAPI.unqueueExecutionsByIds>[0]["state"]})
     }
 
     const queryUnqueueExecution = (options: { newStatus: string } & Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/unqueue/by-query?state=${options.newStatus}`,
-            {},
-            {params: options},
-        )
+        const {newStatus, ...filterKeys} = options
+        return ExecutionsAPI.unqueueExecutionsByQuery({filters: routeQueryToQueryFilters(filterKeys), newState: newStatus} as Parameters<typeof ExecutionsAPI.unqueueExecutionsByQuery>[0])
     }
 
     const forceRun = (options: { id: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/actions/force-run`)
+        return ExecutionsAPI.forceRunExecution({executionId: options.id}) as unknown as Promise<Execution>
     }
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
-        return axios.post(
-            `${apiUrl()}/executions/force-run/by-ids`,
-            options.executionsId,
-        )
+        return ExecutionsAPI.forceRunByIds({body: options.executionsId})
     }
 
     const queryForceRunExecution = (options: Record<string, any>) => {
-        return axios.post(
-            `${apiUrl()}/executions/force-run/by-query`,
-            {},
-            {params: options},
-        )
+        return ExecutionsAPI.forceRunExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.forceRunExecutionsByQuery>[0])
     }
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
-        const revision = options.revision ? `?revision=${options.revision}` : ""
-        return axios.get(`${apiUrl()}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
-            .then(response => {
+        return ExecutionsAPI.flowFromExecution({namespace: options.namespace, flowId: options.flowId, revision: options.revision})
+            .then(data => {
                 if (options.store) {
-                    flow.value = response.data
+                    flow.value = data
                 }
-                return response.data
+                return data
             })
     }
 
     const loadFlowForExecutionByExecutionId = (options: { id: string, revision?: string }) => {
-        return axios.get(`${apiUrl()}/executions/${options.id}/flow`)
-            .then(response => {
-                flow.value = response.data
-                return response.data
+        return ExecutionsAPI.flowFromExecutionById({executionId: options.id})
+            .then(data => {
+                flow.value = data
+                return data
             })
     }
 
-    const fetchGraph = (options: { id: string; params?: Record<string, any> }) => {
-        const params = options.params ? options.params : {}
-        return axios.get(`${apiUrl()}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
-            .then(response => {
-                return response.data
-            })
+    const fetchGraph = (options: { id: string; params?: Record<string, any> }): Promise<any> => {
+        return ExecutionsAPI.executionFlowGraph({executionId: options.id, subflows: options.params?.subflows}, {withCredentials: true})
     }
 
     function loadGraph(options: { id: string; params?: Record<string, any> }) {
@@ -806,6 +705,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return graph
     }
 
+    // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const loadNamespaces = () => {
         return axios.get(`${apiUrl()}/executions/namespaces`)
             .then(response => {
@@ -813,6 +713,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             })
     }
 
+    // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const loadFlowsExecutable = (options: { namespace: string }) => {
         return axios.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
             .then(response => {
@@ -821,9 +722,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadLatestExecutions = (options: { flowFilters: any }) => {
-        return axios.post(`${apiUrl()}/executions/latest`, options.flowFilters).then(response => {
-            return response.data
-        })
+        return ExecutionsAPI.latestExecutions({body: options.flowFilters})
     }
 
     // mutations
@@ -866,18 +765,14 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
-        return axios.get(`${apiUrl()}/executions`, {
-            params: {
-                namespace,
-                flowId,
-            },
-        }).then(response => {
-            executions.value = response.data.results
-            total.value = response.data.total
-            return response.data
+        return ExecutionsAPI.searchExecutionsByFlowId({namespace, flowId}).then(data => {
+            executions.value = data.results as unknown as Execution[]
+            total.value = data.total ?? 0
+            return data
         })
     }
 
+    // Stays on raw axios: CSV blob download, not a clean typed JSON call.
     const exportExecutionsAsCSV = async (params: any) => {
         const response = await axios.get(
             `${apiUrl()}/executions/export/by-query/csv`,

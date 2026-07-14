@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.preview;
 
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.preview.FilePreview;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,6 +19,7 @@ import lombok.experimental.SuperBuilder;
     title = "PDF file renderer",
     description = "Preview PDF files inside the Kestra UI."
 )
+@Plugin
 public class PdfFileRenderer extends AbstractBase64FileRenderer {
     @Override
     protected FilePreview.Type getPreviewType() {

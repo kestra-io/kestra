@@ -91,6 +91,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     private final MetricRegistry metricRegistry;
 
+    // The context captured at construction time.
+    // The static context returned by KestraContext.getContext() might change if the context is restarted inside the same JVM
+    // which can occur at least in tests.
+    private final KestraContext kestraContext;
+
     private final RunContextFactory runContextFactory;
 
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
@@ -106,10 +111,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
 
-    private final List<Runnable> receiveCancellations = new ArrayList<>();
-    private final List<QueueSubscriber<?>> queueSubscribers = new ArrayList<>();
+    // Thread-safe: populated by run() but iterated from maintenance listener and shutdown threads.
+    private final List<Runnable> receiveCancellations = new CopyOnWriteArrayList<>();
+    private final List<QueueSubscriber<?>> queueSubscribers = new CopyOnWriteArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
     private final java.util.concurrent.ExecutorService executionExecutorService;
@@ -124,6 +129,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         ExecutorsUtils executorsUtils,
         ExecutorConfiguration executorConfiguration,
+        KestraContext kestraContext,
         DispatchQueueInterface<Execution> executionQueue,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         KillSwitchService killSwitchService,
@@ -160,6 +166,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
 
+        this.kestraContext = kestraContext;
         this.executionQueue = executionQueue;
         this.executionCommandQueue = executionCommandQueue;
         this.killSwitchService = killSwitchService;
@@ -199,7 +206,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
         int threadCount = executorConfiguration.threadCount() != null ? executorConfiguration.threadCount() : 0;
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, KestraContext.getContext().getAllocatedCpuCores());
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, kestraContext.getAllocatedCpuCores());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
 
@@ -238,6 +245,18 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     @Override
     public void run() {
+        guardedStart(this::doRun, () ->
+        {
+            if (this.maintenanceService.isInMaintenanceMode()) {
+                enterMaintenance();
+            } else {
+                setState(ServiceState.RUNNING);
+            }
+            log.info("Executor started with {} thread(s)", numberOfThreads);
+        });
+    }
+
+    private void doRun() {
         // listen to executor related queues
         this.queueSubscribers.addFirst(this.executionQueue.subscriber().subscribe(this::executionQueue));
         this.queueSubscribers.addFirst(
@@ -293,6 +312,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
             }
         })::dispose);
 
+        // A stop may have timed out waiting for this startup and already closed the scheduled
+        // pool — don't schedule the loops or start their watchers on it.
+        if (isStopRequested()) {
+            return;
+        }
+
         // Start delay and monitoring loops
         executionDelayFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionDelayLoop,
@@ -318,11 +343,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
+                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledDelay thread", e);
                         close();
-                        KestraContext.getContext().shutdown();
+                        kestraContext.shutdown();
                     }
                 }
             }
@@ -339,23 +365,17 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
+                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
-                    if (e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
                         close();
-                        KestraContext.getContext().shutdown();
+                        kestraContext.shutdown();
                     }
                 }
             }
         );
 
-        // init the service
-        if (this.maintenanceService.isInMaintenanceMode()) {
-            enterMaintenance();
-        } else {
-            setState(ServiceState.RUNNING);
-        }
-        log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {
@@ -468,7 +488,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
      * - Failed flow that will be retried after an interval
      **/
     private void executionDelayLoop() {
-        if (this.shutdown.get() || this.isPaused.get()) {
+        if (isStopRequested() || this.isPaused.get()) {
             return;
         }
 
@@ -563,7 +583,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void executionSLAMonitorLoop() {
-        if (this.shutdown.get() || this.isPaused.get()) {
+        if (isStopRequested() || this.isPaused.get()) {
             return;
         }
 
@@ -877,9 +897,21 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     @Override
     protected ServiceState doStop() {
-        this.receiveCancellations.forEach(Runnable::run);
-        this.queueSubscribers.forEach(QueueSubscriber::close);
-        ExecutorsUtils.closeScheduledThreadPool(scheduledExecutorService, Duration.ofSeconds(5), List.of(executionDelayFuture, monitorSLAFuture));
+        // AbstractService.stop() already waited for any in-flight startup, so nothing can be
+        // created past this point; the loops and watchers see the stop via isStopRequested().
+        try {
+            this.receiveCancellations.forEach(Runnable::run);
+            this.queueSubscribers.forEach(QueueSubscriber::close);
+        } finally {
+            // Always stop the scheduled loops: leaving them running after the context is closed makes
+            // them fail on the closed datasource and escalate to an application shutdown.
+            // The futures are null when stop ran before run() scheduled them.
+            ExecutorsUtils.closeScheduledThreadPool(
+                scheduledExecutorService,
+                Duration.ofSeconds(5),
+                Stream.of(executionDelayFuture, monitorSLAFuture).filter(Objects::nonNull).toList()
+            );
+        }
         return ServiceState.TERMINATED_GRACEFULLY;
     }
 }

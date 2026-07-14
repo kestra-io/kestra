@@ -47,7 +47,7 @@ public class GetPluginSchemaTool implements AiPlatformTool {
     public Result getPluginSchema(
         @P(name = "pluginType", value = "The fully-qualified plugin type, e.g. io.kestra.plugin.core.log.Log") String pluginType) {
         PluginClassAndMetadata<? extends Plugin> metadata = pluginRegistry.findMetadataByIdentifier(pluginType)
-            .orElseThrow(() -> new IllegalArgumentException("Plugin type not found: '" + pluginType + "'"));
+            .orElseThrow(() -> new IllegalArgumentException("Plugin type not found: '%s'".formatted(pluginType)));
 
         return new Result(pluginType, jsonSchemaGenerator.schemas(metadata.type()));
     }

@@ -115,7 +115,7 @@ public class AgentOrchestrator {
 
     private void resumePlan(final AgentLoopContext ctx, final boolean approve, final String reason, final TurnEventSink sink) {
         if (!approve) {
-            String summary = "Plan rejected" + (reason != null ? " (" + reason + ")" : "") + ". No actions were taken.";
+            String summary = "Plan rejected%s. No actions were taken.".formatted(reason != null ? " (" + reason + ")" : "");
             threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), summary);
             finishTurn(ctx);
             done(sink, AgentThreadStatus.IDLE);
@@ -211,7 +211,7 @@ public class AgentOrchestrator {
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
-                    rejectTool(ctx, req, AgentToolCall.Kind.PLATFORM, null, "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.", sink);
+                    rejectTool(ctx, req, AgentToolCall.Kind.PLATFORM, null, "Tool '%s' is not available in %s mode.".formatted(req.name(), ctx.mode()), sink);
                     continue;
                 }
 
@@ -226,7 +226,7 @@ public class AgentOrchestrator {
                     } else {
                         rejectTool(
                             ctx, req, entry.kind(), entry.family(),
-                            "Only one action can be confirmed at a time; propose '" + req.name() + "' again on its own.", sink
+                            "Only one action can be confirmed at a time; propose '%s' again on its own.".formatted(req.name()), sink
                         );
                     }
                     continue;
@@ -404,6 +404,6 @@ public class AgentOrchestrator {
     }
 
     private String summaryFor(final String tool, final Map<String, Object> args) {
-        return "Run `" + tool + "` with " + args;
+        return "Run `%s` with %s".formatted(tool, args);
     }
 }

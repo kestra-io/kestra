@@ -52,7 +52,7 @@ public class ReadExecutionTool implements AiPlatformTool {
         String tenant = AgentCallContext.resolveTenant(tenantId);
 
         Execution execution = executionRepository.findById(tenant, executionId)
-            .orElseThrow(() -> new IllegalArgumentException("Execution not found: '" + executionId + "'"));
+            .orElseThrow(() -> new IllegalArgumentException("Execution not found: '%s'".formatted(executionId)));
 
         String duration = execution.getState().getDuration().map(Duration::toString).orElse(null);
         List<TaskRun> taskRuns = execution.getTaskRunList();

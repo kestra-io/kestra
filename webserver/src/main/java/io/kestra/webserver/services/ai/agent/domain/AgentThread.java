@@ -18,8 +18,7 @@ public record AgentThread(
     Instant createdAt,
     @With Instant updatedAt,
     @With @Nullable Instant lastTurnAt,
-    @With boolean deleted
-) {
+    @With boolean deleted) {
 
     /**
      * Returns a copy of this thread reset to the idle state: status set to

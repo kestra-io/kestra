@@ -165,7 +165,7 @@ public class ToolCatalog {
     public String dispatch(final ToolExecutionRequest request, final AgentCallContext.Context context) {
         ToolEntry entry = registry().get(request.name());
         if (entry == null) {
-            throw new IllegalArgumentException("Unknown tool: '" + request.name() + "'");
+            throw new IllegalArgumentException("Unknown tool: '%s'".formatted(request.name()));
         }
 
         if (entry.isPermissionEvaluated()) {

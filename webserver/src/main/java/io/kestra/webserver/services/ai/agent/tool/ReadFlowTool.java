@@ -49,8 +49,8 @@ public class ReadFlowTool implements AiPlatformTool {
         FlowWithSource flow = flowRepository.findByIdWithSource(tenant, namespace, flowId, Optional.ofNullable(revision), false)
             .orElseThrow(
                 () -> new IllegalArgumentException(
-                    "Flow not found: '" + namespace + "." + flowId + "'"
-                        + (revision == null ? "" : " (revision " + revision + ")")
+                    "Flow not found: '%s.%s'".formatted(namespace, flowId)
+                        + (revision == null ? "" : " (revision %s)".formatted(revision))
                 )
             );
 

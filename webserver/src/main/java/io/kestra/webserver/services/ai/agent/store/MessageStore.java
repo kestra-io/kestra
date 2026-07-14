@@ -4,7 +4,6 @@ import java.util.List;
 
 import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
 
-
 /**
  * Store for the {@link AgentMessage} history of Copilot conversation threads.
  */

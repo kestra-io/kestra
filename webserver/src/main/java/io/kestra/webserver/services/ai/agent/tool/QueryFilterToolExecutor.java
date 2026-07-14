@@ -125,11 +125,11 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
             try {
                 op = QueryFilter.Op.valueOf(operatorName);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown operator '" + operatorName + "' for field '" + field.name() + "'");
+                throw new IllegalArgumentException("Unknown operator '%s' for field '%s'".formatted(operatorName, field.name()));
             }
             if (!field.supportedOp().contains(op)) {
                 throw new IllegalArgumentException(
-                    "Operator '" + op + "' is not supported for field '" + field.name() + "'. Valid: " + field.supportedOp()
+                    "Operator '%s' is not supported for field '%s'. Valid: %s".formatted(op, field.name(), field.supportedOp())
                 );
             }
             // leaf shape: field + operation present, no logical/children (see QueryFilter's @JsonCreator).

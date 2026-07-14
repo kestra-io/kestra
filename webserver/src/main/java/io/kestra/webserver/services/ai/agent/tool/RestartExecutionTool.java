@@ -50,12 +50,12 @@ public class RestartExecutionTool implements AiPlatformTool {
         String tenant = AgentCallContext.resolveTenant(tenantId);
 
         Execution execution = executionRepository.findById(tenant, executionId)
-            .orElseThrow(() -> new IllegalArgumentException("Execution not found: '" + executionId + "'"));
+            .orElseThrow(() -> new IllegalArgumentException("Execution not found: '%s'".formatted(executionId)));
 
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution '" + executionId + "' cannot be restarted: current state is '"
-                    + execution.getState().getCurrent() + "', expected terminated or paused."
+                "Execution '%s' cannot be restarted: current state is '%s', expected terminated or paused."
+                    .formatted(executionId, execution.getState().getCurrent())
             );
         }
 
@@ -63,7 +63,7 @@ public class RestartExecutionTool implements AiPlatformTool {
         try {
             executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId));
         } catch (QueueException e) {
-            throw new IllegalStateException("Failed to enqueue restart for execution '" + executionId + "': " + e.getMessage(), e);
+            throw new IllegalStateException("Failed to enqueue restart for execution '%s': %s".formatted(executionId, e.getMessage()), e);
         }
 
         return new Result(executionId, operationId);

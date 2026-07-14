@@ -1,16 +1,16 @@
 package io.kestra.webserver.services.ai.agent.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import io.kestra.core.utils.Enums;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.core.annotation.Nullable;
 
 public record AgentScopeBinding(
     Kind kind,
     @Nullable String namespace,
     @Nullable String flowId,
-    @Nullable String executionId
-) {
+    @Nullable String executionId) {
     public enum Kind {
         FLOW,
         NAMESPACE,

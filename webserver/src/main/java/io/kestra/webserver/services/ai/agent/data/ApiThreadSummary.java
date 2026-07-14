@@ -17,8 +17,7 @@ public record ApiThreadSummary(
     AgentThreadStatus status,
     Instant createdAt,
     Instant updatedAt,
-    @Nullable Instant lastTurnAt
-) {
+    @Nullable Instant lastTurnAt) {
     public static ApiThreadSummary from(final AgentThread thread) {
         return new ApiThreadSummary(
             thread.uid(), thread.title(), thread.mode(), thread.scope(),

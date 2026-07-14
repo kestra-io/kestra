@@ -6,19 +6,22 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiDecision;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
-import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.domain.AgentMode;
+import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -38,8 +41,6 @@ import io.micronaut.http.client.sse.SseClient;
 import io.micronaut.http.sse.Event;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -99,8 +100,10 @@ class AiAgentControllerTest {
     void shouldReturnNotFoundWhenGettingUnknownThread() {
         // When / Then
         assertThatThrownBy(() -> client.toBlocking().retrieve(HttpRequest.GET(BASE + "/does-not-exist"), ApiThreadDetail.class))
-            .isInstanceOfSatisfying(HttpClientResponseException.class,
-                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode()));
+            .isInstanceOfSatisfying(
+                HttpClientResponseException.class,
+                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode())
+            );
     }
 
     @Test
@@ -147,11 +150,18 @@ class AiAgentControllerTest {
         chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null));
 
         // When / Then — a second turn is rejected with 409
-        assertThatThrownBy(() -> client.toBlocking().exchange(
-            HttpRequest.POST(BASE + "/" + thread.uid() + "/chat",
-                new ApiChatTurnRequest("again", AgentMode.EDIT, null, null))))
-            .isInstanceOfSatisfying(HttpClientResponseException.class,
-                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode()));
+        assertThatThrownBy(
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    BASE + "/" + thread.uid() + "/chat",
+                    new ApiChatTurnRequest("again", AgentMode.EDIT, null, null)
+                )
+            )
+        )
+            .isInstanceOfSatisfying(
+                HttpClientResponseException.class,
+                e -> assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode())
+            );
     }
 
     @Test
@@ -226,11 +236,15 @@ class AiAgentControllerTest {
     }
 
     private static AiMessage mutateToolCall(final String id, final String executionId) {
-        return AiMessage.from("", List.of(ToolExecutionRequest.builder()
-            .id(id)
-            .name("update-artefact")
-            .arguments("{\"executionId\":\"" + executionId + "\"}")
-            .build()));
+        return AiMessage.from(
+            "", List.of(
+                ToolExecutionRequest.builder()
+                    .id(id)
+                    .name("update-artefact")
+                    .arguments("{\"executionId\":\"" + executionId + "\"}")
+                    .build()
+            )
+        );
     }
 
     private static List<String> names(final List<Event<Map>> events) {

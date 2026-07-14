@@ -1,8 +1,8 @@
 package io.kestra.webserver.services.ai.agent.data;
 
-import io.kestra.core.utils.Enums;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
+
+import io.kestra.core.utils.Enums;
 
 public enum ApiDecision {
     APPROVE,

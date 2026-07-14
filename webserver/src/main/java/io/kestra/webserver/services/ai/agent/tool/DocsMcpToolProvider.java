@@ -3,6 +3,8 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.kestra.webserver.services.ai.agent.AgentConfiguration;
+
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.McpToolExecutor;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
@@ -10,7 +12,6 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutor;
-import io.kestra.webserver.services.ai.agent.AgentConfiguration;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 

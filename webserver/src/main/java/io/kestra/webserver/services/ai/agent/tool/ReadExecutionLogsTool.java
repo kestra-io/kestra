@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
@@ -22,10 +22,10 @@ import jakarta.inject.Singleton;
 public class ReadExecutionLogsTool implements AiPlatformTool {
     private static final int MAX_LOGS = 500;
 
-    private final LogRepositoryInterface logRepository;
+    private final LogDataStoreInterface logRepository;
 
     @Inject
-    public ReadExecutionLogsTool(final LogRepositoryInterface logRepository) {
+    public ReadExecutionLogsTool(final LogDataStoreInterface logRepository) {
         this.logRepository = logRepository;
     }
 

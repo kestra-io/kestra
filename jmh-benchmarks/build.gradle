@@ -26,3 +26,9 @@ processResources.dependsOn copyGradleProperties
 dependencies {
     jmh project(':core')
 }
+
+jmh {
+    if (project.hasProperty("jmh.include")) {
+        includes = [project.property("jmh.include").toString()]
+    }
+}

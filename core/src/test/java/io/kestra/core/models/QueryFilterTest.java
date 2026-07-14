@@ -9,6 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Logical;
@@ -18,6 +20,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.Prefix;
 import io.kestra.core.models.dashboards.filters.StartsWith;
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -1656,6 +1659,59 @@ public class QueryFilterTest {
                 )
             )
         ).flatMap(s -> s);
+    }
+
+    // The @JsonProperty added on each Field/Logical constant aligns the generated OpenAPI schema
+    // with the @JsonValue wire form; these guard that the actual Jackson wire form is still driven
+    // by @JsonValue/@JsonCreator (i.e. the enum wire values), not the constant names.
+    @Test
+    void shouldSerializeFieldUsingItsWireValue() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.TIME_RANGE)
+            .operation(Op.EQUALS)
+            .value("PT24H")
+            .build();
+
+        // When
+        String json = mapper.writeValueAsString(filter);
+
+        // Then
+        assertThat(json).contains("\"field\":\"timeRange\"");
+        assertThat(json).doesNotContain("TIME_RANGE");
+    }
+
+    @Test
+    void shouldDeserializeFieldFromItsWireValue() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+
+        // When
+        QueryFilter filter = mapper.readValue(
+            "{\"field\":\"flowId\",\"operation\":\"EQUALS\",\"value\":\"my-flow\"}",
+            QueryFilter.class
+        );
+
+        // Then
+        assertThat(filter.field()).isEqualTo(Field.FLOW_ID);
+    }
+
+    @Test
+    void shouldRoundTripLogicalNodeUsingWireValues() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+        QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build();
+        QueryFilter node = QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build();
+
+        // When
+        String json = mapper.writeValueAsString(node);
+        QueryFilter roundTripped = mapper.readValue(json, QueryFilter.class);
+
+        // Then
+        assertThat(json).contains("\"logical\":\"or\"");
+        assertThat(roundTripped.logical()).isEqualTo(Logical.OR);
+        assertThat(roundTripped.children().getFirst().field()).isEqualTo(Field.STATE);
     }
 
     private static Stream<Arguments> buildQueryFiltersForOperations(Field field, Resource resource, Set<Op> operations) {

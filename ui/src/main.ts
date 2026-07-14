@@ -2,21 +2,9 @@ import {createApp} from "vue"
 import type {Router} from "vue-router"
 
 import "./utils/monacoEnvironment"
-import {hasReloadedAfterPreloadError, markPreloadErrorReloaded} from "./utils/preloadErrorReload"
+import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
 
-window.addEventListener("vite:preloadError", (event) => {
-    if (hasReloadedAfterPreloadError()) {
-        console.error("Stale lazy chunk detected, but a reload was already attempted this session", event.payload)
-        return
-    }
-
-    if (markPreloadErrorReloaded()) {
-        event.preventDefault()
-        window.location.reload()
-    } else {
-        console.error("Stale lazy chunk detected, but the reload guard could not be persisted", event.payload)
-    }
-})
+setupPreloadErrorReloadHandler()
 
 const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"}) as Record<string, string>
 function loadNodeTypes(tries = 0) {

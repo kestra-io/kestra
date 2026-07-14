@@ -3,6 +3,7 @@ import {
     hasReloadedAfterPreloadError,
     markPreloadErrorReloaded,
     PRELOAD_ERROR_RELOAD_KEY,
+    setupPreloadErrorReloadHandler,
 } from "../../../src/utils/preloadErrorReload"
 
 function createStorageMock() {
@@ -38,5 +39,24 @@ describe("preloadErrorReload", () => {
 
         expect(storage.setItem).toHaveBeenCalledWith(PRELOAD_ERROR_RELOAD_KEY, "true")
         expect(hasReloadedAfterPreloadError(storage)).toBe(true)
+    })
+
+    test("reloads once when multiple preload errors are dispatched", () => {
+        const storage = createStorageMock()
+        const reload = vi.fn()
+        const logger = {error: vi.fn()}
+        const cleanup = setupPreloadErrorReloadHandler({storage, reload, logger})
+
+        const firstEvent = new Event("vite:preloadError", {cancelable: true})
+        const secondEvent = new Event("vite:preloadError", {cancelable: true})
+
+        window.dispatchEvent(firstEvent)
+        window.dispatchEvent(secondEvent)
+        cleanup()
+
+        expect(reload).toHaveBeenCalledOnce()
+        expect(firstEvent.defaultPrevented).toBe(true)
+        expect(secondEvent.defaultPrevented).toBe(false)
+        expect(logger.error).toHaveBeenCalledOnce()
     })
 })

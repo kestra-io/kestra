@@ -156,20 +156,19 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             }
 
                             // handle quotas
-                            if (!ListUtils.isEmpty(flow.getQuotas())) {
-                                Optional<Quota> quota = quotaService.checkAndIncrement(flow);
-                                if (quota.isPresent()) {
-                                    // a quota is exceeded: stop the execution in the desired state
-                                    Execution newExecution = switch (quota.get().getBehavior()) {
-                                        case FAIL -> {
-                                            var failedExecution = execution
-                                                .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
-                                            var logger = runContextLoggerFactory.create(execution);
-                                            logger.emitLogs(failedExecution.logs());
-                                            yield failedExecution.execution();
-                                        }
-                                        case CANCEL -> execution.withState(State.Type.CANCELLED);
-                                    };
+                            Optional<Quota> quota = quotaService.checkAndIncrement(flow);
+                            if (quota.isPresent()) {
+                                // a quota is exceeded: stop the execution in the desired state
+                                Execution newExecution = switch (quota.get().getBehavior()) {
+                                    case FAIL -> {
+                                        var failedExecution = execution
+                                            .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
+                                        var logger = runContextLoggerFactory.create(execution);
+                                        logger.emitLogs(failedExecution.logs());
+                                        yield failedExecution.execution();
+                                    }
+                                    case CANCEL -> execution.withState(State.Type.CANCELLED);
+                                };
 
                             ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
                             {
@@ -186,9 +185,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
                                         )
                                         .increment();
+                                metricRegistry
+                                    .counter(
+                                        MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
+                                    )
+                                    .increment();
 
-                                    return executor.withExecution(newExecution, "processQuotas");
-                                }
+                                return executor.withExecution(newExecution, "processQuotas");
                             }
 
                             // handle concurrency limit

@@ -205,7 +205,7 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> serialization(HttpRequest<?> request, DeserializationException e) {
-        return jsonError(request, e, HttpStatus.LOCKED, "Locked");
+        return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Cannot deserialize the resource");
     }
 
     @Error(global = true)

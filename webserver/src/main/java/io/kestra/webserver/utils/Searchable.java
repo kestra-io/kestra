@@ -3,11 +3,11 @@ package io.kestra.webserver.utils;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -25,7 +25,8 @@ import io.micronaut.data.model.Sort;
  */
 public final class Searchable<T> {
 
-    public record QueryFilterPredicateKey(QueryFilter.Field field, QueryFilter.Op operator) {}
+    public record QueryFilterPredicateKey(QueryFilter.Field field, QueryFilter.Op operator) {
+    }
 
     private final Map<String, Function<? super T, Object>> searchableExtractors;
     private final Map<String, Function<? super T, Comparable<Object>>> sortableExtractors;
@@ -50,8 +51,7 @@ public final class Searchable<T> {
         int page,
         int size,
         @Nullable List<String> sort,
-        @Nullable List<QueryFilter> queryFilters
-    ) {
+        @Nullable List<QueryFilter> queryFilters) {
         return filter(items, page, size, sort, queryFilters, null);
     }
 
@@ -67,7 +67,8 @@ public final class Searchable<T> {
 
         if (query != null && !searchableExtractors.isEmpty()) {
             final String q = query.toLowerCase();
-            results = results.filter(item -> {
+            results = results.filter(item ->
+            {
                 String search = searchableExtractors.values().stream()
                     .map(extractor -> extractor.apply(item))
                     .filter(Objects::nonNull)
@@ -79,8 +80,8 @@ public final class Searchable<T> {
         }
 
         if (queryFilters != null && !queryFilters.isEmpty()) {
-            results = results.filter(item ->
-                queryFilters.stream().allMatch(queryFilter -> evaluate(item, queryFilter))
+            results = results.filter(
+                item -> queryFilters.stream().allMatch(queryFilter -> evaluate(item, queryFilter))
             );
         }
 
@@ -126,7 +127,7 @@ public final class Searchable<T> {
             Stream<QueryFilter> children = queryFilter.children().stream();
             return switch (queryFilter.logical()) {
                 case AND -> children.allMatch(child -> evaluate(item, child));
-                case OR  -> children.anyMatch(child -> evaluate(item, child));
+                case OR -> children.anyMatch(child -> evaluate(item, child));
             };
         }
         BiPredicate<T, Object> predicate = queryFilterPredicateMap.get(
@@ -165,8 +166,7 @@ public final class Searchable<T> {
             F field, Function<? super T, ?> fieldFunction, O... operators) {
             for (O operator : operators) {
                 BiPredicate<Object, Object> defaultPredicate = defaultPredicateFor(operator, field);
-                BiPredicate<T, Object> predicate = (item, value) ->
-                    defaultPredicate.test(fieldFunction.apply(item), value);
+                BiPredicate<T, Object> predicate = (item, value) -> defaultPredicate.test(fieldFunction.apply(item), value);
                 this.queryFilterPredicateMap.put(new QueryFilterPredicateKey(field, operator), predicate);
             }
             return this;
@@ -174,27 +174,20 @@ public final class Searchable<T> {
 
         private static BiPredicate<Object, Object> defaultPredicateFor(QueryFilter.Op operator, QueryFilter.Field field) {
             return switch (operator) {
-                case EQUALS -> (fieldValue, queryValue) ->
-                    fieldValue != null && fieldValue.toString().equals(queryValue.toString());
-                case NOT_EQUALS -> (fieldValue, queryValue) ->
-                    fieldValue == null || !fieldValue.toString().equals(queryValue.toString());
-                case CONTAINS -> (fieldValue, queryValue) ->
-                    fieldValue != null && fieldValue.toString().contains(queryValue.toString());
-                case STARTS_WITH -> (fieldValue, queryValue) ->
-                    fieldValue != null && fieldValue.toString().startsWith(queryValue.toString());
-                case ENDS_WITH -> (fieldValue, queryValue) ->
-                    fieldValue != null && fieldValue.toString().endsWith(queryValue.toString());
-                case REGEX -> (fieldValue, queryValue) ->
-                    fieldValue != null && RegexUtils.matches(queryValue.toString(), fieldValue.toString());
-                case IN -> (fieldValue, queryValue) ->
-                    fieldValue != null
-                        && queryValue instanceof List<?> list
-                        && list.stream().map(Object::toString).anyMatch(fieldValue.toString()::equals);
-                case NOT_IN -> (fieldValue, queryValue) ->
-                    fieldValue == null
-                        || !(queryValue instanceof List<?> list)
-                        || list.stream().map(Object::toString).noneMatch(fieldValue.toString()::equals);
-                case PREFIX -> (fieldValue, queryValue) -> {
+                case EQUALS -> (fieldValue, queryValue) -> fieldValue != null && fieldValue.toString().equals(queryValue.toString());
+                case NOT_EQUALS -> (fieldValue, queryValue) -> fieldValue == null || !fieldValue.toString().equals(queryValue.toString());
+                case CONTAINS -> (fieldValue, queryValue) -> fieldValue != null && fieldValue.toString().contains(queryValue.toString());
+                case STARTS_WITH -> (fieldValue, queryValue) -> fieldValue != null && fieldValue.toString().startsWith(queryValue.toString());
+                case ENDS_WITH -> (fieldValue, queryValue) -> fieldValue != null && fieldValue.toString().endsWith(queryValue.toString());
+                case REGEX -> (fieldValue, queryValue) -> fieldValue != null && RegexUtils.matches(queryValue.toString(), fieldValue.toString());
+                case IN -> (fieldValue, queryValue) -> fieldValue != null
+                    && queryValue instanceof List<?> list
+                    && list.stream().map(Object::toString).anyMatch(fieldValue.toString()::equals);
+                case NOT_IN -> (fieldValue, queryValue) -> fieldValue == null
+                    || !(queryValue instanceof List<?> list)
+                    || list.stream().map(Object::toString).noneMatch(fieldValue.toString()::equals);
+                case PREFIX -> (fieldValue, queryValue) ->
+                {
                     if (fieldValue == null) {
                         return false;
                     }

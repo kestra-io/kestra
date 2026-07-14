@@ -1,18 +1,5 @@
 package io.kestra.queue;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.queues.*;
-import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.IdUtils;
-import io.micrometer.core.instrument.Tags;
-import jakarta.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -23,10 +10,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.IdUtils;
+
+import io.micrometer.core.instrument.Tags;
+import jakarta.inject.Inject;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
@@ -41,6 +43,9 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Inject
+    private QueueService queueService;
+
     private KestraContext realContext;
     protected NoOpShutdownContext noOpShutdownContext;
 
@@ -49,11 +54,14 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         realContext = KestraContext.getContext();
         noOpShutdownContext = new NoOpShutdownContext(realContext, new AtomicBoolean(false));
         KestraContext.setContext(noOpShutdownContext);
+        // subscribers shut down the context captured by the QueueService, not the static one
+        queueService.setKestraContext(noOpShutdownContext);
     }
 
     @AfterEach
     void restoreKestraContext() {
         KestraContext.setContext(realContext);
+        queueService.setKestraContext(realContext);
     }
 
     @Test
@@ -209,8 +217,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).hasSize(1);
         assertThat(list.getFirst()).isEqualTo(1);
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
-            assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue()
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(
+            () -> assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue()
         );
 
         // consume the remaining items from the queue
@@ -292,7 +300,9 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribe(e -> {});
+            .subscribe(e ->
+            {
+            });
 
         // When
         subscriber.pause();
@@ -314,8 +324,12 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         double baseline = gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags);
 
         // When - subscribe two
-        QueueSubscriber<TestDispatch> sub1 = dispatchQueue.subscriber().subscribe(e -> {});
-        QueueSubscriber<TestDispatch> sub2 = dispatchQueue.subscriber().subscribe(e -> {});
+        QueueSubscriber<TestDispatch> sub1 = dispatchQueue.subscriber().subscribe(e ->
+        {
+        });
+        QueueSubscriber<TestDispatch> sub2 = dispatchQueue.subscriber().subscribe(e ->
+        {
+        });
 
         // Then
         assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(2.0);

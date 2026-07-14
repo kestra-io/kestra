@@ -733,24 +733,24 @@ public class QueryFilterTest {
 
     @Test
     void shouldBuildLeafWhenFieldAndOperationProvided() {
-        assertDoesNotThrow(() ->
-            QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
+        assertDoesNotThrow(
+            () -> QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
         );
     }
 
     @Test
     void shouldBuildNodeWhenLogicalAndChildrenProvided() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
-        assertDoesNotThrow(() ->
-            QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
+        assertDoesNotThrow(
+            () -> QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
         );
     }
 
     @Test
     void shouldThrowExceptionWhenMixingLeafAndNodeShape() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder()
                 .field(Field.STATE)
                 .operation(Op.EQUALS)
                 .logical(Logical.OR)
@@ -761,15 +761,15 @@ public class QueryFilterTest {
 
     @Test
     void shouldThrowExceptionWhenNodeHasEmptyChildren() {
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
         );
     }
 
     @Test
     void shouldThrowExceptionWhenLeafMissingOperation() {
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder().field(Field.STATE).build()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder().field(Field.STATE).build()
         );
     }
 
@@ -783,9 +783,39 @@ public class QueryFilterTest {
             .logical(Logical.OR)
             .children(List.of(invalidLeaf))
             .build();
-        assertThrows(InvalidQueryFiltersException.class, () ->
-            QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
         );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRegexIsCatastrophic() {
+        // Given a REGEX filter prone to catastrophic backtracking
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("(a+)+")
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenRegexIsSafe() {
+        // Given a safe REGEX filter
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("io\\.kestra\\..*")
+            .build();
+
+        // When / Then
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION));
     }
 
     @Test

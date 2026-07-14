@@ -60,7 +60,7 @@
     "save": "Guardar",
     "save_as_draft": "Guardar como borrador",
     "draft": "Borrador",
-    "draft_flow_warning": "Esta revisión del flow es un borrador. La ejecución se realizará sobre esta revisión en borrador y puede fallar inmediatamente si la definición del flow no es válida.",
+    "draft_flow_warning": "La última revisión de este flow es un borrador. La ejecución se realizará sobre la última revisión publicada; publica el borrador (o ejecútalo desde el Playground) para ejecutar tus últimos cambios.",
     "save task": "Guardar tarea",
     "saved": "Guardado exitosamente",
     "saved as draft": "Guardado como borrador correctamente",
@@ -113,6 +113,7 @@
     "prev_execution": "Ejecución anterior",
     "next_execution": "Próxima ejecución",
     "datepicker": {
+      "invalid duration": "Formato de duración no válido. Utilice ISO 8601 (p. ej., PT30M, P1D).",
       "leave empty for infinite": "Dejar vacío para duración infinita o escribir una duración ISO 8601 (ejemplo: 'P1DT1H1M1S)'",
       "duration example": "Ejemplo: 'P1DT1H1M1S'",
       "error": "Formato de duración inválido, debe ser una duración ISO 8601 (P1DT1H1M1S por ej.)",
@@ -326,9 +327,9 @@
     "no metrics available": "No se registraron métricas para esta ejecución de task.",
     "no outputs available": "No hay outputs disponibles para esta ejecución de task.",
     "outputs": "Salidas",
-    "flow_outputs": "Salidas del Flow",
-    "no_flow_outputs": "No hay outputs disponibles.",
+    "flow_inputs": "Entradas del Flow",
     "output": "Salida",
+    "flow_outputs": "Salidas del Flow",
     "eval": {
       "title": "Depurar Expresión",
       "render": "Renderizar Expresión",
@@ -839,6 +840,7 @@
       },
       "filter": "Filtro",
       "new_file": "Nuevo archivo",
+      "read_only": "No tienes permiso para gestionar archivos en este namespace",
       "no_items": {
         "heading": "No se encontraron archivos en tu namespace aún.",
         "paragraph": "Crea o importa archivos para compartir código entre flows en tu namespace."

@@ -16,5 +16,10 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "src/**/*.json",
+  ],
+  "exclude": [
+    // Node scripts (use fs/path/url) — type-checked via tsconfig.test.json, not the browser app build.
+    "src/translations/check.ts",
+    "src/translations/compareTranslations.ts",
   ]
 }

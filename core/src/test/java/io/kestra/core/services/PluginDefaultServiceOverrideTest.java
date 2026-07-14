@@ -48,8 +48,10 @@ class PluginDefaultServiceOverrideTest {
      * 2. Global forced defaults override both flow defaults and explicit task values.
      * 3. Global non-forced defaults are overridden by explicit task values and flow defaults.
      *
-     * <p>The {@code forced} flag at flow level was removed (kestra-ee#7109). All flow-level defaults
-     * behave as non-forced regardless of the original YAML value.</p>
+     * <p>
+     * The {@code forced} flag at flow level was removed (kestra-ee#7109). All flow-level defaults
+     * behave as non-forced regardless of the original YAML value.
+     * </p>
      */
     @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
     @ParameterizedTest
@@ -64,10 +66,12 @@ class PluginDefaultServiceOverrideTest {
         // Flow-level defaults have no 'forced' flag — always non-forced
         final FlowPluginDefault flowDefault = FlowPluginDefault.builder()
             .type(DefaultPrecedenceTester.class.getName())
-            .values(ImmutableMap.of(
-                "propBar", "flowValue",
-                "propBaz", "flowValue"
-            ))
+            .values(
+                ImmutableMap.of(
+                    "propBar", "flowValue",
+                    "propBaz", "flowValue"
+                )
+            )
             .build();
 
         final PluginDefault globalDefault = new PluginDefault(

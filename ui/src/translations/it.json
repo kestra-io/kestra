@@ -60,7 +60,7 @@
     "save": "Salva",
     "save_as_draft": "Salva come bozza",
     "draft": "Bozza",
-    "draft_flow_warning": "Questa revisione del flow è una bozza. L'esecuzione verrà eseguita su questa revisione in bozza e potrebbe fallire immediatamente se la definizione del flow non è valida.",
+    "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
     "save task": "Salva Task",
     "saved": "Salvato con successo",
     "saved as draft": "Salvato come bozza con successo",
@@ -113,6 +113,7 @@
     "prev_execution": "Esecuzione precedente",
     "next_execution": "Prossima esecuzione",
     "datepicker": {
+      "invalid duration": "Formato durata non valido. Utilizzare il formato ISO 8601 (es. PT30M, P1D).",
       "leave empty for infinite": "Lascia vuoto per durata infinita o digita una durata ISO 8601 (esempio: 'P1DT1H1M1S)'",
       "duration example": "Esempio: 'P1DT1H1M1S'",
       "error": "Formato durata non valido, deve essere una durata ISO 8601 (ad es. P1DT1H1M1S)",
@@ -326,9 +327,9 @@
     "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
     "no outputs available": "Nessun output disponibile per questa esecuzione del task.",
     "outputs": "Outputs",
-    "flow_outputs": "Output del Flow",
-    "no_flow_outputs": "Nessun output disponibile.",
+    "flow_inputs": "Input del Flow",
     "output": "Output",
+    "flow_outputs": "Output del Flow",
     "eval": {
       "title": "Espressione di Debug",
       "render": "Espressione di Render",
@@ -839,6 +840,7 @@
       },
       "filter": "Filtro",
       "new_file": "Nuovo file",
+      "read_only": "Non disponi dell'autorizzazione per gestire i file in questo namespace",
       "no_items": {
         "heading": "Nessun file trovato nel tuo namespace.",
         "paragraph": "Crea o importa file per condividere il codice tra i flow nel tuo namespace."

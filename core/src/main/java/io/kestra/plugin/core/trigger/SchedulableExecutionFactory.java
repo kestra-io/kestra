@@ -29,12 +29,13 @@ import io.kestra.core.utils.ListUtils;
 final class SchedulableExecutionFactory {
 
     // TODO rename and maybe move ?
-    static TriggerEvaluationResult createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate)
+    static TriggerEvaluationResult createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables,
+        ZonedDateTime scheduleDate)
         throws IllegalVariableEvaluationException {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
 
-        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), conditionContext.getFlow());
+        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), conditionContext.getFlow(), variables);
 
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
         executionLabels.add(new Label(Label.FROM, "trigger"));
@@ -87,8 +88,9 @@ final class SchedulableExecutionFactory {
         return inputs;
     }
 
-    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow) throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger);
+    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow, Map<String, Object> variables)
+        throws IllegalVariableEvaluationException {
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger, Map.of("trigger", variables));
 
         if (backfill != null) {
             // It is better to remove system labels before rendering

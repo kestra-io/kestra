@@ -1,8 +1,7 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.plugins.DefaultPluginRegistry;
+import java.util.concurrent.TimeUnit;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -15,13 +14,16 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import java.util.concurrent.TimeUnit;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.plugins.DefaultPluginRegistry;
 
 /**
  * Benchmarks {@link PluginDefaultService#injectAllDefaults} on large flows to track the cost of
  * type-matched plugin-default injection.
  *
- * <p>Each invocation re-parses the flow source (two Jackson passes bracket the injection), so the
+ * <p>
+ * Each invocation re-parses the flow source (two Jackson passes bracket the injection), so the
  * input flows are safely shared at trial level. The {@code noDefaults} scenario isolates the
  * parse + traversal cost, and {@code typeDefaults} adds the cost of matching and merging
  * type-matched defaults onto every task.

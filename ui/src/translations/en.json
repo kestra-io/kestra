@@ -60,7 +60,7 @@
     "save": "Save",
     "save_as_draft": "Save as draft",
     "draft": "Draft",
-    "draft_flow_warning": "This flow revision is a draft. The execution will run against this draft revision and may fail immediately if the flow definition is invalid.",
+    "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
     "save task": "Save Task",
     "saved": "Successfully saved",
     "saved as draft": "Successfully saved as draft",
@@ -113,6 +113,7 @@
     "prev_execution": "Previous execution",
     "next_execution": "Next execution",
     "datepicker": {
+      "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
@@ -326,9 +327,9 @@
     "no metrics available": "No metrics recorded for this task run.",
     "no outputs available": "No outputs available for this task run.",
     "outputs": "Outputs",
-    "flow_outputs": "Flow Outputs",
-    "no_flow_outputs": "No outputs available.",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug Expression",
       "render": "Render",
@@ -839,6 +840,7 @@
       },
       "filter": "Filter",
       "new_file": "New File",
+      "read_only": "You don't have permission to manage files in this namespace",
       "no_items": {
         "heading": "No files found in your namespace yet.",
         "paragraph": "Create or import files to share code across flows in your namespace."

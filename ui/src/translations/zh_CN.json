@@ -60,7 +60,7 @@
     "save": "保存",
     "save_as_draft": "保存为草稿",
     "draft": "草稿",
-    "draft_flow_warning": "此 flow 修订版本为草稿。执行将基于此草稿修订版本运行，如果 flow 定义无效，可能会立即失败。",
+    "draft_flow_warning": "此 flow 的最新修订版本为草稿。执行将改为基于最新已发布的修订版本运行——发布草稿（或在 Playground 中运行）以执行您的最新更改。",
     "save task": "保存任务",
     "saved": "保存成功",
     "saved as draft": "已成功保存为草稿",
@@ -113,6 +113,7 @@
     "prev_execution": "先前执行",
     "next_execution": "下一次执行",
     "datepicker": {
+      "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如：PT30M, P1D)。",
       "leave empty for infinite": "留空表示无限持续时间或输入ISO 8601持续时间（例如：'P1DT1H1M1S'）",
       "duration example": "例如：'P1DT1H1M1S'",
       "error": "无效的持续时间格式，必须为ISO 8601持续时间（例如：'P1DT1H1M1S'）",
@@ -326,9 +327,9 @@
     "no metrics available": "此task运行没有记录任何指标。",
     "no outputs available": "此任务运行没有可用的输出。",
     "outputs": "输出",
-    "flow_outputs": "Flow Outputs",
-    "no_flow_outputs": "没有可用的output。",
+    "flow_inputs": "Flow Inputs",
     "output": "输出",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "调试表达式",
       "render": "渲染表达式",
@@ -839,6 +840,7 @@
       },
       "filter": "过滤",
       "new_file": "新建文件",
+      "read_only": "您没有权限管理此 namespace 中的文件",
       "no_items": {
         "heading": "尚未在您的namespace中找到文件。",
         "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"

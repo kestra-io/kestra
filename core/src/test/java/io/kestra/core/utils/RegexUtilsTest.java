@@ -3,8 +3,12 @@ package io.kestra.core.utils;
 import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -89,5 +93,66 @@ class RegexUtilsTest {
         } finally {
             RegexUtils.resetInit();
         }
+    }
+
+    static Stream<Arguments> unsafeUserRegex() {
+        return Stream.of(
+            // Nested unbounded quantifiers
+            Arguments.of("(a+)+b"),
+            Arguments.of("(a*)*"),
+            Arguments.of("(.*)*"),
+            Arguments.of("(a+)*"),
+            Arguments.of("(a{1,})+"),
+            // Ambiguous alternation under repetition
+            Arguments.of("(a|a)+$"),
+            // Bounded-but-large nested quantifier ("Zalgo" shape) — no unbounded quantifier character at all
+            Arguments.of("(a?){25}b"),
+            Arguments.of("a".repeat(RegexUtils.MAX_USER_REGEX_LENGTH + 1))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("unsafeUserRegex")
+    void shouldRejectUnsafeUserRegex(String pattern) {
+        // Given a pattern prone to catastrophic backtracking (or too long to evaluate)
+        // When checking whether it is safe to run against a database engine
+        // Then it must be rejected
+        assertThat(RegexUtils.isSafeUserRegex(pattern)).isFalse();
+    }
+
+    static Stream<Arguments> safeUserRegex() {
+        return Stream.of(
+            Arguments.of("[a-z]+"),
+            Arguments.of("hello.*world"),
+            Arguments.of("(abc)+"),
+            Arguments.of("flow_\\d+"),
+            Arguments.of("io\\.kestra\\..*"),
+            // A single quantifier on an escaped literal '+' — no ambiguity, must not be mistaken for
+            // a nested unbounded quantifier
+            Arguments.of("(a\\+)+"),
+            Arguments.of("")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("safeUserRegex")
+    void shouldAcceptSafeUserRegex(String pattern) {
+        // Given a pattern with no catastrophic-backtracking risk
+        // When checking whether it is safe to run against a database engine
+        // Then it must be accepted
+        assertThat(RegexUtils.isSafeUserRegex(pattern)).isTrue();
+    }
+
+    @Test
+    void shouldRejectNullUserRegex() {
+        // Given a null pattern
+        // When checking whether it is safe to run against a database engine
+        // Then it must be rejected
+        assertThat(RegexUtils.isSafeUserRegex(null)).isFalse();
+    }
+
+    @Test
+    void shouldDefaultConfigurationTimeoutToTenSeconds() {
+        assertThat(new RegexConfiguration().getTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
 }

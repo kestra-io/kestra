@@ -36,10 +36,10 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
 
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
-                              ExecutionRepositoryInterface executionRepository,
-                              DashboardRepositoryInterface dashboardRepository,
-                              @Value("${kestra.server-type}") ServerType serverType,
-                              MetricRegistry metricRegistry) {
+        ExecutionRepositoryInterface executionRepository,
+        DashboardRepositoryInterface dashboardRepository,
+        @Value("${kestra.server-type}") ServerType serverType,
+        MetricRegistry metricRegistry) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;

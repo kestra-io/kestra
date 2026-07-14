@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.utils.Enums;
+import io.kestra.core.utils.RegexUtils;
 
 import lombok.Builder;
 
@@ -37,7 +38,8 @@ public record QueryFilter(
             && field == null && operation == null && value == null;
         if (!leafShape && !nodeShape) {
             throw new IllegalArgumentException(
-                "QueryFilter must be either a leaf (field + operation) or a node (logical + non-empty children), not both or neither");
+                "QueryFilter must be either a leaf (field + operation) or a node (logical + non-empty children), not both or neither"
+            );
         }
         this.field = field;
         this.operation = operation;
@@ -63,8 +65,7 @@ public record QueryFilter(
         if (filters == null) {
             return false;
         }
-        return filters.stream().anyMatch(filter ->
-            filter.field() == field || (filter.children() != null && hasField(filter.children(), field)));
+        return filters.stream().anyMatch(filter -> filter.field() == field || (filter.children() != null && hasField(filter.children(), field)));
     }
 
     public enum Logical {
@@ -776,6 +777,15 @@ public record QueryFilter(
                     filter.field().name(), resource.name(),
                     resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
                 )
+            );
+        }
+        if (
+            filter.operation() == Op.REGEX
+                && filter.value() instanceof String pattern
+                && !RegexUtils.isSafeUserRegex(pattern)
+        ) {
+            errors.add(
+                "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
             );
         }
     }

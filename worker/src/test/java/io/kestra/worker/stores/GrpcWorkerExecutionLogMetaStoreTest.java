@@ -8,11 +8,11 @@ import org.slf4j.event.Level;
 
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.micronaut.context.annotation.Property;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.IdUtils;
 
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +25,7 @@ class GrpcWorkerExecutionLogMetaStoreTest extends AbstractGrpcMetaStoreTest {
     private ExecutionLogsServiceGrpc.ExecutionLogsServiceBlockingStub executionLogsStub;
 
     @Inject
-    private LogRepositoryInterface logRepository;
+    private LogDataStoreInterface logRepository;
 
     private GrpcWorkerExecutionLogMetaStore grpcWorkerExecutionLogMetaStore;
 

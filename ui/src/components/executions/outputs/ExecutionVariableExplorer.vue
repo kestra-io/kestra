@@ -73,7 +73,7 @@
             </KsSplitterPanel>
 
             <!-- Right: evaluate a Pebble expression against the live execution -->
-            <KsSplitterPanel v-if="!fileSelectedOutput" v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel variable-explorer__panel--debug">
+            <KsSplitterPanel v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel variable-explorer__panel--debug">
                 <div class="debug">
                     <ExpressionDebugger
                         :execution="execution"
@@ -179,11 +179,11 @@
             }, {
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
-            
+
             tasksWithOutputs.value = data
                 .map((task) => task.taskRunId)
                 .filter((taskRunId) => taskRunId !== undefined)
-            
+
         },
         {immediate: true},
     )
@@ -199,7 +199,7 @@
             validateStatus: (s: number) => s === 200 || s === 404,
         })
 
-        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}} 
+        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}}
     }
 
     function isOutputTaskAFile(item: any): item is { uri: string } {
@@ -233,9 +233,9 @@
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
-            {key: "inputs", label: t("inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
         ]
     })
 
@@ -264,7 +264,7 @@
             }
         } catch {
             // If the value is not an object or doesn't have a `uri` field, just ignore it.
-        }   
+        }
         return undefined
     })
 
@@ -285,9 +285,9 @@
         expressionPath.value = item.expression
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
-        const baseExpressionPath = sections.value.find((section) => 
+        const baseExpressionPath = sections.value.find((section) =>
             section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
-            ? `execution.${item.expression}` 
+            ? `execution.${item.expression}`
             : item.expression
 
         // if there is only one item in the tree, select it by default to save users one click

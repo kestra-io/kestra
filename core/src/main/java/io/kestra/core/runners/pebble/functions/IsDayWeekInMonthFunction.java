@@ -1,11 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.utils.DateUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -13,17 +7,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.utils.DateUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble function that returns {@code true} if the given date is the Nth occurrence of a weekday in its month.
  *
- * <p>Usage:
+ * <p>
+ * Usage:
  * <ul>
- *   <li>{@code {{ isDayWeekInMonth(date, dayOfWeek, position) }}}</li>
+ * <li>{@code {{ isDayWeekInMonth(date, dayOfWeek, position) }}}</li>
  * </ul>
  *
- * @param date      any valid ISO 8601 date or datetime string
+ * @param date any valid ISO 8601 date or datetime string
  * @param dayOfWeek day of the week (e.g. {@code "MONDAY"}, {@code "FRIDAY"})
- * @param position  occurrence within the month: {@code FIRST}, {@code SECOND}, {@code THIRD}, {@code FOURTH}, or {@code LAST}
+ * @param position occurrence within the month: {@code FIRST}, {@code SECOND}, {@code THIRD}, {@code FOURTH}, or {@code LAST}
  */
 public class IsDayWeekInMonthFunction implements KestraFunction {
     public static final String NAME = "isDayWeekInMonth";
@@ -55,7 +57,12 @@ public class IsDayWeekInMonthFunction implements KestraFunction {
         try {
             dayOfWeek = DayOfWeek.valueOf(dayOfWeekArg.toString().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new PebbleException(e, "The 'isDayWeekInMonth()' function received an invalid 'dayOfWeek' value: '" + dayOfWeekArg + "'. Expected one of: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY.", lineNumber, self.getName());
+            throw new PebbleException(
+                e,
+                "The 'isDayWeekInMonth()' function received an invalid 'dayOfWeek' value: '" + dayOfWeekArg
+                    + "'. Expected one of: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY.",
+                lineNumber, self.getName()
+            );
         }
 
         LocalDate computed = switch (positionArg.toString().toUpperCase()) {
@@ -64,7 +71,10 @@ public class IsDayWeekInMonthFunction implements KestraFunction {
             case "THIRD" -> localDate.with(TemporalAdjusters.firstInMonth(dayOfWeek)).plusWeeks(2);
             case "FOURTH" -> localDate.with(TemporalAdjusters.firstInMonth(dayOfWeek)).plusWeeks(3);
             case "LAST" -> localDate.with(TemporalAdjusters.lastInMonth(dayOfWeek));
-            default -> throw new PebbleException(null, "The 'isDayWeekInMonth()' function received an invalid 'position' value: '" + positionArg + "'. Expected one of: FIRST, SECOND, THIRD, FOURTH, LAST.", lineNumber, self.getName());
+            default -> throw new PebbleException(
+                null, "The 'isDayWeekInMonth()' function received an invalid 'position' value: '" + positionArg + "'. Expected one of: FIRST, SECOND, THIRD, FOURTH, LAST.", lineNumber,
+                self.getName()
+            );
         };
 
         return computed.isEqual(localDate);

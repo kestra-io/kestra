@@ -7,6 +7,8 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +27,6 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
-import org.apache.commons.lang3.tuple.Pair;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -90,8 +91,9 @@ public class FlowableUtils {
         }
 
         // if it has any created/submitted or running, we leave
-        if (taskRuns.stream()
-            .anyMatch(taskRun -> taskRun.getState().isCreated()  || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+        if (
+            taskRuns.stream()
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
         ) {
             return Collections.emptyList();
         }
@@ -130,8 +132,9 @@ public class FlowableUtils {
         }
 
         // if it has any created/submitted or running, we leave
-        if (taskRuns.stream()
-            .anyMatch(taskRun -> taskRun.getState().isCreated()  || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+        if (
+            taskRuns.stream()
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
         ) {
             return Collections.emptyList();
         }
@@ -417,7 +420,8 @@ public class FlowableUtils {
                     if (valuesNode.isArray()) {
                         List<String> resolvedValues = MAPPER.convertValue(valuesNode, TYPE_REFERENCE)
                             .stream()
-                            .map(throwFunction(obj -> {
+                            .map(throwFunction(obj ->
+                            {
                                 if (obj instanceof String s) {
                                     return s;
                                 } else if (obj == null) {
@@ -524,7 +528,7 @@ public class FlowableUtils {
      * Reads up to {@code limit} ION values from the URI-backed ION file and counts the total number of
      * values in a single file pass (no double open). Used during Loop initial creation.
      *
-     * @param uri   the rendered URI pointing to the ION file
+     * @param uri the rendered URI pointing to the ION file
      * @param limit the maximum number of values to return; pass {@link Integer#MAX_VALUE} to return all
      * @return a record holding the total line count, the first {@code limit} values, and the byte offset
      *         immediately after the last value read
@@ -532,8 +536,9 @@ public class FlowableUtils {
     public static LoopInitialValuesFromUri readAndCountLoopValuesFromUri(RunContext runContext, String uri, int limit) throws IOException, IllegalVariableEvaluationException {
         try (var is = new BufferedInputStream(URIFetcher.of(uri).fetch(runContext), FileSerde.BUFFER_SIZE)) {
             List<String> result = new ArrayList<>();
-            int[] totalCount = {0};
-            FileSerde.read(is, throwConsumer(record -> {
+            int[] totalCount = { 0 };
+            FileSerde.read(is, throwConsumer(record ->
+            {
                 if (result.size() < limit) {
                     result.add(ionValueToString(record));
                 }
@@ -545,21 +550,23 @@ public class FlowableUtils {
     }
 
     /** Holds the result of a combined count-and-read pass over a URI-backed ION file. */
-    public record LoopInitialValuesFromUri(int totalCount, List<String> values, long nextOffset) {}
+    public record LoopInitialValuesFromUri(int totalCount, List<String> values, long nextOffset) {
+    }
 
     /**
      * Reads up to {@code count} ION values from the URI-backed ION file, starting at the given record index.
      *
-     * @param uri    the rendered URI pointing to the ION file
+     * @param uri the rendered URI pointing to the ION file
      * @param offset the record index from which to start reading (0 for the beginning of the file)
-     * @param count  the maximum number of values to read
+     * @param count the maximum number of values to read
      * @return a pair of the parsed string values and the record index immediately after the last value read
      */
     public static Pair<List<String>, Long> readLoopValuesFromUri(RunContext runContext, String uri, long offset, int count) throws IOException, IllegalVariableEvaluationException {
         try (var is = new BufferedInputStream(URIFetcher.of(uri).fetch(runContext), FileSerde.BUFFER_SIZE)) {
             List<String> result = new ArrayList<>(count);
-            long[] index = {0};
-            FileSerde.read(is, throwConsumer(record -> {
+            long[] index = { 0 };
+            FileSerde.read(is, throwConsumer(record ->
+            {
                 if (index[0] >= offset && result.size() < count) {
                     result.add(ionValueToString(record));
                 }

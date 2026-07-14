@@ -2,7 +2,6 @@ package io.kestra.executor;
 
 import java.util.List;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESPACE;

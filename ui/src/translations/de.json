@@ -60,7 +60,7 @@
     "save": "Speichern",
     "save_as_draft": "Als Entwurf speichern",
     "draft": "Entwurf",
-    "draft_flow_warning": "Diese flow-Revision ist ein Entwurf. Die Ausführung verwendet diese Entwurfsrevision und kann sofort fehlschlagen, wenn die flow-Definition ungültig ist.",
+    "draft_flow_warning": "Die neueste Revision dieses flow ist ein Entwurf. Die Ausführung verwendet stattdessen die neueste veröffentlichte Revision – veröffentlichen Sie den Entwurf (oder führen Sie ihn im Playground aus), um Ihre letzten Änderungen auszuführen.",
     "save task": "Task speichern",
     "saved": "Erfolgreich gespeichert",
     "saved as draft": "Erfolgreich als Entwurf gespeichert",
@@ -113,6 +113,7 @@
     "prev_execution": "Vorherige Ausführung",
     "next_execution": "Nächste Ausführung",
     "datepicker": {
+      "invalid duration": "Ungültiges Dauerformat. Bitte verwenden Sie ISO 8601 (z.B. PT30M, P1D).",
       "leave empty for infinite": "Leer lassen für unendliche Dauer oder eine ISO 8601-Dauer eingeben (Beispiel: 'P1DT1H1M1S')",
       "duration example": "Beispiel: 'P1DT1H1M1S'",
       "error": "Ungültiges Dauerformat, muss eine ISO 8601-Dauer sein (z.B. P1DT1H1M1S)",
@@ -326,9 +327,9 @@
     "no metrics available": "Für diesen Task-Lauf wurden keine Metriken aufgezeichnet.",
     "no outputs available": "Keine Outputs für diesen Task Run verfügbar.",
     "outputs": "Outputs",
-    "flow_outputs": "Flow Outputs",
-    "no_flow_outputs": "Keine Outputs verfügbar.",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug-Ausdruck",
       "render": "Ausdruck rendern",
@@ -839,6 +840,7 @@
       },
       "filter": "Filter",
       "new_file": "Neue Datei",
+      "read_only": "Sie haben keine Berechtigung, Dateien in diesem namespace zu verwalten",
       "no_items": {
         "heading": "Noch keine Dateien in Ihrem Namespace gefunden.",
         "paragraph": "Erstellen oder importieren Sie Dateien, um Code zwischen Flows in Ihrem Namespace zu teilen."

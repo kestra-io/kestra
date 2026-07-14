@@ -106,7 +106,10 @@ public class SubflowFunction implements KestraFunction {
         // blocking-friendly thread (flow-input rendering on the webserver). A top-level 'taskrun' or
         // 'trigger' variable means we are rendering a task or trigger property, which may run on a worker.
         if (context.getVariable("taskrun") != null || context.getVariable("trigger") != null) {
-            throw new PebbleException(null, "The 'subflow' function can only be used at flow-input render time (e.g. an input's 'values'); it is not supported inside task or trigger properties.", lineNumber, self.getName());
+            throw new PebbleException(
+                null, "The 'subflow' function can only be used at flow-input render time (e.g. an input's 'values'); it is not supported inside task or trigger properties.", lineNumber,
+                self.getName()
+            );
         }
 
         String namespace = (String) args.get(NAMESPACE_ARG);
@@ -117,7 +120,9 @@ public class SubflowFunction implements KestraFunction {
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         if (flow == null) {
-            throw new PebbleException(null, "The 'subflow' function can only be used in a flow context (e.g. an input's 'values'); the caller flow could not be resolved.", lineNumber, self.getName());
+            throw new PebbleException(
+                null, "The 'subflow' function can only be used in a flow context (e.g. an input's 'values'); the caller flow could not be resolved.", lineNumber, self.getName()
+            );
         }
         String tenantId = flow.get("tenantId");
         String callerNamespace = flow.get(NAMESPACE_ARG);
@@ -132,8 +137,11 @@ public class SubflowFunction implements KestraFunction {
 
         int depth = DEPTH.get();
         if (depth >= configuration.maxDepth()) {
-            throw new PebbleException(null, "The 'subflow' function exceeded the maximum nesting depth of " + configuration.maxDepth()
-                + " (a subflow's inputs likely call subflow() recursively).", lineNumber, self.getName());
+            throw new PebbleException(
+                null, "The 'subflow' function exceeded the maximum nesting depth of " + configuration.maxDepth()
+                    + " (a subflow's inputs likely call subflow() recursively).",
+                lineNumber, self.getName()
+            );
         }
 
         DEPTH.set(depth + 1);
@@ -143,8 +151,13 @@ public class SubflowFunction implements KestraFunction {
             // render time, not only at execution time, so anyone able to open the form triggers this resolution.
             FlowInterface targetFlow = flowMetaStore.get()
                 .findByIdFromTask(tenantId, namespace, id, revision, tenantId, callerNamespace, callerId)
-                .orElseThrow(() -> new PebbleException(null, "Unable to find flow '" + namespace + "'.'" + id + "'"
-                    + revision.map(r -> " with revision " + r).orElse("") + ".", lineNumber, self.getName()));
+                .orElseThrow(
+                    () -> new PebbleException(
+                        null, "Unable to find flow '" + namespace + "'.'" + id + "'"
+                            + revision.map(r -> " with revision " + r).orElse("") + ".",
+                        lineNumber, self.getName()
+                    )
+                );
 
             if (targetFlow instanceof FlowWithException fwe) {
                 throw new PebbleException(null, "Cannot run the invalid flow '" + namespace + "'.'" + id + "': " + fwe.getException(), lineNumber, self.getName());
@@ -174,8 +187,11 @@ public class SubflowFunction implements KestraFunction {
 
             State.Type state = terminated.getState().getCurrent();
             if (state != State.Type.SUCCESS && state != State.Type.WARNING) {
-                throw new PebbleException(null, "Subflow '" + namespace + "'.'" + id + "' ended in state " + state
-                    + " (execution " + terminated.getId() + ").", lineNumber, self.getName());
+                throw new PebbleException(
+                    null, "Subflow '" + namespace + "'.'" + id + "' ended in state " + state
+                        + " (execution " + terminated.getId() + ").",
+                    lineNumber, self.getName()
+                );
             }
 
             return Result.of(terminated);
@@ -196,11 +212,15 @@ public class SubflowFunction implements KestraFunction {
             if (!(rawLabels instanceof Map)) {
                 throw new PebbleException(null, "The 'subflow' function 'labels' must be a map of string keys to values.", lineNumber, self.getName());
             }
-            ((Map<String, Object>) rawLabels).forEach((key, value) -> {
+            ((Map<String, Object>) rawLabels).forEach((key, value) ->
+            {
                 if (value != null) {
                     // system labels are reserved for Kestra; only system.correlationId may be propagated by the caller
                     if (key.startsWith(Label.SYSTEM_PREFIX) && !key.equals(Label.CORRELATION_ID)) {
-                        throw new PebbleException(null, "The 'subflow' function cannot set the system label '" + key + "'; system labels are reserved (except '" + Label.CORRELATION_ID + "').", lineNumber, self.getName());
+                        throw new PebbleException(
+                            null, "The 'subflow' function cannot set the system label '" + key + "'; system labels are reserved (except '" + Label.CORRELATION_ID + "').", lineNumber,
+                            self.getName()
+                        );
                     }
                     labels.add(new Label(key, String.valueOf(value)));
                 }
@@ -237,10 +257,10 @@ public class SubflowFunction implements KestraFunction {
      * The minimal, navigable result returned to the template, instead of the full {@link Execution}
      * object (which exposes internal state callers should not depend on).
      *
-     * @param id      the terminal execution id
-     * @param state   the terminal state name (e.g. {@code SUCCESS})
+     * @param id the terminal execution id
+     * @param state the terminal state name (e.g. {@code SUCCESS})
      * @param outputs the subflow's flow-level outputs, navigable as {@code subflow(...).outputs.xxx}
-     * @param labels  the execution labels as a {@code key -> value} map
+     * @param labels the execution labels as a {@code key -> value} map
      */
     public record Result(String id, String state, Map<String, Object> outputs, Map<String, String> labels) {
         static Result of(Execution execution) {

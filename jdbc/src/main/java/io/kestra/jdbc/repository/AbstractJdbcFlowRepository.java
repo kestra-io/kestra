@@ -59,6 +59,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
     public static final Field<Integer> REVISION_FIELD = field("revision", Integer.class);
+    private static final Field<Boolean> DISABLED_FIELD = field("disabled", Boolean.class);
 
     private final ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher;
     private final ModelValidator modelValidator;
@@ -83,7 +84,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         {
             String source = record.get("value", String.class);
             String namespace = record.get("namespace", String.class);
-            String tenantId = record.get("tenant_id", String.class);
+            String tenantId = record.get(TENANT_ID_FIELD);
             try {
                 Map<String, Object> map = MAPPER.readValue(source, new TypeReference<>() {
                 });
@@ -201,8 +202,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return buildTenantCondition(tenantId);
     }
 
+    // "executable" filtering must stay independent of read-ACL, since users with
+    // execute-but-not-read permission are exactly who these two methods serve.
     protected Condition defaultExecutionFilter(String tenantId) {
-        return buildTenantCondition(tenantId);
+        return this.defaultFilterWithNoACL(tenantId).and(DISABLED_FIELD.eq(false));
     }
 
     @Override

@@ -1,10 +1,11 @@
 package io.kestra.core.models.executions;
 
+import java.util.Map;
+
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
-import jakarta.annotation.Nullable;
 
-import java.util.Map;
+import jakarta.annotation.Nullable;
 
 /**
  * Event emitted by the executor to communicate a loop sub-execution state change to its parent execution.
@@ -15,8 +16,7 @@ public record LoopExecutionEvent(
     LoopRun loopRun,
     String executionId,
     State.Type state,
-    @Nullable Map<String, Object> outputs
-) implements DispatchEvent {
+    @Nullable Map<String, Object> outputs) implements DispatchEvent {
 
     @Override
     public String key() {

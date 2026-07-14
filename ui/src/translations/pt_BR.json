@@ -60,7 +60,7 @@
     "save": "Salvar",
     "save_as_draft": "Salvar como rascunho",
     "draft": "Rascunho",
-    "draft_flow_warning": "Esta revisão do flow é um rascunho. A execução será feita nesta revisão de rascunho e pode falhar imediatamente se a definição do flow for inválida.",
+    "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita na revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar suas alterações mais recentes.",
     "save task": "Salvar Task",
     "saved": "Salvo com sucesso",
     "saved as draft": "Salvo como rascunho com sucesso",
@@ -113,6 +113,7 @@
     "prev_execution": "Execução anterior",
     "next_execution": "Próxima execução",
     "datepicker": {
+      "invalid duration": "Formato de duração inválido. Use o formato ISO 8601 (ex: PT30M, P1D).",
       "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (exemplo: 'P1DT1H1M1S)'",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (P1DT1H1M1S por ex.)",
@@ -326,9 +327,9 @@
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
     "no outputs available": "Nenhuma saída disponível para esta execução de task.",
     "outputs": "Outputs",
-    "flow_outputs": "Saídas do Flow",
-    "no_flow_outputs": "Sem outputs disponíveis.",
+    "flow_inputs": "Entradas do Flow",
     "output": "Output",
+    "flow_outputs": "Saídas do Flow",
     "eval": {
       "title": "Expressão de Depuração",
       "render": "Expressão de Renderização",
@@ -839,6 +840,7 @@
       },
       "filter": "Filtro",
       "new_file": "Novo arquivo",
+      "read_only": "Você não tem permissão para gerenciar arquivos neste namespace",
       "no_items": {
         "heading": "Nenhum arquivo encontrado no seu namespace ainda.",
         "paragraph": "Crie ou importe arquivos para compartilhar código entre flows no seu namespace."

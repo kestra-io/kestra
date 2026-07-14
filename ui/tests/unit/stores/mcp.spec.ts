@@ -1,8 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
-const BASE_URL = "http://localhost/api/v1/main"
-
 const mockServer = {
     id: "my-server",
     serverType: "PRIVATE" as const,
@@ -11,63 +9,61 @@ const mockServer = {
     isDefault: false,
 }
 
-const axiosGet = vi.fn().mockResolvedValue({data: {results: [mockServer], total: 1}})
-const axiosPost = vi.fn().mockResolvedValue({data: mockServer})
-const axiosPut = vi.fn().mockResolvedValue({data: mockServer})
-const axiosDelete = vi.fn().mockResolvedValue({data: undefined})
-const axiosPatch = vi.fn().mockResolvedValue({data: {...mockServer, disabled: true}})
+const listMcps = vi.fn().mockResolvedValue({results: [mockServer], total: 1})
+const mcp = vi.fn().mockResolvedValue(mockServer)
+const createMcp = vi.fn().mockResolvedValue(mockServer)
+const updateMcp = vi.fn().mockResolvedValue(mockServer)
+const deleteMcp = vi.fn().mockResolvedValue(undefined)
+const toggleMcp = vi.fn().mockResolvedValue({...mockServer, disabled: true})
+const listTools = vi.fn().mockResolvedValue([])
 
-vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({
-        get: axiosGet,
-        post: axiosPost,
-        put: axiosPut,
-        delete: axiosDelete,
-        patch: axiosPatch,
-    }),
-}))
-
-vi.mock("override/utils/route", () => ({
-    apiUrl: () => BASE_URL,
+vi.mock("@kestra-io/kestra-sdk/mcp", () => ({
+    listMcps: (...args: any[]) => listMcps(...args),
+    mcp: (...args: any[]) => mcp(...args),
+    createMcp: (...args: any[]) => createMcp(...args),
+    updateMcp: (...args: any[]) => updateMcp(...args),
+    deleteMcp: (...args: any[]) => deleteMcp(...args),
+    toggleMcp: (...args: any[]) => toggleMcp(...args),
+    listTools: (...args: any[]) => listTools(...args),
 }))
 
 describe("mcp store", () => {
     beforeEach(() => {
         vi.resetModules()
-        axiosGet.mockClear()
-        axiosPost.mockClear()
-        axiosPut.mockClear()
-        axiosDelete.mockClear()
-        axiosPatch.mockClear()
+        listMcps.mockClear()
+        mcp.mockClear()
+        createMcp.mockClear()
+        updateMcp.mockClear()
+        deleteMcp.mockClear()
+        toggleMcp.mockClear()
+        listTools.mockClear()
         setActivePinia(createPinia())
         localStorage.clear()
     })
 
-    it("list() calls GET /mcp/servers and returns data", async () => {
+    it("list() calls listMcps and returns data", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
         const result = await store.list()
 
-        expect(axiosGet).toHaveBeenCalledOnce()
-        expect(axiosGet).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers`)
+        expect(listMcps).toHaveBeenCalledOnce()
         expect(result).toEqual({results: [mockServer], total: 1})
     })
 
-    it("load() calls GET /mcp/servers/{id} and sets server", async () => {
-        axiosGet.mockResolvedValueOnce({data: mockServer})
+    it("load() calls mcp() and sets server", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
         await store.load("my-server")
 
-        expect(axiosGet).toHaveBeenCalledOnce()
-        expect(axiosGet).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server`)
+        expect(mcp).toHaveBeenCalledOnce()
+        expect(mcp).toHaveBeenCalledWith({id: "my-server"})
         expect(store.server).toEqual(mockServer)
     })
 
     it("load() sets server to null when server is not found", async () => {
-        axiosGet.mockRejectedValueOnce(new Error("404"))
+        mcp.mockRejectedValueOnce(new Error("404"))
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
@@ -76,48 +72,48 @@ describe("mcp store", () => {
         expect(store.server).toBeNull()
     })
 
-    it("create() calls POST /mcp/servers with payload and returns server", async () => {
+    it("create() calls createMcp with payload and returns server", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
         const payload = {id: "my-server", serverType: "PRIVATE" as const, authType: "BASIC" as const, disabled: false}
         const result = await store.create(payload)
 
-        expect(axiosPost).toHaveBeenCalledOnce()
-        expect(axiosPost).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers`, payload)
+        expect(createMcp).toHaveBeenCalledOnce()
+        expect(createMcp).toHaveBeenCalledWith(payload)
         expect(result).toEqual(mockServer)
     })
 
-    it("update() calls PUT /mcp/servers/{id} with payload and returns server", async () => {
+    it("update() calls updateMcp with id and payload and returns server", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
         const payload = {id: "my-server", serverType: "PUBLIC" as const, authType: "BASIC" as const, disabled: false}
         const result = await store.update("my-server", payload)
 
-        expect(axiosPut).toHaveBeenCalledOnce()
-        expect(axiosPut).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server`, payload)
+        expect(updateMcp).toHaveBeenCalledOnce()
+        expect(updateMcp).toHaveBeenCalledWith({id: "my-server", serverType: "PUBLIC", authType: "BASIC", disabled: false})
         expect(result).toEqual(mockServer)
     })
 
-    it("remove() calls DELETE /mcp/servers/{id}", async () => {
+    it("remove() calls deleteMcp with id", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
         await store.remove("my-server")
 
-        expect(axiosDelete).toHaveBeenCalledOnce()
-        expect(axiosDelete).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server`)
+        expect(deleteMcp).toHaveBeenCalledOnce()
+        expect(deleteMcp).toHaveBeenCalledWith({id: "my-server"})
     })
 
-    it("toggle() calls PATCH /mcp/servers/{id}/toggle and returns updated server", async () => {
+    it("toggle() calls toggleMcp and returns updated server", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
         const result = await store.toggle("my-server")
 
-        expect(axiosPatch).toHaveBeenCalledOnce()
-        expect(axiosPatch).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server/toggle`)
+        expect(toggleMcp).toHaveBeenCalledOnce()
+        expect(toggleMcp).toHaveBeenCalledWith({id: "my-server"})
         expect(result).toEqual({...mockServer, disabled: true})
     })
 })

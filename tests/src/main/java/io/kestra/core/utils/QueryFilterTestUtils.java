@@ -1,17 +1,19 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.QueryFilter;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.kestra.core.models.QueryFilter;
+
 /**
  * Test utility for converting {@link QueryFilter} instances to PHP-style URL query parameters
  * compatible with the format parsed by {@code QueryFilterFormatBinder}.
  *
- * <p>Example usage:
+ * <p>
+ * Example usage:
+ * 
  * <pre>{@code
  * Map<String, String> params = QueryFilterTestUtils.toQueryParams(filters);
  * UriBuilder builder = UriBuilder.of("/api/v1/executions/search");

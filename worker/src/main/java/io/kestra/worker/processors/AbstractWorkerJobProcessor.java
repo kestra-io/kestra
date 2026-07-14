@@ -79,7 +79,8 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
                 workerJobCallable.getRunContext(),
                 workerJobCallable.getType(),
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
-                () -> {
+                () ->
+                {
                     var state = workerSecurityService.callInSecurityContext(workerJobCallable);
                     if (state != null && state.isTerminatedInError()) {
                         Span.current().setStatus(StatusCode.ERROR, "Task ended in state " + state.name());

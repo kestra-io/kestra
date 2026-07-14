@@ -1,37 +1,5 @@
 package io.kestra.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
-import io.grpc.ChannelCredentials;
-import io.grpc.Channel;
-import io.grpc.ConnectivityState;
-import io.grpc.EquivalentAddressGroup;
-import io.grpc.Grpc;
-import io.grpc.InsecureChannelCredentials;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.NameResolverProvider;
-import io.grpc.NameResolverRegistry;
-import io.kestra.controller.config.GrpcChannelConfiguration;
-import io.kestra.controller.config.GrpcConfiguration;
-import io.kestra.controller.config.WorkerControllersConfiguration;
-import io.kestra.controller.discovery.ControllerRegistration;
-import io.kestra.controller.discovery.ControllerRegistry;
-import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
-import io.kestra.controller.grpc.resolver.StorageNameResolverProvider;
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.ExecutorsUtils;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +15,40 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.controller.config.GrpcChannelConfiguration;
+import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.config.WorkerControllersConfiguration;
+import io.kestra.controller.discovery.ControllerRegistration;
+import io.kestra.controller.discovery.ControllerRegistry;
+import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
+import io.kestra.controller.grpc.resolver.StorageNameResolverProvider;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.ExecutorsUtils;
+
+import io.grpc.Channel;
+import io.grpc.ChannelCredentials;
+import io.grpc.ConnectivityState;
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.NameResolverProvider;
+import io.grpc.NameResolverRegistry;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Manages gRPC channels for worker-to-controller communication.
@@ -66,9 +67,11 @@ public class GrpcChannelManager {
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private static final AtomicBoolean STATIC_RESOLVER_REGISTERED = new AtomicBoolean(false);
-    // Reference to the registered resolver provider for cleanup
-    private static final AtomicReference<StaticNameResolverProvider> REGISTERED_STATIC_RESOLVER_PROVIDER = new AtomicReference<>();
+    // The static name resolver is stateless (endpoints are encoded in each channel's target URI),
+    // so a single instance is registered once per JVM at class-load time and never deregistered.
+    static {
+        NameResolverRegistry.getDefaultRegistry().register(new StaticNameResolverProvider());
+    }
 
     private static final AtomicBoolean STORAGE_RESOLVER_REGISTERED = new AtomicBoolean(false);
     private static final AtomicReference<StorageNameResolverProvider> REGISTERED_STORAGE_RESOLVER_PROVIDER = new AtomicReference<>();
@@ -93,10 +96,10 @@ public class GrpcChannelManager {
      * Creates a new {@link GrpcChannelManager} instance.
      *
      * @param grpcChannelConfiguration the gRPC channel configuration.
-     * @param grpcConfiguration        the global gRPC configuration.
-     * @param controllersConfig        the multi-endpoint controllers configuration.
-     * @param storageInterface         the internal storage used for STORAGE discovery. May be {@code null}
-     *                                 when Kestra is started without storage (only STATIC/DNS are then usable).
+     * @param grpcConfiguration the global gRPC configuration.
+     * @param controllersConfig the multi-endpoint controllers configuration.
+     * @param storageInterface the internal storage used for STORAGE discovery. May be {@code null}
+     *        when Kestra is started without storage (only STATIC/DNS are then usable).
      */
     @Inject
     public GrpcChannelManager(
@@ -176,23 +179,17 @@ public class GrpcChannelManager {
             throw new IllegalStateException("Static configuration requires at least one endpoint");
         }
 
-        List<EquivalentAddressGroup> addresses = staticConfig.endpoints().stream()
+        List<InetSocketAddress> endpoints = staticConfig.endpoints().stream()
             .map(e ->
             {
                 log.debug("Adding static controller endpoint: {}:{}", e.host(), e.port());
-                return new EquivalentAddressGroup(new InetSocketAddress(e.host(), e.port()));
+                return InetSocketAddress.createUnresolved(e.host(), e.port());
             })
             .toList();
 
-        log.info("Configuring static discovery with {} controller endpoint(s)", addresses.size());
+        log.info("Configuring static discovery with {} controller endpoint(s)", endpoints.size());
 
-        // Register the static name resolver provider only once, store reference for cleanup
-        if (STATIC_RESOLVER_REGISTERED.compareAndSet(false, true)) {
-            StaticNameResolverProvider resolverProvider = new StaticNameResolverProvider(addresses);
-            NameResolverRegistry.getDefaultRegistry().register(resolverProvider);
-            REGISTERED_STATIC_RESOLVER_PROVIDER.set(resolverProvider);
-        }
-        return Grpc.newChannelBuilder("static:///controllers", createChannelCredentials());
+        return Grpc.newChannelBuilder(StaticNameResolverProvider.targetFor(endpoints), createChannelCredentials());
     }
 
     /**
@@ -235,8 +232,10 @@ public class GrpcChannelManager {
             lastKnownStorageAddresses = List.of();
             return lastKnownStorageAddresses;
         } catch (IOException e) {
-            log.warn("Failed to list controller registry from storage; returning last known good list ({} entries)",
-                lastKnownStorageAddresses.size(), e);
+            log.warn(
+                "Failed to list controller registry from storage; returning last known good list ({} entries)",
+                lastKnownStorageAddresses.size(), e
+            );
             return lastKnownStorageAddresses;
         }
 
@@ -260,14 +259,17 @@ public class GrpcChannelManager {
             } catch (IOException e) {
                 // Transient storage failure on a per-entry read — treat as we would a list() failure
                 // and preserve the last known good list rather than committing a shrunken pool.
-                log.warn("Transient storage error reading controller registration at {}; returning last known good list ({} entries)",
-                    entryUri, lastKnownStorageAddresses.size(), e);
+                log.warn(
+                    "Transient storage error reading controller registration at {}; returning last known good list ({} entries)",
+                    entryUri, lastKnownStorageAddresses.size(), e
+                );
                 return lastKnownStorageAddresses;
             }
         }
         lastKnownStorageAddresses = List.copyOf(addresses);
         if (!addresses.isEmpty() && firstStorageLoadLogged.compareAndSet(false, true)) {
-            log.info("Discovered {} controller endpoint(s) from internal storage: {}",
+            log.info(
+                "Discovered {} controller endpoint(s) from internal storage: {}",
                 addresses.size(),
                 addresses.stream()
                     .flatMap(group -> group.getAddresses().stream())
@@ -357,15 +359,6 @@ public class GrpcChannelManager {
                     Thread.currentThread().interrupt();
                 }
             }
-        }
-
-        // Unregister the static name resolver provider to prevent memory leaks
-        // and allow clean re-initialization in tests.
-        // Use getAndSet to atomically retrieve and clear, preventing double-deregister races.
-        StaticNameResolverProvider staticProvider = REGISTERED_STATIC_RESOLVER_PROVIDER.getAndSet(null);
-        if (staticProvider != null) {
-            STATIC_RESOLVER_REGISTERED.set(false);
-            deregisterSilently(staticProvider, "static");
         }
 
         StorageNameResolverProvider storageProvider = REGISTERED_STORAGE_RESOLVER_PROVIDER.getAndSet(null);

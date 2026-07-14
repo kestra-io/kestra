@@ -16,7 +16,8 @@ import jakarta.inject.Singleton;
  * and hyphens, must start and end with an alphanumeric, max {@value #MAX_LENGTH}
  * characters.
  *
- * <p>Exposes {@link #isValid(String)} as a static helper so record compact
+ * <p>
+ * Exposes {@link #isValid(String)} as a static helper so record compact
  * constructors and other non-CDI code paths can enforce the same invariant
  * without going through the validator beans.
  */
@@ -32,8 +33,7 @@ public final class Rfc1123LabelValidator implements ConstraintValidator<Rfc1123L
     public boolean isValid(
         @Nullable String value,
         @NonNull AnnotationValue<Rfc1123Label> annotationMetadata,
-        @NonNull ConstraintValidatorContext context
-    ) {
+        @NonNull ConstraintValidatorContext context) {
         return value == null || isValid(value);
     }
 

@@ -34,7 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofJson(false);
-    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
+    };
 
     private final ConnectControllerServiceBlockingStub connectControllerService;
     private final WorkerControllersConfiguration workerControllersConfiguration;

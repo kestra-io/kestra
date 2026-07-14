@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.controller.config.ControllerAdvertiseConfiguration;
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
@@ -18,14 +20,12 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Network;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
 
 /**
  * Publishes the controller's gRPC endpoint to internal storage on every successful
@@ -62,14 +62,14 @@ public class ControllerStorageRegistrar implements ServiceLivenessListener, Clos
 
     @Inject
     public ControllerStorageRegistrar(final Provider<StorageInterface> storageInterface,
-                                      final ControllerAdvertiseConfiguration advertiseConfig,
-                                      final ControllerConfiguration controllerConfig) {
+        final ControllerAdvertiseConfiguration advertiseConfig,
+        final ControllerConfiguration controllerConfig) {
         this.storageInterface = Objects.requireNonNull(storageInterface, "StorageInterface cannot be null");
         this.advertiseConfig = Objects.requireNonNull(advertiseConfig, "ControllerAdvertiseConfiguration cannot be null");
         this.controllerConfig = Objects.requireNonNull(controllerConfig, "ControllerConfiguration cannot be null");
 
         String host = advertiseConfig.host();
-        this.resolvedHost =  host != null && !host.isBlank() ? host : Network.localHostname();
+        this.resolvedHost = host != null && !host.isBlank() ? host : Network.localHostname();
     }
 
     /**
@@ -79,10 +79,12 @@ public class ControllerStorageRegistrar implements ServiceLivenessListener, Clos
     public void onLivenessUpdate(final Instant now,
         final ServiceInstance instance,
         final Service.ServiceState newState) {
-        if (closed.get() ||
-            instance.type() != ServiceType.CONTROLLER ||
-            newState != Service.ServiceState.RUNNING ||
-            !isDueForRefresh(now)) {
+        if (
+            closed.get() ||
+                instance.type() != ServiceType.CONTROLLER ||
+                newState != Service.ServiceState.RUNNING ||
+                !isDueForRefresh(now)
+        ) {
             return;
         }
 
@@ -96,8 +98,10 @@ public class ControllerStorageRegistrar implements ServiceLivenessListener, Clos
         }
 
         if (lastWrittenAt == null) {
-            log.info("Controller [{}] registered in internal storage at [{}]; heartbeat every {}",
-                id, resolvedHost, advertiseConfig.heartbeatInterval());
+            log.info(
+                "Controller [{}] registered in internal storage at [{}]; heartbeat every {}",
+                id, resolvedHost, advertiseConfig.heartbeatInterval()
+            );
         }
         this.registrationId = id;
         this.lastWrittenAt = now;

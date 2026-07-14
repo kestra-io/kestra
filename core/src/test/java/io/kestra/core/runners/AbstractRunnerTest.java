@@ -225,11 +225,12 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/trigger-flow-listener-with-pause.yaml",
-            "flows/valids/trigger-flow-with-pause.yaml" }
+        value = { "flows/valids/trigger-flow-listener-with-pause.yaml",
+            "flows/valids/trigger-flow-with-pause.yaml" },
+        tenantId = "pause-tenant"
     )
     void flowTriggerWithPause() throws Exception {
-        flowTriggerCaseTest.triggerWithPause();
+        flowTriggerCaseTest.triggerWithPause("pause-tenant");
     }
 
     @Test

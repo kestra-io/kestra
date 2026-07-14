@@ -34,11 +34,11 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * A tenant-scoped tool declares a {@link TenantId} parameter whose visibility in the model-facing
  * spec is decided by the {@link AiToolSpecFactory} (hidden by default, exposed by editions with
- * multiple tenants). OSS tools carry no authorization; EE {@code @Replaces} subclasses override the
- * same {@code @Tool} method to validate the caller's grants and then delegate to {@code super}.
- * Because such an override drops the {@code @Tool}/{@code @P} annotations, {@link #toolMethod}
- * resolves the annotated method up the class hierarchy — the spec comes from the OSS method while
- * execution dispatches virtually to the EE override.
+ * multiple tenants). Tools carry no authorization by default; a replacement can override the same
+ * {@code @Tool} method to validate the caller's access and then delegate to {@code super}. Because
+ * such an override drops the {@code @Tool}/{@code @P} annotations, {@link #toolMethod} resolves the
+ * annotated method up the class hierarchy — the spec comes from the annotated method while execution
+ * dispatches virtually to the override.
  * </p>
  */
 @Singleton
@@ -152,9 +152,9 @@ public class ToolCatalog {
     /**
      * Execute a tool call scoped to the given caller context — the one entry point both the in-process
      * loop and (later) the MCP projection use. Enforces the coarse tool permission against the
-     * caller's tenant, binds the context to the executor thread so {@code @Tool} methods (and EE
-     * overrides) can read it, and always clears it. Per-namespace and cross-tenant checks are the EE
-     * tool subclasses' responsibility.
+     * caller's tenant, binds the context to the executor thread so {@code @Tool} methods (and any
+     * overrides) can read it, and always clears it. Per-namespace and cross-tenant checks are the
+     * individual tool implementations' responsibility.
      *
      * @param request the tool call emitted by the model
      * @param context what the call runs as (tenant, principal, provider, draft channel)
@@ -185,10 +185,10 @@ public class ToolCatalog {
     }
 
     /**
-     * The {@code @Tool}-annotated method, searched up the class hierarchy: an EE {@code @Replaces}
-     * subclass overrides the method without repeating {@code @Tool}/{@code @P}, so the annotated
-     * definition lives on the OSS super-class while the bean itself is the EE type. Executing the
-     * returned method against the bean dispatches virtually to the override.
+     * The {@code @Tool}-annotated method, searched up the class hierarchy: a replacement subclass may
+     * override the method without repeating {@code @Tool}/{@code @P}, so the annotated definition
+     * lives on the super-class while the bean itself is the subtype. Executing the returned method
+     * against the bean dispatches virtually to the override.
      */
     private static Method toolMethod(final Object toolInstance) {
         for (Class<?> type = toolInstance.getClass(); type != null; type = type.getSuperclass()) {

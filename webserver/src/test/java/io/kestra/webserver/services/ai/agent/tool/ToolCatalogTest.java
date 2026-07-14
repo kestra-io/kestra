@@ -53,7 +53,7 @@ class ToolCatalogTest {
         // Given / When
         ToolCatalog catalog = newCatalog(ALLOW_ALL);
 
-        // Then — the entry exposes the tool instance so the EE evaluator can read its RBAC mapping
+        // Then — the entry exposes the tool instance so a permission evaluator can read its mapping
         ToolCatalog.ToolEntry entry = catalog.byName("update-artefact").orElseThrow();
         assertThat(entry.tool()).isInstanceOf(TestMutateTool.class);
         assertThat(entry.isPermissionEvaluated()).isTrue();
@@ -73,7 +73,7 @@ class ToolCatalogTest {
 
     @Test
     void shouldExposeTenantIdInSpecWithMultiTenantFactory() {
-        // Given — a spec factory that exposes tenant targeting (as EE does)
+        // Given — a spec factory that exposes tenant targeting (as a multi-tenant surface does)
         ToolCatalog catalog = newCatalog(ALLOW_ALL, EXPOSE_TENANT);
 
         // When
@@ -125,7 +125,7 @@ class ToolCatalogTest {
     @Test
     void shouldExecuteSubclassOverrideOfInheritedToolMethod() {
         // Given — a bean that overrides the @Tool method without repeating the annotation, mirroring
-        // how an EE @Replaces subclass extends an OSS tool
+        // how a replacement subclass extends a base tool
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
         ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL, HIDE_TENANT);
@@ -167,7 +167,7 @@ class ToolCatalogTest {
             .build();
     }
 
-    /** Overrides the inherited {@code @Tool} method without re-annotating it — like an EE subclass. */
+    /** Overrides the inherited {@code @Tool} method without re-annotating it — like a replacement subclass. */
     private static final class OverridingEchoTool extends TestTenantEchoTool {
         @Override
         public String tenantEcho(final String tenantId) {

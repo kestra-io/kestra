@@ -5,9 +5,8 @@ package io.kestra.webserver.services.ai.agent.tool;
  * {@code @Tool}-annotated method the model-facing specification is derived from.
  *
  * <p>
- * OSS tools carry no authorization logic (mirroring OSS controllers, which have none). RBAC lives
- * entirely in EE: an EE {@code @Replaces} subclass overrides the same {@code @Tool} method to check
- * the caller's grants, then delegates to {@code super}.
+ * Tools here carry no authorization logic. A replacement bean can override the same {@code @Tool}
+ * method to check the caller's access, then delegate to {@code super}.
  * </p>
  */
 public interface AiTool {

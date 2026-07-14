@@ -1,9 +1,12 @@
 package io.kestra.core.docs;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.core.plugins.PluginClassAndMetadata;
 
@@ -16,7 +19,14 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
-    private static final Map<PluginDocIdentifier, ClassPluginDocumentation<?>> CACHE = new ConcurrentHashMap<>();
+    // Bounded: the keyspace (class name + version + allProperties) is effectively unbounded in EE
+    // where multiple plugin versions can be installed, and the generated documentation values are
+    // large (JSON schemas, $defs, outputs). An unbounded map here grows the heap for the whole JVM
+    // lifetime as users browse plugins/versions (see #16983).
+    private static final Cache<PluginDocIdentifier, ClassPluginDocumentation<?>> CACHE = Caffeine.newBuilder()
+        .maximumSize(1_000)
+        .expireAfterAccess(Duration.ofHours(1))
+        .build();
     private String icon;
     private String group;
     protected String docLicense;
@@ -87,7 +97,7 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
 
     public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, PluginClassAndMetadata<T> plugin, String version, boolean allProperties) {
         //noinspection unchecked
-        return (ClassPluginDocumentation<T>) CACHE.computeIfAbsent(
+        return (ClassPluginDocumentation<T>) CACHE.get(
             new PluginDocIdentifier(plugin.type(), version, allProperties),
             (key) -> new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, allProperties)
         );

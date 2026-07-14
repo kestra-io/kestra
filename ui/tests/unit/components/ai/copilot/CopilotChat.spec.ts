@@ -23,6 +23,8 @@ const state = {
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
+// CopilotChat reads a seeded prompt from the misc store on mount; stub it (no Pinia in unit env).
+vi.mock("override/stores/misc", () => ({useMiscStore: () => ({copilotPrompt: null, openCopilot: vi.fn(), promptCopilot: vi.fn()})}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 

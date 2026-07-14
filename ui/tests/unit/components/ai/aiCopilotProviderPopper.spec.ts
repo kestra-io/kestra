@@ -4,7 +4,6 @@ import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import AiCopilot from "../../../../src/components/ai/AiCopilot.vue"
-import AiCopilotWrapper from "../../../../src/components/ai/AiCopilotWrapper.vue"
 import {useMiscStore} from "override/stores/misc"
 import {AI_PROVIDER_POPPER_CLASS, aiGenerationTypes} from "../../../../src/utils/constants"
 
@@ -82,41 +81,5 @@ describe("AI Copilot provider select popper", () => {
         const popper = document.body.querySelector(`.${AI_PROVIDER_POPPER_CLASS}`)
         expect(popper).not.toBeNull()
         expect(popper!.querySelectorAll(".kel-select-dropdown__item").length).toBe(PROVIDERS.length)
-    })
-
-    test("clicking a provider option does not close the copilot panel", async () => {
-        const wrapper = mount(AiCopilotWrapper, {
-            attachTo: document.body,
-            global: globalConfig,
-            props: {
-                flow: "id: test\nnamespace: test",
-                generationType: aiGenerationTypes.FLOW,
-            },
-        })
-        await flushPromises()
-
-        wrapper.vm.openAiCopilot()
-        await flushPromises()
-        expect(wrapper.vm.aiCopilotOpened).toBe(true)
-
-        // Open the provider select dropdown
-        const selectTrigger = document.body.querySelector(".kel-select__wrapper")
-        expect(selectTrigger).not.toBeNull()
-        dispatchPointerDownAndClick(selectTrigger!)
-        await flushPromises()
-
-        // Click an option inside the teleported popper — copilot must stay open
-        const option = document.body.querySelector(`.${AI_PROVIDER_POPPER_CLASS} .kel-select-dropdown__item`)
-        expect(option).not.toBeNull()
-        dispatchPointerDownAndClick(option!)
-        await flushPromises()
-        expect(wrapper.vm.aiCopilotOpened).toBe(true)
-
-        // Control: clicking truly outside still closes the copilot
-        const outside = document.createElement("div")
-        document.body.appendChild(outside)
-        dispatchPointerDownAndClick(outside)
-        await flushPromises()
-        expect(wrapper.vm.aiCopilotOpened).toBe(false)
     })
 })

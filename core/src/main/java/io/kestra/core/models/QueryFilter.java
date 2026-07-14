@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.utils.Enums;
+import io.kestra.core.utils.RegexUtils;
 
 import lombok.Builder;
 
@@ -776,6 +777,15 @@ public record QueryFilter(
                     filter.field().name(), resource.name(),
                     resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
                 )
+            );
+        }
+        if (
+            filter.operation() == Op.REGEX
+                && filter.value() instanceof String pattern
+                && !RegexUtils.isSafeUserRegex(pattern)
+        ) {
+            errors.add(
+                "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
             );
         }
     }

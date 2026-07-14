@@ -43,7 +43,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import escape from "lodash/escape"
-    import {useExecutionsStore} from "../../../../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
     import {State} from "@kestra-io/design-system"
@@ -53,14 +53,6 @@
     import {useToast} from "../../../../../utils/toast"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-
-    interface Execution {
-        id: string;
-        namespace: string;
-        state: {
-            current: string;
-        };
-    }
 
     const props = defineProps<{
         execution: Execution;

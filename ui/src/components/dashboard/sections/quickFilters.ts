@@ -1,5 +1,5 @@
 import type {Chart} from "../types.ts"
-import {FilterObject} from "../../../utils/filters"
+import {QueryFilter} from "@kestra-io/kestra-sdk"
 
 export const QUICK_FILTER_TABS = [
     {
@@ -50,12 +50,12 @@ export const chartConstrainsState = (chart: Chart): boolean =>
     ((chart.data?.where as {field?: string}[] | undefined) ?? [])
         .some((condition) => String(condition?.field).toUpperCase() === "STATE")
 
-export const stateFilterForTab = (chart: Chart, key: QuickFilterTabKey): FilterObject | null => {
+export const stateFilterForTab = (chart: Chart, key: QuickFilterTabKey): QueryFilter | null => {
     const tab = QUICK_FILTER_TABS.find((t) => t.key === key)
     if (!tab?.states.length) {
         return chartConstrainsState(chart)
-            ? {field: "state", operation: "IN", value: [...ALL_STATES]}
+            ? {field: "STATE", operation: "IN", value: [...ALL_STATES]}
             : null
     }
-    return {field: "state", operation: "IN", value: [...tab.states]}
+    return {field: "STATE", operation: "IN", value: [...tab.states]}
 }

@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.StoragePurgeService;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -113,7 +114,7 @@ public class PurgeStorage extends Task implements RunnableTask<PurgeStorage.Outp
         String rNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         String rFlowId = runContext.render(this.flowId).as(String.class).orElse(null);
         ZonedDateTime rStartDate = runContext.render(this.startDate).as(String.class).map(ZonedDateTime::parse).orElse(null);
-        ZonedDateTime rEndDate = ZonedDateTime.parse(runContext.render(this.endDate).as(String.class).orElseThrow());
+        ZonedDateTime rEndDate = TypeConverter.toZonedDateTime(runContext.render(this.endDate).as(String.class).orElseThrow());
         boolean rDryRun = runContext.render(this.dryRun).as(Boolean.class).orElseThrow();
 
         // Reject before the ACL check so the user sees the actual mistake, not an "all namespaces" denial.

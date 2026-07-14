@@ -23,6 +23,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -108,7 +109,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                     if (r.getBody() != null && !contentEncoded) {
                         r.getHeaders().firstValue("Content-Length").ifPresent(header ->
                         {
-                            long length = Long.parseLong(header);
+                            long length = TypeConverter.toLong(header);
 
                             if (length != size.get()) {
                                 throw new IllegalStateException("Invalid size, got " + size + ", expected " + length);

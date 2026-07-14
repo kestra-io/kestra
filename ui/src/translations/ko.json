@@ -113,6 +113,7 @@
     "prev_execution": "이전 실행",
     "next_execution": "다음 실행",
     "datepicker": {
+      "invalid duration": "잘못된 지속 시간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해 주세요.",
       "leave empty for infinite": "무제한 지속 시간을 원하시면 비워 두거나 ISO 8601 형식의 지속 시간을 입력하세요 (예: 'P1DT1H1M1S').",
       "duration example": "예: 'P1DT1H1M1S'",
       "error": "잘못된 형식입니다. 지속 시간은 ISO 8601 형식이어야 합니다.(예: P1DT1H1M1S)",
@@ -325,9 +326,9 @@
     "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
     "no outputs available": "이 task 실행에 대한 output이 없습니다.",
     "outputs": "Outputs",
-    "flow_outputs": "Flow Outputs",
-    "no_flow_outputs": "출력 없음.",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "디버그 표현식",
       "render": "식 렌더링",

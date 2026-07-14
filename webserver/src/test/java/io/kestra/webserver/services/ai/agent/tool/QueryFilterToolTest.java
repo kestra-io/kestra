@@ -32,8 +32,24 @@ class QueryFilterToolTest {
         }
     }
 
+    static final class TypedLogsTool {
+        record Result(String executionId, int matched) {
+        }
+
+        @Tool(name = "read-execution-logs", value = "Read execution logs, optionally filtered.")
+        public Result read(
+            @P("The execution id") String executionId,
+            @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters) {
+            return new Result(executionId, filters.size());
+        }
+    }
+
     private static Method readMethod() {
-        for (Method m : SampleLogsTool.class.getMethods()) {
+        return toolMethodOf(SampleLogsTool.class);
+    }
+
+    private static Method toolMethodOf(final Class<?> type) {
+        for (Method m : type.getMethods()) {
             if (m.isAnnotationPresent(Tool.class)) {
                 return m;
             }
@@ -95,6 +111,28 @@ class QueryFilterToolTest {
         assertThat(tool.capturedFilters)
             .extracting(f -> f.field() + "/" + f.operation() + "/" + f.value())
             .containsExactlyInAnyOrder("TASK_ID/EQUALS/load", "LEVEL/GREATER_THAN_OR_EQUAL_TO/WARN");
+    }
+
+    @Test
+    void shouldSerializeStrongTypedResultToJson() {
+        // Given — a filter tool that returns a strong type instead of a String
+        TypedLogsTool tool = new TypedLogsTool();
+        QueryFilterToolExecutor executor = new QueryFilterToolExecutor(tool, toolMethodOf(TypedLogsTool.class));
+        ToolExecutionRequest request = ToolExecutionRequest.builder()
+            .id("call-3")
+            .name("read-execution-logs")
+            .arguments("""
+                {
+                  "executionId": "exec-1",
+                  "TASK_ID": { "operator": "EQUALS", "value": "load" }
+                }""")
+            .build();
+
+        // When
+        String result = executor.execute(request, "mem-1");
+
+        // Then — the record is serialized to JSON for the model (not Record.toString())
+        assertThat(result).isEqualTo("{\"executionId\":\"exec-1\",\"matched\":1}");
     }
 
     @Test

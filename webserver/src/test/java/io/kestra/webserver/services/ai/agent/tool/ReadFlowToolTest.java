@@ -58,10 +58,12 @@ class ReadFlowToolTest {
             .thenReturn(Optional.of(flowWithSource()));
 
         // When
-        String result = tool.readFlow("io.kestra.test", "flow-1", null, null);
+        ReadFlowTool.Result result = tool.readFlow("io.kestra.test", "flow-1", null, null);
 
         // Then
-        assertThat(result).isEqualTo(YAML);
+        assertThat(result.source()).isEqualTo(YAML);
+        assertThat(result.namespace()).isEqualTo("io.kestra.test");
+        assertThat(result.id()).isEqualTo("flow-1");
     }
 
     @Test
@@ -71,10 +73,10 @@ class ReadFlowToolTest {
             .thenReturn(Optional.of(flowWithSource()));
 
         // When
-        String result = tool.readFlow("io.kestra.test", "flow-1", 3, null);
+        ReadFlowTool.Result result = tool.readFlow("io.kestra.test", "flow-1", 3, null);
 
         // Then
-        assertThat(result).isEqualTo(YAML);
+        assertThat(result.source()).isEqualTo(YAML);
     }
 
     @Test

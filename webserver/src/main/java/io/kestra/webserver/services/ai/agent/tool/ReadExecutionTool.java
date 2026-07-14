@@ -1,7 +1,8 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -42,9 +43,10 @@ public class ReadExecutionTool implements AiPlatformTool {
 
     @Tool(
         name = "read-execution",
-        value = "Read a single Kestra execution: its state, duration and per-task-run breakdown (failed runs include their state history). Read-only; use this to diagnose or inspect a specific run when you already know its id."
+        value = "Read a single Kestra execution: its state, duration and per-task-run breakdown (failed runs include their state history). Read-only; use this to diagnose or inspect a specific run when you already know its id. "
+            + "Returns an object { id, namespace, flowId, state, startDate, duration, taskRuns } where each task run is { taskId, state, attempts, value, failedAttempts } and `failedAttempts` (only populated for FAILED runs) is an array of { attempt, stateHistory } whose `stateHistory` entries read \"STATE@date\"."
     )
-    public String readExecution(
+    public Result readExecution(
         @P(name = "executionId", value = "The id of the execution to read") String executionId,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
         String tenant = AgentCallContext.resolveTenant(tenantId);
@@ -52,55 +54,87 @@ public class ReadExecutionTool implements AiPlatformTool {
         Execution execution = executionRepository.findById(tenant, executionId)
             .orElseThrow(() -> new IllegalArgumentException("Execution not found: '" + executionId + "'"));
 
-        StringBuilder out = new StringBuilder()
-            .append("Execution '").append(execution.getId()).append("' of flow ")
-            .append(execution.getNamespace()).append('.').append(execution.getFlowId()).append('\n')
-            .append("State: ").append(execution.getState().getCurrent());
-        execution.getState().getDuration()
-            .ifPresent(duration -> out.append(" (started ").append(execution.getState().getStartDate()).append(", duration ").append(duration).append(')'));
-        out.append('\n');
-
+        String duration = execution.getState().getDuration().map(Duration::toString).orElse(null);
         List<TaskRun> taskRuns = execution.getTaskRunList();
-        if (taskRuns == null || taskRuns.isEmpty()) {
-            out.append("No task runs.");
-        } else {
-            out.append("Task runs:");
-            taskRuns.forEach(taskRun -> out.append('\n').append(formatTaskRun(taskRun)));
-        }
-        return out.toString();
+        List<TaskRunDetail> taskRunDetails = taskRuns == null ? List.of()
+            : taskRuns.stream().map(ReadExecutionTool::toTaskRunDetail).toList();
+
+        return new Result(
+            execution.getId(),
+            execution.getNamespace(),
+            execution.getFlowId(),
+            execution.getState().getCurrent().name(),
+            String.valueOf(execution.getState().getStartDate()),
+            duration,
+            taskRunDetails
+        );
     }
 
-    private static String formatTaskRun(final TaskRun taskRun) {
-        StringBuilder line = new StringBuilder()
-            .append("- ").append(taskRun.getTaskId())
-            .append(" [").append(taskRun.getState().getCurrent()).append(']')
-            .append(" attempts=").append(taskRun.attemptNumber());
-        if (taskRun.getValue() != null) {
-            line.append(" value=").append(taskRun.getValue());
-        }
-        if (State.Type.FAILED.equals(taskRun.getState().getCurrent())) {
-            line.append(formatFailedAttempts(taskRun.getAttempts()));
-        }
-        return line.toString();
+    private static TaskRunDetail toTaskRunDetail(final TaskRun taskRun) {
+        List<FailedAttempt> failedAttempts = State.Type.FAILED.equals(taskRun.getState().getCurrent())
+            ? toFailedAttempts(taskRun.getAttempts())
+            : List.of();
+        return new TaskRunDetail(
+            taskRun.getTaskId(),
+            taskRun.getState().getCurrent().name(),
+            taskRun.attemptNumber(),
+            taskRun.getValue(),
+            failedAttempts
+        );
     }
 
-    private static String formatFailedAttempts(final List<TaskRunAttempt> attempts) {
+    private static List<FailedAttempt> toFailedAttempts(final List<TaskRunAttempt> attempts) {
         if (attempts == null || attempts.isEmpty()) {
-            return "";
+            return List.of();
         }
-        StringBuilder details = new StringBuilder();
+        List<FailedAttempt> details = new ArrayList<>(attempts.size());
         for (int i = 0; i < attempts.size(); i++) {
-            details.append("\n    attempt ").append(i + 1).append(": ").append(formatHistories(attempts.get(i).getState()));
+            details.add(new FailedAttempt(i + 1, stateHistory(attempts.get(i).getState())));
         }
-        return details.toString();
+        return details;
     }
 
-    private static String formatHistories(final State state) {
+    private static List<String> stateHistory(final State state) {
         if (state == null || state.getHistories() == null || state.getHistories().isEmpty()) {
-            return "no state history";
+            return List.of();
         }
         return state.getHistories().stream()
             .map(history -> history.getState() + "@" + history.getDate())
-            .collect(Collectors.joining(" -> "));
+            .toList();
+    }
+
+    /**
+     * A single execution with its per-task-run breakdown.
+     *
+     * @param id the execution id
+     * @param namespace the flow's namespace
+     * @param flowId the flow's id
+     * @param state the current execution state
+     * @param startDate the execution start date
+     * @param duration the execution duration as an ISO-8601 duration, or null when not yet available
+     * @param taskRuns one entry per task run, empty when there are none
+     */
+    public record Result(String id, String namespace, String flowId, String state, String startDate, String duration, List<TaskRunDetail> taskRuns) {
+    }
+
+    /**
+     * A single task run of an execution.
+     *
+     * @param taskId the task id
+     * @param state the current task-run state
+     * @param attempts the number of attempts
+     * @param value the iteration value for looped tasks, or null
+     * @param failedAttempts the state history of each attempt, populated only for FAILED runs
+     */
+    public record TaskRunDetail(String taskId, String state, int attempts, String value, List<FailedAttempt> failedAttempts) {
+    }
+
+    /**
+     * The state history of a single failed attempt.
+     *
+     * @param attempt the 1-based attempt number
+     * @param stateHistory the ordered "STATE@date" transitions, empty when unavailable
+     */
+    public record FailedAttempt(int attempt, List<String> stateHistory) {
     }
 }

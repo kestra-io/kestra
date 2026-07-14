@@ -22,6 +22,7 @@ import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -66,7 +67,7 @@ class AuthorDashboardToolTest {
         when(aiService.generateDashboard(any(), any())).thenReturn(GenerationResult.of(YAML));
 
         // When
-        String result = tool.authorDashboard("show executions per namespace", null);
+        AuthorDashboardTool.Result result = tool.authorDashboard("show executions per namespace", null);
 
         // Then — the draft carries the generated YAML and passed validation
         assertThat(published).hasSize(1);
@@ -75,7 +76,11 @@ class AuthorDashboardToolTest {
         assertThat(draft.yaml()).isEqualTo(YAML);
         assertThat(draft.valid()).isTrue();
         assertThat(draft.constraints()).isNull();
-        assertThat(result).contains(draft.draftId()).contains("valid").contains(YAML);
+        assertThat(result.draftId()).isEqualTo(draft.draftId());
+        assertThat(result.kind()).isEqualTo(ArtefactKind.DASHBOARD);
+        assertThat(result.valid()).isTrue();
+        assertThat(result.validationError()).isNull();
+        assertThat(result.yaml()).isEqualTo(YAML);
     }
 
     @Test
@@ -101,13 +106,14 @@ class AuthorDashboardToolTest {
         doThrow(new ConstraintViolationException("title: must not be blank", Set.of())).when(modelValidator).validate(any());
 
         // When
-        String result = tool.authorDashboard("show executions", null);
+        AuthorDashboardTool.Result result = tool.authorDashboard("show executions", null);
 
         // Then — the draft is still published (the user sees it) but flagged invalid for the model to fix
         assertThat(published).hasSize(1);
         assertThat(published.getFirst().valid()).isFalse();
         assertThat(published.getFirst().constraints()).isEqualTo("title: must not be blank");
-        assertThat(result).contains("validation failed").contains("title: must not be blank");
+        assertThat(result.valid()).isFalse();
+        assertThat(result.validationError()).isEqualTo("title: must not be blank");
     }
 
     @Test
@@ -116,25 +122,26 @@ class AuthorDashboardToolTest {
         when(aiService.generateDashboard(any(), any())).thenReturn(GenerationResult.of("title: [unclosed\n"));
 
         // When
-        String result = tool.authorDashboard("show executions", null);
+        AuthorDashboardTool.Result result = tool.authorDashboard("show executions", null);
 
         // Then — the parse error surfaces as a constraint violation on the draft
         assertThat(published).hasSize(1);
         assertThat(published.getFirst().valid()).isFalse();
         assertThat(published.getFirst().constraints()).contains("Illegal dashboard source");
-        assertThat(result).contains("validation failed");
+        assertThat(result.valid()).isFalse();
+        assertThat(result.validationError()).contains("Illegal dashboard source");
     }
 
     @Test
-    void shouldReturnErrorWithoutDraftWhenGenerationFails() {
+    void shouldThrowWithoutDraftWhenGenerationFails() {
         // Given
         when(aiService.generateDashboard(any(), any())).thenThrow(new AiException("I cannot generate this dashboard"));
 
-        // When
-        String result = tool.authorDashboard("do something impossible", null);
-
-        // Then — no draft reaches the user; the model gets the failure to react to
+        // When / Then — no draft reaches the user; the tool errors so the orchestrator feeds the
+        // message back to the model to react to
+        assertThatThrownBy(() -> tool.authorDashboard("do something impossible", null))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Dashboard generation failed: I cannot generate this dashboard");
         assertThat(published).isEmpty();
-        assertThat(result).isEqualTo("Dashboard generation failed: I cannot generate this dashboard");
     }
 }

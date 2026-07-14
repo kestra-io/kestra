@@ -48,9 +48,10 @@ public class AuthorFlowTool implements AiAuthoringTool {
 
     @Tool(
         name = "author-flow",
-        value = "Draft a Kestra flow (YAML) from a natural-language description, or revise an existing flow when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft."
+        value = "Draft a Kestra flow (YAML) from a natural-language description, or revise an existing flow when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft. "
+            + "Returns an object { draftId, kind, valid, validationError, yaml }: `draftId` and `yaml` identify the published draft and `valid` reflects validation (`validationError` holds the constraints when invalid). If generation fails, the tool errors with the reason instead of returning."
     )
-    public String authorFlow(
+    public Result authorFlow(
         @P(name = "instructions", value = "What the flow should do, or how the current flow should be changed") String instructions,
         @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown", required = false) String namespace,
         @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml) {
@@ -72,20 +73,14 @@ public class AuthorFlowTool implements AiAuthoringTool {
         try {
             yaml = aiService.generateFlow(new UserInfo(null, "copilot-agent"), prompt, context.tenant()).content();
         } catch (AiException e) {
-            return "Flow generation failed: " + e.getMessage();
+            throw new IllegalStateException("Flow generation failed: " + e.getMessage(), e);
         }
 
         String constraints = validate(context.tenant(), yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.FLOW, yaml, constraints == null, constraints);
         AgentCallContext.publishDraft(draft);
 
-        StringBuilder result = new StringBuilder("Draft ").append(draft.draftId());
-        if (constraints == null) {
-            result.append(" created; the flow is valid.");
-        } else {
-            result.append(" created, but validation failed: ").append(constraints);
-        }
-        return result.append("\n\n").append(yaml).toString();
+        return Result.drafted(draft);
     }
 
     /** Run platform validation on the generated source; returns the violations, or null when valid. */
@@ -96,5 +91,20 @@ public class AuthorFlowTool implements AiAuthoringTool {
             .filter(Objects::nonNull)
             .collect(Collectors.joining("; "));
         return constraints.isEmpty() ? null : constraints;
+    }
+
+    /**
+     * A published artefact draft.
+     *
+     * @param draftId the id of the published draft
+     * @param kind the kind of artefact that was drafted
+     * @param valid whether the generated YAML passed validation
+     * @param validationError the validation constraints when invalid, else null
+     * @param yaml the generated YAML
+     */
+    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml) {
+        static Result drafted(final ArtefactDraft draft) {
+            return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml());
+        }
     }
 }

@@ -42,18 +42,19 @@ class GetPluginSchemaToolTest {
 
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    void shouldReturnSchemaAsJsonWhenPluginTypeExists() {
+    void shouldReturnSchemaWhenPluginTypeExists() {
         // Given — the registry resolves the type and the generator produces a schema for its class
         PluginClassAndMetadata<? extends Plugin> metadata = new PluginClassAndMetadata(FakePlugin.class, Plugin.class, "core", null, "Log", null, null);
+        Map<String, Object> schema = Map.of("properties", Map.of("message", Map.of("type", "string")));
         when(pluginRegistry.findMetadataByIdentifier(PLUGIN_TYPE)).thenReturn(Optional.of(metadata));
-        when(jsonSchemaGenerator.schemas(FakePlugin.class))
-            .thenReturn(Map.of("properties", Map.of("message", Map.of("type", "string"))));
+        when(jsonSchemaGenerator.schemas(FakePlugin.class)).thenReturn(schema);
 
         // When
-        String result = tool.getPluginSchema(PLUGIN_TYPE);
+        GetPluginSchemaTool.Result result = tool.getPluginSchema(PLUGIN_TYPE);
 
-        // Then — valid JSON text of the generated schema
-        assertThat(result).isEqualTo("{\"properties\":{\"message\":{\"type\":\"string\"}}}");
+        // Then — the generated schema, wrapped with its plugin type
+        assertThat(result.pluginType()).isEqualTo(PLUGIN_TYPE);
+        assertThat(result.schema()).isEqualTo(schema);
     }
 
     @Test

@@ -409,6 +409,33 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldRecordErrorResultAndContinueWhenToolThrows() {
+        // Given — Ask mode; the model reads an execution that does not exist, so the READ tool throws
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution", "missing"))));
+        scriptedModel.enqueue(AiMessage.from("That execution does not exist."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "read execution missing", AgentMode.ASK, TENANT, null, null), sink);
+
+        // Then — the throw is a recoverable error result (not a turn failure); the loop continues to an answer
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        // the error result is durable and carries the tool author's message for the model to read
+        assertThat(messageStore.load(thread.uid()))
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
+            .allMatch(
+                m -> "error".equals(m.toolResult().get("outcome"))
+                    && String.valueOf(m.toolResult().get("error")).contains("Execution not found")
+            );
+    }
+
+    @Test
     void shouldExecuteEveryToolWhenModelRequestsThemInParallel() {
         // Given — Ask mode; the model returns two read tool calls in one response (parallel tool calls)
         AgentThread thread = newThread(AgentMode.ASK);

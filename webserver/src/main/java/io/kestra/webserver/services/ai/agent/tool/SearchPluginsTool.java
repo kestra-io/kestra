@@ -44,9 +44,10 @@ public class SearchPluginsTool implements AiPlatformTool {
 
     @Tool(
         name = "search-plugins",
-        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get-plugin-schema."
+        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get-plugin-schema. "
+            + "Returns an object { plugins } where `plugins` is an array of { type, title } (empty when nothing matches); `type` is the fully-qualified plugin class and `title` may be null."
     )
-    public String searchPlugins(
+    public Result searchPlugins(
         @P(name = "query", value = "Keyword matched case-insensitively against the plugin class name and title") String query) {
         String needle = query == null ? "" : query.toLowerCase(Locale.ROOT).trim();
 
@@ -56,7 +57,7 @@ public class SearchPluginsTool implements AiPlatformTool {
             for (List<Class> classes : plugin.allClassGrouped().values()) {
                 for (Class<?> pluginClass : classes) {
                     if (matches.size() >= MAX_RESULTS) {
-                        return format(matches, needle);
+                        return toResult(matches);
                     }
                     Schema schema = pluginClass.getDeclaredAnnotation(Schema.class);
                     if (schema != null && schema.deprecated()) {
@@ -69,7 +70,7 @@ public class SearchPluginsTool implements AiPlatformTool {
                 }
             }
         }
-        return format(matches, needle);
+        return toResult(matches);
     }
 
     private static boolean matches(final String type, final String title, final String needle) {
@@ -77,21 +78,28 @@ public class SearchPluginsTool implements AiPlatformTool {
             || (title != null && title.toLowerCase(Locale.ROOT).contains(needle));
     }
 
-    private static String format(final Map<String, String> matches, final String needle) {
-        if (matches.isEmpty()) {
-            return "No plugins found matching '" + needle + "'.";
-        }
-        StringBuilder out = new StringBuilder();
-        matches.forEach((type, title) ->
-        {
-            if (!out.isEmpty()) {
-                out.append('\n');
-            }
-            out.append(type);
-            if (title != null && !title.isBlank()) {
-                out.append(" — ").append(title);
-            }
-        });
-        return out.toString();
+    private static Result toResult(final Map<String, String> matches) {
+        return new Result(
+            matches.entrySet().stream()
+                .map(entry -> new PluginMatch(entry.getKey(), entry.getValue()))
+                .toList()
+        );
+    }
+
+    /**
+     * The plugin types matching the search keyword.
+     *
+     * @param plugins one entry per matching plugin type, empty when nothing matches
+     */
+    public record Result(List<PluginMatch> plugins) {
+    }
+
+    /**
+     * A single matching plugin type.
+     *
+     * @param type the fully-qualified plugin class name
+     * @param title the plugin title, or null when it has none
+     */
+    public record PluginMatch(String type, String title) {
     }
 }

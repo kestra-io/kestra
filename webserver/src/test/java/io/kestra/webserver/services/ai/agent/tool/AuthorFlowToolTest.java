@@ -66,7 +66,7 @@ class AuthorFlowToolTest {
         when(flowService.validate(eq(TENANT), any())).thenReturn(List.of(ValidateConstraintViolation.builder().index(0).build()));
 
         // When
-        String result = tool.authorFlow("log hello", "company.team", null);
+        AuthorFlowTool.Result result = tool.authorFlow("log hello", "company.team", null);
 
         // Then — the draft carries the generated YAML and passed validation
         assertThat(published).hasSize(1);
@@ -75,7 +75,11 @@ class AuthorFlowToolTest {
         assertThat(draft.yaml()).isEqualTo(YAML);
         assertThat(draft.valid()).isTrue();
         assertThat(draft.constraints()).isNull();
-        assertThat(result).contains(draft.draftId()).contains("valid").contains(YAML);
+        assertThat(result.draftId()).isEqualTo(draft.draftId());
+        assertThat(result.kind()).isEqualTo(ArtefactKind.FLOW);
+        assertThat(result.valid()).isTrue();
+        assertThat(result.validationError()).isNull();
+        assertThat(result.yaml()).isEqualTo(YAML);
     }
 
     @Test
@@ -107,26 +111,27 @@ class AuthorFlowToolTest {
         );
 
         // When
-        String result = tool.authorFlow("log hello", null, null);
+        AuthorFlowTool.Result result = tool.authorFlow("log hello", null, null);
 
         // Then — the draft is still published (the user sees it) but flagged invalid for the model to fix
         assertThat(published).hasSize(1);
         assertThat(published.getFirst().valid()).isFalse();
         assertThat(published.getFirst().constraints()).isEqualTo("tasks: must not be empty");
-        assertThat(result).contains("validation failed").contains("tasks: must not be empty");
+        assertThat(result.valid()).isFalse();
+        assertThat(result.validationError()).isEqualTo("tasks: must not be empty");
     }
 
     @Test
-    void shouldReturnErrorWithoutDraftWhenGenerationFails() {
+    void shouldThrowWithoutDraftWhenGenerationFails() {
         // Given
         when(aiService.generateFlow(any(), any(), anyString())).thenThrow(new AiException("I cannot generate this flow"));
 
-        // When
-        String result = tool.authorFlow("do something impossible", null, null);
-
-        // Then — no draft reaches the user; the model gets the failure to react to
+        // When / Then — no draft reaches the user; the tool errors so the orchestrator feeds the
+        // message back to the model to react to
+        assertThatThrownBy(() -> tool.authorFlow("do something impossible", null, null))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Flow generation failed: I cannot generate this flow");
         assertThat(published).isEmpty();
-        assertThat(result).isEqualTo("Flow generation failed: I cannot generate this flow");
     }
 
     @Test

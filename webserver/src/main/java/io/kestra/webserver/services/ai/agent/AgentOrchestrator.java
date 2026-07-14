@@ -31,6 +31,7 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -155,6 +156,10 @@ public class AgentOrchestrator {
             rejectTool(ctx, held, entry.kind(), entry.family(), e.getMessage(), sink);
             runLoop(ctx, sink);
             return;
+        } catch (RuntimeException e) {
+            failTool(ctx, held, entry.kind(), entry.family(), toolErrorMessage(e), sink);
+            runLoop(ctx, sink);
+            return;
         }
         ctx.messages().add(ToolExecutionResultMessage.from(held, result));
         threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
@@ -245,6 +250,9 @@ public class AgentOrchestrator {
         } catch (ToolPermissionDeniedException e) {
             rejectTool(ctx, req, entry.kind(), entry.family(), e.getMessage(), sink);
             return;
+        } catch (RuntimeException e) {
+            failTool(ctx, req, entry.kind(), entry.family(), toolErrorMessage(e), sink);
+            return;
         }
         ctx.messages().add(ToolExecutionResultMessage.from(req, result));
         threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
@@ -256,6 +264,18 @@ public class AgentOrchestrator {
         ctx.messages().add(ToolExecutionResultMessage.from(req, reason));
         threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), rejectedResult(reason));
         emitToolResult(sink, req.name(), "rejected");
+    }
+
+    /**
+     * A {@code @Tool} threw: surface the message to the model as an error tool-result so it can react
+     * (retry, apologise, pick another tool) rather than aborting the whole turn. The failure is a
+     * recoverable outcome, not a turn-level error.
+     */
+    private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String message, final TurnEventSink sink) {
+        ctx.messages().add(ToolExecutionResultMessage.from(req, "Error: " + message));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
+        emitToolResult(sink, req.name(), "error");
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
@@ -374,6 +394,13 @@ public class AgentOrchestrator {
         return reason == null
             ? Map.of("outcome", "rejected")
             : Map.of("outcome", "rejected", "reason", reason);
+    }
+
+    /** The tool author's message, unwrapping langchain4j's {@link ToolExecutionException} envelope. */
+    private static String toolErrorMessage(final RuntimeException e) {
+        Throwable cause = e instanceof ToolExecutionException && e.getCause() != null ? e.getCause() : e;
+        String message = cause.getMessage();
+        return message != null ? message : cause.getClass().getSimpleName();
     }
 
     private String summaryFor(final String tool, final Map<String, Object> args) {

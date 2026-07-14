@@ -47,9 +47,10 @@ public class AuthorDashboardTool implements AiAuthoringTool {
 
     @Tool(
         name = "author-dashboard",
-        value = "Draft a Kestra custom dashboard (YAML) from a natural-language description, or revise an existing dashboard when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentDashboardYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft."
+        value = "Draft a Kestra custom dashboard (YAML) from a natural-language description, or revise an existing dashboard when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentDashboardYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft. "
+            + "Returns an object { draftId, kind, valid, validationError, yaml }: `draftId` and `yaml` identify the published draft and `valid` reflects validation (`validationError` holds the constraints when invalid). If generation fails, the tool errors with the reason instead of returning."
     )
-    public String authorDashboard(
+    public Result authorDashboard(
         @P(name = "instructions", value = "What the dashboard should display, or how the current dashboard should be changed") String instructions,
         @P(
             name = "currentDashboardYaml", value = "The full current dashboard YAML when revising an existing dashboard; omit when creating a new one", required = false
@@ -71,20 +72,14 @@ public class AuthorDashboardTool implements AiAuthoringTool {
         try {
             yaml = aiService.generateDashboard(new UserInfo(null, "copilot-agent"), prompt).content();
         } catch (AiException e) {
-            return "Dashboard generation failed: " + e.getMessage();
+            throw new IllegalStateException("Dashboard generation failed: " + e.getMessage(), e);
         }
 
         String constraints = validate(yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.DASHBOARD, yaml, constraints == null, constraints);
         AgentCallContext.publishDraft(draft);
 
-        StringBuilder result = new StringBuilder("Draft ").append(draft.draftId());
-        if (constraints == null) {
-            result.append(" created; the dashboard is valid.");
-        } else {
-            result.append(" created, but validation failed: ").append(constraints);
-        }
-        return result.append("\n\n").append(yaml).toString();
+        return Result.drafted(draft);
     }
 
     /** Parse and validate the generated source, as the dashboard validate endpoint does; null when valid. */
@@ -97,6 +92,21 @@ public class AuthorDashboardTool implements AiAuthoringTool {
             return e.getMessage();
         } catch (RuntimeException e) {
             return "Unable to validate the dashboard: " + e.getMessage();
+        }
+    }
+
+    /**
+     * A published artefact draft.
+     *
+     * @param draftId the id of the published draft
+     * @param kind the kind of artefact that was drafted
+     * @param valid whether the generated YAML passed validation
+     * @param validationError the validation constraints when invalid, else null
+     * @param yaml the generated YAML
+     */
+    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml) {
+        static Result drafted(final ArtefactDraft draft) {
+            return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml());
         }
     }
 }

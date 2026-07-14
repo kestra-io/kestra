@@ -2,7 +2,6 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
@@ -41,9 +40,10 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
 
     @Tool(
         name = "read-execution-logs",
-        value = "Read the logs of a Kestra execution as timestamped lines. `executionId` scopes to one execution; the optional per-field filters narrow the results (e.g. by task or level). Use this to diagnose why an execution failed or to summarize a run."
+        value = "Read the logs of a Kestra execution. `executionId` scopes to one execution; the optional per-field filters narrow the results (e.g. by task or level). Use this to diagnose why an execution failed or to summarize a run. "
+            + "Returns an object { executionId, logs } where `logs` is an array of { timestamp, level, taskId, message } (empty when nothing matches); `taskId` is null for execution-level logs."
     )
-    public String readExecutionLogs(
+    public Result readExecutionLogs(
         @P(name = "executionId", value = "The id of the execution whose logs to read") String executionId,
         @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
@@ -59,23 +59,26 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
         }
 
         List<LogEntry> entries = logRepository.find(PageableUtils.from(1, MAX_LOGS), tenant, effective);
-        if (entries.isEmpty()) {
-            return "No logs found for execution '" + executionId + "' with the given filters.";
-        }
 
-        return entries.stream()
-            .map(ReadExecutionLogsTool::formatLine)
-            .collect(Collectors.joining("\n"));
+        return new Result(
+            executionId, entries.stream()
+                .map(ReadExecutionLogsTool::toLogLine)
+                .toList()
+        );
     }
 
-    private static String formatLine(final LogEntry entry) {
-        StringBuilder line = new StringBuilder()
-            .append(entry.getTimestamp())
-            .append(" [").append(entry.getLevel()).append("] ");
-        if (entry.getTaskId() != null) {
-            line.append(entry.getTaskId()).append(": ");
-        }
-        line.append(entry.getMessage());
-        return line.toString();
+    private static LogLine toLogLine(final LogEntry entry) {
+        return new LogLine(
+            String.valueOf(entry.getTimestamp()),
+            String.valueOf(entry.getLevel()),
+            entry.getTaskId(),
+            entry.getMessage()
+        );
+    }
+
+    public record Result(String executionId, List<LogLine> logs) {
+    }
+
+    public record LogLine(String timestamp, String level, String taskId, String message) {
     }
 }

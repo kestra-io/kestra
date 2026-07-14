@@ -39,8 +39,11 @@ public class RestartExecutionTool implements AiPlatformTool {
         return AgentWritePolicy.CONFIRM;
     }
 
-    @Tool(name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks, creating a new run. The execution must be in a terminated or paused state.")
-    public String restartExecution(
+    @Tool(
+        name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks, creating a new run. The execution must be in a terminated or paused state. "
+            + "Returns an object { executionId, operationId } where `operationId` identifies the asynchronously enqueued restart request."
+    )
+    public Result restartExecution(
         @P(name = "executionId", value = "The id of the execution to restart") String executionId,
         @P(name = "revision", value = "Optional flow revision to restart with; omit to use the execution's own revision", required = false) Integer revision,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
@@ -63,6 +66,15 @@ public class RestartExecutionTool implements AiPlatformTool {
             throw new IllegalStateException("Failed to enqueue restart for execution '" + executionId + "': " + e.getMessage(), e);
         }
 
-        return "Restart requested for execution '" + executionId + "' (operationId=" + operationId + ").";
+        return new Result(executionId, operationId);
+    }
+
+    /**
+     * Acknowledgement of an enqueued restart request.
+     *
+     * @param executionId the execution that was restarted
+     * @param operationId the id identifying the asynchronously enqueued restart request
+     */
+    public record Result(String executionId, String operationId) {
     }
 }

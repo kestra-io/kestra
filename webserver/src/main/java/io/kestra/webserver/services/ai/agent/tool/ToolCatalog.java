@@ -126,9 +126,18 @@ public class ToolCatalog {
             .anyMatch(parameter -> parameter.isAnnotationPresent(QueryFilterFormat.class));
         ToolSpecification spec = specFactory.specificationFrom(method);
 
+        // propagateToolExecutionExceptions: let a @Tool throw propagate out of dispatch (instead of
+        // langchain4j swallowing it into an opaque "ok" result text) so AgentOrchestrator can record it
+        // as an error outcome and feed the message back to the model. QueryFilterToolExecutor already
+        // propagates, so both executor paths behave the same on failure.
         ToolExecutor executor = hasQueryFilter
             ? new QueryFilterToolExecutor(tool.toolInstance(), method)
-            : new DefaultToolExecutor(tool.toolInstance(), method);
+            : DefaultToolExecutor.builder()
+                .object(tool.toolInstance())
+                .originalMethod(method)
+                .methodToInvoke(method)
+                .propagateToolExecutionExceptions(true)
+                .build();
         built.put(spec.name(), new ToolEntry(spec.name(), spec, executor, kind, family, writePolicy, tool));
     }
 

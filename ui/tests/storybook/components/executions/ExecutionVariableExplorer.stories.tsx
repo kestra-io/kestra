@@ -8,7 +8,7 @@ import ExecutionVariableExplorer from "../../../../src/components/executions/out
 /**
  * The explorer reads everything but task outputs straight from the active
  * execution in the executions store: `variables` → Variables, `trigger` →
- * Triggers, `inputs` → Inputs. Task outputs are fetched lazily from the
+ * Triggers, `inputs` → Flow Inputs. Task outputs are fetched lazily from the
  * backend (`/outputs/{id}`) and therefore only appear against a live API —
  * these stories exercise the store-sourced sections.
  */

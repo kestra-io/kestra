@@ -10,9 +10,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
@@ -54,7 +57,6 @@ public class AgentOrchestrator {
     private final ToolCatalog catalog;
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
-    private final ConfirmationRegistry confirmationRegistry;
     private final Duration modelCallTimeout;
 
     @Inject
@@ -63,13 +65,11 @@ public class AgentOrchestrator {
         final ToolCatalog catalog,
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
-        final ConfirmationRegistry confirmationRegistry,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
-        this.confirmationRegistry = confirmationRegistry;
         this.modelCallTimeout = configuration.modelCallTimeout();
     }
 
@@ -95,23 +95,50 @@ public class AgentOrchestrator {
         }
     }
 
-    public void resume(final SuspendedTurn turn, final AgentThread running, final boolean approve, final String reason,
+    /**
+     * Resume a turn awaiting confirmation. The turn's state is reconstructed from the durable stores —
+     * the message log (projected to the model-facing history and scanned for the pending proposed
+     * action) and the thread (its mode) — with the provider supplied by the caller, exactly as a chat
+     * turn is. So a resume can run on any node, not only the one that suspended the turn.
+     */
+    public void resume(final AgentThread running, final String providerId, final boolean approve, final String reason,
         final AgentPrincipal principal, final TurnEventSink sink) {
         try {
-            StreamingChatModel model = aiServiceManager.getAiService(turn.providerId()).streamingChatModel(List.of());
+            List<AgentMessage> log = threadManager.load(running.uid());
+            String traceId = running.uid() + "-turn-" + (log.size() + 1);
+            ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
+            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+
+            List<ChatMessage> projected = ChatMessageAdaptor.project(log);
+            List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
+            messages.add(SystemMessage.from(profile.systemPrompt()));
+            messages.addAll(projected);
+
+            AgentMessage pending = pendingActionOrThrow(log);
+            boolean planProposal = pending.toolCall() == null;
             AgentLoopContext ctx = new AgentLoopContext(
-                running, turn.tenant(), principal, turn.providerId(), turn.mode(), turn.profile(),
-                model, turn.messages(), turn.traceId(), new AtomicBoolean(turn.planProposal())
+                running, running.tenant(), principal, providerId, running.mode(), profile,
+                model, messages, traceId, new AtomicBoolean(planProposal)
             );
 
-            if (turn.planProposal()) {
+            if (planProposal) {
                 resumePlan(ctx, approve, reason, sink);
             } else {
-                resumeHeldAction(ctx, turn.heldRequest(), approve, reason, sink);
+                resumeHeldAction(ctx, ChatMessageAdaptor.toRequest(pending.toolCall()), approve, reason, sink);
             }
         } catch (Exception e) {
             failTurn(running, sink, e);
         }
+    }
+
+    /** The last proposed action in the log — the plan or held tool call the confirmation applies to. */
+    private static AgentMessage pendingActionOrThrow(final List<AgentMessage> log) {
+        for (int i = log.size() - 1; i >= 0; i--) {
+            if (log.get(i).type() == AgentMessageType.PROPOSED_ACTION) {
+                return log.get(i);
+            }
+        }
+        throw new IllegalStateException("No proposed action to resume in the thread log.");
     }
 
     private void resumePlan(final AgentLoopContext ctx, final boolean approve, final String reason, final TurnEventSink sink) {
@@ -281,22 +308,20 @@ public class AgentOrchestrator {
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), planText, null);
-        threadManager.markAwaiting(ctx.thread());
-        SuspendedTurn turn = SuspendedTurn.forPlan(ctx);
-        confirmationRegistry.park(turn);
-        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(turn.confirmationId(), null, null, planText, null));
+        String confirmationId = IdUtils.create();
+        threadManager.markAwaiting(ctx.thread(), confirmationId);
+        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(confirmationId, null, null, planText, null));
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
     private void suspendForAction(final AgentLoopContext ctx, final ToolExecutionRequest req,
         final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()));
-        threadManager.markAwaiting(ctx.thread());
-        SuspendedTurn turn = SuspendedTurn.forAction(ctx, req);
-        confirmationRegistry.park(turn);
+        String confirmationId = IdUtils.create();
+        threadManager.markAwaiting(ctx.thread(), confirmationId);
         sink.emit(
             AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(
-                turn.confirmationId(), req.name(), entry.family().name(), summaryFor(req.name(), args), args
+                confirmationId, req.name(), entry.family().name(), summaryFor(req.name(), args), args
             )
         );
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);

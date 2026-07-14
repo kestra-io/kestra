@@ -173,7 +173,7 @@ class AiAgentControllerTest {
         scriptedModel.enqueue(AiMessage.from("Understood, I won't update it."));
 
         // When
-        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.REJECT, "leave it"));
+        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.REJECT, "leave it", null));
 
         // Then — rejected result surfaced, turn resumed and finished IDLE
         assertThat(data(events, AgentEvents.TOOL_RESULT).get("outcome")).isEqualTo("rejected");
@@ -205,7 +205,7 @@ class AiAgentControllerTest {
         scriptedModel.enqueue(AiMessage.from("All steps completed."));
 
         // When
-        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.APPROVE, null));
+        List<Event<Map>> events = confirm(thread.uid(), new ApiConfirmActionRequest(confirmationId, ApiDecision.APPROVE, null, null));
 
         // Then
         assertThat(doneStatus(events)).isEqualTo(AgentThreadStatus.IDLE.name());

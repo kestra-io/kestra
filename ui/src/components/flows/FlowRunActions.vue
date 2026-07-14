@@ -20,6 +20,9 @@
                 {{ $t(flowRun?.buttonText ?? "launch execution") }}
             </KsButton>
         </span>
+        <KsText v-if="flowRun?.validationMessage" type="danger" size="small">
+            {{ flowRun.validationMessage }}
+        </KsText>
     </div>
 </template>
 
@@ -37,6 +40,7 @@
         buttonIcon: Component
         buttonTestId: string
         showExecuteButton: boolean
+        validationMessage?: string
     }
 
     defineProps<{flowRun: FlowRunInstance | null}>()
@@ -47,6 +51,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: var(--ks-spacing-2);
 }
 

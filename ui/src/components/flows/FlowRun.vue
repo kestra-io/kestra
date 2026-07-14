@@ -47,12 +47,6 @@
                         <LabelInput
                             v-model:labels="executionLabels"
                         />
-                        <KsText v-if="haveBadLabels" type="danger" size="small">
-                            {{ $t('wrong labels') }}
-                        </KsText>
-                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
-                            {{ $t('forbidden system labels') }}
-                        </KsText>
                     </KsFormItem>
                     <KsFormItem
                         :label="$t('scheduleDate')"
@@ -96,22 +90,23 @@
                         </KsButton>
                     </KsFormItem>
                 </div>
-                <div class="right-align" v-if="!hasFormInputs || inputsOnRecap">
-                    <KsFormItem class="submit">
-                        <span data-onboarding-target="flow-execute-confirm-button">
-                            <KsButton
-                                :icon="buttonIcon"
-                                :disabled="!flowCanBeExecuted || hasBlockingChecks"
-                                :data-test="buttonTestId"
-                                class="flow-run-trigger-button"
-                                type="primary"
-                                nativeType="submit"
-                                @click.prevent="() => { onSubmit(); executeClicked = true; }"
-                            >
-                                {{ $t(buttonText) }}
-                            </KsButton>
-                        </span>
-                    </KsFormItem>
+                <div class="right-align execute-row" v-if="!hasFormInputs || inputsOnRecap">
+                    <span data-onboarding-target="flow-execute-confirm-button">
+                        <KsButton
+                            :icon="buttonIcon"
+                            :disabled="!flowCanBeExecuted || hasBlockingChecks"
+                            :data-test="buttonTestId"
+                            class="flow-run-trigger-button"
+                            type="primary"
+                            nativeType="submit"
+                            @click.prevent="() => { onSubmit(); executeClicked = true; }"
+                        >
+                            {{ $t(buttonText) }}
+                        </KsButton>
+                    </span>
+                    <KsText v-if="validationMessage" type="danger" size="small">
+                        {{ validationMessage }}
+                    </KsText>
                 </div>
             </div>
         </KsForm>
@@ -264,6 +259,16 @@
         hasForbiddenUserSystemLabels(executionLabels.value),
     )
 
+    const validationMessage = computed(() => {
+        if (haveBadLabels.value) {
+            return t("wrong labels")
+        }
+        if (haveForbiddenSystemLabels.value) {
+            return t("forbidden system labels")
+        }
+        return undefined
+    })
+
     const flowCanBeExecuted = computed(() =>
         Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
     )
@@ -309,6 +314,7 @@
         flowCanBeExecuted,
         hasBlockingChecks,
         showExecuteButton,
+        validationMessage,
         buttonText: props.buttonText,
         buttonIcon: props.buttonIcon,
         buttonTestId: props.buttonTestId,
@@ -502,6 +508,14 @@
 
     .right-align{
         text-align: right;
+    }
+
+    .execute-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
     }
 
     .execution-pane {

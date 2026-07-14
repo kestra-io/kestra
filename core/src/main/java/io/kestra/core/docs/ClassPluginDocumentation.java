@@ -19,13 +19,16 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
+    private static final int CACHE_MAXIMUM_SIZE = 1_000;
+    private static final Duration CACHE_EXPIRE_AFTER_ACCESS = Duration.ofHours(1);
+
     // Bounded: the keyspace (class name + version + allProperties) is effectively unbounded in EE
     // where multiple plugin versions can be installed, and the generated documentation values are
     // large (JSON schemas, $defs, outputs). An unbounded map here grows the heap for the whole JVM
     // lifetime as users browse plugins/versions (see #16983).
     private static final Cache<PluginDocIdentifier, ClassPluginDocumentation<?>> CACHE = Caffeine.newBuilder()
-        .maximumSize(1_000)
-        .expireAfterAccess(Duration.ofHours(1))
+        .maximumSize(CACHE_MAXIMUM_SIZE)
+        .expireAfterAccess(CACHE_EXPIRE_AFTER_ACCESS)
         .build();
     private String icon;
     private String group;

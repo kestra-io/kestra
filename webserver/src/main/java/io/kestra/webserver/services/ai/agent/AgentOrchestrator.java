@@ -82,9 +82,10 @@ public class AgentOrchestrator {
 
             threadManager.appendUser(thread.uid(), traceId, context.prompt());
 
-            List<ChatMessage> messages = new ArrayList<>();
+            List<ChatMessage> projected = ChatMessageAdaptor.project(threadManager.load(thread.uid()));
+            List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
             messages.add(SystemMessage.from(profile.systemPrompt()));
-            messages.addAll(ChatMessageAdaptor.project(threadManager.load(thread.uid())));
+            messages.addAll(projected);
 
             runLoop(
                 new AgentLoopContext(thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink

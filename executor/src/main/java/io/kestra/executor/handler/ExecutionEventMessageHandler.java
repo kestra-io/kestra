@@ -22,6 +22,7 @@ import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -355,15 +356,22 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                                 log.info(msg);
 
-                                var logger = runContextLoggerFactory.create(execution);
-                                logger.emitLog(
-                                    LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
-                                        .level(Level.INFO)
-                                        .message(msg)
-                                        .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
-                                        .thread(Thread.currentThread().getName())
-                                        .build()
-                                );
+                                // Respect the parent task's configured logLevel (e.g. plugin defaults setting
+                                // logLevel: WARN): emitLog bypasses the regular logging pipeline, so without this
+                                // check the INFO creation log is persisted regardless of configuration (#16238).
+                                Task parentTask = flow.findTaskByTaskIdOrNull(subflowExecution.getParentTaskRun().getTaskId());
+                                Level minLevel = parentTask != null ? parentTask.getLogLevel() : null;
+                                if (minLevel == null || Level.INFO.toInt() >= minLevel.toInt()) {
+                                    var logger = runContextLoggerFactory.create(execution);
+                                    logger.emitLog(
+                                        LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
+                                            .level(Level.INFO)
+                                            .message(msg)
+                                            .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
+                                            .thread(Thread.currentThread().getName())
+                                            .build()
+                                    );
+                                }
 
                                 executionQueue.emit(subflowExecution.getExecution());
                             }));

@@ -47,4 +47,13 @@ describe("CopilotMessage", () => {
         })
         expect(w.text()).toContain("rejected")
     })
+
+    it("renders an artefact_draft message as a draft card", () => {
+        const w = mountMessage({
+            id: "6", role: "ASSISTANT", type: "ARTEFACT_DRAFT",
+            draft: {draftId: "d1", kind: "FLOW", yaml: "id: demo\nnamespace: x", valid: true, constraints: null},
+        })
+        expect(w.find(".copilot-draft").exists()).toBe(true)
+        expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
+    })
 })

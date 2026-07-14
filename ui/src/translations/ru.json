@@ -2051,14 +2051,25 @@
           "cancel": "Cancel voice input"
         },
         "unavailable": {
-            "title": "AI Copilot недоступен",
-            "detail": "Не настроен ни один AI-провайдер. Попросите администратора настроить его и повторите попытку.",
-            "retry": "Повторить"
+          "title": "AI Copilot недоступен",
+          "detail": "Не настроен ни один AI-провайдер. Попросите администратора настроить его и повторите попытку.",
+          "retry": "Повторить"
         },
         "thinking": "Думаю",
         "newChat": "New chat",
         "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet"
+        "recentsEmpty": "No recent conversations yet",
+        "draft": {
+          "title": {
+            "flow": "Proposed flow",
+            "dashboard": "Proposed dashboard",
+            "app": "Proposed app"
+          },
+          "valid": "Valid",
+          "invalid": "Needs changes",
+          "copy": "Copy YAML",
+          "copied": "Copied"
+        }
       }
     },
     "playground": {

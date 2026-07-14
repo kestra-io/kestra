@@ -2051,14 +2051,25 @@
           "cancel": "Cancel voice input"
         },
         "unavailable": {
-            "title": "AI Copilot을 사용할 수 없습니다",
-            "detail": "구성된 AI 제공자가 없습니다. 관리자에게 설정을 요청한 후 다시 시도하세요.",
-            "retry": "다시 시도"
+          "title": "AI Copilot을 사용할 수 없습니다",
+          "detail": "구성된 AI 제공자가 없습니다. 관리자에게 설정을 요청한 후 다시 시도하세요.",
+          "retry": "다시 시도"
         },
         "thinking": "생각 중",
         "newChat": "New chat",
         "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet"
+        "recentsEmpty": "No recent conversations yet",
+        "draft": {
+          "title": {
+            "flow": "Proposed flow",
+            "dashboard": "Proposed dashboard",
+            "app": "Proposed app"
+          },
+          "valid": "Valid",
+          "invalid": "Needs changes",
+          "copy": "Copy YAML",
+          "copied": "Copied"
+        }
       }
     },
     "playground": {

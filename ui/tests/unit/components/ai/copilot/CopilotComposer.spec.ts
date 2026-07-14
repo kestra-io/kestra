@@ -64,4 +64,17 @@ describe("CopilotComposer", () => {
         // No SpeechRecognition in jsdom → voice input degrades gracefully to no mic button.
         expect(mountComposer().find("[data-test=\"copilot-mic\"]").exists()).toBe(false)
     })
+
+    it("reflects an external v-model value in the textarea (seed/prefill)", () => {
+        const w = mountComposer({modelValue: "Fix this error"})
+        expect((input(w).element as HTMLTextAreaElement).value).toBe("Fix this error")
+        // A seeded prompt is submittable straight away.
+        expect(sendBtn(w).attributes("disabled")).toBeUndefined()
+    })
+
+    it("emits update:modelValue as the user types", async () => {
+        const w = mountComposer()
+        await input(w).setValue("hello")
+        expect(w.emitted("update:modelValue")?.at(-1)).toEqual(["hello"])
+    })
 })

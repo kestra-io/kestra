@@ -151,7 +151,8 @@
 
     const {t} = useI18n()
 
-    const draft = ref("")
+    // The composer text. A v-model so a parent can seed it (e.g. "Fix with AI" prefills a prompt).
+    const draft = defineModel<string>({default: ""})
     const textareaEl = ref<HTMLTextAreaElement>()
 
     // Values are the backend Mode enum; labels follow the Figma wording

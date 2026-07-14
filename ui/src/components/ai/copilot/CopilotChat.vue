@@ -39,6 +39,8 @@
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
                 <CopilotComposer
+                    ref="emptyComposer"
+                    v-model="composerText"
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
@@ -88,6 +90,7 @@
             <div class="copilot-footer">
                 <CopilotComposer
                     ref="footerComposer"
+                    v-model="composerText"
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
@@ -114,6 +117,7 @@
     import ProposedActionCard from "./ProposedActionCard.vue"
     import {useAiChat} from "./useAiChat"
     import type {Mode, ScopeBinding} from "./types"
+    import {useMiscStore} from "override/stores/misc"
 
     const props = defineProps<{
         /** Initial mode; defaults to EDIT. */
@@ -123,8 +127,14 @@
     }>()
 
     const {t} = useI18n()
+    const miscStore = useMiscStore()
 
     const mode = ref<Mode>(props.initialMode ?? "EDIT")
+
+    // Shared composer text (both the empty-state and footer composers bind it), so an external
+    // entry point can seed a prompt via the misc store (see consumeSeededPrompt).
+    const composerText = ref("")
+    const emptyComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
 
     // Available AI providers (same endpoint the previous copilot used); the selected one is
     // sent as providerId on each turn. Falls back to the server default when unset.
@@ -197,6 +207,24 @@
         await nextTick()
         footerComposer.value?.focus()
     }
+
+    // Seeded prompts: an entry point (e.g. "Fix with AI") calls miscStore.promptCopilot(text),
+    // which opens this tab and stashes the text. Prefill the composer with it and focus, then
+    // clear the store so it doesn't re-seed on the next open. Runs on mount (drawer just opened)
+    // and via a watcher (drawer already open / kept alive).
+    async function consumeSeededPrompt(): Promise<void> {
+        const seeded = miscStore.copilotPrompt
+        if (!seeded) return
+        composerText.value = seeded
+        miscStore.copilotPrompt = null
+        await nextTick()
+        ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+    }
+
+    onMounted(consumeSeededPrompt)
+    watch(() => miscStore.copilotPrompt, (value) => {
+        if (value) consumeSeededPrompt()
+    })
 
     onBeforeUnmount(cancel)
 </script>

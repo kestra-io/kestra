@@ -23,6 +23,10 @@ const state = {
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
+// CopilotChat reads a seeded prompt from the misc store on mount. Shared mutable stub so a
+// test can seed a prompt before mounting (no Pinia in the unit env).
+const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), promptCopilot: vi.fn()}
+vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 
@@ -40,6 +44,7 @@ describe("CopilotChat", () => {
         state.confirm.mockReset()
         state.reset.mockReset()
         state.retry.mockReset()
+        miscStore.copilotPrompt = null
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -62,6 +67,16 @@ describe("CopilotChat", () => {
         const alert = w.find(".ks-alert")
         expect(alert.exists()).toBe(true)
         expect(alert.text()).toBe("A turn is already in progress.")
+    })
+
+    it("prefills the composer from a seeded prompt and clears it", async () => {
+        miscStore.copilotPrompt = "Fix this error"
+        const w = mountChat()
+        await flushPromises()
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("Fix this error")
+        // Consumed once, so it doesn't re-seed on the next open.
+        expect(miscStore.copilotPrompt).toBeNull()
     })
 
     it("forwards a composer submit to sendChat with the current mode", async () => {

@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Неверный исходный код",
+    "invalid duration": "Неверный формат длительности. Используйте ISO 8601 (например, PT30M, P1D).",
     "missingSource": "Отсутствует источник",
     "update": "Обновить",
     "update ok": "обновлено",

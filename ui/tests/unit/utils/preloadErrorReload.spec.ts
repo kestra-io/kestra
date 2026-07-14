@@ -31,11 +31,12 @@ describe("preloadErrorReload", () => {
         expect(hasReloadedAfterPreloadError(storage)).toBe(true)
     })
 
-    test("treats any stored value as already reloaded", () => {
+    test("stores a session reload marker", () => {
         const storage = createStorageMock()
 
-        storage.setItem(PRELOAD_ERROR_RELOAD_KEY, "0")
+        expect(markPreloadErrorReloaded(storage)).toBe(true)
 
+        expect(storage.setItem).toHaveBeenCalledWith(PRELOAD_ERROR_RELOAD_KEY, "true")
         expect(hasReloadedAfterPreloadError(storage)).toBe(true)
     })
 })

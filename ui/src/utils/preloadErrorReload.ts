@@ -1,4 +1,4 @@
-export const PRELOAD_ERROR_RELOAD_KEY = "kestra:vite-preload-error-reload-at"
+export const PRELOAD_ERROR_RELOAD_KEY = "kestra:vite-preload-error-reloaded"
 
 export function hasReloadedAfterPreloadError(storage: Storage = window.sessionStorage) {
     try {
@@ -10,7 +10,7 @@ export function hasReloadedAfterPreloadError(storage: Storage = window.sessionSt
 
 export function markPreloadErrorReloaded(storage: Storage = window.sessionStorage) {
     try {
-        storage.setItem(PRELOAD_ERROR_RELOAD_KEY, String(Date.now()))
+        storage.setItem(PRELOAD_ERROR_RELOAD_KEY, "true")
         return true
     } catch {
         return false

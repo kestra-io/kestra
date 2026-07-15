@@ -98,15 +98,6 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
     }
 
-    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
-        // if concurrency was removed, it can be null as we always get the latest flow definition
-        if (flow.getConcurrency() == null) {
-            return runExecutionRunning(executionRunning);
-        }
-
-        return processExecutionRunning(List.of(ScopedConcurrencyLimit.ofFlow(flow)), List.of(runningCount), executionRunning);
-    }
-
     /**
      * Evaluate the scoped concurrency limits in order against their running counts: the first
      * limit reached defines the behavior applied to the execution; when none is reached the

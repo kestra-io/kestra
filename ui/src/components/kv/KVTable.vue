@@ -338,7 +338,7 @@
     const editorBindings = useEditorBindings()
 
     const namespaceFilter = (namespace: string) =>
-        [{field: "NAMESPACE" as const, operation: "EQUALS" as const, value: namespace}]
+        [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return

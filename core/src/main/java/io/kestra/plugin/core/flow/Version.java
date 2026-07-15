@@ -4,16 +4,12 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -22,20 +18,15 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 public class Version {
-    @NotNull
-    @JsonInclude
-    @Builder.Default
-    protected String type = "version";
-
     @Schema(
         title = "The date before which revisions should be purged.",
-        description = "Must be an ISO-8601 instant, for example `2026-01-01T00:00:00Z`. Using this filter will never delete the latest revision of a flow to avoid accidental flow deletion."
+        description = "Must be an ISO-8601 instant, for example `2026-01-01T00:00:00Z`. Using this filter will never delete the latest revision or the latest non-draft revision of a flow to avoid accidental flow deletion."
     )
     private String before;
 
     @Schema(
         title = "How many revisions should be kept for each matching flow.",
-        description = "The latest revision is always kept."
+        description = "The latest revision and the latest non-draft revision are always kept."
     )
     @Min(1)
     private Integer keepAmount;
@@ -50,9 +41,15 @@ public class Version {
             .map(FlowWithSource::getRevision)
             .max(Integer::compareTo)
             .orElse(null);
+        Integer latestNonDraftRevision = revisions.stream()
+            .filter(revision -> !revision.isDraft())
+            .map(FlowWithSource::getRevision)
+            .max(Integer::compareTo)
+            .orElse(null);
 
         List<FlowWithSource> oldRevisions = revisions.stream()
             .filter(revision -> !revision.getRevision().equals(latestRevision))
+            .filter(revision -> !revision.getRevision().equals(latestNonDraftRevision))
             .toList();
 
         if (keepAmount != null) {
@@ -60,6 +57,7 @@ public class Version {
                 .sorted(Comparator.comparing(FlowWithSource::getRevision).reversed())
                 .skip(keepAmount)
                 .filter(revision -> !revision.getRevision().equals(latestRevision))
+                .filter(revision -> !revision.getRevision().equals(latestNonDraftRevision))
                 .toList();
         }
 

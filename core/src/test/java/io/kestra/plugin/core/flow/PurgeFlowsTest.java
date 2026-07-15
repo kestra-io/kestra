@@ -54,7 +54,7 @@ class PurgeFlowsTest {
 
         PurgeFlows purgeFlows = PurgeFlows.builder()
             .type(PurgeFlows.class.getName())
-            .namespaces(Property.ofValue(List.of(namespace)))
+            .namespace(Property.ofValue(namespace))
             .behavior(Property.ofValue(Version.builder().keepAmount(2).build()))
             .build();
 
@@ -77,7 +77,7 @@ class PurgeFlowsTest {
 
         PurgeFlows purgeFlows = PurgeFlows.builder()
             .type(PurgeFlows.class.getName())
-            .namespaces(Property.ofValue(List.of(namespace)))
+            .namespace(Property.ofValue(namespace))
             .behavior(Property.ofValue(Version.builder().before(afterFirstRevision.toString()).build()))
             .build();
 
@@ -91,9 +91,9 @@ class PurgeFlowsTest {
     }
 
     @Test
-    void shouldPurgeOnlyFlowsMatchingPattern() throws Exception {
+    void shouldPurgeOnlyTargetedFlow() throws Exception {
         String namespace = TestsUtils.randomNamespace();
-        String matchingFlowId = "matching_" + IdUtils.create();
+        String matchingFlowId = IdUtils.create();
         String otherFlowId = "other_" + IdUtils.create();
         FlowWithSource matchingRevision1 = flowRepository.create(testingFlow(namespace, matchingFlowId, "first"));
         flowRepository.update(testingFlow(namespace, matchingFlowId, "second"), matchingRevision1);
@@ -102,8 +102,8 @@ class PurgeFlowsTest {
 
         PurgeFlows purgeFlows = PurgeFlows.builder()
             .type(PurgeFlows.class.getName())
-            .namespaces(Property.ofValue(List.of(namespace)))
-            .flowPattern(Property.ofValue("matching_*"))
+            .namespace(Property.ofValue(namespace))
+            .flowId(Property.ofValue(matchingFlowId))
             .build();
 
         PurgeFlows.Output output = purgeFlows.run(runContextFactory.of(namespace));
@@ -115,6 +115,60 @@ class PurgeFlowsTest {
         assertThat(flowRepository.findRevisions(MAIN_TENANT, namespace, otherFlowId, false))
             .extracting(FlowWithSource::getRevision)
             .containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void shouldPurgeFlowsFromNamespacePrefix() throws Exception {
+        String namespace = TestsUtils.randomNamespace();
+        String childNamespace = namespace + ".child";
+        String similarNamespace = namespace + "_similar";
+        String flowId = IdUtils.create();
+        FlowWithSource rootRevision1 = flowRepository.create(testingFlow(namespace, flowId, "first"));
+        flowRepository.update(testingFlow(namespace, flowId, "second"), rootRevision1);
+        FlowWithSource childRevision1 = flowRepository.create(testingFlow(childNamespace, flowId, "first"));
+        flowRepository.update(testingFlow(childNamespace, flowId, "second"), childRevision1);
+        FlowWithSource similarRevision1 = flowRepository.create(testingFlow(similarNamespace, flowId, "first"));
+        flowRepository.update(testingFlow(similarNamespace, flowId, "second"), similarRevision1);
+
+        PurgeFlows purgeFlows = PurgeFlows.builder()
+            .type(PurgeFlows.class.getName())
+            .namespace(Property.ofValue(namespace))
+            .build();
+
+        PurgeFlows.Output output = purgeFlows.run(runContextFactory.of(namespace));
+
+        assertThat(output.getSize()).isEqualTo(2L);
+        assertThat(flowRepository.findRevisions(MAIN_TENANT, namespace, flowId, false))
+            .extracting(FlowWithSource::getRevision)
+            .containsExactly(2);
+        assertThat(flowRepository.findRevisions(MAIN_TENANT, childNamespace, flowId, false))
+            .extracting(FlowWithSource::getRevision)
+            .containsExactly(2);
+        assertThat(flowRepository.findRevisions(MAIN_TENANT, similarNamespace, flowId, false))
+            .extracting(FlowWithSource::getRevision)
+            .containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void shouldKeepLatestNonDraftRevision() throws Exception {
+        String namespace = TestsUtils.randomNamespace();
+        String flowId = IdUtils.create();
+        FlowWithSource revision1 = flowRepository.create(testingFlow(namespace, flowId, "published", false));
+        FlowWithSource revision2 = flowRepository.update(testingFlow(namespace, flowId, "draft", true), revision1);
+        flowRepository.update(testingFlow(namespace, flowId, "draft again", true), revision2);
+
+        PurgeFlows purgeFlows = PurgeFlows.builder()
+            .type(PurgeFlows.class.getName())
+            .namespace(Property.ofValue(namespace))
+            .behavior(Property.ofValue(Version.builder().keepAmount(1).build()))
+            .build();
+
+        PurgeFlows.Output output = purgeFlows.run(runContextFactory.of(namespace));
+
+        assertThat(output.getSize()).isEqualTo(1L);
+        assertThat(flowRepository.findRevisions(MAIN_TENANT, namespace, flowId, false))
+            .extracting(FlowWithSource::getRevision)
+            .containsExactlyInAnyOrder(1, 3);
     }
 
     @Test
@@ -139,11 +193,16 @@ class PurgeFlowsTest {
     }
 
     private GenericFlow testingFlow(String namespace, String flowId, String message) {
+        return testingFlow(namespace, flowId, message, false);
+    }
+
+    private GenericFlow testingFlow(String namespace, String flowId, String message, boolean draft) {
         return GenericFlow.of(
             Flow.builder()
                 .tenantId(MAIN_TENANT)
                 .namespace(namespace)
                 .id(flowId)
+                .draft(draft)
                 .tasks(List.of(Return.builder().id("return").type(Return.class.getName()).format(Property.ofValue(message)).build()))
                 .build()
         );

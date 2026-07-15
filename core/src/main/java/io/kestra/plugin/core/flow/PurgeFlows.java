@@ -3,6 +3,7 @@ package io.kestra.plugin.core.flow;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -12,7 +13,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.plugin.core.purge.PurgeTask;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -28,7 +28,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Purge old flow revisions.",
     description = """
-        Deletes old flow revisions using a purge `behavior` (default keeps 1 latest revision), optional flow ID glob, and Namespace filters (`namespaces` list or `namespacePattern`). Child Namespaces are included by default.
+        Deletes old flow revisions using a purge `behavior` (default keeps 1 latest revision), with optional namespace prefix and flow ID filters.
 
         The latest revision of each flow is always kept."""
 )
@@ -44,35 +44,25 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: purge_flows
                     type: io.kestra.plugin.core.flow.PurgeFlows
-                    namespaces:
-                      - company
-                    includeChildNamespaces: true
-                    flowPattern: "*_deprecated"
+                    namespace: company
                     behavior:
-                      type: version
                       keepAmount: 2
                 """
         )
     }
 )
-public class PurgeFlows extends Task implements PurgeTask<FlowWithSource>, RunnableTask<PurgeFlows.Output> {
+public class PurgeFlows extends Task implements RunnableTask<PurgeFlows.Output> {
     @Schema(
-        title = "Flow ID pattern, e.g. '*'",
-        description = "Delete only old revisions for flows whose ID matches the glob pattern."
+        title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged",
+        description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
-    private Property<String> flowPattern;
+    private Property<String> namespace;
 
     @Schema(
-        title = "List of namespaces to delete old flow revisions from",
-        description = "If not set, all namespaces will be considered. Can't be used with `namespacePattern` - use one or the other."
+        title = "The flow ID whose old revisions should be purged",
+        description = "You need to provide the `namespace` property if you want to purge a flow."
     )
-    private Property<List<String>> namespaces;
-
-    @Schema(
-        title = "Glob pattern for the namespaces to delete old flow revisions from",
-        description = "If not set, all namespaces will be considered. Example: `company.*`. Can't be used with `namespaces` - use one or the other."
-    )
-    private Property<String> namespacePattern;
+    private Property<String> flowId;
 
     @Schema(
         title = "Purge behavior",
@@ -83,33 +73,28 @@ public class PurgeFlows extends Task implements PurgeTask<FlowWithSource>, Runna
     @NotNull
     private Property<Version> behavior = Property.ofValue(Version.builder().keepAmount(1).build());
 
-    @Schema(
-        title = "Delete old flow revisions from child namespaces",
-        description = "Defaults to true. This means that if you set `namespaces` to `company`, it will also delete old flow revisions from `company.team`, `company.data`, etc."
-    )
-    @Builder.Default
-    private Property<Boolean> includeChildNamespaces = Property.ofValue(true);
-
     @Override
     public Output run(RunContext runContext) throws Exception {
-        List<String> flowNamespaces = findNamespaces(runContext);
-        runContext.logger().info("purging old flow revisions from {} namespaces: {}", flowNamespaces.size(), flowNamespaces);
-
         AtomicLong count = new AtomicLong();
         Version renderedBehavior = runContext.render(behavior).as(Version.class).orElseThrow();
         String tenantId = runContext.flowInfo().tenantId();
         FlowRepositoryInterface flowRepository = ((DefaultRunContext) runContext).services().additionalService(FlowRepositoryInterface.class);
+        String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
+        String renderedFlowId = runContext.render(this.flowId).as(String.class).orElse(null);
+        if (renderedNamespace == null && renderedFlowId != null) {
+            throw new ValidationErrorException(List.of("Property `namespace` is required when `flowId` is set."));
+        }
 
-        for (String namespace : flowNamespaces) {
-            List<FlowWithSource> latestFlows = filterItems(runContext, flowRepository.findByNamespaceWithSource(tenantId, namespace));
-            for (FlowWithSource flow : latestFlows) {
-                List<Integer> revisions = renderedBehavior.revisionsToPurge(tenantId, namespace, flow.getId(), flowRepository).stream()
-                    .map(FlowWithSource::getRevision)
-                    .toList();
-                if (!revisions.isEmpty()) {
-                    flowRepository.deleteRevisions(tenantId, namespace, flow.getId(), revisions);
-                    count.addAndGet(revisions.size());
-                }
+        List<FlowWithSource> flows = findFlows(runContext, flowRepository, tenantId, renderedNamespace, renderedFlowId);
+        runContext.logger().info("purging old revisions from {} flows", flows.size());
+
+        for (FlowWithSource flow : flows) {
+            List<Integer> revisions = renderedBehavior.revisionsToPurge(tenantId, flow.getNamespace(), flow.getId(), flowRepository).stream()
+                .map(FlowWithSource::getRevision)
+                .toList();
+            if (!revisions.isEmpty()) {
+                flowRepository.deleteRevisions(tenantId, flow.getNamespace(), flow.getId(), revisions);
+                count.addAndGet(revisions.size());
             }
         }
 
@@ -120,14 +105,26 @@ public class PurgeFlows extends Task implements PurgeTask<FlowWithSource>, Runna
             .build();
     }
 
-    @Override
-    public Property<String> filterPattern() {
-        return flowPattern;
-    }
+    private List<FlowWithSource> findFlows(
+        RunContext runContext,
+        FlowRepositoryInterface flowRepository,
+        String tenantId,
+        String renderedNamespace,
+        String renderedFlowId
+    ) {
+        if (renderedNamespace == null) {
+            runContext.acl().allowAllNamespaces().check();
+            return flowRepository.findAllWithSource(tenantId);
+        }
 
-    @Override
-    public String filterTargetExtractor(FlowWithSource item) {
-        return item.getId();
+        runContext.acl().allowNamespace(renderedNamespace).check();
+        if (renderedFlowId != null) {
+            return flowRepository.findByIdWithSource(tenantId, renderedNamespace, renderedFlowId)
+                .map(List::of)
+                .orElseGet(List::of);
+        }
+
+        return flowRepository.findByNamespacePrefixWithSource(tenantId, renderedNamespace);
     }
 
     @Builder

@@ -5,15 +5,24 @@ import java.util.function.Consumer;
 import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
 import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 
+import dev.langchain4j.invocation.InvocationContext;
+import dev.langchain4j.invocation.InvocationParameters;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * Per-dispatch context bound to the executor thread while a tool call runs, so {@code @Tool} methods
- * can read the caller's tenant and principal, the turn's provider and conversation, and publish
- * artefact drafts back to the turn without depending on the orchestrator.
+ * The per-call context a {@code @Tool} method runs against: the caller's tenant and principal, the
+ * turn's provider and conversation, and the channel to publish artefact drafts back to the turn.
+ *
+ * <p>
+ * It travels to the tool through langchain4j's {@link InvocationContext} (set by
+ * {@link io.kestra.webserver.services.ai.agent.tool.ToolCatalog#dispatch} and injected by
+ * {@code DefaultToolExecutor} into the tool method's {@link InvocationContext} argument), not a
+ * thread-local — so nothing is bound to the executor thread. A tool reads it with
+ * {@link #from(InvocationContext)}.
+ * </p>
  */
 public final class AgentCallContext {
-    private static final ThreadLocal<Context> CURRENT = new ThreadLocal<>();
+    private static final String KEY = AgentCallContext.class.getName();
 
     private AgentCallContext() {
     }
@@ -27,43 +36,29 @@ public final class AgentCallContext {
         public static Context ofTenant(final String tenant) {
             return new Context(tenant, null, null, null, null);
         }
+
+        public void publishDraft(final ArtefactDraft draft) {
+            if (draftPublisher == null) {
+                throw new IllegalStateException("No draft publisher bound to this agent call context");
+            }
+            draftPublisher.accept(draft);
+        }
     }
 
-    public static void set(final Context context) {
-        CURRENT.set(context);
+    /** Build an {@link InvocationContext} carrying the context for a single tool dispatch. */
+    public static InvocationContext into(final Context context) {
+        InvocationParameters parameters = new InvocationParameters();
+        parameters.put(KEY, context);
+        return InvocationContext.builder().invocationParameters(parameters).build();
     }
 
-    public static void clear() {
-        CURRENT.remove();
-    }
-
-    public static Context require() {
-        Context context = CURRENT.get();
+    /** Read the context a {@code @Tool} method was dispatched with from its injected invocation. */
+    public static Context from(final InvocationContext invocationContext) {
+        InvocationParameters parameters = invocationContext == null ? null : invocationContext.invocationParameters();
+        Context context = parameters == null ? null : parameters.get(KEY);
         if (context == null) {
-            throw new IllegalStateException("No agent call context bound to this thread");
+            throw new IllegalStateException("No agent call context in the invocation");
         }
         return context;
-    }
-
-    /**
-     * The effective tenant a tool call runs against: the explicitly requested {@code tenantId} if the
-     * caller provided one, otherwise the caller's own (conversation) tenant. This is plumbing only —
-     * it performs no authorization. On a single-tenant surface the parameter is hidden from the tool
-     * spec and this always returns the caller's tenant; a surface with multiple tenants exposes the
-     * parameter, and its tool implementations validate the returned tenant before acting on it.
-     */
-    public static String resolveTenant(@Nullable final String tenantId) {
-        if (tenantId == null || tenantId.isBlank()) {
-            return require().tenant();
-        }
-        return tenantId;
-    }
-
-    public static void publishDraft(final ArtefactDraft draft) {
-        Consumer<ArtefactDraft> publisher = require().draftPublisher();
-        if (publisher == null) {
-            throw new IllegalStateException("No draft publisher bound to this agent call context");
-        }
-        publisher.accept(draft);
     }
 }

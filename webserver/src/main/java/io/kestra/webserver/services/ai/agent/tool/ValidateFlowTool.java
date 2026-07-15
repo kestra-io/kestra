@@ -13,6 +13,7 @@ import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -46,8 +47,8 @@ public class ValidateFlowTool implements AiPlatformTool {
     )
     public Result validateFlow(
         @P(name = "flowYaml", value = "The full flow YAML source to validate") String flowYaml,
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        String tenant = AgentCallContext.resolveTenant(tenantId);
+        final InvocationContext invocationContext) {
+        String tenant = AgentCallContext.from(invocationContext).tenant();
 
         List<ValidateConstraintViolation> violations = flowService.validate(tenant, List.of(new FlowSource(null, flowYaml)));
 

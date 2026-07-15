@@ -19,6 +19,7 @@ import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.invocation.InvocationContext;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -54,8 +55,9 @@ public class AuthorFlowTool implements AiAuthoringTool {
     public Result authorFlow(
         @P(name = "instructions", value = "What the flow should do, or how the current flow should be changed") String instructions,
         @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown", required = false) String namespace,
-        @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml) {
-        AgentCallContext.Context context = AgentCallContext.require();
+        @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml,
+        final InvocationContext invocationContext) {
+        AgentCallContext.Context context = AgentCallContext.from(invocationContext);
 
         AiServiceInterface aiService = aiServiceManager.getAiService(context.providerId());
         if (aiService == null) {
@@ -78,7 +80,7 @@ public class AuthorFlowTool implements AiAuthoringTool {
 
         String constraints = validate(context.tenant(), yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.FLOW, yaml, constraints == null, constraints);
-        AgentCallContext.publishDraft(draft);
+        context.publishDraft(draft);
 
         return Result.drafted(draft);
     }

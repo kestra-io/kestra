@@ -4,13 +4,13 @@ import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
-import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.invocation.InvocationContext;
 
 /**
- * Test-only tool (constructed manually, not a bean) following the multi-tenant pattern: a
- * {@link TenantId} parameter resolved via {@link AgentCallContext#resolveTenant} — used to assert the
- * catalog hides the parameter from the spec and binds the effective tenant.
+ * Test-only tool (constructed manually, not a bean) that echoes the conversation's tenant — read from
+ * the {@link AgentCallContext.Context}, never a tool argument — used to assert the catalog binds the
+ * call context and the tool reads the tenant from it.
  */
 public class TestTenantEchoTool implements AiPlatformTool {
     @Override
@@ -24,8 +24,7 @@ public class TestTenantEchoTool implements AiPlatformTool {
     }
 
     @Tool(name = "tenant-echo", value = "Test-only tool; echoes the tenant it runs against.")
-    public String tenantEcho(
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        return AgentCallContext.resolveTenant(tenantId);
+    public String tenantEcho(final InvocationContext invocationContext) {
+        return AgentCallContext.from(invocationContext).tenant();
     }
 }

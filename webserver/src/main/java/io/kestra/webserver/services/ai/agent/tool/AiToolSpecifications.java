@@ -27,16 +27,12 @@ import dev.langchain4j.model.chat.request.json.JsonStringSchema;
  * each a {@code {operator, value}} object whose {@code operator} is a field-scoped enum.
  *
  * <p>
- * It also hides any {@link TenantId}-annotated parameter from the schema unless
- * {@code exposeTenantId} is set: the parameter stays in the Java signature (bound to {@code null}
- * when absent) but the model only sees it in editions that offer tenant targeting.
- * </p>
- *
- * <p>
  * Implementation: reuse langchain4j's derivation for the whole method (name, description,
  * metadata, and every non-filter parameter), then surgically replace the filter parameter's property
- * with the expanded per-field properties and drop hidden parameters. This avoids reimplementing the
- * {@code @Internal} {@code JsonSchemaElementUtils} while giving full control over the schema.
+ * with the expanded per-field properties. This avoids reimplementing the {@code @Internal}
+ * {@code JsonSchemaElementUtils} while giving full control over the schema. (langchain4j already
+ * omits the injected {@link dev.langchain4j.invocation.InvocationContext} parameter from the
+ * schema, so it never reaches the model.)
  * </p>
  */
 public final class AiToolSpecifications {
@@ -59,31 +55,19 @@ public final class AiToolSpecifications {
 
     /**
      * @param method the {@code @Tool}-annotated method
-     * @param exposeTenantId whether {@link TenantId} parameters are shown to the model or hidden
      */
-    public static ToolSpecification toolSpecificationFrom(final Method method, final boolean exposeTenantId) {
+    public static ToolSpecification toolSpecificationFrom(final Method method) {
         ToolSpecification base = ToolSpecifications.toolSpecificationFrom(method);
 
         List<Parameter> filterParams = Arrays.stream(method.getParameters())
             .filter(p -> p.isAnnotationPresent(QueryFilterFormat.class))
             .toList();
-        List<Parameter> hiddenParams = exposeTenantId ? List.of()
-            : Arrays.stream(method.getParameters())
-                .filter(p -> p.isAnnotationPresent(TenantId.class))
-                .toList();
-        if ((filterParams.isEmpty() && hiddenParams.isEmpty()) || !(base.parameters() instanceof JsonObjectSchema params)) {
+        if (filterParams.isEmpty() || !(base.parameters() instanceof JsonObjectSchema params)) {
             return base;
         }
 
         Map<String, JsonSchemaElement> properties = new LinkedHashMap<>(params.properties());
         List<String> required = new ArrayList<>(params.required() == null ? List.of() : params.required());
-
-        // hide tenant-targeting parameters from the model; they stay in the signature, bound to null
-        for (Parameter hiddenParam : hiddenParams) {
-            String name = parameterName(hiddenParam);
-            properties.remove(name);
-            required.remove(name);
-        }
 
         for (Parameter filterParam : filterParams) {
             String name = parameterName(filterParam);
@@ -105,11 +89,10 @@ public final class AiToolSpecifications {
             .definitions(params.definitions())
             .build();
 
-        ToolSpecification.Builder builder = base.toBuilder().parameters(reshaped);
-        if (!filterParams.isEmpty()) {
-            builder.description(withFilterValueGuidance(base.description()));
-        }
-        return builder.build();
+        return base.toBuilder()
+            .parameters(reshaped)
+            .description(withFilterValueGuidance(base.description()))
+            .build();
     }
 
     private static JsonObjectSchema fieldFilterSchema(final QueryFilter.Field field) {

@@ -3,103 +3,91 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.time.Instant;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
-import io.micronaut.data.model.Pageable;
+import dev.langchain4j.invocation.InvocationContext;
+import jakarta.inject.Inject;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+/**
+ * Integration check that {@code list-executions} returns real executions from the repository,
+ * including when a state filter is supplied, exercising the tool → repository wiring end to end.
+ */
+@KestraTest(environments = "memory")
 class ListExecutionsToolTest {
-    private static final String TENANT = "main";
+    private static final String NAMESPACE = "io.kestra.test.ai";
+    private static final InvocationContext CONTEXT = AgentCallContext.into(AgentCallContext.Context.ofTenant(MAIN_TENANT));
 
-    private ExecutionRepositoryInterface executionRepository;
+    @Inject
     private ListExecutionsTool tool;
 
-    @BeforeEach
-    void setUp() {
-        executionRepository = mock(ExecutionRepositoryInterface.class);
-        tool = new ListExecutionsTool(executionRepository);
-        AgentCallContext.set(AgentCallContext.Context.ofTenant(TENANT));
-    }
-
-    @AfterEach
-    void tearDown() {
-        AgentCallContext.clear();
-    }
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     void shouldExposeReadOnlyMetadata() {
-        // When / Then
         assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
         assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.AUTO);
     }
 
     @Test
-    void shouldReturnOneSummaryPerExecutionWhenExecutionsExist() {
-        // Given — a terminated execution with a duration
-        State state = State.of(
-            State.Type.SUCCESS, List.of(
-                new State.History(State.Type.CREATED, Instant.parse("2026-01-01T00:00:00Z")),
-                new State.History(State.Type.SUCCESS, Instant.parse("2026-01-01T00:00:10Z"))
-            )
-        );
-        Execution execution = Execution.builder()
-            .id("exec-1")
-            .tenantId(TENANT)
-            .namespace("io.kestra.test")
-            .flowId("flow-1")
-            .state(state)
-            .build();
-        when(executionRepository.find(any(Pageable.class), eq(TENANT), any()))
-            .thenReturn(new ArrayListTotal<>(List.of(execution), 1));
+    void shouldReturnSummaryPerExecutionWhenExecutionsExist() {
+        // Given — a terminated execution
+        String executionId = save(State.Type.SUCCESS);
 
         // When
-        List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "SUCCESS", null, null));
-        ListExecutionsTool.Result result = tool.listExecutions(filters, null);
+        ListExecutionsTool.Result result = tool.listExecutions(List.of(), CONTEXT);
 
-        // Then — one summary, and the filters plus a start-date-desc pageable were forwarded
-        assertThat(result.executions()).containsExactly(
-            new ListExecutionsTool.ExecutionSummary("exec-1", "io.kestra.test", "flow-1", "SUCCESS", "2026-01-01T00:00:00Z", "PT10S")
-        );
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(executionRepository).find(pageableCaptor.capture(), eq(TENANT), eq(filters));
-        assertThat(pageableCaptor.getValue().getSize()).isEqualTo(50);
-        assertThat(pageableCaptor.getValue().getSort().getOrderBy())
-            .singleElement()
-            .satisfies(order ->
-            {
-                assertThat(order.getProperty()).isEqualTo(Execution.STATE_START_DATE_FIELD);
-                assertThat(order.getDirection()).isEqualTo(io.micronaut.data.model.Sort.Order.Direction.DESC);
-            });
+        // Then
+        assertThat(result.executions())
+            .anyMatch(summary -> executionId.equals(summary.id()) && "SUCCESS".equals(summary.state()));
     }
 
     @Test
-    void shouldReturnEmptyListWhenNoExecutionsMatch() {
-        // Given
-        when(executionRepository.find(any(Pageable.class), eq(TENANT), any()))
-            .thenReturn(new ArrayListTotal<>(List.of(), 0));
+    void shouldApplyStateFilter() {
+        // Given — a SUCCESS and a FAILED execution
+        String successId = save(State.Type.SUCCESS);
+        save(State.Type.FAILED);
 
-        // When
-        ListExecutionsTool.Result result = tool.listExecutions(null, null);
+        // When — filtering on SUCCESS
+        List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "SUCCESS", null, null));
+        ListExecutionsTool.Result result = tool.listExecutions(filters, CONTEXT);
 
-        // Then
-        assertThat(result.executions()).isEmpty();
+        // Then — only SUCCESS executions are returned, including the one we created
+        assertThat(result.executions()).isNotEmpty();
+        assertThat(result.executions()).allMatch(summary -> "SUCCESS".equals(summary.state()));
+        assertThat(result.executions()).anyMatch(summary -> successId.equals(summary.id()));
+    }
+
+    private String save(final State.Type stateType) {
+        String executionId = IdUtils.create();
+        State state = State.of(
+            stateType, List.of(
+                new State.History(State.Type.CREATED, Instant.parse("2026-01-01T00:00:00Z")),
+                new State.History(stateType, Instant.parse("2026-01-01T00:00:10Z"))
+            )
+        );
+        executionRepository.save(
+            Execution.builder()
+                .id(executionId)
+                .tenantId(MAIN_TENANT)
+                .namespace(NAMESPACE)
+                .flowId("flow-1")
+                .state(state)
+                .build()
+        );
+        return executionId;
     }
 }

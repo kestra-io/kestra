@@ -12,8 +12,8 @@ import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 import io.kestra.webserver.utils.PageableUtils;
 
-import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -49,8 +49,8 @@ public class ListExecutionsTool implements AiPlatformTool {
     )
     public Result listExecutions(
         @QueryFilterFormat(QueryFilter.Resource.EXECUTION) List<QueryFilter> filters,
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        String tenant = AgentCallContext.resolveTenant(tenantId);
+        final InvocationContext invocationContext) {
+        String tenant = AgentCallContext.from(invocationContext).tenant();
 
         List<Execution> executions = executionRepository.find(
             PageableUtils.from(1, MAX_RESULTS, List.of(Execution.STATE_START_DATE_FIELD + ":desc"), executionRepository.sortMapping()),

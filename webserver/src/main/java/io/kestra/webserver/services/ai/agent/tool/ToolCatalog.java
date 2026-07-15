@@ -32,13 +32,13 @@ import lombok.extern.slf4j.Slf4j;
  * {@link #dispatch} for execution.
  *
  * <p>
- * A tenant-scoped tool declares a {@link TenantId} parameter whose visibility in the model-facing
- * spec is decided by the {@link AiToolSpecFactory} (hidden by default, exposed by editions with
- * multiple tenants). Tools carry no authorization by default; a replacement can override the same
- * {@code @Tool} method to validate the caller's access and then delegate to {@code super}. Because
- * such an override drops the {@code @Tool}/{@code @P} annotations, {@link #toolMethod} resolves the
- * annotated method up the class hierarchy — the spec comes from the annotated method while execution
- * dispatches virtually to the override.
+ * A tool runs against the caller's own tenant, carried on the {@link AgentCallContext.Context}; there
+ * is no per-call tenant parameter, so a conversation is single-tenant by construction. Tools carry no
+ * authorization by default; a replacement can override the same {@code @Tool} method to validate the
+ * caller's access and then delegate to {@code super}. Because such an override drops the
+ * {@code @Tool}/{@code @P} annotations, {@link #toolMethod} resolves the annotated method up the class
+ * hierarchy — the spec comes from the annotated method while execution dispatches virtually to the
+ * override.
  * </p>
  */
 @Singleton
@@ -48,7 +48,6 @@ public class ToolCatalog {
     private final List<AiAuthoringTool> authoringTools;
     private final DocsMcpToolProvider docsMcpToolProvider;
     private final AgentToolPermissionEvaluator permissionEvaluator;
-    private final AiToolSpecFactory specFactory;
 
     private volatile Map<String, ToolEntry> registry;
 
@@ -57,13 +56,11 @@ public class ToolCatalog {
         final List<AiPlatformTool> platformTools,
         final List<AiAuthoringTool> authoringTools,
         final DocsMcpToolProvider docsMcpToolProvider,
-        final AgentToolPermissionEvaluator permissionEvaluator,
-        final AiToolSpecFactory specFactory) {
+        final AgentToolPermissionEvaluator permissionEvaluator) {
         this.platformTools = platformTools;
         this.authoringTools = authoringTools;
         this.docsMcpToolProvider = docsMcpToolProvider;
         this.permissionEvaluator = permissionEvaluator;
-        this.specFactory = specFactory;
     }
 
     public record ToolEntry(
@@ -124,7 +121,7 @@ public class ToolCatalog {
 
         boolean hasQueryFilter = Arrays.stream(method.getParameters())
             .anyMatch(parameter -> parameter.isAnnotationPresent(QueryFilterFormat.class));
-        ToolSpecification spec = specFactory.specificationFrom(method);
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(method);
 
         // propagateToolExecutionExceptions: let a @Tool throw propagate out of dispatch (instead of
         // langchain4j swallowing it into an opaque "ok" result text) so AgentOrchestrator can record it
@@ -152,9 +149,9 @@ public class ToolCatalog {
     /**
      * Execute a tool call scoped to the given caller context — the one entry point both the in-process
      * loop and (later) the MCP projection use. Enforces the coarse tool permission against the
-     * caller's tenant, binds the context to the executor thread so {@code @Tool} methods (and any
-     * overrides) can read it, and always clears it. Per-namespace and cross-tenant checks are the
-     * individual tool implementations' responsibility.
+     * caller's tenant, then hands the context to the {@code @Tool} method (and any overrides) through
+     * the invocation's {@link dev.langchain4j.invocation.InvocationContext}. Per-namespace and
+     * cross-tenant checks are the individual tool implementations' responsibility.
      *
      * @param request the tool call emitted by the model
      * @param context what the call runs as (tenant, principal, provider, draft channel)
@@ -176,12 +173,9 @@ public class ToolCatalog {
             }
         }
 
-        AgentCallContext.set(context);
-        try {
-            return entry.executor().execute(request, context.tenant());
-        } finally {
-            AgentCallContext.clear();
-        }
+        // Carry the caller context to the @Tool method through langchain4j's InvocationContext — the
+        // executor injects it into the tool's InvocationContext argument — rather than a thread-local.
+        return entry.executor().executeWithContext(request, AgentCallContext.into(context)).resultText();
     }
 
     /**

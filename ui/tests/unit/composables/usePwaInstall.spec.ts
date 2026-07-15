@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent} from "vue"
 import {mount} from "@vue/test-utils"
 import {usePwaInstall} from "../../../src/composables/usePwaInstall"
+import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../../../src/utils/pwaInstallState"
 
 function mountPwaInstall() {
     let api: ReturnType<typeof usePwaInstall>
@@ -50,6 +51,8 @@ describe("usePwaInstall", () => {
     beforeEach(() => {
         stubMatchMedia(false)
         restoreLocation = stubLocation("https:", "kestra.example.com")
+        deferredInstallPrompt.value = null
+        appInstalled.value = false
     })
 
     afterEach(() => {
@@ -127,5 +130,17 @@ describe("usePwaInstall", () => {
         window.dispatchEvent(new Event("appinstalled"))
 
         expect(api.canInstall.value).toBe(false)
+    })
+
+    it("can install when beforeinstallprompt was captured at bootstrap, before the composable ever ran", () => {
+        // Simulates a user landing on an anonymous route first: main.ts already
+        // called initPwaInstallCapture() and Chrome already fired the event by
+        // the time an authenticated route mounts PwaInstallPrompt.
+        initPwaInstallCapture()
+        fireBeforeInstallPrompt()
+
+        const {api} = mountPwaInstall()
+
+        expect(api.canInstall.value).toBe(true)
     })
 })

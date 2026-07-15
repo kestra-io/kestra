@@ -124,7 +124,6 @@ export default defineConfig(({mode}) => {
                 // for every deploy path (root, sub-path, behind a proxy), so the scope can't
                 // be baked in at build time.
                 injectRegister: null,
-                registerType: "autoUpdate",
                 manifestFilename: "manifest.webmanifest",
                 includeManifestIcons: false,
                 manifest: {

@@ -1,9 +1,5 @@
-import {computed, onBeforeUnmount, onMounted, ref} from "vue"
-
-interface BeforeInstallPromptEvent extends Event {
-    readonly userChoice: Promise<{outcome: "accepted" | "dismissed", platform: string}>
-    prompt(): Promise<void>
-}
+import {computed, ref} from "vue"
+import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../utils/pwaInstallState"
 
 function isStandalone(): boolean {
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -16,43 +12,24 @@ function isSecureOrigin(): boolean {
 }
 
 export function usePwaInstall() {
-    const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
+    initPwaInstallCapture()
+
     const installed = ref(isStandalone())
     const dismissed = ref(false)
 
     const canInstall = computed(() =>
-        deferredPrompt.value !== null && !installed.value && !dismissed.value && isSecureOrigin(),
+        deferredInstallPrompt.value !== null && !installed.value && !appInstalled.value && !dismissed.value && isSecureOrigin(),
     )
 
-    function onBeforeInstallPrompt(event: Event) {
-        event.preventDefault()
-        deferredPrompt.value = event as BeforeInstallPromptEvent
-    }
-
-    function onAppInstalled() {
-        installed.value = true
-        deferredPrompt.value = null
-    }
-
-    onMounted(() => {
-        window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt)
-        window.addEventListener("appinstalled", onAppInstalled)
-    })
-
-    onBeforeUnmount(() => {
-        window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt)
-        window.removeEventListener("appinstalled", onAppInstalled)
-    })
-
     async function promptInstall(): Promise<void> {
-        const prompt = deferredPrompt.value
+        const prompt = deferredInstallPrompt.value
         if (!prompt) {
             return
         }
 
         await prompt.prompt()
         await prompt.userChoice
-        deferredPrompt.value = null
+        deferredInstallPrompt.value = null
     }
 
     function dismiss(): void {

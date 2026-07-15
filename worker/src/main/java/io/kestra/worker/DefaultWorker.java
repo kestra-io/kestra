@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.Asset;
@@ -121,6 +122,9 @@ public class DefaultWorker implements Worker {
 
     @Inject
     private ServerConfig serverConfig;
+
+    @Inject
+    private WorkerConfig workerConfig;
 
     @Inject
     private RunContextInitializer runContextInitializer;
@@ -615,10 +619,15 @@ public class DefaultWorker implements Worker {
                     );
 
                     if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
+                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger, workerConfig.triggerEvaluationTimeout());
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                         if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
+                            if (workerCallable.getException() instanceof TimeoutExceededException) {
+                                metricRegistry
+                                    .counter(MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT, MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
+                                    .increment();
+                            }
                             this.handleTriggerError(workerTrigger, workerCallable.getException());
                         }
 

@@ -43,6 +43,7 @@ import {commit} from "./plugins/commit"
 import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
+import {VitePWA} from "vite-plugin-pwa"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
 
@@ -116,6 +117,60 @@ export default defineConfig(({mode}) => {
                 bundleName: "ui",
                 uploadToken: process.env.CODECOV_TOKEN,
                 telemetry: false,
+            }),
+            !process.env.STORYBOOK && VitePWA({
+                // Registered manually at runtime (see src/utils/serviceWorker.ts) so the
+                // scope can be computed from window.KESTRA_BASE_PATH: one build is shipped
+                // for every deploy path (root, sub-path, behind a proxy), so the scope can't
+                // be baked in at build time.
+                injectRegister: null,
+                registerType: "autoUpdate",
+                manifestFilename: "manifest.webmanifest",
+                includeManifestIcons: false,
+                manifest: {
+                    name: "Kestra",
+                    short_name: "Kestra",
+                    description: "Kestra - Declarative Data Orchestration Platform",
+                    start_url: "./",
+                    scope: "./",
+                    display: "standalone",
+                    theme_color: "#631bf3",
+                    background_color: "#ffffff",
+                    icons: [
+                        {src: "pwa-192x192.png", sizes: "192x192", type: "image/png", purpose: "any"},
+                        {src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any"},
+                        {src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable"},
+                    ],
+                },
+                workbox: {
+                    // Every JS/CSS chunk (entry included) lives under assets/ and, because
+                    // Monaco, shiki (one grammar/theme chunk per language), mermaid, katex,
+                    // echarts and the topology graph are all reachable from the entry, this
+                    // app has no small, cleanly-separable "critical entry chunk" - the whole
+                    // assets/ graph is tens of MB. So the app shell we precache is just the
+                    // static root-level files (manifest, icons, loader stylesheet); JS/CSS is
+                    // always fetched from the network, keeping the first install tiny.
+                    // manifest.webmanifest is precached automatically by the plugin itself;
+                    // matching it here too would just add a harmless duplicate entry.
+                    globPatterns: ["*.{ico,png,css}"],
+                    maximumFileSizeToCacheInBytes: 256 * 1024,
+                    // vite-plugin-pwa defaults navigateFallback to "index.html", which would
+                    // register a NavigationRoute bound to a precache entry we don't generate
+                    // (see above) and break every navigation once the SW is active. Disabled:
+                    // the webserver injects a fresh, request-scoped CSRF meta tag into
+                    // index.html on every request (StaticFilter); serving a precached/fallback
+                    // copy for navigations would ship a stale/missing token and break the next
+                    // mutating API call. Navigation requests always hit the network.
+                    navigateFallback: undefined,
+                    skipWaiting: true,
+                    clientsClaim: true,
+                    runtimeCaching: [
+                        {
+                            urlPattern: /\/api\//,
+                            handler: "NetworkOnly",
+                        },
+                    ],
+                },
             }),
         ],
         assetsInclude: ["**/*.md"],

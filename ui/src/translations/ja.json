@@ -2302,6 +2302,12 @@
     },
     "open source": "オープンソース",
     "pricing": "料金",
-    "license": "ライセンス"
+    "license": "ライセンス",
+    "pwa": {
+      "install_title": "Kestra をインストール",
+      "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
+      "install": "インストール",
+      "dismiss": "後で"
+    }
   }
 }

@@ -2,8 +2,6 @@ package io.kestra.webserver.responses;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.PaginationType;
 
@@ -23,7 +21,6 @@ public class PagedResults<T> {
      * Exact total row count — present in offset mode (and for the {@link ArrayListTotal} path used by other
      * endpoints), omitted in cursor mode (a cursor store has no total).
      */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long total;
 
     /**
@@ -31,7 +28,6 @@ public class PagedResults<T> {
      * {@link PaginationType#CURSOR} (forward-only, no {@code total}). Only set by {@link #of(Page)} — the
      * {@link ArrayListTotal} path leaves it null (omitted) so existing endpoints keep their {@code {results, total}} shape.
      */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private PaginationType type;
 
     /**
@@ -40,7 +36,6 @@ public class PagedResults<T> {
      * a {@code nextCursor}, so the client keeps paging until it gets back an empty page (not until {@code nextCursor}
      * is null).
      */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String nextCursor;
 
     private PagedResults(ArrayListTotal<T> results) {

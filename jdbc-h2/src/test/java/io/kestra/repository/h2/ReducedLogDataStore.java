@@ -65,7 +65,7 @@ public class ReducedLogDataStore extends H2LogDataStore {
         // One cursor per row (Micronaut expects the list to match the content); every entry carries the same
         // next-page token, so the last one — which the wrapper reads — resumes at the next page.
         String nextToken = String.valueOf(offset + size);
-        List<Pageable.Cursor> cursors = new ArrayList<>();
+        List<Pageable.Cursor> cursors = new ArrayList<>(content.size());
         for (int i = 0; i < content.size(); i++) {
             cursors.add(Pageable.Cursor.of(nextToken));
         }

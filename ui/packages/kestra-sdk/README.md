@@ -1,4 +1,4 @@
-# @kestra-io/kestra-sdk-oss (POC)
+# @kestra-io/kestra-sdk (POC)
 
 Throwaway-branch proof of concept for [the JS/TS SDK spike](https://app.notion.com/p/kestra-io/Spike-Move-the-JS-TS-SDK-into-the-OSS-EE-repos-39e36907f7b581e3af35fccf010639b2):
 a TS client generated **in this repo, on the same commit as the OSS backend**, instead of
@@ -10,15 +10,14 @@ fails CI in the same PR that introduced it.
 
 ## Same package name as the public npm package — on purpose
 
-The folder is named `kestra-sdk-oss` for humans browsing the tree, but `package.json`'s
-`name` is literally `@kestra-io/kestra-sdk` — the same name every existing import in
-`ui/src` already uses (and the same name the EE package below carries too, in its own
-repo). This is deliberate: npm workspaces resolves a bare specifier to the workspace
-member by **name**, so with the dependency range set to `"*"` in `ui/package.json`,
-every one of the ~44 existing `@kestra-io/kestra-sdk` imports in `ui/src` resolves to
-this local, in-repo package with **zero import changes** — no migration, no rename, no
-big-bang PR (the OSS/EE split reuses the exact same "same name, different local
-content" trick that already governs vs the npm registry version).
+`package.json`'s `name` is literally `@kestra-io/kestra-sdk` — the same name every
+existing import in `ui/src` already uses (and the same name the EE package below
+carries too, in its own repo). This is deliberate: npm workspaces resolves a bare
+specifier to the workspace member by **name**, so with the dependency range set to `"*"`
+in `ui/package.json`, every one of the ~44 existing `@kestra-io/kestra-sdk` imports in
+`ui/src` resolves to this local, in-repo package with **zero import changes** — no
+migration, no rename, no big-bang PR (the OSS/EE split reuses the exact same "same
+name, different local content" trick that already governs vs the npm registry version).
 
 ## How it's generated
 

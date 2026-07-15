@@ -1526,6 +1526,7 @@
     "documentationMenu": "ドキュメントメニュー",
     "item": "アイテム",
     "items": "アイテム",
+    "iterations": "イテレーション",
     "cron": "Cron（クーロン）",
     "execution_started": "実行が開始されました！",
     "execution_failed": "実行が失敗しました！",

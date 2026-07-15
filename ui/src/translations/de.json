@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Ungültiger Quellcode",
+    "invalid duration": "Ungültiges Dauerformat. Bitte verwenden Sie ISO 8601 (z.B. PT30M, P1D).",
     "missingSource": "Fehlende Quelle",
     "update": "Aktualisieren",
     "update ok": "ist aktualisiert",

@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "無効なソースコード",
+    "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
     "missingSource": "ソースが見つかりません",
     "update": "更新",
     "update ok": "更新されました",

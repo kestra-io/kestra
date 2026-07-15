@@ -28,6 +28,7 @@
     "flows": "流程",
     "flow": "流程",
     "invalid source": "无效的源代码",
+    "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "missingSource": "缺少源",
     "update": "更新",
     "update ok": "已更新",

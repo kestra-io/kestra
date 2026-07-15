@@ -37,6 +37,28 @@ jobs:
           event-type: "oss-updated"
           client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
 
+      # Detect whether this push can affect the generated OpenAPI spec (anything outside ui/.github)
+      - name: Detect OpenAPI-relevant changes
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        id: openapi-changes
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            backend:
+              - '!{ui,.github}/**'
+
+      # Trigger the EE client-sdk OpenAPI spec update as soon as OSS backend/API code changes,
+      # instead of waiting for an unrelated EE develop push to pick it up
+      - name: Trigger EE OpenAPI spec update
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && steps.openapi-changes.outputs.backend == 'true' }}
+        uses: kestra-io/actions/composite/repository-dispatch@main
+        with:
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          repository: kestra-io/kestra-ee
+          event-type: "oss-openapi-updated"
+          client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
+
   backend-tests:
     name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}

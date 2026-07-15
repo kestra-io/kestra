@@ -1,17 +1,17 @@
 <template>
     <article
-        class="ks-plugin-card"
-        :class="{'ks-plugin-card--clickable': clickable}"
+        class="plugin-card"
+        :class="{'plugin-card--clickable': clickable}"
         :role="clickable ? 'button' : undefined"
         :tabindex="clickable ? 0 : undefined"
         @click="onClick"
         @keydown.enter="onClick"
         @keydown.space.prevent="onClick"
     >
-        <header class="ks-plugin-card__header">
-            <div v-if="hasIcon" class="ks-plugin-card__logo">
+        <header class="plugin-card__header">
+            <div v-if="hasIcon" class="plugin-card__logo">
                 <slot name="icon">
-                    <KsTaskIcon
+                    <TaskIcon
                         v-if="iconCls"
                         :cls="iconCls"
                         :icons="icons"
@@ -21,36 +21,36 @@
                 </slot>
             </div>
 
-            <div class="ks-plugin-card__heading">
-                <h5 class="ks-plugin-card__title">{{ title }}</h5>
-                <p v-if="description" class="ks-plugin-card__description">
+            <div class="plugin-card__heading">
+                <h5 class="plugin-card__title">{{ title }}</h5>
+                <p v-if="description" class="plugin-card__description">
                     {{ description }}
                 </p>
             </div>
         </header>
 
-        <div v-if="categories?.length" class="ks-plugin-card__tags">
+        <div v-if="categories?.length" class="plugin-card__tags">
             <KsTag v-for="category in categories" :key="category">
-                <span class="ks-plugin-card__category">{{ category }}</span>
+                <span class="plugin-card__category">{{ category }}</span>
             </KsTag>
         </div>
 
-        <hr v-if="hasDivider" class="ks-plugin-card__divider">
+        <hr v-if="hasDivider" class="plugin-card__divider">
 
-        <footer v-if="hasFooter" class="ks-plugin-card__footer">
+        <footer v-if="hasFooter" class="plugin-card__footer">
             <slot name="footer-content">
-                <span v-if="hasTaskCount" class="ks-plugin-card__count">
-                    <span class="ks-plugin-card__count-value">{{ taskCount }}</span>
-                    <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.tasks", taskCount ?? 0) }}</span>
+                <span v-if="hasTaskCount" class="plugin-card__count">
+                    <span class="plugin-card__count-value">{{ taskCount }}</span>
+                    <span class="plugin-card__count-label">{{ t("plugin_card.tasks", taskCount ?? 0) }}</span>
                 </span>
-                <span v-if="hasBlueprintCount" class="ks-plugin-card__count">
-                    <span class="ks-plugin-card__count-value">{{ blueprintCount }}</span>
-                    <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.blueprints", blueprintCount ?? 0) }}</span>
+                <span v-if="hasBlueprintCount" class="plugin-card__count">
+                    <span class="plugin-card__count-value">{{ blueprintCount }}</span>
+                    <span class="plugin-card__count-label">{{ t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
                 </span>
             </slot>
             <ChevronRight
                 v-if="clickable"
-                class="ks-plugin-card__chevron"
+                class="plugin-card__chevron"
                 aria-hidden="true"
             />
         </footer>
@@ -61,9 +61,13 @@
     import {computed, useSlots} from "vue"
     import {useI18n} from "vue-i18n"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import KsTag from "./KsTag/KsTag.vue"
-    import KsTaskIcon, {type KsTaskIconData} from "../Kestra/KsTaskIcon.vue"
-    import locale from "./KsPluginCard.locale"
+    import {KsTag} from "@kestra-io/design-system"
+    import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
+    import locale from "./PluginCard.locale"
+
+    defineOptions({
+        name: "PluginCard",
+    })
 
     const {t} = useI18n({
         useScope: "local",
@@ -75,7 +79,7 @@
     const props = withDefaults(defineProps<{
         iconCls?: string
         icons?: Record<string, any>
-        loadIcon?: (cls: string) => Promise<KsTaskIconData | undefined>
+        loadIcon?: (cls: string) => Promise<TaskIconData | undefined>
         title: string
         description?: string | null
         categories?: string[]
@@ -116,7 +120,7 @@
 </script>
 
 <style scoped lang="scss">
-    .ks-plugin-card {
+    .plugin-card {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);

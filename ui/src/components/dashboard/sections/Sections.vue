@@ -118,13 +118,13 @@
 
         if (route.name === "flows/update") {
             baseFilters.push({
-                field: "NAMESPACE", operation: "EQUALS", value: route.params.namespace as string,
+                field: "namespace", operation: "EQUALS", value: route.params.namespace as string,
             })
-            baseFilters.push({field: "FLOW_ID", operation: "EQUALS", value: route.params.id as string})
+            baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string})
         }
 
         if (route.name === "namespaces/update") {
-            baseFilters.push({field: "NAMESPACE", operation: "EQUALS", value: route.params.id as string})
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string})
         }
 
         return baseFilters

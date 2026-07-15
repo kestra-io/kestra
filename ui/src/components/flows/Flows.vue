@@ -721,7 +721,7 @@
     function chartFilters() {
         const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
         return [{
-            field: "TIME_RANGE",
+            field: "timeRange",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
         } satisfies QueryFilter]

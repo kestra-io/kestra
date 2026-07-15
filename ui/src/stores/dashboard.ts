@@ -16,7 +16,7 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
-import {ChartFiltersOverrides, useClient, type DashboardSettings, type QueryFilter} from "@kestra-io/kestra-sdk"
+import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
@@ -34,26 +34,6 @@ export const DEFAULT_DASHBOARD = {
     deleted: false,
     charts: [],
 } as const satisfies Dashboard
-
-// The generated SDK's `QueryFilterField` type carries the enum *names* (e.g. `TIME_RANGE`,
-// `FLOW_ID`), whereas the backend deserializes `QueryFilter.field` through its `@JsonValue` wire
-// form (`timeRange`, `flowId`). For the search endpoints the SDK's query-string serializer
-// camelCases the field names, but the dashboard chart endpoints receive `filters` in the JSON
-// body, which axios serializes verbatim — so enum-name fields must be converted here too, or
-// Jackson fails with "Cannot construct instance of QueryFilter$Field". Fields already in wire
-// form (e.g. those produced by `decodeSearchParams`) are all-lowercase/camelCase and left as-is.
-const toWireField = (field: string): string => {
-    if (!/^[A-Z0-9]+(_[A-Z0-9]+)*$/.test(field)) return field
-    if (field === "QUERY") return "q"
-    return field.toLowerCase().replace(/_([a-z0-9])/g, (_match, char) => char.toUpperCase())
-}
-
-const toWireFilters = (filters?: QueryFilter[]): QueryFilter[] | undefined =>
-    filters?.map((filter) => ({
-        ...filter,
-        ...(filter.field !== undefined ? {field: toWireField(String(filter.field)) as QueryFilter["field"]} : {}),
-        ...(filter.children ? {children: toWireFilters(filter.children)} : {}),
-    }))
 
 export const useDashboardStore = defineStore("dashboard", () => {
     const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
@@ -231,8 +211,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const normalized = {...parameters, filters: toWireFilters(parameters.filters)}
-            return await DashboardsAPI.dashboardChartData({id, chartId, ...normalized} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
+            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
         } catch (e: any) {
             if (e.status === 404) return undefined
             throw e
@@ -246,18 +225,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function chartPreview(request: Parameters<typeof DashboardsAPI.previewChart>[0]) {
-        const globalFilter = request.globalFilter
-            ? {...request.globalFilter, filters: toWireFilters(request.globalFilter.filters)}
-            : request.globalFilter
-        return DashboardsAPI.previewChart({...request, globalFilter})
+        return DashboardsAPI.previewChart(request)
     }
 
     async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides) {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`
-        const normalized = {...parameters, filters: toWireFilters(parameters.filters)}
-        const payload = isDefault ? {chart: chart.content, globalFilter: normalized} : normalized
+        const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters
 
         const filename = `chart__${chart.id}`
 

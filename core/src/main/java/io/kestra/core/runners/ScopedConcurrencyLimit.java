@@ -69,22 +69,6 @@ public record ScopedConcurrencyLimit(
         return new ScopedConcurrencyLimit(scope, tenantId, namespace, flowId, concurrency);
     }
 
-    /**
-     * Whether the given execution coordinates fall inside this scope: the flow itself for a
-     * flow scope, the namespace or any descendant for a namespace scope, the whole tenant for
-     * a tenant scope.
-     */
-    public boolean covers(String tenantId, String namespace, String flowId) {
-        if (!Objects.equals(this.tenantId, tenantId)) {
-            return false;
-        }
-        return switch (this.scope) {
-            case FLOW -> Objects.equals(this.namespace, namespace) && Objects.equals(this.flowId, flowId);
-            case NAMESPACE -> Objects.equals(this.namespace, namespace) || (namespace != null && namespace.startsWith(this.namespace + "."));
-            case TENANT -> true;
-        };
-    }
-
     /** {@inheritDoc} */
     @Override
     public String uid() {

@@ -36,7 +36,8 @@
     "Default page": "पूर्व-निर्धारित पृष्ठ",
     "confirmation": "पुष्टि",
     "common": {
-      "back": "वापस"
+      "back": "वापस",
+      "openInNewTab": "नए टैब में खोलें"
     },
     "delete confirm": "क्या आप वाकई <code>{name}</code> को हटाना चाहते हैं?",
     "outdated revision save confirmation": {

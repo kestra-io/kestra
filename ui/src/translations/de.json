@@ -36,7 +36,8 @@
     "Default page": "Standardseite",
     "confirmation": "Bestätigung",
     "common": {
-      "back": "Zurück"
+      "back": "Zurück",
+      "openInNewTab": "In neuer Registerkarte öffnen"
     },
     "delete confirm": "Sind Sie sicher, dass Sie <code>{name}</code> löschen möchten?",
     "outdated revision save confirmation": {

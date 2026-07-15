@@ -36,7 +36,8 @@
     "Default page": "Página predeterminada",
     "confirmation": "Confirmación",
     "common": {
-      "back": "Atrás"
+      "back": "Atrás",
+      "openInNewTab": "Abrir en nueva pestaña"
     },
     "delete confirm": "¿Estás seguro de eliminar <code>{name}</code>?",
     "outdated revision save confirmation": {

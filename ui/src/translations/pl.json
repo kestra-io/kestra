@@ -36,7 +36,8 @@
     "Default page": "Domyślna strona",
     "confirmation": "Potwierdzenie",
     "common": {
-      "back": "Wstecz"
+      "back": "Wstecz",
+      "openInNewTab": "Otwórz w nowej karcie"
     },
     "delete confirm": "Czy na pewno chcesz usunąć <code>{name}</code>?",
     "outdated revision save confirmation": {

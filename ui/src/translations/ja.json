@@ -36,7 +36,8 @@
     "Default page": "デフォルトページ",
     "confirmation": "確認",
     "common": {
-      "back": "戻る"
+      "back": "戻る",
+      "openInNewTab": "新しいタブで開く"
     },
     "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
     "outdated revision save confirmation": {

@@ -36,7 +36,8 @@
     "Default page": "Page par défaut",
     "confirmation": "Confirmation",
     "common": {
-      "back": "Retour"
+      "back": "Retour",
+      "openInNewTab": "Ouvrir dans un nouvel onglet"
     },
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
     "outdated revision save confirmation": {

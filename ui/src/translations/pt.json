@@ -36,7 +36,8 @@
     "Default page": "Página padrão",
     "confirmation": "Confirmação",
     "common": {
-      "back": "Voltar"
+      "back": "Voltar",
+      "openInNewTab": "Abrir em nova aba"
     },
     "delete confirm": "Tem certeza de que deseja deletar <code>{name}</code>?",
     "outdated revision save confirmation": {

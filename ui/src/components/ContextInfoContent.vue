@@ -1,8 +1,9 @@
 <template>
     <div class="wrapper">
-        <div v-if="title || $slots['back-button']" class="title">
+        <div v-if="title || $slots['back-button'] || $slots['header']" class="title">
             <slot name="back-button" />
             <h2 v-if="title">{{ title }}</h2>
+            <slot name="header" />
         </div>
         <div class="content" ref="contentRef">
             <slot />
@@ -49,7 +50,8 @@
             overflow: hidden;
             margin-bottom: 0;
             margin-top: 0;
-            width: 100%;
+            flex: 1;
+            min-width: 0;
             line-height: 1.2;
             font-weight: var(--ks-font-weight-semibold);
         }

@@ -22,13 +22,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # When an OSS ci start, we trigger an EE one
+  # When develop lands a push, run the kestra-ee compile check for the ref (via a
+  # Kestra webhook) and surface the result inline. Replaces the async
+  # "oss-updated" repository_dispatch round-trip.
   trigger-ee:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout  # required so the local composite action below can resolve
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: actions/checkout@v4
+
+      # Run the EE compileJava check for the pushed ref on a Kestra instance and
+      # surface the result inline. The flow resolves the matching kestra-ee ref
+      # itself (same-name branch, else develop). commit-sha posts a commit-status
+      # callback on the develop HEAD so EE-compile health is visible on develop.
+      - name: EE compile check (via Kestra webhook)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: ./.github/actions/ee-compile-check
+        with:
+          webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+          ref: ${{ github.ref_name }}
+          commit-sha: ${{ github.sha }}
+          pr-repo: ${{ github.repository }}
+
+      # ------------------------------------------------------------------------
+      # LEGACY (DISABLED): the develop push used to trigger the full kestra-ee
+      # workflow asynchronously via an "oss-updated" repository dispatch. It is
+      # superseded by the synchronous "EE compile check (via Kestra webhook)"
+      # step above. Kept here, guarded by `false &&`, for quick rollback — drop
+      # the `false &&` (and disable the webhook step above) to re-enable.
+      # ------------------------------------------------------------------------
       # Targeting develop branch from develop
       - name: Trigger EE Workflow (develop push, no payload)
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        if: ${{ false && (github.event_name == 'push' && github.ref == 'refs/heads/develop') }}
         uses: kestra-io/actions/composite/repository-dispatch@main
         with:
           gh-app-id: ${{ secrets.GH_BOT_APP_ID }}

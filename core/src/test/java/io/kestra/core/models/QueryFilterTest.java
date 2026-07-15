@@ -90,7 +90,7 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(
+            buildQueryFiltersForOperationsWithCompanion(
                 Field.FLOW_ID, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
@@ -102,7 +102,8 @@ public class QueryFilterTest {
                     Op.IN,
                     Op.NOT_IN,
                     Op.PREFIX
-                )
+                ),
+                QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value("io.kestra.tests").build()
             ),
 
             buildQueryFiltersForOperations(
@@ -1012,14 +1013,15 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(
+            buildQueryFiltersForOperationsWithCompanion(
                 Field.FLOW_ID, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO
-                )
+                ),
+                QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value("io.kestra.tests").build()
             ),
 
             buildQueryFiltersForOperations(
@@ -1798,6 +1800,22 @@ public class QueryFilterTest {
 
     private static Stream<Arguments> buildQueryFiltersForOperations(Field field, Resource resource, Set<Op> operations) {
         return operations.stream().map(operation -> Arguments.of(QueryFilter.builder().field(field).operation(operation).build(), resource));
+    }
+
+    /**
+     * Like {@link #buildQueryFiltersForOperations} but pairs each filter with a companion filter
+     * to satisfy cross-field constraints (e.g. FLOW_ID requires NAMESPACE for EXECUTION).
+     */
+    private static Stream<Arguments> buildQueryFiltersForOperationsWithCompanion(
+        Field field, Resource resource, Set<Op> operations, QueryFilter companion) {
+        return operations.stream().map(operation -> {
+            QueryFilter filter = QueryFilter.builder().field(field).operation(operation).build();
+            QueryFilter combined = QueryFilter.builder()
+                .logical(Logical.AND)
+                .children(List.of(companion, filter))
+                .build();
+            return Arguments.of(combined, resource);
+        });
     }
 
 }

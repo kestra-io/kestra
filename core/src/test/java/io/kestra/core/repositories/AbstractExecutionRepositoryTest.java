@@ -248,15 +248,15 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key1", "value1")).operation(Op.NOT_IN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).value("value").operation(Op.CONTAINS).build(), 1),
 
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 16),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.NOT_EQUALS).build(), 13),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ul").operation(Op.CONTAINS).build(), 16),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ful").operation(Op.STARTS_WITH).build(), 16),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ull").operation(Op.ENDS_WITH).build(), 16),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("[ful]{4}").operation(Op.REGEX).build(), 16),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other")).operation(Op.IN).build(), 16),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other2")).operation(Op.NOT_IN).build(), 13),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.PREFIX).build(), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build()), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.NOT_EQUALS).build()), 13),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value("ul").operation(Op.CONTAINS).build()), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value("ful").operation(Op.STARTS_WITH).build()), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value("ull").operation(Op.ENDS_WITH).build()), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value("[ful]{4}").operation(Op.REGEX).build()), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other")).operation(Op.IN).build()), 16),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other2")).operation(Op.NOT_IN).build()), 13),
+            Arguments.of(flowIdWithNamespace(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.PREFIX).build()), 16),
 
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 29),
@@ -304,6 +304,7 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(
                 "(RUNNING AND flow=full) OR (SUCCESS AND flow=second)",
                 List.of(
+                    namespaceEq,
                     QueryFilter.builder()
                         .logical(Logical.OR)
                         .children(
@@ -341,6 +342,7 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(
                 "(RUNNING AND flow=full) OR FAILED OR (SUCCESS AND flow=second)",
                 List.of(
+                    namespaceEq,
                     QueryFilter.builder()
                         .logical(Logical.OR)
                         .children(
@@ -431,12 +433,15 @@ public abstract class AbstractExecutionRepositoryTest {
         // Given
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         inject(tenant);
+        QueryFilter namespaceFilter = QueryFilter.builder()
+            .field(Field.NAMESPACE).operation(Op.EQUALS).value(NAMESPACE)
+            .build();
         QueryFilter narrow = QueryFilter.builder()
             .field(Field.FLOW_ID).operation(Op.CONTAINS).value("cond")
             .build();
 
         // When
-        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(narrow), Pageable.from(0, 100));
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(namespaceFilter, narrow), Pageable.from(0, 100));
 
         // Then
         assertThat(ids).containsExactly("second");
@@ -463,12 +468,15 @@ public abstract class AbstractExecutionRepositoryTest {
         // Given
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         inject(tenant);
+        QueryFilter namespaceFilter = QueryFilter.builder()
+            .field(Field.NAMESPACE).operation(Op.EQUALS).value(NAMESPACE)
+            .build();
         QueryFilter narrow = QueryFilter.builder()
             .field(Field.FLOW_ID).operation(Op.CONTAINS).value("no-such-flow-id")
             .build();
 
         // When
-        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(narrow), Pageable.from(0, 100));
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(namespaceFilter, narrow), Pageable.from(0, 100));
 
         // Then
         assertThat(ids).isEmpty();
@@ -552,24 +560,14 @@ public abstract class AbstractExecutionRepositoryTest {
 
         filters = List.of(
             QueryFilter.builder()
-                .field(QueryFilter.Field.FLOW_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value("second")
-                .build()
-        );
-        executions = executionRepository.find(Pageable.from(1, 10), tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(13L);
-
-        filters = List.of(
-            QueryFilter.builder()
-                .field(QueryFilter.Field.FLOW_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value("second")
-                .build(),
-            QueryFilter.builder()
                 .field(QueryFilter.Field.NAMESPACE)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(NAMESPACE)
+                .build(),
+            QueryFilter.builder()
+                .field(QueryFilter.Field.FLOW_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("second")
                 .build()
         );
         executions = executionRepository.find(Pageable.from(1, 10), tenant, filters);
@@ -1619,6 +1617,11 @@ public abstract class AbstractExecutionRepositoryTest {
             // filtered using repository find (pageable) since findAllAsync has no filters
             List<QueryFilter> filters = List.of(
                 QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(NAMESPACE)
+                    .build(),
+                QueryFilter.builder()
                     .field(QueryFilter.Field.FLOW_ID)
                     .operation(QueryFilter.Op.EQUALS)
                     .value("flowA")
@@ -1842,5 +1845,19 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(resultBoth).hasSize(2);
         assertThat(resultBoth).extracting(Execution::getId)
             .containsExactlyInAnyOrder(execA.getId(), execB.getId());
+    }
+
+    /**
+     * Wraps a FLOW_ID filter in an AND node with a NAMESPACE filter
+     * to satisfy the cross-field validation requirement.
+     */
+    private static QueryFilter flowIdWithNamespace(QueryFilter flowIdFilter) {
+        return QueryFilter.builder()
+            .logical(Logical.AND)
+            .children(List.of(
+                QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value(NAMESPACE).build(),
+                flowIdFilter
+            ))
+            .build();
     }
 }

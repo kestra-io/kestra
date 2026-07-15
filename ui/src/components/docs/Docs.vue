@@ -5,9 +5,7 @@
             <Toc />
         </template>
         <template #content>
-            <template>
-                <KsMarkdown class="markdown" :content="markdownContent" :components="markdownComponents" />
-            </template>
+            <KsMarkdown class="markdown" :content="markdownContent" :components="markdownComponents" />
         </template>
     </DocsLayout>
 </template>
@@ -36,6 +34,7 @@
     import ProseA from "../content/ProseA.vue"
     import ChildTableOfContents from "../content/ChildTableOfContents.vue"
     import ChildCard from "../content/ChildCard.vue"
+    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     const markdownComponents = {
         a: ProseA,
@@ -72,15 +71,20 @@
     useRouteContext(routeInfo)
 
     watch(
-        () => route.params.path,
-        async () => {
-            const response = await docStore.fetchResource(path.value ? `/${path.value}` : "")
+        [() => route.params.path, () => docStore.resourceUrlTemplate],
+        async ([, resourceUrlTemplate]) => {
+            if (!resourceUrlTemplate) return
+
+            // the route already consumes the "docs" path segment, so it must be added back here for the API lookup
+            const response = await docStore.fetchResource(path.value ? `/docs/${path.value}` : "/docs")
             docStore.pageMetadata = response.metadata
             let content = response.content
             if (!("canShare" in navigator)) {
                 content = content.replaceAll(/\s*web-share\s*/g, "")
             }
-            markdownContent.value = content
+            content = removeMDXImports(content)
+            const {content: cleanedContent} = extractMultilineJSXComponents(content)
+            markdownContent.value = replaceSelfClosingTagsWithOpenClose(cleanedContent)
         },
         {immediate: true},
     )

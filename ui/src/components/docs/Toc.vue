@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed, watch} from "vue"
     import {useDocStore} from "../../stores/doc"
     import RecursiveToc from "./RecursiveToc.vue"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
@@ -120,9 +120,14 @@
         ])
     })
 
-    onMounted(async () => {
-        rawStructure.value = await docStore.children()
-    })
+    watch(
+        () => docStore.resourceUrlTemplate,
+        async (resourceUrlTemplate) => {
+            if (!resourceUrlTemplate) return
+            rawStructure.value = await docStore.children()
+        },
+        {immediate: true},
+    )
 
     const search = async (q: string, cb: (results: SearchResult[]) => void) => {
         cb(await docStore.search({q}))

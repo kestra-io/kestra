@@ -1,8 +1,6 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
-// POC: sourced from the in-repo, same-commit OSS SDK instead of the published npm package
-// (see ui/packages/kestra-sdk-oss/README.md).
-import * as FlowsAPI from "@kestra-io/kestra-sdk-oss/flows"
+import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import {Message} from "../components/ErrorToast.vue"
 import {TUTORIAL_NAMESPACE} from "../utils/constants"
 import {Flow} from "./flow"

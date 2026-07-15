@@ -1,8 +1,8 @@
 {
-  "name": "@kestra-io/kestra-sdk-oss",
+  "name": "@kestra-io/kestra-sdk",
   "version": "0.0.0-poc",
   "private": true,
-  "description": "POC: JS/TS client generated from the OSS-only OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. See README.md.",
+  "description": "POC: JS/TS client generated from the OSS-only OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. Same package name as the public npm package on purpose — see README.md.",
   "license": "Unlicense",
   "type": "module",
   "exports": {

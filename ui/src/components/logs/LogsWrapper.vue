@@ -467,12 +467,16 @@
             display: flex;
             align-items: center;
             margin-left: auto;
+            gap: var(--ks-spacing-2);
         }
 
         &__btn {
-            margin: 0;
             padding: var(--ks-spacing-2);
             border-radius: var(--ks-radius-base);
+        }
+
+        :deep(.kel-button) {
+            margin: 0;
         }
     }
 

@@ -1,6 +1,5 @@
 package io.kestra.jdbc.runner;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,46 +47,6 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
             consumer.accept(txContext, maybeExecution.get().getExecution());
             this.jdbcRepository.delete(maybeExecution.get());
         }
-    }
-
-    /**
-     * Lock (FOR UPDATE SKIP LOCKED) and return the oldest queued execution within a scope —
-     * a single flow when {@code flowId} is set, a namespace and its descendants when only
-     * {@code namespace} is set, the whole tenant when both are null — excluding already-tried
-     * entries. The row is only locked, not deleted: the caller pops it with
-     * {@link #delete(TransactionContext, ExecutionQueued)} once it accepted the candidate.
-     * Used by the multi-scope concurrency release to scan pop candidates.
-     */
-    public Optional<ExecutionQueued> lockNextCandidate(TransactionContext txContext, String tenantId, String namespace, String flowId, Collection<String> excludedUids) {
-        var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
-
-        var condition = buildTenantCondition(tenantId);
-        if (flowId != null) {
-            condition = condition.and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId));
-        } else if (namespace != null) {
-            condition = condition.and(field("namespace", String.class).eq(namespace).or(field("namespace", String.class).startsWith(namespace + ".")));
-        }
-        if (!excludedUids.isEmpty()) {
-            condition = condition.and(KEY_FIELD.notIn(excludedUids));
-        }
-
-        var select = dslContext
-            .select(VALUE_FIELD)
-            .from(this.jdbcRepository.getTable())
-            .where(condition)
-            .orderBy(field("date").asc())
-            .limit(1)
-            .forUpdate()
-            .skipLocked();
-
-        return this.jdbcRepository.fetchOne(select);
-    }
-
-    /**
-     * Delete a queued execution within the caller's transaction.
-     */
-    public void delete(TransactionContext txContext, ExecutionQueued executionQueued) {
-        this.jdbcRepository.delete(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), executionQueued);
     }
 
     /**

@@ -76,7 +76,7 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kvsList(item: {id: string}) {
-        const data = await KvAPI.listAllKeys({filters: [{field: "NAMESPACE", operation: "EQUALS", value: item.id}] as any})
+        const data = await KvAPI.listAllKeys({filters: [{field: "namespace", operation: "EQUALS", value: item.id}] as any})
         return kvs.value = data?.results
     }
 
@@ -122,7 +122,7 @@ export const useBaseNamespacesStore = () => {
 
     async function listSecrets({id, commit: shouldCommit}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
         try {
-            const data = await SecretsAPI.listSecrets({filters: [{field: "NAMESPACE", operation: "EQUALS", value: id}] as any}) as any
+            const data = await SecretsAPI.listSecrets({filters: [{field: "namespace", operation: "EQUALS", value: id}] as any}) as any
             if (shouldCommit !== false) {
                 secrets.value = data.results
             }

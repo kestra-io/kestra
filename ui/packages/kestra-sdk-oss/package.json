@@ -1,0 +1,30 @@
+{
+  "name": "@kestra-io/kestra-sdk-oss",
+  "version": "0.0.0-poc",
+  "private": true,
+  "description": "POC: JS/TS client generated from the OSS-only OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. See README.md.",
+  "license": "Unlicense",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./client": "./dist/client.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "generate:openapi": "openapi-ts",
+    "prebuild": "openapi-ts",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "nprogress": "0.2.0",
+    "axios": "1.16.1"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.97.3",
+    "@types/node": "^26.1.1",
+    "@types/nprogress": "^0.2.3",
+    "tsdown": "^0.22.0",
+    "typescript": "^6.0.3"
+  }
+}

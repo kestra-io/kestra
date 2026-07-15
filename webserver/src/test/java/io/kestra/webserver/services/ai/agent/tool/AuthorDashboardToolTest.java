@@ -1,8 +1,5 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,9 +27,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * Integration check for {@code author-dashboard}: the tool, the real dashboard YAML parsing and
- * {@link io.kestra.core.models.validations.ModelValidator} validation, and draft publishing are
- * exercised end to end. Only the AI provider (which drives an LLM) is mocked, so generated YAML is
- * deterministic while validation runs for real.
+ * {@link io.kestra.core.models.validations.ModelValidator} validation are exercised end to end, and
+ * the tool's returned publishable draft is asserted. Only the AI provider (which drives an LLM) is
+ * mocked, so generated YAML is deterministic while validation runs for real.
  */
 @KestraTest(environments = "memory")
 class AuthorDashboardToolTest {
@@ -80,7 +77,6 @@ class AuthorDashboardToolTest {
     private AiServiceManager aiServiceManager;
 
     private AiServiceInterface aiService;
-    private List<ArtefactDraft> published;
     private AgentCallContext.Context params;
 
     @MockBean(AiServiceManager.class)
@@ -91,8 +87,7 @@ class AuthorDashboardToolTest {
     @BeforeEach
     void setUp() {
         aiService = mock(AiServiceInterface.class);
-        published = new ArrayList<>();
-        params = new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1", published::add);
+        params = new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1");
         when(aiServiceManager.getAiService("provider-1")).thenReturn(aiService);
     }
 
@@ -102,25 +97,25 @@ class AuthorDashboardToolTest {
     }
 
     @Test
-    void shouldPublishValidDraftWhenGenerationSucceeds() {
+    void shouldReturnValidDraftWhenGenerationSucceeds() {
         // Given — the model returns a well-formed dashboard
         when(aiService.generateDashboard(any(), any())).thenReturn(GenerationResult.of(VALID_YAML));
 
         // When
         AuthorDashboardTool.Result result = tool.authorDashboard("show executions per namespace", null, params);
 
-        // Then — the draft carries the generated YAML and passed real validation
-        assertThat(published).hasSize(1);
-        ArtefactDraft draft = published.getFirst();
-        assertThat(draft.kind()).isEqualTo(ArtefactKind.DASHBOARD);
-        assertThat(draft.yaml()).isEqualTo(VALID_YAML);
-        assertThat(draft.valid()).isTrue();
-        assertThat(draft.constraints()).isNull();
-        assertThat(result.draftId()).isEqualTo(draft.draftId());
+        // Then — the result carries the generated YAML and passed real validation
         assertThat(result.kind()).isEqualTo(ArtefactKind.DASHBOARD);
         assertThat(result.valid()).isTrue();
         assertThat(result.validationError()).isNull();
         assertThat(result.yaml()).isEqualTo(VALID_YAML);
+        // and its publishable artefact mirrors it — what the orchestrator persists and streams
+        ArtefactDraft draft = result.artefact();
+        assertThat(draft.draftId()).isEqualTo(result.draftId());
+        assertThat(draft.kind()).isEqualTo(ArtefactKind.DASHBOARD);
+        assertThat(draft.yaml()).isEqualTo(VALID_YAML);
+        assertThat(draft.valid()).isTrue();
+        assertThat(draft.constraints()).isNull();
     }
 
     @Test
@@ -140,23 +135,22 @@ class AuthorDashboardToolTest {
     }
 
     @Test
-    void shouldPublishInvalidDraftWithConstraintsWhenValidationFails() {
+    void shouldReturnInvalidDraftWithConstraintsWhenValidationFails() {
         // Given — a parseable dashboard that fails real validation (missing the mandatory id)
         when(aiService.generateDashboard(any(), any())).thenReturn(GenerationResult.of("title: Only a title\n"));
 
         // When
         AuthorDashboardTool.Result result = tool.authorDashboard("show executions", null, params);
 
-        // Then — the draft is still published (the user sees it) but flagged invalid for the model to fix
-        assertThat(published).hasSize(1);
-        assertThat(published.getFirst().valid()).isFalse();
-        assertThat(published.getFirst().constraints()).isNotBlank();
+        // Then — the draft is still returned (the user sees it) but flagged invalid for the model to fix
         assertThat(result.valid()).isFalse();
         assertThat(result.validationError()).isNotBlank();
+        assertThat(result.artefact().valid()).isFalse();
+        assertThat(result.artefact().constraints()).isNotBlank();
     }
 
     @Test
-    void shouldPublishInvalidDraftWhenGeneratedYamlDoesNotParse() {
+    void shouldReturnInvalidDraftWhenGeneratedYamlDoesNotParse() {
         // Given — the generated source is not a parseable dashboard
         when(aiService.generateDashboard(any(), any())).thenReturn(GenerationResult.of("title: [unclosed\n"));
 
@@ -164,11 +158,10 @@ class AuthorDashboardToolTest {
         AuthorDashboardTool.Result result = tool.authorDashboard("show executions", null, params);
 
         // Then — the parse error surfaces as a constraint violation on the draft
-        assertThat(published).hasSize(1);
-        assertThat(published.getFirst().valid()).isFalse();
-        assertThat(published.getFirst().constraints()).isNotBlank();
         assertThat(result.valid()).isFalse();
         assertThat(result.validationError()).isNotBlank();
+        assertThat(result.artefact().valid()).isFalse();
+        assertThat(result.artefact().constraints()).isNotBlank();
     }
 
     @Test
@@ -181,6 +174,5 @@ class AuthorDashboardToolTest {
         assertThatThrownBy(() -> tool.authorDashboard("do something impossible", null, params))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Dashboard generation failed: I cannot generate this dashboard");
-        assertThat(published).isEmpty();
     }
 }

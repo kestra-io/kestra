@@ -1,8 +1,5 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -31,9 +28,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Integration check for {@code author-flow}: the tool, the real {@link io.kestra.core.services.FlowService}
- * validation, and draft publishing are exercised end to end. Only the AI provider (which drives an LLM)
- * is mocked, so generated YAML is deterministic while validation runs for real.
+ * Integration check for {@code author-flow}: the tool and the real
+ * {@link io.kestra.core.services.FlowService} validation are exercised end to end, and the tool's
+ * returned publishable draft is asserted. Only the AI provider (which drives an LLM) is mocked, so
+ * generated YAML is deterministic while validation runs for real.
  */
 @KestraTest(environments = "memory")
 class AuthorFlowToolTest {
@@ -48,7 +46,6 @@ class AuthorFlowToolTest {
     private AiServiceManager aiServiceManager;
 
     private AiServiceInterface aiService;
-    private List<ArtefactDraft> published;
     private AgentCallContext.Context params;
 
     @MockBean(AiServiceManager.class)
@@ -59,8 +56,7 @@ class AuthorFlowToolTest {
     @BeforeEach
     void setUp() {
         aiService = mock(AiServiceInterface.class);
-        published = new ArrayList<>();
-        params = new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1", published::add);
+        params = new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1");
         when(aiServiceManager.getAiService("provider-1")).thenReturn(aiService);
     }
 
@@ -70,25 +66,25 @@ class AuthorFlowToolTest {
     }
 
     @Test
-    void shouldPublishValidDraftWhenGenerationSucceeds() {
+    void shouldReturnValidDraftWhenGenerationSucceeds() {
         // Given — the model returns a well-formed flow
         when(aiService.generateFlow(any(), any(), eq(TENANT))).thenReturn(GenerationResult.of(VALID_YAML));
 
         // When
         AuthorFlowTool.Result result = tool.authorFlow("log hello", "company.team", null, params);
 
-        // Then — the draft carries the generated YAML and passed real validation
-        assertThat(published).hasSize(1);
-        ArtefactDraft draft = published.getFirst();
-        assertThat(draft.kind()).isEqualTo(ArtefactKind.FLOW);
-        assertThat(draft.yaml()).isEqualTo(VALID_YAML);
-        assertThat(draft.valid()).isTrue();
-        assertThat(draft.constraints()).isNull();
-        assertThat(result.draftId()).isEqualTo(draft.draftId());
+        // Then — the result carries the generated YAML and passed real validation
         assertThat(result.kind()).isEqualTo(ArtefactKind.FLOW);
         assertThat(result.valid()).isTrue();
         assertThat(result.validationError()).isNull();
         assertThat(result.yaml()).isEqualTo(VALID_YAML);
+        // and its publishable artefact mirrors it — what the orchestrator persists and streams
+        ArtefactDraft draft = result.artefact();
+        assertThat(draft.draftId()).isEqualTo(result.draftId());
+        assertThat(draft.kind()).isEqualTo(ArtefactKind.FLOW);
+        assertThat(draft.yaml()).isEqualTo(VALID_YAML);
+        assertThat(draft.valid()).isTrue();
+        assertThat(draft.constraints()).isNull();
     }
 
     @Test
@@ -109,19 +105,18 @@ class AuthorFlowToolTest {
     }
 
     @Test
-    void shouldPublishInvalidDraftWithConstraintsWhenValidationFails() {
+    void shouldReturnInvalidDraftWithConstraintsWhenValidationFails() {
         // Given — the model returns a flow that fails real validation (no tasks)
         when(aiService.generateFlow(any(), any(), eq(TENANT))).thenReturn(GenerationResult.of(INVALID_YAML));
 
         // When
         AuthorFlowTool.Result result = tool.authorFlow("log hello", null, null, params);
 
-        // Then — the draft is still published (the user sees it) but flagged invalid for the model to fix
-        assertThat(published).hasSize(1);
-        assertThat(published.getFirst().valid()).isFalse();
-        assertThat(published.getFirst().constraints()).isNotBlank();
+        // Then — the draft is still returned (the user sees it) but flagged invalid for the model to fix
         assertThat(result.valid()).isFalse();
         assertThat(result.validationError()).isNotBlank();
+        assertThat(result.artefact().valid()).isFalse();
+        assertThat(result.artefact().constraints()).isNotBlank();
     }
 
     @Test
@@ -134,7 +129,6 @@ class AuthorFlowToolTest {
         assertThatThrownBy(() -> tool.authorFlow("do something impossible", null, null, params))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Flow generation failed: I cannot generate this flow");
-        assertThat(published).isEmpty();
     }
 
     @Test
@@ -146,6 +140,5 @@ class AuthorFlowToolTest {
         assertThatThrownBy(() -> tool.authorFlow("log hello", null, null, params))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("No AI provider");
-        assertThat(published).isEmpty();
     }
 }

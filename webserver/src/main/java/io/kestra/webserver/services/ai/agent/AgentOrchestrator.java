@@ -23,6 +23,7 @@ import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
@@ -177,9 +178,9 @@ public class AgentOrchestrator {
         }
 
         emitToolCall(sink, held, entry.kind(), entry.family());
-        String result;
+        ToolCatalog.DispatchResult result;
         try {
-            result = catalog.dispatch(held, callContext(ctx, sink));
+            result = catalog.dispatch(held, callContext(ctx));
         } catch (ToolPermissionDeniedException e) {
             rejectTool(ctx, held, entry.kind(), entry.family(), e.getMessage(), sink);
             runLoop(ctx, sink);
@@ -189,8 +190,11 @@ public class AgentOrchestrator {
             runLoop(ctx, sink);
             return;
         }
-        ctx.messages().add(ToolExecutionResultMessage.from(held, result));
-        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
+        if (result.artefact() != null) {
+            publishArtefact(ctx, sink, result.artefact());
+        }
+        ctx.messages().add(ToolExecutionResultMessage.from(held, result.text()));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result.text()));
         emitToolResult(sink, held.name(), "ok");
         runLoop(ctx, sink);
     }
@@ -272,9 +276,9 @@ public class AgentOrchestrator {
 
     private void executeTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final ToolEntry entry, final TurnEventSink sink) {
         emitToolCall(sink, req, entry.kind(), entry.family());
-        String result;
+        ToolCatalog.DispatchResult result;
         try {
-            result = catalog.dispatch(req, callContext(ctx, sink));
+            result = catalog.dispatch(req, callContext(ctx));
         } catch (ToolPermissionDeniedException e) {
             rejectTool(ctx, req, entry.kind(), entry.family(), e.getMessage(), sink);
             return;
@@ -282,8 +286,11 @@ public class AgentOrchestrator {
             failTool(ctx, req, entry.kind(), entry.family(), toolErrorMessage(e), sink);
             return;
         }
-        ctx.messages().add(ToolExecutionResultMessage.from(req, result));
-        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
+        if (result.artefact() != null) {
+            publishArtefact(ctx, sink, result.artefact());
+        }
+        ctx.messages().add(ToolExecutionResultMessage.from(req, result.text()));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result.text()));
         emitToolResult(sink, req.name(), "ok");
     }
 
@@ -387,16 +394,18 @@ public class AgentOrchestrator {
         sink.error(e);
     }
 
-    private AgentCallContext.Context callContext(final AgentLoopContext ctx, final TurnEventSink sink) {
-        return new AgentCallContext.Context(ctx.tenant(), ctx.principal(), ctx.providerId(), ctx.thread().uid(), draft ->
-        {
-            threadManager.appendArtefactDraft(ctx.thread().uid(), ctx.traceId(), draft);
-            sink.emit(
-                AgentEvents.ARTEFACT_DRAFT, new AgentEvents.ArtefactDraftEvent(
-                    draft.draftId(), draft.kind().name(), draft.yaml(), draft.valid(), draft.constraints()
-                )
-            );
-        });
+    private AgentCallContext.Context callContext(final AgentLoopContext ctx) {
+        return new AgentCallContext.Context(ctx.tenant(), ctx.principal(), ctx.providerId(), ctx.thread().uid());
+    }
+
+    /** Persist and stream an artefact a tool produced — the counterpart of the tool's publishable result. */
+    private void publishArtefact(final AgentLoopContext ctx, final TurnEventSink sink, final ArtefactDraft draft) {
+        threadManager.appendArtefactDraft(ctx.thread().uid(), ctx.traceId(), draft);
+        sink.emit(
+            AgentEvents.ARTEFACT_DRAFT, new AgentEvents.ArtefactDraftEvent(
+                draft.draftId(), draft.kind().name(), draft.yaml(), draft.valid(), draft.constraints()
+            )
+        );
     }
 
     private void emitToolCall(final TurnEventSink sink, final ToolExecutionRequest req, final AgentToolCall.Kind kind, final AgentToolFamily family) {

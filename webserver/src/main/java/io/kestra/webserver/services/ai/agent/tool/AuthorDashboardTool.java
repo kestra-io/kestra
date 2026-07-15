@@ -77,7 +77,6 @@ public class AuthorDashboardTool implements AiAuthoringTool {
 
         String constraints = validate(yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.DASHBOARD, yaml, constraints == null, constraints);
-        context.publishDraft(draft);
 
         return Result.drafted(draft);
     }
@@ -104,9 +103,16 @@ public class AuthorDashboardTool implements AiAuthoringTool {
      * @param validationError the validation constraints when invalid, else null
      * @param yaml the generated YAML
      */
-    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml) {
+    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml)
+        implements
+            PublishableToolResult {
         static Result drafted(final ArtefactDraft draft) {
             return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml());
+        }
+
+        @Override
+        public ArtefactDraft artefact() {
+            return new ArtefactDraft(draftId, kind, yaml, valid, validationError);
         }
     }
 }

@@ -15,14 +15,13 @@ public class TestDraftTool implements AiAuthoringTool {
         return ArtefactKind.FLOW;
     }
 
-    @Tool(name = "draft-artefact", value = "Test-only authoring tool; publishes a draft for its argument.")
-    public String draftArtefact(@P(name = "executionId", value = "opaque test argument") final String executionId,
+    @Tool(name = "draft-artefact", value = "Test-only authoring tool; returns a publishable draft for its argument.")
+    public Result draftArtefact(@P(name = "executionId", value = "opaque test argument") final String executionId,
         final AgentCallContext.Context context) {
-        context.publishDraft(
-            new ArtefactDraft(
-                "draft-" + executionId, ArtefactKind.FLOW, "id: " + executionId + "\n", true, null
-            )
-        );
-        return "drafted: " + executionId;
+        return new Result(new ArtefactDraft("draft-" + executionId, ArtefactKind.FLOW, "id: " + executionId + "\n", true, null));
+    }
+
+    /** A publishable draft — dispatch extracts {@link #artefact()} to publish it. */
+    public record Result(ArtefactDraft artefact) implements PublishableToolResult {
     }
 }

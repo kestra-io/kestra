@@ -1,18 +1,16 @@
 package io.kestra.webserver.services.ai.agent;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 
 import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.invocation.LangChain4jManaged;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * The per-call context a {@code @Tool} method runs against: the caller's tenant and principal, the
- * turn's provider and conversation, and the channel to publish artefact drafts back to the turn.
+ * The per-call context a {@code @Tool} method runs against: the caller's tenant and principal, and the
+ * turn's provider and conversation.
  *
  * <p>
  * {@link Context} is a langchain4j {@link LangChain4jManaged managed argument}: {@link #into(Context)}
@@ -32,18 +30,10 @@ public final class AgentCallContext {
         String tenant,
         @Nullable AgentPrincipal principal,
         @Nullable String providerId,
-        @Nullable String conversationId,
-        @Nullable Consumer<ArtefactDraft> draftPublisher) implements LangChain4jManaged {
+        @Nullable String conversationId) implements LangChain4jManaged {
 
         public static Context ofTenant(final String tenant) {
-            return new Context(tenant, null, null, null, null);
-        }
-
-        public void publishDraft(final ArtefactDraft draft) {
-            if (draftPublisher == null) {
-                throw new IllegalStateException("No draft publisher bound to this agent call context");
-            }
-            draftPublisher.accept(draft);
+            return new Context(tenant, null, null, null);
         }
     }
 

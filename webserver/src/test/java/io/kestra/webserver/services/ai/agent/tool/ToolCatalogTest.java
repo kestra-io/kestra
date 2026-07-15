@@ -24,7 +24,7 @@ class ToolCatalogTest {
         ToolCatalog catalog = newCatalog(ALLOW_ALL);
 
         // When
-        String result = catalog.dispatch(request("update-artefact"), AgentCallContext.Context.ofTenant("unit"));
+        String result = catalog.dispatch(request("update-artefact"), AgentCallContext.Context.ofTenant("unit")).text();
 
         // Then
         assertThat(result).isEqualTo("updated: exec-1");
@@ -64,7 +64,7 @@ class ToolCatalogTest {
             .build();
 
         // When / Then — the tool reads the caller's tenant from the bound context
-        assertThat(catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit"))).isEqualTo("unit");
+        assertThat(catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit")).text()).isEqualTo("unit");
     }
 
     @Test
@@ -77,7 +77,7 @@ class ToolCatalogTest {
         ToolExecutionRequest request = ToolExecutionRequest.builder().id("c1").name("tenant-echo").arguments("{}").build();
 
         // When — the spec is derived from the inherited @Tool method, execution dispatches virtually
-        String result = catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit"));
+        String result = catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit")).text();
 
         // Then — the subclass override ran
         assertThat(result).isEqualTo("overridden:unit");
@@ -92,6 +92,32 @@ class ToolCatalogTest {
         assertThatThrownBy(() -> catalog.dispatch(request("no-such-tool"), AgentCallContext.Context.ofTenant("unit")))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("no-such-tool");
+    }
+
+    @Test
+    void shouldSurfaceArtefactWhenToolReturnsPublishableResult() {
+        // Given
+        ToolCatalog catalog = newCatalog(ALLOW_ALL);
+
+        // When
+        ToolCatalog.DispatchResult result = catalog.dispatch(request("draft-artefact"), AgentCallContext.Context.ofTenant("unit"));
+
+        // Then — the publishable artefact is surfaced for the orchestrator to persist and stream
+        assertThat(result.artefact()).isNotNull();
+        assertThat(result.artefact().draftId()).isEqualTo("draft-exec-1");
+    }
+
+    @Test
+    void shouldSurfaceNoArtefactForNonPublishableResult() {
+        // Given
+        ToolCatalog catalog = newCatalog(ALLOW_ALL);
+
+        // When
+        ToolCatalog.DispatchResult result = catalog.dispatch(request("update-artefact"), AgentCallContext.Context.ofTenant("unit"));
+
+        // Then
+        assertThat(result.artefact()).isNull();
+        assertThat(result.text()).isEqualTo("updated: exec-1");
     }
 
     private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator) {

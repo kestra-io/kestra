@@ -13,11 +13,13 @@ import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
+import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import dev.langchain4j.service.tool.ToolExecutor;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -154,12 +156,12 @@ public class ToolCatalog {
      * individual tool implementations' responsibility.
      *
      * @param request the tool call emitted by the model
-     * @param context what the call runs as (tenant, principal, provider, draft channel)
-     * @return the tool's textual result
+     * @param context what the call runs as (tenant, principal, provider, conversation)
+     * @return the tool's textual result plus any artefact it produced to publish
      * @throws IllegalArgumentException if the tool name is unknown
      * @throws ToolPermissionDeniedException if the caller lacks the tool's permission
      */
-    public String dispatch(final ToolExecutionRequest request, final AgentCallContext.Context context) {
+    public DispatchResult dispatch(final ToolExecutionRequest request, final AgentCallContext.Context context) {
         ToolEntry entry = registry().get(request.name());
         if (entry == null) {
             throw new IllegalArgumentException("Unknown tool: '%s'".formatted(request.name()));
@@ -175,7 +177,18 @@ public class ToolCatalog {
 
         // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
         // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
-        return entry.executor().executeWithContext(request, AgentCallContext.into(context)).resultText();
+        ToolExecutionResult executed = entry.executor().executeWithContext(request, AgentCallContext.into(context));
+        // A tool's single output is its return value; if that value is publishable, the caller (the
+        // orchestrator) persists and streams the artefact — the tool never reaches back through a side channel.
+        ArtefactDraft artefact = executed.result() instanceof PublishableToolResult publishable ? publishable.artefact() : null;
+        return new DispatchResult(executed.resultText(), artefact);
+    }
+
+    /**
+     * The outcome of a tool dispatch: the text handed to the model, plus the artefact to publish when
+     * the tool returned a {@link PublishableToolResult} (else {@code null}).
+     */
+    public record DispatchResult(String text, @Nullable ArtefactDraft artefact) {
     }
 
     /**

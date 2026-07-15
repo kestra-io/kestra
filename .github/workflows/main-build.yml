@@ -57,7 +57,7 @@ jobs:
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           repository: kestra-io/kestra-ee
           event-type: "oss-openapi-updated"
-          client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
+          client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}", "repo": "${{ github.repository }}"}'
 
   backend-tests:
     name: Backend tests

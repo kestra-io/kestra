@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Código fonte inválido",
+    "invalid duration": "Formato de duração inválido. Por favor, use ISO 8601 (ex: PT30M, P1D).",
     "missingSource": "Fonte ausente",
     "update": "Atualizar",
     "update ok": "está atualizado",
@@ -113,6 +114,7 @@
     "prev_execution": "Execução anterior",
     "next_execution": "Próxima execução",
     "datepicker": {
+      "invalid duration": "Formato de duração inválido. Por favor, use ISO 8601 (ex: PT30M, P1D).",
       "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (exemplo: 'P1DT1H1M1S)'",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (P1DT1H1M1S por ex.)",
@@ -325,7 +327,9 @@
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
     "no outputs available": "Nenhuma saída disponível para esta execução de task.",
     "outputs": "Outputs",
+    "flow_inputs": "Entradas do Flow",
     "output": "Output",
+    "flow_outputs": "Saídas do Flow",
     "eval": {
       "title": "Expressão de Depuração",
       "render": "Expressão de Renderização",

@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Code source invalide",
+    "invalid duration": "Format de durée invalide. Veuillez utiliser le format ISO 8601 (par exemple, PT30M, P1D).",
     "missingSource": "Source manquant",
     "update": "Mettre à jour",
     "update ok": "est mis à jour",
@@ -113,6 +114,7 @@
     "prev_execution": "Exécution précédente",
     "next_execution": "Prochaine exécution",
     "datepicker": {
+      "invalid duration": "Format de durée invalide. Veuillez utiliser ISO 8601 (par ex., PT30M, P1D).",
       "leave empty for infinite": "Laisser vide pour une durée infinie ou entrer une durée ISO 8601 (exemple: 'P1DT1H1M1S)'",
       "duration example": "Exemple: 'P1DT1H1M1S'",
       "error": "Format de durée invalide, un format ISO 8601 est attendu (ex: P1DT1H1M1S)",
@@ -325,7 +327,9 @@
     "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
     "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
     "outputs": "Sorties",
+    "flow_inputs": "Entrées du flow",
     "output": "Sortie",
+    "flow_outputs": "Sorties du flow",
     "eval": {
       "title": "Expression de débogage",
       "render": "Rendre l'expression",

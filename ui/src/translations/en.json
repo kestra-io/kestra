@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Invalid source code",
+    "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
     "missingSource": "Missing source",
     "update": "Update",
     "update ok": "is updated",
@@ -326,7 +327,9 @@
     "no metrics available": "No metrics recorded for this task run.",
     "no outputs available": "No outputs available for this task run.",
     "outputs": "Outputs",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug Expression",
       "render": "Render",

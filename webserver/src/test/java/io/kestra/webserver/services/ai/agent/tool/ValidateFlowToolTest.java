@@ -7,7 +7,6 @@ import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
-import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -19,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @KestraTest(environments = "memory")
 class ValidateFlowToolTest {
-    private static final InvocationContext CONTEXT = AgentCallContext.into(AgentCallContext.Context.ofTenant(MAIN_TENANT));
+    private static final AgentCallContext.Context CONTEXT = AgentCallContext.Context.ofTenant(MAIN_TENANT);
     private static final String VALID_YAML = """
         id: valid-flow
         namespace: io.kestra.test

@@ -14,7 +14,6 @@ import io.kestra.webserver.utils.PageableUtils;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -47,8 +46,8 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
     public Result readExecutionLogs(
         @P(name = "executionId", value = "The id of the execution whose logs to read") String executionId,
         @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters,
-        final InvocationContext invocationContext) {
-        String tenant = AgentCallContext.from(invocationContext).tenant();
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         // executionId is the authoritative scope; ignore any EXECUTION_ID the model added via filters.
         List<QueryFilter> effective = new ArrayList<>();

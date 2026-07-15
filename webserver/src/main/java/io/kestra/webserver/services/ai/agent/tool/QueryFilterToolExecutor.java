@@ -28,10 +28,10 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * {@link DefaultToolExecutor}.
  *
  * <p>
- * Everything after reassembly — binding the remaining parameters (including the injected
- * {@link dev.langchain4j.invocation.InvocationContext}), invoking the method, serializing the
- * result and propagating tool exceptions — is done by the delegate, so this executor only owns the
- * per-field → {@code List<QueryFilter>} translation.
+ * Everything after reassembly — binding the remaining parameters (including the managed
+ * {@code AgentCallContext.Context} argument injected from the {@link InvocationContext}), invoking
+ * the method, serializing the result and propagating tool exceptions — is done by the delegate, so
+ * this executor only owns the per-field → {@code List<QueryFilter>} translation.
  * </p>
  */
 public final class QueryFilterToolExecutor implements ToolExecutor {

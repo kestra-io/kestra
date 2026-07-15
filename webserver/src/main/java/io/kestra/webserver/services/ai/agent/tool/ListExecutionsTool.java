@@ -13,7 +13,6 @@ import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 import io.kestra.webserver.utils.PageableUtils;
 
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -49,8 +48,8 @@ public class ListExecutionsTool implements AiPlatformTool {
     )
     public Result listExecutions(
         @QueryFilterFormat(QueryFilter.Resource.EXECUTION) List<QueryFilter> filters,
-        final InvocationContext invocationContext) {
-        String tenant = AgentCallContext.from(invocationContext).tenant();
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         List<Execution> executions = executionRepository.find(
             PageableUtils.from(1, MAX_RESULTS, List.of(Execution.STATE_START_DATE_FIELD + ":desc"), executionRepository.sortMapping()),

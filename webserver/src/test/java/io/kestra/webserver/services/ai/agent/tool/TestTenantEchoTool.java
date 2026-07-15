@@ -5,7 +5,6 @@ import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.invocation.InvocationContext;
 
 /**
  * Test-only tool (constructed manually, not a bean) that echoes the conversation's tenant — read from
@@ -24,7 +23,7 @@ public class TestTenantEchoTool implements AiPlatformTool {
     }
 
     @Tool(name = "tenant-echo", value = "Test-only tool; echoes the tenant it runs against.")
-    public String tenantEcho(final InvocationContext invocationContext) {
-        return AgentCallContext.from(invocationContext).tenant();
+    public String tenantEcho(final AgentCallContext.Context context) {
+        return context.tenant();
     }
 }

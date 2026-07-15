@@ -17,7 +17,6 @@ import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.invocation.InvocationContext;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -56,8 +55,7 @@ public class AuthorDashboardTool implements AiAuthoringTool {
         @P(
             name = "currentDashboardYaml", value = "The full current dashboard YAML when revising an existing dashboard; omit when creating a new one", required = false
         ) String currentDashboardYaml,
-        final InvocationContext invocationContext) {
-        AgentCallContext.Context context = AgentCallContext.from(invocationContext);
+        final AgentCallContext.Context context) {
 
         AiServiceInterface aiService = aiServiceManager.getAiService(context.providerId());
         if (aiService == null) {

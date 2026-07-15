@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.invocation.InvocationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -112,8 +111,8 @@ class ToolCatalogTest {
     /** Overrides the inherited {@code @Tool} method without re-annotating it — like a replacement subclass. */
     private static final class OverridingEchoTool extends TestTenantEchoTool {
         @Override
-        public String tenantEcho(final InvocationContext invocationContext) {
-            return "overridden:" + super.tenantEcho(invocationContext);
+        public String tenantEcho(final AgentCallContext.Context context) {
+            return "overridden:" + super.tenantEcho(context);
         }
     }
 }

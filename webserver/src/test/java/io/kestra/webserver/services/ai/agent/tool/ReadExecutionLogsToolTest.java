@@ -16,7 +16,6 @@ import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
-import dev.langchain4j.invocation.InvocationContext;
 import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
@@ -27,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Property(name = "kestra.server-type", value = "STANDALONE")
 class ReadExecutionLogsToolTest {
     private static final String NAMESPACE = "io.kestra.test.ai";
-    private static final InvocationContext CONTEXT = AgentCallContext.into(AgentCallContext.Context.ofTenant(MAIN_TENANT));
+    private static final AgentCallContext.Context CONTEXT = AgentCallContext.Context.ofTenant(MAIN_TENANT);
 
     @Inject
     private ReadExecutionLogsTool tool;

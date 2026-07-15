@@ -31,8 +31,8 @@ import dev.langchain4j.model.chat.request.json.JsonStringSchema;
  * metadata, and every non-filter parameter), then surgically replace the filter parameter's property
  * with the expanded per-field properties. This avoids reimplementing the {@code @Internal}
  * {@code JsonSchemaElementUtils} while giving full control over the schema. (langchain4j already
- * omits the injected {@link dev.langchain4j.invocation.InvocationContext} parameter from the
- * schema, so it never reaches the model.)
+ * omits managed parameters, e.g. the injected {@code AgentCallContext.Context}, from the schema,
+ * so they never reach the model.)
  * </p>
  */
 public final class AiToolSpecifications {

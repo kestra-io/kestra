@@ -149,9 +149,9 @@ public class ToolCatalog {
     /**
      * Execute a tool call scoped to the given caller context — the one entry point both the in-process
      * loop and (later) the MCP projection use. Enforces the coarse tool permission against the
-     * caller's tenant, then hands the context to the {@code @Tool} method (and any overrides) through
-     * the invocation's {@link dev.langchain4j.invocation.InvocationContext}. Per-namespace and
-     * cross-tenant checks are the individual tool implementations' responsibility.
+     * caller's tenant, then hands the context to the {@code @Tool} method (and any overrides) as a
+     * langchain4j managed argument on the invocation. Per-namespace and cross-tenant checks are the
+     * individual tool implementations' responsibility.
      *
      * @param request the tool call emitted by the model
      * @param context what the call runs as (tenant, principal, provider, draft channel)
@@ -173,8 +173,8 @@ public class ToolCatalog {
             }
         }
 
-        // Carry the caller context to the @Tool method through langchain4j's InvocationContext — the
-        // executor injects it into the tool's InvocationContext argument — rather than a thread-local.
+        // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
+        // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
         return entry.executor().executeWithContext(request, AgentCallContext.into(context)).resultText();
     }
 

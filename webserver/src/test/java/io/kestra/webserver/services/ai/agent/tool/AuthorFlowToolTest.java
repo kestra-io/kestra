@@ -17,7 +17,6 @@ import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
-import dev.langchain4j.invocation.InvocationContext;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
@@ -50,7 +49,7 @@ class AuthorFlowToolTest {
 
     private AiServiceInterface aiService;
     private List<ArtefactDraft> published;
-    private InvocationContext params;
+    private AgentCallContext.Context params;
 
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
@@ -61,7 +60,7 @@ class AuthorFlowToolTest {
     void setUp() {
         aiService = mock(AiServiceInterface.class);
         published = new ArrayList<>();
-        params = AgentCallContext.into(new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1", published::add));
+        params = new AgentCallContext.Context(TENANT, null, "provider-1", "thread-1", published::add);
         when(aiServiceManager.getAiService("provider-1")).thenReturn(aiService);
     }
 

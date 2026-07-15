@@ -10,7 +10,6 @@ import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -44,8 +43,8 @@ public class ReadFlowTool implements AiPlatformTool {
         @P(name = "namespace", value = "The namespace of the flow") String namespace,
         @P(name = "flowId", value = "The id of the flow") String flowId,
         @P(name = "revision", value = "Optional flow revision to read; omit to read the latest revision", required = false) Integer revision,
-        final InvocationContext invocationContext) {
-        String tenant = AgentCallContext.from(invocationContext).tenant();
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         FlowWithSource flow = flowRepository.findByIdWithSource(tenant, namespace, flowId, Optional.ofNullable(revision), false)
             .orElseThrow(

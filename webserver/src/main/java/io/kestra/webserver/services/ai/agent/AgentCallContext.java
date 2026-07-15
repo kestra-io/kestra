@@ -1,12 +1,13 @@
 package io.kestra.webserver.services.ai.agent;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
 import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
 
 import dev.langchain4j.invocation.InvocationContext;
-import dev.langchain4j.invocation.InvocationParameters;
+import dev.langchain4j.invocation.LangChain4jManaged;
 import io.micronaut.core.annotation.Nullable;
 
 /**
@@ -14,15 +15,15 @@ import io.micronaut.core.annotation.Nullable;
  * turn's provider and conversation, and the channel to publish artefact drafts back to the turn.
  *
  * <p>
- * It travels to the tool through langchain4j's {@link InvocationContext} (set by
- * {@link io.kestra.webserver.services.ai.agent.tool.ToolCatalog#dispatch} and injected by
- * {@code DefaultToolExecutor} into the tool method's {@link InvocationContext} argument), not a
- * thread-local — so nothing is bound to the executor thread. A tool reads it with
- * {@link #from(InvocationContext)}.
+ * {@link Context} is a langchain4j {@link LangChain4jManaged managed argument}: {@link #into(Context)}
+ * places it in the {@link InvocationContext}'s managed parameters (set by
+ * {@link io.kestra.webserver.services.ai.agent.tool.ToolCatalog#dispatch}), and
+ * {@code DefaultToolExecutor} injects it <em>by type</em> into any {@code @Tool} method that declares
+ * a {@link Context} parameter. langchain4j also omits managed parameters from the generated tool
+ * schema, so the context never reaches the model — and nothing is bound to the executor thread.
  * </p>
  */
 public final class AgentCallContext {
-    private static final String KEY = AgentCallContext.class.getName();
 
     private AgentCallContext() {
     }
@@ -32,7 +33,8 @@ public final class AgentCallContext {
         @Nullable AgentPrincipal principal,
         @Nullable String providerId,
         @Nullable String conversationId,
-        @Nullable Consumer<ArtefactDraft> draftPublisher) {
+        @Nullable Consumer<ArtefactDraft> draftPublisher) implements LangChain4jManaged {
+
         public static Context ofTenant(final String tenant) {
             return new Context(tenant, null, null, null, null);
         }
@@ -45,20 +47,12 @@ public final class AgentCallContext {
         }
     }
 
-    /** Build an {@link InvocationContext} carrying the context for a single tool dispatch. */
+    /**
+     * Build an {@link InvocationContext} carrying the context as a managed argument for a single tool
+     * dispatch; {@code DefaultToolExecutor} injects it into the tool method's {@link Context} parameter.
+     */
     public static InvocationContext into(final Context context) {
-        InvocationParameters parameters = new InvocationParameters();
-        parameters.put(KEY, context);
-        return InvocationContext.builder().invocationParameters(parameters).build();
-    }
-
-    /** Read the context a {@code @Tool} method was dispatched with from its injected invocation. */
-    public static Context from(final InvocationContext invocationContext) {
-        InvocationParameters parameters = invocationContext == null ? null : invocationContext.invocationParameters();
-        Context context = parameters == null ? null : parameters.get(KEY);
-        if (context == null) {
-            throw new IllegalStateException("No agent call context in the invocation");
-        }
-        return context;
+        Map<Class<? extends LangChain4jManaged>, LangChain4jManaged> managed = Map.of(Context.class, context);
+        return InvocationContext.builder().managedParameters(managed).build();
     }
 }

@@ -15,7 +15,6 @@ import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.invocation.InvocationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -49,8 +48,8 @@ public class ReadExecutionTool implements AiPlatformTool {
     )
     public Result readExecution(
         @P(name = "executionId", value = "The id of the execution to read") String executionId,
-        final InvocationContext invocationContext) {
-        String tenant = AgentCallContext.from(invocationContext).tenant();
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         Execution execution = executionRepository.findById(tenant, executionId)
             .orElseThrow(() -> new IllegalArgumentException("Execution not found: '%s'".formatted(executionId)));

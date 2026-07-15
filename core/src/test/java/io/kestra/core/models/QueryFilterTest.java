@@ -822,6 +822,88 @@ public class QueryFilterTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenFlowIdWithoutNamespaceForExecution() {
+        // Given a FLOW_ID filter without a NAMESPACE filter
+        QueryFilter flowIdFilter = QueryFilter.builder()
+            .field(Field.FLOW_ID)
+            .operation(Op.EQUALS)
+            .value("my_flow")
+            .build();
+
+        // When / Then
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(flowIdFilter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("FLOW_ID requires NAMESPACE");
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenFlowIdWithNamespaceForExecution() {
+        // Given both FLOW_ID and NAMESPACE filters
+        QueryFilter namespaceFilter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.EQUALS)
+            .value("io.kestra.tests")
+            .build();
+        QueryFilter flowIdFilter = QueryFilter.builder()
+            .field(Field.FLOW_ID)
+            .operation(Op.EQUALS)
+            .value("my_flow")
+            .build();
+
+        // When / Then
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(namespaceFilter, flowIdFilter), Resource.EXECUTION));
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenNamespaceOnlyForExecution() {
+        // Given a NAMESPACE filter without FLOW_ID
+        QueryFilter namespaceFilter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.EQUALS)
+            .value("io.kestra.tests")
+            .build();
+
+        // When / Then
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(namespaceFilter), Resource.EXECUTION));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFlowIdNestedWithoutNamespaceForExecution() {
+        // Given a FLOW_ID filter nested inside an OR group without NAMESPACE
+        QueryFilter flowIdFilter = QueryFilter.builder()
+            .field(Field.FLOW_ID)
+            .operation(Op.EQUALS)
+            .value("my_flow")
+            .build();
+        QueryFilter nestedNode = QueryFilter.builder()
+            .logical(Logical.OR)
+            .children(List.of(flowIdFilter))
+            .build();
+
+        // When / Then
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(nestedNode), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("FLOW_ID requires NAMESPACE");
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenFlowIdWithoutNamespaceForNonExecutionResource() {
+        // Given a FLOW_ID filter without NAMESPACE for a non-EXECUTION resource
+        QueryFilter flowIdFilter = QueryFilter.builder()
+            .field(Field.FLOW_ID)
+            .operation(Op.EQUALS)
+            .value("my_flow")
+            .build();
+
+        // When / Then — the constraint only applies to EXECUTION
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(flowIdFilter), Resource.LOG));
+    }
+
+    @Test
     void shouldReturnPrefixFilterWhenOperationIsPrefix() {
         QueryFilter filter = QueryFilter.builder()
             .field(Field.NAMESPACE)

@@ -340,16 +340,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             }
         }
 
+        if (flowId != null && namespace == null) {
+            throw new IllegalArgumentException("flowId requires namespace to be specified");
+        }
+
         if (namespace != null) {
             if (flowId != null) {
                 select = select.and(field("namespace").eq(namespace));
+                select = select.and(field("flow_id").eq(flowId));
             } else {
                 select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").startsWith(namespace + ".")));
             }
-        }
-
-        if (flowId != null) {
-            select = select.and(DSL.or(field("flow_id").eq(flowId)));
         }
 
         if (query != null || labels != null) {

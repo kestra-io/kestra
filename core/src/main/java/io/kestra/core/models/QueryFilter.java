@@ -827,6 +827,7 @@ public record QueryFilter(
         }
         List<String> errors = new ArrayList<>();
         filters.forEach(filter -> collectValidationErrors(filter, resource, errors));
+        collectCrossFieldErrors(filters, resource, errors);
         if (!errors.isEmpty()) {
             throw new InvalidQueryFiltersException(errors);
         }
@@ -860,6 +861,26 @@ public record QueryFilter(
         ) {
             errors.add(
                 "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
+            );
+        }
+    }
+
+    /**
+     * Validates cross-field constraints that cannot be checked per-filter.
+     * For {@link Resource#EXECUTION}, querying by {@link Field#FLOW_ID} without
+     * {@link Field#NAMESPACE} is rejected because a flow identifier is only unique
+     * within a namespace.
+     *
+     * <p>Note: this is a flat existence check across the entire filter tree.
+     * It does not verify that FLOW_ID and NAMESPACE reside in the same logical
+     * branch (e.g. a FLOW_ID in one OR branch and a NAMESPACE in another would
+     * pass validation). Full structural validation would require tree analysis
+     * beyond the current scope.</p>
+     */
+    private static void collectCrossFieldErrors(List<QueryFilter> filters, Resource resource, List<String> errors) {
+        if (Resource.EXECUTION == resource && hasField(filters, Field.FLOW_ID) && !hasField(filters, Field.NAMESPACE)) {
+            errors.add(
+                "Field FLOW_ID requires NAMESPACE to be specified for resource EXECUTION"
             );
         }
     }

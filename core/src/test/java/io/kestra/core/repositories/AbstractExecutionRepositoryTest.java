@@ -742,6 +742,114 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void dailyStatistics() throws InterruptedException {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        for (int i = 0; i < 28; i++) {
+            executionRepository.save(
+                builder(
+                    tenant,
+                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                    i < 15 ? null : "second"
+                ).build()
+            );
+        }
+
+        executionRepository.save(
+            builder(
+                tenant,
+                State.Type.SUCCESS,
+                "second"
+            ).namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE).build()
+        );
+
+        // mysql need some time ...
+        Thread.sleep(500);
+
+        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            null,
+            tenant,
+            null,
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null
+        );
+
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
+        assertThat(result.get(10).getDuration().getAvg().toMillis()).isGreaterThan(0L);
+
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
+
+        result = executionRepository.dailyStatistics(
+            null,
+            tenant,
+            List.of(FlowScope.USER, FlowScope.SYSTEM),
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null
+        );
+
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
+
+        result = executionRepository.dailyStatistics(
+            null,
+            tenant,
+            List.of(FlowScope.USER),
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null
+        );
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
+
+        result = executionRepository.dailyStatistics(
+            null,
+            tenant,
+            List.of(FlowScope.SYSTEM),
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null
+        );
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
+    }
+
+    @Test
+    void shouldThrowWhenFlowIdWithoutNamespaceOnDailyStatistics() {
+        // Given flowId is specified but namespace is null
+
+        // When / Then — the repository must reject this combination
+        assertThrows(IllegalArgumentException.class, () ->
+            executionRepository.dailyStatistics(
+                null,
+                null,
+                null,
+                null,       // namespace — null
+                "my_flow",  // flowId — non-null
+                ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now(),
+                null,
+                null
+            )
+        );
+    }
+
+    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));

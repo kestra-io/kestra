@@ -1,5 +1,5 @@
 <template>
-    <div class="copilot-draft">
+    <div class="copilot-draft" data-test="copilot-draft">
         <!-- Header band: what was drafted + whether it validates -->
         <div class="copilot-draft-header">
             <KsText size="small" class="copilot-draft-title">

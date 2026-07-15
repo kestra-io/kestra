@@ -14,7 +14,7 @@
     </div>
 
     <!-- Tool call / tool result — collapsible technical detail -->
-    <div v-else-if="message.type === 'TOOL_CALL'" class="copilot-msg copilot-tool">
+    <div v-else-if="message.type === 'TOOL_CALL'" class="copilot-msg copilot-tool" data-test="copilot-tool-call">
         <KsCollapse v-model="expanded">
             <KsCollapseItem name="tool">
                 <!-- Title via slot so it renders at the same small/secondary treatment as the
@@ -29,7 +29,7 @@
         </KsCollapse>
     </div>
 
-    <div v-else-if="message.type === 'TOOL_RESULT'" class="copilot-msg copilot-tool-result">
+    <div v-else-if="message.type === 'TOOL_RESULT'" class="copilot-msg copilot-tool-result" data-test="copilot-tool-result">
         <KsIcon class="copilot-tool-result-icon" :class="isOk ? 'is-ok' : 'is-error'">
             <CheckCircleOutline v-if="isOk" />
             <CloseCircleOutline v-else />

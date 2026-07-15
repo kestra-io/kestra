@@ -35,7 +35,7 @@
     import {State} from "@kestra-io/design-system"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    import {useExecutionsStore} from "../../../../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
 
     import {useI18n} from "vue-i18n"
@@ -44,16 +44,6 @@
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
-
-    interface ExecutionState {
-        current: string;
-    }
-
-    interface Execution {
-        id: string;
-        namespace: string;
-        state: ExecutionState;
-    }
 
     const props = defineProps<{
         execution: Execution;

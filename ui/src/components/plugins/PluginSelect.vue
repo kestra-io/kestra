@@ -13,11 +13,10 @@
             :value="item.cls"
         >
             <span class="options">
-                <KsTaskIcon
-                    v-if="hasIcons"
+                <TaskIcon
                     :cls="item?.cls"
                     :onlyIcon="true"
-                    :icons="pluginsStore.icons"
+                    :loadIcon="pluginsStore.loadIcon"
                 />
                 <div class="option-content">
                     <div class="cls">{{ item?.cls }}</div>
@@ -29,11 +28,11 @@
         </KsOption>
 
         <template #prefix>
-            <KsTaskIcon
-                v-if="modelValue && hasIcons"
+            <TaskIcon
+                v-if="modelValue"
                 :cls="modelValue"
                 :onlyIcon="true"
-                :icons="pluginsStore.icons"
+                :loadIcon="pluginsStore.loadIcon"
             />
         </template>
     </KsSelect>
@@ -41,7 +40,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onBeforeMount, ref} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins"
     import {
         FULL_SCHEMA_INJECTION_KEY,
@@ -137,11 +136,6 @@
         return taskModels.value.filter(({cls}) => cls.toLowerCase().includes(q))
     })
 
-    const hasIcons = computed(() => {
-        const models = taskModels.value.map(m => m.cls)
-        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => models.includes(plugin)).length > 0
-    })
-
     const modelValue = defineModel({
         type: String,
         default: "",
@@ -153,7 +147,7 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(div.ks-task-icon) {
+    :deep(div.task-icon) {
         display: inline-block;
         width: var(--ks-font-size-lg);
         height: var(--ks-font-size-lg);
@@ -161,7 +155,7 @@
     }
 
     :deep(.kel-input__prefix-inner) {
-        .ks-task-icon {
+        .task-icon {
             top: 0;
             margin-right: 0;
         }
@@ -182,7 +176,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.ks-task-icon) {
+        :deep(.task-icon) {
             width: 2rem;
             height: 2rem;
         }

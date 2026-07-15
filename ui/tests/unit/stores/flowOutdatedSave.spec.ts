@@ -5,6 +5,8 @@ import {KsMessageBox} from "@kestra-io/design-system"
 const axiosGet = vi.fn()
 const axiosPost = vi.fn()
 const axiosPut = vi.fn()
+const validateFlows = vi.fn()
+const updateFlow = vi.fn()
 
 vi.mock("nprogress", () => ({
     start: vi.fn(),
@@ -31,6 +33,12 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
         patch: vi.fn(),
         delete: vi.fn(),
     }),
+}))
+
+// validateFlow()/saveFlow() go through the SDK's flows submodule, not useClient()'s axios instance
+vi.mock("@kestra-io/kestra-sdk/flows", () => ({
+    validateFlows: (...args: any[]) => validateFlows(...args),
+    updateFlow: (...args: any[]) => updateFlow(...args),
 }))
 
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
@@ -67,14 +75,13 @@ describe("flow store outdated save confirmation", () => {
         axiosGet.mockReset()
         axiosPost.mockReset()
         axiosPut.mockReset()
+        validateFlows.mockReset()
+        updateFlow.mockReset()
 
         // /flows/validate -> backend flags the in-progress edit as outdated
-        axiosPost.mockResolvedValue({data: [{outdated: true}]})
+        validateFlows.mockResolvedValue([{outdated: true}])
         // /flows/{ns}/{id} (save) -> succeeds
-        axiosPut.mockResolvedValue({
-            status: 200,
-            data: {id: "my-flow", namespace: "my.ns", revision: 2},
-        })
+        updateFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 2, source: FLOW_YAML})
 
         setActivePinia(createPinia())
         localStorage.clear()
@@ -87,7 +94,7 @@ describe("flow store outdated save confirmation", () => {
         const outcome = await store.saveAll()
 
         expect(KsMessageBox).toHaveBeenCalledTimes(1)
-        expect(axiosPut).not.toHaveBeenCalled()
+        expect(updateFlow).not.toHaveBeenCalled()
         expect(outcome).toBe("no_op")
     })
 
@@ -98,18 +105,18 @@ describe("flow store outdated save confirmation", () => {
         const outcome = await store.saveAll()
 
         expect(KsMessageBox).toHaveBeenCalledTimes(1)
-        expect(axiosPut).toHaveBeenCalledTimes(1)
+        expect(updateFlow).toHaveBeenCalledTimes(1)
         expect(outcome).toBe("saved")
     })
 
     it("does not prompt when the edited revision is up to date", async () => {
-        axiosPost.mockResolvedValue({data: [{}]})
+        validateFlows.mockResolvedValue([{}])
 
         const store = await setupOutdatedStore()
         const outcome = await store.saveAll()
 
         expect(KsMessageBox).not.toHaveBeenCalled()
-        expect(axiosPut).toHaveBeenCalledTimes(1)
+        expect(updateFlow).toHaveBeenCalledTimes(1)
         expect(outcome).toBe("saved")
     })
 
@@ -121,7 +128,7 @@ describe("flow store outdated save confirmation", () => {
         const outcome = await store.save()
 
         expect(KsMessageBox).toHaveBeenCalledTimes(1)
-        expect(axiosPut).not.toHaveBeenCalled()
+        expect(updateFlow).not.toHaveBeenCalled()
         expect(outcome).toBe("no_op")
     })
 
@@ -132,7 +139,7 @@ describe("flow store outdated save confirmation", () => {
         const outcome = await store.save()
 
         expect(KsMessageBox).toHaveBeenCalledTimes(1)
-        expect(axiosPut).toHaveBeenCalledTimes(1)
+        expect(updateFlow).toHaveBeenCalledTimes(1)
         expect(outcome).toBe("saved")
     })
 })

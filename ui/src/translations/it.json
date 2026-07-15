@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Codice sorgente non valido",
+    "invalid duration": "Formato durata non valido. Utilizzare ISO 8601 (ad es., PT30M, P1D).",
     "missingSource": "Sorgente mancante",
     "update": "Aggiorna",
     "update ok": "è aggiornato",

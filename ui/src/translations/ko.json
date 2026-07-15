@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "잘못된 소스 코드",
+    "invalid duration": "유효하지 않은 기간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해주세요.",
     "missingSource": "소스 누락",
     "update": "업데이트",
     "update ok": "업데이트됨",

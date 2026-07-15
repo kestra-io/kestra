@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "अमान्य स्रोत कोड",
+    "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
     "missingSource": "स्रोत अनुपलब्ध",
     "update": "अपडेट करें",
     "update ok": "अपडेट किया गया है",

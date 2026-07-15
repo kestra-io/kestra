@@ -36,7 +36,8 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "common": {
-      "back": "Back"
+      "back": "Back",
+      "openInNewTab": "Open in new tab"
     },
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
     "outdated revision save confirmation": {

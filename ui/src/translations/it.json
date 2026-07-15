@@ -36,7 +36,8 @@
     "Default page": "Pagina predefinita",
     "confirmation": "Conferma",
     "common": {
-      "back": "Indietro"
+      "back": "Indietro",
+      "openInNewTab": "Apri in una nuova scheda"
     },
     "delete confirm": "Sei sicuro di voler eliminare <code>{name}</code>?",
     "outdated revision save confirmation": {

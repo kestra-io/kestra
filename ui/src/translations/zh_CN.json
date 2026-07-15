@@ -36,7 +36,8 @@
     "Default page": "默认页面",
     "confirmation": "确认",
     "common": {
-      "back": "返回"
+      "back": "返回",
+      "openInNewTab": "在新标签页中打开"
     },
     "delete confirm": "确定要删除 <code>{name}</code> 吗？",
     "outdated revision save confirmation": {

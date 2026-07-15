@@ -36,7 +36,8 @@
     "Default page": "Страница по умолчанию",
     "confirmation": "Подтверждение",
     "common": {
-      "back": "Назад"
+      "back": "Назад",
+      "openInNewTab": "Открыть в новой вкладке"
     },
     "delete confirm": "Вы уверены, что хотите удалить <code>{name}</code>?",
     "outdated revision save confirmation": {

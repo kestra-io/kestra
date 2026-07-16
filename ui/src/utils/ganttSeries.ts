@@ -19,7 +19,7 @@ const DEFAULT_ALIGNMENT_EPSILON_MS = 200
  * @param executionStart      
  * @param executionDelta      
  * @param alignmentEpsilonMs 
- * @return 
+ * @return each task's id paired with its start/width percentages and, if aligned, parentEndPercent
  */
 export function computeTaskBarPercents(
     tasks: TaskBarInput[],

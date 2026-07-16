@@ -512,7 +512,6 @@
                 const lastIndex = task.state.histories.length - 1
                 stopTs = ts(task.state.histories[lastIndex].date)
             }
-        
             const startTs = ts(task.state.histories[0].date)
 
             const runningState = task.state.histories.filter(r => r.state === State.RUNNING)

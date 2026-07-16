@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.FileSerde;
@@ -28,6 +29,7 @@ import lombok.experimental.SuperBuilder;
     title = "Text file renderer",
     description = "Preview text files inside the Kestra UI, supported extensions: txt, md."
 )
+@Plugin
 public class TextFileRenderer implements FileRenderer {
     private static final int MAX_SIZE_IN_BYTES = 2_097_152; // 2 MB
 

@@ -24,6 +24,7 @@ import io.kestra.webserver.utils.QueryFilterUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -73,14 +74,23 @@ public class LogController {
                 @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc")
             }
         ) @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "An opaque cursor token (from a previous response's nextCursor) for cursor-paginated log stores")
+        @Nullable @QueryValue String cursor,
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
         ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters)
         throws HttpStatusException {
+        Pageable offsetPageable = PageableUtils.from(page, size, sort);
+        // A cursor param targets a cursor-paginated store (e.g. an external log store): resume after the
+        // opaque token (the store interprets it). Otherwise use offset pagination (the default for JDBC/Elasticsearch).
+        Pageable pageable = cursor != null
+            ? Pageable.afterCursor(Pageable.Cursor.of(cursor), page, size, offsetPageable.getSort())
+            : offsetPageable;
+
         return PagedResults.of(
             logRepository.find(
-                PageableUtils.from(page, size, sort),
+                pageable,
                 tenantService.resolveTenant(),
                 QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
             )

@@ -633,7 +633,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0,
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
                                                 Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
                                             )
                                         );
@@ -648,7 +648,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
                                             )
                                         );
 

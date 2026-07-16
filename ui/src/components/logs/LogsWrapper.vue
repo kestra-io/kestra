@@ -26,7 +26,7 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
+                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
                 </template>
 
                 <template #table>
@@ -141,6 +141,7 @@
     import LogDisplaySettings from "./LogDisplaySettings.vue"
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
+    import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -466,12 +467,16 @@
             display: flex;
             align-items: center;
             margin-left: auto;
+            gap: var(--ks-spacing-2);
         }
 
         &__btn {
-            margin: 0;
             padding: var(--ks-spacing-2);
             border-radius: var(--ks-radius-base);
+        }
+
+        :deep(.kel-button) {
+            margin: 0;
         }
     }
 

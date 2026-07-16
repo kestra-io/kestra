@@ -1,4 +1,5 @@
 export const PRELOAD_ERROR_RELOAD_KEY = "kestra:vite-preload-error-reloaded"
+export const PRELOAD_ERROR_RELOAD_WINDOW_MS = 10_000
 
 type PreloadErrorReloadHandlerOptions = {
     storage?: Storage
@@ -6,9 +7,10 @@ type PreloadErrorReloadHandlerOptions = {
     logger?: Pick<Console, "error">
 }
 
-export function hasReloadedAfterPreloadError(storage: Storage = window.sessionStorage) {
+export function hasReloadedAfterPreloadError(storage: Storage = window.sessionStorage, windowMs = PRELOAD_ERROR_RELOAD_WINDOW_MS) {
     try {
-        return storage.getItem(PRELOAD_ERROR_RELOAD_KEY) !== null
+        const last = Number(storage.getItem(PRELOAD_ERROR_RELOAD_KEY) ?? 0)
+        return last > 0 && Date.now() - last < windowMs
     } catch {
         return false
     }
@@ -21,7 +23,7 @@ export function setupPreloadErrorReloadHandler({
 }: PreloadErrorReloadHandlerOptions = {}) {
     const handler = (event: WindowEventMap["vite:preloadError"]) => {
         if (hasReloadedAfterPreloadError(storage)) {
-            logger.error("Stale lazy chunk detected, but a reload was already attempted this session", event.payload)
+            logger.error("Stale lazy chunk detected, but a reload was already attempted recently", event.payload)
             return
         }
 
@@ -40,7 +42,7 @@ export function setupPreloadErrorReloadHandler({
 
 export function markPreloadErrorReloaded(storage: Storage = window.sessionStorage) {
     try {
-        storage.setItem(PRELOAD_ERROR_RELOAD_KEY, "true")
+        storage.setItem(PRELOAD_ERROR_RELOAD_KEY, String(Date.now()))
         return true
     } catch {
         return false

@@ -87,6 +87,10 @@
                 {{ t(`ai.copilot.error.${error}`) }}
             </KsAlert>
 
+            <KsAlert v-else-if="notice" type="warning" class="copilot-error" data-test="copilot-notice">
+                {{ t(`ai.copilot.notice.${notice}`) }}
+            </KsAlert>
+
             <div class="copilot-footer">
                 <CopilotComposer
                     ref="footerComposer"
@@ -104,6 +108,7 @@
 
 <script setup lang="ts">
     import {ref, computed, nextTick, watch, onBeforeUnmount, onMounted} from "vue"
+    import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -116,6 +121,7 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import {useAiChat} from "./useAiChat"
+    import {scopeFromRoute} from "./routeScope"
     import type {Mode, ScopeBinding} from "./types"
     import {useMiscStore} from "override/stores/misc"
 
@@ -127,9 +133,15 @@
     }>()
 
     const {t} = useI18n()
+    const route = useRoute()
     const miscStore = useMiscStore()
 
     const mode = ref<Mode>(props.initialMode ?? "EDIT")
+
+    // Context-awareness: when the copilot opens on a flow / execution / namespace page, send that
+    // page as `inFocus` so the agent knows what the user is looking at. An explicit `inFocus` prop
+    // (if a parent ever passes one) still wins. Recomputed as the route changes while the drawer is open.
+    const routeInFocus = computed<ScopeBinding | null>(() => props.inFocus ?? scopeFromRoute(route))
 
     // Shared composer text (both the empty-state and footer composers bind it), so an external
     // entry point can seed a prompt via the misc store (see consumeSeededPrompt).
@@ -159,14 +171,14 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {messages, status, streaming, error, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry} = useAiChat()
+    const {messages, status, streaming, error, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry} = useAiChat()
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status
 
     // Empty state shows until the first turn produces a message, a proposal, or an error.
     const isEmpty = computed(
-        () => messages.value.length === 0 && !pendingConfirmation.value && !error.value,
+        () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
 
     // "Thinking…" placeholder while the model is working but hasn't produced its next output
@@ -182,7 +194,7 @@
     })
 
     function onSubmit(prompt: string): void {
-        sendChat({prompt, mode: mode.value, inFocus: props.inFocus, providerId: selectedProvider.value})
+        sendChat({prompt, mode: mode.value, inFocus: routeInFocus.value, providerId: selectedProvider.value})
     }
 
     // Keep the transcript pinned to the bottom as content arrives: new messages, streamed

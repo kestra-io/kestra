@@ -2036,6 +2036,9 @@
           "pending": "Pending approval",
           "revise": "Reply to revise"
         },
+        "notice": {
+          "emptyTurn": "助手未返回响应。请重试。"
+        },
         "error": {
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",

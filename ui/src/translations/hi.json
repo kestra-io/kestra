@@ -2036,6 +2036,9 @@
           "pending": "Pending approval",
           "revise": "Reply to revise"
         },
+        "notice": {
+          "emptyTurn": "सहायक ने कोई प्रतिक्रिया नहीं दी। कृपया पुनः प्रयास करें।"
+        },
         "error": {
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",

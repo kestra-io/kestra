@@ -159,7 +159,7 @@
                                                         :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                                         :levelFilter="effectiveSelectedLogLevel"
                                                         hideTaskHeader
-                                                            :targetFlow="executionsStore.flow"
+                                                        :targetFlow="executionsStore.flow"
                                                         class="mh-100 mx-3"
                                                     />
                                                 </div>

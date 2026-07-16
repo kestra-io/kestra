@@ -24,6 +24,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 @Property(name = "kestra.server-type", value = "STANDALONE")
+// The compactor is a live @Scheduled singleton here; without disabling the schedule a background
+// tick can call compact() concurrently with the test's manual compact(), and both hit the shared
+// singleton jOOQ Configuration from two threads -> ConcurrentModificationException. Push the
+// schedule far past any test run so only the manual calls exercise compact().
+@Property(name = "kestra.jdbc.execution-statistics.compactor.initial-delay", value = "999d")
+@Property(name = "kestra.jdbc.execution-statistics.compactor.fixed-delay", value = "999d")
 public abstract class AbstractExecutionStatisticsCompactorTest {
     @Inject
     protected ExecutionStatisticsRepositoryInterface executionStatisticsRepository;

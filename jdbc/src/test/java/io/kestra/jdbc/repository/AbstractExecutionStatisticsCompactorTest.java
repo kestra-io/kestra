@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -68,6 +69,11 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
     void shouldNotCompactTheCurrentOpenBucket() {
         // Given: a raw row in the current (not yet closed) minute
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        // The compactor derives closedBefore = Instant.now().truncatedTo(MINUTES) inside compact(); if a
+        // minute rollover lands between the bucket built here and that sampling, this still-open bucket
+        // would look closed and get compacted (count 2). Start early in a fresh minute so save + compact()
+        // can't straddle a rollover.
+        Await.until(() -> Instant.now().toEpochMilli() % 60_000 < 55_000);
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
         String executionId = FriendlyId.createFriendlyId();
         executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, executionId, 1000));

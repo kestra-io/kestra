@@ -16,7 +16,6 @@ import * as Utils from "../utils/utils"
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
-import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -81,7 +80,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function loadDefaults() {
-        defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards()
+        // Was DashboardsAdminAPI.defaultDashboards() — that "-admin" split only existed because
+        // this operationId collided with EE TenantController's (now-renamed) superadmin
+        // getTenantDefaultDashboards. This is the ordinary, authenticated-only usage-tier read.
+        defaultDashboards.value = await DashboardsAPI.defaultDashboards()
         return defaultDashboards.value
     }
 

@@ -148,6 +148,18 @@ kestra:
     # Automatically loads all tutorial flows at startup.
     enabled: true
 
+  webserver:
+    # Browser security response headers, added to every HTTP response (UI and API).
+    # Set a value to "" to disable that single header, or security-headers.enabled to false to disable the whole filter.
+    security-headers:
+      enabled: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: strict-origin-when-cross-origin
+      # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
+      # content-security-policy-report-only: true # report-only intermediate step
+      # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
+
   retries:
     attempts: 5
     multiplier: 2.0

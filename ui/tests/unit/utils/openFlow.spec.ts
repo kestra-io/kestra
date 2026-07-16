@@ -45,11 +45,10 @@ describe("openFlowInNewTab", () => {
         )
 
         expect(router.resolve).toHaveBeenCalledWith({
-            name: "executions/update",
+            name: "executions/update/topology",
             params: {
                 namespace: "company.team",
                 flowId: "child_flow",
-                tab: "topology",
                 id: "exec-123",
                 tenant: "main",
             },

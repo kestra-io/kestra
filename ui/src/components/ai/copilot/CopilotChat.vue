@@ -75,7 +75,7 @@
                     v-if="pendingConfirmation"
                     :action="pendingConfirmation"
                     :disabled="streaming"
-                    @approve="confirm('APPROVE')"
+                    @approve="confirm('APPROVE', undefined, selectedProvider)"
                     @reject="onReject"
                 />
 
@@ -203,7 +203,7 @@
     const footerComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
 
     async function onReject(): Promise<void> {
-        await confirm("REJECT")
+        await confirm("REJECT", undefined, selectedProvider.value)
         await nextTick()
         footerComposer.value?.focus()
     }

@@ -2022,6 +2022,7 @@
         },
         "toolCall": "Running {tool}",
         "toolResult": {
+          "error": "{tool} 失败",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"
         },

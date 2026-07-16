@@ -9,11 +9,14 @@ vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({post, get})}))
 
 let nextFrames: AiSseFrame[] = []
 let nextError: Error | null = null
+/** Records the JSON body of the most recent stream (chat/confirm) so tests can assert what was sent. */
+let lastBody: Record<string, unknown> | null = null
 vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOriginal) => {
     const actual = await importOriginal<typeof import("../../../../../src/components/ai/copilot/streamSse")>()
     return {
         ...actual,
-        streamSse: vi.fn(async ({onFrame}: {onFrame: (f: AiSseFrame) => void}) => {
+        streamSse: vi.fn(async ({onFrame, body}: {onFrame: (f: AiSseFrame) => void; body: Record<string, unknown>}) => {
+            lastBody = body
             if (nextError) throw nextError
             for (const f of nextFrames) onFrame(f)
         }),
@@ -35,6 +38,7 @@ describe("useAiChat", () => {
         get.mockReset()
         nextFrames = []
         nextError = null
+        lastBody = null
         post.mockResolvedValue(idleThread())
     })
 
@@ -86,7 +90,9 @@ describe("useAiChat", () => {
             {event: "tool_result", data: {tool: "restart-execution", outcome: "ok"}},
             {event: "done", data: {status: "IDLE"}},
         ]
-        await chat.confirm("APPROVE")
+        // The resumed turn runs a fresh model call, so confirm must forward the provider it was given.
+        await chat.confirm("APPROVE", undefined, "gemini-legacy")
+        expect(lastBody).toMatchObject({confirmationId: "c1", decision: "APPROVE", providerId: "gemini-legacy"})
         expect(chat.pendingConfirmation.value).toBeNull()
         expect(chat.status.value).toBe("IDLE")
         expect(chat.messages.value.some((m) => m.type === "TOOL_RESULT" && m.toolResult?.outcome === "ok")).toBe(true)

@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
+import io.kestra.core.ai.agent.models.ArtefactDraft;
 
 /**
  * A tool return value that, besides the text the model receives, yields an artefact to publish —

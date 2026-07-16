@@ -4,13 +4,13 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import io.micronaut.http.HttpRequest;

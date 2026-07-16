@@ -1,10 +1,10 @@
-package io.kestra.webserver.services.ai.agent.store;
+package io.kestra.core.ai.agent.repositories;
 
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
+import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThreadStatus;
 
 /**
  * Store for {@link AgentThread} Copilot conversation threads, scoped by tenant.

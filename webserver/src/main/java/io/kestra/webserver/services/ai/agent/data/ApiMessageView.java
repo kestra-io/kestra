@@ -3,11 +3,11 @@ package io.kestra.webserver.services.ai.agent.data;
 import java.time.Instant;
 import java.util.Map;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessageRole;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessageRole;
+import io.kestra.core.ai.agent.models.AgentMessageType;
+import io.kestra.core.ai.agent.models.AgentToolCall;
+import io.kestra.core.ai.agent.models.ArtefactDraft;
 
 import io.micronaut.core.annotation.Nullable;
 

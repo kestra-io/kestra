@@ -2,12 +2,12 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.Map;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;

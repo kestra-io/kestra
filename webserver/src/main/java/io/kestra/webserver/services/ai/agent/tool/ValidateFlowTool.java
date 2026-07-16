@@ -3,13 +3,13 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;

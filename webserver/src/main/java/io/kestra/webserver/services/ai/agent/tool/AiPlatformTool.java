@@ -1,7 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 
 /**
  * A native platform tool — a deterministic platform call. This base declares no authorization; a

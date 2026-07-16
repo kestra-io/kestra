@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 
 /**
  * An LLM-backed authoring delegate (sub-agent) that returns a validated, <em>unpersisted</em>

@@ -1,8 +1,8 @@
 package io.kestra.webserver.services.ai.agent;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.ai.agent.models.AgentThread;
 
 import io.micronaut.core.annotation.Nullable;
 

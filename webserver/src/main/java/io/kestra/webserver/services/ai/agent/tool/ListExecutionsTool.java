@@ -3,13 +3,13 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.time.Duration;
 import java.util.List;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 import io.kestra.webserver.utils.PageableUtils;
 
 import dev.langchain4j.agent.tool.Tool;

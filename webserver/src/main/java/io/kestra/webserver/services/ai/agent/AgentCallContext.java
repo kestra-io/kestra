@@ -2,7 +2,7 @@ package io.kestra.webserver.services.ai.agent;
 
 import java.util.Map;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
 
 import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.invocation.LangChain4jManaged;

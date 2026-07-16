@@ -1,6 +1,6 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
 
 import io.micronaut.core.annotation.Nullable;
 

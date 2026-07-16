@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
@@ -14,8 +16,6 @@ import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.UserInfo;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;

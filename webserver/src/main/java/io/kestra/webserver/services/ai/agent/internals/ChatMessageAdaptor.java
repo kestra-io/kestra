@@ -6,10 +6,10 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentToolCall;
+import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;

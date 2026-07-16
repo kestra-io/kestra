@@ -2,11 +2,11 @@ package io.kestra.webserver.services.ai.agent.data;
 
 import java.util.List;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentScopeBinding;
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentScopeBinding;
+import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThreadStatus;
 
 import io.micronaut.core.annotation.Nullable;
 

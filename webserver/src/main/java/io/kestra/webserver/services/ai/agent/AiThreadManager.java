@@ -6,18 +6,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessageRole;
+import io.kestra.core.ai.agent.models.AgentMessageType;
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThreadStatus;
+import io.kestra.core.ai.agent.models.AgentToolCall;
+import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.ai.agent.repositories.MessageStore;
+import io.kestra.core.ai.agent.repositories.ThreadStore;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessageRole;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
-import io.kestra.webserver.services.ai.agent.store.MessageStore;
-import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

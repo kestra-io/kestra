@@ -1,4 +1,4 @@
-package io.kestra.webserver.services.ai.agent.domain;
+package io.kestra.core.ai.agent.models;
 
 import io.micronaut.core.annotation.Nullable;
 

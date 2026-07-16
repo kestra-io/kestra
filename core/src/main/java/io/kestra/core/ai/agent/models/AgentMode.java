@@ -1,4 +1,4 @@
-package io.kestra.webserver.services.ai.agent.domain;
+package io.kestra.core.ai.agent.models;
 
 import java.util.Collections;
 import java.util.EnumSet;

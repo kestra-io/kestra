@@ -2,6 +2,8 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.Objects;
 
+import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
@@ -12,8 +14,6 @@ import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.UserInfo;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;

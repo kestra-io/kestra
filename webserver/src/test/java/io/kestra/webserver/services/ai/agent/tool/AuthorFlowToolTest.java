@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.libs.copilot.exceptions.AiException;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
@@ -11,8 +13,6 @@ import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.GenerationResult;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;

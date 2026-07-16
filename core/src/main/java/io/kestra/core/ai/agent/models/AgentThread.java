@@ -1,11 +1,18 @@
-package io.kestra.webserver.services.ai.agent.domain;
+package io.kestra.core.ai.agent.models;
 
 import java.time.Instant;
+
+import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 
 import io.micronaut.core.annotation.Nullable;
 import lombok.Builder;
 import lombok.With;
 
+/**
+ * A Copilot conversation thread. Persisted with {@code uid} as its cluster-wide key
+ * ({@link HasUID}) and soft-deleted ({@link SoftDeletable}).
+ */
 @Builder(toBuilder = true)
 public record AgentThread(
     String uid,
@@ -19,7 +26,17 @@ public record AgentThread(
     Instant createdAt,
     @With Instant updatedAt,
     @With @Nullable Instant lastTurnAt,
-    @With boolean deleted) {
+    @With boolean deleted) implements HasUID, SoftDeletable<AgentThread> {
+
+    @Override
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    @Override
+    public AgentThread toDeleted() {
+        return this.withDeleted(true);
+    }
 
     /**
      * Returns a copy of this thread reset to the idle state: status set to

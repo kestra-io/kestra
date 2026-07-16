@@ -2,10 +2,10 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import jakarta.inject.Inject;
 

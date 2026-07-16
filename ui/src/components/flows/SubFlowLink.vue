@@ -30,26 +30,28 @@
     const route = useRoute()
     const executionsStore = useExecutionsStore()
 
-    const routeName = computed(() => {
-        return props.executionId ? "executions/update" : "flows/update"
-    })
-
     const tab = computed(() => {
         return props.executionId ? props.tabExecution : props.tabFlow
+    })
+
+    // Executions detail is router-view driven (child route per tab); flows detail
+    // still uses the legacy `:tab?` param, so only the execution branch bakes the
+    // tab into the route name.
+    const routeName = computed(() => {
+        return props.executionId ? `executions/update/${tab.value}` : "flows/update"
     })
 
     const params = (execution?: Execution) => {
         if (execution) {
             return {
-                namespace: execution.namespace, 
-                flowId: execution.flowId, 
-                id: execution.id, 
-                tab: tab.value,
+                namespace: execution.namespace,
+                flowId: execution.flowId,
+                id: execution.id,
             }
         } else {
             return {
-                namespace: props.namespace, 
-                id: props.flowId, 
+                namespace: props.namespace,
+                id: props.flowId,
                 tab: tab.value,
             }
         }
@@ -63,7 +65,6 @@
                     namespace: props.namespace,
                     flowId: props.flowId,
                     id: props.executionId,
-                    tab: tab.value,
                     tenant: route.params.tenant,
                 },
             })

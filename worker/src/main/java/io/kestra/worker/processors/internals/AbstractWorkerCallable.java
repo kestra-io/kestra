@@ -7,11 +7,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
+import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Exceptions;
 
+import dev.failsafe.Failsafe;
+import dev.failsafe.Timeout;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import lombok.Getter;
@@ -125,6 +128,55 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
         } else {
             logger.error(e.getMessage(), e);
             return FAILED;
+        }
+    }
+
+    @FunctionalInterface
+    protected interface Evaluation {
+        void run() throws Exception;
+    }
+
+    /**
+     * Runs {@code work} bounded by an interruptible {@code timeout} ({@code null} = unbounded).
+     * <p>
+     * On timeout the worker thread is interrupted to awake blocking calls (e.g. a stuck
+     * {@code KafkaConsumer.poll()}), the interrupt flag is then cleared so it does not leak to later
+     * operations, {@code onTimeout} is invoked (e.g. a metric increment), and the timeout is recorded
+     * via {@link #exceptionHandler} — returning {@code FAILED} (or {@code KILLED}). When {@code work}
+     * completes within the timeout this returns {@code null} and the caller maps its own success state.
+     * Failsafe wraps checked exceptions thrown by {@code work}; the cause is unwrapped and rethrown so
+     * callers handle it exactly as they would without a timeout.
+     *
+     * @param onTimeout action to run when the timeout fires; may be {@code null}
+     * @return the terminal state on timeout, or {@code null} if {@code work} completed in time
+     */
+    protected State.Type callWithTimeout(Duration timeout, Evaluation work, Runnable onTimeout) throws Exception {
+        if (timeout == null) {
+            work.run();
+            return null;
+        }
+
+        Timeout<Object> failsafeTimeout = Timeout
+            .builder(timeout)
+            .withInterrupt() // use to awake blocking evaluations, e.g. a stuck KafkaConsumer.poll().
+            .build();
+        try {
+            Failsafe.with(failsafeTimeout).run(work::run);
+            return null;
+        } catch (dev.failsafe.TimeoutExceededException e) {
+            if (onTimeout != null) {
+                onTimeout.run();
+            }
+            kill(false);
+            // Clear the interrupt flag set by Failsafe's withInterrupt() so it doesn't leak to the caller.
+            Thread.interrupted();
+            return this.exceptionHandler(new TimeoutExceededException(timeout));
+        } catch (dev.failsafe.FailsafeException e) {
+            // Failsafe wraps checked exceptions; unwrap so they are handled like a normal failure.
+            if (e.getCause() instanceof Exception cause) {
+                throw cause;
+            }
+            throw e;
         }
     }
 

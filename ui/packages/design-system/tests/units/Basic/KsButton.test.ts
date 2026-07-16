@@ -71,6 +71,29 @@ describe("KsButton", () => {
         expect(wrapper.find(".kel-button.is-circle").exists()).toBe(true)
     })
 
+    test("square applies is-square class", () => {
+        const wrapper = mount(KsButton, {
+            props: {square: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button.is-square").exists()).toBe(true)
+    })
+
+    test("square is not forwarded as a DOM attribute", () => {
+        const wrapper = mount(KsButton, {
+            props: {square: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").attributes("square")).toBeUndefined()
+    })
+
+    test("no is-square class without the square prop", () => {
+        const wrapper = mount(KsButton, {
+            global: globalConfig,
+        })
+        expect(wrapper.find(".is-square").exists()).toBe(false)
+    })
+
     test("emits click event when clicked", async () => {
         const wrapper = mount(KsButton, {
             slots: {default: "Click"},

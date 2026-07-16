@@ -1,7 +1,7 @@
 <template>
     <KsPopover placement="bottom-end" trigger="click" :title="t('display_settings')" width="300">
         <template #reference>
-            <KsButton type="default" size="default" class="display-settings-btn" :icon="Cog" :aria-label="t('display_settings')" />
+            <KsButton square type="default" size="default" :icon="Cog" :aria-label="t('display_settings')" />
         </template>
         <template #default>
             <div class="log-display-settings">
@@ -64,12 +64,6 @@
 </script>
 
 <style scoped lang="scss">
-    .display-settings-btn {
-        margin: 0;
-        padding: var(--ks-spacing-2);
-        border-radius: var(--ks-radius-base);
-    }
-
     .log-display-settings {
         display: flex;
         flex-direction: column;

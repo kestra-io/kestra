@@ -916,7 +916,7 @@ function deleteFlowAndDependencies() {
     })
 
     const readOnlySystemLabel = computed(() => {
-        if (!flow.value || !flow.value.labels) {
+        if (!flow.value || !flow.value.labels || !Array.isArray(flow.value.labels)) {
             return false
         }
 

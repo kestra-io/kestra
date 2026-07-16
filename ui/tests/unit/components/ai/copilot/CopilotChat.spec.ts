@@ -20,6 +20,7 @@ const state = {
     cancel: vi.fn(),
     reset: vi.fn(),
     retry: vi.fn(),
+    retryLastTurn: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // CopilotChat derives `inFocus` from the current route — mock a mutable route so tests control it.
@@ -51,6 +52,7 @@ describe("CopilotChat", () => {
         state.confirm.mockReset()
         state.reset.mockReset()
         state.retry.mockReset()
+        state.retryLastTurn.mockReset()
         miscStore.copilotPrompt = null
     })
 
@@ -132,7 +134,14 @@ describe("CopilotChat", () => {
         const w = mountChat()
         const alert = w.find("[data-test=\"copilot-notice\"]")
         expect(alert.exists()).toBe(true)
-        expect(alert.text()).toBe("The assistant didn't return a response. Please try again.")
+        expect(alert.text()).toContain("The assistant didn't return a response. Please try again.")
+    })
+
+    it("retries the last turn from the empty-turn notice", async () => {
+        state.notice.value = "emptyTurn"
+        const w = mountChat()
+        await w.find("[data-test=\"copilot-notice-retry\"]").trigger("click")
+        expect(state.retryLastTurn).toHaveBeenCalled()
     })
 
     it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {

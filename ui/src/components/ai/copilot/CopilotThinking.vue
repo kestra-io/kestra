@@ -1,7 +1,9 @@
 <template>
     <!-- Shown while the model is working before its next output arrives. -->
     <div class="copilot-thinking" data-test="copilot-thinking">
-        <KsText size="small" class="copilot-thinking-label">{{ t("ai.copilot.thinking") }}</KsText><span
+        <Transition name="copilot-word" mode="out-in">
+            <KsText :key="word" size="small" class="copilot-thinking-label">{{ word }}</KsText>
+        </Transition><span
             class="copilot-thinking-dots"
             aria-hidden="true"
         />
@@ -9,9 +11,30 @@
 </template>
 
 <script setup lang="ts">
+    import {ref, computed, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
 
-    const {t} = useI18n()
+    const {tm, rt} = useI18n()
+
+    // Orchestration-flavoured status words that rotate while the agent works, instead of a single
+    // static "Thinking". Sourced from i18n (ai.copilot.thinkingWords) so they localise.
+    const words = computed(() => (tm("ai.copilot.thinkingWords") as unknown[]).map((entry) => rt(entry as string)))
+
+    const index = ref(0)
+    const word = computed(() => words.value[index.value] ?? "")
+
+    // Advance every 5s; start on a random word so a new turn doesn't always open on the same one.
+    const ROTATE_MS = 5000
+    let timer: ReturnType<typeof setInterval> | undefined
+    onMounted(() => {
+        const count = words.value.length
+        if (count === 0) return
+        index.value = Math.floor(Math.random() * count)
+        timer = setInterval(() => {
+            index.value = (index.value + 1) % words.value.length
+        }, ROTATE_MS)
+    })
+    onBeforeUnmount(() => clearInterval(timer))
 </script>
 
 <style scoped>
@@ -25,6 +48,17 @@
     .copilot-thinking-label {
         --kel-text-color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
+    }
+
+    /* Cross-fade each word as it swaps, so the rotation reads as intentional rather than a flicker. */
+    .copilot-word-enter-active,
+    .copilot-word-leave-active {
+        transition: opacity 0.2s ease;
+    }
+
+    .copilot-word-enter-from,
+    .copilot-word-leave-to {
+        opacity: 0;
     }
 
     /*

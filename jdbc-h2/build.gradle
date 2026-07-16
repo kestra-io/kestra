@@ -15,11 +15,11 @@ dependencies {
     runtimeOnly("com.h2database:h2")
 
     testAnnotationProcessor project(":processor")
-    testImplementation project(':core').sourceSets.test.output
-    testImplementation project(':jdbc').sourceSets.test.output
-    testImplementation project(':executor').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
+    testImplementation project(path: ':jdbc', configuration: 'testArtifacts')
+    testImplementation project(path: ':executor', configuration: 'testArtifacts')
     testImplementation project(':storage-local')
     testImplementation project(':indexer')
     testImplementation project(':tests')
-    testImplementation project(':queue').sourceSets.test.output
+    testImplementation project(path: ':queue', configuration: 'testArtifacts')
 }

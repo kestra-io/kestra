@@ -12,7 +12,7 @@ dependencies {
     }
     implementation 'com.github.docker-java:docker-java-transport-httpclient5'
 
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
     testImplementation project(':tests')
     testImplementation project(':storage-local')
     testImplementation project(':repository-memory')

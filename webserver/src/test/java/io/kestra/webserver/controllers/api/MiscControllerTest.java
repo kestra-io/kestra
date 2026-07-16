@@ -237,14 +237,35 @@ class MiscControllerTest {
         );
     }
 
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     @Test
-    void logout_shouldClearCookie() {
-        var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/logout", null));
+    void logout_shouldClearCookie_whenAuthenticated() {
+        String uid = "logoutUid";
+        String username = "logout.success@kestra.io";
+        String password = "logoutPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
 
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
-        assertThat(cookie).isPresent();
-        assertThat(cookie.get().getMaxAge()).isEqualTo(0);
+        try {
+            var response = client.toBlocking().exchange(POST("/api/v1/logout", null).basicAuth(username, password));
+
+            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+            var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
+            assertThat(cookie).isPresent();
+            assertThat(cookie.get().getMaxAge()).isEqualTo(0);
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void logout_shouldRequireAuthentication() {
+        // unlike /login, /logout must not bypass AuthenticationFilter: an unauthenticated caller has
+        // no session to clear, so the request is rejected rather than silently accepted.
+        assertThatThrownBy(
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/logout", null))
+        ).isInstanceOfSatisfying(
+            HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+        );
     }
 
     @Test

@@ -54,8 +54,8 @@ export const stateFilterForTab = (chart: Chart, key: QuickFilterTabKey): QueryFi
     const tab = QUICK_FILTER_TABS.find((t) => t.key === key)
     if (!tab?.states.length) {
         return chartConstrainsState(chart)
-            ? {field: "STATE", operation: "IN", value: [...ALL_STATES]}
+            ? {field: "state", operation: "IN", value: [...ALL_STATES]}
             : null
     }
-    return {field: "STATE", operation: "IN", value: [...tab.states]}
+    return {field: "state", operation: "IN", value: [...tab.states]}
 }

@@ -743,8 +743,9 @@ public abstract class AbstractScheduler implements Scheduler {
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
                                 var flowWithTrigger = f.toBuilder().triggerContext(triggerRunning).build();
                                 try {
-                                    this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
-                                    this.sendWorkerTriggerToWorker(flowWithTrigger);
+                                    if (this.sendWorkerTriggerToWorker(flowWithTrigger)) {
+                                        this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
+                                    }
                                 } catch (InternalException e) {
                                     Logs.logTrigger(
                                         f.getTriggerContext(),
@@ -1113,7 +1114,15 @@ public abstract class AbstractScheduler implements Scheduler {
         );
     }
 
-    private void sendWorkerTriggerToWorker(FlowWithWorkerTrigger flowWithTrigger) throws InternalException {
+    /**
+     * Sends a worker trigger evaluation job to a worker.
+     *
+     * @return {@code true} if the job was actually dispatched to a worker, {@code false} for every
+     *         no-dispatch outcome (no worker group for the key, FAIL/CANCEL fallback when no worker is
+     *         available, or a queue emission error). The caller must only take the trigger evaluation
+     *         lock when this returns {@code true}, otherwise the trigger would stay locked forever.
+     */
+    private boolean sendWorkerTriggerToWorker(FlowWithWorkerTrigger flowWithTrigger) throws InternalException {
         if (log.isDebugEnabled()) {
             Logs.logTrigger(
                 flowWithTrigger.getTriggerContext(),
@@ -1138,32 +1147,44 @@ public abstract class AbstractScheduler implements Scheduler {
                 String workerGroupKey = runContext.render(workerGroup.get().getKey());
                 if (WorkerGroup.isDefault(workerGroupKey)) {
                     this.workerJobQueue.emit(workerTrigger);
+                    return true;
                 } else if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
                     if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
                         this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                        return true;
                     } else {
                         WorkerGroup.Fallback fallback = workerGroup.map(WorkerGroup::getFallback).orElse(WorkerGroup.Fallback.WAIT);
-                        switch (fallback) {
-                            case FAIL -> runContext.logger()
-                                .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
-                            case CANCEL -> runContext.logger()
-                                .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                        return switch (fallback) {
+                            case FAIL -> {
+                                runContext.logger()
+                                    .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                                yield false;
+                            }
+                            case CANCEL -> {
+                                runContext.logger()
+                                    .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                                yield false;
+                            }
                             case WAIT -> {
                                 runContext.logger()
                                     .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
                                 this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                                yield true;
                             }
-                        }
+                        };
                     }
                 } else {
                     runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);
+                    return false;
                 }
             } else {
                 this.workerJobQueue.emit(workerTrigger);
+                return true;
             }
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);
+            return false;
         }
     }
 

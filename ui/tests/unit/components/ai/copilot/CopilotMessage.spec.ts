@@ -58,6 +58,36 @@ describe("CopilotMessage", () => {
         expect(w.text()).not.toContain("completed")
     })
 
+    it("shows the result payload detail on a reloaded ok tool_result", () => {
+        const w = mountMessage({
+            id: "5c", role: "TOOL", type: "TOOL_RESULT",
+            toolResult: {outcome: "ok", result: {executionId: "exec-1", state: "SUCCESS"}},
+            toolCall: {tool: "read-execution", kind: "PLATFORM", family: "READ", arguments: {}},
+        })
+        // Tool name resolves from the paired toolCall when the persisted result map has no `tool`.
+        expect(w.text()).toContain("read-execution")
+        expect(w.find("[data-test=\"copilot-tool-result-detail\"]").exists()).toBe(true)
+        expect(w.text()).toContain("exec-1")
+        expect(w.text()).toContain("SUCCESS")
+    })
+
+    it("shows the error message as detail on an errored tool_result", () => {
+        const w = mountMessage({
+            id: "5d", role: "TOOL", type: "TOOL_RESULT",
+            toolResult: {tool: "read-flow", outcome: "error", error: "Flow not found: x"},
+        })
+        expect(w.find("[data-test=\"copilot-tool-result-detail\"]").exists()).toBe(true)
+        expect(w.text()).toContain("Flow not found: x")
+    })
+
+    it("has no detail collapsible on a live tool_result carrying only the outcome", () => {
+        const w = mountMessage({
+            id: "5e", role: "TOOL", type: "TOOL_RESULT",
+            toolResult: {tool: "list-flows", outcome: "ok"},
+        })
+        expect(w.find("[data-test=\"copilot-tool-result-detail\"]").exists()).toBe(false)
+    })
+
     it("renders an artefact_draft message as a draft card", () => {
         const w = mountMessage({
             id: "6", role: "ASSISTANT", type: "ARTEFACT_DRAFT",

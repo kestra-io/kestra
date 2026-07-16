@@ -120,4 +120,39 @@ test.describe("AI Copilot", () => {
         await expect(page.locator(D.chat)).toContainText("Done — it's running again.")
         await expect(card).toBeHidden()
     })
+
+    test("surfaces a notice when a turn returns no output", async ({page}) => {
+        // The stream closes with only `done` — no tokens, tools, or proposal.
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([["done", {status: "IDLE"}]]),
+            })
+        })
+
+        await page.locator(D.input).fill("hello?")
+        await page.locator(D.send).click()
+
+        await expect(page.locator("[data-test=\"copilot-notice\"]")).toBeVisible()
+    })
+
+    test("carries the current page as a context chip on a detail route", async ({page}) => {
+        // Open a flow detail route (the flow need not exist — the chip is derived from the route name
+        // + params). Re-open the AI dock on the new page, then assert the context chip reflects it.
+        const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
+        await page.goto(`/ui/${tenant}/flows/edit/company.team/e2e-context-flow`, {waitUntil: "domcontentloaded"})
+
+        const chat = page.locator(D.chat)
+        if (!(await chat.isVisible().catch(() => false))) {
+            await page.getByRole("button", {name: "Toggle panel"}).click().catch(() => {})
+            await page.waitForTimeout(500)
+            await page.getByRole("tab", {name: "AI"}).click().catch(() => {})
+        }
+        await expect(chat).toBeVisible({timeout: 15000})
+
+        const chip = page.locator("[data-test=\"copilot-context-chip\"]")
+        await expect(chip).toBeVisible()
+        await expect(chip).toContainText("e2e-context-flow")
+    })
 })

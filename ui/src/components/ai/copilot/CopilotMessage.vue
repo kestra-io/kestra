@@ -30,13 +30,26 @@
     </div>
 
     <div v-else-if="message.type === 'TOOL_RESULT'" class="copilot-msg copilot-tool-result" data-test="copilot-tool-result">
-        <KsIcon class="copilot-tool-result-icon" :class="isOk ? 'is-ok' : 'is-error'">
-            <CheckCircleOutline v-if="isOk" />
-            <CloseCircleOutline v-else />
-        </KsIcon>
-        <KsText size="small" class="copilot-tool-label">
-            {{ t(`ai.copilot.toolResult.${outcome}`, {tool: toolName}) }}
-        </KsText>
+        <div class="copilot-tool-result-row">
+            <KsIcon class="copilot-tool-result-icon" :class="isOk ? 'is-ok' : 'is-error'">
+                <CheckCircleOutline v-if="isOk" />
+                <CloseCircleOutline v-else />
+            </KsIcon>
+            <KsText size="small" class="copilot-tool-label">
+                {{ t(`ai.copilot.toolResult.${outcome}`, {tool: toolName}) }}
+            </KsText>
+        </div>
+
+        <!-- Result payload / error / rejection reason — present on thread reload (the live stream
+             carries only the outcome). Collapsed by default, like the tool-call args. -->
+        <KsCollapse v-if="resultDetail" v-model="expandedResult" data-test="copilot-tool-result-detail">
+            <KsCollapseItem name="result">
+                <template #title>
+                    <KsText size="small" class="copilot-tool-label">{{ t("ai.copilot.toolResult.detail") }}</KsText>
+                </template>
+                <pre class="copilot-tool-args">{{ resultDetail }}</pre>
+            </KsCollapseItem>
+        </KsCollapse>
     </div>
 
     <!-- Artefact draft — a non-mutating flow/dashboard/app the agent generated -->
@@ -58,9 +71,12 @@
     const {t} = useI18n()
 
     const expanded = ref<string[]>([])
+    const expandedResult = ref<string[]>([])
 
     const argsJson = computed(() => JSON.stringify(props.message.toolCall?.arguments ?? {}, null, 2))
-    const toolName = computed(() => props.message.toolResult?.tool ?? "")
+    // On reload the tool name lives on the paired toolCall (the persisted result map has no `tool`);
+    // on the live stream it's on the result event itself.
+    const toolName = computed(() => props.message.toolResult?.tool ?? props.message.toolCall?.tool ?? "")
     // Backend outcomes: "ok" (tool ran), "error" (tool threw, turn continues), "rejected" (user declined).
     // Anything unexpected falls back to "rejected" so we never render a raw/missing label.
     const outcome = computed(() => {
@@ -68,6 +84,20 @@
         return value === "ok" || value === "error" ? value : "rejected"
     })
     const isOk = computed(() => outcome.value === "ok")
+
+    // The detail to show under a tool result: the returned payload on success, the message on an
+    // error, the reason on a rejection. Null when there's nothing extra (e.g. a live turn, which
+    // streams only the outcome) so the collapsible is hidden.
+    const resultDetail = computed<string | null>(() => {
+        const toolResult = props.message.toolResult
+        if (!toolResult) return null
+        if (outcome.value === "error") return toolResult.error ?? null
+        if (outcome.value === "rejected") return toolResult.reason ?? null
+        if (toolResult.result == null) return null
+        return typeof toolResult.result === "string"
+            ? toolResult.result
+            : JSON.stringify(toolResult.result, null, 2)
+    })
 </script>
 
 <style scoped>
@@ -127,7 +157,7 @@
         --kel-text-color: var(--ks-text-secondary);
     }
 
-    .copilot-tool-result {
+    .copilot-tool-result-row {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);

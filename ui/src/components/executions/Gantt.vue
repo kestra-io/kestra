@@ -96,7 +96,7 @@
                                                 :style="{'--depth': item.depth || 0}"
                                             >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
-                                                    <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
+                                                    <TaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :loadIcon="pluginsStore.loadIcon" />
                                                 </div>
                                                 <KsTooltip placement="top-start">
                                                     <template #content>
@@ -218,12 +218,12 @@
         normalizeRouteLevelFilter,
         readRouteLevelFilter,
         KsExecutionStatus,
-        KsTaskIcon,
         KsFilter as KSFilter,
         KsEmptyState,
         type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
 
     import * as FlowUtils from "../../utils/flowUtils"
     import * as Utils from "../../utils/utils"
@@ -298,7 +298,6 @@
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const pluginsStore = usePluginsStore()
-    pluginsStore.fetchIcons()
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
     const ganttExecutionFilter = useGanttExecutionFilter()
 

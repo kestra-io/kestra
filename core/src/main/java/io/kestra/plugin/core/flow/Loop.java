@@ -1,6 +1,17 @@
 package io.kestra.plugin.core.flow;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -19,21 +30,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.GraphUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -352,8 +355,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
         @Schema(title = "The count of running iterations")
         private Integer runningIterations;
 
-        @Schema(title = "The count of terminated iterations")
-        private Integer terminatedIterations;
+        @Schema(title = "The count of terminated iterations per terminal state")
+        private Map<State.Type, Integer> terminatedIterations;
 
         @Schema(
             title = "The list of loop iteration (task runs) outputs, accessible outside of the loop for subsequent tasks",
@@ -395,7 +398,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
      * Reads the first batch of values and counts the total in a single file pass.
      *
      * @param runContext the run context
-     * @param valuesUri  the rendered URI pointing to the ION file
+     * @param valuesUri the rendered URI pointing to the ION file
      * @return a {@link UriInit} holding totalCount, active limit, first batch of values, and next byte offset
      */
     public UriInit initFromUri(RunContext runContext, String valuesUri) throws IOException, IllegalVariableEvaluationException {
@@ -421,10 +424,16 @@ public class Loop extends AbstractBranch<Loop.Output> {
     }
 
     /** Holds initialization data computed from a URI-backed ION file. */
-    public record UriInit(int totalCount, int limit, List<String> values, long nextOffset) {}
+    public record UriInit(int totalCount, int limit, List<String> values, long nextOffset) {
+    }
 
     /** Holds initialization data computed from in-memory (list or map) values. */
-    public record ValuesInit(int totalCount, int limit, Either<List<String>, List<Pair<String, String>>> values) {}
+    public record ValuesInit(int totalCount, int limit, Either<List<String>, List<Pair<String, String>>> values) {
+    }
 
-    public enum FetchType { AUTO, FETCH, STORE }
+    public enum FetchType {
+        AUTO,
+        FETCH,
+        STORE
+    }
 }

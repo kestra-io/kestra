@@ -1,5 +1,5 @@
 plugins {
-    id("io.kestra.gradle.develocity-conventions") version "1.2.5"
+    id("io.kestra.gradle.develocity-conventions") version "1.2.6"
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.7.0"
 }
 

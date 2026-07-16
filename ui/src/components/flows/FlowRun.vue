@@ -284,8 +284,7 @@
         if (!execution.value?.labels) {
             return []
         }
-        // flow.labels at runtime is Label[] for the execution-context flow
-        const flowLabels = flow.value?.labels as unknown as Label[] | undefined
+        const flowLabels = flow.value?.labels
         if (!flowLabels) {
             return execution.value.labels
         }
@@ -385,7 +384,8 @@
                                 newTab: newTab.value,
                                 id: flow.value.id,
                                 namespace: flow.value.namespace,
-                                revision: flow.value.revision,
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
                                 scheduleDate: moment(scheduleDate.value)
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())

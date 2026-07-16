@@ -18,7 +18,6 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
-import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
@@ -28,6 +27,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
 import io.grpc.stub.ServerCallStreamObserver;

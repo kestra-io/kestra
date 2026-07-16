@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
+
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -12,9 +13,7 @@ import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -115,8 +114,6 @@ public final class RunVariables {
     public static List<String> allContextPaths() {
         return EXECUTION_CONTEXT_PATHS;
     }
-
-
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -420,15 +417,10 @@ public final class RunVariables {
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (realExecution.getInputs() != null) {
                     inputs.putAll(realExecution.getInputs());
-                    if (decryptVariables && flow != null && flow.getInputs() != null) {
-                        // if some inputs are of type secret, we decode them
+                    if (decryptVariables && !ListUtils.isEmpty(secretInputs)) {
                         final Secret secret = new Secret(secretKey, logger);
-                        // Expand FORM inputs so SECRET children are decoded by their dotted path; decodeInput already
-                        // navigates the nested inputs map for dotted ids.
-                        for (Input<?> input : flow.resolvableInputs()) {
-                            if (input instanceof SecretInput) {
-                                decodeInput(secret, input.getId(), inputs);
-                            }
+                        for (String secretId : secretInputs) {
+                            decodeInput(secret, secretId, inputs);
                         }
                     }
                 }
@@ -491,9 +483,11 @@ public final class RunVariables {
                         builder.put("trigger", triggerVariables);
                     } else {
 
-                        builder.put("trigger", Map.of(
-                            "_context", triggerContext
-                        ));
+                        builder.put(
+                            "trigger", Map.of(
+                                "_context", triggerContext
+                            )
+                        );
                     }
                 }
 

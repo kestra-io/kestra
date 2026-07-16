@@ -22,8 +22,6 @@ import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,11 +67,12 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @Schema(
         title = "The labels to pass to the execution created.",
+        description = "Label values are dynamic and can reference trigger variables.",
         implementation = Object.class, oneOf = { List.class, Map.class }
     )
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @PluginProperty(hidden = true, group = "advanced")
+    @PluginProperty(hidden = true, group = "advanced", dynamic = true)
     private List<@NoSystemLabelValidation Label> labels;
 
     @PluginProperty(group = "reliability")

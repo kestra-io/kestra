@@ -20,10 +20,10 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -546,6 +546,79 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByNamespaceExecutable_shouldReturnFlowWhenEnabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        try {
+            List<FlowForExecution> executable = flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE);
+
+            assertThat(executable).hasSize(1);
+            assertThat(executable.getFirst().getId()).isEqualTo(flow.getId());
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findByNamespaceExecutable_shouldExcludeFlowWhenDisabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).disabled(true).build()));
+
+        try {
+            assertThat(flow.isDisabled()).isTrue();
+            assertThat(flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE)).isEmpty();
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findByNamespaceExecutable_shouldExcludeFlowWhenDeleted() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        deleteFlow(flow);
+
+        assertThat(flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE)).isEmpty();
+    }
+
+    @Test
+    void findDistinctNamespaceExecutable_shouldReturnNamespaceWhenEnabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        try {
+            assertThat(flowRepository.findDistinctNamespaceExecutable(tenant)).containsExactly(TEST_NAMESPACE);
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findDistinctNamespaceExecutable_shouldExcludeNamespaceWhenOnlyFlowIsDisabled() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).disabled(true).build()));
+
+        try {
+            assertThat(flow.isDisabled()).isTrue();
+            assertThat(flowRepository.findDistinctNamespaceExecutable(tenant)).isEmpty();
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    void findDistinctNamespaceExecutable_shouldExcludeNamespaceWhenOnlyFlowIsDeleted() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Flow flow = flowRepository.create(GenericFlow.of(builder(tenant).build()));
+
+        deleteFlow(flow);
+
+        assertThat(flowRepository.findDistinctNamespaceExecutable(tenant)).isEmpty();
+    }
+
+    @Test
     void delete() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Flow flow = builder(tenant).tenantId(tenant).build();
@@ -1053,8 +1126,10 @@ public abstract class AbstractFlowRepositoryTest {
 
             // Then — only the flow in namespaceA is returned
             assertThat(byNamespaceA)
-                .as("Expected only namespace %s but got: %s", namespaceA,
-                    byNamespaceA.stream().map(r -> r.getModel().getNamespace()).toList())
+                .as(
+                    "Expected only namespace %s but got: %s", namespaceA,
+                    byNamespaceA.stream().map(r -> r.getModel().getNamespace()).toList()
+                )
                 .hasSize(1);
             assertThat(byNamespaceA.getFirst().getModel().getNamespace()).isEqualTo(namespaceA);
 
@@ -1065,8 +1140,10 @@ public abstract class AbstractFlowRepositoryTest {
 
             // Then — only the flow whose source contains "beta" is returned
             assertThat(byQuery)
-                .as("Expected only flow-beta but got: %s",
-                    byQuery.stream().map(r -> r.getModel().getId()).toList())
+                .as(
+                    "Expected only flow-beta but got: %s",
+                    byQuery.stream().map(r -> r.getModel().getId()).toList()
+                )
                 .hasSize(1);
             assertThat(byQuery.getFirst().getModel().getId()).isEqualTo("source-flow-beta");
         } finally {

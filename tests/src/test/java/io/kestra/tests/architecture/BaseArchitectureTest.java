@@ -16,12 +16,11 @@ import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_
 public class BaseArchitectureTest {
 
     @ArchTest
-    static final ArchRule no_java_util_logging =
-        NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
+    static final ArchRule no_java_util_logging = NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 
     @ArchTest
     public static final ArchRule no_production_use_of_awaitility = noClasses()
         .that().doNotBelongToAnyOf(io.kestra.core.utils.Await.class)
         .should().dependOnClassesThat().resideInAPackage("org.awaitility")
-        .because("you should not use it directly but use " + io.kestra.core.utils.Await.class.getName()+" wrapper instead");
+        .because("you should not use it directly but use " + io.kestra.core.utils.Await.class.getName() + " wrapper instead");
 }

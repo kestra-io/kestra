@@ -52,7 +52,7 @@ public class WebhookTestPlugin extends AbstractWebhookTrigger implements Trigger
         Execution execution = maybeExecution.get();
 
         return context.webhookService().startExecution(execution)
-            .<HttpResponse<?>>thenReturn(HttpResponse.of(HttpStatus.OK))
+            .<HttpResponse<?>> thenReturn(HttpResponse.of(HttpStatus.OK))
             .onErrorReturn(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
     }
 

@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
-import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +34,7 @@ import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.runners.RunContext;
@@ -50,6 +49,8 @@ import io.kestra.core.services.LabelService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
@@ -379,9 +380,11 @@ public class TriggerScheduler {
             try {
                 TriggerState dispatched = state.nextDispatchEpoch(clock);
                 if (this.triggerWorkerJobPublisher.send(dispatched, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext())) {
-                    triggerStateStore.save(dispatched
-                        .lastTriggeredDate(clock)
-                        .locked(clock, mustBeLocked));
+                    triggerStateStore.save(
+                        dispatched
+                            .lastTriggeredDate(clock)
+                            .locked(clock, mustBeLocked)
+                    );
                 } else {
                     // When the job was not dispatched, save without taking the lock so the
                     // trigger is retried at its next evaluation date.
@@ -443,13 +446,16 @@ public class TriggerScheduler {
         ) {
             Object nextVariable = evaluationResult.trigger().getVariables().get("next");
 
-            ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;
+            ZonedDateTime next = TypeConverter.toZonedDateTime(nextVariable);
 
             // Exclude backfills
             // FIXME : "late" are not excluded and can increase delay value (false positive)
             if (next != null && now.isBefore(next)) {
                 metricRegistry
-                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(evaluationResult, triggerContext))
+                    .timer(
+                        MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION,
+                        metricRegistry.tags(evaluationResult, triggerContext)
+                    )
                     .record(Duration.between(triggerContext.getDate(), now));
             }
         }

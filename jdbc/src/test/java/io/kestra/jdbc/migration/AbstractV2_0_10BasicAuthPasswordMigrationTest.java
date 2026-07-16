@@ -45,8 +45,8 @@ public abstract class AbstractV2_0_10BasicAuthPasswordMigrationTest {
 
     @BeforeEach
     void cleanup() {
-        dslContextWrapper.transaction(configuration ->
-            DSL.using(configuration)
+        dslContextWrapper.transaction(
+            configuration -> DSL.using(configuration)
                 .deleteFrom(DSL.table("settings"))
                 .where(KEY_FIELD.eq(BASIC_AUTH_SETTINGS_KEY))
                 .execute()
@@ -107,8 +107,8 @@ public abstract class AbstractV2_0_10BasicAuthPasswordMigrationTest {
             "value", innerValue
         );
         String json = MAPPER.writeValueAsString(settingJson);
-        dslContextWrapper.transaction(configuration ->
-            DSL.using(configuration)
+        dslContextWrapper.transaction(
+            configuration -> DSL.using(configuration)
                 .insertInto(DSL.table("settings"))
                 .set(KEY_FIELD, (Object) BASIC_AUTH_SETTINGS_KEY)
                 .set(VALUE_FIELD, (Object) JdbcJsonbUtils.valueOf(json))
@@ -117,8 +117,8 @@ public abstract class AbstractV2_0_10BasicAuthPasswordMigrationTest {
     }
 
     private String readStoredPassword() throws Exception {
-        String json = dslContextWrapper.transactionResult(configuration ->
-            DSL.using(configuration)
+        String json = dslContextWrapper.transactionResult(
+            configuration -> DSL.using(configuration)
                 .select(VALUE_FIELD)
                 .from(DSL.table("settings"))
                 .where(KEY_FIELD.eq(BASIC_AUTH_SETTINGS_KEY))

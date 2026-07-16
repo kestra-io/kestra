@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -16,14 +17,16 @@ import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
+import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -107,6 +110,98 @@ class PluginControllerTest {
                 .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
                 .findFirst().orElseThrow().getValue().getIcon()
         ).isNotNull();
+    }
+
+    @Test
+    void iconByClass() {
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
+        assertThat(response.icon().getMonochrome()).isFalse();
+        assertThat(response.icon().getHash()).isNotBlank();
+    }
+
+    @Test
+    void iconHashIsStableAndContentAddressed() {
+        PluginController.PluginIconResponse first = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse second = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse other = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Return.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(first.icon().getHash()).isEqualTo(second.icon().getHash());
+        assertThat(first.icon().getHash()).isNotEqualTo(other.icon().getHash());
+    }
+
+    @Test
+    void iconSvg() {
+        PluginController.PluginIconResponse jsonResponse = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName() + "/icon.svg"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
+        assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).contains("immutable");
+    }
+
+    @Test
+    void iconSvgNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/icon.svg"),
+                byte[].class
+            )
+        );
+
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void iconByClassNotFound() {
+        // must answer 200 with a null icon, not 404: the frontend's shared HTTP client treats
+        // any 404 as a global error and would otherwise take over the whole page for what's just
+        // a normal "this class has no icon" outcome.
+        HttpResponse<PluginController.PluginIconResponse> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task"),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.body().icon()).isNull();
+    }
+
+    @Test
+    void iconByClassFallsBackToPluginDefault() {
+        // A registered class that ships no class- or package-specific icon still resolves one:
+        // it inherits its plugin's default (plugin-icon.svg), so hasIcon is truthful and matches
+        // what the icon.svg endpoint actually serves.
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/io.kestra.core.plugins.test.SuperclassTask"),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo("SuperclassTask");
     }
 
     @SuppressWarnings("unchecked")
@@ -263,8 +358,13 @@ class PluginControllerTest {
         assertThat(manifest.manifest()).containsKey("io.kestra.plugin.redis.list.ListPop");
         List<PluginUiModuleWithGroup> pluginUiModules = manifest.manifest().get("io.kestra.plugin.redis.list.ListPop");
         assertThat(pluginUiModules).containsExactly(
-            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", PluginDistribution.OSS),
-            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", PluginDistribution.OSS)
+            new PluginUiModuleWithGroup(
+                "topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                PluginDistribution.OSS
+            ),
+            new PluginUiModuleWithGroup(
+                "log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", PluginDistribution.OSS
+            )
         );
     }
 

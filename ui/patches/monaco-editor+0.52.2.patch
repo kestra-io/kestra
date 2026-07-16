@@ -1,0 +1,10 @@
+diff --git a/node_modules/monaco-editor/esm/vs/base/common/marked/marked.js b/node_modules/monaco-editor/esm/vs/base/common/marked/marked.js
+index 56333ff..d743087 100644
+--- a/node_modules/monaco-editor/esm/vs/base/common/marked/marked.js
++++ b/node_modules/monaco-editor/esm/vs/base/common/marked/marked.js
+@@ -2534,5 +2534,3 @@ export var setOptions = (__marked_exports.setOptions || exports.setOptions);
+ export var use = (__marked_exports.use || exports.use);
+ export var walkTokens = (__marked_exports.walkTokens || exports.walkTokens);
+ // ESM-uncomment-end
+-
+-//# sourceMappingURL=marked.umd.js.map

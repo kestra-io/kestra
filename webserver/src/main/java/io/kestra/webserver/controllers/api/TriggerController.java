@@ -23,14 +23,14 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
-import io.kestra.webserver.models.api.ApiTriggerAndState;
-import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.TriggerStateService;
 import io.kestra.webserver.utils.CSVUtils;
@@ -107,10 +107,9 @@ public class TriggerController {
             description = "Which trigger date field the time interval is applied to",
             schema = @Schema(
                 type = "string",
-                allowableValues = {"NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE"}
+                allowableValues = { "NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE" }
             )
-        ) @Nullable @QueryValue QueryFilter.Field dateFilter
-    ) throws HttpStatusException {
+        ) @Nullable @QueryValue QueryFilter.Field dateFilter) throws HttpStatusException {
         ArrayListTotal<TriggerState> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),
@@ -414,6 +413,7 @@ public class TriggerController {
     @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Triggers" }, summary = "Export all triggers as a streamed CSV file")
+    @ApiResponse(responseCode = "200", content = { @Content(mediaType = MediaType.TEXT_CSV, schema = @Schema(type = "string")) })
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportTriggers(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)

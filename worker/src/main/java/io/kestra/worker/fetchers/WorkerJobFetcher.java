@@ -22,7 +22,6 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
-
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
@@ -55,8 +54,8 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Receives jobs from the controller and puts them in the local queue</li>
  * <li>Sends updated permit values back to the controller as local capacity changes</li>
  * <li>Piggy-backs job completion signals (job UIDs that reached a terminal state) on
- *     the same stream so the controller can release the per-queue bucket reserved
- *     for the job — see {@link #onJobCompleted(String)}</li>
+ * the same stream so the controller can release the per-queue bucket reserved
+ * for the job — see {@link #onJobCompleted(String)}</li>
  * </ul>
  * <p>
  * The controller only sends jobs when the worker has permits (capacity), providing flow control
@@ -164,17 +163,17 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      *
      * @param workerControllerServiceStub the gRPC worker controller service stub.
      * @param channelManager the shared gRPC channel manager, used to confirm a reconnection
-     *                       only once the transport reaches {@code READY}.
+     *        only once the transport reaches {@code READY}.
      * @param workerQueueRegistry the worker queue registry.
      * @param executionKilledManager the execution killed manager.
      * @param clusterEventQueue the worker-local cluster-event broadcast queue used to relay events
-     *                          received from the controller to in-process subscribers. May be {@code null}
-     *                          when the process has direct access to the shared broadcast queue (see
-     *                          {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
+     *        received from the controller to in-process subscribers. May be {@code null}
+     *        when the process has direct access to the shared broadcast queue (see
+     *        {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
      * @param metadataChangeHandlers worker-side handlers invoked for each
-     *                               {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
-     *                               and on stream (re-)connection. Typically one handler per cached metastore;
-     *                               may be empty on workers that do not participate in metastore caching.
+     *        {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
+     *        and on stream (re-)connection. Typically one handler per cached metastore;
+     *        may be empty on workers that do not participate in metastore caching.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
@@ -397,8 +396,10 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             try {
                 handler.onReconnect();
             } catch (Exception e) {
-                log.warn("Metadata-change handler {} failed onReconnect: {}",
-                    handler.getClass().getSimpleName(), e.getMessage());
+                log.warn(
+                    "Metadata-change handler {} failed onReconnect: {}",
+                    handler.getClass().getSimpleName(), e.getMessage()
+                );
             }
         }
     }
@@ -474,16 +475,20 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             }
             case WorkerBroadcastEvent.MetadataChangeEvent metadataChange -> {
                 if (!metadataChangeHandlers.isEmpty()) {
-                    log.debug("Received metadata change via gRPC: type={}, tenantId={}, namespace={}",
+                    log.debug(
+                        "Received metadata change via gRPC: type={}, tenantId={}, namespace={}",
                         metadataChange.payload().type(),
                         metadataChange.payload().tenantId(),
-                        metadataChange.payload().namespace());
+                        metadataChange.payload().namespace()
+                    );
                     for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
                         try {
                             handler.onMetadataChange(metadataChange.payload());
                         } catch (Exception e) {
-                            log.warn("Metadata-change handler {} failed: {}",
-                                handler.getClass().getSimpleName(), e.getMessage());
+                            log.warn(
+                                "Metadata-change handler {} failed: {}",
+                                handler.getClass().getSimpleName(), e.getMessage()
+                            );
                         }
                     }
                 }

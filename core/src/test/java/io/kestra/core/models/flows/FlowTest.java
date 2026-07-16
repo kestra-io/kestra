@@ -120,7 +120,7 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(13);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(9);
 
         assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("array1: `itemType` cannot be ARRAY");
@@ -181,14 +181,16 @@ class FlowTest {
         Flow flow = Flow.builder()
             .id("a")
             .namespace("a")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("environment")
-                    .type(Type.FORM)
-                    .inputs(List.of(StringInput.builder().id("region").type(Type.STRING).build()))
-                    .build(),
-                StringInput.builder().id("api_key").type(Type.STRING).build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("environment")
+                        .type(Type.FORM)
+                        .inputs(List.of(StringInput.builder().id("region").type(Type.STRING).build()))
+                        .build(),
+                    StringInput.builder().id("api_key").type(Type.STRING).build()
+                )
+            )
             .build();
 
         // resolvableInputs() must flatten the FORM into a dotted leaf and leave the ungrouped input untouched;

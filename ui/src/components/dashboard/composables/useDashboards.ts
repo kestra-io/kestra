@@ -8,9 +8,8 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-
-import {FilterObject} from "../../../utils/filters"
-import {Chart, Parameters, Request} from "../types.ts"
+import {Chart} from "../types.ts"
+import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
 
 
 
@@ -28,7 +27,7 @@ export const processFlowYaml = (yaml: string, namespace: string, flow: string): 
 
 export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"]
 
-export function useChartGenerator(dashboardId: string | undefined, props: {chart: Chart; filters: FilterObject[]; showDefault: boolean;}, includeHooks: boolean = true) {
+export function useChartGenerator(dashboardId: string | undefined, props: {chart: Chart; filters: QueryFilter[]; showDefault: boolean;}, includeHooks: boolean = true) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE")
 
     const route = useRoute()
@@ -44,10 +43,10 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         isMounted = false
     })
 
-    async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[], appendFilters?: FilterObject[]) {
-        const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? [])
-        const allFilters = appendFilters?.length ? [...(filters as FilterObject[]), ...appendFilters] : filters
-        const parameters: Parameters = {...pagination, filters: (allFilters ?? {})}
+    async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: QueryFilter[], appendFilters?: QueryFilter[]) {
+        const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [])
+        const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
+        const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
 
         let result
         if (!props.showDefault) {
@@ -60,8 +59,10 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
                 throw new Error("Chart content must exist for preview.")
             }
 
-            const request: Request = {chart: props.chart.content, globalFilter: parameters}
-            result = await dashboardStore.chartPreview(request)
+            result = await dashboardStore.chartPreview({
+                chart: props.chart.content,
+                globalFilter: parameters,
+            })
         }
 
         if (!isMounted) return

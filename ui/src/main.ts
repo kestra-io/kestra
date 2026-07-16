@@ -29,9 +29,15 @@ import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useMiscStore} from "override/stores/misc"
+import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
+import TaskIcon from "./components/plugins/TaskIcon.vue"
 
 
 const app = createApp(App)
+
+// lets KsEditor and the topology package render real plugin icons without
+// the design system depending on the app's plugin-icon API
+app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
 const handleAuthError = (error: Error, to: {fullPath: string}) => {
     if (error.message?.includes("401")) {

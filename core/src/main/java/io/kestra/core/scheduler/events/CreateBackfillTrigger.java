@@ -8,9 +8,9 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.Label;
-import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;

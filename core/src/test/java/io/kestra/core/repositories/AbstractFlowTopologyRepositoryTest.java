@@ -113,7 +113,7 @@ public abstract class AbstractFlowTopologyRepositoryTest {
     }
 
     @Test
-    void findByFlowDestinationOnly(){
+    void findByFlowDestinationOnly() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         flowTopologyRepository.save(
             createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
@@ -142,6 +142,5 @@ public abstract class AbstractFlowTopologyRepositoryTest {
 
         assertThat(list).isEmpty();
     }
-
 
 }

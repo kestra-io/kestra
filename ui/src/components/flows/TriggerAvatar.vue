@@ -13,7 +13,7 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <KsTaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
+                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
@@ -29,7 +29,7 @@
     import * as Utils from "../../utils/utils"
     import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import TriggerVars from "./TriggerVars.vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {Execution} from "../../stores/executions"

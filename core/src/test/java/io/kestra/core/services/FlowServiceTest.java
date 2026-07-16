@@ -18,23 +18,21 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.scheduler.events.TriggerCreated;
+import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
-
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.scheduler.events.TriggerCreated;
-import io.kestra.core.scheduler.events.TriggerEvent;
-import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
-import io.kestra.core.scheduler.events.TriggerUpdated;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
@@ -871,8 +869,8 @@ class FlowServiceTest {
             tasks: []
             """.formatted(flowId, TEST_NAMESPACE);
 
-        assertThatThrownBy(() ->
-            flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source))
+        assertThatThrownBy(
+            () -> flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source))
         ).isInstanceOf(jakarta.validation.ConstraintViolationException.class);
     }
 
@@ -959,8 +957,7 @@ class FlowServiceTest {
         FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
 
         try {
-            Optional<jakarta.validation.ConstraintViolationException> violations =
-                flowService.validateForExecution(saved.toFlow());
+            Optional<jakarta.validation.ConstraintViolationException> violations = flowService.validateForExecution(saved.toFlow());
             assertThat(violations).isPresent();
             // The flow has at least one violation - we don't pin the exact message so this stays
             // robust against bean-validation message wording changes.

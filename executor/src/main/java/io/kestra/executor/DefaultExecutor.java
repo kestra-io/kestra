@@ -2,6 +2,7 @@ package io.kestra.executor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,6 +20,7 @@ import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -75,6 +77,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
     private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+    private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
+
     private final ExecutorService executorService;
     private final ExecutionService executionService;
     private final FlowTriggerService flowTriggerService;
@@ -142,6 +146,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue,
         DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
+        DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         ExecutorService executorService,
         ExecutionService executionService,
         FlowTriggerService flowTriggerService,
@@ -179,6 +184,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.subflowExecutionEndQueue = subflowExecutionEndQueue;
         this.multipleConditionEventQueue = multipleConditionEventQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
+        this.executionStatisticQueue = executionStatisticQueue;
         this.executorService = executorService;
         this.executionService = executionService;
         this.flowTriggerService = flowTriggerService;
@@ -676,6 +682,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     sendTriggerExecutionTerminated(execution);
                     this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
+                    emitExecutionStatistic(execution);
                 }
 
                 return;
@@ -812,6 +819,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // Note that we must use 'emit' here and not emitAsync as we need to emit it inside the same transaction to avoid races,
                 // and transactions are bound to a thread. This is true for all emission of the follow execution event inside an execution lock.
                 this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
+
+                emitExecutionStatistic(execution);
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
@@ -839,11 +848,24 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
                         // update all execution followers
                         this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
+
+                        emitExecutionStatistic(failedExecution);
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Asynchronously emits a raw execution-statistic row for the indexer to persist for every terminal NORMAL-kind execution.
+     */
+    private void emitExecutionStatistic(Execution execution) {
+        if (execution.getKind() == null || ExecutionKind.NORMAL == execution.getKind()) {
+            // An end date should always be set, but use the current date as a safety belt
+            Instant bucket = execution.getState().getEndDate().orElse(Instant.now()).truncatedTo(ChronoUnit.MINUTES);
+            this.executionStatisticQueue.emitAsync(new ExecutionStatistic(execution, bucket));
         }
     }
 

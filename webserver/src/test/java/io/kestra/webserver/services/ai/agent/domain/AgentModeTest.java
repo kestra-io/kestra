@@ -36,7 +36,7 @@ class AgentModeTest {
 
     @Test
     void shouldFailFastOnNullOrUnknownMode() {
-        // Then: no UNKNOWN fallback — an unparseable value is a hard error
+        // Then: no UNKNOWN fallback — an unparsable value is a hard error
         assertThatThrownBy(() -> AgentMode.fromString(null))
             .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AgentMode.fromString("teleport"))

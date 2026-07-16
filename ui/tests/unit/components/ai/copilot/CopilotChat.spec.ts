@@ -29,6 +29,7 @@ const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), p
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
+import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
 
 const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
 
@@ -86,14 +87,17 @@ describe("CopilotChat", () => {
         expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", inFocus: undefined})
     })
 
-    it("renders the proposed-action card and confirms on approve", async () => {
+    it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {
+        // The resumed turn needs the same provider as the chat turn, so approve must pass it through.
+        ;(providersMock as any).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
         state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}
         const w = mountChat()
+        await flushPromises() // let the provider list resolve so selectedProvider is set
         const card = w.findComponent({name: "ProposedActionCard"})
         expect(card.exists()).toBe(true)
         card.vm.$emit("approve")
         await flushPromises()
-        expect(state.confirm).toHaveBeenCalledWith("APPROVE")
+        expect(state.confirm).toHaveBeenCalledWith("APPROVE", undefined, "gemini-legacy")
     })
 
     it("rejects via the proposed-action card", async () => {
@@ -101,7 +105,7 @@ describe("CopilotChat", () => {
         const w = mountChat()
         w.findComponent({name: "ProposedActionCard"}).vm.$emit("reject")
         await flushPromises()
-        expect(state.confirm).toHaveBeenCalledWith("REJECT")
+        expect(state.confirm).toHaveBeenCalledWith("REJECT", undefined, undefined)
     })
 
     it("disables the composer when a turn cannot be sent", () => {

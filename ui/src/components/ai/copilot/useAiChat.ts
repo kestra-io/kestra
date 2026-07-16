@@ -140,13 +140,16 @@ export function useAiChat() {
         error.value = null
     }
 
-    /** Resolves a pending proposal. APPROVE resumes & dispatches; REJECT records rejection. */
-    async function confirm(decision: Decision, reason?: string): Promise<void> {
+    /**
+     * Resolves a pending proposal. APPROVE resumes & dispatches; REJECT records rejection.
+     * The resumed turn runs a fresh model call, so it needs the same `providerId` the chat turn used.
+     */
+    async function confirm(decision: Decision, reason?: string, providerId?: string): Promise<void> {
         const active = thread.value
         const proposal = pendingConfirmation.value
         if (!active || !proposal) return
 
-        const request: ConfirmActionRequest = {confirmationId: proposal.confirmationId, decision, reason}
+        const request: ConfirmActionRequest = {confirmationId: proposal.confirmationId, decision, reason, providerId}
         pendingConfirmation.value = null
         await runStream(`${base()}/${active.uid}/confirm`, request)
     }

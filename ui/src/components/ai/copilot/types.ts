@@ -63,6 +63,7 @@ export interface ConfirmActionRequest {
     confirmationId: string
     decision: Decision
     reason?: string | null
+    providerId?: string | null
 }
 
 /* ------------------------------------------------------------------ *
@@ -148,7 +149,7 @@ export interface ArtefactDraftEvent {
 
 export interface ToolResultEvent {
     tool: string
-    /** "ok" or "rejected". */
+    /** "ok", "error" (the tool threw; the turn continues), or "rejected". */
     outcome: string
 }
 

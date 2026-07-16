@@ -54,7 +54,7 @@ describe("TableQuickFilter", () => {
         await buttons[0].trigger("click")
 
         expect(lastChange(wrapper)).toEqual([
-            {field: "STATE", operation: "IN", value: ALL_STATES},
+            {field: "state", operation: "IN", value: ALL_STATES},
             "all",
         ])
     })
@@ -65,7 +65,7 @@ describe("TableQuickFilter", () => {
         await tabButtons(wrapper)[5].trigger("click")
 
         expect(lastChange(wrapper)).toEqual([
-            {field: "STATE", operation: "IN", value: ["FAILED", "KILLED", "CANCELLED", "SKIPPED", "RETRIED"]},
+            {field: "state", operation: "IN", value: ["FAILED", "KILLED", "CANCELLED", "SKIPPED", "RETRIED"]},
             "failed",
         ])
     })

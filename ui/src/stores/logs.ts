@@ -71,7 +71,7 @@ export const useLogsStore = defineStore("logs", () => {
             .filter((f) => f.field !== "LEVEL")
 
         const cumulative = await Promise.all(LEVELS_ASC.map((logLevel) => {
-            const filters = [...baseFilters, {field: "LEVEL", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
+            const filters = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
             return LogsAPI.searchLogs({page: 1, size: 1, filters} as Parameters<typeof LogsAPI.searchLogs>[0])
                 .then((response) => (response.total ?? 0) as number)
                 .catch(() => 0)

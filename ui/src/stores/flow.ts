@@ -758,8 +758,8 @@ function deleteFlowAndDependencies() {
 
     function importFlows(options: { file: FormData,  failOnError: boolean }): Promise<RawHttpResponse> {
          const {file, failOnError} = options
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
         return axios.post(`${apiUrl()}/flows/import`, file, {
-            headers: {"Content-Type": "multipart/form-data"},
             params: {failOnError},
         }).then(response => {
             return response

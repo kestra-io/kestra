@@ -180,6 +180,9 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself; an
+    // explicit "multipart/form-data" header (needed under the old axios client) has no boundary
+    // and corrupts the request.
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }): Promise<RawHttpResponse<Execution>> => {
         return axios.post<Execution>(
             `${apiUrl()}/executions/${options.executionId}/actions/replay-with-inputs`,
@@ -189,9 +192,6 @@ export const useExecutionsStore = defineStore("executions", () => {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
                     breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-                },
-                headers: {
-                    "Content-Type": "multipart/form-data",
                 },
             })
     }
@@ -226,22 +226,18 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const resume = (options: { id: string; formData: any }): Promise<RawHttpResponse> => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
         })
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const validateResume = (options: { id: string; formData: any }): Promise<RawHttpResponse> => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
         })
     }
 
@@ -315,12 +311,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }): Promise<RawHttpResponse<ValidationResponse>> => {
         return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
             params: {
                 labels: options.labels ?? [],
                 scheduleDate: options.scheduleDate,
@@ -351,12 +345,10 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        // Content-Type must be forced to multipart here: the shared client's default
-        // "application/json" header makes axios's transformRequest silently JSON-stringify the
-        // FormData body instead of sending it as multipart (utils.isFormData(data) is true, but
-        // axios still re-encodes it whenever the Content-Type header says JSON) - same override
-        // the raw-axios multipart calls elsewhere in this file (resume, validateExecution, ...) need.
-        }, {timeout: 60 * 60 * 1000, headers: {"Content-Type": "multipart/form-data"}})
+        // Don't set Content-Type here - createExecution() already defaults it to null so the
+        // browser can generate the multipart boundary itself. An explicit "multipart/form-data"
+        // header (needed under the old axios client) has no boundary and corrupts the request.
+        }, {timeout: 60 * 60 * 1000})
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {

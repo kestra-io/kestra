@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import com.devskiller.friendly_id.FriendlyId;
 
@@ -24,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 @Property(name = "kestra.server-type", value = "STANDALONE")
+@Execution(ExecutionMode.SAME_THREAD)
 public abstract class AbstractExecutionStatisticsCompactorTest {
     @Inject
     protected ExecutionStatisticsRepositoryInterface executionStatisticsRepository;

@@ -1,8 +1,5 @@
 package io.kestra.plugin.core.templating;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -20,6 +17,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @SuperBuilder
 @ToString
@@ -79,7 +78,7 @@ public class TemplatedTask extends Task implements RunnableTask<Output> {
                 }
             }
             throw new IllegalArgumentException("The templated task must be a runnable task");
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalVariableEvaluationException(e);
         }
     }

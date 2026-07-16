@@ -189,7 +189,13 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(TaskRunner.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-            var taskRunner = definitions.get(TaskRunner.class.getName());
+            // TaskRunner is generic, so victools suffixes the definition key with the resolved type parameter.
+            var taskRunner = definitions.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(TaskRunner.class.getName()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+            Assertions.assertNotNull(taskRunner);
             Assertions.assertNotNull(taskRunner.get("$ref"));
         });
     }
@@ -204,7 +210,13 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(LogExporter.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-            var logShipper = definitions.get(LogExporter.class.getName());
+            // LogExporter is generic, so victools suffixes the definition key with the resolved type parameter.
+            var logShipper = definitions.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(LogExporter.class.getName()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+            Assertions.assertNotNull(logShipper);
             Assertions.assertNotNull(logShipper.get("$ref"));
         });
     }

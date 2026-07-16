@@ -23,10 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.amazon.ion.util.IonStreamUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
@@ -36,6 +32,10 @@ import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.RegexUtils;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.MappingIterator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SequenceWriter;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 

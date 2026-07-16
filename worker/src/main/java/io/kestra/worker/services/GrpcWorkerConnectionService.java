@@ -3,9 +3,6 @@ package io.kestra.worker.services;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
 import io.kestra.controller.grpc.ConnectRequest;
@@ -22,6 +19,8 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * gRPC-based implementation of {@link WorkerConnectionService}.

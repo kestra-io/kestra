@@ -4,13 +4,13 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.serializers.JacksonMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +18,7 @@ class AbstractMetricEntryTest {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Test
-    void shouldDeserializeCounter() throws JsonProcessingException {
+    void shouldDeserializeCounter() throws JacksonException {
         Counter counter = Counter.of("my.counter", "A counter", 42D);
         String json = MAPPER.writeValueAsString(counter);
         AbstractMetricEntry<?> deserialized = MAPPER.readValue(json, AbstractMetricEntry.class);
@@ -30,7 +30,7 @@ class AbstractMetricEntryTest {
     }
 
     @Test
-    void shouldDeserializeTimer() throws JsonProcessingException {
+    void shouldDeserializeTimer() throws JacksonException {
         Timer timer = Timer.of("my.timer", "A timer", Duration.ofSeconds(5));
         String json = MAPPER.writeValueAsString(timer);
         AbstractMetricEntry<?> deserialized = MAPPER.readValue(json, AbstractMetricEntry.class);
@@ -42,7 +42,7 @@ class AbstractMetricEntryTest {
     }
 
     @Test
-    void shouldDeserializeGauge() throws JsonProcessingException {
+    void shouldDeserializeGauge() throws JacksonException {
         Gauge gauge = Gauge.of("my.gauge", "A gauge", 99.5D);
         String json = MAPPER.writeValueAsString(gauge);
         AbstractMetricEntry<?> deserialized = MAPPER.readValue(json, AbstractMetricEntry.class);

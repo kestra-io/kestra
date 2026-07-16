@@ -13,13 +13,6 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.victools.jsonschema.generator.*;
 import com.github.victools.jsonschema.generator.impl.DefinitionKey;
 import com.github.victools.jsonschema.generator.naming.DefaultSchemaDefinitionNamingStrategy;
@@ -63,10 +56,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import static io.kestra.core.docs.AbstractClassDocumentation.flattenWithoutType;
 import static io.kestra.core.docs.AbstractClassDocumentation.required;
-import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 
 @Singleton
 @Slf4j
@@ -74,11 +74,18 @@ public class JsonSchemaGenerator {
 
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
-        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
-    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
-        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+    // Duration values in a generated schema (e.g. a task's timeout default) should read as an ISO-8601
+    // string, not the hub's own numeric default used for storage.
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().rebuild()
+        .disable(DateTimeFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
+        .build();
+
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().rebuild()
+        .disable(DateTimeFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
+        .build();
 
     private static final List<String> AVAILABLE_ZONE_IDS = Stream
         .concat(ZoneId.getAvailableZoneIds().stream(), ZoneId.SHORT_IDS.keySet().stream())
@@ -245,7 +252,7 @@ public class JsonSchemaGenerator {
             if (jsonNode instanceof ObjectNode oNode) {
                 JsonNode anyOf = oNode.get("anyOf");
                 if (anyOf instanceof ArrayNode arrayNode) {
-                    Iterator<JsonNode> it = arrayNode.elements();
+                    Iterator<JsonNode> it = arrayNode.elements().iterator();
                     var nodesToPullUp = new HashMap<String, Optional<JsonNode>>(
                         Map.ofEntries(
                             Map.entry("default", Optional.empty()),
@@ -303,11 +310,11 @@ public class JsonSchemaGenerator {
                 sb.append("Default value is : `")
                     .append(YAML_MAPPER.writeValueAsString(collectedTypeAttributes.get("default")).trim())
                     .append("`");
-            } catch (JsonProcessingException ignored) {
+            } catch (JacksonException ignored) {
 
             }
 
-            collectedTypeAttributes.set("markdownDescription", new TextNode(sb.toString()));
+            collectedTypeAttributes.set("markdownDescription", new StringNode(sb.toString()));
         }
     }
 
@@ -712,7 +719,7 @@ public class JsonSchemaGenerator {
 
                     description += "##### Examples\n" + doc;
 
-                    collectedTypeAttributes.set("markdownDescription", new TextNode(description));
+                    collectedTypeAttributes.set("markdownDescription", new StringNode(description));
 
                     collectedTypeAttributes.remove("$examples");
                 }
@@ -822,7 +829,7 @@ public class JsonSchemaGenerator {
                     return p.optional("allOf").flatMap(node ->
                     {
                         if (node.isArray()) {
-                            Iterable<JsonNode> iterable = node::values;
+                            Iterable<JsonNode> iterable = node.values();
                             return StreamSupport.stream(
                                 iterable.spliterator(),
                                 false
@@ -1000,7 +1007,7 @@ public class JsonSchemaGenerator {
 
     private boolean defaultInAllOf(JsonNode property) {
         if (property.has("allOf")) {
-            for (Iterator<JsonNode> it = property.get("allOf").elements(); it.hasNext();) {
+            for (Iterator<JsonNode> it = property.get("allOf").values().iterator(); it.hasNext();) {
                 JsonNode child = it.next();
                 if (child.has("default")) {
                     return true;
@@ -1076,7 +1083,7 @@ public class JsonSchemaGenerator {
     }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {
-        TextNode ref = (TextNode) objectNode.get("$ref");
+        StringNode ref = (StringNode) objectNode.get("$ref");
         ObjectNode defs = (ObjectNode) objectNode.get("$defs");
 
         if (ref == null) {
@@ -1150,7 +1157,7 @@ public class JsonSchemaGenerator {
             Method field = cls.getMethod("get" + fieldName.substring(0, 1).toUpperCase(Locale.ROOT) + fieldName.substring(1));
 
             field.setAccessible(true);
-            return field.invoke(instance);
+            return unwrapProperty(field.invoke(instance));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException ignored) {
 
         }
@@ -1159,11 +1166,30 @@ public class JsonSchemaGenerator {
             Method field = cls.getMethod("is" + fieldName.substring(0, 1).toUpperCase(Locale.ROOT) + fieldName.substring(1));
 
             field.setAccessible(true);
-            return field.invoke(instance);
+            return unwrapProperty(field.invoke(instance));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException ignored) {
 
         }
 
         return null;
+    }
+
+    // Property is serialized by a custom Jackson 3 serializer (PropertySerializer) that Jackson 2 (used by
+    // the victools schema generator and by our own MAPPER/YAML_MAPPER above, see comment near their declaration)
+    // cannot see, so a raw Property default value would otherwise serialize as an empty object. Property#toString()
+    // mirrors what PropertySerializer writes (the Pebble expression, or the plain value if none was set).
+    //
+    // A raw enum default value hits a different wall: victools wraps whatever withDefaultResolver() returns as a
+    // deferred POJONode, and Jackson 3's stricter node coercion refuses to read that POJONode back as text later
+    // in this class (pullDocumentationAndDefaultFromAnyOf, etc.) unless it is already a plain value. Jackson 2's
+    // coercion was lenient enough to paper over this; Jackson 3's is not, so the enum must be unwrapped up front.
+    private static Object unwrapProperty(Object value) {
+        if (value instanceof Property<?> property) {
+            return property.toString();
+        }
+        if (value instanceof Enum<?> enumValue) {
+            return enumValue.toString();
+        }
+        return value;
     }
 }

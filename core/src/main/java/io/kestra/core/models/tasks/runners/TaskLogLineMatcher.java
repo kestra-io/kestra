@@ -12,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.spi.LoggingEventBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.queues.QueueException;
@@ -23,6 +21,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 
 import jakarta.inject.Singleton;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
 

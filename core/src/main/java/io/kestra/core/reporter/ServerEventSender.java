@@ -5,8 +5,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.collectors.Result;
@@ -27,6 +25,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 @Singleton
 @Slf4j

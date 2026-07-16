@@ -2,11 +2,11 @@ package io.kestra.jdbc;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class VersionJsonKeyFreezeTest {
     @Test
-    void persistedKvMetadataKeepsVersionJsonKey() throws JsonProcessingException {
+    void persistedKvMetadataKeepsVersionJsonKey() throws JacksonException {
         PersistedKvMetadata metadata = PersistedKvMetadata.builder()
             .namespace("my.ns")
             .name("my-key")
@@ -34,7 +34,7 @@ class VersionJsonKeyFreezeTest {
     }
 
     @Test
-    void persistedKvMetadataReadsLegacyVersionJsonKey() throws JsonProcessingException {
+    void persistedKvMetadataReadsLegacyVersionJsonKey() throws JacksonException {
         String legacy = "{\"namespace\":\"my.ns\",\"name\":\"my-key\",\"version\":7,\"last\":true,\"deleted\":false}";
 
         PersistedKvMetadata metadata = JdbcMapper.of().readValue(legacy, PersistedKvMetadata.class);
@@ -43,7 +43,7 @@ class VersionJsonKeyFreezeTest {
     }
 
     @Test
-    void namespaceFileMetadataKeepsVersionJsonKey() throws JsonProcessingException {
+    void namespaceFileMetadataKeepsVersionJsonKey() throws JacksonException {
         NamespaceFileMetadata metadata = NamespaceFileMetadata.builder()
             .namespace("my.ns")
             .path("/sub/file.txt")
@@ -59,7 +59,7 @@ class VersionJsonKeyFreezeTest {
     }
 
     @Test
-    void namespaceFileMetadataReadsLegacyVersionJsonKey() throws JsonProcessingException {
+    void namespaceFileMetadataReadsLegacyVersionJsonKey() throws JacksonException {
         String legacy = "{\"namespace\":\"my.ns\",\"path\":\"/sub/file.txt\",\"version\":7,\"size\":12,\"last\":true,\"deleted\":false}";
 
         NamespaceFileMetadata metadata = JdbcMapper.of().readValue(legacy, NamespaceFileMetadata.class);

@@ -4,9 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import io.kestra.core.models.Label;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -20,6 +17,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 @SuperBuilder(toBuilder = true)
 @Getter

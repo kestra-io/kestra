@@ -4,9 +4,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.JacksonMapper;
@@ -20,6 +17,8 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @CommandLine.Command(
     name = "update",
@@ -88,7 +87,7 @@ public class KvUpdateCommand extends AbstractApiCommand {
         try {
             mapper.readTree(input);
             return false;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return true;
         }
     }

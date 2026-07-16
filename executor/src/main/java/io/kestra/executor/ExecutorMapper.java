@@ -1,18 +1,18 @@
 package io.kestra.executor;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import io.kestra.core.serializers.JacksonMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * FIXME this is a copy of the JdbcMapper
@@ -32,24 +32,23 @@ final class ExecutorMapper {
     }
 
     private static ObjectMapper init() {
-        ObjectMapper objectMapper = JacksonMapper.ofJson(false).copy();
-
         final SimpleModule module = new SimpleModule();
-        module.addSerializer(Instant.class, new JsonSerializer<>() {
+        module.addSerializer(Instant.class, new ValueSerializer<>() {
             @Override
-            public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+            public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializationContext serializationContext) throws JacksonException {
                 jsonGenerator.writeString(INSTANT_FORMATTER.format(instant));
             }
         });
 
-        module.addSerializer(ZonedDateTime.class, new JsonSerializer<>() {
+        module.addSerializer(ZonedDateTime.class, new ValueSerializer<>() {
             @Override
-            public void serialize(ZonedDateTime instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+            public void serialize(ZonedDateTime instant, JsonGenerator jsonGenerator, SerializationContext serializationContext) throws JacksonException {
                 jsonGenerator.writeString(ZONED_DATE_TIME_FORMATTER.format(instant));
             }
         });
 
-        objectMapper.registerModule(module);
-        return objectMapper;
+        return JacksonMapper.ofJson(false).rebuild()
+            .addModule(module)
+            .build();
     }
 }

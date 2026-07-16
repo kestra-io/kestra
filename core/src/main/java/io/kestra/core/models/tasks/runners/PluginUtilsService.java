@@ -10,9 +10,6 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
@@ -21,6 +18,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 
 import jakarta.validation.constraints.NotNull;
+import tools.jackson.core.type.TypeReference;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -83,13 +81,13 @@ abstract public class PluginUtilsService {
         }
     }
 
-    public static Map<String, String> transformInputFiles(RunContext runContext, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
+    public static Map<String, String> transformInputFiles(RunContext runContext, @NotNull Object inputFiles) throws IllegalVariableEvaluationException {
         return PluginUtilsService.transformInputFiles(runContext, Collections.emptyMap(), inputFiles);
     }
 
     @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles)
-        throws IllegalVariableEvaluationException, JsonProcessingException {
+        throws IllegalVariableEvaluationException {
         if (inputFiles instanceof Map) {
             Map<String, String> castedInputFiles = (Map<String, String>) inputFiles;
             Map<String, String> nullFilteredInputFiles = new HashMap<>();

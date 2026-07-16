@@ -1,26 +1,24 @@
 package io.kestra.core.serializers;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
-
 import io.kestra.core.models.Label;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 
 /**
  * This deserializer is for historical purpose, labels was first a map but has been updated to a List of Label so
  * this deserializer allows using both types.
  */
-public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> implements ResolvableDeserializer {
+public class ListOrMapOfLabelDeserializer extends ValueDeserializer<List<Label>> {
     @SuppressWarnings("unchecked")
     @Override
-    public List<Label> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public List<Label> deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
         if (p.hasToken(JsonToken.VALUE_NULL)) {
             return null;
         } else if (p.hasToken(JsonToken.START_ARRAY)) {
@@ -62,9 +60,5 @@ public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> 
             value instanceof Float ||
             value instanceof Double ||
             value instanceof Boolean;
-    }
-
-    @Override
-    public void resolve(DeserializationContext ctxt) throws JsonMappingException {
     }
 }

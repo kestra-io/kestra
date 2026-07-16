@@ -16,8 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.controller.config.GrpcChannelConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration;
@@ -33,6 +31,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.storage.local.LocalStorage;
 
 import io.grpc.EquivalentAddressGroup;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

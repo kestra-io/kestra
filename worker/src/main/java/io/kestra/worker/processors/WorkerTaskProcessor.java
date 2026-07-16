@@ -21,7 +21,6 @@ import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -471,7 +470,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             digest.update(json);
             byte[] bytes = digest.digest();
             return Optional.of(HexFormat.of().formatHex(bytes));
-        } catch (RuntimeException | IllegalVariableEvaluationException | JsonProcessingException | NoSuchAlgorithmException e) {
+        } catch (RuntimeException | IllegalVariableEvaluationException | NoSuchAlgorithmException e) {
             runContext.logger().error("Unable to create the cache key for the task '{}'", task.getId(), e);
             return Optional.empty();
         }

@@ -1,14 +1,8 @@
 package io.kestra.jdbc.migration;
 
-import java.io.IOException;
-
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.impl.DSL;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.core.utils.AuthUtils;
@@ -20,6 +14,10 @@ import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Migrates the stored BasicAuth password from plain SHA-512 to bcrypt-wrapped SHA-512.
@@ -104,7 +102,7 @@ public class V2_0_10BasicAuthPasswordMigration implements MigrationScript {
             JsonNode root;
             try {
                 root = MAPPER.readTree(json);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 // Corrupt JSON must not be silently skipped: the migration runner would mark the script
                 // as applied and skip it on future restarts, leaving the password unmigrated permanently.
                 // Fail hard so the operator is forced to fix the settings row.
@@ -138,7 +136,7 @@ public class V2_0_10BasicAuthPasswordMigration implements MigrationScript {
             String updatedJson;
             try {
                 updatedJson = MAPPER.writeValueAsString(root);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 log.error("BasicAuth migration: failed to serialize updated setting JSON.", e);
                 throw new RuntimeException(e);
             }

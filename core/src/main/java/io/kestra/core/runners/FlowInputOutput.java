@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -50,6 +48,7 @@ import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -513,7 +512,11 @@ public class FlowInputOutput {
             .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
 
         // Ensure outputs are compliant with tasks outputs.
-        return JacksonMapper.toMap(results);
+        Map<String, Object> converted = JacksonMapper.toMap(results);
+        // A missing optional output is intentionally kept as an explicit null entry above so it doesn't
+        // fail validation, but it must not be reported as a real output value once outputs are computed.
+        converted.values().removeIf(Objects::isNull);
+        return converted;
     }
 
     private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(

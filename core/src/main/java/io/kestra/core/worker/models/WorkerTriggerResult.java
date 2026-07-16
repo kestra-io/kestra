@@ -1,7 +1,6 @@
 package io.kestra.core.worker.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
@@ -9,6 +8,7 @@ import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.scheduler.model.TriggerType;
 
 import jakarta.annotation.Nullable;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Represents the result of a trigger evaluation by a worker.

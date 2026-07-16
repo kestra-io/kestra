@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
@@ -19,6 +18,8 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.Enums;
+
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)

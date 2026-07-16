@@ -13,7 +13,6 @@ import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -28,6 +27,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.JacksonException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static java.util.Map.entry;
@@ -392,7 +392,7 @@ class PropertyTest {
     }
 
     @Test
-    void jsonSubtype() throws JsonProcessingException, IllegalVariableEvaluationException {
+    void jsonSubtype() throws JacksonException, IllegalVariableEvaluationException {
         Optional<WithSubtype> rendered = runContextFactory.of().render(
             Property.<WithSubtype> ofExpression(JacksonMapper.ofJson().writeValueAsString(new MySubtype()))
         ).as(WithSubtype.class);

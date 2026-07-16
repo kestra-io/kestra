@@ -5,9 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.Label;
@@ -17,6 +14,8 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
 
 import jakarta.annotation.Nullable;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A command to backfill a trigger.

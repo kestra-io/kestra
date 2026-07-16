@@ -8,8 +8,6 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.controller.config.ControllerAdvertiseConfiguration;
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
@@ -26,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publishes the controller's gRPC endpoint to internal storage on every successful

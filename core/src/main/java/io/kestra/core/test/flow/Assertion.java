@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.TypeConversionException;
@@ -20,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import tools.jackson.core.JacksonException;
 
 import static io.kestra.core.test.flow.Assertion.Operator.*;
 
@@ -197,7 +197,7 @@ public class Assertion {
     private String getDisplayableAssertion() {
         try {
             return JacksonMapper.ofJson().writeValueAsString(this);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

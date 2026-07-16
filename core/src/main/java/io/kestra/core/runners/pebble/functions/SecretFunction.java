@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.runners.RunVariables;
 import io.kestra.core.secret.SecretException;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -26,6 +22,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Singleton
@@ -99,7 +98,7 @@ public class SecretFunction implements KestraFunction {
                         JsonNode jsonNode = subkeys.get(subkey);
                         secret = jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString();
                     }
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     throw new SecretException(
                         String.format(
                             "Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.",

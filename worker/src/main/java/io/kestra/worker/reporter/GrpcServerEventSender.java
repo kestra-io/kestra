@@ -2,7 +2,6 @@ package io.kestra.worker.reporter;
 
 import java.time.Instant;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 
 import io.kestra.controller.grpc.WorkerReportRequest;
@@ -20,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * gRPC-based {@link ServerEventSender} for workers.

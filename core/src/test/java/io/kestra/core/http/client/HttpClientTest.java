@@ -27,8 +27,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.net.HttpHeaders;
 
 import io.kestra.core.context.TestRunContextFactory;
@@ -62,6 +60,8 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import lombok.Builder;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -231,7 +231,7 @@ class HttpClientTest {
 
     private static final String UUID = IdUtils.create();
 
-    static Stream<Arguments> postJsonSource() throws JsonProcessingException {
+    static Stream<Arguments> postJsonSource() throws JacksonException {
         return Stream.of(
             Arguments.of(HttpRequest.JsonRequestBody.builder().content(Map.of("ping", UUID)).build()),
             Arguments.of(

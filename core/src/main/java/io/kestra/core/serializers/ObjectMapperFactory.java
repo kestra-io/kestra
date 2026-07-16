@@ -3,8 +3,6 @@ package io.kestra.core.serializers;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.kestra.core.plugins.PluginModule;
-
 import io.micronaut.context.annotation.BootstrapContextCompatible;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Replaces;
@@ -15,7 +13,11 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 /**
- * Custom Micronaut ObjectMapperFactory to add the PluginModule.
+ * Custom Micronaut ObjectMapperFactory.
+ * <p>
+ * PluginModule is now Jackson 3-based (see {@link io.kestra.core.plugins.PluginModule}) and can no longer be
+ * registered on this Jackson 2 Micronaut-managed mapper. Plugin polymorphic deserialization through Micronaut's
+ * HTTP layer is unavailable until the Micronaut 5 bump (which brings Jackson 3 support) lands on this branch.
  */
 @Factory
 @BootstrapContextCompatible
@@ -28,8 +30,6 @@ public class ObjectMapperFactory extends io.micronaut.jackson.ObjectMapperFactor
     @BootstrapContextCompatible
     @Override
     public ObjectMapper objectMapper(@Nullable JacksonConfiguration jacksonConfiguration, @Nullable JsonFactory jsonFactory) {
-        ObjectMapper objectMapper = super.objectMapper(jacksonConfiguration, jsonFactory);
-        objectMapper.registerModule(new PluginModule());
-        return objectMapper;
+        return super.objectMapper(jacksonConfiguration, jsonFactory);
     }
 }

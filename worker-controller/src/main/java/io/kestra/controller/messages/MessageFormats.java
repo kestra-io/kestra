@@ -1,14 +1,14 @@
 package io.kestra.controller.messages;
 
-import java.io.IOException;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 
 import io.kestra.core.serializers.JacksonMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Supported formats for serialized messages in Protocol Buffer message.
@@ -27,7 +27,7 @@ public enum MessageFormats implements MessageFormat {
             }
             try {
                 return OBJECT_MAPPER.readValue(bytes, type);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -40,7 +40,7 @@ public enum MessageFormats implements MessageFormat {
             }
             try {
                 return OBJECT_MAPPER.readValue(bytes, type);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -53,7 +53,7 @@ public enum MessageFormats implements MessageFormat {
             }
             try {
                 return ByteString.copyFrom(OBJECT_MAPPER.writeValueAsBytes(value));
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -16,8 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.controller.config.GrpcChannelConfiguration;
@@ -49,6 +47,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Manages gRPC channels for worker-to-controller communication.
@@ -253,7 +253,7 @@ public class GrpcChannelManager {
                     continue;
                 }
                 addresses.add(new EquivalentAddressGroup(new InetSocketAddress(registration.host(), registration.port())));
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 // Malformed JSON — drop just this entry, likely from a stale or partial writer.
                 log.warn("Skipping malformed controller registration at {}", entryUri, e);
             } catch (IOException e) {

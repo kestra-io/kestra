@@ -11,24 +11,27 @@ import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-
 import io.kestra.core.models.validations.ManualConstraintViolation;
 
 import jakarta.validation.ConstraintViolationException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.exc.InvalidTypeIdException;
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
 
 public final class YamlParser {
     private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml()
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+        .rebuild()
+        .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
+        .disable(DateTimeFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
+        .build();
 
-    private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.copy()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+    private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.rebuild()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+        .build();
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
@@ -47,8 +50,10 @@ public final class YamlParser {
 
         try {
             return currentMapper.convertValue(input, cls);
+        } catch (JacksonException e) {
+            throw toConstraintViolationException(input, type(cls), e);
         } catch (IllegalArgumentException e) {
-            if (e.getCause() instanceof JsonProcessingException jsonProcessingException) {
+            if (e.getCause() instanceof JacksonException jsonProcessingException) {
                 throw toConstraintViolationException(input, type(cls), jsonProcessingException);
             }
 
@@ -84,7 +89,7 @@ public final class YamlParser {
     private static <T> T read(String input, Class<T> objectClass, String resource) {
         try {
             return STRICT_MAPPER.readValue(input, objectClass);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw toConstraintViolationException(input, resource, e);
         }
     }
@@ -92,12 +97,12 @@ public final class YamlParser {
     private static <T> T readNonStrict(String input, Class<T> objectClass, String resource) {
         try {
             return NON_STRICT_MAPPER.readValue(input, objectClass);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw toConstraintViolationException(input, resource, e);
         }
     }
 
-    private static String formatYamlErrorMessage(String originalMessage, JsonProcessingException e) {
+    private static String formatYamlErrorMessage(String originalMessage, JacksonException e) {
         StringBuilder friendlyMessage = new StringBuilder();
         if (originalMessage.contains("Expected a field name")) {
             friendlyMessage.append("YAML syntax error: Invalid structure. Check indentation and ensure all fields are properly formatted.");
@@ -117,7 +122,7 @@ public final class YamlParser {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> ConstraintViolationException toConstraintViolationException(T target, String resource, JsonProcessingException e) {
+    public static <T> ConstraintViolationException toConstraintViolationException(T target, String resource, JacksonException e) {
         if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
             return constraintViolationException;
         } else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
@@ -142,7 +147,7 @@ public final class YamlParser {
                 )
             );
         } else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
-            var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
+            var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.messageSuffix();
             return new ConstraintViolationException(
                 message,
                 Collections.singleton(

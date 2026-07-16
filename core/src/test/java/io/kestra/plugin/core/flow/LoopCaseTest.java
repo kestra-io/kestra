@@ -9,9 +9,6 @@ import java.util.Map;
 
 import org.slf4j.event.Level;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
@@ -25,6 +22,8 @@ import io.kestra.core.storages.StorageInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 import static io.kestra.core.utils.Await.await;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
@@ -358,7 +357,7 @@ public class LoopCaseTest {
         assertThat(subExecutions).allMatch(throwPredicate(sub -> execution.getId().equals(taskOutputService.getOutputs(sub.getTaskRunList().getLast()).get("value"))));
     }
 
-    public void loopOutputs(Execution execution) throws InternalException, JsonProcessingException {
+    public void loopOutputs(Execution execution) throws InternalException, JacksonException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
 

@@ -12,9 +12,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -29,6 +26,8 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class YamlParserTest {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy();
+    private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().rebuild().build();
 
     @Inject
     private ModelValidator modelValidator;
@@ -200,7 +199,7 @@ class YamlParserTest {
             () -> this.parse("flows/invalids/invalid-property.yaml")
         );
 
-        assertThat(exception.getMessage()).startsWith("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable");
+        assertThat(exception.getMessage()).startsWith("Unrecognized property \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable");
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString())
             .isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
@@ -240,7 +239,7 @@ class YamlParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'message'");
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate Object property \"message\"");
     }
 
     @Test

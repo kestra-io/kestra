@@ -2,8 +2,6 @@ package io.kestra.core.models.flows.input;
 
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.Error;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
@@ -19,14 +17,13 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.ObjectMapper;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 public class JsonInput extends Input<Object> {
-    private static final ObjectMapper FASTERXML_MAPPER = JacksonMapper.ofJson();
-    private static final JsonMapper TOOLS_MAPPER = JsonMapper.builder().build();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final SchemaRegistry SCHEMA_REGISTRY = SchemaRegistry.withDialect(Dialects.getDraft202012());
 
     @io.swagger.v3.oas.annotations.media.Schema(title = "A JSON schema used to validate the input value.")
@@ -39,11 +36,11 @@ public class JsonInput extends Input<Object> {
         }
 
         try {
-            final JsonNode schemaNode = TOOLS_MAPPER.readTree(jsonSchema);
+            final JsonNode schemaNode = MAPPER.readTree(jsonSchema);
             Schema schema = SCHEMA_REGISTRY.getSchema(schemaNode);
 
-            String inputJson = (input instanceof String s) ? s : FASTERXML_MAPPER.writeValueAsString(input);
-            JsonNode inputNode = TOOLS_MAPPER.readTree(inputJson);
+            String inputJson = (input instanceof String s) ? s : MAPPER.writeValueAsString(input);
+            JsonNode inputNode = MAPPER.readTree(inputJson);
             List<Error> errors = schema.validate(inputNode);
 
             if (!errors.isEmpty()) {
@@ -55,7 +52,7 @@ public class JsonInput extends Input<Object> {
                     input
                 );
             }
-        } catch (JsonProcessingException | JacksonException e) {
+        } catch (JacksonException e) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "Invalid JSON content or schema: " + e.getMessage(),
                 this,

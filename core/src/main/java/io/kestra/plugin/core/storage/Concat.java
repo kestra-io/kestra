@@ -9,8 +9,6 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -24,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.type.TypeReference;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 

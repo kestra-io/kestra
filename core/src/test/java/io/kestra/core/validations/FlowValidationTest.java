@@ -7,10 +7,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
@@ -28,6 +24,9 @@ import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.TokenStreamLocation;
+import tools.jackson.core.io.ContentReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,22 +38,20 @@ class FlowValidationTest {
     @Inject
     private FlowService flowService;
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    // Helper class to create JsonProcessingException with location
-    private static class TestJsonProcessingException extends JsonProcessingException {
-        public TestJsonProcessingException(String msg, JsonLocation location) {
-            super(msg, location);
+    // Helper class to create JacksonException with location
+    private static class TestJacksonException extends JacksonException {
+        public TestJacksonException(String msg, TokenStreamLocation location) {
+            super(msg, location, null);
         }
 
-        public TestJsonProcessingException(String msg) {
+        public TestJacksonException(String msg) {
             super(msg);
         }
     }
 
     @Test
-    void testFormatYamlErrorMessage_WithExpectedFieldName() throws JsonProcessingException {
-        JsonProcessingException e = new TestJsonProcessingException("Expected a field name", new JsonLocation(null, 100, 5, 10));
+    void testFormatYamlErrorMessage_WithExpectedFieldName() throws JacksonException {
+        JacksonException e = new TestJacksonException("Expected a field name", new TokenStreamLocation(ContentReference.unknown(), 100, 5, 10));
         Object dummyTarget = new Object(); // Dummy target for toConstraintViolationException
 
         ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
@@ -63,8 +60,8 @@ class FlowValidationTest {
     }
 
     @Test
-    void testFormatYamlErrorMessage_WithMappingStartEvent() throws JsonProcessingException {
-        JsonProcessingException e = new TestJsonProcessingException("MappingStartEvent", new JsonLocation(null, 200, 3, 5));
+    void testFormatYamlErrorMessage_WithMappingStartEvent() throws JacksonException {
+        JacksonException e = new TestJacksonException("MappingStartEvent", new TokenStreamLocation(ContentReference.unknown(), 200, 3, 5));
         Object dummyTarget = new Object();
 
         ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
@@ -73,8 +70,8 @@ class FlowValidationTest {
     }
 
     @Test
-    void testFormatYamlErrorMessage_WithScalarValue() throws JsonProcessingException {
-        JsonProcessingException e = new TestJsonProcessingException("Scalar value", new JsonLocation(null, 150, 7, 12));
+    void testFormatYamlErrorMessage_WithScalarValue() throws JacksonException {
+        JacksonException e = new TestJacksonException("Scalar value", new TokenStreamLocation(ContentReference.unknown(), 150, 7, 12));
         Object dummyTarget = new Object();
 
         ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
@@ -83,8 +80,8 @@ class FlowValidationTest {
     }
 
     @Test
-    void testFormatYamlErrorMessage_GenericError() throws JsonProcessingException {
-        JsonProcessingException e = new TestJsonProcessingException("Some other error", new JsonLocation(null, 50, 2, 8));
+    void testFormatYamlErrorMessage_GenericError() throws JacksonException {
+        JacksonException e = new TestJacksonException("Some other error", new TokenStreamLocation(ContentReference.unknown(), 50, 2, 8));
         Object dummyTarget = new Object();
 
         ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
@@ -93,8 +90,8 @@ class FlowValidationTest {
     }
 
     @Test
-    void testFormatYamlErrorMessage_NoLocation() throws JsonProcessingException {
-        JsonProcessingException e = new TestJsonProcessingException("Expected a field name");
+    void testFormatYamlErrorMessage_NoLocation() throws JacksonException {
+        JacksonException e = new TestJacksonException("Expected a field name");
         Object dummyTarget = new Object();
 
         ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);

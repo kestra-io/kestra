@@ -1,10 +1,7 @@
 package io.kestra.queue;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
@@ -25,6 +22,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Singleton
@@ -104,7 +103,7 @@ public class QueueService {
             }
 
             return serialize;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new QueueException("[" + cls.getSimpleName() + "] failed to produce: " + e.getMessage(), e);
         }
     }
@@ -112,7 +111,7 @@ public class QueueService {
     public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, byte[] record) {
         try {
             return Either.left(MAPPER.readValue(record, cls));
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             return Either.right(new DeserializationException(e, new String(record)));
         }
     }

@@ -5,12 +5,11 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
 import lombok.SneakyThrows;
+import tools.jackson.databind.ObjectMapper;
 
 public class JsonWriter extends OutputWriter implements SpecializedWriter {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();

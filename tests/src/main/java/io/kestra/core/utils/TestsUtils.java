@@ -16,8 +16,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
 
 import io.kestra.core.exceptions.DeserializationException;
@@ -44,6 +42,8 @@ import io.kestra.core.serializers.JacksonMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
@@ -324,14 +324,14 @@ abstract public class TestsUtils {
             .doFinally(signalType -> receiveCancellation.close());
     }
 
-    public static <T> Property<List<T>> propertyFromList(List<T> list) throws JsonProcessingException {
+    public static <T> Property<List<T>> propertyFromList(List<T> list) throws JacksonException {
         return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
     }
 
     public static String stringify(Object object) {
         try {
             return JacksonMapper.ofJson().writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("failed to serialize object to json string", e);
             return object != null ? object.toString() : "null";
         }

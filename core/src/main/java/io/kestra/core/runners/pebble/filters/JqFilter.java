@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.*;
-
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -17,8 +14,18 @@ import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.NumericNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 public class JqFilter implements Filter {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     // Load Scope once as static to avoid repeated initialization
     // This improves performance by loading builtin functions only once when the class loads
     private static final Scope SCOPE;
@@ -55,9 +62,9 @@ public class JqFilter implements Filter {
 
             JsonNode in;
             if (input instanceof String stringValue) {
-                in = JacksonMapper.ofJson().readTree(stringValue);
+                in = MAPPER.readTree(stringValue);
             } else {
-                in = JacksonMapper.ofJson().valueToTree(input);
+                in = MAPPER.valueToTree(input);
             }
 
             final List<Object> out = new ArrayList<>();
@@ -65,7 +72,7 @@ public class JqFilter implements Filter {
             try {
                 q.apply(Scope.newChildScope(SCOPE), in, v ->
                 {
-                    if (v instanceof TextNode) {
+                    if (v instanceof StringNode) {
                         out.add(v.textValue());
                     } else if (v instanceof NullNode) {
                         out.add(null);
@@ -74,9 +81,9 @@ public class JqFilter implements Filter {
                     } else if (v instanceof BooleanNode) {
                         out.add(v.booleanValue());
                     } else if (v instanceof ObjectNode) {
-                        out.add(JacksonMapper.ofJson().convertValue(v, Map.class));
+                        out.add(MAPPER.convertValue(v, Map.class));
                     } else if (v instanceof ArrayNode) {
-                        out.add(JacksonMapper.ofJson().convertValue(v, List.class));
+                        out.add(MAPPER.convertValue(v, List.class));
                     } else {
                         out.add(v);
                     }

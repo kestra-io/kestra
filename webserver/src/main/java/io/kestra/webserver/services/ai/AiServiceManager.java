@@ -4,9 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.InstanceService;
@@ -24,6 +21,8 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 
 @Singleton
 @Slf4j
@@ -139,8 +138,9 @@ public class AiServiceManager {
         }
 
         try {
-            ObjectMapper mapper = JacksonMapper.ofJson().copy()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            ObjectMapper mapper = JacksonMapper.ofJson().rebuild()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
             AiService<?> service = new GeminiAiService(

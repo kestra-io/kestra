@@ -1,6 +1,5 @@
 package io.kestra.jdbc;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -18,8 +17,6 @@ import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
@@ -32,6 +29,8 @@ import io.micronaut.data.model.Sort.Order;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.CaseUtils.camelToSnake;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
@@ -326,7 +325,7 @@ public abstract class AbstractJdbcRepository<T> {
     public T deserialize(String record) {
         try {
             return MAPPER.readValue(record, cls);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new DeserializationException(e, record);
         }
     }

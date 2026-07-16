@@ -8,15 +8,17 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginRegistry;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.exc.InvalidTypeIdException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,10 +29,11 @@ class PluginDeserializerTest {
     private PluginRegistry registry;
 
     @Test
-    void shouldSucceededDeserializePluginGivenValidType() throws JsonProcessingException {
+    void shouldSucceededDeserializePluginGivenValidType() throws JacksonException {
         // Given
-        ObjectMapper om = new ObjectMapper()
-            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)));
+        ObjectMapper om = JsonMapper.builder()
+            .addModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)))
+            .build();
         String input = """
             { "plugin": { "type": "io.kestra.core.plugins.serdes.PluginDeserializerTest.TestPlugin"} }
             """;
@@ -51,8 +54,9 @@ class PluginDeserializerTest {
     @Test
     void shouldFailedDeserializePluginGivenInvalidType() {
         // Given
-        ObjectMapper om = new ObjectMapper()
-            .registerModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)));
+        ObjectMapper om = JsonMapper.builder()
+            .addModule(new SimpleModule().addDeserializer(Plugin.class, new PluginDeserializer<>(registry)))
+            .build();
         String input = """
             { "plugin": { "type": "io.kestra.core.plugins.serdes.Unknown"} }
             """;
@@ -69,27 +73,29 @@ class PluginDeserializerTest {
 
     @Test
     void shouldReturnNullPluginIdentifierGivenNullType() {
-        assertThat(PluginDeserializer.extractPluginRawIdentifier(new TextNode(null), true)).isNull();
+        // Jackson 3's StringNode disallows a null value (unlike Jackson 2's TextNode); NullNode is the correct
+        // representation of a JSON null here.
+        assertThat(PluginDeserializer.extractPluginRawIdentifier(NullNode.getInstance(), true)).isNull();
     }
 
     @Test
     void shouldReturnNullPluginIdentifierGivenEmptyType() {
-        assertThat(PluginDeserializer.extractPluginRawIdentifier(new TextNode(""), true)).isNull();
+        assertThat(PluginDeserializer.extractPluginRawIdentifier(new StringNode(""), true)).isNull();
     }
 
     @Test
     void shouldReturnTypeWithVersionGivenSupportedVersionTrue() {
-        ObjectNode jsonNodes = new ObjectNode(new ObjectMapper().getNodeFactory());
-        jsonNodes.set("type", new TextNode("io.kestra.core.plugins.serdes.Unknown"));
-        jsonNodes.set("version", new TextNode("1.0.0"));
+        ObjectNode jsonNodes = new ObjectNode(JsonMapper.builder().build().getNodeFactory());
+        jsonNodes.set("type", new StringNode("io.kestra.core.plugins.serdes.Unknown"));
+        jsonNodes.set("version", new StringNode("1.0.0"));
         assertThat(PluginDeserializer.extractPluginRawIdentifier(jsonNodes, true)).isEqualTo("io.kestra.core.plugins.serdes.Unknown:1.0.0");
     }
 
     @Test
     void shouldReturnTypeWithVersionGivenSupportedVersionFalse() {
-        ObjectNode jsonNodes = new ObjectNode(new ObjectMapper().getNodeFactory());
-        jsonNodes.set("type", new TextNode("io.kestra.core.plugins.serdes.Unknown"));
-        jsonNodes.set("version", new TextNode("1.0.0"));
+        ObjectNode jsonNodes = new ObjectNode(JsonMapper.builder().build().getNodeFactory());
+        jsonNodes.set("type", new StringNode("io.kestra.core.plugins.serdes.Unknown"));
+        jsonNodes.set("version", new StringNode("1.0.0"));
         assertThat(PluginDeserializer.extractPluginRawIdentifier(jsonNodes, false)).isEqualTo("io.kestra.core.plugins.serdes.Unknown");
     }
 

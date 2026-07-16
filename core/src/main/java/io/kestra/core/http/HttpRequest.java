@@ -26,13 +26,12 @@ import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JacksonException;
 
 @Builder
 @Value
@@ -302,7 +301,7 @@ public class HttpRequest {
                     JacksonMapper.ofJson().writeValueAsString(content),
                     this.charset != null ? ContentType.APPLICATION_JSON.withCharset(this.charset) : ContentType.APPLICATION_JSON
                 );
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new IOException(e);
             }
         }

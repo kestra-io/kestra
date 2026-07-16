@@ -2,10 +2,10 @@ package io.kestra.core.runners;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.serializers.JacksonMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,7 +13,7 @@ class WorkerTaskTest {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Test
-    void deserializeOldWorkerTask() throws JsonProcessingException {
+    void deserializeOldWorkerTask() throws JacksonException {
         var workerTask = MAPPER.readValue("""
             {
               "task": {

@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Example;
@@ -25,6 +23,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @SuperBuilder
 @ToString
@@ -114,8 +114,9 @@ import reactor.core.publisher.Mono;
 )
 @WebhookValidation
 public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Webhook.Output> {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
-        .setDefaultPropertyInclusion(JsonInclude.Include.USE_DEFAULTS);
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().rebuild()
+        .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.USE_DEFAULTS))
+        .build();
 
     @PluginProperty
     @Builder.Default

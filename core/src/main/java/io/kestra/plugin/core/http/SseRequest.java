@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.*;
-
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.HttpClient;
@@ -29,6 +25,12 @@ import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.node.NumericNode;
+import tools.jackson.databind.node.StringNode;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -102,6 +104,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     }
 )
 public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.Output> {
+    private static final ObjectMapper JQ_MAPPER = JacksonMapper.ofJson();
+
     // Load Scope once as static to avoid repeated initialization
     // This improves performance by loading builtin functions only once when the class loads
     private static final Scope SCOPE;
@@ -147,7 +151,7 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
 
                 try {
                     events.add(event.clone(JacksonMapper.toObject(event.data())));
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     events.add(event);
                 }
             });
@@ -160,14 +164,14 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
                     .stream()
                     .map(throwFunction(event ->
                     {
-                        JsonNode in = JacksonMapper.ofJson().valueToTree(event);
+                        JsonNode in = JQ_MAPPER.valueToTree(event);
 
                         AtomicReference<String> local = new AtomicReference<>();
 
                         try {
                             jqQuery.apply(Scope.newChildScope(SCOPE), in, v ->
                             {
-                                if (v instanceof TextNode) {
+                                if (v instanceof StringNode) {
                                     local.set(v.textValue());
                                 } else if (v instanceof NumericNode) {
                                     local.set(v.numberValue().toString());

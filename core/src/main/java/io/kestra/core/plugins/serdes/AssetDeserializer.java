@@ -1,13 +1,13 @@
 package io.kestra.core.plugins.serdes;
 
-import com.fasterxml.jackson.databind.JsonDeserializer;
-
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.Custom;
 
+import tools.jackson.databind.ValueDeserializer;
+
 /**
- * Specific {@link JsonDeserializer} for deserializing {@link Asset}.
+ * Specific {@link ValueDeserializer} for deserializing {@link Asset}.
  */
 public final class AssetDeserializer extends PluginDeserializer<Asset> {
     @Override

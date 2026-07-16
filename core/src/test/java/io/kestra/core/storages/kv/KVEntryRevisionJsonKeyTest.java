@@ -4,11 +4,11 @@ import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.serializers.JacksonMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +23,7 @@ class KVEntryRevisionJsonKeyTest {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Test
-    void serializesRevisionJsonKey() throws JsonProcessingException {
+    void serializesRevisionJsonKey() throws JacksonException {
         KVEntry entry = new KVEntry("my.ns", "my-key", 7, "desc", Instant.now(), Instant.now(), null);
 
         JsonNode node = MAPPER.readTree(MAPPER.writeValueAsString(entry));

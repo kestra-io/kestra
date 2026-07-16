@@ -16,9 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -46,6 +43,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Services for parsing flows and injecting plugin default values.
@@ -54,11 +54,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PluginDefaultService {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
-        .copy()
-        .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
+        .rebuild()
+        .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_DEFAULT))
+        .build();
 
-    private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy()
-        .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
+    private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().rebuild()
+        .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+        .build();
     private static final String PLUGIN_DEFAULTS_FIELD = "pluginDefaults";
 
     private static final TypeReference<List<PluginDefault>> PLUGIN_DEFAULTS_TYPE_REF = new TypeReference<>() {
@@ -215,7 +217,7 @@ public class PluginDefaultService {
         try {
             Flow parsed = NON_DEFAULT_OBJECT_MAPPER.readValue(flow.getSource(), Flow.class);
             return FlowWithSource.of(parsed, flow.getSource());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new KestraRuntimeException("Failed to read flow from source", e);
         }
     }
@@ -262,7 +264,7 @@ public class PluginDefaultService {
             );
         } catch (ConstraintViolationException e) {
             throw new FlowProcessingException(e);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
         }
     }
@@ -339,7 +341,7 @@ public class PluginDefaultService {
             return parseFlowWithAllDefaults(tenantId, null, null, false, source, false, strict);
         } catch (ConstraintViolationException e) {
             throw new FlowProcessingException(e);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
         }
     }
@@ -359,7 +361,7 @@ public class PluginDefaultService {
             return parseFlowWithAllDefaults(tenantId, null, null, false, source, true, strictParsing);
         } catch (ConstraintViolationException e) {
             throw new FlowProcessingException(e);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
         }
     }
@@ -381,7 +383,7 @@ public class PluginDefaultService {
         final boolean isDeleted,
         final String source,
         final boolean onlyVersions,
-        final boolean strictParsing) throws ConstraintViolationException, JsonProcessingException {
+        final boolean strictParsing) throws ConstraintViolationException {
         Map<String, Object> mapFlow = OBJECT_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
         namespace = namespace == null ? (String) mapFlow.get("namespace") : namespace;
         revision = revision == null ? (Integer) mapFlow.get("revision") : revision;

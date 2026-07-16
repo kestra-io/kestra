@@ -7,7 +7,6 @@ import java.util.stream.Stream;
 
 import org.reactivestreams.Publisher;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -68,6 +67,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.JacksonException;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -885,7 +885,7 @@ public class FlowController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                    .map(log -> (Map<String, Object>) objectMapper.convertValue(log, Map.class))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
@@ -959,7 +959,7 @@ public class FlowController {
     protected <T> T parseTaskTrigger(String input, Class<T> cls) throws ConstraintViolationException {
         try {
             return JacksonMapper.ofJson(true).readValue(input, cls);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw YamlParser.toConstraintViolationException(input, cls.getSimpleName(), e);
         }
     }

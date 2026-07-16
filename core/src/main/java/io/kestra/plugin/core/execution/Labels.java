@@ -5,10 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -28,6 +24,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -100,7 +99,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         if (labels instanceof String labelStr) {
             try {
                 labelsAsMap = MAPPER.readValue(runContext.render(labelStr), MAP_TYPE_REFERENCE);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
         } else if (labels instanceof List<?> labelsList) {

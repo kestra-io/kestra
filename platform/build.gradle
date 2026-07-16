@@ -16,7 +16,7 @@ dependencies {
     def bouncycastleVersion = "1.85"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.15.0"
-    def jsonschemaVersion = "4.38.0"
+    def jsonschemaVersion = "5.0.0"
     def kafkaVersion = "4.3.1"
     def opensearchVersion = "3.9.0"
     def opensearchRestVersion = "3.7.0"
@@ -37,6 +37,7 @@ dependencies {
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     // Jackson 3, for Kestra's own serialization code (see jackson3Version comment above)
+    // libraries that still use Jackson 2: com.github.java-json-tools:json-patch and logback-jackson
     api enforcedPlatform("tools.jackson:jackson-bom:$jackson3Version")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
@@ -104,7 +105,7 @@ dependencies {
         api "org.slf4j:jcl-over-slf4j:$slf4jVersion"
         api "org.fusesource.jansi:jansi:2.4.3"
         api "com.devskiller.friendly-id:friendly-id:1.1.0"
-        api "net.thisptr:jackson-jq:1.6.2"
+        api "net.thisptr:jackson-jq:2.0.0-alpha1"
         api "com.google.guava:guava:33.6.0-jre"
         api "commons-io:commons-io:2.22.0"
         api "org.apache.commons:commons-lang3:3.20.0"

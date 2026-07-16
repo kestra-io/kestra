@@ -14,8 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.controller.config.ControllerAdvertiseConfiguration;
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
@@ -26,6 +24,8 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.storages.StorageInterface;
+
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

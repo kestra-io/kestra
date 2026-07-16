@@ -1,6 +1,5 @@
 package io.kestra.core.serializers;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -11,13 +10,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.DefaultTimeZone;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,11 +30,12 @@ class JacksonMapperTest {
 
     @Test
     @DefaultTimeZone("Europe/Athens")
-    void json() throws IOException {
+    void json() throws JacksonException {
         ObjectMapper mapper = JacksonMapper
             .ofJson()
-            .copy()
-            .setTimeZone(TimeZone.getDefault());
+            .rebuild()
+            .defaultTimeZone(TimeZone.getDefault())
+            .build();
 
         Pojo original = pojo();
 
@@ -49,7 +47,7 @@ class JacksonMapperTest {
 
     @Test
     @DefaultTimeZone("Europe/Athens")
-    void ion() throws IOException {
+    void ion() throws JacksonException {
         ObjectMapper mapper = JacksonMapper.ofIon();
 
         Pojo original = pojo();
@@ -61,7 +59,7 @@ class JacksonMapperTest {
     }
 
     @Test
-    void toList() throws JsonProcessingException {
+    void toList() throws JacksonException {
         String list = "[1, 2, 3]";
 
         List<Object> integerList = JacksonMapper.toList(list);
@@ -71,7 +69,7 @@ class JacksonMapperTest {
     }
 
     @Test
-    void toMap() throws JsonProcessingException {
+    void toMap() throws JacksonException {
         assertThat(JacksonMapper.toMap("""
             {
                 "some": "property",
@@ -94,7 +92,7 @@ class JacksonMapperTest {
 
     @Test
     void shouldComputeDiffGivenCreatedObject() {
-        Pair<JsonNode, JsonNode> value = JacksonMapper.getBiDirectionalDiffs(null, new DummyObject("value"));
+        Pair<com.fasterxml.jackson.databind.JsonNode, com.fasterxml.jackson.databind.JsonNode> value = JacksonMapper.getBiDirectionalDiffs(null, new DummyObject("value"));
         // patch
         assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":{\"value\":\"value\"}}]");
         // Revert
@@ -103,7 +101,7 @@ class JacksonMapperTest {
 
     @Test
     void shouldComputeDiffGivenUpdatedObject() {
-        Pair<JsonNode, JsonNode> value = JacksonMapper.getBiDirectionalDiffs(new DummyObject("before"), new DummyObject("after"));
+        Pair<com.fasterxml.jackson.databind.JsonNode, com.fasterxml.jackson.databind.JsonNode> value = JacksonMapper.getBiDirectionalDiffs(new DummyObject("before"), new DummyObject("after"));
         // patch
         assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"/value\",\"value\":\"after\"}]");
         // Revert
@@ -112,7 +110,7 @@ class JacksonMapperTest {
 
     @Test
     void shouldComputeDiffGivenDeletedObject() {
-        Pair<JsonNode, JsonNode> value = JacksonMapper.getBiDirectionalDiffs(new DummyObject("value"), null);
+        Pair<com.fasterxml.jackson.databind.JsonNode, com.fasterxml.jackson.databind.JsonNode> value = JacksonMapper.getBiDirectionalDiffs(new DummyObject("value"), null);
         // Patch
         assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":null}]");
         // Revert

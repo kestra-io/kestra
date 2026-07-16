@@ -7,9 +7,6 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.*;
@@ -24,6 +21,8 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.MapUtils;
 
 import jakarta.inject.Singleton;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -84,7 +83,7 @@ public class TaskOutputService {
                 var output = shouldStoreInInternalStorage(value) ? storeToInternalStorage(taskRun, value)
                     : new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), value, null);
                 outputRepository.save(output);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new InternalException(e);
             }
         }

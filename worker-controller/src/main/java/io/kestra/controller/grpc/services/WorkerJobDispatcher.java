@@ -1,6 +1,5 @@
 package io.kestra.controller.grpc.services;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +19,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.ByteString;
@@ -60,6 +58,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Central coordinator for dispatching {@link WorkerJob} to workers using the pull/ack pattern.
@@ -799,7 +799,7 @@ public class WorkerJobDispatcher {
                         this.triggerEventQueue.send(workerTriggerResult);
                     }
                 }
-            } catch (IOException | QueueException e) {
+            } catch (JacksonException | QueueException e) {
                 // ignore the message if we cannot do anything about it
                 log.error("Unexpected exception when trying to handle a deserialization error", e);
             }

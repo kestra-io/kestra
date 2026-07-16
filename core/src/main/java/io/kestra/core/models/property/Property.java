@@ -1,19 +1,9 @@
 package io.kestra.core.models.property;
 
-import java.io.IOException;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
@@ -26,6 +16,18 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -49,8 +51,9 @@ public class Property<T> {
     // We cannot change that globally, as in JDBC/Elastic 'execution.state.duration' must be a number to be able to aggregate them.
     // So we only change it here to be used for Property.of().
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson()
-        .copy()
-        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+        .rebuild()
+        .disable(DateTimeFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
+        .build();
 
     private final boolean skipCache;
     private String expression;
@@ -92,17 +95,17 @@ public class Property<T> {
         if (value instanceof Map<?, ?> || value instanceof List<?>) {
             try {
                 expression = MAPPER.writeValueAsString(value);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new IllegalArgumentException(e);
             }
         } else {
             try {
                 expression = MAPPER.convertValue(value, String.class);
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | JacksonException e) {
                 // if it fails, try with writeValueAsString instead
                 try {
                     expression = MAPPER.writeValueAsString(value);
-                } catch (JsonProcessingException e2) {
+                } catch (JacksonException e2) {
                     throw new IllegalArgumentException(e2);
                 }
             }
@@ -158,11 +161,11 @@ public class Property<T> {
     private static <T> T deserialize(Object rendered, Class<T> clazz) throws IllegalVariableEvaluationException {
         try {
             return MAPPER.convertValue(rendered, clazz);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | JacksonException e) {
             if (rendered instanceof String str) {
                 try {
                     return MAPPER.readValue(str, clazz);
-                } catch (JsonProcessingException ex) {
+                } catch (JacksonException ex) {
                     throw new IllegalVariableEvaluationException(ex);
                 }
             }
@@ -174,11 +177,11 @@ public class Property<T> {
     private static <T> T deserialize(Object rendered, JavaType type) throws IllegalVariableEvaluationException {
         try {
             return MAPPER.convertValue(rendered, type);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | JacksonException e) {
             if (rendered instanceof String str) {
                 try {
                     return MAPPER.readValue(str, type);
-                } catch (JsonProcessingException ex) {
+                } catch (JacksonException ex) {
                     throw new IllegalVariableEvaluationException(ex);
                 }
             }
@@ -278,7 +281,7 @@ public class Property<T> {
                     Map asRawMap = MAPPER.readValue(property.expression, Map.class);
                     property.value = deserialize(runContext.render(asRawMap, variables), targetMapType);
                 }
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
         }
@@ -318,7 +321,7 @@ public class Property<T> {
         }
 
         @Override
-        public Property<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        public Property<?> deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
             String s;
             if (p.isExpectedStartArrayToken()) {
                 List<Object> list = p.readValueAs(JacksonMapper.LIST_TYPE_REFERENCE);
@@ -343,7 +346,7 @@ public class Property<T> {
         }
 
         @Override
-        public void serialize(Property value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        public void serialize(Property value, JsonGenerator gen, SerializationContext provider) throws JacksonException {
             gen.writeString(value.getExpression());
         }
     }

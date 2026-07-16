@@ -5,13 +5,12 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
 
 import lombok.Builder;
 import lombok.Value;
+import tools.jackson.core.type.TypeReference;
 
 import static io.kestra.core.storages.FileAttributes.FileType.*;
 

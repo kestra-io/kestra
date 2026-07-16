@@ -6,23 +6,24 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.ReadOnlyDelegatingMap;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 import static io.kestra.core.utils.Rethrow.throwBiConsumer;
 
@@ -221,7 +222,7 @@ public sealed interface Variables extends Map<String, Object> {
         }
 
         @Override
-        public void serialize(Variables value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        public void serialize(Variables value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
             if (value == null) {
                 gen.writeNull();
             } else {
@@ -229,14 +230,14 @@ public sealed interface Variables extends Map<String, Object> {
                     case InMemoryVariables inMemory -> {
                         // we must write entry by entry otherwise nulls are not included
                         gen.writeStartObject();
-                        inMemory.getDelegate().forEach(throwBiConsumer((k, v) -> gen.writeObjectField(k, v)));
+                        inMemory.getDelegate().forEach(throwBiConsumer((k, v) -> gen.writePOJOProperty(k, v)));
                         gen.writeEndObject();
                     }
                     case InStorageVariables inStorage -> {
                         gen.writeStartObject();
-                        gen.writeStringField("type", TYPE); // marker to be sure at deserialization time it's a Variables not some random Map
-                        gen.writeStringField("storageUri", inStorage.getStorageUri() != null ? inStorage.getStorageUri().toString() : null);
-                        gen.writeObjectField("storageContext", inStorage.getStorageContext());
+                        gen.writeStringProperty("type", TYPE); // marker to be sure at deserialization time it's a Variables not some random Map
+                        gen.writeStringProperty("storageUri", inStorage.getStorageUri() != null ? inStorage.getStorageUri().toString() : null);
+                        gen.writePOJOProperty("storageContext", inStorage.getStorageContext());
                         gen.writeEndObject();
                     }
                 }
@@ -253,7 +254,7 @@ public sealed interface Variables extends Map<String, Object> {
 
         @Override
         @SuppressWarnings("unchecked")
-        public Variables deserialize(JsonParser parser, DeserializationContext ctx) throws IOException {
+        public Variables deserialize(JsonParser parser, DeserializationContext ctx) throws JacksonException {
             if (parser.hasToken(JsonToken.VALUE_NULL)) {
                 return null;
             } else if (parser.hasToken(JsonToken.START_OBJECT)) {

@@ -1,18 +1,19 @@
 package io.kestra.core.serializers.ion;
 
-import java.io.IOException;
 import java.io.Serial;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.core.json.PackageVersion;
-import com.fasterxml.jackson.core.util.VersionUtil;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.Version;
+import tools.jackson.core.json.PackageVersion;
+import tools.jackson.core.util.VersionUtil;
+import tools.jackson.databind.JacksonModule.SetupContext;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.StdScalarSerializer;
 
 @SuppressWarnings({ "serial", "this-escape" })
 public class IonModule extends SimpleModule {
@@ -63,7 +64,7 @@ public class IonModule extends SimpleModule {
         }
 
         @Override
-        public void serialize(T value, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        public void serialize(T value, JsonGenerator jsonGenerator, SerializationContext serializationContext) throws JacksonException {
             ((IonGenerator) jsonGenerator).writeString(value, mapper.apply(value));
         }
     }
@@ -77,7 +78,7 @@ public class IonModule extends SimpleModule {
         }
 
         @Override
-        public void serialize(Instant date, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        public void serialize(Instant date, JsonGenerator jsonGenerator, SerializationContext serializationContext) throws JacksonException {
             ((IonGenerator) jsonGenerator).writeDate(date);
         }
     }
@@ -91,7 +92,7 @@ public class IonModule extends SimpleModule {
         }
 
         @Override
-        public void serialize(LocalDate date, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        public void serialize(LocalDate date, JsonGenerator jsonGenerator, SerializationContext serializationContext) throws JacksonException {
             ((IonGenerator) jsonGenerator).writeDate(date);
         }
     }

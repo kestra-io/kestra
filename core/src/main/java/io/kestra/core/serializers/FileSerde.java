@@ -4,15 +4,14 @@ import java.io.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SequenceWriter;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.MappingIterator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SequenceWriter;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -149,11 +148,11 @@ public final class FileSerde {
         return false;
     }
 
-    private static Object convert(String row) throws JsonProcessingException {
+    private static Object convert(String row) throws JacksonException {
         return DEFAULT_OBJECT_MAPPER.readValue(row, DEFAULT_TYPE_REFERENCE);
     }
 
-    private static <T> T convert(String row, Class<T> cls) throws JsonProcessingException {
+    private static <T> T convert(String row, Class<T> cls) throws JacksonException {
         return DEFAULT_OBJECT_MAPPER.readValue(row, cls);
     }
 

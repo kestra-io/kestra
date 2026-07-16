@@ -8,30 +8,45 @@ import java.util.Date;
 
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.Timestamp;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.io.IOContext;
 
-public class IonGenerator extends com.fasterxml.jackson.dataformat.ion.IonGenerator {
-    public IonGenerator(int jsonFeatures, int ionFeatures, ObjectCodec codec, IonWriter ion, boolean ionWriterIsManaged, IOContext ctxt, Closeable dst) {
-        super(jsonFeatures, ionFeatures, codec, ion, ionWriterIsManaged, ctxt, dst);
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.ObjectWriteContext;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.core.io.IOContext;
+
+public class IonGenerator extends tools.jackson.dataformat.ion.IonGenerator {
+    public IonGenerator(ObjectWriteContext writeCtxt, IOContext ctxt, int jsonFeatures, int ionFeatures, IonWriter ion, boolean ionWriterIsManaged, Closeable dst) {
+        super(writeCtxt, ctxt, jsonFeatures, ionFeatures, ion, ionWriterIsManaged, dst);
     }
 
-    public void writeString(Object value, String serialized) throws IOException {
+    public void writeString(Object value, String serialized) throws JacksonException {
         _verifyValueWrite("write " + value.getClass().getName() + " value");
 
-        _writer.addTypeAnnotation(value.getClass().getSimpleName());
-        _writer.writeString(serialized);
+        try {
+            _writer.addTypeAnnotation(value.getClass().getSimpleName());
+            _writer.writeString(serialized);
+        } catch (IOException e) {
+            throw JacksonIOException.construct(e);
+        }
     }
 
-    public void writeDate(Instant value) throws IOException {
+    public void writeDate(Instant value) throws JacksonException {
         _verifyValueWrite("write LocalDateTime value");
 
-        _writer.writeTimestamp(Timestamp.forDateZ(Date.from(value)));
+        try {
+            _writer.writeTimestamp(Timestamp.forDateZ(Date.from(value)));
+        } catch (IOException e) {
+            throw JacksonIOException.construct(e);
+        }
     }
 
-    public void writeDate(LocalDate value) throws IOException {
+    public void writeDate(LocalDate value) throws JacksonException {
         _verifyValueWrite("write LocalDate value");
 
-        _writer.writeTimestamp(Timestamp.forDay(value.getYear(), value.getMonth().getValue(), value.getDayOfMonth()));
+        try {
+            _writer.writeTimestamp(Timestamp.forDay(value.getYear(), value.getMonth().getValue(), value.getDayOfMonth()));
+        } catch (IOException e) {
+            throw JacksonIOException.construct(e);
+        }
     }
 }

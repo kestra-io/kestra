@@ -1,6 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -10,10 +9,6 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.events.CrudEvent;
@@ -50,6 +45,10 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
@@ -99,12 +98,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 deserialize.allTasksWithChilds();
 
                 return deserialize;
-            } catch (DeserializationException | IOException | IllegalArgumentException | FlowProcessingException e) {
+            } catch (DeserializationException | JacksonException | IllegalArgumentException | FlowProcessingException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
                     return FlowWithException.from(jsonNode, e)
                         .orElseThrow(() -> e instanceof DeserializationException de ? de : new DeserializationException(e, source));
-                } catch (JsonProcessingException ex) {
+                } catch (JacksonException ex) {
                     throw new DeserializationException(ex, source);
                 }
             }

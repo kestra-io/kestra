@@ -2,8 +2,6 @@ package io.kestra.worker.stores;
 
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.controller.grpc.ErrorLogsRequest;
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.controller.grpc.OpaqueData;
@@ -19,6 +17,7 @@ import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Worker-side implementation of {@link ExecutionLogMetaStore} that retrieves

@@ -6,11 +6,6 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasUID;
@@ -34,6 +29,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.MapperConfig;
+import tools.jackson.databind.introspect.AnnotatedMember;
+import tools.jackson.databind.introspect.JacksonAnnotationIntrospector;
 
 /**
  * A serializable flow with no source.
@@ -48,18 +49,20 @@ import lombok.experimental.SuperBuilder;
 @FlowValidation
 public class Flow extends AbstractFlow implements HasUID {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
-        .copy()
-        .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
+        .rebuild()
+        .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_DEFAULT))
+        .build();
 
-    private static final ObjectMapper WITHOUT_REVISION_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.copy()
+    private static final ObjectMapper WITHOUT_REVISION_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.rebuild()
         .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
-        .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+        .annotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
-            public boolean hasIgnoreMarker(final AnnotatedMember m) {
+            public boolean hasIgnoreMarker(final MapperConfig<?> config, final AnnotatedMember m) {
                 List<String> exclusions = Arrays.asList("revision", "deleted", "source", "updated");
-                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
+                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(config, m);
             }
-        });
+        })
+        .build();
 
     @Schema(
         type = "object",
@@ -255,7 +258,7 @@ public class Flow extends AbstractFlow implements HasUID {
     public boolean equalsWithoutRevision(FlowInterface o) {
         try {
             return WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(this).equals(WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(o));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

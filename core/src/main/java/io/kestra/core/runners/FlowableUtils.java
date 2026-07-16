@@ -9,11 +9,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -27,6 +22,11 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -445,7 +445,7 @@ public class FlowableUtils {
                     } else {
                         throw new IllegalVariableEvaluationException("Unknown value type: " + valuesNode.getNodeType());
                     }
-                } catch (IOException e) {
+                } catch (JacksonException e) {
                     throw new IllegalVariableEvaluationException(e);
                 }
             }
@@ -482,7 +482,7 @@ public class FlowableUtils {
     private static String serializeAsString(Object obj) throws IllegalVariableEvaluationException {
         try {
             return MAPPER.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalVariableEvaluationException(e);
         }
     }

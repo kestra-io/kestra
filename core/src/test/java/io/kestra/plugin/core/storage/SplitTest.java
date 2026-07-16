@@ -20,8 +20,6 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.SequenceWriter;
 import com.google.common.io.CharStreams;
 
 import io.kestra.core.context.TestRunContextFactory;
@@ -34,6 +32,8 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Rethrow;
 
 import jakarta.inject.Inject;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.SequenceWriter;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;

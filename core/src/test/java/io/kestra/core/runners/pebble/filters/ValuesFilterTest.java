@@ -7,8 +7,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -17,6 +15,8 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 
 import jakarta.inject.Inject;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +26,7 @@ class ValuesFilterTest {
     VariableRenderer variableRenderer;
 
     @Test
-    void map() throws IllegalVariableEvaluationException, JsonProcessingException {
+    void map() throws IllegalVariableEvaluationException, JacksonException {
         ZonedDateTime date = ZonedDateTime.parse("2013-09-08T16:19:00+02").withZoneSameLocal(ZoneId.systemDefault());
 
         ImmutableMap<String, Object> vars = ImmutableMap.of(

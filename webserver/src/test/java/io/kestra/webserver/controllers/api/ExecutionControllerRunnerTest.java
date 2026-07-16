@@ -28,7 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.InternalException;
@@ -87,6 +86,7 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.JacksonException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
@@ -523,7 +523,7 @@ class ExecutionControllerRunnerTest {
         Map<String, Object> resultMap = null;
         try {
             resultMap = JacksonMapper.toMap(result.getResult());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
         }
         assertThat(resultMap.get("type")).isEqualTo(EncryptedString.TYPE);
@@ -534,7 +534,7 @@ class ExecutionControllerRunnerTest {
         result = this.evalTaskRunExpression(execution, "{{inputs.secret}}", 0);
         try {
             resultMap = JacksonMapper.toMap(result.getResult());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
         }
         assertThat(resultMap.get("value")).isNotEqualTo(inputs.get("secret"));

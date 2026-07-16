@@ -9,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JdbcMapper;
@@ -18,6 +16,7 @@ import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.jdbc.migration.V2_0_10BasicAuthPasswordMigration.BASIC_AUTH_SETTINGS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;

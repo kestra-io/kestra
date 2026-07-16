@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
@@ -21,6 +19,7 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Worker-side implementation of {@link NamespaceFileMetadataStateStore} that communicates

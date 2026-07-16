@@ -1,6 +1,5 @@
 package io.kestra.jdbc.migration;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -27,6 +26,7 @@ import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
 
 /**
  * Migrates V1 trigger rows (stored as legacy {@code Trigger} JSON) to V2 {@link TriggerState} format.
@@ -107,7 +107,7 @@ public class V2_0_07TriggerMigration implements MigrationScript {
                             .execute();
 
                         migrated++;
-                    } catch (IOException e) {
+                    } catch (JacksonException e) {
                         log.error("Failed to migrate trigger with key '{}'", key, e);
                         throw new RuntimeException(e);
                     }

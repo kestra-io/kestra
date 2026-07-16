@@ -5,12 +5,12 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
+
+import tools.jackson.core.type.TypeReference;
 
 public class StatefulTriggerService {
     public record Entry(String uri, String version, Instant modifiedAt, Instant lastSeenAt) {

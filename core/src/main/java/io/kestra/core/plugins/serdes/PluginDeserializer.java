@@ -1,18 +1,10 @@
 package io.kestra.core.plugins.serdes;
 
-import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Optional;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.Plugin;
@@ -23,15 +15,22 @@ import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.type.TypeFactory;
 
 /**
- * Specific {@link JsonDeserializer} for deserializing classes that implements the {@link Plugin} interface.
+ * Specific {@link ValueDeserializer} for deserializing classes that implements the {@link Plugin} interface.
  * <p>
  * The {@link PluginDeserializer} uses the {@link PluginRegistry} to found the plugin class corresponding to
  * a plugin type.
  */
 @Slf4j
-public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
+public class PluginDeserializer<T extends Plugin> extends ValueDeserializer<T> {
 
     private static final String TYPE = "type";
     private static final String VERSION = "version";
@@ -57,7 +56,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
      * {@inheritDoc}
      */
     @Override
-    public T deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+    public T deserialize(JsonParser parser, DeserializationContext context) throws JacksonException {
         checkState();
         JsonNode node = parser.readValueAsTree();
         if (node.isObject()) {
@@ -84,7 +83,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
     @SuppressWarnings("unchecked")
     private T fromObjectNode(JsonParser jp,
         JsonNode node,
-        DeserializationContext context) throws IOException {
+        DeserializationContext context) throws JacksonException {
         Class<? extends Plugin> pluginType = null;
 
         final String identifier = extractPluginRawIdentifier(node, pluginRegistry.isVersioningSupported());
@@ -136,7 +135,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
 
             // Note that if the provided plugin is not annotated with `@JsonDeserialize()` then
             // the following method will end up to a StackOverflowException as the `PluginDeserializer` will be re-invoked.
-            return (T) jp.getCodec().treeToValue(node, pluginType);
+            return (T) context.readTreeAsValue(node, pluginType);
         }
 
         // should not happen.
@@ -145,7 +144,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
     }
 
     private static void throwInvalidTypeException(final DeserializationContext context,
-        final String type) throws JsonMappingException {
+        final String type) throws DatabindException {
         throw context.invalidTypeIdException(
             context.constructType(Plugin.class),
             type,

@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -34,6 +31,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 @Controller("/api/v1/{tenant}")
 public class KVController {
@@ -134,7 +133,7 @@ public class KVController {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);
             kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             kvStore(namespace).put(key, new KVValueAndMetadata(metadata, value));
         }
     }

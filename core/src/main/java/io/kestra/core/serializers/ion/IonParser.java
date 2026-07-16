@@ -1,22 +1,25 @@
 package io.kestra.core.serializers.ion;
 
-import java.io.IOException;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 
 import com.amazon.ion.IonReader;
+import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonType;
 import com.amazon.ion.Timestamp;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.io.IOContext;
 
-public class IonParser extends com.fasterxml.jackson.dataformat.ion.IonParser {
-    @SuppressWarnings("deprecation")
-    public IonParser(IonReader r, IOContext ctxt) {
-        super(r, ctxt);
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.io.IOContext;
+
+public class IonParser extends tools.jackson.dataformat.ion.IonParser {
+    public IonParser(ObjectReadContext readCtxt, IOContext ctxt, int generalFeatures, int formatFeatures, IonReader r, IonSystem system) {
+        super(readCtxt, ctxt, generalFeatures, formatFeatures, r, system);
     }
 
+    @Override
     protected JsonToken _tokenFromType(IonType type) {
         String[] typeAnnotations = _reader.getTypeAnnotations();
 
@@ -28,7 +31,7 @@ public class IonParser extends com.fasterxml.jackson.dataformat.ion.IonParser {
     }
 
     @Override
-    public Object getEmbeddedObject() throws IOException {
+    public Object getEmbeddedObject() throws JacksonException {
         if (this.getTypeId() != null) {
             if (this.getTypeId().equals(Instant.class.getSimpleName())) {
                 return Instant.parse(_reader.stringValue());

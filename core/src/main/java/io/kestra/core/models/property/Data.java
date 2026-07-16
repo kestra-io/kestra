@@ -7,11 +7,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.runners.RunContext;
@@ -23,6 +18,10 @@ import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.type.CollectionType;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -35,8 +34,9 @@ public class Data {
 
     // this would be used in case 'from' is a String but not a URI to read it as a single item or a list of items
     private static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson()
-        .copy()
-        .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        .rebuild()
+        .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+        .build();
 
     @Nullable
     private final Object from;
@@ -123,7 +123,7 @@ public class Data {
                     CollectionType collectionType = JSON_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz);
                     List<T> list = JSON_MAPPER.readValue(renderedString, collectionType);
                     return Flux.fromIterable(list);
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     throw new RuntimeException(e);
                 }
             }

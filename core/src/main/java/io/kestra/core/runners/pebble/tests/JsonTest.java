@@ -3,14 +3,13 @@ package io.kestra.core.runners.pebble.tests;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Test;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
+import tools.jackson.core.JacksonException;
 
 public class JsonTest implements Test {
     @Override
@@ -23,7 +22,7 @@ public class JsonTest implements Test {
         try {
             JacksonMapper.ofJson().readTree((String) input);
             return true;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return false;
         }
     }

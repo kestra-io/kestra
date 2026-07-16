@@ -1,9 +1,10 @@
 package io.kestra.controller.messages;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.ByteString;
 
 import io.kestra.core.utils.Enums;
+
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Represents a specific message format.

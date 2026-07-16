@@ -5,10 +5,10 @@ import java.util.Map;
 import org.jooq.JSONB;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.serializers.JacksonMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +22,7 @@ class JdbcJsonbUtilsTest {
     }
 
     @Test
-    void shouldStripJsonEscapedNullBytes() throws JsonProcessingException {
+    void shouldStripJsonEscapedNullBytes() throws JacksonException {
         String javaString = "value" + NULL_CHAR + "with" + NULL_CHAR + "nulls";
         String json = MAPPER.writeValueAsString(Map.of("key", javaString));
 
@@ -65,7 +65,7 @@ class JdbcJsonbUtilsTest {
     }
 
     @Test
-    void shouldHandleKafkaStylePayload() throws JsonProcessingException {
+    void shouldHandleKafkaStylePayload() throws JacksonException {
         // Given - mimics the customer scenario: Kafka header with a null byte value
         String json = MAPPER.writeValueAsString(
             Map.of("headers", Map.of("apicurio.value.globalId", NULL_CHAR))

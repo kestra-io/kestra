@@ -6,10 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-
 import io.kestra.core.serializers.JacksonMapper;
 
 import lombok.SneakyThrows;
@@ -17,11 +13,17 @@ import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.NullNode;
 
 public final class H2Functions {
 
     private H2Functions() {
     }
+
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     private static final Scope scope = Scope.newEmptyScope();
     private static final ConcurrentHashMap<String, JsonQuery> QUERY_CACHE = new ConcurrentHashMap<>();
@@ -97,7 +99,7 @@ public final class H2Functions {
         JsonQuery q = QUERY_CACHE.computeIfAbsent(expression, H2Functions::compileQuery);
 
         final List<JsonNode> out = new ArrayList<>();
-        JsonNode in = JacksonMapper.ofJson().readTree(value);
+        JsonNode in = MAPPER.readTree(value);
 
         q.apply(scope, in, out::add);
 

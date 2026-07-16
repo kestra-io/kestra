@@ -1,12 +1,9 @@
 package io.kestra.core.models.flows;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -15,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -43,7 +42,7 @@ public class FlowWithException extends FlowWithSource {
         try {
             var jsonNode = JacksonMapper.ofJson().readTree(source);
             return FlowWithException.from(jsonNode, exception);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             // if we cannot create a FlowWithException, ignore the message
             log.error("Unexpected exception when trying to handle a deserialization error", e);
             return Optional.empty();

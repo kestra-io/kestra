@@ -16,8 +16,6 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -59,6 +57,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
 
 /**
  * Provides business logic for manipulating flow objects.
@@ -540,7 +539,7 @@ public class FlowService {
                 );
             Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
             return relocations(aliases, stringObjectMap);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             // silent failure (we don't compromise the app / response for warnings)
             return Collections.emptyList();
         }

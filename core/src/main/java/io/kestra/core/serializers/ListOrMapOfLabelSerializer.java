@@ -1,20 +1,20 @@
 package io.kestra.core.serializers;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
 /**
  * This serializer is for historical purpose, labels was first a map but has been updated to a List of Label so
  * this serializer allows using both types.
  */
-public class ListOrMapOfLabelSerializer extends JsonSerializer<Object> {
+public class ListOrMapOfLabelSerializer extends ValueSerializer<Object> {
     @Override
-    public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+    public void serialize(Object value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
         if (value == null) {
             gen.writeNull();
         } else if (value instanceof List) {

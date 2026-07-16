@@ -13,8 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
@@ -23,6 +21,7 @@ import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

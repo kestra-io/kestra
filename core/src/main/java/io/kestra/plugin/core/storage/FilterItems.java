@@ -8,10 +8,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -29,6 +25,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Schema(
     title = "Filter line-oriented files with a Pebble expression.",
@@ -212,7 +211,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
             try {
                 String rendered = extract(MAPPER.readTree(data));
                 return rendered == null ? null : TruthUtils.isTruthy(rendered.trim());
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }

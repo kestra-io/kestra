@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
@@ -19,6 +16,8 @@ import io.kestra.plugin.core.trigger.McpToolTrigger;
 
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Singleton
 public class FlowToolSchemaMapper {

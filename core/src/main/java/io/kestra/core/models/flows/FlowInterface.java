@@ -11,9 +11,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
@@ -28,6 +25,9 @@ import io.kestra.core.runners.ReusableInputsExpander;
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.core.annotation.Nullable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * The base interface for FLow.
@@ -203,8 +203,9 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
      */
     class SourceGenerator {
         private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson(true)
-            .copy()
-            .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
+            .rebuild()
+            .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_DEFAULT))
+            .build();
 
         static String generate(final FlowInterface flow) {
             try {
@@ -216,7 +217,7 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
                 // remove the revision from the generated source
                 return sourceWithoutRevision(source);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 return null;
             }
         }

@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
@@ -40,6 +38,8 @@ import io.kestra.core.storages.StorageInterface;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 @Slf4j
 public class PluginScanner {
@@ -266,7 +266,7 @@ public class PluginScanner {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             log.error("Unable to read plugin ui manifest for plugin {}", getLocation(externalPlugin));
         }
 

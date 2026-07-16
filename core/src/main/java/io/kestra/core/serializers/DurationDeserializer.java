@@ -1,24 +1,25 @@
 package io.kestra.core.serializers;
 
-import java.io.IOException;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.Duration;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.core.io.NumberInput;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.datatype.jsr310.DecimalUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.StreamReadCapability;
+import tools.jackson.core.io.NumberInput;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ext.javatime.util.DecimalUtils;
 
-public class DurationDeserializer extends com.fasterxml.jackson.datatype.jsr310.deser.DurationDeserializer {
+public class DurationDeserializer extends tools.jackson.databind.ext.javatime.deser.DurationDeserializer {
     @Serial
     private static final long serialVersionUID = 1L;
 
     // durations can be a string with a number which is not taken into account as it should not happen
     // we specialize the Duration deserialization from string to support that
     @Override
-    protected Duration _fromString(JsonParser parser, DeserializationContext ctxt, String value0) throws IOException {
+    protected Duration _fromString(JsonParser parser, DeserializationContext ctxt, String value0) throws JacksonException {
         String value = value0.trim();
         if (value.isEmpty()) {
             // 22-Oct-2020, tatu: not sure if we should pass original (to distinguish
@@ -39,7 +40,7 @@ public class DurationDeserializer extends com.fasterxml.jackson.datatype.jsr310.
         if (_isFloat(value)) {
             double d = Double.parseDouble(value);
             BigDecimal bigDecimal = BigDecimal.valueOf(d);
-            return DecimalUtils.extractSecondsAndNanos(bigDecimal, Duration::ofSeconds);
+            return DecimalUtils.extractSecondsAndNanos(bigDecimal, Duration::ofSeconds, shouldReadTimestampsAsNanoseconds(ctxt));
         }
 
         try {

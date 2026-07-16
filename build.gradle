@@ -145,7 +145,7 @@ allprojects {
             // OTEL
             implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
-            // jackson
+            // jackson 2 - still required by Micronaut's HTTP/Jackson integration (pending the Micronaut 5 bump)
             implementation "com.fasterxml.jackson.core:jackson-core"
             implementation "com.fasterxml.jackson.core:jackson-databind"
             implementation "com.fasterxml.jackson.core:jackson-annotations"
@@ -153,6 +153,15 @@ allprojects {
             implementation "com.fasterxml.jackson.module:jackson-module-parameter-names"
             implementation "com.fasterxml.jackson.datatype:jackson-datatype-guava"
             implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+
+            // jackson 3 (tools.jackson) - used by Kestra's own serialization code.
+            // No datatype-jsr310/jdk8 or module-parameter-names equivalents: jackson-databind 3.x embeds them.
+            implementation "tools.jackson.core:jackson-core"
+            implementation "tools.jackson.core:jackson-databind"
+            implementation "tools.jackson.dataformat:jackson-dataformat-yaml"
+            implementation "tools.jackson.dataformat:jackson-dataformat-ion"
+            implementation "tools.jackson.datatype:jackson-datatype-guava"
+
             implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra

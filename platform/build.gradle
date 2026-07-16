@@ -23,6 +23,12 @@ dependencies {
     def flyingSaucerVersion = "10.3.0"
     def jacksonVersion = "2.22.1"
     def jacksonAnnotationsVersion = "2.22"
+    // Jackson 3 (tools.jackson): used by Kestra's own serialization code going forward.
+    // Coexists with Jackson 2 (com.fasterxml.jackson) below, which Micronaut 4's HTTP/Jackson
+    // integration still requires until the Micronaut 5 bump lands on this branch.
+    // jackson-annotations has no separate 3.x release: v3 depends on the 2.x artifact/package
+    // (com.fasterxml.jackson.annotation), already pinned by jacksonAnnotationsVersion above.
+    def jackson3Version = "3.1.1"
     def jugVersion = "5.2.0"
     def langchain4jVersion = "1.17.2"
     def langchain4jCommunityVersion = "1.17.2-beta27"
@@ -30,6 +36,8 @@ dependencies {
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
+    // Jackson 3, for Kestra's own serialization code (see jackson3Version comment above)
+    api enforcedPlatform("tools.jackson:jackson-bom:$jackson3Version")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
     api platform("io.micronaut.platform:micronaut-platform:4.10.16")
@@ -64,6 +72,13 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
+        // ugly hack for jackson 3, same reasoning as jackson 2 above: force every individual artifact.
+        // No datatype-jsr310/jdk8 or module-parameter-names equivalents: jackson-databind 3.x embeds them.
+        api("tools.jackson.core:jackson-core:$jackson3Version")
+        api("tools.jackson.core:jackson-databind:$jackson3Version")
+        api("tools.jackson.dataformat:jackson-dataformat-yaml:$jackson3Version")
+        api("tools.jackson.dataformat:jackson-dataformat-ion:$jackson3Version")
+        api("tools.jackson.datatype:jackson-datatype-guava:$jackson3Version")
 
         // http5 client
         api("org.apache.httpcomponents.client5:httpclient5:5.6.2")

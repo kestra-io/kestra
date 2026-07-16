@@ -38,6 +38,7 @@
                     <img :src="logo" alt="" class="copilot-artwork-img" >
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
+                <CopilotContextChip v-if="activeScope" :scope="activeScope" @clear="scopeDismissed = true" />
                 <CopilotComposer
                     ref="emptyComposer"
                     v-model="composerText"
@@ -92,6 +93,7 @@
             </KsAlert>
 
             <div class="copilot-footer">
+                <CopilotContextChip v-if="activeScope" :scope="activeScope" @clear="scopeDismissed = true" />
                 <CopilotComposer
                     ref="footerComposer"
                     v-model="composerText"
@@ -120,6 +122,7 @@
     import CopilotComposer from "./CopilotComposer.vue"
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
+    import CopilotContextChip from "./CopilotContextChip.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute} from "./routeScope"
     import type {Mode, ScopeBinding} from "./types"
@@ -142,6 +145,15 @@
     // page as `inFocus` so the agent knows what the user is looking at. An explicit `inFocus` prop
     // (if a parent ever passes one) still wins. Recomputed as the route changes while the drawer is open.
     const routeInFocus = computed<ScopeBinding | null>(() => props.inFocus ?? scopeFromRoute(route))
+
+    // The user can dismiss the context chip to run a turn without the current page's scope. Dismissal
+    // is re-armed whenever the focused resource changes (navigating to a new page re-attaches scope).
+    const scopeDismissed = ref(false)
+    const activeScope = computed<ScopeBinding | null>(() => (scopeDismissed.value ? null : routeInFocus.value))
+    watch(
+        () => JSON.stringify(routeInFocus.value),
+        () => (scopeDismissed.value = false),
+    )
 
     // Shared composer text (both the empty-state and footer composers bind it), so an external
     // entry point can seed a prompt via the misc store (see consumeSeededPrompt).
@@ -194,7 +206,7 @@
     })
 
     function onSubmit(prompt: string): void {
-        sendChat({prompt, mode: mode.value, inFocus: routeInFocus.value, providerId: selectedProvider.value})
+        sendChat({prompt, mode: mode.value, inFocus: activeScope.value, providerId: selectedProvider.value})
     }
 
     // Keep the transcript pinned to the bottom as content arrives: new messages, streamed

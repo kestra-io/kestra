@@ -151,6 +151,14 @@ export interface ToolResultEvent {
     tool: string
     /** "ok", "error" (the tool threw; the turn continues), or "rejected". */
     outcome: string
+    /**
+     * Detail persisted with the result — present on thread reload, not on the live stream (the SSE
+     * tool_result event carries only `tool` + `outcome`). `result` on success, `error` on a thrown
+     * tool, `reason` on a user rejection.
+     */
+    result?: unknown
+    error?: string | null
+    reason?: string | null
 }
 
 /** A single step of a Plan-mode plan card. */

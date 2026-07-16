@@ -2021,7 +2021,13 @@
           "title": "Turn your idea into a workflow"
         },
         "toolCall": "Running {tool}",
+        "context": {
+          "execution": "Ausführung: {id}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {namespace}"
+        },
         "toolResult": {
+          "detail": "Details",
           "error": "{tool} fehlgeschlagen",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"

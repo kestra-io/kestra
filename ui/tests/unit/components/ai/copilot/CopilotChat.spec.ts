@@ -104,6 +104,29 @@ describe("CopilotChat", () => {
         }))
     })
 
+    it("shows the context chip on a detail route and hides it on a plain route", async () => {
+        routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+        expect(mountChat().findComponent({name: "CopilotContextChip"}).exists()).toBe(true)
+
+        routeStub = {name: "flows/list", params: {}}
+        expect(mountChat().findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
+    })
+
+    it("drops the scope from the turn after the context chip is dismissed", async () => {
+        routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+        const w = mountChat()
+        const chip = w.findComponent({name: "CopilotContextChip"})
+        expect(chip.exists()).toBe(true)
+
+        chip.vm.$emit("clear")
+        await flushPromises()
+        expect(w.findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
+
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no scope please")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "no scope please", inFocus: null}))
+    })
+
     it("surfaces a warning notice when a turn yields no output", () => {
         state.notice.value = "emptyTurn"
         const w = mountChat()

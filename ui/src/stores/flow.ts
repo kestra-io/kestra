@@ -536,7 +536,7 @@ export const useFlowStore = defineStore("flow", () => {
     }
     function updateFlowTask(options: { flow: Flow, task: Task }) {
         return axios
-            .patch<Flow>(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+            .patch(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
                 flow.value = response.data
 
                 return response.data
@@ -726,7 +726,7 @@ function deleteFlowAndDependencies() {
     }
 
     function exportFlowByIds(options: { ids: string[] }) {
-        return axios.post<Blob>(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
+        return axios.post(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
             .then(response => {
                 const blob = new Blob([response.data], {type: "application/octet-stream"})
                 const url = window.URL.createObjectURL(blob)
@@ -742,7 +742,7 @@ function deleteFlowAndDependencies() {
     }
 
     async function exportFlowAsCSV(params: any) {
-        const response = await axios.get<string>(
+        const response = await axios.get(
             `${apiUrl()}/flows/export/by-query/csv`,
             {params, responseType: "text", headers: {Accept: "text/csv"}},
         )

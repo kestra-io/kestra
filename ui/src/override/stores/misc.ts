@@ -21,7 +21,7 @@ export const useMiscStore = defineStore("misc", () => {
 
 
     async function loadConfigs() {
-        const response = await axios.get<Record<string, any>>(`${apiUrlWithoutTenants()}/configs`)
+        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`)
         configs.value = response.data
         // Best-effort: flush any queued analytics events once configs are known.
         void useApiStore().flushQueuedEvents()
@@ -29,13 +29,13 @@ export const useMiscStore = defineStore("misc", () => {
     }
 
     async function loadBasicAuthValidationErrors() {
-        const response = await axios.get<string[]>(`${apiUrlWithoutTenants()}/basicAuthValidationErrors`)
+        const response = await axios.get(`${apiUrlWithoutTenants()}/basicAuthValidationErrors`)
         return response.data
     }
 
     async function loadAllUsages() {
         if (configs.value?.isBasicAuthInitialized && BasicAuth.isLoggedIn()) {
-            const response = await axios.get<any>(`${apiUrl()}/usages/all`)
+            const response = await axios.get(`${apiUrl()}/usages/all`)
             return response.data
         }
         return []

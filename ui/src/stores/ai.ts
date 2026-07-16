@@ -25,7 +25,7 @@ export const useAiStore = defineStore("ai", () => {
         type: AiGenerationType
     }) {
         const uid = getUid()
-        const response = await client.post<string>(`${apiUrl()}/ai/generate/${type}`, {
+        const response = await client.post(`${apiUrl()}/ai/generate/${type}`, {
             userPrompt,
             conversationId,
             providerId,

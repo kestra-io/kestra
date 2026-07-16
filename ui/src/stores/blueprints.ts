@@ -1,7 +1,7 @@
 import {ref} from "vue"
 import {defineStore} from "pinia"
 
-import {BlueprintControllerApiFlowBlueprint, type PagedResultsBlueprint, useClient} from "@kestra-io/kestra-sdk"
+import {BlueprintControllerApiFlowBlueprint, useClient} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import * as BlueprintsAPI from "@kestra-io/kestra-sdk/blueprints"
 import * as BlueprintTagsAPI from "@kestra-io/kestra-sdk/blueprint-tags"
@@ -55,8 +55,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-            const response = await axios.get<PagedResultsBlueprint>(COMMUNITY, PARAMS)
-            blueprints.value = response.data.results as unknown as Blueprint[]
+            const response = await axios.get(COMMUNITY, PARAMS)
+            blueprints.value = response.data
             return response.data
         }
 
@@ -91,7 +91,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const getBlueprint = async (options: Options) => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
-            const response = await axios.get<Blueprint>(COMMUNITY)
+            const response = await axios.get(COMMUNITY)
             if (response.data?.id) {
                 trackBlueprintSelection(response.data.id)
             }
@@ -110,7 +110,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const getBlueprintSource = async (options: Options) => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
-            const response = await axios.get<string>(COMMUNITY)
+            const response = await axios.get(COMMUNITY)
             source.value = response.data
             return response.data
         }
@@ -134,7 +134,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
-            const response = await axios.get<any[]>(COMMUNITY, PARAMS)
+            const response = await axios.get(COMMUNITY, PARAMS)
             return response.data
         }
 

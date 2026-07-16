@@ -235,7 +235,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const filename = `chart__${chart.id}`
 
         return axios
-            .post<Blob>(`${apiUrl()}/dashboards${path}`, payload, blobResponse)
+            .post(`${apiUrl()}/dashboards${path}`, payload, blobResponse)
             .then((res) => downloadHandler(res, filename))
     }
 

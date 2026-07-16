@@ -746,7 +746,7 @@
             return
         }
 
-        const axiosResponse = await $http.get<{size: number}>(
+        const axiosResponse = await $http.get(
             `${apiUrl()}/executions/${followedExecution.value.id}/file/metas?path=${path}`,
             {
                 validateStatus: (status: number) =>

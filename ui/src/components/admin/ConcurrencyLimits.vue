@@ -81,7 +81,7 @@
     }>()
 
     async function loadData(){
-        const response = await axios.get<{total: number; results: ConcurrencyLimit[]}>(`${apiUrl()}/concurrency-limit/search`)
+        const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
         if(response?.status !== 200){
             throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }

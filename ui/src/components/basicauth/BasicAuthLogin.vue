@@ -129,7 +129,7 @@
     }
 
     const checkServerInitialization = async () => {
-        const response = await axios.get<{isBasicAuthInitialized?: boolean}>(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000})
+        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000})
         return response.data?.isBasicAuthInitialized
     }
 

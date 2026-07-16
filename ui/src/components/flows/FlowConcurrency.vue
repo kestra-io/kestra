@@ -76,7 +76,7 @@
         error.value = undefined
 
         try {
-            const response = await axios.get<{results: any[]}>(`${apiUrl()}/concurrency-limit/search`)
+            const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
             const limits = response.data?.results || []
 
             const currentFlowLimit = limits.find(

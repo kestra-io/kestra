@@ -184,7 +184,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // explicit "multipart/form-data" header (needed under the old axios client) has no boundary
     // and corrupts the request.
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }): Promise<RawHttpResponse<Execution>> => {
-        return axios.post<Execution>(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/actions/replay-with-inputs`,
             options.formData,
             {
@@ -243,7 +243,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }): Promise<RawHttpResponse<Execution>> => {
-        return axios.post<Execution>(
+        return axios.post(
             `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
             null,
             {
@@ -313,7 +313,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }): Promise<RawHttpResponse<ValidationResponse>> => {
-        return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             params: {
                 labels: options.labels ?? [],
@@ -539,7 +539,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const filePreviewB = ref<any | undefined>(undefined)
     // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
-        return axios.get<any>(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
+        return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options,
         }).then(response => {
             let data = {...response.data}
@@ -709,7 +709,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const loadNamespaces = () => {
-        return axios.get<string[]>(`${apiUrl()}/executions/namespaces`)
+        return axios.get(`${apiUrl()}/executions/namespaces`)
             .then(response => {
                 namespaces.value = response.data
             })
@@ -717,7 +717,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const loadFlowsExecutable = (options: { namespace: string }) => {
-        return axios.get<any[]>(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
+        return axios.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
             .then(response => {
                 flowsExecutable.value = response.data
             })
@@ -776,7 +776,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: CSV blob download, not a clean typed JSON call.
     const exportExecutionsAsCSV = async (params: any) => {
-        const response = await axios.get<string>(
+        const response = await axios.get(
             `${apiUrl()}/executions/export/by-query/csv`,
             {params, responseType: "text", headers: {Accept: "text/csv"}},
         )

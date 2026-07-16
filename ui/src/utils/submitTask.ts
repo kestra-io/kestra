@@ -105,12 +105,11 @@ export const executeTask = (
                     window.open(resolved.href, "_blank")
                 } else {
                     submitor.$router.push({
-                        name: "executions/update",
+                        name: `executions/update/${localStorage.getItem("executeDefaultTab") || "gantt"}`,
                         params: {
                             namespace: response.namespace,
                             flowId: response.flowId,
                             id: response.id,
-                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,

@@ -121,12 +121,11 @@ export function useFlowEditorActions() {
                 onboardingStore.recordExecution()
 
                 await router.push({
-                    name: "executions/update",
+                    name: "executions/update/gantt",
                     params: {
                         namespace: response.namespace,
                         flowId: response.flowId,
                         id: response.id,
-                        tab: "gantt",
                         tenant: tenant.value,
                     },
                     query: {

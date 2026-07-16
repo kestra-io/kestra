@@ -3,7 +3,7 @@ import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../uti
 
 function isStandalone(): boolean {
     return window.matchMedia("(display-mode: standalone)").matches ||
-        // iOS Safari has no display-mode media query support; it exposes this instead.
+        // iOS Safari: no display-mode query, exposes navigator.standalone instead
         (navigator as Navigator & {standalone?: boolean}).standalone === true
 }
 

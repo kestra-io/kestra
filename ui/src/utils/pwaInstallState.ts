@@ -10,10 +10,7 @@ export const appInstalled = ref(false)
 
 let initialized = false
 
-// Captured at bootstrap (see main.ts) so the event is never missed when the
-// user first lands on an anonymous route (e.g. /login), where PwaInstallPrompt
-// is not yet mounted. A single listener lives for the app's lifetime; it must
-// not be re-registered per composable/component instance.
+// captured at bootstrap (main.ts) so the event isn't missed on login-first routes
 export function initPwaInstallCapture(): void {
     if (initialized || typeof window === "undefined") {
         return

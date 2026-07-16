@@ -119,10 +119,7 @@ export default defineConfig(({mode}) => {
                 telemetry: false,
             }),
             !process.env.STORYBOOK && VitePWA({
-                // Registered manually at runtime (see src/utils/serviceWorker.ts) so the
-                // scope can be computed from window.KESTRA_BASE_PATH: one build is shipped
-                // for every deploy path (root, sub-path, behind a proxy), so the scope can't
-                // be baked in at build time.
+                // registered manually (serviceWorker.ts) so scope derives from the runtime base path
                 injectRegister: null,
                 manifestFilename: "manifest.webmanifest",
                 includeManifestIcons: false,
@@ -142,24 +139,10 @@ export default defineConfig(({mode}) => {
                     ],
                 },
                 workbox: {
-                    // Every JS/CSS chunk (entry included) lives under assets/ and, because
-                    // Monaco, shiki (one grammar/theme chunk per language), mermaid, katex,
-                    // echarts and the topology graph are all reachable from the entry, this
-                    // app has no small, cleanly-separable "critical entry chunk" - the whole
-                    // assets/ graph is tens of MB. So the app shell we precache is just the
-                    // static root-level files (manifest, icons, loader stylesheet); JS/CSS is
-                    // always fetched from the network, keeping the first install tiny.
-                    // manifest.webmanifest is precached automatically by the plugin itself;
-                    // matching it here too would just add a harmless duplicate entry.
+                    // shell-only precache: JS/CSS stays network-fetched (the assets/ graph is tens of MB)
                     globPatterns: ["*.{ico,png,css}"],
                     maximumFileSizeToCacheInBytes: 256 * 1024,
-                    // vite-plugin-pwa defaults navigateFallback to "index.html", which would
-                    // register a NavigationRoute bound to a precache entry we don't generate
-                    // (see above) and break every navigation once the SW is active. Disabled:
-                    // the webserver injects a fresh, request-scoped CSRF meta tag into
-                    // index.html on every request (StaticFilter); serving a precached/fallback
-                    // copy for navigations would ship a stale/missing token and break the next
-                    // mutating API call. Navigation requests always hit the network.
+                    // disabled: index.html carries a per-request CSRF meta (StaticFilter); a cached copy breaks CSRF
                     navigateFallback: undefined,
                     skipWaiting: true,
                     clientsClaim: true,

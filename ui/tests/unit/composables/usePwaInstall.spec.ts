@@ -133,9 +133,6 @@ describe("usePwaInstall", () => {
     })
 
     it("can install when beforeinstallprompt was captured at bootstrap, before the composable ever ran", () => {
-        // Simulates a user landing on an anonymous route first: main.ts already
-        // called initPwaInstallCapture() and Chrome already fired the event by
-        // the time an authenticated route mounts PwaInstallPrompt.
         initPwaInstallCapture()
         fireBeforeInstallPrompt()
 

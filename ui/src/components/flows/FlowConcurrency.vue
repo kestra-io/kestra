@@ -46,14 +46,14 @@
     import Empty from "../layout/empty/Empty.vue"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
-    import {useKestraHttp} from "../../utils/kestraHttp"
+    import {useClient} from "@kestra-io/kestra-sdk"
     import {apiUrl} from "override/utils/route"
     import Loading from "vue-material-design-icons/Loading.vue"
 
     defineOptions({inheritAttrs: false})
 
     const flowStore = useFlowStore()
-    const axios = useKestraHttp()
+    const axios = useClient()
 
     const runningCount = ref(0)
     const totalCount = ref(0)

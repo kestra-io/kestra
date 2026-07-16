@@ -15,8 +15,7 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import type {FlowWithSource, AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
-import {useKestraHttp} from "../utils/kestraHttp"
+import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
@@ -26,6 +25,16 @@ const textYamlHeader = {
     headers: {
         "Content-Type": "application/x-yaml",
     },
+}
+
+// Locally-declared stand-in for the SDK's unexported AxiosLikeResponse: raw-axios call
+// sites (multipart uploads, no matching generated endpoint) need a nameable return type
+// so their result can appear in this store's exported type.
+interface RawHttpResponse<T = any> {
+    data: T;
+    status: number;
+    headers: Record<string, string>;
+    request?: {responseURL: string};
 }
 
 // backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
@@ -116,7 +125,7 @@ export const useFlowStore = defineStore("flow", () => {
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
 
-    const axios = useKestraHttp()
+    const axios = useClient()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -527,7 +536,7 @@ export const useFlowStore = defineStore("flow", () => {
     }
     function updateFlowTask(options: { flow: Flow, task: Task }) {
         return axios
-            .patch(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+            .patch<Flow>(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
                 flow.value = response.data
 
                 return response.data
@@ -728,7 +737,7 @@ function deleteFlowAndDependencies() {
     function exportFlowByQuery(options: { namespace: string, id: string }) {
         return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
             .then(response => {
-                Utils.downloadUrl(response.request.responseURL, "flows.zip")
+                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
             })
     }
 
@@ -747,7 +756,7 @@ function deleteFlowAndDependencies() {
         window.URL.revokeObjectURL(url)
     }
 
-    function importFlows(options: { file: FormData,  failOnError: boolean }) {
+    function importFlows(options: { file: FormData,  failOnError: boolean }): Promise<RawHttpResponse> {
          const {file, failOnError} = options
         return axios.post(`${apiUrl()}/flows/import`, file, {
             headers: {"Content-Type": "multipart/form-data"},

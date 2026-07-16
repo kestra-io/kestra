@@ -1,11 +1,11 @@
 import {defineStore} from "pinia"
-import {useKestraHttp} from "../utils/kestraHttp"
+import {useClient} from "@kestra-io/kestra-sdk"
 import {AiGenerationType, aiGenerationTypes} from "../utils/constants"
 import {getUid} from "../utils/uid"
 import {apiUrl} from "override/utils/route"
 
 export const useAiStore = defineStore("ai", () => {
-    const client = useKestraHttp()
+    const client = useClient()
 
     async function generate({
         userPrompt, 

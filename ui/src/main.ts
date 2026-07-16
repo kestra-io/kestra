@@ -20,6 +20,7 @@ loadNodeTypes()
 import App from "./App.vue"
 import initApp from "./utils/init"
 import {setupKestraHttp} from "./utils/kestraHttp"
+import {useClient} from "@kestra-io/kestra-sdk"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter} from "./composables/useTenant"
@@ -71,15 +72,16 @@ function setupAxios(router: Router) {
     })
 
     // Add CSRF token to every request - covers both generated-endpoint calls and
-    // the ad-hoc KestraHttpClient, since setupKestraHttp() registers this on both.
-    httpClient.interceptors.request.use(({headers}) => {
+    // useClient() ad-hoc calls, since they share client.interceptors under the hood.
+    httpClient.interceptors.request.use((request) => {
         const csrfToken = getCsrfToken()
-        if (csrfToken) {
-            headers.set("X-CSRF-TOKEN", csrfToken)
-        }
+        if (!csrfToken) return request
+        const headers = new Headers(request.headers)
+        headers.set("X-CSRF-TOKEN", csrfToken)
+        return new Request(request, {headers})
     })
 
-    return httpClient
+    return useClient()
 }
 
 // FIXME: any - guard args are untyped in the GuardFn interface

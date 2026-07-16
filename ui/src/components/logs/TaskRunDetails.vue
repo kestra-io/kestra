@@ -286,8 +286,7 @@
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import throttle from "lodash/throttle"
-    import type {TaskRun, TaskRunAttempt} from "@kestra-io/kestra-sdk"
-    import {useKestraHttp} from "../../utils/kestraHttp"
+    import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -295,7 +294,7 @@
 
     const {t} = useI18n()
 
-    const $http = useKestraHttp()
+    const $http = useClient()
 
     // The UI taskrun carries a computed `depth` (for nesting) and subflow `outputs`,
     // neither of which the SDK TaskRun type models.

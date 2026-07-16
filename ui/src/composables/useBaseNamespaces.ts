@@ -1,8 +1,7 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
-import type {PagedResultsNamespace} from "@kestra-io/kestra-sdk"
-import {useKestraHttp} from "../utils/kestraHttp"
+import {useClient, type PagedResultsNamespace} from "@kestra-io/kestra-sdk"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
@@ -33,7 +32,7 @@ export const useBaseNamespacesStore = () => {
     const total = ref(0)
     const existing = ref(true)
 
-    const axios = useKestraHttp()
+    const axios = useClient()
 
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
@@ -243,7 +242,7 @@ export const useBaseNamespacesStore = () => {
         const request = await axios.get(URL)
 
         const name = payload.namespace + "_files.zip"
-        Utils.downloadUrl(request.request.responseURL, name)
+        Utils.downloadUrl(request.request?.responseURL ?? "", name)
     }
 
     return {

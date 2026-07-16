@@ -22,7 +22,7 @@
     import * as ExecutionUtils from "../../utils/executionUtils"
     import FlowRun from "../../components/flows/FlowRun.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import {useKestraHttp} from "../../utils/kestraHttp"
+    import {useClient} from "@kestra-io/kestra-sdk"
 
     const {t} = useI18n()
     const toast = useToast()
@@ -41,7 +41,7 @@
 
     const flow = computed(() => executionsStore.flow)
 
-    const axios = useKestraHttp()
+    const axios = useClient()
 
     const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
 

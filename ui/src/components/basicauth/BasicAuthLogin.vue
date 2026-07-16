@@ -55,7 +55,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessage, KsIcon} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {useKestraHttp} from "../../utils/kestraHttp"
+    import {useClient} from "@kestra-io/kestra-sdk"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -116,7 +116,7 @@
         password: [{required: true, validator: validatePassword, trigger: "blur"}],
     }))
 
-    const axios = useKestraHttp()
+    const axios = useClient()
 
     const validateCredentials = async (auth: string) => {
         try {

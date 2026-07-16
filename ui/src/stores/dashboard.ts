@@ -1,10 +1,8 @@
 import {computed, nextTick, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {KestraHttpConfig, KestraHttpResponse} from "../utils/kestraHttp"
-
-const blobResponse: KestraHttpConfig = {responseType: "blob"}
-const downloadHandler = (res: KestraHttpResponse<Blob>, filename: string) => {
+const blobResponse = {responseType: "blob" as const}
+const downloadHandler = (res: {data: Blob}, filename: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 
@@ -16,8 +14,7 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
-import {ChartFiltersOverrides, type DashboardSettings} from "@kestra-io/kestra-sdk"
-import {useKestraHttp} from "../utils/kestraHttp"
+import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
@@ -62,7 +59,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
-    const axios = useKestraHttp()
+    const axios = useClient()
 
     async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options

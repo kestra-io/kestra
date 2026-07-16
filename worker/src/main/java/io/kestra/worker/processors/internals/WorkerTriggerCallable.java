@@ -23,8 +23,10 @@ public class WorkerTriggerCallable extends AbstractWorkerTriggerCallable {
     // Maximum time the evaluation is allowed to run before being interrupted; null disables the timeout.
     private final Duration triggerEvaluationTimeout;
 
+    // Initialized to empty so getEvaluate() is never null when the evaluation ends
+    // before the assignment (killed, timed out, or failed).
     @Getter
-    Optional<TriggerEvaluationResult> evaluate;
+    Optional<TriggerEvaluationResult> evaluate = Optional.empty();
 
     public WorkerTriggerCallable(RunContext runContext, ConditionContext conditionContext, TriggerContext triggerContext, WorkerTrigger workerTrigger, PollingTriggerInterface pollingTrigger, Duration triggerEvaluationTimeout) {
         super(runContext, pollingTrigger.getClass().getName(), workerTrigger);

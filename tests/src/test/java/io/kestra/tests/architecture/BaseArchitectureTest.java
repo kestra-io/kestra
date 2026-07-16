@@ -6,7 +6,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
+import static com.tngtech.archunit.library.GeneralCodingRules.*;
 
 /**
  * Base architecture test with common rules that apply across all modules.
@@ -20,7 +20,7 @@ public class BaseArchitectureTest {
 
     @ArchTest
     public static final ArchRule no_production_use_of_awaitility = noClasses()
-        .that().doNotBelongToAnyOf(io.kestra.core.utils.Await.class)
+        .that().doNotBelongToAnyOf(io.kestra.core.utils.Await.class, io.kestra.core.junit.extensions.AbstractLoaderExtension.class)
         .should().dependOnClassesThat().resideInAPackage("org.awaitility")
         .because("you should not use it directly but use " + io.kestra.core.utils.Await.class.getName() + " wrapper instead");
 }

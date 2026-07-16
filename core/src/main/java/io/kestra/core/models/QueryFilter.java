@@ -197,6 +197,13 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("leaseExpiry")
+        LEASE_EXPIRY("leaseExpiry") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("flowId")
         FLOW_ID("flowId") {
             @Override
@@ -687,6 +694,7 @@ public record QueryFilter(
                     Field.NAMESPACE,
                     Field.METADATA,
                     Field.ASSET_STATUS,
+                    Field.LEASE_EXPIRY,
                     Field.UPDATED
                 );
             }

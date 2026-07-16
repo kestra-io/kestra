@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -111,11 +114,12 @@ public class PluginSchemaBundleService {
      *
      * <p>
      * It walks every discriminator the bundle knows about — not just the requested {@code type}'s own
-     * root, but any embedded in {@code localSchema} (e.g. the "flow" schema embeds the same
-     * {@code Task} discriminator the "task" schema's root points at). Dedup is by FQCN, so an
-     * installed subtype (already an {@code anyOf} branch) is never shadowed by a stub and re-merging
-     * is idempotent. When the service is disabled or the bundle has no root for {@code type}, the
-     * original {@code localSchema} is returned unchanged.
+     * root, but any occurrence embedded in {@code localSchema}, including subtype lists the generator
+     * inlined directly at property sites (e.g. {@code Flow.tasks.items.anyOf}) — see
+     * {@link #mergeLightweightSubtypes}. Dedup is by FQCN, so an installed subtype (already an
+     * {@code anyOf} branch) is never shadowed by a stub and re-merging is idempotent. When the
+     * service is disabled or no bundle could be loaded, the original {@code localSchema} is returned
+     * unchanged.
      *
      * @param type the schema type to look up in the bundle
      * @param localSchema the locally-generated schema (not modified)
@@ -127,7 +131,7 @@ public class PluginSchemaBundleService {
         }
 
         Bundle bundle = getBundle();
-        if (bundle.roots().get(type) == null || bundle.definitions().isEmpty()) {
+        if (bundle.isEmpty() || bundle.definitions().isEmpty()) {
             return localSchema;
         }
 
@@ -197,63 +201,107 @@ public class PluginSchemaBundleService {
     }
 
     /**
-     * For every known polymorphic discriminator definition present in {@code local} — whether it's
-     * the schema's own root (e.g. requesting the "task" schema directly) or a definition merely
-     * embedded within it (e.g. {@code Task} nested inside the "flow" schema's {@code tasks} property)
-     * — adds, for each catalog subtype not already installed locally, a <b>lightweight definition</b>
-     * plus a {@code $ref} branch pointing at it. The added entry mirrors the exact shape of an
-     * installed subtype (a definition with {@code type: object} + a {@code type} {@code const}, referenced
-     * from the discriminator's {@code anyOf}) — only without the plugin's full property schema. That
-     * structural parity matters: the editor's YAML language service offers a {@code type} value from an
-     * {@code anyOf} branch that resolves to an object definition; an inline branch without
-     * {@code type: object} is silently skipped, which is why a type-only stub failed to autocomplete.
-     * Dedup is by FQCN, so an installed subtype is never shadowed and re-merging is idempotent.
+     * For every polymorphic subtype list present in {@code local}, adds, for each catalog subtype
+     * not already installed locally, a <b>lightweight definition</b> plus a {@code $ref} branch
+     * pointing at it. The added entry mirrors the exact shape of an installed subtype (a definition
+     * with {@code type: object} + a {@code type} {@code const}, referenced from the site's
+     * {@code anyOf}) — only without the plugin's full property schema. That structural parity
+     * matters: the editor's YAML language service offers a {@code type} value from an {@code anyOf}
+     * branch that resolves to an object definition; an inline branch without {@code type: object}
+     * is silently skipped, which is why a type-only stub failed to autocomplete.
+     *
+     * <p>
+     * Crucially, the generator does <em>not</em> route every subtype list through the discriminator
+     * base-class definition: the "flow" schema inlines the full installed-subtype {@code anyOf}
+     * directly at each property site ({@code Flow.tasks.items}, {@code errors}, every flowable
+     * task's nested {@code tasks}, …) while the {@code Task} definition itself is barely referenced.
+     * Patching only the named discriminator definition therefore never reaches what the editor
+     * actually completes from. Instead, every {@code anyOf} array in {@code local} whose {@code $ref}
+     * branch keys intersect a bundle discriminator's subtype set is treated as an occurrence of that
+     * discriminator and extended. This is a heuristic, but a safe one: the generator always emits the
+     * <em>full</em> registered subtype list at such sites (verified against a real flow schema — every
+     * intersecting site carried the complete installed set), and subtype sets of distinct
+     * discriminators (task/trigger/…) are disjoint. Dedup is by FQCN per site, so an installed
+     * subtype is never shadowed and re-merging is idempotent.
      */
     private static void mergeLightweightSubtypes(ObjectNode local, ObjectNode bundleDefinitions, Map<SchemaType, String> bundleRoots) {
         JsonNode localDefsNode = local.get("definitions");
         ObjectNode localDefinitions = localDefsNode instanceof ObjectNode existing ? existing : local.putObject("definitions");
 
+        List<ArrayNode> anyOfSites = new ArrayList<>();
+        collectAnyOfSites(local, anyOfSites);
+
         bundleRoots.values().forEach(bundleRootRef ->
         {
-            String key = definitionKeyFromRef(bundleRootRef);
-            ObjectNode localEntry = definitionEntry(localDefinitions, key);
-            ObjectNode bundleEntry = definitionEntry(bundleDefinitions, key);
-            if (localEntry == null || bundleEntry == null) {
+            ObjectNode bundleEntry = definitionEntry(bundleDefinitions, definitionKeyFromRef(bundleRootRef));
+            if (bundleEntry == null || !(bundleEntry.get("anyOf") instanceof ArrayNode bundleBranches)) {
                 return;
             }
 
-            JsonNode bundleAnyOf = bundleEntry.get("anyOf");
-            if (!(bundleAnyOf instanceof ArrayNode bundleBranches)) {
+            Set<String> bundleSubtypes = refKeys(bundleBranches);
+            if (bundleSubtypes.isEmpty()) {
                 return;
             }
 
-            ArrayNode targetAnyOf = localEntry.get("anyOf") instanceof ArrayNode existing ? existing : localEntry.putArray("anyOf");
+            // The named discriminator definition, when present locally, is always an occurrence —
+            // even with an empty (or missing) anyOf, where the intersection heuristic can't see it.
+            ObjectNode localEntry = definitionEntry(localDefinitions, definitionKeyFromRef(bundleRootRef));
+            if (localEntry != null) {
+                ArrayNode namedAnyOf = localEntry.get("anyOf") instanceof ArrayNode existing ? existing : localEntry.putArray("anyOf");
+                extendSite(namedAnyOf, bundleSubtypes, localDefinitions, bundleDefinitions);
+            }
 
-            Set<String> existingSubtypes = new HashSet<>();
-            targetAnyOf.forEach(branch ->
+            anyOfSites.forEach(site ->
             {
-                JsonNode ref = branch.get("$ref");
-                if (ref != null) {
-                    existingSubtypes.add(definitionKeyFromRef(ref.asText()));
-                }
-            });
-
-            bundleBranches.forEach(branch ->
-            {
-                JsonNode ref = branch.get("$ref");
-                if (ref == null) {
+                if (Collections.disjoint(refKeys(site), bundleSubtypes)) {
                     return;
                 }
-                String subtypeKey = definitionKeyFromRef(ref.asText());
-                if (!existingSubtypes.add(subtypeKey)) {
-                    return;
-                }
-                if (!localDefinitions.has(subtypeKey)) {
-                    localDefinitions.set(subtypeKey, lightweightDefinition(subtypeKey, definitionEntry(bundleDefinitions, subtypeKey)));
-                }
-                targetAnyOf.add(JsonNodeFactory.instance.objectNode().put("$ref", "#/definitions/" + subtypeKey));
+                extendSite(site, bundleSubtypes, localDefinitions, bundleDefinitions);
             });
         });
+    }
+
+    /** Appends a {@code $ref} branch (and its lightweight definition when missing) for every bundle subtype not already listed at {@code site}. */
+    private static void extendSite(ArrayNode site, Set<String> bundleSubtypes, ObjectNode localDefinitions, ObjectNode bundleDefinitions) {
+        Set<String> existingSubtypes = refKeys(site);
+        bundleSubtypes.forEach(subtypeKey ->
+        {
+            if (!existingSubtypes.add(subtypeKey)) {
+                return;
+            }
+            if (!localDefinitions.has(subtypeKey)) {
+                localDefinitions.set(subtypeKey, lightweightDefinition(subtypeKey, definitionEntry(bundleDefinitions, subtypeKey)));
+            }
+            site.add(JsonNodeFactory.instance.objectNode().put("$ref", "#/definitions/" + subtypeKey));
+        });
+    }
+
+    /** Collects every {@code anyOf} array node in the tree (before any mutation, so patching sites can't re-trigger traversal). */
+    private static void collectAnyOfSites(JsonNode node, List<ArrayNode> sites) {
+        if (node instanceof ObjectNode obj) {
+            obj.properties().forEach(entry ->
+            {
+                if ("anyOf".equals(entry.getKey()) && entry.getValue() instanceof ArrayNode anyOf) {
+                    sites.add(anyOf);
+                }
+                collectAnyOfSites(entry.getValue(), sites);
+            });
+        } else if (node instanceof ArrayNode arr) {
+            arr.forEach(child -> collectAnyOfSites(child, sites));
+        }
+    }
+
+    /** Returns the definition keys of every {@code $ref} branch in {@code anyOf} (insertion-ordered). */
+    private static Set<String> refKeys(ArrayNode anyOf) {
+        Set<String> keys = new LinkedHashSet<>();
+        anyOf.forEach(branch ->
+        {
+            JsonNode ref = branch.get("$ref");
+            if (ref != null && ref.isTextual()) {
+                keys.add(definitionKeyFromRef(ref.asText()));
+            }
+        });
+        return keys;
     }
 
     /**

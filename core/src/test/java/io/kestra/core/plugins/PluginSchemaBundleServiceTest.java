@@ -204,6 +204,92 @@ class PluginSchemaBundleServiceTest {
         );
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldExtendInlinedSubtypeListsAtPropertySites() throws IOException {
+        // Given: the real "flow" schema shape — the generator does NOT route Flow.tasks through the
+        // Task discriminator definition; it inlines the full installed-subtype anyOf directly at the
+        // property site. The merge must reach those inlined sites, not just the named definition.
+        Files.writeString(tempDir.resolve("plugins-schema.json"), """
+            {
+              "definitions": {
+                "io.kestra.core.models.tasks.Task": {
+                  "anyOf": [
+                    {"$ref": "#/definitions/io.kestra.plugin.core.log.Log"},
+                    {"$ref": "#/definitions/io.kestra.plugin.algolia.Search"}
+                  ]
+                },
+                "io.kestra.core.models.triggers.AbstractTrigger": {
+                  "anyOf": [
+                    {"$ref": "#/definitions/io.kestra.plugin.core.trigger.Schedule"}
+                  ]
+                },
+                "io.kestra.plugin.core.log.Log": {"type": "object"},
+                "io.kestra.plugin.algolia.Search": {
+                  "properties": {"type": {"const": "io.kestra.plugin.algolia.Search"}}
+                },
+                "io.kestra.plugin.core.trigger.Schedule": {"type": "object"}
+              },
+              "roots": {
+                "task": "#/definitions/io.kestra.core.models.tasks.Task",
+                "trigger": "#/definitions/io.kestra.core.models.triggers.AbstractTrigger"
+              }
+            }
+            """);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toUri().toString());
+
+        Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
+            {
+              "$ref": "#/definitions/io.kestra.core.models.flows.Flow",
+              "definitions": {
+                "io.kestra.core.models.flows.Flow": {
+                  "type": "object",
+                  "properties": {
+                    "tasks": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {"$ref": "#/definitions/io.kestra.plugin.core.log.Log"}
+                        ]
+                      }
+                    },
+                    "id": {
+                      "anyOf": [
+                        {"type": "string"},
+                        {"type": "null"}
+                      ]
+                    }
+                  }
+                },
+                "io.kestra.plugin.core.log.Log": {"type": "object"}
+              }
+            }
+            """, Map.class);
+
+        // When
+        Map<String, Object> result = service.mergeWithBundle(SchemaType.FLOW, localFlowSchema);
+
+        // Then: the inlined tasks.items.anyOf gains the catalog subtype's $ref …
+        Map<String, Object> definitions = (Map<String, Object>) result.get("definitions");
+        Map<String, Object> flow = (Map<String, Object>) definitions.get("io.kestra.core.models.flows.Flow");
+        Map<String, Object> properties = (Map<String, Object>) flow.get("properties");
+        Map<String, Object> items = (Map<String, Object>) ((Map<String, Object>) properties.get("tasks")).get("items");
+        List<Map<String, Object>> tasksAnyOf = (List<Map<String, Object>>) items.get("anyOf");
+        assertThat(tasksAnyOf).extracting(branch -> branch.get("$ref")).containsExactlyInAnyOrder(
+            "#/definitions/io.kestra.plugin.core.log.Log",
+            "#/definitions/io.kestra.plugin.algolia.Search"
+        );
+        assertThat(definitions).containsKey("io.kestra.plugin.algolia.Search");
+
+        // … the trigger discriminator's subtypes are NOT injected there (disjoint sets) …
+        assertThat(tasksAnyOf).extracting(branch -> branch.get("$ref"))
+            .doesNotContain("#/definitions/io.kestra.plugin.core.trigger.Schedule");
+
+        // … and an anyOf that shares nothing with any discriminator (a plain nullable scalar) is untouched.
+        List<Map<String, Object>> idAnyOf = (List<Map<String, Object>>) ((Map<String, Object>) properties.get("id")).get("anyOf");
+        assertThat(idAnyOf).hasSize(2);
+    }
+
     @SuppressWarnings("unchecked")
     private static String defTypeConst(Map<String, Object> definition) {
         Map<String, Object> properties = (Map<String, Object>) definition.get("properties");

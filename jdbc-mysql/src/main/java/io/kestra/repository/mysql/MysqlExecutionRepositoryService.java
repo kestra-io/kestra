@@ -38,19 +38,12 @@ public abstract class MysqlExecutionRepositoryService {
         List<Condition> inConditions = new ArrayList<>();
         if (input.isRight()) {
             var query = input.getRight();
-            if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
-                conditions.add(
-                    DSL.condition(
-                        "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].key') IS NOT NULL", query
-                    )
-                        .or(
-                            DSL.condition(
-                                "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query
-                            )
-                        )
-                );
-            } else {
-                throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
+            switch (Objects.requireNonNull(operation)) {
+                case CONTAINS -> conditions.add(labelContainsCondition(query));
+                case NOT_CONTAINS -> conditions.add(labelContainsCondition(query).not());
+                case IS_NULL -> conditions.add(labelKeyCondition(query).not());
+                case IS_NOT_NULL -> conditions.add(labelKeyCondition(query));
+                default -> throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
             }
         } else {
             var labels = input.getLeft();
@@ -66,6 +59,11 @@ public abstract class MysqlExecutionRepositoryService {
                         conditions.add(DSL.not(labelCondition));
                     case IN ->
                         inConditions.add(labelCondition);
+                    case IS_NULL ->
+                        conditions.add(labelKeyCondition((String) key).not());
+                    case IS_NOT_NULL ->
+                        conditions.add(labelKeyCondition((String) key));
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             });
         }
@@ -74,6 +72,23 @@ public abstract class MysqlExecutionRepositoryService {
             conditions.add(DSL.or(inConditions));
         }
         return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
+    }
+
+    private static Condition labelContainsCondition(String query) {
+        return DSL.condition(
+            "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].key') IS NOT NULL", query
+        )
+            .or(
+                DSL.condition(
+                    "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query
+                )
+            );
+    }
+
+    private static Condition labelKeyCondition(String key) {
+        return DSL.condition(
+            "JSON_SEARCH(value, 'one', ?, NULL, '$.labels[*].key') IS NOT NULL", key
+        );
     }
 
 }

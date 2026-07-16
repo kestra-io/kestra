@@ -6,6 +6,7 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
+import {labelComparatorLabels} from "./labelComparatorLabels"
 
 export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -88,8 +89,18 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels.label"),
                     description: t("filter.labels.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "key-value",
+                    showComparatorSelection: true,
                 },
             ],
         }
@@ -111,7 +122,6 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     description: t("filter.flowId.description"),
                     comparators: [
                         Comparators.EQUALS,
-                        Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH,
@@ -140,9 +150,17 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                 {
                     key: "labels",
                     label: t("filter.labels.label"),
-                    description: "Filter by labels",
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    description: t("filter.labels.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "text",
+                    showComparatorSelection: true,
                 },
             ],
         }
@@ -174,8 +192,16 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels.label"),
                     description: t("filter.labels.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "text",
+                    showComparatorSelection: true,
                 },
             ],
         }

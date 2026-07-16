@@ -56,8 +56,17 @@ public abstract class MysqlFlowRepositoryService {
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
+        List<Condition> inConditions = new ArrayList<>();
 
-        if (labels instanceof Map<?, ?> labelValues) {
+        if (labels instanceof String label) {
+            switch (operation) {
+                case CONTAINS -> conditions.add(labelContainsCondition(label));
+                case NOT_CONTAINS -> conditions.add(labelContainsCondition(label).not());
+                case IS_NULL -> conditions.add(labelKeyCondition(label).not());
+                case IS_NOT_NULL -> conditions.add(labelKeyCondition(label));
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            }
+        } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
                 Field<Boolean> valueField = DSL.field(
@@ -65,6 +74,10 @@ public abstract class MysqlFlowRepositoryService {
                 );
                 if (operation.equals(EQUALS))
                     conditions.add(valueField.eq(value != null));
+                else if (operation.equals(QueryFilter.Op.IN))
+                    inConditions.add(valueField.eq(value != null));
+                else if (operation.equals(QueryFilter.Op.NOT_IN))
+                    conditions.add(DSL.not(valueField.eq(value != null)));
                 else if (operation.equals(NOT_EQUALS)) {
                     // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
                     String extractValueSqlTemplate = "JSON_UNQUOTE(JSON_EXTRACT(`value`, REPLACE(JSON_UNQUOTE(JSON_SEARCH(`value`, 'one', {0}, NULL, '$.labels[*].key')), '.key', '.value')))";
@@ -73,9 +86,35 @@ public abstract class MysqlFlowRepositoryService {
                     conditions.add(
                         extractedValue.isNull().or(extractedValue.ne(DSL.val(value, String.class)))
                     );
+                } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
+                    conditions.add(labelKeyCondition((String) key).not());
+                } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {
+                    conditions.add(labelKeyCondition((String) key));
+                } else {
+                    throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             });
         }
+        if (!inConditions.isEmpty()) {
+            conditions.add(DSL.or(inConditions));
+        }
         return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
+    }
+
+    private static Condition labelContainsCondition(String query) {
+        return DSL.condition(
+            "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].key') IS NOT NULL", query
+        )
+            .or(
+                DSL.condition(
+                    "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query
+                )
+            );
+    }
+
+    private static Condition labelKeyCondition(String key) {
+        return DSL.condition(
+            "JSON_SEARCH(value, 'one', ?, NULL, '$.labels[*].key') IS NOT NULL", key
+        );
     }
 }

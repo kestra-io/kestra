@@ -62,8 +62,20 @@ public abstract class H2FlowRepositoryService {
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
+        List<Condition> inConditions = new ArrayList<>();
 
-        if (labels instanceof Map<?, ?> labelValues) {
+        if (labels instanceof String label) {
+            Field<String> keyField = DSL.field("JQ_STRING(\"value\", '.labels[]? | .key')", String.class);
+            Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | .value')", String.class);
+            Condition containsCondition = DSL.coalesce(keyField, "").contains(label).or(DSL.coalesce(valueField, "").contains(label));
+            switch (operation) {
+                case CONTAINS -> conditions.add(containsCondition);
+                case NOT_CONTAINS -> conditions.add(containsCondition.not());
+                case IS_NULL -> conditions.add(labelKeyCondition(label).not());
+                case IS_NOT_NULL -> conditions.add(labelKeyCondition(label));
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            }
+        } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
                 Field<String> valueField = DSL.field(
@@ -71,14 +83,31 @@ public abstract class H2FlowRepositoryService {
                 );
                 Condition condition = switch (operation) {
                     case EQUALS -> value == null ? valueField.isNull() : valueField.eq((String) value);
-                    case NOT_EQUALS -> value == null ? valueField.isNotNull() : valueField.isNull().or(valueField.ne((String) value));
+                    case NOT_EQUALS, NOT_IN -> value == null ? valueField.isNotNull() : valueField.isNull().or(valueField.ne((String) value));
+                    case IN -> value == null ? valueField.isNull() : valueField.eq((String) value);
+                    case IS_NULL -> labelKeyCondition((String) key).not();
+                    case IS_NOT_NULL -> labelKeyCondition((String) key);
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 };
 
-                conditions.add(condition);
+                if (operation == QueryFilter.Op.IN) {
+                    inConditions.add(condition);
+                } else {
+                    conditions.add(condition);
+                }
             });
 
         }
+        if (!inConditions.isEmpty()) {
+            conditions.add(DSL.or(inConditions));
+        }
         return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
+    }
+
+    private static Condition labelKeyCondition(String key) {
+        Field<String> keyField = DSL.field(
+            "JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .key'))", String.class, DSL.val(H2Functions.escapeJqString(key), String.class)
+        );
+        return keyField.isNotNull();
     }
 }

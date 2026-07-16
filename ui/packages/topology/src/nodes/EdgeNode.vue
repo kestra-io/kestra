@@ -68,11 +68,11 @@
 
     const labelAnchor = computed(() => {
         switch (props.targetPosition) {
-            case "left": return "translate(-100%, -50%)"
-            case "right": return "translate(0, -50%)"
-            case "top": return "translate(-50%, -100%)"
-            case "bottom": return "translate(-50%, 0)"
-            default: return "translate(-50%, -50%)"
+        case "left": return "translate(-100%, -50%)"
+        case "right": return "translate(0, -50%)"
+        case "top": return "translate(-50%, -100%)"
+        case "bottom": return "translate(-50%, 0)"
+        default: return "translate(-50%, -50%)"
         }
     })
 

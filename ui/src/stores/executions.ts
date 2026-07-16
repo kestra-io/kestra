@@ -77,16 +77,6 @@ interface LogsState {
     results: any[];
 }
 
-// Locally-declared stand-in for the SDK's unexported AxiosLikeResponse: raw-axios call
-// sites (multipart uploads, no matching generated endpoint) need a nameable return type
-// so their result can appear in this store's exported type.
-interface RawHttpResponse<T = any> {
-    data: T;
-    status: number;
-    headers: Record<string, string>;
-    request?: {responseURL: string};
-}
-
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
 export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
@@ -183,7 +173,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // Don't set Content-Type - the browser must generate the multipart boundary itself; an
     // explicit "multipart/form-data" header (needed under the old axios client) has no boundary
     // and corrupts the request.
-    const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }): Promise<RawHttpResponse<Execution>> => {
+    const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post(
             `${apiUrl()}/executions/${options.executionId}/actions/replay-with-inputs`,
             options.formData,
@@ -227,7 +217,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     // Don't set Content-Type - the browser must generate the multipart boundary itself.
-    const resume = (options: { id: string; formData: any }): Promise<RawHttpResponse> => {
+    const resume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
         })
@@ -235,14 +225,14 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     // Don't set Content-Type - the browser must generate the multipart boundary itself.
-    const validateResume = (options: { id: string; formData: any }): Promise<RawHttpResponse> => {
+    const validateResume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
         })
     }
 
     // Stays on raw axios: no matching endpoint exposed by the generated SDK.
-    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }): Promise<RawHttpResponse<Execution>> => {
+    const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
             null,
@@ -312,7 +302,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     // Don't set Content-Type - the browser must generate the multipart boundary itself.
-    const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }): Promise<RawHttpResponse<ValidationResponse>> => {
+    const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             params: {

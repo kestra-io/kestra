@@ -27,16 +27,6 @@ const textYamlHeader = {
     },
 }
 
-// Locally-declared stand-in for the SDK's unexported AxiosLikeResponse: raw-axios call
-// sites (multipart uploads, no matching generated endpoint) need a nameable return type
-// so their result can appear in this store's exported type.
-interface RawHttpResponse<T = any> {
-    data: T;
-    status: number;
-    headers: Record<string, string>;
-    request?: {responseURL: string};
-}
-
 // backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
 // the SDK's generic AbstractTrigger schema (which models fields common to every trigger type).
 export type Trigger = AbstractTrigger & {
@@ -756,7 +746,7 @@ function deleteFlowAndDependencies() {
         window.URL.revokeObjectURL(url)
     }
 
-    function importFlows(options: { file: FormData,  failOnError: boolean }): Promise<RawHttpResponse> {
+    function importFlows(options: { file: FormData,  failOnError: boolean }) {
          const {file, failOnError} = options
         // Don't set Content-Type - the browser must generate the multipart boundary itself.
         return axios.post(`${apiUrl()}/flows/import`, file, {

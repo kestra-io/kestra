@@ -11,6 +11,7 @@ const state = {
     status: ref("IDLE"),
     streaming: ref(false),
     error: ref<string | null>(null),
+    notice: ref<string | null>(null),
     pendingConfirmation: ref<any>(null),
     unavailable: ref(false),
     canSend: ref(true),
@@ -21,6 +22,9 @@ const state = {
     retry: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
+// CopilotChat derives `inFocus` from the current route — mock a mutable route so tests control it.
+let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
+vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
 // CopilotChat reads a seeded prompt from the misc store on mount. Shared mutable stub so a
@@ -37,10 +41,12 @@ describe("CopilotChat", () => {
     beforeEach(() => {
         state.messages.value = []
         state.error.value = null
+        state.notice.value = null
         state.pendingConfirmation.value = null
         state.unavailable.value = false
         state.canSend.value = true
         state.streaming.value = false
+        routeStub = {name: undefined, params: {}}
         state.sendChat.mockReset()
         state.confirm.mockReset()
         state.reset.mockReset()
@@ -80,11 +86,30 @@ describe("CopilotChat", () => {
         expect(miscStore.copilotPrompt).toBeNull()
     })
 
-    it("forwards a composer submit to sendChat with the current mode", async () => {
+    it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {
         const w = mountChat({initialMode: "PLAN"})
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "do it")
         await flushPromises()
-        expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", inFocus: undefined})
+        expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", inFocus: null, providerId: undefined})
+    })
+
+    it("sends the current page as inFocus when on a detail route (context-awareness)", async () => {
+        routeStub = {name: "executions/update", params: {namespace: "company.team", flowId: "my-flow", id: "exec-1"}}
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "why did this fail?")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            prompt: "why did this fail?",
+            inFocus: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"},
+        }))
+    })
+
+    it("surfaces a warning notice when a turn yields no output", () => {
+        state.notice.value = "emptyTurn"
+        const w = mountChat()
+        const alert = w.find("[data-test=\"copilot-notice\"]")
+        expect(alert.exists()).toBe(true)
+        expect(alert.text()).toBe("The assistant didn't return a response. Please try again.")
     })
 
     it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {

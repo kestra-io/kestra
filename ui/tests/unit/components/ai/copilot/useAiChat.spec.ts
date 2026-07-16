@@ -168,6 +168,48 @@ describe("useAiChat", () => {
         expect(chat.error.value).toBe("generic")
     })
 
+    it("surfaces the emptyTurn notice when a turn streams only done (no output)", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.notice.value).toBe("emptyTurn")
+        expect(chat.status.value).toBe("IDLE")
+    })
+
+    it("does not set the emptyTurn notice when the turn produced output", async () => {
+        const chat = useAiChat()
+        nextFrames = [
+            {event: "token", data: {text: "Hi there"}},
+            {event: "done", data: {status: "IDLE"}},
+        ]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.notice.value).toBeNull()
+    })
+
+    it("does not set the emptyTurn notice when the turn suspends on a proposal", async () => {
+        const chat = useAiChat()
+        nextFrames = [
+            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}},
+            {event: "done", data: {status: "AWAITING_CONFIRMATION"}},
+        ]
+        await chat.sendChat({prompt: "restart it", mode: "EDIT"})
+        expect(chat.notice.value).toBeNull()
+    })
+
+    it("clears a prior emptyTurn notice when a new turn starts", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "first"})
+        expect(chat.notice.value).toBe("emptyTurn")
+
+        nextFrames = [
+            {event: "token", data: {text: "now I answer"}},
+            {event: "done", data: {status: "IDLE"}},
+        ]
+        await chat.sendChat({prompt: "second"})
+        expect(chat.notice.value).toBeNull()
+    })
+
     it("rehydrates a thread transcript sorted by uid", async () => {
         const chat = useAiChat()
         get.mockResolvedValue({data: {

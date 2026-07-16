@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import CopilotArtefactDraft from "../../../../../src/components/ai/copilot/CopilotArtefactDraft.vue"
 import {mountGlobal} from "./_helpers"
@@ -7,19 +7,13 @@ import type {ArtefactDraftEvent} from "../../../../../src/components/ai/copilot/
 const mountDraft = (draft: ArtefactDraftEvent) =>
     mount(CopilotArtefactDraft, {props: {draft}, global: mountGlobal})
 
-const writeText = vi.fn().mockResolvedValue(undefined)
-
 describe("CopilotArtefactDraft", () => {
-    beforeEach(() => {
-        writeText.mockClear()
-        vi.stubGlobal("navigator", {clipboard: {writeText}})
-    })
-
     it("renders the kind title, a valid badge and the YAML", () => {
         const w = mountDraft({draftId: "d1", kind: "FLOW", yaml: "id: demo", valid: true, constraints: null})
         expect(w.text()).toContain("Proposed flow")
         expect(w.find(".ks-code-status").attributes("data-status")).toBe("valid")
-        expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toBe("id: demo")
+        // Rendered via KsMarkdown as a highlighted yaml fence, so assert the YAML is present.
+        expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
         // A valid draft shows no constraints alert.
         expect(w.find(".ks-alert").exists()).toBe(false)
     })
@@ -33,13 +27,10 @@ describe("CopilotArtefactDraft", () => {
         expect(alert.text()).toContain("charts is required")
     })
 
-    it("copies the YAML to the clipboard and flips the button label", async () => {
+    it("renders the YAML via KsMarkdown and exposes no separate copy button", () => {
+        // Copy is handled by KsMarkdown's built-in control, so the card has no copy button of its own.
         const w = mountDraft({draftId: "d3", kind: "APP", yaml: "id: my-app", valid: true, constraints: null})
-        const button = w.find("[data-test=\"copilot-draft-copy\"]")
-        expect(button.text()).toBe("Copy YAML")
-        await button.trigger("click")
-        await w.vm.$nextTick()
-        expect(writeText).toHaveBeenCalledWith("id: my-app")
-        expect(button.text()).toBe("Copied")
+        expect(w.find("[data-test=\"copilot-draft-copy\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: my-app")
     })
 })

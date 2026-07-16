@@ -22,23 +22,15 @@
             {{ draft.constraints }}
         </KsAlert>
 
-        <!-- The drafted YAML — read-only preview, nothing is saved -->
-        <pre class="copilot-draft-yaml" data-test="copilot-draft-yaml">{{ draft.yaml }}</pre>
-
-        <div class="copilot-draft-footer">
-            <KsButton
-                type="default"
-                data-test="copilot-draft-copy"
-                @click="copy"
-            >
-                {{ copied ? t("ai.copilot.draft.copied") : t("ai.copilot.draft.copy") }}
-            </KsButton>
-        </div>
+        <!-- The drafted YAML — read-only, syntax-highlighted preview (nothing is saved).
+             KsMarkdown provides its own copy-to-clipboard control, so no separate copy button.
+             A one-click "apply" (load into the flow editor) arrives with the flow-editor cutover. -->
+        <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import type {ArtefactDraftEvent} from "./types"
@@ -47,23 +39,9 @@
 
     const {t} = useI18n()
 
-    const copied = ref(false)
-    let resetTimer: ReturnType<typeof setTimeout> | undefined
-
-    // Dock fallback for "accept": there is no editor mounted alongside the global
-    // copilot yet (that arrives with the flow-editor cutover), so the useful action
-    // today is to hand the user the YAML to paste. Loading it into an in-place editor
-    // will be wired when the copilot is embedded in the editor.
-    async function copy(): Promise<void> {
-        try {
-            await navigator.clipboard?.writeText(props.draft.yaml)
-        } catch {
-            return
-        }
-        copied.value = true
-        clearTimeout(resetTimer)
-        resetTimer = setTimeout(() => (copied.value = false), 2000)
-    }
+    // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the
+    // assistant transcript), rather than showing it as flat monospace text.
+    const yamlBlock = computed(() => "```yaml\n" + props.draft.yaml + "\n```")
 </script>
 
 <style scoped>
@@ -95,21 +73,12 @@
         margin: var(--ks-spacing-2) var(--ks-spacing-3) 0;
     }
 
+    /* Constrain + scroll the highlighted block; KsMarkdown styles the code itself. */
     .copilot-draft-yaml {
         margin: 0;
         max-height: 18rem;
         overflow: auto;
         padding: var(--ks-spacing-3);
-        font-family: monospace;
         font-size: var(--ks-font-size-sm);
-        white-space: pre;
-        color: var(--ks-text-secondary);
-    }
-
-    .copilot-draft-footer {
-        display: flex;
-        justify-content: flex-end;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        background: var(--ks-bg-elevated);
     }
 </style>

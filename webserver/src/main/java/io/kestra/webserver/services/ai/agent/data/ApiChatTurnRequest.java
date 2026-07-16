@@ -9,6 +9,5 @@ public record ApiChatTurnRequest(
     String prompt,
     @Nullable AgentMode mode,
     @Nullable AgentScopeBinding inFocus,
-    @Nullable String providerId
-) {
+    @Nullable String providerId) {
 }

@@ -2,13 +2,10 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
@@ -44,18 +41,17 @@ public class GetPluginSchemaTool implements AiPlatformTool {
 
     @Tool(
         name = "get-plugin-schema",
-        value = "Get the JSON schema of a Kestra plugin type (its configuration properties and their types). Read-only; use this to learn how to configure a task, trigger or other plugin before authoring flow YAML."
+        value = "Get the JSON schema of a Kestra plugin type (its configuration properties and their types). Read-only; use this to learn how to configure a task, trigger or other plugin before authoring flow YAML. "
+            + "Returns an object { pluginType, schema } where `schema` is the plugin's JSON schema (a nested object of properties and their types)."
     )
-    public String getPluginSchema(
+    public Result getPluginSchema(
         @P(name = "pluginType", value = "The fully-qualified plugin type, e.g. io.kestra.plugin.core.log.Log") String pluginType) {
         PluginClassAndMetadata<? extends Plugin> metadata = pluginRegistry.findMetadataByIdentifier(pluginType)
-            .orElseThrow(() -> new IllegalArgumentException("Plugin type not found: '" + pluginType + "'"));
+            .orElseThrow(() -> new IllegalArgumentException("Plugin type not found: '%s'".formatted(pluginType)));
 
-        Map<String, Object> schema = jsonSchemaGenerator.schemas(metadata.type());
-        try {
-            return JacksonMapper.ofJson().writeValueAsString(schema);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize the schema of '" + pluginType + "': " + e.getMessage(), e);
-        }
+        return new Result(pluginType, jsonSchemaGenerator.schemas(metadata.type()));
+    }
+
+    public record Result(String pluginType, Map<String, Object> schema) {
     }
 }

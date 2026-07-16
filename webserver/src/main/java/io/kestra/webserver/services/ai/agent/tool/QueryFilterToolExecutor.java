@@ -8,12 +8,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.converters.QueryFilterFormat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.internal.Json;
 import dev.langchain4j.service.tool.ToolExecutor;
 
 /**
@@ -23,6 +25,13 @@ import dev.langchain4j.service.tool.ToolExecutor;
  * {@link QueryFilter} directly so its Jackson {@code @JsonCreator} validation runs — no JSON
  * round-trip through langchain4j's coercion), validates each against the resource's
  * {@code supportedField()} / {@code supportedOp()}, then invokes the target method.
+ *
+ * <p>
+ * The invocation result is turned into the model-facing text exactly as langchain4j's
+ * {@code DefaultToolExecutor} does: a {@code String} return is passed through verbatim, anything else
+ * (e.g. a strong-typed result record) is serialized to JSON. This keeps both executor paths
+ * consistent for tools that return a strong type instead of a hand-formatted string.
+ * </p>
  */
 public final class QueryFilterToolExecutor implements ToolExecutor {
 
@@ -61,7 +70,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
     }
 
     private static Object[] bindArguments(final Parameter[] parameters, final int filterParamIndex,
-                                          final List<QueryFilter> filters, final Map<String, Object> args) {
+        final List<QueryFilter> filters, final Map<String, Object> args) {
         Object[] bound = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             bound[i] = bindArgument(parameters, filterParamIndex, i, filters, args);
@@ -70,7 +79,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
     }
 
     private static Object bindArgument(final Parameter[] parameters, final int filterParamIndex,
-                                       final int index, final List<QueryFilter> filters, final Map<String, Object> args) {
+        final int index, final List<QueryFilter> filters, final Map<String, Object> args) {
         if (index == filterParamIndex) {
             return filters;
         }
@@ -84,7 +93,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
     private static String invoke(final Method method, final Object toolInstance, final Object[] bound) {
         try {
             Object result = method.invoke(toolInstance, bound);
-            return result == null ? "" : result.toString();
+            return toText(method, result);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw new RuntimeException(cause.getMessage(), cause);
@@ -93,11 +102,19 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
         }
     }
 
+    /** Mirror {@code DefaultToolExecutor.toText}: pass a String through, serialize anything else to JSON. */
+    private static String toText(final Method method, final Object result) {
+        if (method.getReturnType() == String.class) {
+            return result == null ? "" : (String) result;
+        }
+        return Json.toJson(result);
+    }
+
     private static List<QueryFilter> reassembleFilters(final QueryFilter.Resource resource, final Map<String, Object> args) {
         List<QueryFilter> filters = new ArrayList<>();
         for (QueryFilter.Field field : resource.supportedField()) {
             if (!AiToolSpecifications.isExposedFilterField(field)) {
-                continue;   // not exposed in the schema (e.g. TIME_RANGE) — ignore if the model sent it
+                continue; // not exposed in the schema (e.g. TIME_RANGE) — ignore if the model sent it
             }
             Object raw = args.remove(field.name());
             if (!(raw instanceof Map<?, ?> entry)) {
@@ -108,11 +125,12 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
             try {
                 op = QueryFilter.Op.valueOf(operatorName);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown operator '" + operatorName + "' for field '" + field.name() + "'");
+                throw new IllegalArgumentException("Unknown operator '%s' for field '%s'".formatted(operatorName, field.name()));
             }
             if (!field.supportedOp().contains(op)) {
                 throw new IllegalArgumentException(
-                    "Operator '" + op + "' is not supported for field '" + field.name() + "'. Valid: " + field.supportedOp());
+                    "Operator '%s' is not supported for field '%s'. Valid: %s".formatted(op, field.name(), field.supportedOp())
+                );
             }
             // leaf shape: field + operation present, no logical/children (see QueryFilter's @JsonCreator).
             filters.add(new QueryFilter(field, op, entry.get("value"), null, null));

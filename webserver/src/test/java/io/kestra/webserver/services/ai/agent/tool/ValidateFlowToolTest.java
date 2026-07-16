@@ -55,10 +55,14 @@ class ValidateFlowToolTest {
             .thenReturn(List.of(ValidateConstraintViolation.builder().index(0).build()));
 
         // When
-        String result = tool.validateFlow(YAML, null);
+        ValidateFlowTool.Result result = tool.validateFlow(YAML, null);
 
         // Then — the YAML was wrapped in a FlowSource and the flow reported valid
-        assertThat(result).isEqualTo("The flow is valid.");
+        assertThat(result.valid()).isTrue();
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.warnings()).isEmpty();
+        assertThat(result.deprecatedPaths()).isEmpty();
+        assertThat(result.infos()).isEmpty();
         ArgumentCaptor<List<FlowSource>> captor = ArgumentCaptor.forClass(List.class);
         verify(flowService).validate(eq(TENANT), captor.capture());
         assertThat(captor.getValue())
@@ -81,15 +85,14 @@ class ValidateFlowToolTest {
         );
 
         // When
-        String result = tool.validateFlow(YAML, null);
+        ValidateFlowTool.Result result = tool.validateFlow(YAML, null);
 
         // Then
-        assertThat(result).isEqualTo(
-            "The flow is valid.\n"
-                + "Warnings: task 'hello' is slow\n"
-                + "Deprecated paths: tasks[0].oldProp\n"
-                + "Infos: io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log"
-        );
+        assertThat(result.valid()).isTrue();
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.warnings()).containsExactly("task 'hello' is slow");
+        assertThat(result.deprecatedPaths()).containsExactly("tasks[0].oldProp");
+        assertThat(result.infos()).containsExactly("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
     }
 
     @Test
@@ -105,10 +108,10 @@ class ValidateFlowToolTest {
         );
 
         // When
-        String result = tool.validateFlow("id: broken", null);
+        ValidateFlowTool.Result result = tool.validateFlow("id: broken", null);
 
-        // Then — errors reported, no "valid" line
-        assertThat(result).isEqualTo("Errors: tasks: must not be empty");
-        assertThat(result).doesNotContain("The flow is valid.");
+        // Then — errors reported, not valid
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors()).containsExactly("tasks: must not be empty");
     }
 }

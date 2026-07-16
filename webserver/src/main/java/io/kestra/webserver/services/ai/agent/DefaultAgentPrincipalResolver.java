@@ -5,8 +5,8 @@ import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
 import jakarta.inject.Singleton;
 
 /**
- * OSS resolver: no multi-user identity exists (a single BasicAuth account), so there is no principal
- * to capture. EE replaces this with a resolver backed by the authenticated user.
+ * Default resolver: no multi-user identity exists (a single account), so there is no principal to
+ * capture. A replacement can override this to resolve the authenticated user.
  */
 @Singleton
 public class DefaultAgentPrincipalResolver implements AgentPrincipalResolver {

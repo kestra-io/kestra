@@ -1,7 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
@@ -44,9 +44,10 @@ public class ListExecutionsTool implements AiPlatformTool {
 
     @Tool(
         name = "list-executions",
-        value = "List the most recent Kestra executions matching the given per-field filters (newest first, at most 50). Read-only; use this to find executions of interest before inspecting one with read-execution."
+        value = "List the most recent Kestra executions matching the given per-field filters (newest first, at most 50). Read-only; use this to find executions of interest before inspecting one with read-execution. "
+            + "Returns an object { executions } where `executions` is an array of { id, namespace, flowId, state, startDate, duration } (empty when nothing matches); `duration` is an ISO-8601 duration or null."
     )
-    public String listExecutions(
+    public Result listExecutions(
         @QueryFilterFormat(QueryFilter.Resource.EXECUTION) List<QueryFilter> filters,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
         String tenant = AgentCallContext.resolveTenant(tenantId);
@@ -56,22 +57,29 @@ public class ListExecutionsTool implements AiPlatformTool {
             tenant,
             filters
         );
-        if (executions.isEmpty()) {
-            return "No executions found matching the given filters.";
-        }
 
-        return executions.stream()
-            .map(ListExecutionsTool::formatLine)
-            .collect(Collectors.joining("\n"));
+        return new Result(
+            executions.stream()
+                .map(ListExecutionsTool::toSummary)
+                .toList()
+        );
     }
 
-    private static String formatLine(final Execution execution) {
-        StringBuilder line = new StringBuilder()
-            .append(execution.getId())
-            .append(' ').append(execution.getNamespace()).append('.').append(execution.getFlowId())
-            .append(" [").append(execution.getState().getCurrent()).append(']')
-            .append(" startDate=").append(execution.getState().getStartDate());
-        execution.getState().getDuration().ifPresent(duration -> line.append(" duration=").append(duration));
-        return line.toString();
+    private static ExecutionSummary toSummary(final Execution execution) {
+        String duration = execution.getState().getDuration().map(Duration::toString).orElse(null);
+        return new ExecutionSummary(
+            execution.getId(),
+            execution.getNamespace(),
+            execution.getFlowId(),
+            execution.getState().getCurrent().name(),
+            String.valueOf(execution.getState().getStartDate()),
+            duration
+        );
+    }
+
+    public record Result(List<ExecutionSummary> executions) {
+    }
+
+    public record ExecutionSummary(String id, String namespace, String flowId, String state, String startDate, String duration) {
     }
 }

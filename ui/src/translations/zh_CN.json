@@ -28,6 +28,7 @@
     "flows": "流程",
     "flow": "流程",
     "invalid source": "无效的源代码",
+    "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "missingSource": "缺少源",
     "update": "更新",
     "update ok": "已更新",
@@ -1526,6 +1527,7 @@
     "documentationMenu": "文档菜单",
     "item": "项目",
     "items": "项目",
+    "iterations": "迭代次数",
     "cron": "定时任务",
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
@@ -2020,6 +2022,7 @@
         },
         "toolCall": "Running {tool}",
         "toolResult": {
+          "error": "{tool} 失败",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"
         },
@@ -2032,6 +2035,9 @@
           "reasonPlaceholder": "Reply to revise…",
           "pending": "Pending approval",
           "revise": "Reply to revise"
+        },
+        "notice": {
+          "emptyTurn": "助手未返回响应。请重试。"
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

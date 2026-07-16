@@ -14,8 +14,6 @@ import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.AgentTurnContext;
 import io.kestra.webserver.services.ai.agent.AiThreadManager;
-import io.kestra.webserver.services.ai.agent.ConfirmationRegistry;
-import io.kestra.webserver.services.ai.agent.SuspendedTurn;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
@@ -57,7 +55,6 @@ public class AiAgentController {
     private final MessageStore messageStore;
     private final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
-    private final ConfirmationRegistry confirmationRegistry;
     private final AgentPrincipalResolver principalResolver;
     private final ExecutorService executor;
 
@@ -69,7 +66,6 @@ public class AiAgentController {
         final MessageStore messageStore,
         final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
-        final ConfirmationRegistry confirmationRegistry,
         final AgentPrincipalResolver principalResolver,
         final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
@@ -78,7 +74,6 @@ public class AiAgentController {
         this.messageStore = messageStore;
         this.threadManager = threadManager;
         this.orchestrator = orchestrator;
-        this.confirmationRegistry = confirmationRegistry;
         this.principalResolver = principalResolver;
         this.executor = executorsUtils.maxCachedThreadPool(8, "ai-agent-orchestrator");
     }
@@ -147,22 +142,28 @@ public class AiAgentController {
         @PathVariable final String threadId,
         @Body final ApiConfirmActionRequest request) {
         String tenant = tenantService.resolveTenant();
-        requireProvider(null);
+        requireProvider(request.providerId());
         AgentThread thread = requireThread(tenant, threadId);
 
-        SuspendedTurn turn = confirmationRegistry.take(request.confirmationId())
-            .filter(t -> t.threadId().equals(threadId) && t.tenant().equals(tenant))
-            .orElseThrow(() -> new NotFoundException("No pending action for confirmationId '" + request.confirmationId() + "'"));
+        // The confirmation token is persisted on the thread, so the pending action is matched from the
+        // durable state rather than in-memory — a resume can land on any node, not only the one that
+        // suspended the turn.
+        if (
+            thread.status() != AgentThreadStatus.AWAITING_CONFIRMATION
+                || !request.confirmationId().equals(thread.pendingConfirmationId())
+        ) {
+            throw new NotFoundException("No pending action for confirmationId %s".formatted(request.confirmationId()));
+        }
 
         // Atomically claim the awaiting thread (AWAITING_CONFIRMATION -> RUNNING) before scheduling the
         // resumed turn, mirroring the chat path so a concurrent turn is rejected here rather than racing.
-        AgentThread running = threadManager.tryMarkRunning(thread, turn.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
-            .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
+        AgentThread running = threadManager.tryMarkRunning(thread, thread.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
+            .orElseThrow(() -> new ConflictException("A turn is already in flight for thread %s".formatted(threadId)));
 
         boolean approve = request.decision() == ApiDecision.APPROVE;
 
         AgentPrincipal principal = principalResolver.resolve();
-        return stream(sink -> orchestrator.resume(turn, running, approve, request.reason(), principal, sink));
+        return stream(sink -> orchestrator.resume(running, request.providerId(), approve, request.reason(), principal, sink));
     }
 
     private Flux<Event<Object>> stream(final Consumer<TurnEventSink> work) {

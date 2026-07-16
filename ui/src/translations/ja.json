@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "無効なソースコード",
+    "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
     "missingSource": "ソースが見つかりません",
     "update": "更新",
     "update ok": "更新されました",
@@ -1526,6 +1527,7 @@
     "documentationMenu": "ドキュメントメニュー",
     "item": "アイテム",
     "items": "アイテム",
+    "iterations": "イテレーション",
     "cron": "Cron（クーロン）",
     "execution_started": "実行が開始されました！",
     "execution_failed": "実行が失敗しました！",
@@ -2020,6 +2022,7 @@
         },
         "toolCall": "Running {tool}",
         "toolResult": {
+          "error": "{tool} が失敗しました",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"
         },
@@ -2032,6 +2035,9 @@
           "reasonPlaceholder": "Reply to revise…",
           "pending": "Pending approval",
           "revise": "Reply to revise"
+        },
+        "notice": {
+          "emptyTurn": "アシスタントから応答がありませんでした。もう一度お試しください。"
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

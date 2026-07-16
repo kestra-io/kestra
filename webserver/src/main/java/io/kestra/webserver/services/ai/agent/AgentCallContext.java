@@ -48,9 +48,9 @@ public final class AgentCallContext {
     /**
      * The effective tenant a tool call runs against: the explicitly requested {@code tenantId} if the
      * caller provided one, otherwise the caller's own (conversation) tenant. This is plumbing only —
-     * it performs no authorization. OSS is single-tenant, so the parameter is hidden from the tool
-     * spec and this always returns the caller's tenant; EE exposes the parameter and its tool
-     * subclasses validate the returned tenant before acting on it.
+     * it performs no authorization. On a single-tenant surface the parameter is hidden from the tool
+     * spec and this always returns the caller's tenant; a surface with multiple tenants exposes the
+     * parameter, and its tool implementations validate the returned tenant before acting on it.
      */
     public static String resolveTenant(@Nullable final String tenantId) {
         if (tenantId == null || tenantId.isBlank()) {

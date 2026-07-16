@@ -58,29 +58,31 @@ class SearchPluginsToolTest {
     @Test
     void shouldMatchOnClassNameAndTitleCaseInsensitivelyWhenPluginsExist() {
         // When — "log" matches LogTask by name/title but must skip the deprecated one
-        String result = tool.searchPlugins("LOG");
+        SearchPluginsTool.Result result = tool.searchPlugins("LOG");
 
         // Then
-        assertThat(result).contains(LogTask.class.getName() + " — Log a message to the console");
-        assertThat(result).doesNotContain(DeprecatedLogTask.class.getName());
-        assertThat(result).doesNotContain(PostgresQueryTask.class.getName());
+        assertThat(result.plugins()).containsExactly(
+            new SearchPluginsTool.PluginMatch(LogTask.class.getName(), "Log a message to the console")
+        );
     }
 
     @Test
     void shouldMatchOnTitleWhenKeywordOnlyAppearsInTitle() {
         // When — "database" only appears in the @Schema title
-        String result = tool.searchPlugins("database");
+        SearchPluginsTool.Result result = tool.searchPlugins("database");
 
         // Then
-        assertThat(result).isEqualTo(PostgresQueryTask.class.getName() + " — Query a Postgres database");
+        assertThat(result.plugins()).containsExactly(
+            new SearchPluginsTool.PluginMatch(PostgresQueryTask.class.getName(), "Query a Postgres database")
+        );
     }
 
     @Test
-    void shouldReturnNoMatchMessageWhenNothingMatches() {
+    void shouldReturnEmptyListWhenNothingMatches() {
         // When
-        String result = tool.searchPlugins("does-not-exist");
+        SearchPluginsTool.Result result = tool.searchPlugins("does-not-exist");
 
         // Then
-        assertThat(result).isEqualTo("No plugins found matching 'does-not-exist'.");
+        assertThat(result.plugins()).isEmpty();
     }
 }

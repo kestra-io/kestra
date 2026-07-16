@@ -9,10 +9,10 @@ import io.kestra.core.exceptions.KestraRuntimeException;
  */
 public class ToolPermissionDeniedException extends KestraRuntimeException {
     public ToolPermissionDeniedException(final String tool, final String tenant) {
-        super("Permission denied: tool '" + tool + "' cannot be used on tenant '" + tenant + "' by the caller.");
+        super("Permission denied: tool '%s' cannot be used on tenant '%s' by the caller.".formatted(tool, tenant));
     }
 
     public ToolPermissionDeniedException(final String tool, final String tenant, final String namespace) {
-        super("Permission denied: tool '" + tool + "' cannot be used on tenant '" + tenant + "' and namespace '" + namespace + "' by the caller.");
+        super("Permission denied: tool '%s' cannot be used on tenant '%s' and namespace '%s' by the caller.".formatted(tool, tenant, namespace));
     }
 }

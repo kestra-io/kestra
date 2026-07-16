@@ -9,11 +9,14 @@ vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({post, get})}))
 
 let nextFrames: AiSseFrame[] = []
 let nextError: Error | null = null
+/** Records the JSON body of the most recent stream (chat/confirm) so tests can assert what was sent. */
+let lastBody: Record<string, unknown> | null = null
 vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOriginal) => {
     const actual = await importOriginal<typeof import("../../../../../src/components/ai/copilot/streamSse")>()
     return {
         ...actual,
-        streamSse: vi.fn(async ({onFrame}: {onFrame: (f: AiSseFrame) => void}) => {
+        streamSse: vi.fn(async ({onFrame, body}: {onFrame: (f: AiSseFrame) => void; body: Record<string, unknown>}) => {
+            lastBody = body
             if (nextError) throw nextError
             for (const f of nextFrames) onFrame(f)
         }),
@@ -35,6 +38,7 @@ describe("useAiChat", () => {
         get.mockReset()
         nextFrames = []
         nextError = null
+        lastBody = null
         post.mockResolvedValue(idleThread())
     })
 
@@ -86,7 +90,9 @@ describe("useAiChat", () => {
             {event: "tool_result", data: {tool: "restart-execution", outcome: "ok"}},
             {event: "done", data: {status: "IDLE"}},
         ]
-        await chat.confirm("APPROVE")
+        // The resumed turn runs a fresh model call, so confirm must forward the provider it was given.
+        await chat.confirm("APPROVE", undefined, "gemini-legacy")
+        expect(lastBody).toMatchObject({confirmationId: "c1", decision: "APPROVE", providerId: "gemini-legacy"})
         expect(chat.pendingConfirmation.value).toBeNull()
         expect(chat.status.value).toBe("IDLE")
         expect(chat.messages.value.some((m) => m.type === "TOOL_RESULT" && m.toolResult?.outcome === "ok")).toBe(true)
@@ -160,6 +166,48 @@ describe("useAiChat", () => {
         nextError = new Error("network down")
         await chat.sendChat({prompt: "hi"})
         expect(chat.error.value).toBe("generic")
+    })
+
+    it("surfaces the emptyTurn notice when a turn streams only done (no output)", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.notice.value).toBe("emptyTurn")
+        expect(chat.status.value).toBe("IDLE")
+    })
+
+    it("does not set the emptyTurn notice when the turn produced output", async () => {
+        const chat = useAiChat()
+        nextFrames = [
+            {event: "token", data: {text: "Hi there"}},
+            {event: "done", data: {status: "IDLE"}},
+        ]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.notice.value).toBeNull()
+    })
+
+    it("does not set the emptyTurn notice when the turn suspends on a proposal", async () => {
+        const chat = useAiChat()
+        nextFrames = [
+            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}},
+            {event: "done", data: {status: "AWAITING_CONFIRMATION"}},
+        ]
+        await chat.sendChat({prompt: "restart it", mode: "EDIT"})
+        expect(chat.notice.value).toBeNull()
+    })
+
+    it("clears a prior emptyTurn notice when a new turn starts", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "first"})
+        expect(chat.notice.value).toBe("emptyTurn")
+
+        nextFrames = [
+            {event: "token", data: {text: "now I answer"}},
+            {event: "done", data: {status: "IDLE"}},
+        ]
+        await chat.sendChat({prompt: "second"})
+        expect(chat.notice.value).toBeNull()
     })
 
     it("rehydrates a thread transcript sorted by uid", async () => {

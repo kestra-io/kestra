@@ -48,6 +48,16 @@ describe("CopilotMessage", () => {
         expect(w.text()).toContain("rejected")
     })
 
+    it("renders an errored tool_result with the failed message", () => {
+        const w = mountMessage({
+            id: "5b", role: "TOOL", type: "TOOL_RESULT",
+            toolResult: {tool: "read-execution", outcome: "error"},
+        })
+        expect(w.text()).toContain("failed")
+        // An error is not a success — it must not render as ok.
+        expect(w.text()).not.toContain("completed")
+    })
+
     it("renders an artefact_draft message as a draft card", () => {
         const w = mountMessage({
             id: "6", role: "ASSISTANT", type: "ARTEFACT_DRAFT",

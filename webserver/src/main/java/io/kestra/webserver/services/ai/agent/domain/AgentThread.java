@@ -15,21 +15,23 @@ public record AgentThread(
     @Nullable AgentScopeBinding scope,
     @With @Nullable String ownerNodeId,
     @With AgentThreadStatus status,
+    @With @Nullable String pendingConfirmationId,
     Instant createdAt,
     @With Instant updatedAt,
     @With @Nullable Instant lastTurnAt,
-    @With boolean deleted
-) {
+    @With boolean deleted) {
 
     /**
      * Returns a copy of this thread reset to the idle state: status set to
-     * {@link AgentThreadStatus#IDLE}, the owning node released, and the update timestamp refreshed.
+     * {@link AgentThreadStatus#IDLE}, the owning node released, any pending confirmation cleared, and
+     * the update timestamp refreshed.
      *
      * @return the idle copy of this thread.
      */
     public AgentThread toIdle() {
         return this.withStatus(AgentThreadStatus.IDLE)
             .withOwnerNodeId(null)
+            .withPendingConfirmationId(null)
             .withUpdatedAt(Instant.now());
     }
 }

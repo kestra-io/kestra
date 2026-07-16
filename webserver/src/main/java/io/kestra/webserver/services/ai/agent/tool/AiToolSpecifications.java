@@ -59,7 +59,7 @@ public final class AiToolSpecifications {
 
     /**
      * @param method the {@code @Tool}-annotated method
-     * @param exposeTenantId whether {@link TenantId} parameters are shown to the model (EE) or hidden (OSS)
+     * @param exposeTenantId whether {@link TenantId} parameters are shown to the model or hidden
      */
     public static ToolSpecification toolSpecificationFrom(final Method method, final boolean exposeTenantId) {
         ToolSpecification base = ToolSpecifications.toolSpecificationFrom(method);

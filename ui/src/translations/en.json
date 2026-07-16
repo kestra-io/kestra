@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Invalid source code",
+    "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
     "missingSource": "Missing source",
     "update": "Update",
     "update ok": "is updated",
@@ -1526,6 +1527,7 @@
     "documentationMenu": "Docs menu",
     "item": "item",
     "items": "items",
+    "iterations": "Iterations",
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
@@ -2020,6 +2022,7 @@
         },
         "toolCall": "Running {tool}",
         "toolResult": {
+          "error": "{tool} failed",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"
         },
@@ -2032,6 +2035,9 @@
           "reasonPlaceholder": "Reply to revise…",
           "pending": "Pending approval",
           "revise": "Reply to revise"
+        },
+        "notice": {
+          "emptyTurn": "The assistant didn't return a response. Please try again."
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

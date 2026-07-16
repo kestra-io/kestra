@@ -69,12 +69,12 @@ class ListFlowsToolTest {
 
         // When
         List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS, "io.kestra.test", null, null));
-        String result = tool.listFlows(filters, null);
+        ListFlowsTool.Result result = tool.listFlows(filters, null);
 
-        // Then — one line per flow, description flattened to a single line
-        assertThat(result).isEqualTo(
-            "io.kestra.test.flow-1 — Loads the daily sales report\n"
-                + "io.kestra.other.flow-2"
+        // Then — one summary per flow
+        assertThat(result.flows()).containsExactly(
+            new ListFlowsTool.FlowSummary("io.kestra.test", "flow-1", "Loads the daily\nsales report"),
+            new ListFlowsTool.FlowSummary("io.kestra.other", "flow-2", null)
         );
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(flowRepository).find(pageableCaptor.capture(), eq(TENANT), eq(filters));
@@ -82,15 +82,15 @@ class ListFlowsToolTest {
     }
 
     @Test
-    void shouldReturnNoFlowsMessageWhenEmpty() {
+    void shouldReturnEmptyListWhenNoFlowsMatch() {
         // Given
         when(flowRepository.find(any(Pageable.class), eq(TENANT), ArgumentMatchers.<List<QueryFilter>> any()))
             .thenReturn(new ArrayListTotal<>(List.of(), 0));
 
         // When
-        String result = tool.listFlows(null, null);
+        ListFlowsTool.Result result = tool.listFlows(null, null);
 
         // Then
-        assertThat(result).isEqualTo("No flows found matching the given filters.");
+        assertThat(result.flows()).isEmpty();
     }
 }

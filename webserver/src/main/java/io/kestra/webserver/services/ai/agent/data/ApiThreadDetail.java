@@ -16,8 +16,7 @@ public record ApiThreadDetail(
     AgentMode mode,
     @Nullable AgentScopeBinding scope,
     AgentThreadStatus status,
-    List<ApiMessageView> messages
-) {
+    List<ApiMessageView> messages) {
     public static ApiThreadDetail from(final AgentThread thread, final List<AgentMessage> messages) {
         return new ApiThreadDetail(
             thread.uid(), thread.title(), thread.mode(), thread.scope(), thread.status(),

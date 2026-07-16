@@ -10,9 +10,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
+import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
 import io.kestra.webserver.services.ai.agent.domain.AgentMode;
 import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
 import io.kestra.webserver.services.ai.agent.domain.AgentThread;
@@ -31,6 +34,7 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -53,7 +57,6 @@ public class AgentOrchestrator {
     private final ToolCatalog catalog;
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
-    private final ConfirmationRegistry confirmationRegistry;
     private final Duration modelCallTimeout;
 
     @Inject
@@ -62,13 +65,11 @@ public class AgentOrchestrator {
         final ToolCatalog catalog,
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
-        final ConfirmationRegistry confirmationRegistry,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
-        this.confirmationRegistry = confirmationRegistry;
         this.modelCallTimeout = configuration.modelCallTimeout();
     }
 
@@ -81,9 +82,10 @@ public class AgentOrchestrator {
 
             threadManager.appendUser(thread.uid(), traceId, context.prompt());
 
-            List<ChatMessage> messages = new ArrayList<>();
+            List<ChatMessage> projected = ChatMessageAdaptor.project(threadManager.load(thread.uid()));
+            List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
             messages.add(SystemMessage.from(profile.systemPrompt()));
-            messages.addAll(ChatMessageAdaptor.project(threadManager.load(thread.uid())));
+            messages.addAll(projected);
 
             runLoop(
                 new AgentLoopContext(thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink
@@ -93,28 +95,55 @@ public class AgentOrchestrator {
         }
     }
 
-    public void resume(final SuspendedTurn turn, final AgentThread running, final boolean approve, final String reason,
+    /**
+     * Resume a turn awaiting confirmation. The turn's state is reconstructed from the durable stores —
+     * the message log (projected to the model-facing history and scanned for the pending proposed
+     * action) and the thread (its mode) — with the provider supplied by the caller, exactly as a chat
+     * turn is. So a resume can run on any node, not only the one that suspended the turn.
+     */
+    public void resume(final AgentThread running, final String providerId, final boolean approve, final String reason,
         final AgentPrincipal principal, final TurnEventSink sink) {
         try {
-            StreamingChatModel model = aiServiceManager.getAiService(turn.providerId()).streamingChatModel(List.of());
+            List<AgentMessage> log = threadManager.load(running.uid());
+            String traceId = running.uid() + "-turn-" + (log.size() + 1);
+            ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
+            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+
+            List<ChatMessage> projected = ChatMessageAdaptor.project(log);
+            List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
+            messages.add(SystemMessage.from(profile.systemPrompt()));
+            messages.addAll(projected);
+
+            AgentMessage pending = pendingActionOrThrow(log);
+            boolean planProposal = pending.toolCall() == null;
             AgentLoopContext ctx = new AgentLoopContext(
-                running, turn.tenant(), principal, turn.providerId(), turn.mode(), turn.profile(),
-                model, turn.messages(), turn.traceId(), new AtomicBoolean(turn.planProposal())
+                running, running.tenant(), principal, providerId, running.mode(), profile,
+                model, messages, traceId, new AtomicBoolean(planProposal)
             );
 
-            if (turn.planProposal()) {
+            if (planProposal) {
                 resumePlan(ctx, approve, reason, sink);
             } else {
-                resumeHeldAction(ctx, turn.heldRequest(), approve, reason, sink);
+                resumeHeldAction(ctx, ChatMessageAdaptor.toRequest(pending.toolCall()), approve, reason, sink);
             }
         } catch (Exception e) {
             failTurn(running, sink, e);
         }
     }
 
+    /** The last proposed action in the log — the plan or held tool call the confirmation applies to. */
+    private static AgentMessage pendingActionOrThrow(final List<AgentMessage> log) {
+        for (int i = log.size() - 1; i >= 0; i--) {
+            if (log.get(i).type() == AgentMessageType.PROPOSED_ACTION) {
+                return log.get(i);
+            }
+        }
+        throw new IllegalStateException("No proposed action to resume in the thread log.");
+    }
+
     private void resumePlan(final AgentLoopContext ctx, final boolean approve, final String reason, final TurnEventSink sink) {
         if (!approve) {
-            String summary = "Plan rejected" + (reason != null ? " (" + reason + ")" : "") + ". No actions were taken.";
+            String summary = "Plan rejected%s. No actions were taken.".formatted(reason != null ? " (" + reason + ")" : "");
             threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), summary);
             finishTurn(ctx);
             done(sink, AgentThreadStatus.IDLE);
@@ -153,6 +182,10 @@ public class AgentOrchestrator {
             result = catalog.dispatch(held, callContext(ctx, sink));
         } catch (ToolPermissionDeniedException e) {
             rejectTool(ctx, held, entry.kind(), entry.family(), e.getMessage(), sink);
+            runLoop(ctx, sink);
+            return;
+        } catch (RuntimeException e) {
+            failTool(ctx, held, entry.kind(), entry.family(), toolErrorMessage(e), sink);
             runLoop(ctx, sink);
             return;
         }
@@ -206,7 +239,7 @@ public class AgentOrchestrator {
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
-                    rejectTool(ctx, req, AgentToolCall.Kind.PLATFORM, null, "Tool '" + req.name() + "' is not available in " + ctx.mode() + " mode.", sink);
+                    rejectTool(ctx, req, AgentToolCall.Kind.PLATFORM, null, "Tool '%s' is not available in %s mode.".formatted(req.name(), ctx.mode()), sink);
                     continue;
                 }
 
@@ -221,7 +254,7 @@ public class AgentOrchestrator {
                     } else {
                         rejectTool(
                             ctx, req, entry.kind(), entry.family(),
-                            "Only one action can be confirmed at a time; propose '" + req.name() + "' again on its own.", sink
+                            "Only one action can be confirmed at a time; propose '%s' again on its own.".formatted(req.name()), sink
                         );
                     }
                     continue;
@@ -245,6 +278,9 @@ public class AgentOrchestrator {
         } catch (ToolPermissionDeniedException e) {
             rejectTool(ctx, req, entry.kind(), entry.family(), e.getMessage(), sink);
             return;
+        } catch (RuntimeException e) {
+            failTool(ctx, req, entry.kind(), entry.family(), toolErrorMessage(e), sink);
+            return;
         }
         ctx.messages().add(ToolExecutionResultMessage.from(req, result));
         threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result));
@@ -258,24 +294,34 @@ public class AgentOrchestrator {
         emitToolResult(sink, req.name(), "rejected");
     }
 
+    /**
+     * A {@code @Tool} threw: surface the message to the model as an error tool-result so it can react
+     * (retry, apologise, pick another tool) rather than aborting the whole turn. The failure is a
+     * recoverable outcome, not a turn-level error.
+     */
+    private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
+        final AgentToolFamily family, final String message, final TurnEventSink sink) {
+        ctx.messages().add(ToolExecutionResultMessage.from(req, "Error: " + message));
+        threadManager.appendToolResult(ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
+        emitToolResult(sink, req.name(), "error");
+    }
+
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), planText, null);
-        threadManager.markAwaiting(ctx.thread());
-        SuspendedTurn turn = SuspendedTurn.forPlan(ctx);
-        confirmationRegistry.park(turn);
-        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(turn.confirmationId(), null, null, planText, null));
+        String confirmationId = IdUtils.create();
+        threadManager.markAwaiting(ctx.thread(), confirmationId);
+        sink.emit(AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(confirmationId, null, null, planText, null));
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
     private void suspendForAction(final AgentLoopContext ctx, final ToolExecutionRequest req,
         final ToolEntry entry, final Map<String, Object> args, final TurnEventSink sink) {
         threadManager.appendProposedAction(ctx.thread().uid(), ctx.traceId(), null, ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()));
-        threadManager.markAwaiting(ctx.thread());
-        SuspendedTurn turn = SuspendedTurn.forAction(ctx, req);
-        confirmationRegistry.park(turn);
+        String confirmationId = IdUtils.create();
+        threadManager.markAwaiting(ctx.thread(), confirmationId);
         sink.emit(
             AgentEvents.PROPOSED_ACTION, new AgentEvents.ProposedActionEvent(
-                turn.confirmationId(), req.name(), entry.family().name(), summaryFor(req.name(), args), args
+                confirmationId, req.name(), entry.family().name(), summaryFor(req.name(), args), args
             )
         );
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
@@ -376,7 +422,14 @@ public class AgentOrchestrator {
             : Map.of("outcome", "rejected", "reason", reason);
     }
 
+    /** The tool author's message, unwrapping langchain4j's {@link ToolExecutionException} envelope. */
+    private static String toolErrorMessage(final RuntimeException e) {
+        Throwable cause = e instanceof ToolExecutionException && e.getCause() != null ? e.getCause() : e;
+        String message = cause.getMessage();
+        return message != null ? message : cause.getClass().getSimpleName();
+    }
+
     private String summaryFor(final String tool, final Map<String, Object> args) {
-        return "Run `" + tool + "` with " + args;
+        return "Run `%s` with %s".formatted(tool, args);
     }
 }

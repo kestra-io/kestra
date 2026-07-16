@@ -52,7 +52,7 @@ class ListExecutionsToolTest {
     }
 
     @Test
-    void shouldFormatOneLinePerExecutionWhenExecutionsExist() {
+    void shouldReturnOneSummaryPerExecutionWhenExecutionsExist() {
         // Given — a terminated execution with a duration
         State state = State.of(
             State.Type.SUCCESS, List.of(
@@ -72,10 +72,12 @@ class ListExecutionsToolTest {
 
         // When
         List<QueryFilter> filters = List.of(new QueryFilter(QueryFilter.Field.STATE, QueryFilter.Op.EQUALS, "SUCCESS", null, null));
-        String result = tool.listExecutions(filters, null);
+        ListExecutionsTool.Result result = tool.listExecutions(filters, null);
 
-        // Then — one compact line, and the filters plus a start-date-desc pageable were forwarded
-        assertThat(result).isEqualTo("exec-1 io.kestra.test.flow-1 [SUCCESS] startDate=2026-01-01T00:00:00Z duration=PT10S");
+        // Then — one summary, and the filters plus a start-date-desc pageable were forwarded
+        assertThat(result.executions()).containsExactly(
+            new ListExecutionsTool.ExecutionSummary("exec-1", "io.kestra.test", "flow-1", "SUCCESS", "2026-01-01T00:00:00Z", "PT10S")
+        );
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(executionRepository).find(pageableCaptor.capture(), eq(TENANT), eq(filters));
         assertThat(pageableCaptor.getValue().getSize()).isEqualTo(50);
@@ -89,15 +91,15 @@ class ListExecutionsToolTest {
     }
 
     @Test
-    void shouldReturnNoExecutionsMessageWhenEmpty() {
+    void shouldReturnEmptyListWhenNoExecutionsMatch() {
         // Given
         when(executionRepository.find(any(Pageable.class), eq(TENANT), any()))
             .thenReturn(new ArrayListTotal<>(List.of(), 0));
 
         // When
-        String result = tool.listExecutions(null, null);
+        ListExecutionsTool.Result result = tool.listExecutions(null, null);
 
         // Then
-        assertThat(result).isEqualTo("No executions found matching the given filters.");
+        assertThat(result.executions()).isEmpty();
     }
 }

@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Неверный исходный код",
+    "invalid duration": "Неверный формат длительности. Используйте ISO 8601 (например, PT30M, P1D).",
     "missingSource": "Отсутствует источник",
     "update": "Обновить",
     "update ok": "обновлено",
@@ -1526,6 +1527,7 @@
     "documentationMenu": "Меню документации",
     "item": "элемент",
     "items": "элементы",
+    "iterations": "Итерации",
     "cron": "Крон",
     "execution_started": "Выполнение началось!",
     "execution_failed": "Выполнение не удалось!",
@@ -2020,6 +2022,7 @@
         },
         "toolCall": "Running {tool}",
         "toolResult": {
+          "error": "{tool} не удалось",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"
         },
@@ -2032,6 +2035,9 @@
           "reasonPlaceholder": "Reply to revise…",
           "pending": "Pending approval",
           "revise": "Reply to revise"
+        },
+        "notice": {
+          "emptyTurn": "Ассистент не вернул ответ. Пожалуйста, попробуйте снова."
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

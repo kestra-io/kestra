@@ -84,7 +84,7 @@ public final class ChatMessageAdaptor {
         }
     }
 
-    private static ToolExecutionRequest toRequest(final AgentToolCall toolCall) {
+    public static ToolExecutionRequest toRequest(final AgentToolCall toolCall) {
         return ToolExecutionRequest.builder()
             .id(toolCall.id())
             .name(toolCall.tool())

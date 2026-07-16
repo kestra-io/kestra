@@ -35,7 +35,7 @@
             <CloseCircleOutline v-else />
         </KsIcon>
         <KsText size="small" class="copilot-tool-label">
-            {{ isOk ? t("ai.copilot.toolResult.ok", {tool: toolName}) : t("ai.copilot.toolResult.rejected", {tool: toolName}) }}
+            {{ t(`ai.copilot.toolResult.${outcome}`, {tool: toolName}) }}
         </KsText>
     </div>
 
@@ -61,7 +61,13 @@
 
     const argsJson = computed(() => JSON.stringify(props.message.toolCall?.arguments ?? {}, null, 2))
     const toolName = computed(() => props.message.toolResult?.tool ?? "")
-    const isOk = computed(() => props.message.toolResult?.outcome === "ok")
+    // Backend outcomes: "ok" (tool ran), "error" (tool threw, turn continues), "rejected" (user declined).
+    // Anything unexpected falls back to "rejected" so we never render a raw/missing label.
+    const outcome = computed(() => {
+        const value = props.message.toolResult?.outcome
+        return value === "ok" || value === "error" ? value : "rejected"
+    })
+    const isOk = computed(() => outcome.value === "ok")
 </script>
 
 <style scoped>

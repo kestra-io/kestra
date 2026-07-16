@@ -56,8 +56,17 @@ public class AiThreadManager {
         );
     }
 
-    public AgentThread markAwaiting(final AgentThread thread) {
-        return threadStore.save(thread.withStatus(AgentThreadStatus.AWAITING_CONFIRMATION).withUpdatedAt(Instant.now()));
+    /**
+     * Marks a thread awaiting confirmation and durably records the confirmation token the client must
+     * present to resume. The held action / plan itself is reconstructed from the message log, so
+     * nothing else is captured.
+     */
+    public AgentThread markAwaiting(final AgentThread thread, final String confirmationId) {
+        return threadStore.save(
+            thread.withStatus(AgentThreadStatus.AWAITING_CONFIRMATION)
+                .withPendingConfirmationId(confirmationId)
+                .withUpdatedAt(Instant.now())
+        );
     }
 
     public AgentThread finish(final AgentThread thread) {

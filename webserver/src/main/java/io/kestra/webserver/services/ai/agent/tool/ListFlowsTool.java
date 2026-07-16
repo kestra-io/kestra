@@ -1,7 +1,6 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
@@ -44,33 +43,37 @@ public class ListFlowsTool implements AiPlatformTool {
 
     @Tool(
         name = "list-flows",
-        value = "List Kestra flows matching the given per-field filters (at most 50), one line per flow with namespace, id and description. Read-only; use this to discover flows before reading one with read-flow."
+        value = "List Kestra flows matching the given per-field filters (at most 50). Read-only; use this to discover flows before reading one with read-flow. "
+            + "Returns an object { flows } where `flows` is an array of { namespace, id, description } (empty when nothing matches); long descriptions are truncated."
     )
-    public String listFlows(
+    public Result listFlows(
         @QueryFilterFormat(QueryFilter.Resource.FLOW) List<QueryFilter> filters,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
         String tenant = AgentCallContext.resolveTenant(tenantId);
 
         List<Flow> flows = flowRepository.find(PageableUtils.from(1, MAX_RESULTS), tenant, filters);
-        if (flows.isEmpty()) {
-            return "No flows found matching the given filters.";
-        }
 
-        return flows.stream()
-            .map(ListFlowsTool::formatLine)
-            .collect(Collectors.joining("\n"));
+        return new Result(
+            flows.stream()
+                .map(ListFlowsTool::toSummary)
+                .toList()
+        );
     }
 
-    private static String formatLine(final Flow flow) {
-        StringBuilder line = new StringBuilder()
-            .append(flow.getNamespace()).append('.').append(flow.getId());
-        if (flow.getDescription() != null && !flow.getDescription().isBlank()) {
-            line.append(" — ").append(truncate(flow.getDescription().replace('\n', ' ')));
-        }
-        return line.toString();
+    private static FlowSummary toSummary(final Flow flow) {
+        String description = flow.getDescription() == null || flow.getDescription().isBlank()
+            ? null
+            : truncate(flow.getDescription());
+        return new FlowSummary(flow.getNamespace(), flow.getId(), description);
     }
 
     private static String truncate(final String text) {
         return text.length() <= MAX_DESCRIPTION_LENGTH ? text : text.substring(0, MAX_DESCRIPTION_LENGTH) + "…";
+    }
+
+    public record Result(List<FlowSummary> flows) {
+    }
+
+    public record FlowSummary(String namespace, String id, String description) {
     }
 }

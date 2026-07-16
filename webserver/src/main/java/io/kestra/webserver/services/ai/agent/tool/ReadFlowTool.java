@@ -35,8 +35,11 @@ public class ReadFlowTool implements AiPlatformTool {
         return AgentWritePolicy.AUTO;
     }
 
-    @Tool(name = "read-flow", value = "Read the YAML source of a Kestra flow. Read-only; use this to inspect a flow's definition before explaining, diagnosing or proposing changes to it.")
-    public String readFlow(
+    @Tool(
+        name = "read-flow", value = "Read the source of a Kestra flow. Read-only; use this to inspect a flow's definition before explaining, diagnosing or proposing changes to it. "
+            + "Returns an object { namespace, id, revision, source } where `source` is the flow's YAML and `revision` is the revision that was read."
+    )
+    public Result readFlow(
         @P(name = "namespace", value = "The namespace of the flow") String namespace,
         @P(name = "flowId", value = "The id of the flow") String flowId,
         @P(name = "revision", value = "Optional flow revision to read; omit to read the latest revision", required = false) Integer revision,
@@ -46,11 +49,22 @@ public class ReadFlowTool implements AiPlatformTool {
         FlowWithSource flow = flowRepository.findByIdWithSource(tenant, namespace, flowId, Optional.ofNullable(revision), false)
             .orElseThrow(
                 () -> new IllegalArgumentException(
-                    "Flow not found: '" + namespace + "." + flowId + "'"
-                        + (revision == null ? "" : " (revision " + revision + ")")
+                    "Flow not found: '%s.%s'".formatted(namespace, flowId)
+                        + (revision == null ? "" : " (revision %s)".formatted(revision))
                 )
             );
 
-        return flow.getSource();
+        return new Result(flow.getNamespace(), flow.getId(), flow.getRevision(), flow.getSource());
+    }
+
+    /**
+     * The source of a single flow.
+     *
+     * @param namespace the flow's namespace
+     * @param id the flow's id
+     * @param revision the revision that was read
+     * @param source the flow's YAML source
+     */
+    public record Result(String namespace, String id, Integer revision, String source) {
     }
 }

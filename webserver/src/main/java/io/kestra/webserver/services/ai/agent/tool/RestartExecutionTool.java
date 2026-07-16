@@ -39,20 +39,23 @@ public class RestartExecutionTool implements AiPlatformTool {
         return AgentWritePolicy.CONFIRM;
     }
 
-    @Tool(name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks, creating a new run. The execution must be in a terminated or paused state.")
-    public String restartExecution(
+    @Tool(
+        name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks, creating a new run. The execution must be in a terminated or paused state. "
+            + "Returns an object { executionId, operationId } where `operationId` identifies the asynchronously enqueued restart request."
+    )
+    public Result restartExecution(
         @P(name = "executionId", value = "The id of the execution to restart") String executionId,
         @P(name = "revision", value = "Optional flow revision to restart with; omit to use the execution's own revision", required = false) Integer revision,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
         String tenant = AgentCallContext.resolveTenant(tenantId);
 
         Execution execution = executionRepository.findById(tenant, executionId)
-            .orElseThrow(() -> new IllegalArgumentException("Execution not found: '" + executionId + "'"));
+            .orElseThrow(() -> new IllegalArgumentException("Execution not found: '%s'".formatted(executionId)));
 
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution '" + executionId + "' cannot be restarted: current state is '"
-                    + execution.getState().getCurrent() + "', expected terminated or paused."
+                "Execution '%s' cannot be restarted: current state is '%s', expected terminated or paused."
+                    .formatted(executionId, execution.getState().getCurrent())
             );
         }
 
@@ -60,9 +63,18 @@ public class RestartExecutionTool implements AiPlatformTool {
         try {
             executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId));
         } catch (QueueException e) {
-            throw new IllegalStateException("Failed to enqueue restart for execution '" + executionId + "': " + e.getMessage(), e);
+            throw new IllegalStateException("Failed to enqueue restart for execution '%s': %s".formatted(executionId, e.getMessage()), e);
         }
 
-        return "Restart requested for execution '" + executionId + "' (operationId=" + operationId + ").";
+        return new Result(executionId, operationId);
+    }
+
+    /**
+     * Acknowledgement of an enqueued restart request.
+     *
+     * @param executionId the execution that was restarted
+     * @param operationId the id identifying the asynchronously enqueued restart request
+     */
+    public record Result(String executionId, String operationId) {
     }
 }

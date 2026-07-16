@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Código fonte inválido",
+    "invalid duration": "Formato de duração inválido. Por favor, use ISO 8601 (ex: PT30M, P1D).",
     "missingSource": "Fonte ausente",
     "update": "Atualizar",
     "update ok": "está atualizado",
@@ -1526,6 +1527,7 @@
     "documentationMenu": "Menu de documentação",
     "item": "item",
     "items": "itens",
+    "iterations": "Iterações",
     "cron": "Cron",
     "execution_started": "A execução foi iniciada!",
     "execution_failed": "Execução FAILED!",
@@ -2020,6 +2022,7 @@
         },
         "toolCall": "Running {tool}",
         "toolResult": {
+          "error": "{tool} falhou",
           "ok": "{tool} completed",
           "rejected": "{tool} rejected"
         },
@@ -2032,6 +2035,9 @@
           "reasonPlaceholder": "Reply to revise…",
           "pending": "Pending approval",
           "revise": "Reply to revise"
+        },
+        "notice": {
+          "emptyTurn": "O assistente não retornou uma resposta. Tente novamente."
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

@@ -85,19 +85,39 @@ class ReadExecutionToolTest {
         when(executionRepository.findById(TENANT, "exec-1")).thenReturn(Optional.of(execution));
 
         // When
-        String result = tool.readExecution("exec-1", null);
+        ReadExecutionTool.Result result = tool.readExecution("exec-1", null);
 
-        // Then — header, per-taskrun lines, and the failed run's attempt state history
-        assertThat(result).contains("Execution 'exec-1' of flow io.kestra.test.flow-1");
-        assertThat(result).contains("State: FAILED");
-        assertThat(result).contains("duration PT5S");
-        assertThat(result).contains("- extract [SUCCESS] attempts=1");
-        assertThat(result).contains("- load [FAILED] attempts=1");
-        assertThat(result).contains("attempt 1: CREATED@2026-01-01T00:00:00Z -> RUNNING@2026-01-01T00:00:01Z -> FAILED@2026-01-01T00:00:05Z");
+        // Then — header, per-taskrun details, and the failed run's attempt state history
+        assertThat(result.id()).isEqualTo("exec-1");
+        assertThat(result.namespace()).isEqualTo("io.kestra.test");
+        assertThat(result.flowId()).isEqualTo("flow-1");
+        assertThat(result.state()).isEqualTo("FAILED");
+        assertThat(result.duration()).isEqualTo("PT5S");
+
+        assertThat(result.taskRuns()).hasSize(2);
+        ReadExecutionTool.TaskRunDetail extract = result.taskRuns().get(0);
+        assertThat(extract.taskId()).isEqualTo("extract");
+        assertThat(extract.state()).isEqualTo("SUCCESS");
+        assertThat(extract.attempts()).isEqualTo(1);
+        assertThat(extract.failedAttempts()).isEmpty();
+
+        ReadExecutionTool.TaskRunDetail load = result.taskRuns().get(1);
+        assertThat(load.taskId()).isEqualTo("load");
+        assertThat(load.state()).isEqualTo("FAILED");
+        assertThat(load.attempts()).isEqualTo(1);
+        assertThat(load.failedAttempts()).containsExactly(
+            new ReadExecutionTool.FailedAttempt(
+                1, List.of(
+                    "CREATED@2026-01-01T00:00:00Z",
+                    "RUNNING@2026-01-01T00:00:01Z",
+                    "FAILED@2026-01-01T00:00:05Z"
+                )
+            )
+        );
     }
 
     @Test
-    void shouldMentionNoTaskRunsWhenExecutionHasNone() {
+    void shouldReturnEmptyTaskRunsWhenExecutionHasNone() {
         // Given — a freshly created execution without task runs
         Execution execution = Execution.builder()
             .id("exec-2")
@@ -109,11 +129,11 @@ class ReadExecutionToolTest {
         when(executionRepository.findById(TENANT, "exec-2")).thenReturn(Optional.of(execution));
 
         // When
-        String result = tool.readExecution("exec-2", null);
+        ReadExecutionTool.Result result = tool.readExecution("exec-2", null);
 
         // Then
-        assertThat(result).contains("State: CREATED");
-        assertThat(result).contains("No task runs.");
+        assertThat(result.state()).isEqualTo("CREATED");
+        assertThat(result.taskRuns()).isEmpty();
     }
 
     @Test

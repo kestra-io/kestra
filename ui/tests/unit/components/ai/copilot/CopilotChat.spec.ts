@@ -11,6 +11,7 @@ const state = {
     status: ref("IDLE"),
     streaming: ref(false),
     error: ref<string | null>(null),
+    notice: ref<string | null>(null),
     pendingConfirmation: ref<any>(null),
     unavailable: ref(false),
     canSend: ref(true),
@@ -22,6 +23,9 @@ const state = {
     loadThread: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
+// CopilotChat derives `inFocus` from the current route — mock a mutable route so tests control it.
+let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
+vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
 // Thread management is an EE-only override component; OSS resolves a no-op stub. Stub it here
@@ -35,6 +39,7 @@ const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), p
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
+import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
 
 const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
 
@@ -42,10 +47,12 @@ describe("CopilotChat", () => {
     beforeEach(() => {
         state.messages.value = []
         state.error.value = null
+        state.notice.value = null
         state.pendingConfirmation.value = null
         state.unavailable.value = false
         state.canSend.value = true
         state.streaming.value = false
+        routeStub = {name: undefined, params: {}}
         state.sendChat.mockReset()
         state.confirm.mockReset()
         state.reset.mockReset()
@@ -86,21 +93,43 @@ describe("CopilotChat", () => {
         expect(miscStore.copilotPrompt).toBeNull()
     })
 
-    it("forwards a composer submit to sendChat with the current mode", async () => {
+    it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {
         const w = mountChat({initialMode: "PLAN"})
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "do it")
         await flushPromises()
-        expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", inFocus: undefined})
+        expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", inFocus: null, providerId: undefined})
     })
 
-    it("renders the proposed-action card and confirms on approve", async () => {
+    it("sends the current page as inFocus when on a detail route (context-awareness)", async () => {
+        routeStub = {name: "executions/update", params: {namespace: "company.team", flowId: "my-flow", id: "exec-1"}}
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "why did this fail?")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            prompt: "why did this fail?",
+            inFocus: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"},
+        }))
+    })
+
+    it("surfaces a warning notice when a turn yields no output", () => {
+        state.notice.value = "emptyTurn"
+        const w = mountChat()
+        const alert = w.find("[data-test=\"copilot-notice\"]")
+        expect(alert.exists()).toBe(true)
+        expect(alert.text()).toBe("The assistant didn't return a response. Please try again.")
+    })
+
+    it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {
+        // The resumed turn needs the same provider as the chat turn, so approve must pass it through.
+        ;(providersMock as any).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
         state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}
         const w = mountChat()
+        await flushPromises() // let the provider list resolve so selectedProvider is set
         const card = w.findComponent({name: "ProposedActionCard"})
         expect(card.exists()).toBe(true)
         card.vm.$emit("approve")
         await flushPromises()
-        expect(state.confirm).toHaveBeenCalledWith("APPROVE")
+        expect(state.confirm).toHaveBeenCalledWith("APPROVE", undefined, "gemini-legacy")
     })
 
     it("rejects via the proposed-action card", async () => {
@@ -108,7 +137,7 @@ describe("CopilotChat", () => {
         const w = mountChat()
         w.findComponent({name: "ProposedActionCard"}).vm.$emit("reject")
         await flushPromises()
-        expect(state.confirm).toHaveBeenCalledWith("REJECT")
+        expect(state.confirm).toHaveBeenCalledWith("REJECT", undefined, undefined)
     })
 
     it("disables the composer when a turn cannot be sent", () => {

@@ -72,7 +72,7 @@ class RestartExecutionToolTest {
         when(executionRepository.findById(TENANT, "exec-1")).thenReturn(Optional.of(executionWith(State.Type.FAILED)));
 
         // When
-        String result = tool.restartExecution("exec-1", null, null);
+        RestartExecutionTool.Result result = tool.restartExecution("exec-1", null, null);
 
         // Then — a Restart command for this execution is enqueued, carrying an operationId
         ArgumentCaptor<ExecutionCommand> captor = ArgumentCaptor.forClass(ExecutionCommand.class);
@@ -82,7 +82,8 @@ class RestartExecutionToolTest {
             assertThat(restart.executionId()).isEqualTo("exec-1");
             assertThat(restart.operationId()).isNotNull();
         });
-        assertThat(result).contains("Restart requested for execution 'exec-1'");
+        assertThat(result.executionId()).isEqualTo("exec-1");
+        assertThat(result.operationId()).isEqualTo(captor.getValue().operationId());
     }
 
     @Test

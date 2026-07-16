@@ -41,36 +41,47 @@ public class ValidateFlowTool implements AiPlatformTool {
 
     @Tool(
         name = "validate-flow",
-        value = "Validate Kestra flow YAML without saving or executing anything, reporting validation errors, warnings and deprecations. Read-only; always use this to check flow YAML before proposing it."
+        value = "Validate Kestra flow YAML without saving or executing anything, reporting validation errors, warnings and deprecations. Read-only; always use this to check flow YAML before proposing it. "
+            + "Returns an object { valid, errors, warnings, deprecatedPaths, infos } where `valid` is true only when `errors` is empty; each of the other fields is an array of messages."
     )
-    public String validateFlow(
+    public Result validateFlow(
         @P(name = "flowYaml", value = "The full flow YAML source to validate") String flowYaml,
         @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
         String tenant = AgentCallContext.resolveTenant(tenantId);
 
         List<ValidateConstraintViolation> violations = flowService.validate(tenant, List.of(new FlowSource(null, flowYaml)));
 
-        boolean hasErrors = false;
-        List<String> lines = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        List<String> deprecatedPaths = new ArrayList<>();
+        List<String> infos = new ArrayList<>();
         for (ValidateConstraintViolation violation : violations) {
             if (violation.getConstraints() != null && !violation.getConstraints().isBlank()) {
-                hasErrors = true;
-                lines.add("Errors: " + violation.getConstraints());
+                errors.add(violation.getConstraints());
             }
             if (!ListUtils.isEmpty(violation.getWarnings())) {
-                lines.add("Warnings: " + String.join("; ", violation.getWarnings()));
+                warnings.addAll(violation.getWarnings());
             }
             if (!ListUtils.isEmpty(violation.getDeprecationPaths())) {
-                lines.add("Deprecated paths: " + String.join(", ", violation.getDeprecationPaths()));
+                deprecatedPaths.addAll(violation.getDeprecationPaths());
             }
             if (!ListUtils.isEmpty(violation.getInfos())) {
-                lines.add("Infos: " + String.join("; ", violation.getInfos()));
+                infos.addAll(violation.getInfos());
             }
         }
 
-        if (!hasErrors) {
-            lines.add(0, "The flow is valid.");
-        }
-        return String.join("\n", lines);
+        return new Result(errors.isEmpty(), errors, warnings, deprecatedPaths, infos);
+    }
+
+    /**
+     * The outcome of validating flow YAML.
+     *
+     * @param valid true only when there are no errors
+     * @param errors constraint-violation messages, empty when valid
+     * @param warnings non-blocking warnings
+     * @param deprecatedPaths paths that use deprecated properties
+     * @param infos informational messages
+     */
+    public record Result(boolean valid, List<String> errors, List<String> warnings, List<String> deprecatedPaths, List<String> infos) {
     }
 }

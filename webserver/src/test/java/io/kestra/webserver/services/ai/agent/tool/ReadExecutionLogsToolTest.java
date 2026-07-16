@@ -12,7 +12,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
@@ -29,12 +29,12 @@ import static org.mockito.Mockito.when;
 class ReadExecutionLogsToolTest {
     private static final String TENANT = "main";
 
-    private LogRepositoryInterface logRepository;
+    private LogDataStoreInterface logRepository;
     private ReadExecutionLogsTool tool;
 
     @BeforeEach
     void setUp() {
-        logRepository = mock(LogRepositoryInterface.class);
+        logRepository = mock(LogDataStoreInterface.class);
         tool = new ReadExecutionLogsTool(logRepository);
         AgentCallContext.set(AgentCallContext.Context.ofTenant(TENANT));
     }
@@ -52,7 +52,7 @@ class ReadExecutionLogsToolTest {
     }
 
     @Test
-    void shouldFormatMatchingLogLinesWhenLogsExist() {
+    void shouldReturnMatchingLogLinesWhenLogsExist() {
         // Given
         LogEntry line = LogEntry.builder()
             .timestamp(Instant.parse("2026-01-01T00:00:00Z"))
@@ -64,23 +64,27 @@ class ReadExecutionLogsToolTest {
             .thenReturn(new ArrayListTotal<>(List.of(line), 1));
 
         // When
-        String result = tool.readExecutionLogs("exec-1", null, null);
+        ReadExecutionLogsTool.Result result = tool.readExecutionLogs("exec-1", null, null);
 
         // Then
-        assertThat(result).isEqualTo("2026-01-01T00:00:00Z [ERROR] load: boom");
+        assertThat(result.executionId()).isEqualTo("exec-1");
+        assertThat(result.logs()).containsExactly(
+            new ReadExecutionLogsTool.LogLine("2026-01-01T00:00:00Z", "ERROR", "load", "boom")
+        );
     }
 
     @Test
-    void shouldReturnNoLogsMessageWhenEmpty() {
+    void shouldReturnEmptyLogsWhenNoneMatch() {
         // Given
         when(logRepository.find(any(Pageable.class), eq(TENANT), any()))
             .thenReturn(new ArrayListTotal<>(List.of(), 0));
 
         // When
-        String result = tool.readExecutionLogs("exec-1", null, null);
+        ReadExecutionLogsTool.Result result = tool.readExecutionLogs("exec-1", null, null);
 
         // Then
-        assertThat(result).isEqualTo("No logs found for execution 'exec-1' with the given filters.");
+        assertThat(result.executionId()).isEqualTo("exec-1");
+        assertThat(result.logs()).isEmpty();
     }
 
     @Test

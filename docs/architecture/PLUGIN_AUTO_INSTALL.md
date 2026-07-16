@@ -127,12 +127,21 @@ loaded asynchronously, and a **no-op when the property is empty** (the default).
 **local** schema (installed plugins) and enriches it with the bundle via
 `PluginSchemaBundleService.mergeWithBundle` — `mergeLightweightSubtypes`:
 
-- for **every** polymorphic discriminator present in the local schema — the requested root *and* any
-  embedded one (e.g. the `Task` discriminator nested in the `flow` schema's `tasks`) — it adds, for
-  each catalog subtype not already installed, a **lightweight definition**
+- for **every occurrence** of a polymorphic subtype list in the local schema, it adds, for each
+  catalog subtype not already installed, a **lightweight definition**
   `{"type": "object", "properties": {"type": {"const": "<fqcn>"}}, "required": ["type"]}` (plus
-  `title` / `markdownDescription` when the bundle carries them) **and a `$ref` branch** to it in the
-  discriminator's `anyOf`.
+  `title` / `markdownDescription` when the bundle carries them) **and a `$ref` branch** to it in
+  that occurrence's `anyOf`.
+- "every occurrence" is load-bearing (that was the second bug): the generator does **not** route
+  every subtype list through the discriminator base-class definition. The `flow` schema inlines the
+  full installed-subtype `anyOf` directly at each property site (`Flow.tasks.items`, `errors`, every
+  flowable task's nested `tasks`, … — 15 sites on a real schema) while the `Task` definition itself
+  is barely referenced. Patching only the named definition therefore never reached what the editor
+  actually completes from. The merge instead extends **every `anyOf` array whose `$ref` keys
+  intersect a bundle discriminator's subtype set** — a safe heuristic because the generator always
+  emits the *full* registered subtype list at such sites and the subtype sets of distinct
+  discriminators (task/trigger/…) are disjoint. The named discriminator definition is still patched
+  explicitly, covering the empty-`anyOf` case the intersection can't see.
 - this **mirrors the exact shape of an installed subtype** (a `$ref` to an object definition), only
   without the plugin's full property schema. The structural parity is load-bearing: the editor's YAML
   language service offers a `type` const from an `anyOf` branch that resolves to an *object*
@@ -147,8 +156,9 @@ plugins take precedence** over the bundle. Draft-7 shape (`definitions`, not `$d
 
 > **Size matters.** Copying the whole catalog's *full* definitions produced a ~12 MB schema per flow
 > file that silently broke completion in monaco-yaml. Lightweight definitions cut the bundle's
-> contribution to a few hundred KB. On a lean (`-no-plugins`) install — the actual target — the local
-> schema is small too, so the merged result stays light.
+> contribution to under 1 MB (each stub definition appears once; only the ~50-byte `$ref` branches
+> repeat per site — e.g. a full-plugin dev install goes 6.9 → 7.8 MB). On a lean (`-no-plugins`)
+> install — the actual target — the local schema is small too, so the merged result stays light.
 
 Merge-by-FQCN works only because both sides come from the same `JsonSchemaGenerator.schemas()` — the
 runtime local schema and the bundle — so a class always resolves to the same definition key and the
@@ -162,8 +172,9 @@ newly-installed plugin must show up in the editor promptly, not up to an hour la
 ### (d) Frontend
 
 `ui/src/override/utils/yamlSchemas.ts` points `monaco-yaml` at those endpoints with
-`includeCatalog=true`, so the editor receives a schema covering the whole catalog and offers
-completion/validation for plugins that were never installed.
+`includeCatalog=true` (flow, task, trigger, plugindefault — dashboard stays installed-only), so the
+editor receives a schema covering the whole catalog and offers completion/validation for plugins
+that were never installed.
 
 ---
 

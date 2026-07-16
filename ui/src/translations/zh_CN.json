@@ -2043,7 +2043,8 @@
           "revise": "Reply to revise"
         },
         "notice": {
-          "emptyTurn": "助手未返回响应。请重试。"
+          "emptyTurn": "助手未返回响应。请重试。",
+          "retry": "重试"
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

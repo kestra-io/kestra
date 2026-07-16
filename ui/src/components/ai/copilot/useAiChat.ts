@@ -75,6 +75,8 @@ export function useAiChat() {
     /** Reference to the assistant bubble currently being streamed into. */
     let activeAssistant: ChatMessage | null = null
     let abort: AbortController | null = null
+    /** The last chat/confirm request, so an empty/failed turn can be retried without retyping. */
+    let lastTurn: {url: string; body: unknown} | null = null
 
     /** True when a new chat turn may be sent. */
     const canSend = computed(() => status.value === "IDLE" && !streaming.value)
@@ -147,6 +149,12 @@ export function useAiChat() {
         notice.value = null
     }
 
+    /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
+    async function retryLastTurn(): Promise<void> {
+        if (!lastTurn || streaming.value) return
+        await runStream(lastTurn.url, lastTurn.body)
+    }
+
     /**
      * Resolves a pending proposal. APPROVE resumes & dispatches; REJECT records rejection.
      * The resumed turn runs a fresh model call, so it needs the same `providerId` the chat turn used.
@@ -178,6 +186,7 @@ export function useAiChat() {
         pendingConfirmation.value = null
         unavailable.value = false
         activeAssistant = null
+        lastTurn = null
     }
 
     /** Shared streaming driver for both chat and confirm turns. */
@@ -187,6 +196,7 @@ export function useAiChat() {
         notice.value = null
         activeAssistant = null
         abort = new AbortController()
+        lastTurn = {url, body}
         const countBefore = messages.value.length
 
         try {
@@ -294,6 +304,7 @@ export function useAiChat() {
         cancel,
         reset,
         retry,
+        retryLastTurn,
     }
 }
 

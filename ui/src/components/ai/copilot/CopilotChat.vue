@@ -91,7 +91,12 @@
                     {{ t(`ai.copilot.error.${error}`) }}
                 </KsAlert>
                 <KsAlert v-else-if="notice" type="warning" data-test="copilot-notice">
-                    {{ t(`ai.copilot.notice.${notice}`) }}
+                    <div class="copilot-notice-body">
+                        <span>{{ t(`ai.copilot.notice.${notice}`) }}</span>
+                        <KsButton size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
+                            {{ t("ai.copilot.notice.retry") }}
+                        </KsButton>
+                    </div>
                 </KsAlert>
             </div>
 
@@ -186,7 +191,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {messages, status, streaming, error, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry} = useAiChat()
+    const {messages, status, streaming, error, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn} = useAiChat()
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status
@@ -380,6 +385,23 @@
 
     .copilot-banner {
         padding: 0 var(--ks-spacing-5);
+    }
+
+    /* Notice text + its retry action share a row; the button is pinned to the right. */
+    .copilot-notice-body {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+    }
+
+    .copilot-notice-body > span {
+        flex: 1;
+    }
+
+    .copilot-notice-body > :last-child {
+        flex-shrink: 0;
+        margin-left: auto;
     }
 
     .copilot-footer {

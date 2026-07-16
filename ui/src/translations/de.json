@@ -2043,7 +2043,8 @@
           "revise": "Reply to revise"
         },
         "notice": {
-          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuche es erneut."
+          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuche es erneut.",
+          "retry": "Erneut versuchen"
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

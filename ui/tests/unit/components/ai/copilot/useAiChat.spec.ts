@@ -196,6 +196,30 @@ describe("useAiChat", () => {
         expect(chat.notice.value).toBeNull()
     })
 
+    it("retryLastTurn re-runs the last turn and clears the notice when output arrives", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hi", providerId: "gemini-legacy"})
+        expect(chat.notice.value).toBe("emptyTurn")
+
+        nextFrames = [
+            {event: "token", data: {text: "now answered"}},
+            {event: "done", data: {status: "IDLE"}},
+        ]
+        await chat.retryLastTurn()
+        // Same request body was replayed, and the successful turn cleared the notice.
+        expect(lastBody).toMatchObject({prompt: "hi", providerId: "gemini-legacy"})
+        expect(chat.notice.value).toBeNull()
+        expect(chat.messages.value.some((m) => m.role === "ASSISTANT" && m.content === "now answered")).toBe(true)
+    })
+
+    it("retryLastTurn is a no-op before any turn has run", async () => {
+        const chat = useAiChat()
+        await chat.retryLastTurn()
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.messages.value).toHaveLength(0)
+    })
+
     it("clears a prior emptyTurn notice when a new turn starts", async () => {
         const chat = useAiChat()
         nextFrames = [{event: "done", data: {status: "IDLE"}}]

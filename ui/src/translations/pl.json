@@ -2043,7 +2043,8 @@
           "revise": "Reply to revise"
         },
         "notice": {
-          "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie."
+          "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
+          "retry": "Ponów"
         },
         "error": {
           "turnInProgress": "A turn is already in progress.",

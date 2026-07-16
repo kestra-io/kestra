@@ -34,4 +34,11 @@ class JsonStringTest {
         assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid json");
     }
+
+    @Test
+    void jsonStringWithTrailingContent() {
+        JsonStringCls build = new JsonStringCls("{} garbage");
+
+        assertThat(modelValidator.isValid(build).isEmpty()).isTrue();
+    }
 }

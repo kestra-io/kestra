@@ -3,9 +3,6 @@ package io.kestra.cli.commands.plugins;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.kestra.cli.AbstractCommand;
 
 import io.micronaut.http.HttpRequest;
@@ -14,6 +11,9 @@ import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 @Command(
     name = "search",
@@ -24,7 +24,7 @@ public class PluginSearchCommand extends AbstractCommand {
     @Client("api")
     private HttpClient httpClient;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     private static final char SPACE = ' ';
 
     @Parameters(index = "0", description = "Search term (optional)", defaultValue = "")

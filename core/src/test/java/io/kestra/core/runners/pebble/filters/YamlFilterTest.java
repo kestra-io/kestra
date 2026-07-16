@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,6 +41,7 @@ class YamlFilterTest {
                     ),
                     "bool", true,
                     "date", date,
+                    "duration", Duration.ofMinutes(5),
                     "map", Map.of(
                         "string", "string",
                         "int", 1,
@@ -66,6 +68,9 @@ class YamlFilterTest {
 
         render = variableRenderer.render("{{ vars.second.date | yaml }}", vars);
         assertThat(render).isEqualTo(date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\n");
+
+        render = variableRenderer.render("{{ vars.second.duration | yaml }}", vars);
+        assertThat(render).isEqualTo("300.000000000\n");
 
         render = variableRenderer.render("{{ vars.second.map | yaml }}", vars);
         assertThat(render).contains("int: 1\n");

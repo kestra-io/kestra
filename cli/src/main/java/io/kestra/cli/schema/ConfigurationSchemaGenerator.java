@@ -1,7 +1,6 @@
 package io.kestra.cli.schema;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -23,11 +22,6 @@ import java.util.ServiceConfigurationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -37,13 +31,19 @@ import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.inject.BeanDefinitionReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 final class ConfigurationSchemaGenerator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationSchemaGenerator.class);
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-        .enable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper MAPPER = JsonMapper.builder()
+        .enable(SerializationFeature.INDENT_OUTPUT)
+        .build();
 
     private static final String PLUGIN_PROPERTY_ANNOTATION = "io.kestra.core.models.annotations.PluginProperty";
     private static final String SCHEMA_ANNOTATION = "io.swagger.v3.oas.annotations.media.Schema";
@@ -96,7 +96,7 @@ final class ConfigurationSchemaGenerator {
         return root;
     }
 
-    static void write(ObjectNode schema, File outputFile) throws IOException {
+    static void write(ObjectNode schema, File outputFile) {
         MAPPER.writeValue(outputFile, schema);
     }
 

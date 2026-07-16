@@ -4,12 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.contrib.json.classic.JsonLayout;
 import lombok.Data;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 @SuppressWarnings("this-escape")
 @Data
@@ -26,7 +26,7 @@ public class StackdriverJsonLayout extends JsonLayout {
         this.appendLineSeparator = true;
         this.includeExceptionInMessage = true;
         this.includeException = false;
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder().build();
         setJsonFormatter(mapper::writeValueAsString);
     }
 

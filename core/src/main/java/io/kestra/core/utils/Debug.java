@@ -3,17 +3,21 @@ package io.kestra.core.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 public class Debug {
     private static final String NAME = Thread.currentThread().getStackTrace()[2].getClassName();
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
-    private static ObjectMapper MAPPER = new ObjectMapper()
-        .registerModule(new JavaTimeModule())
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    // java.time support is embedded in jackson-databind 3.x, no explicit module registration needed.
+    // WRITE_DURATIONS_AS_TIMESTAMPS defaults to false in v3 (was true in v2); keep it enabled to preserve the
+    // existing numeric Duration representation used across the codebase (see JacksonMapper.java).
+    private static ObjectMapper MAPPER = JsonMapper.builder()
+        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .configure(DateTimeFeature.WRITE_DURATIONS_AS_TIMESTAMPS, true)
+        .build();
 
     private static String caller() {
         return Thread.currentThread().getStackTrace()[3].getClassName() + " -> " +
@@ -31,7 +35,7 @@ public class Debug {
         } else {
             try {
                 output = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(arg);
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }

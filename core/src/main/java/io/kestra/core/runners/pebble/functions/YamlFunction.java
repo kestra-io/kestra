@@ -3,22 +3,19 @@ package io.kestra.core.runners.pebble.functions;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 public class YamlFunction implements KestraFunction {
     public static final String NAME = "yaml";
-    final static ObjectMapper MAPPER = new ObjectMapper(
-        new YAMLFactory()
-    ).findAndRegisterModules();
+    final static ObjectMapper MAPPER = YAMLMapper.builder()
+        .findAndAddModules()
+        .build();
     private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {
     };
 
@@ -45,11 +42,7 @@ public class YamlFunction implements KestraFunction {
 
         try {
             return MAPPER.readValue(yaml, TYPE_REFERENCE);
-        } catch (JacksonYAMLParseException e) {
-            throw new PebbleException(null, "Invalid yaml: " + e.getMessage(), lineNumber, self.getName());
-        } catch (JsonMappingException e) {
-            throw new PebbleException(null, "Invalid yaml: " + e.getMessage(), lineNumber, self.getName());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new PebbleException(null, "Invalid yaml: " + e.getMessage(), lineNumber, self.getName());
         }
     }

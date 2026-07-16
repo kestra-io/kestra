@@ -15,7 +15,8 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
+import type {FlowWithSource, AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../utils/kestraHttp"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
@@ -115,7 +116,7 @@ export const useFlowStore = defineStore("flow", () => {
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
 
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -716,7 +717,7 @@ function deleteFlowAndDependencies() {
     }
 
     function exportFlowByIds(options: { ids: string[] }) {
-        return axios.post(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
+        return axios.post<Blob>(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
             .then(response => {
                 const blob = new Blob([response.data], {type: "application/octet-stream"})
                 const url = window.URL.createObjectURL(blob)
@@ -732,7 +733,7 @@ function deleteFlowAndDependencies() {
     }
 
     async function exportFlowAsCSV(params: any) {
-        const response = await axios.get(
+        const response = await axios.get<string>(
             `${apiUrl()}/flows/export/by-query/csv`,
             {params, responseType: "text", headers: {Accept: "text/csv"}},
         )

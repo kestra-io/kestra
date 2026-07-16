@@ -19,7 +19,7 @@ loadNodeTypes()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
-import {setupKestraAxios} from "./utils/kestraAxios"
+import {setupKestraHttp} from "./utils/kestraHttp"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter} from "./composables/useTenant"
@@ -48,7 +48,7 @@ const handleAuthError = (error: Error, to: {fullPath: string}) => {
     return {name: "setup"}
 }
 
-let axiosInstance: ReturnType<typeof setupKestraAxios> | undefined
+let httpClient: ReturnType<typeof setupKestraHttp> | undefined
 
 function setupAxios(router: Router) {
     const coreStore = useCoreStore()
@@ -63,25 +63,23 @@ function setupAxios(router: Router) {
     }
 
 
-    axiosInstance = setupKestraAxios({}, {
+    httpClient = setupKestraHttp({}, {
         coreStore,
         router,
         beforeLogout,
         isLoggedIn: () => !!BasicAuth.isLoggedIn(),
     })
 
-    // Add CSRF token to every request. Do NOT call configureClient({axios}) after this:
-    // it re-registers a fresh instance for useClient() and drops this interceptor (→ 403).
-    axiosInstance.interceptors.request.use((config) => {
+    // Add CSRF token to every request - covers both generated-endpoint calls and
+    // the ad-hoc KestraHttpClient, since setupKestraHttp() registers this on both.
+    httpClient.interceptors.request.use(({headers}) => {
         const csrfToken = getCsrfToken()
         if (csrfToken) {
-            config.headers = config.headers || {}
-            config.headers["X-CSRF-TOKEN"] = csrfToken
+            headers.set("X-CSRF-TOKEN", csrfToken)
         }
-        return config
     })
 
-    return axiosInstance
+    return httpClient
 }
 
 // FIXME: any - guard args are untyped in the GuardFn interface
@@ -92,7 +90,7 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
 
     try {
         const miscStore = useMiscStore()
-        if(!axiosInstance) {
+        if(!httpClient) {
             setupAxios(router)
         }
         const configs = await miscStore.loadConfigs()

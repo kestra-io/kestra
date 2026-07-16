@@ -52,7 +52,7 @@
     import TopNavBar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useKestraHttp} from "../../utils/kestraHttp"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -74,14 +74,14 @@
 
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
 
-    const axios = useClient()
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
+    const axios = useKestraHttp()
+    const data = ref<{
+        total: number;
+        results: ConcurrencyLimit[]
     }>()
 
     async function loadData(){
-        const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
+        const response = await axios.get<{total: number; results: ConcurrencyLimit[]}>(`${apiUrl()}/concurrency-limit/search`)
         if(response?.status !== 200){
             throw new Error(`Failed to load concurrency limits: ${response?.statusText}`)
         }

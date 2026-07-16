@@ -1,7 +1,8 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
-import {useClient, type PagedResultsNamespace} from "@kestra-io/kestra-sdk"
+import type {PagedResultsNamespace} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../utils/kestraHttp"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
@@ -32,7 +33,7 @@ export const useBaseNamespacesStore = () => {
     const total = ref(0)
     const existing = ref(true)
 
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})

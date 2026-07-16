@@ -46,14 +46,14 @@
     import Empty from "../layout/empty/Empty.vue"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useKestraHttp} from "../../utils/kestraHttp"
     import {apiUrl} from "override/utils/route"
     import Loading from "vue-material-design-icons/Loading.vue"
 
     defineOptions({inheritAttrs: false})
 
     const flowStore = useFlowStore()
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     const runningCount = ref(0)
     const totalCount = ref(0)
@@ -76,7 +76,7 @@
         error.value = undefined
 
         try {
-            const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
+            const response = await axios.get<{results: any[]}>(`${apiUrl()}/concurrency-limit/search`)
             const limits = response.data?.results || []
 
             const currentFlowLimit = limits.find(

@@ -6,7 +6,8 @@ import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
 import {useRoute} from "vue-router"
 import {CLUSTER_PREFIX, routeQueryToQueryFilters} from "@kestra-io/design-system"
-import {TaskRun, useClient, type Execution as SDKExecution} from "@kestra-io/kestra-sdk"
+import type {TaskRun, Execution as SDKExecution} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../utils/kestraHttp"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
@@ -119,7 +120,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     })
 
     const coreStore = useCoreStore()
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {

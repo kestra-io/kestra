@@ -55,7 +55,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessage, KsIcon} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useKestraHttp} from "../../utils/kestraHttp"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -116,12 +116,12 @@
         password: [{required: true, validator: validatePassword, trigger: "blur"}],
     }))
 
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     const validateCredentials = async (auth: string) => {
         try {
             document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
-            await axios.get(`${apiUrl()}/usages/all`, {timeout: 10000, withCredentials: true})
+            await axios.get(`${apiUrl()}/usages/all`, {timeout: 10000})
         } catch(e) {
             BasicAuth.logout()
             throw e
@@ -129,14 +129,14 @@
     }
 
     const checkServerInitialization = async () => {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000, withCredentials: true})
+        const response = await axios.get<{isBasicAuthInitialized?: boolean}>(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000})
         return response.data?.isBasicAuthInitialized
     }
 
     const handleNetworkError = (error: any) => {
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
-            (!error.response && error.message?.includes("Network Error"))
+            (!error.response && error instanceof TypeError)
     }
 
     const loadAuthConfigErrors = async () => {

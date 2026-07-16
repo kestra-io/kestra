@@ -1,11 +1,11 @@
 import {defineStore} from "pinia"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../utils/kestraHttp"
 import {AiGenerationType, aiGenerationTypes} from "../utils/constants"
 import {getUid} from "../utils/uid"
 import {apiUrl} from "override/utils/route"
 
 export const useAiStore = defineStore("ai", () => {
-    const client = useClient()
+    const client = useKestraHttp()
 
     async function generate({
         userPrompt, 
@@ -24,17 +24,16 @@ export const useAiStore = defineStore("ai", () => {
         tenantId?: string,
         type: AiGenerationType
     }) {
-        const response = await client.post(`${apiUrl()}/ai/generate/${type}`, {
+        const uid = getUid()
+        const response = await client.post<string>(`${apiUrl()}/ai/generate/${type}`, {
             userPrompt,
             conversationId,
             providerId,
-            namespace, 
+            namespace,
             tenantId,
             ...(yaml !== undefined ? {yaml} : {}),
         }, {
-            headers: {
-                "X-Kestra-User-Id": getUid(),
-            },
+            headers: uid ? {"X-Kestra-User-Id": uid} : {},
         })
 
         const remainingQuota = response.headers["x-kestra-ai-quota"]

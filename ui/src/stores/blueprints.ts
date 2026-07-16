@@ -1,7 +1,8 @@
 import {ref} from "vue"
 import {defineStore} from "pinia"
 
-import {BlueprintControllerApiFlowBlueprint, useClient} from "@kestra-io/kestra-sdk"
+import {BlueprintControllerApiFlowBlueprint} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 import * as BlueprintsAPI from "@kestra-io/kestra-sdk/blueprints"
 import * as BlueprintTagsAPI from "@kestra-io/kestra-sdk/blueprint-tags"
@@ -39,7 +40,7 @@ const API_URL = "https://api.kestra.io/v1"
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
 
 export const useBlueprintsStore = defineStore("blueprints", () => {
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     const miscStore = useMiscStore()
     const {edition, version} = miscStore.configs || {}

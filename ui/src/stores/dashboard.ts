@@ -1,10 +1,10 @@
 import {computed, nextTick, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosRequestConfig, AxiosResponse} from "axios"
+import type {KestraHttpConfig, KestraHttpResponse} from "../utils/kestraHttp"
 
-const response: AxiosRequestConfig = {responseType: "blob" as const}
-const downloadHandler = (res: AxiosResponse, filename: string) => {
+const blobResponse: KestraHttpConfig = {responseType: "blob"}
+const downloadHandler = (res: KestraHttpResponse<Blob>, filename: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 
@@ -16,7 +16,8 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
-import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
+import {ChartFiltersOverrides, type DashboardSettings} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../utils/kestraHttp"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
@@ -61,7 +62,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
-    const axios = useClient()
+    const axios = useKestraHttp()
 
     async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
@@ -237,7 +238,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const filename = `chart__${chart.id}`
 
         return axios
-            .post(`${apiUrl()}/dashboards${path}`, payload, response)
+            .post<Blob>(`${apiUrl()}/dashboards${path}`, payload, blobResponse)
             .then((res) => downloadHandler(res, filename))
     }
 

@@ -286,7 +286,8 @@
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import throttle from "lodash/throttle"
-    import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {TaskRun, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {useKestraHttp} from "../../utils/kestraHttp"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -294,7 +295,7 @@
 
     const {t} = useI18n()
 
-    const $http = useClient()
+    const $http = useKestraHttp()
 
     // The UI taskrun carries a computed `depth` (for nesting) and subflow `outputs`,
     // neither of which the SDK TaskRun type models.
@@ -746,7 +747,7 @@
             return
         }
 
-        const axiosResponse = await $http(
+        const axiosResponse = await $http.get<{size: number}>(
             `${apiUrl()}/executions/${followedExecution.value.id}/file/metas?path=${path}`,
             {
                 validateStatus: (status: number) =>

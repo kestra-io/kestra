@@ -3,7 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
 import {useApiStore} from "../../stores/api"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useKestraHttp} from "../../utils/kestraHttp"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
@@ -17,7 +17,7 @@ export const useMiscStore = defineStore("misc", () => {
     const lastContextTab = ref("news")
     const theme = ref<SelectedTheme>("syncWithSystem")
 
-    const axios = useClient()
+    const axios = useKestraHttp()
 
 
     async function loadConfigs() {

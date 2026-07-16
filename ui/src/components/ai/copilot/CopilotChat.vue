@@ -84,13 +84,16 @@
                 <div ref="bottomAnchor" class="copilot-scroll-anchor" />
             </KsScrollbar>
 
-            <KsAlert v-if="error" type="error" class="copilot-error">
-                {{ t(`ai.copilot.error.${error}`) }}
-            </KsAlert>
-
-            <KsAlert v-else-if="notice" type="warning" class="copilot-error" data-test="copilot-notice">
-                {{ t(`ai.copilot.notice.${notice}`) }}
-            </KsAlert>
+            <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
+                 horizontal margin would push it past the panel (100% + margin) and overflow. -->
+            <div v-if="error || notice" class="copilot-banner">
+                <KsAlert v-if="error" type="error">
+                    {{ t(`ai.copilot.error.${error}`) }}
+                </KsAlert>
+                <KsAlert v-else-if="notice" type="warning" data-test="copilot-notice">
+                    {{ t(`ai.copilot.notice.${notice}`) }}
+                </KsAlert>
+            </div>
 
             <div class="copilot-footer">
                 <CopilotContextChip v-if="activeScope" :scope="activeScope" @clear="scopeDismissed = true" />
@@ -375,8 +378,8 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-5);
     }
 
-    .copilot-error {
-        margin: 0 var(--ks-spacing-5);
+    .copilot-banner {
+        padding: 0 var(--ks-spacing-5);
     }
 
     .copilot-footer {

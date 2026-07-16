@@ -619,7 +619,7 @@ public class DefaultWorker implements Worker {
                     );
 
                     if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger, workerConfig.triggerEvaluationTimeout());
+                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger, workerConfig.pollingTriggerTimeout());
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                         if (workerCallable.getException() != null || !state.equals(SUCCESS)) {

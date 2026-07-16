@@ -9,7 +9,7 @@ import io.micronaut.core.bind.annotation.Bindable;
 /**
  * Worker configuration.
  *
- * @param triggerEvaluationTimeout The maximum time a polling trigger evaluation is allowed to run on
+ * @param pollingTriggerTimeout The maximum time a polling trigger evaluation is allowed to run on
  *        a worker before it is interrupted. This bounds evaluations that would otherwise block
  *        forever (e.g. a stuck {@code KafkaConsumer.poll()} during a consumer-group rebalance): on
  *        timeout the worker thread is freed and an error result is emitted so the scheduler releases
@@ -21,6 +21,6 @@ import io.micronaut.core.bind.annotation.Bindable;
 @ConfigurationProperties("kestra.worker")
 public record WorkerConfig(
     @Bindable(defaultValue = "10m")
-    @Nullable Duration triggerEvaluationTimeout
+    @Nullable Duration pollingTriggerTimeout
 ) {
 }

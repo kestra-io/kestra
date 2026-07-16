@@ -20,6 +20,6 @@ public class DefaultExecutionLogMetaStore implements ExecutionLogMetaStore {
 
     @Override
     public java.util.List<io.kestra.core.models.executions.LogEntry> errorLogs(String tenantId, String executionId) {
-        return logRepository.findByExecutionId(tenantId, executionId, Level.ERROR, Pageable.from(1, 25, Sort.of(Sort.Order.asc("timestamp"))));
+        return logRepository.findByExecutionId(tenantId, executionId, Level.ERROR, Pageable.from(1, 25, Sort.of(Sort.Order.asc("timestamp")))).getContent();
     }
 }

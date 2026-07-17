@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -123,6 +124,15 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<MetricEntry> metricQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             MetricEntry.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
+    public DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue(JdbcDependencies dependencies) {
+        return new JdbcDispatchQueue<>(
+            ExecutionStatistic.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
         );
     }
 

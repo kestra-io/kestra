@@ -75,15 +75,15 @@
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
 
     const axios = useClient()
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
+    const data = ref<{
+        total: number;
+        results: ConcurrencyLimit[]
     }>()
 
     async function loadData(){
         const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
         if(response?.status !== 200){
-            throw new Error(`Failed to load concurrency limits: ${response?.statusText}`)
+            throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
         data.value = response.data
     }

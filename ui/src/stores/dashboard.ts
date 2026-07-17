@@ -1,10 +1,8 @@
 import {computed, nextTick, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosRequestConfig, AxiosResponse} from "axios"
-
-const response: AxiosRequestConfig = {responseType: "blob" as const}
-const downloadHandler = (res: AxiosResponse, filename: string) => {
+const blobResponse = {responseType: "blob" as const}
+const downloadHandler = (res: {data: Blob}, filename: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 
@@ -211,8 +209,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            // filters is FilterObject[] here (see ChartParameters' comment); the backend accepts
-            // the same field/operation strings the SDK's QueryFilterField/QueryFilterOp enums do.
             return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
         } catch (e: any) {
             if (e.status === 404) return undefined
@@ -239,7 +235,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const filename = `chart__${chart.id}`
 
         return axios
-            .post(`${apiUrl()}/dashboards${path}`, payload, response)
+            .post(`${apiUrl()}/dashboards${path}`, payload, blobResponse)
             .then((res) => downloadHandler(res, filename))
     }
 

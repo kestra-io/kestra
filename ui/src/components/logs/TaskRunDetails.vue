@@ -699,8 +699,8 @@
 
     // Lifecycle
     onMounted(() => {
-        throttledExecutionUpdate.value = throttle((executionEvent: any) => { // FIXME: any
-            targetExecution.value = JSON.parse(executionEvent.data)
+        throttledExecutionUpdate.value = throttle((targetExecutionEvent: any) => { // FIXME: any
+            targetExecution.value = targetExecutionEvent
         }, 500)
 
         if (props.targetExecutionId) {
@@ -746,7 +746,7 @@
             return
         }
 
-        const axiosResponse = await $http(
+        const axiosResponse = await $http.get(
             `${apiUrl()}/executions/${followedExecution.value.id}/file/metas?path=${path}`,
             {
                 validateStatus: (status: number) =>
@@ -821,24 +821,13 @@
 
     function followExecution(executionId: string) {
         closeTargetExecutionSSE()
-        executionsStore
-            .followExecution({id: executionId, rawSSE: true}, (s: string) => s)
-            .then((sse: any) => { // FIXME: any
-                executionSSE.value = sse
-                executionSSE.value.onmessage = (executionEvent: any) => { // FIXME: any
-                    const isEnd =
-                        executionEvent &&
-                        executionEvent.lastEventId === "end"
-                    // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                    if (executionEvent.lastEventId !== "start") {
-                        throttledExecutionUpdate.value!(executionEvent)
-                    }
-                    if (isEnd) {
-                        closeTargetExecutionSSE()
-                        throttledExecutionUpdate.value!.flush()
-                    }
-                }
-            })
+        executionSSE.value = executionsStore.subscribeToExecution(executionId, {
+            onExecution: (targetExecutionEvent) => throttledExecutionUpdate.value!(targetExecutionEvent),
+            onEnd: () => {
+                throttledExecutionUpdate.value!.flush()
+                closeTargetExecutionSSE()
+            },
+        })
     }
 
     function refreshLogs() {

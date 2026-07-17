@@ -67,7 +67,7 @@ public interface ConcurrencyLimitStateStore {
      * <p>
      * The default implementation only supports the single flow-scoped limit case (the OSS
      * semantics) and delegates to {@link #countThenProcess(FlowInterface, BiFunction)};
-     * implementors must override it to support namespace or tenant scoped limits.
+     * implementers must override it to support namespace or tenant scoped limits.
      *
      * @param flow the flow whose execution is evaluated
      * @param limits the applicable limits in evaluation order, never empty

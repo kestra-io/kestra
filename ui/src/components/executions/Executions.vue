@@ -143,6 +143,17 @@
                         </KsFormItem>
                     </KsForm>
                 </KsDialog>
+
+                <component
+                    :is="action"
+                    v-for="(action, i) in bulkActionComponents"
+                    :key="i"
+                    :selection="selection"
+                    :queryBulkAction="queryBulkAction"
+                    :namespace="props.namespace"
+                    :loadQuery="loadQuery"
+                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
+                />
             </template>
 
             <KsTableColumn
@@ -261,6 +272,17 @@
                     <KsTooltip :content="$t('taskid column details')">
                         {{ scope.column.label }}
                     </KsTooltip>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn
+                v-for="col in extraColumns"
+                :key="col.prop"
+                :prop="col.prop"
+                :label="$t(col.label)"
+            >
+                <template #default="scope">
+                    <component :is="cellComponents[col.prop]" :execution="scope.row" />
                 </template>
             </KsTableColumn>
         </KsDataTable>
@@ -451,6 +473,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
     import {Label, useExecutionsStore} from "../../stores/executions"
+    import {extraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
     import {useStateFilter} from "../filter/composables/useStateFilter"
@@ -781,7 +804,7 @@
             ? executionFilter.value
             : flowExecutionFilter.value
         const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
-            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
+            entry.key === "timeRange" ? ["timeRange", "startDate", "endDate"] : [entry.key],
         )
         if (configuration.searchPlaceholder) {
             fields.push("q")

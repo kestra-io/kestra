@@ -1228,6 +1228,12 @@
         "title": "Приведите каждый набор данных, сервис и зависимость в поле зрения.",
         "message": "Активы связывают метаданные наблюдаемости, происхождения и владения, чтобы команды платформы могли быстрее устранять неполадки и развертывать с уверенностью."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC",
         "message": "Kestra Enterprise Edition имеет встроенные возможности IAM с поддержкой единого входа (SSO), синхронизацией каталога SCIM и управлением доступом на основе ролей (RBAC), интегрируясь с несколькими поставщиками идентификации и позволяя назначать детализированные разрешения для пользователей и учетных записей сервисов."
@@ -1701,6 +1707,10 @@
         "title": "У вас еще нет Assets!",
         "content": "Добавьте assets, чтобы отслеживать и управлять вашими данными, сервисами и инфраструктурой."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Управление вашими API Tokens",
         "content": "Токены API используются всякий раз, когда вы хотите предоставить программный доступ к API Kestra."
@@ -1790,7 +1800,8 @@
       "kv_pairs": "Пары kv store не найдены",
       "secrets": "Секреты не найдены",
       "templates": "Шаблоны не найдены",
-      "assets": "Активы не найдены"
+      "assets": "Активы не найдены",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "dashboards": {

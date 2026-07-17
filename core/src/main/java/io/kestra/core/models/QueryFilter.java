@@ -299,7 +299,19 @@ public record QueryFilter(
         STATUS("status") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        SEVERITY("severity") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        ASSIGNEE("assignee") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.IS_NULL);
             }
         },
         @JsonProperty("email")
@@ -798,6 +810,28 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.NAMESPACE, Field.POLICY_SCOPE, Field.ENFORCEMENT);
+            }
+        },
+        CASE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.STATUS,
+                    Field.SEVERITY,
+                    Field.ASSIGNEE,
+                    Field.START_DATE,
+                    Field.END_DATE,
+                    Field.CREATED,
+                    Field.UPDATED
+                );
+            }
+        },
+        CASE_TEMPLATE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
             }
         };
 

@@ -1241,6 +1241,12 @@
         "title": "Bring every dataset, service, and dependency into view.",
         "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
         "message": "Kestra Enterprise Edition has built-in IAM capabilities with single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."
@@ -1876,6 +1882,10 @@
         "title": "You have no Assets yet!",
         "content": "Add assets to track and manage your data assets, services, and infrastructure."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Manage your API Tokens",
         "content": "API tokens are used anytime you want to grant programmatic access to the Kestra API."
@@ -1965,7 +1975,8 @@
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
       "templates": "No Templates Found",
-      "assets": "No Assets Found"
+      "assets": "No Assets Found",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {

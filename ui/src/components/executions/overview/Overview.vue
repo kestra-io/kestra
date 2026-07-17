@@ -13,6 +13,7 @@
             class="topology"
             :horizontalDefault="!verticalLayout"
         />
+        <component :is="executionOverviewPanel" v-if="executionOverviewPanel" :execution="execution" />
         <PrevNext :execution />
     </div>
     <KsNoData
@@ -40,6 +41,7 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
+    import {executionOverviewPanel} from "override/components/executions/overview/OverviewExtensions"
 
     const execution = computed(() => store.execution)
 

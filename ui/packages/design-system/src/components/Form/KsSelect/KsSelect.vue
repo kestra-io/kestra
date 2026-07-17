@@ -15,6 +15,9 @@
         <template v-if="$slots.label" #label="p">
             <slot name="label" v-bind="p" />
         </template>
+        <template v-else-if="colorMap" #label="p">
+            <span class="kel-select-color-option" :style="{color: colorMap[p.value]}">{{ p.label }}</span>
+        </template>
         <template v-if="$slots.tag" #tag="tagScope">
             <slot name="tag" v-bind="tagScope" />
         </template>
@@ -22,11 +25,12 @@
 </template>
 
 <script setup lang="ts">
-    import {type Component, computed, h, markRaw} from "vue"
+    import {type Component, computed, h, markRaw, provide, toRef} from "vue"
     import {ElSelect} from "element-plus"
     import Loading from "vue-material-design-icons/Loading.vue"
     import KsIcon from "../../Basic/KsIcon.vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import {type KsSelectColorMap, KsSelectColorMapKey} from "./colorMap"
 
     defineOptions({inheritAttrs: false})
 
@@ -53,6 +57,8 @@
         suffixIcon?: Component | string
         loading?: boolean
         fit?: boolean
+        /** Value -> CSS color (hex, rgb(), var(--token), ...) applied to both the dropdown options and the selected value. */
+        colorMap?: KsSelectColorMap
     }>(), {
         placeholder: undefined,
         size: undefined,
@@ -64,6 +70,7 @@
         popperClass: undefined,
         suffixIcon: undefined,
         loading: undefined,
+        colorMap: undefined,
     })
 
     const emit = defineEmits<{
@@ -79,7 +86,9 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading", "colorMap"])
+
+    provide(KsSelectColorMapKey, toRef(props, "colorMap"))
 
     // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
     // list on `!loading`, so forwarding would hide still-valid options while they
@@ -258,5 +267,22 @@
 
     .kel-icon.kel-select__caret.kel-select__icon {
         font-size: var(--ks-font-size-md);
+    }
+
+    // Rendered for colorMap entries, in both the closed label and the (teleported) dropdown options.
+    .kel-select-color-option {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        font-weight: var(--ks-font-weight-semibold);
+
+        &::before {
+            content: "";
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 2px;
+            background: currentColor;
+            flex-shrink: 0;
+        }
     }
 </style>

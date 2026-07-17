@@ -8,16 +8,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.ai.agent.models.AgentToolCall;
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.ai.agent.models.ArtefactDraft;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import dev.langchain4j.service.tool.ToolExecutor;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -32,13 +34,13 @@ import lombok.extern.slf4j.Slf4j;
  * {@link #dispatch} for execution.
  *
  * <p>
- * A tenant-scoped tool declares a {@link TenantId} parameter whose visibility in the model-facing
- * spec is decided by the {@link AiToolSpecFactory} (hidden by default, exposed by editions with
- * multiple tenants). Tools carry no authorization by default; a replacement can override the same
- * {@code @Tool} method to validate the caller's access and then delegate to {@code super}. Because
- * such an override drops the {@code @Tool}/{@code @P} annotations, {@link #toolMethod} resolves the
- * annotated method up the class hierarchy — the spec comes from the annotated method while execution
- * dispatches virtually to the override.
+ * A tool runs against the caller's own tenant, carried on the {@link AgentCallContext.Context}; there
+ * is no per-call tenant parameter, so a conversation is single-tenant by construction. Tools carry no
+ * authorization by default; a replacement can override the same {@code @Tool} method to validate the
+ * caller's access and then delegate to {@code super}. Because such an override drops the
+ * {@code @Tool}/{@code @P} annotations, {@link #toolMethod} resolves the annotated method up the class
+ * hierarchy — the spec comes from the annotated method while execution dispatches virtually to the
+ * override.
  * </p>
  */
 @Singleton
@@ -48,7 +50,6 @@ public class ToolCatalog {
     private final List<AiAuthoringTool> authoringTools;
     private final DocsMcpToolProvider docsMcpToolProvider;
     private final AgentToolPermissionEvaluator permissionEvaluator;
-    private final AiToolSpecFactory specFactory;
 
     private volatile Map<String, ToolEntry> registry;
 
@@ -57,13 +58,11 @@ public class ToolCatalog {
         final List<AiPlatformTool> platformTools,
         final List<AiAuthoringTool> authoringTools,
         final DocsMcpToolProvider docsMcpToolProvider,
-        final AgentToolPermissionEvaluator permissionEvaluator,
-        final AiToolSpecFactory specFactory) {
+        final AgentToolPermissionEvaluator permissionEvaluator) {
         this.platformTools = platformTools;
         this.authoringTools = authoringTools;
         this.docsMcpToolProvider = docsMcpToolProvider;
         this.permissionEvaluator = permissionEvaluator;
-        this.specFactory = specFactory;
     }
 
     public record ToolEntry(
@@ -124,7 +123,7 @@ public class ToolCatalog {
 
         boolean hasQueryFilter = Arrays.stream(method.getParameters())
             .anyMatch(parameter -> parameter.isAnnotationPresent(QueryFilterFormat.class));
-        ToolSpecification spec = specFactory.specificationFrom(method);
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(method);
 
         // propagateToolExecutionExceptions: let a @Tool throw propagate out of dispatch (instead of
         // langchain4j swallowing it into an opaque "ok" result text) so AgentOrchestrator can record it
@@ -152,17 +151,17 @@ public class ToolCatalog {
     /**
      * Execute a tool call scoped to the given caller context — the one entry point both the in-process
      * loop and (later) the MCP projection use. Enforces the coarse tool permission against the
-     * caller's tenant, binds the context to the executor thread so {@code @Tool} methods (and any
-     * overrides) can read it, and always clears it. Per-namespace and cross-tenant checks are the
+     * caller's tenant, then hands the context to the {@code @Tool} method (and any overrides) as a
+     * langchain4j managed argument on the invocation. Per-namespace and cross-tenant checks are the
      * individual tool implementations' responsibility.
      *
      * @param request the tool call emitted by the model
-     * @param context what the call runs as (tenant, principal, provider, draft channel)
-     * @return the tool's textual result
+     * @param context what the call runs as (tenant, principal, provider, conversation)
+     * @return the tool's textual result plus any artefact it produced to publish
      * @throws IllegalArgumentException if the tool name is unknown
      * @throws ToolPermissionDeniedException if the caller lacks the tool's permission
      */
-    public String dispatch(final ToolExecutionRequest request, final AgentCallContext.Context context) {
+    public DispatchResult dispatch(final ToolExecutionRequest request, final AgentCallContext.Context context) {
         ToolEntry entry = registry().get(request.name());
         if (entry == null) {
             throw new IllegalArgumentException("Unknown tool: '%s'".formatted(request.name()));
@@ -176,12 +175,20 @@ public class ToolCatalog {
             }
         }
 
-        AgentCallContext.set(context);
-        try {
-            return entry.executor().execute(request, context.tenant());
-        } finally {
-            AgentCallContext.clear();
-        }
+        // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
+        // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
+        ToolExecutionResult executed = entry.executor().executeWithContext(request, AgentCallContext.into(context));
+        // A tool's single output is its return value; if that value is publishable, the caller (the
+        // orchestrator) persists and streams the artefact — the tool never reaches back through a side channel.
+        ArtefactDraft artefact = executed.result() instanceof PublishableToolResult publishable ? publishable.artefact() : null;
+        return new DispatchResult(executed.resultText(), artefact);
+    }
+
+    /**
+     * The outcome of a tool dispatch: the text handed to the model, plus the artefact to publish when
+     * the tool returned a {@link PublishableToolResult} (else {@code null}).
+     */
+    public record DispatchResult(String text, @Nullable ArtefactDraft artefact) {
     }
 
     /**

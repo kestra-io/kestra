@@ -4,108 +4,103 @@ import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.slf4j.event.Level;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
-import io.micronaut.data.model.Pageable;
+import io.micronaut.context.annotation.Property;
+import jakarta.inject.Inject;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+@KestraTest(environments = "memory")
+@Property(name = "kestra.server-type", value = "STANDALONE")
 class ReadExecutionLogsToolTest {
-    private static final String TENANT = "main";
+    private static final String NAMESPACE = "io.kestra.test.ai";
+    private static final AgentCallContext.Context CONTEXT = AgentCallContext.Context.ofTenant(MAIN_TENANT);
 
-    private LogDataStoreInterface logRepository;
+    @Inject
     private ReadExecutionLogsTool tool;
 
-    @BeforeEach
-    void setUp() {
-        logRepository = mock(LogDataStoreInterface.class);
-        tool = new ReadExecutionLogsTool(logRepository);
-        AgentCallContext.set(AgentCallContext.Context.ofTenant(TENANT));
-    }
+    @Inject
+    private LogDataStoreInterface logRepository;
 
     @AfterEach
     void tearDown() {
-        AgentCallContext.clear();
+        logRepository.deleteByQuery(MAIN_TENANT, null, null, null, (Level) null, null);
     }
 
     @Test
     void shouldExposeReadOnlyMetadata() {
-        // When / Then
         assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
         assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.AUTO);
     }
 
     @Test
     void shouldReturnMatchingLogLinesWhenLogsExist() {
-        // Given
-        LogEntry line = LogEntry.builder()
-            .timestamp(Instant.parse("2026-01-01T00:00:00Z"))
-            .level(Level.ERROR)
-            .taskId("load")
-            .message("boom")
-            .build();
-        when(logRepository.find(any(Pageable.class), eq(TENANT), any()))
-            .thenReturn(new ArrayListTotal<>(List.of(line), 1));
+        // Given — a log line for the target execution
+        String executionId = IdUtils.create();
+        logRepository.save(logEntry(executionId, "load", Level.ERROR, "boom"));
 
         // When
-        ReadExecutionLogsTool.Result result = tool.readExecutionLogs("exec-1", null, null);
+        ReadExecutionLogsTool.Result result = tool.readExecutionLogs(executionId, null, CONTEXT);
 
         // Then
-        assertThat(result.executionId()).isEqualTo("exec-1");
-        assertThat(result.logs()).containsExactly(
-            new ReadExecutionLogsTool.LogLine("2026-01-01T00:00:00Z", "ERROR", "load", "boom")
-        );
+        assertThat(result.executionId()).isEqualTo(executionId);
+        assertThat(result.logs())
+            .anyMatch(line -> "ERROR".equals(line.level()) && "load".equals(line.taskId()) && "boom".equals(line.message()));
     }
 
     @Test
     void shouldReturnEmptyLogsWhenNoneMatch() {
-        // Given
-        when(logRepository.find(any(Pageable.class), eq(TENANT), any()))
-            .thenReturn(new ArrayListTotal<>(List.of(), 0));
+        String executionId = IdUtils.create();
 
-        // When
-        ReadExecutionLogsTool.Result result = tool.readExecutionLogs("exec-1", null, null);
+        ReadExecutionLogsTool.Result result = tool.readExecutionLogs(executionId, null, CONTEXT);
 
-        // Then
-        assertThat(result.executionId()).isEqualTo("exec-1");
+        assertThat(result.executionId()).isEqualTo(executionId);
         assertThat(result.logs()).isEmpty();
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void shouldForceExecutionIdScopeAndDropModelSuppliedExecutionId() {
-        // Given — the model smuggles a different EXECUTION_ID alongside a real TASK_ID filter
-        when(logRepository.find(any(Pageable.class), eq(TENANT), any()))
-            .thenReturn(new ArrayListTotal<>(List.of(), 0));
+        // Given — two executions each with their own log line
+        String target = IdUtils.create();
+        String other = IdUtils.create();
+        logRepository.save(logEntry(target, "load", Level.INFO, "target log"));
+        logRepository.save(logEntry(other, "load", Level.INFO, "other log"));
+
+        // When — the model smuggles the other execution's id alongside a real task filter
         List<QueryFilter> modelFilters = List.of(
-            new QueryFilter(QueryFilter.Field.EXECUTION_ID, QueryFilter.Op.EQUALS, "other-exec", null, null),
+            new QueryFilter(QueryFilter.Field.EXECUTION_ID, QueryFilter.Op.EQUALS, other, null, null),
             new QueryFilter(QueryFilter.Field.TASK_ID, QueryFilter.Op.EQUALS, "load", null, null)
         );
+        ReadExecutionLogsTool.Result result = tool.readExecutionLogs(target, modelFilters, CONTEXT);
 
-        // When
-        tool.readExecutionLogs("exec-1", modelFilters, null);
+        // Then — only the authoritative execution's logs come back; the other execution never leaks
+        assertThat(result.executionId()).isEqualTo(target);
+        assertThat(result.logs()).isNotEmpty();
+        assertThat(result.logs()).allMatch(line -> "target log".equals(line.message()));
+    }
 
-        // Then — exactly one EXECUTION_ID (the authoritative arg); the model's is dropped, TASK_ID kept
-        ArgumentCaptor<List<QueryFilter>> captor = ArgumentCaptor.forClass(List.class);
-        verify(logRepository).find(any(Pageable.class), eq(TENANT), captor.capture());
-        assertThat(captor.getValue())
-            .extracting(filter -> filter.field() + "/" + filter.value())
-            .containsExactly("EXECUTION_ID/exec-1", "TASK_ID/load");
+    private LogEntry logEntry(final String executionId, final String taskId, final Level level, final String message) {
+        return LogEntry.builder()
+            .tenantId(MAIN_TENANT)
+            .namespace(NAMESPACE)
+            .flowId("flow-1")
+            .executionId(executionId)
+            .taskId(taskId)
+            .timestamp(Instant.parse("2026-01-01T00:00:00Z"))
+            .level(level)
+            .message(message)
+            .build();
     }
 }

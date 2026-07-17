@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 

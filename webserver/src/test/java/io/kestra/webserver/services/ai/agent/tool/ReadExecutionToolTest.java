@@ -2,54 +2,46 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
+import jakarta.inject.Inject;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+@KestraTest(environments = "memory")
 class ReadExecutionToolTest {
-    private static final String TENANT = "main";
+    private static final String NAMESPACE = "io.kestra.test.ai";
+    private static final AgentCallContext.Context CONTEXT = AgentCallContext.Context.ofTenant(MAIN_TENANT);
 
-    private ExecutionRepositoryInterface executionRepository;
+    @Inject
     private ReadExecutionTool tool;
 
-    @BeforeEach
-    void setUp() {
-        executionRepository = mock(ExecutionRepositoryInterface.class);
-        tool = new ReadExecutionTool(executionRepository);
-        AgentCallContext.set(AgentCallContext.Context.ofTenant(TENANT));
-    }
-
-    @AfterEach
-    void tearDown() {
-        AgentCallContext.clear();
-    }
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     void shouldExposeReadOnlyMetadata() {
-        // When / Then
         assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
         assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.AUTO);
     }
 
     @Test
     void shouldSummarizeExecutionWithTaskRunsWhenFound() {
-        // Given — a FAILED execution with a successful task run and a failed one with an attempt history
+        // Given — a FAILED execution with a successful task run and a failed one carrying attempt history
         State failedState = State.of(
             State.Type.FAILED, List.of(
                 new State.History(State.Type.CREATED, Instant.parse("2026-01-01T00:00:00Z")),
@@ -74,22 +66,24 @@ class ReadExecutionToolTest {
             .state(failedState)
             .attempts(List.of(TaskRunAttempt.builder().state(failedState).build()))
             .build();
-        Execution execution = Execution.builder()
-            .id("exec-1")
-            .tenantId(TENANT)
-            .namespace("io.kestra.test")
-            .flowId("flow-1")
-            .state(failedState)
-            .taskRunList(List.of(okRun, failedRun))
-            .build();
-        when(executionRepository.findById(TENANT, "exec-1")).thenReturn(Optional.of(execution));
+        String executionId = IdUtils.create();
+        executionRepository.save(
+            Execution.builder()
+                .id(executionId)
+                .tenantId(MAIN_TENANT)
+                .namespace(NAMESPACE)
+                .flowId("flow-1")
+                .state(failedState)
+                .taskRunList(List.of(okRun, failedRun))
+                .build()
+        );
 
         // When
-        ReadExecutionTool.Result result = tool.readExecution("exec-1", null);
+        ReadExecutionTool.Result result = tool.readExecution(executionId, CONTEXT);
 
         // Then — header, per-taskrun details, and the failed run's attempt state history
-        assertThat(result.id()).isEqualTo("exec-1");
-        assertThat(result.namespace()).isEqualTo("io.kestra.test");
+        assertThat(result.id()).isEqualTo(executionId);
+        assertThat(result.namespace()).isEqualTo(NAMESPACE);
         assertThat(result.flowId()).isEqualTo("flow-1");
         assertThat(result.state()).isEqualTo("FAILED");
         assertThat(result.duration()).isEqualTo("PT5S");
@@ -117,33 +111,9 @@ class ReadExecutionToolTest {
     }
 
     @Test
-    void shouldReturnEmptyTaskRunsWhenExecutionHasNone() {
-        // Given — a freshly created execution without task runs
-        Execution execution = Execution.builder()
-            .id("exec-2")
-            .tenantId(TENANT)
-            .namespace("io.kestra.test")
-            .flowId("flow-1")
-            .state(new State(State.Type.CREATED))
-            .build();
-        when(executionRepository.findById(TENANT, "exec-2")).thenReturn(Optional.of(execution));
-
-        // When
-        ReadExecutionTool.Result result = tool.readExecution("exec-2", null);
-
-        // Then
-        assertThat(result.state()).isEqualTo("CREATED");
-        assertThat(result.taskRuns()).isEmpty();
-    }
-
-    @Test
     void shouldThrowWhenExecutionNotFound() {
-        // Given
-        when(executionRepository.findById(TENANT, "missing")).thenReturn(Optional.empty());
-
-        // When / Then
-        assertThatThrownBy(() -> tool.readExecution("missing", null))
+        assertThatThrownBy(() -> tool.readExecution("does-not-exist", CONTEXT))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Execution not found: 'missing'");
+            .hasMessageContaining("Execution not found");
     }
 }

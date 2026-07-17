@@ -4,14 +4,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -48,8 +48,8 @@ public class ReadExecutionTool implements AiPlatformTool {
     )
     public Result readExecution(
         @P(name = "executionId", value = "The id of the execution to read") String executionId,
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        String tenant = AgentCallContext.resolveTenant(tenantId);
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         Execution execution = executionRepository.findById(tenant, executionId)
             .orElseThrow(() -> new IllegalArgumentException("Execution not found: '%s'".formatted(executionId)));

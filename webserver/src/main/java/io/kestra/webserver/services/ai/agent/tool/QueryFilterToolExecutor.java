@@ -1,6 +1,5 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -15,48 +14,69 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.converters.QueryFilterFormat;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.internal.Json;
+import dev.langchain4j.invocation.InvocationContext;
+import dev.langchain4j.service.tool.DefaultToolExecutor;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import dev.langchain4j.service.tool.ToolExecutor;
 
 /**
  * A {@link ToolExecutor} for a tool whose {@code List<QueryFilter>} parameter was expanded per-field
  * by {@link AiToolSpecifications}. It reads the per-field {@code {operator, value}} arguments the
- * model returns, reassembles them into a single {@code List<QueryFilter>} (constructing
- * {@link QueryFilter} directly so its Jackson {@code @JsonCreator} validation runs — no JSON
- * round-trip through langchain4j's coercion), validates each against the resource's
- * {@code supportedField()} / {@code supportedOp()}, then invokes the target method.
+ * model returns, reassembles and validates them into a single {@code List<QueryFilter>} (constructing
+ * {@link QueryFilter} directly so field/operator validity is checked with clear errors), then rewrites
+ * the arguments to place that list under the real filter parameter and hands off to a
+ * {@link DefaultToolExecutor}.
  *
  * <p>
- * The invocation result is turned into the model-facing text exactly as langchain4j's
- * {@code DefaultToolExecutor} does: a {@code String} return is passed through verbatim, anything else
- * (e.g. a strong-typed result record) is serialized to JSON. This keeps both executor paths
- * consistent for tools that return a strong type instead of a hand-formatted string.
+ * Everything after reassembly — binding the remaining parameters (including the managed
+ * {@code AgentCallContext.Context} argument injected from the {@link InvocationContext}), invoking
+ * the method, serializing the result and propagating tool exceptions — is done by the delegate, so
+ * this executor only owns the per-field → {@code List<QueryFilter>} translation.
  * </p>
  */
 public final class QueryFilterToolExecutor implements ToolExecutor {
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private final Object toolInstance;
-    private final Method method;
-    private final Parameter[] parameters;
-    private final int filterParamIndex;
     private final QueryFilter.Resource resource;
+    private final String filterParameterName;
+    private final DefaultToolExecutor delegate;
 
     public QueryFilterToolExecutor(final Object toolInstance, final Method method) {
-        this.toolInstance = toolInstance;
-        this.method = method;
-        this.parameters = method.getParameters();
-        this.filterParamIndex = findFilterParamIndex(this.parameters, method);
-        this.resource = parameters[filterParamIndex].getAnnotation(QueryFilterFormat.class).value();
+        Parameter[] parameters = method.getParameters();
+        Parameter filterParameter = parameters[findFilterParamIndex(parameters, method)];
+        this.resource = filterParameter.getAnnotation(QueryFilterFormat.class).value();
+        this.filterParameterName = AiToolSpecifications.parameterName(filterParameter);
+        // Reuse langchain4j's executor for the actual invocation; propagate exceptions so the
+        // orchestrator can turn a tool failure into a recoverable error result (see ToolCatalog).
+        this.delegate = DefaultToolExecutor.builder()
+            .object(toolInstance)
+            .originalMethod(method)
+            .methodToInvoke(method)
+            .propagateToolExecutionExceptions(true)
+            .build();
+    }
+
+    @Override
+    public ToolExecutionResult executeWithContext(final ToolExecutionRequest request, final InvocationContext context) {
+        Map<String, Object> args = parseArguments(request.arguments());
+        List<QueryFilter> filters = reassembleFilters(resource, args);
+        // Hand the delegate the minimal { field, operation, value } shape rather than serialized
+        // QueryFilter objects: those carry derived getters (e.g. `node`) that the delegate's strict
+        // JSON codec rejects. The delegate re-materializes each leaf through QueryFilter's @JsonCreator.
+        args.put(filterParameterName, filters.stream().map(QueryFilterToolExecutor::toArgument).toList());
+
+        ToolExecutionRequest rewritten = ToolExecutionRequest.builder()
+            .id(request.id())
+            .name(request.name())
+            .arguments(writeArguments(args))
+            .build();
+        return delegate.executeWithContext(rewritten, context);
     }
 
     @Override
     public String execute(final ToolExecutionRequest request, final Object memoryId) {
-        Map<String, Object> args = parseArguments(request.arguments());
-        List<QueryFilter> filters = reassembleFilters(resource, args);
-        Object[] bound = bindArguments(parameters, filterParamIndex, filters, args);
-        return invoke(method, toolInstance, bound);
+        return executeWithContext(request, InvocationContext.builder().chatMemoryId(memoryId).build()).resultText();
     }
 
     /** Locate the single {@code @QueryFilterFormat} parameter; fail if the method declares none. */
@@ -67,47 +87,6 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
             }
         }
         throw new IllegalArgumentException("No @QueryFilterFormat parameter on " + method);
-    }
-
-    private static Object[] bindArguments(final Parameter[] parameters, final int filterParamIndex,
-        final List<QueryFilter> filters, final Map<String, Object> args) {
-        Object[] bound = new Object[parameters.length];
-        for (int i = 0; i < parameters.length; i++) {
-            bound[i] = bindArgument(parameters, filterParamIndex, i, filters, args);
-        }
-        return bound;
-    }
-
-    private static Object bindArgument(final Parameter[] parameters, final int filterParamIndex,
-        final int index, final List<QueryFilter> filters, final Map<String, Object> args) {
-        if (index == filterParamIndex) {
-            return filters;
-        }
-        Object raw = args.get(AiToolSpecifications.parameterName(parameters[index]));
-        if (raw == null) {
-            return null;
-        }
-        return MAPPER.convertValue(raw, MAPPER.getTypeFactory().constructType(parameters[index].getParameterizedType()));
-    }
-
-    private static String invoke(final Method method, final Object toolInstance, final Object[] bound) {
-        try {
-            Object result = method.invoke(toolInstance, bound);
-            return toText(method, result);
-        } catch (InvocationTargetException e) {
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
-            throw new RuntimeException(cause.getMessage(), cause);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Unable to invoke tool method " + method, e);
-        }
-    }
-
-    /** Mirror {@code DefaultToolExecutor.toText}: pass a String through, serialize anything else to JSON. */
-    private static String toText(final Method method, final Object result) {
-        if (method.getReturnType() == String.class) {
-            return result == null ? "" : (String) result;
-        }
-        return Json.toJson(result);
     }
 
     private static List<QueryFilter> reassembleFilters(final QueryFilter.Resource resource, final Map<String, Object> args) {
@@ -138,6 +117,15 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
         return filters;
     }
 
+    /** The minimal creator-recognized shape of a leaf filter — enums serialize via their @JsonValue. */
+    private static Map<String, Object> toArgument(final QueryFilter filter) {
+        Map<String, Object> argument = new LinkedHashMap<>();
+        argument.put("field", filter.field());
+        argument.put("operation", filter.operation());
+        argument.put("value", filter.value());
+        return argument;
+    }
+
     @SuppressWarnings("unchecked")
     private static Map<String, Object> parseArguments(final String json) {
         if (json == null || json.isBlank()) {
@@ -147,6 +135,14 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
             return new LinkedHashMap<>(MAPPER.readValue(json, Map.class));
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid tool arguments JSON: " + e.getMessage(), e);
+        }
+    }
+
+    private static String writeArguments(final Map<String, Object> args) {
+        try {
+            return MAPPER.writeValueAsString(args);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Unable to serialize tool arguments: " + e.getMessage(), e);
         }
     }
 }

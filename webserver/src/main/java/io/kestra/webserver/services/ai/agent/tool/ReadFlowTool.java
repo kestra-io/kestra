@@ -2,11 +2,11 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.Optional;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -43,8 +43,8 @@ public class ReadFlowTool implements AiPlatformTool {
         @P(name = "namespace", value = "The namespace of the flow") String namespace,
         @P(name = "flowId", value = "The id of the flow") String flowId,
         @P(name = "revision", value = "Optional flow revision to read; omit to read the latest revision", required = false) Integer revision,
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        String tenant = AgentCallContext.resolveTenant(tenantId);
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         FlowWithSource flow = flowRepository.findByIdWithSource(tenant, namespace, flowId, Optional.ofNullable(revision), false)
             .orElseThrow(

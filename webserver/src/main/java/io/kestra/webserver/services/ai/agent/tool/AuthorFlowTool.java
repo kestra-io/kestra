@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
@@ -14,8 +16,6 @@ import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.UserInfo;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -54,8 +54,8 @@ public class AuthorFlowTool implements AiAuthoringTool {
     public Result authorFlow(
         @P(name = "instructions", value = "What the flow should do, or how the current flow should be changed") String instructions,
         @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown", required = false) String namespace,
-        @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml) {
-        AgentCallContext.Context context = AgentCallContext.require();
+        @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml,
+        final AgentCallContext.Context context) {
 
         AiServiceInterface aiService = aiServiceManager.getAiService(context.providerId());
         if (aiService == null) {
@@ -78,7 +78,6 @@ public class AuthorFlowTool implements AiAuthoringTool {
 
         String constraints = validate(context.tenant(), yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.FLOW, yaml, constraints == null, constraints);
-        AgentCallContext.publishDraft(draft);
 
         return Result.drafted(draft);
     }
@@ -102,9 +101,16 @@ public class AuthorFlowTool implements AiAuthoringTool {
      * @param validationError the validation constraints when invalid, else null
      * @param yaml the generated YAML
      */
-    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml) {
+    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml)
+        implements
+            PublishableToolResult {
         static Result drafted(final ArtefactDraft draft) {
             return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml());
+        }
+
+        @Override
+        public ArtefactDraft artefact() {
+            return new ArtefactDraft(draftId, kind, yaml, valid, validationError);
         }
     }
 }

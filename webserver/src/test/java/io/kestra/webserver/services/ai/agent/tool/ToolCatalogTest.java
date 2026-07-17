@@ -1,6 +1,5 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -9,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,17 +18,13 @@ class ToolCatalogTest {
     private static final AgentToolPermissionEvaluator ALLOW_ALL = (permission, tenant, principal) -> true;
     private static final AgentToolPermissionEvaluator DENY_ALL = (permission, tenant, principal) -> false;
 
-    /** Default OSS factory hides the tenant parameter; the multi-tenant one exposes it. */
-    private static final AiToolSpecFactory HIDE_TENANT = new DefaultAiToolSpecFactory();
-    private static final AiToolSpecFactory EXPOSE_TENANT = method -> AiToolSpecifications.toolSpecificationFrom(method, true);
-
     @Test
     void shouldExecuteToolWhenPermissionAllowed() {
         // Given
         ToolCatalog catalog = newCatalog(ALLOW_ALL);
 
         // When
-        String result = catalog.dispatch(request("update-artefact"), AgentCallContext.Context.ofTenant("unit"));
+        String result = catalog.dispatch(request("update-artefact"), AgentCallContext.Context.ofTenant("unit")).text();
 
         // Then
         assertThat(result).isEqualTo("updated: exec-1");
@@ -60,57 +54,8 @@ class ToolCatalogTest {
     }
 
     @Test
-    void shouldHideTenantIdFromSpecWithDefaultFactory() {
-        // Given — the default (OSS) spec factory
-        ToolCatalog catalog = newCatalog(ALLOW_ALL, HIDE_TENANT);
-
-        // When
-        JsonObjectSchema params = (JsonObjectSchema) catalog.byName("tenant-echo").orElseThrow().specification().parameters();
-
-        // Then — the @TenantId parameter is not advertised to the model
-        assertThat(params.properties()).doesNotContainKey("tenantId");
-    }
-
-    @Test
-    void shouldExposeTenantIdInSpecWithMultiTenantFactory() {
-        // Given — a spec factory that exposes tenant targeting (as a multi-tenant surface does)
-        ToolCatalog catalog = newCatalog(ALLOW_ALL, EXPOSE_TENANT);
-
-        // When
-        JsonObjectSchema params = (JsonObjectSchema) catalog.byName("tenant-echo").orElseThrow().specification().parameters();
-
-        // Then — the parameter is advertised so a multi-tenant caller can target another tenant
-        assertThat(params.properties()).containsKey("tenantId");
-    }
-
-    @Test
-    void shouldBindTenantIdEvenWhenHiddenFromSpec() {
-        // Given — an evaluator recording the tenant it is asked about
-        List<String> checkedTenants = new ArrayList<>();
-        AgentToolPermissionEvaluator recording = (permission, tenant, principal) ->
-        {
-            checkedTenants.add(tenant);
-            return true;
-        };
-        ToolCatalog catalog = newCatalog(recording);
-        ToolExecutionRequest request = ToolExecutionRequest.builder()
-            .id("c1")
-            .name("tenant-echo")
-            .arguments("{\"tenantId\":\"other-tenant\"}")
-            .build();
-
-        // When — the caller's own tenant is 'unit' but the call targets 'other-tenant'
-        String result = catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit"));
-
-        // Then — the coarse gate checks only the caller's own tenant (resolveTenant is plumbing),
-        // yet the parameter still binds and the tool runs against the requested tenant
-        assertThat(checkedTenants).containsExactly("unit");
-        assertThat(result).isEqualTo("other-tenant");
-    }
-
-    @Test
-    void shouldUseCallerTenantWhenNoTenantIdProvided() {
-        // Given
+    void shouldRunToolAgainstCallerTenant() {
+        // Given — the tenant is a property of the conversation, carried on the call context, never a tool arg
         ToolCatalog catalog = newCatalog(ALLOW_ALL);
         ToolExecutionRequest request = ToolExecutionRequest.builder()
             .id("c1")
@@ -118,8 +63,8 @@ class ToolCatalogTest {
             .arguments("{}")
             .build();
 
-        // When / Then
-        assertThat(catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit"))).isEqualTo("unit");
+        // When / Then — the tool reads the caller's tenant from the bound context
+        assertThat(catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit")).text()).isEqualTo("unit");
     }
 
     @Test
@@ -128,11 +73,11 @@ class ToolCatalogTest {
         // how a replacement subclass extends a base tool
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
-        ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL, HIDE_TENANT);
+        ToolCatalog catalog = new ToolCatalog(List.of(new OverridingEchoTool()), List.of(), docs, ALLOW_ALL);
         ToolExecutionRequest request = ToolExecutionRequest.builder().id("c1").name("tenant-echo").arguments("{}").build();
 
         // When — the spec is derived from the inherited @Tool method, execution dispatches virtually
-        String result = catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit"));
+        String result = catalog.dispatch(request, AgentCallContext.Context.ofTenant("unit")).text();
 
         // Then — the subclass override ran
         assertThat(result).isEqualTo("overridden:unit");
@@ -149,14 +94,36 @@ class ToolCatalogTest {
             .hasMessageContaining("no-such-tool");
     }
 
-    private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator) {
-        return newCatalog(evaluator, HIDE_TENANT);
+    @Test
+    void shouldSurfaceArtefactWhenToolReturnsPublishableResult() {
+        // Given
+        ToolCatalog catalog = newCatalog(ALLOW_ALL);
+
+        // When
+        ToolCatalog.DispatchResult result = catalog.dispatch(request("draft-artefact"), AgentCallContext.Context.ofTenant("unit"));
+
+        // Then — the publishable artefact is surfaced for the orchestrator to persist and stream
+        assertThat(result.artefact()).isNotNull();
+        assertThat(result.artefact().draftId()).isEqualTo("draft-exec-1");
     }
 
-    private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator, final AiToolSpecFactory specFactory) {
+    @Test
+    void shouldSurfaceNoArtefactForNonPublishableResult() {
+        // Given
+        ToolCatalog catalog = newCatalog(ALLOW_ALL);
+
+        // When
+        ToolCatalog.DispatchResult result = catalog.dispatch(request("update-artefact"), AgentCallContext.Context.ofTenant("unit"));
+
+        // Then
+        assertThat(result.artefact()).isNull();
+        assertThat(result.text()).isEqualTo("updated: exec-1");
+    }
+
+    private static ToolCatalog newCatalog(final AgentToolPermissionEvaluator evaluator) {
         DocsMcpToolProvider docs = mock(DocsMcpToolProvider.class);
         when(docs.tools()).thenReturn(Map.of());
-        return new ToolCatalog(List.of(new TestMutateTool(), new TestTenantEchoTool()), List.of(new TestDraftTool()), docs, evaluator, specFactory);
+        return new ToolCatalog(List.of(new TestMutateTool(), new TestTenantEchoTool()), List.of(new TestDraftTool()), docs, evaluator);
     }
 
     private static ToolExecutionRequest request(final String name) {
@@ -170,8 +137,8 @@ class ToolCatalogTest {
     /** Overrides the inherited {@code @Tool} method without re-annotating it — like a replacement subclass. */
     private static final class OverridingEchoTool extends TestTenantEchoTool {
         @Override
-        public String tenantEcho(final String tenantId) {
-            return "overridden:" + super.tenantEcho(tenantId);
+        public String tenantEcho(final AgentCallContext.Context context) {
+            return "overridden:" + super.tenantEcho(context);
         }
     }
 }

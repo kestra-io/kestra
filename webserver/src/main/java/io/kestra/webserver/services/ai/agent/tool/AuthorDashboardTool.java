@@ -2,6 +2,8 @@ package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.Objects;
 
+import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
@@ -12,8 +14,6 @@ import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.UserInfo;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -54,8 +54,8 @@ public class AuthorDashboardTool implements AiAuthoringTool {
         @P(name = "instructions", value = "What the dashboard should display, or how the current dashboard should be changed") String instructions,
         @P(
             name = "currentDashboardYaml", value = "The full current dashboard YAML when revising an existing dashboard; omit when creating a new one", required = false
-        ) String currentDashboardYaml) {
-        AgentCallContext.Context context = AgentCallContext.require();
+        ) String currentDashboardYaml,
+        final AgentCallContext.Context context) {
 
         AiServiceInterface aiService = aiServiceManager.getAiService(context.providerId());
         if (aiService == null) {
@@ -77,7 +77,6 @@ public class AuthorDashboardTool implements AiAuthoringTool {
 
         String constraints = validate(yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.DASHBOARD, yaml, constraints == null, constraints);
-        AgentCallContext.publishDraft(draft);
 
         return Result.drafted(draft);
     }
@@ -104,9 +103,16 @@ public class AuthorDashboardTool implements AiAuthoringTool {
      * @param validationError the validation constraints when invalid, else null
      * @param yaml the generated YAML
      */
-    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml) {
+    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml)
+        implements
+            PublishableToolResult {
         static Result drafted(final ArtefactDraft draft) {
             return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml());
+        }
+
+        @Override
+        public ArtefactDraft artefact() {
+            return new ArtefactDraft(draftId, kind, yaml, valid, validationError);
         }
     }
 }

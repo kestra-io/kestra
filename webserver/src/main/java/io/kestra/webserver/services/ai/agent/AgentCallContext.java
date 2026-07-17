@@ -1,19 +1,27 @@
 package io.kestra.webserver.services.ai.agent;
 
-import java.util.function.Consumer;
+import java.util.Map;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactDraft;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
 
+import dev.langchain4j.invocation.InvocationContext;
+import dev.langchain4j.invocation.LangChain4jManaged;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * Per-dispatch context bound to the executor thread while a tool call runs, so {@code @Tool} methods
- * can read the caller's tenant and principal, the turn's provider and conversation, and publish
- * artefact drafts back to the turn without depending on the orchestrator.
+ * The per-call context a {@code @Tool} method runs against: the caller's tenant and principal, and the
+ * turn's provider and conversation.
+ *
+ * <p>
+ * {@link Context} is a langchain4j {@link LangChain4jManaged managed argument}: {@link #into(Context)}
+ * places it in the {@link InvocationContext}'s managed parameters (set by
+ * {@link io.kestra.webserver.services.ai.agent.tool.ToolCatalog#dispatch}), and
+ * {@code DefaultToolExecutor} injects it <em>by type</em> into any {@code @Tool} method that declares
+ * a {@link Context} parameter. langchain4j also omits managed parameters from the generated tool
+ * schema, so the context never reaches the model — and nothing is bound to the executor thread.
+ * </p>
  */
 public final class AgentCallContext {
-    private static final ThreadLocal<Context> CURRENT = new ThreadLocal<>();
 
     private AgentCallContext() {
     }
@@ -22,48 +30,19 @@ public final class AgentCallContext {
         String tenant,
         @Nullable AgentPrincipal principal,
         @Nullable String providerId,
-        @Nullable String conversationId,
-        @Nullable Consumer<ArtefactDraft> draftPublisher) {
+        @Nullable String conversationId) implements LangChain4jManaged {
+
         public static Context ofTenant(final String tenant) {
-            return new Context(tenant, null, null, null, null);
+            return new Context(tenant, null, null, null);
         }
-    }
-
-    public static void set(final Context context) {
-        CURRENT.set(context);
-    }
-
-    public static void clear() {
-        CURRENT.remove();
-    }
-
-    public static Context require() {
-        Context context = CURRENT.get();
-        if (context == null) {
-            throw new IllegalStateException("No agent call context bound to this thread");
-        }
-        return context;
     }
 
     /**
-     * The effective tenant a tool call runs against: the explicitly requested {@code tenantId} if the
-     * caller provided one, otherwise the caller's own (conversation) tenant. This is plumbing only —
-     * it performs no authorization. On a single-tenant surface the parameter is hidden from the tool
-     * spec and this always returns the caller's tenant; a surface with multiple tenants exposes the
-     * parameter, and its tool implementations validate the returned tenant before acting on it.
+     * Build an {@link InvocationContext} carrying the context as a managed argument for a single tool
+     * dispatch; {@code DefaultToolExecutor} injects it into the tool method's {@link Context} parameter.
      */
-    public static String resolveTenant(@Nullable final String tenantId) {
-        if (tenantId == null || tenantId.isBlank()) {
-            return require().tenant();
-        }
-        return tenantId;
-    }
-
-    public static void publishDraft(final ArtefactDraft draft) {
-        Consumer<ArtefactDraft> publisher = require().draftPublisher();
-        if (publisher == null) {
-            throw new IllegalStateException("No draft publisher bound to this agent call context");
-        }
-        publisher.accept(draft);
+    public static InvocationContext into(final Context context) {
+        Map<Class<? extends LangChain4jManaged>, LangChain4jManaged> managed = Map.of(Context.class, context);
+        return InvocationContext.builder().managedParameters(managed).build();
     }
 }

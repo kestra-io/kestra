@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
-import io.kestra.webserver.services.ai.agent.domain.ArtefactKind;
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentToolCall;
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.AiAuthoringTool;
 import io.kestra.webserver.services.ai.agent.tool.AiPlatformTool;

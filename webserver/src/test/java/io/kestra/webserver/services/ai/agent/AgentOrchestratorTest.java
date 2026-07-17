@@ -17,25 +17,27 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.ai.agent.models.AgentMessageType;
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThreadStatus;
+import io.kestra.core.ai.agent.models.AgentToolCall;
+import io.kestra.core.ai.agent.repositories.MessageStore;
+import io.kestra.core.ai.agent.repositories.ThreadStore;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
-import io.kestra.webserver.services.ai.agent.domain.AgentMessageType;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolCall;
-import io.kestra.webserver.services.ai.agent.store.MessageStore;
-import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.DefaultAgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -105,7 +107,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then
         assertThat(sink.names()).containsExactly(AgentEvents.TOKEN, AgentEvents.DONE);
@@ -118,13 +120,54 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldAppendAdditionalContextAsLastModelMessageWithoutPersistingItWhenProvided() {
+        // Given — a turn carrying caller-supplied additional context
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("You are on the flow editor."));
+        CollectingSink sink = new CollectingSink();
+        Map<String, Object> additionalContext = Map.of(
+            "view", "flow-editor",
+            "namespace", "company.team",
+            "flowId", "hello"
+        );
+
+        // When
+        orchestrator.runTurn(
+            new AgentTurnContext(thread, "what am I looking at?", AgentMode.ASK, TENANT, null, null, additionalContext), sink
+        );
+
+        // Then — the context is rendered as the LAST message the model receives...
+        List<ChatMessage> sent = scriptedModel.lastRequestMessages();
+        ChatMessage last = sent.get(sent.size() - 1);
+        assertThat(last).isInstanceOf(UserMessage.class);
+        String lastText = ((UserMessage) last).singleText();
+        assertThat(lastText)
+            .contains("Additional context")
+            .contains("flow-editor")
+            .contains("company.team")
+            .contains("hello");
+
+        // ...the user's prompt is still sent, ahead of the context message...
+        assertThat(sent)
+            .filteredOn(UserMessage.class::isInstance)
+            .anySatisfy(m -> assertThat(((UserMessage) m).singleText()).isEqualTo("what am I looking at?"));
+
+        // ...and the context is NOT persisted to the thread history (only the prompt and the answer are)
+        assertThat(messageStore.load(thread.uid()))
+            .extracting(m -> m.role() + "/" + m.type())
+            .containsExactly("USER/TEXT", "ASSISTANT/TEXT");
+        assertThat(messageStore.load(thread.uid()))
+            .noneSatisfy(m -> assertThat(m.content()).contains("Additional context"));
+    }
+
+    @Test
     void shouldDeriveTitleFromFirstUserMessageWhenTitleAbsent() {
         // Given
         AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("answer"));
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "How do retries work?", AgentMode.ASK, TENANT, null, null), new CollectingSink());
+        orchestrator.runTurn(new AgentTurnContext(thread, "How do retries work?", AgentMode.ASK, TENANT, null, null, null), new CollectingSink());
 
         // Then
         assertThat(reload(thread).title()).isEqualTo("How do retries work?");
@@ -138,7 +181,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 fail?", AgentMode.PLAN, TENANT, null, null, null), first);
         AgentThread awaiting = reload(thread);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "read-execution-logs", "exec-1"))));
         scriptedModel.enqueue(AiMessage.from("The run failed on the load task."));
@@ -170,7 +213,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null, null), sink);
 
         // Then — suspended before executing; a turn is parked and the thread awaits confirmation
         assertThat(sink.names()).containsExactly(AgentEvents.PROPOSED_ACTION, AgentEvents.DONE);
@@ -188,7 +231,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null, null), first);
         AgentThread awaiting = reload(thread);
         scriptedModel.enqueue(AiMessage.from("Done, I restarted it."));
         CollectingSink sink = new CollectingSink();
@@ -214,7 +257,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null, null), first);
         AgentThread awaiting = reload(thread);
         scriptedModel.enqueue(AiMessage.from("Okay, I won't restart it."));
         CollectingSink sink = new CollectingSink();
@@ -240,7 +283,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "draft a flow", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "draft a flow", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — the draft is streamed between the tool call and its result, and the turn finishes IDLE
         assertThat(sink.names()).containsExactly(
@@ -283,7 +326,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "read the logs of exec-1", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "read the logs of exec-1", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — rejected result recorded, loop continues to an answer
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
@@ -297,7 +340,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.EDIT);
         scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "update it", AgentMode.EDIT, TENANT, null, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "update it", AgentMode.EDIT, TENANT, null, null, null), first);
         AgentThread awaiting = reload(thread);
         deniedTools.add("update-artefact");
         scriptedModel.enqueue(AiMessage.from("I could not perform the update: permission denied."));
@@ -328,7 +371,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null, null, null), sink);
 
         // Then — a plan card (no tool) awaiting confirmation
         AgentEvents.ProposedActionEvent plan = (AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION);
@@ -343,7 +386,7 @@ class AgentOrchestratorTest {
         AgentThread thread = newThread(AgentMode.PLAN);
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read logs\n2. restart"));
         CollectingSink first = new CollectingSink();
-        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null, null), first);
+        orchestrator.runTurn(new AgentTurnContext(thread, "fix it", AgentMode.PLAN, TENANT, null, null, null), first);
         AgentThread awaiting = reload(thread);
         CollectingSink sink = new CollectingSink();
 
@@ -367,7 +410,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — the disallowed call is rejected (not dispatched) and the loop continues to an answer
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
@@ -415,7 +458,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "read execution missing", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "read execution missing", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — the throw is a recoverable error result (not a turn failure); the loop continues to an answer
         assertThat(sink.error).isNull();
@@ -449,7 +492,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 and exec-2 fail?", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "why did exec-1 and exec-2 fail?", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — BOTH calls run (neither is silently dropped), then the loop continues to a final answer
         assertThat(sink.names()).containsExactly(
@@ -477,7 +520,7 @@ class AgentOrchestratorTest {
         sink.cancel();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — nothing is emitted or errored, and the thread is returned to IDLE
         assertThat(sink.names()).isEmpty();
@@ -494,7 +537,7 @@ class AgentOrchestratorTest {
         sink.cancelOnFirstEmit();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hi", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — the streamed token was delivered, but the turn aborts before DONE (without erroring
         // or looping again) and the thread is returned to IDLE
@@ -514,7 +557,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When — the bounded model-call wait (PT1S in tests) elapses
-        orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello?", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — the turn fails cleanly with a timeout and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
@@ -529,7 +572,7 @@ class AgentOrchestratorTest {
         CollectingSink sink = new CollectingSink();
 
         // When
-        orchestrator.runTurn(new AgentTurnContext(thread, "hello", AgentMode.ASK, TENANT, null, null), sink);
+        orchestrator.runTurn(new AgentTurnContext(thread, "hello", AgentMode.ASK, TENANT, null, null, null), sink);
 
         // Then — the turn fails cleanly: error surfaced and the thread is reset to IDLE
         assertThat(sink.error).isNotNull();
@@ -633,6 +676,7 @@ class AgentOrchestratorTest {
 
     private static final class ScriptedStreamingChatModel implements StreamingChatModel {
         private final Deque<AiMessage> responses = new ArrayDeque<>();
+        private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
         private volatile boolean hang;
 
         private void enqueue(final AiMessage message) {
@@ -645,11 +689,24 @@ class AgentOrchestratorTest {
 
         private void clear() {
             responses.clear();
+            requestMessages.clear();
             this.hang = false;
+        }
+
+        /**
+         * A snapshot of the messages the orchestrator sent on its most recent chat call. Snapshotted
+         * because the orchestrator keeps mutating the same list as the loop appends responses.
+         */
+        private List<ChatMessage> lastRequestMessages() {
+            if (requestMessages.isEmpty()) {
+                throw new AssertionError("No chat request was sent to the model");
+            }
+            return requestMessages.get(requestMessages.size() - 1);
         }
 
         @Override
         public void chat(final ChatRequest request, final StreamingChatResponseHandler handler) {
+            requestMessages.add(new ArrayList<>(request.messages()));
             if (hang) {
                 return; // never complete the response -> the orchestrator's bounded wait must time out
             }

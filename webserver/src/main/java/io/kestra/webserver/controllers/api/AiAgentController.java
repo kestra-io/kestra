@@ -4,6 +4,12 @@ import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import io.kestra.core.ai.agent.models.AgentMode;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
+import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThreadStatus;
+import io.kestra.core.ai.agent.repositories.MessageStore;
+import io.kestra.core.ai.agent.repositories.ThreadStore;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.tenant.TenantService;
@@ -21,12 +27,6 @@ import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiDecision;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
-import io.kestra.webserver.services.ai.agent.domain.AgentMode;
-import io.kestra.webserver.services.ai.agent.domain.AgentPrincipal;
-import io.kestra.webserver.services.ai.agent.domain.AgentThread;
-import io.kestra.webserver.services.ai.agent.domain.AgentThreadStatus;
-import io.kestra.webserver.services.ai.agent.store.MessageStore;
-import io.kestra.webserver.services.ai.agent.store.ThreadStore;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpStatus;
@@ -94,7 +94,6 @@ public class AiAgentController {
             .tenant(tenant)
             .title(request.title())
             .mode(request.mode() != null ? request.mode() : AgentMode.ASK)
-            .scope(request.scope())
             .status(AgentThreadStatus.IDLE)
             .createdAt(now)
             .updatedAt(now)
@@ -131,7 +130,7 @@ public class AiAgentController {
         AgentPrincipal principal = principalResolver.resolve();
         return stream(
             sink -> orchestrator.runTurn(
-                new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal), sink
+                new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink
             )
         );
     }

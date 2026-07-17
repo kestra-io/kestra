@@ -59,15 +59,13 @@ class QueryFilterToolTest {
 
     @Test
     void shouldExpandFilterParamIntoPerFieldSchema() {
-        // When — OSS spec (tenant targeting not offered)
-        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod(), false);
+        // When
+        ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod());
 
         // Then — the generic "filters" array is gone; each LOG field is its own {operator,value} object
         JsonObjectSchema params = (JsonObjectSchema) spec.parameters();
         assertThat(params.properties()).containsKey("executionId");
         assertThat(params.properties()).doesNotContainKey("filters");
-        // the hidden @TenantId parameter is not advertised alongside the expanded filters
-        assertThat(params.properties()).doesNotContainKey("tenantId");
         assertThat(params.properties()).containsKeys("TASK_ID", "LEVEL", "NAMESPACE");
         // The per-field operator enum is scoped to that field's supportedOp()
         JsonObjectSchema level = (JsonObjectSchema) params.properties().get("LEVEL");

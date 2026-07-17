@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.Restart;
 import io.kestra.core.models.executions.Execution;
@@ -8,8 +10,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -46,8 +46,8 @@ public class RestartExecutionTool implements AiPlatformTool {
     public Result restartExecution(
         @P(name = "executionId", value = "The id of the execution to restart") String executionId,
         @P(name = "revision", value = "Optional flow revision to restart with; omit to use the execution's own revision", required = false) Integer revision,
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        String tenant = AgentCallContext.resolveTenant(tenantId);
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         Execution execution = executionRepository.findById(tenant, executionId)
             .orElseThrow(() -> new IllegalArgumentException("Execution not found: '%s'".formatted(executionId)));

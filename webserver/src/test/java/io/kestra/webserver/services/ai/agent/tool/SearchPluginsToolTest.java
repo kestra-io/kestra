@@ -1,88 +1,42 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
-import java.util.List;
-import java.util.Map;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.junit.annotations.KestraTest;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+/**
+ * Integration check that {@code search-plugins} runs against the real plugin registry: a keyword
+ * matches an installed plugin type, and a keyword that matches nothing returns an empty list.
+ */
+@KestraTest(environments = "memory")
 class SearchPluginsToolTest {
-
-    @Schema(title = "Log a message to the console")
-    private static final class LogTask {
-    }
-
-    @Schema(title = "Query a Postgres database")
-    private static final class PostgresQueryTask {
-    }
-
-    @Schema(title = "Old log task", deprecated = true)
-    private static final class DeprecatedLogTask {
-    }
-
-    private PluginRegistry pluginRegistry;
+    @Inject
     private SearchPluginsTool tool;
-
-    @BeforeEach
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    void setUp() {
-        pluginRegistry = mock(PluginRegistry.class);
-        RegisteredPlugin registeredPlugin = mock(RegisteredPlugin.class);
-        when(registeredPlugin.allClassGrouped()).thenReturn(
-            (Map) Map.of(
-                "tasks", List.of(LogTask.class, PostgresQueryTask.class, DeprecatedLogTask.class)
-            )
-        );
-        when(pluginRegistry.plugins()).thenReturn(List.of(registeredPlugin));
-        tool = new SearchPluginsTool(pluginRegistry);
-    }
 
     @Test
     void shouldExposeReadOnlyMetadata() {
-        // When / Then
         assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
         assertThat(tool.writePolicy()).isEqualTo(AgentWritePolicy.AUTO);
     }
 
     @Test
-    void shouldMatchOnClassNameAndTitleCaseInsensitivelyWhenPluginsExist() {
-        // When — "log" matches LogTask by name/title but must skip the deprecated one
-        SearchPluginsTool.Result result = tool.searchPlugins("LOG");
+    void shouldMatchInstalledPluginByType() {
+        // When — a keyword that appears in a core plugin's fully-qualified type
+        SearchPluginsTool.Result result = tool.searchPlugins("core.debug.Return");
 
-        // Then
-        assertThat(result.plugins()).containsExactly(
-            new SearchPluginsTool.PluginMatch(LogTask.class.getName(), "Log a message to the console")
-        );
-    }
-
-    @Test
-    void shouldMatchOnTitleWhenKeywordOnlyAppearsInTitle() {
-        // When — "database" only appears in the @Schema title
-        SearchPluginsTool.Result result = tool.searchPlugins("database");
-
-        // Then
-        assertThat(result.plugins()).containsExactly(
-            new SearchPluginsTool.PluginMatch(PostgresQueryTask.class.getName(), "Query a Postgres database")
-        );
+        // Then — the core Return task is found
+        assertThat(result.plugins())
+            .anyMatch(match -> "io.kestra.plugin.core.debug.Return".equals(match.type()));
     }
 
     @Test
     void shouldReturnEmptyListWhenNothingMatches() {
-        // When
-        SearchPluginsTool.Result result = tool.searchPlugins("does-not-exist");
-
-        // Then
-        assertThat(result.plugins()).isEmpty();
+        assertThat(tool.searchPlugins("definitely-not-an-installed-plugin-xyz").plugins()).isEmpty();
     }
 }

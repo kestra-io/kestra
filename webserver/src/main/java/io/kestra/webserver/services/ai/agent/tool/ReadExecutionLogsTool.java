@@ -3,13 +3,13 @@ package io.kestra.webserver.services.ai.agent.tool;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.ai.agent.models.AgentToolFamily;
+import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
-import io.kestra.webserver.services.ai.agent.domain.AgentToolFamily;
-import io.kestra.webserver.services.ai.agent.domain.AgentWritePolicy;
 import io.kestra.webserver.utils.PageableUtils;
 
 import dev.langchain4j.agent.tool.P;
@@ -46,8 +46,8 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
     public Result readExecutionLogs(
         @P(name = "executionId", value = "The id of the execution whose logs to read") String executionId,
         @QueryFilterFormat(QueryFilter.Resource.LOG) List<QueryFilter> filters,
-        @TenantId @P(name = "tenantId", value = "The tenant to run against; omit to use your current tenant", required = false) String tenantId) {
-        String tenant = AgentCallContext.resolveTenant(tenantId);
+        final AgentCallContext.Context context) {
+        String tenant = context.tenant();
 
         // executionId is the authoritative scope; ignore any EXECUTION_ID the model added via filters.
         List<QueryFilter> effective = new ArrayList<>();

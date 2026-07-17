@@ -1,8 +1,8 @@
-package io.kestra.webserver.services.ai.agent.store;
+package io.kestra.core.ai.agent.repositories;
 
 import java.util.List;
 
-import io.kestra.webserver.services.ai.agent.domain.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessage;
 
 /**
  * Store for the {@link AgentMessage} history of Copilot conversation threads.

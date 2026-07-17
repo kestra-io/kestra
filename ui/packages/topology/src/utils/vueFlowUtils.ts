@@ -547,7 +547,7 @@ export function generateGraph(
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
-                draggable: nodeType === "task" ? !isReadOnlyTask : false,
+                draggable: false,
                 data: {
                     node: node,
                     parent: cluster ? cluster : undefined,

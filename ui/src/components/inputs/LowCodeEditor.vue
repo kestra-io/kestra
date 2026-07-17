@@ -36,8 +36,6 @@
             @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
-            @swapped-task="onSwappedTask"
-            @message="message"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
@@ -480,7 +478,6 @@
         "on-edit",
         "loading",
         "expand-subflow",
-        "swapped-task",
     ])
 
     const coreStore = useCoreStore()
@@ -791,19 +788,6 @@
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true
         isDrawerOpen.value = true
-    }
-
-    const onSwappedTask = (event: any) => {
-        emit("swapped-task", event.swappedTasks)
-        emit("on-edit", event.newSource, true)
-    }
-
-    const message = (event: any) => {
-        coreStore.message = {
-            variant: event.variant,
-            title: t(event.title),
-            message: t(event.message),
-        }
     }
 
     const expandSubflow = (event: any) => {

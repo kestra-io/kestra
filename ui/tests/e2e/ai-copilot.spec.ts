@@ -107,7 +107,7 @@ test.describe("AI Copilot", () => {
             })
         })
 
-        // Default mode is already Build (EDIT); the stub returns a proposal regardless of mode.
+        // Default mode is already Edit (EDIT); the stub returns a proposal regardless of mode.
         await page.locator(D.input).fill("restart my failed execution")
         await page.locator(D.send).click()
 

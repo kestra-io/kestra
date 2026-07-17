@@ -10,7 +10,7 @@
  * for the shapes the frontend exchanges with `…/ai/threads`.
  */
 
-/** Conversation mode. NOTE: the Figma design labels EDIT as "Build". */
+/** Conversation mode. */
 export type Mode = "ASK" | "EDIT" | "PLAN"
 
 /** The resting/working state of a thread — the single source of truth for what the UI may do next. */

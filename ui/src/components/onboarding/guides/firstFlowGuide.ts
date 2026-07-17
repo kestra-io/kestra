@@ -225,7 +225,7 @@ tasks:
         title: "onboarding.steps.edit_flow_from_execution.title",
         description: "onboarding.steps.edit_flow_from_execution.description",
         overlayPosition: {vertical: "bottom", horizontal: "right"},
-        targetSelector: "[data-onboarding-target=\"execution-edit-flow-button\"], .execution-edit-flow-button",
+        targetSelector: "[data-onboarding-target=\"execution-actions-menu\"], .execution-edit-flow-button",
         actionNote: "onboarding.actions.edit_flow_to_continue",
         shouldAutoAdvance: ({routeName}) => routeName === "flows/update",
         validate: ({routeName}) => {

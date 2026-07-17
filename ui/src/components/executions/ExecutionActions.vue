@@ -1,6 +1,6 @@
 <template>
     <KsDropdown trigger="click" placement="bottom-end" :persistent="true">
-        <KsButton link>
+        <KsButton link data-onboarding-target="execution-actions-menu">
             <KsIcon><DotsVertical /></KsIcon>
             <span class="d-none d-lg-inline-block">{{ t("actions") }}</span>
         </KsButton>

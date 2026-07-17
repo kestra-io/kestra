@@ -23,7 +23,14 @@
     const index = ref(0)
     const word = computed(() => words.value[index.value] ?? "")
 
-    // Advance every 5s; start on a random word so a new turn doesn't always open on the same one.
+    /** A random index in [0, count) that is never the current one, so no word repeats back-to-back. */
+    function nextRandomIndex(current: number, count: number): number {
+        if (count <= 1) return 0
+        const pick = Math.floor(Math.random() * (count - 1))
+        return pick >= current ? pick + 1 : pick
+    }
+
+    // Show the words in random order, advancing every 5s (a random start, then a random next each tick).
     const ROTATE_MS = 5000
     let timer: ReturnType<typeof setInterval> | undefined
     onMounted(() => {
@@ -31,7 +38,7 @@
         if (count === 0) return
         index.value = Math.floor(Math.random() * count)
         timer = setInterval(() => {
-            index.value = (index.value + 1) % words.value.length
+            index.value = nextRandomIndex(index.value, words.value.length)
         }, ROTATE_MS)
     })
     onBeforeUnmount(() => clearInterval(timer))

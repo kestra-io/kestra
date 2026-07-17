@@ -24,14 +24,17 @@ describe("CopilotThinking", () => {
         expect(dots.attributes("aria-hidden")).toBe("true")
     })
 
-    it("advances to the next word every 5 seconds", async () => {
+    it("rotates to a different (random) word every 5 seconds, never repeating the current one", async () => {
         vi.useFakeTimers()
-        vi.spyOn(Math, "random").mockReturnValue(0)
+        // Random sequence: 0 → start on the first word; 0.5 → the next tick picks a different index.
+        const seq = [0, 0.5]
+        let i = 0
+        vi.spyOn(Math, "random").mockImplementation(() => seq[i++] ?? 0)
         const w = mountThinking()
-        expect(w.text()).toContain("Orchestrating")
+        const first = w.text()
 
         vi.advanceTimersByTime(5000)
         await w.vm.$nextTick()
-        expect(w.text()).toContain("Scheduling")
+        expect(w.text()).not.toBe(first)
     })
 })

@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -29,6 +30,7 @@ import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
+import io.kestra.webserver.services.ai.agent.internals.TurnWindow;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
 import io.kestra.webserver.services.ai.agent.tool.ToolPermissionDeniedException;
@@ -63,6 +65,8 @@ public class AgentOrchestrator {
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
     private final Duration modelCallTimeout;
+    private final int maxContextTurns;
+    private final int maxSequentialToolsInvocations;
 
     @Inject
     public AgentOrchestrator(
@@ -76,6 +80,8 @@ public class AgentOrchestrator {
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
         this.modelCallTimeout = configuration.modelCallTimeout();
+        this.maxContextTurns = configuration.maxContextTurns();
+        this.maxSequentialToolsInvocations = configuration.maxSequentialToolsInvocations();
     }
 
     public void runTurn(final AgentTurnContext context, final TurnEventSink sink) {
@@ -87,7 +93,7 @@ public class AgentOrchestrator {
 
             threadManager.appendUser(thread.uid(), traceId, context.prompt());
 
-            List<ChatMessage> projected = ChatMessageAdaptor.project(threadManager.load(thread.uid()));
+            List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(threadManager.load(thread.uid()), maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 2);
             messages.add(SystemMessage.from(profile.systemPrompt()));
             messages.addAll(projected);
@@ -96,7 +102,9 @@ public class AgentOrchestrator {
             additionalContextMessage(context.additionalContext()).ifPresent(messages::add);
 
             runLoop(
-                new AgentLoopContext(thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink
+                new AgentLoopContext(
+                    thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false), new AtomicInteger(0)
+                ), sink
             );
         } catch (Exception e) {
             failTurn(thread, sink, e);
@@ -135,20 +143,25 @@ public class AgentOrchestrator {
         final AgentPrincipal principal, final TurnEventSink sink) {
         try {
             List<AgentMessage> log = threadManager.load(running.uid());
-            String traceId = running.uid() + "-turn-" + (log.size() + 1);
+            AgentMessage pending = pendingActionOrThrow(log);
+            // A confirmation resume is part of the same logical turn as the action it confirms: reuse that
+            // turn's traceId so the resumed messages group with it. This keeps a turn = one trace, and
+            // keeps every tool-call/result pair inside one turn so turn-windowing can never split them.
+            String traceId = pending.traceId();
             ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
             StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
 
-            List<ChatMessage> projected = ChatMessageAdaptor.project(log);
+            List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(log, maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
             messages.add(SystemMessage.from(profile.systemPrompt()));
             messages.addAll(projected);
 
-            AgentMessage pending = pendingActionOrThrow(log);
             boolean planProposal = pending.toolCall() == null;
+            // Preserve the per-turn sequential-tool-invocation count across the suspend/resume by seeding
+            // it from the tool rounds already recorded in this turn.
             AgentLoopContext ctx = new AgentLoopContext(
                 running, running.tenant(), principal, providerId, running.mode(), profile,
-                model, messages, traceId, new AtomicBoolean(planProposal)
+                model, messages, traceId, new AtomicBoolean(planProposal), new AtomicInteger(toolInvocationsInTurn(log, traceId))
             );
 
             if (planProposal) {
@@ -260,6 +273,13 @@ public class AgentOrchestrator {
                 threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), ai.text());
                 finishTurn(ctx);
                 done(sink, AgentThreadStatus.IDLE);
+                return;
+            }
+
+            // The model requested tools: this is one sequential tool-calling round-trip. Guard against a
+            // runaway reasoning loop — on exhaustion the turn is ended gracefully, not failed.
+            if (ctx.toolInvocations().incrementAndGet() > maxSequentialToolsInvocations) {
+                stopForToolBudget(ctx, sink);
                 return;
             }
 
@@ -405,6 +425,27 @@ public class AgentOrchestrator {
 
     private void finishTurn(final AgentLoopContext ctx) {
         threadManager.finish(ctx.thread());
+    }
+
+    /**
+     * Ends a turn gracefully after the sequential tool-invocation cap is hit: records an assistant note
+     * (so the history explains the stop), streams it to the client, and returns the thread to IDLE — the
+     * turn is stopped, not failed, so the user can simply ask it to continue.
+     */
+    private void stopForToolBudget(final AgentLoopContext ctx, final TurnEventSink sink) {
+        log.warn("Copilot turn for thread {} hit the sequential tool-invocation cap ({})", ctx.thread().uid(), maxSequentialToolsInvocations);
+        String message = "I reached the maximum number of tool steps (%d) for this turn and stopped before finishing. Ask me to continue if you'd like me to keep going."
+            .formatted(maxSequentialToolsInvocations);
+        threadManager.appendAssistantText(ctx.thread().uid(), ctx.traceId(), message);
+        sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(message));
+        finishTurn(ctx);
+        done(sink, AgentThreadStatus.IDLE);
+    }
+
+    private static int toolInvocationsInTurn(final List<AgentMessage> log, final String traceId) {
+        return (int) log.stream()
+            .filter(m -> m.type() == AgentMessageType.TOOL_CALL && traceId.equals(m.traceId()))
+            .count();
     }
 
     private void abortCancelled(final AgentLoopContext ctx) {

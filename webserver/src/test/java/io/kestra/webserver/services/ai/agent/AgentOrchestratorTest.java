@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.ai.agent.AgentMessage;
 import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentMode;
@@ -578,6 +579,31 @@ class AgentOrchestratorTest {
         assertThat(sink.error).isNotNull();
         assertThat(sink.completed).isFalse();
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+    }
+
+    @Test
+    void shouldEndTurnGracefullyWhenSequentialToolCapIsReached() {
+        // Given — Ask mode; the model calls a read tool every round (a runaway reasoning loop). Enqueue
+        // one more tool-calling response than the default cap (25) so the cap is what stops the turn,
+        // not an exhausted script.
+        AgentThread thread = newThread(AgentMode.ASK);
+        for (int i = 0; i <= 25; i++) {
+            scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c" + i, "read-execution-logs", "exec-" + i))));
+        }
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "keep going forever", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — the turn ends gracefully (not failed) back to IDLE, after exactly the capped number of rounds
+        assertThat(sink.error).isNull();
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        List<AgentMessage> log = messageStore.load(thread.uid());
+        assertThat(log.stream().filter(m -> m.type() == AgentMessageType.TOOL_RESULT).count()).isEqualTo(25L);
+        // the final assistant message explains the graceful stop
+        assertThat(log.getLast().type()).isEqualTo(AgentMessageType.TEXT);
+        assertThat(log.getLast().content()).contains("maximum number of tool steps");
     }
 
     private AgentThread newThread(final AgentMode mode) {

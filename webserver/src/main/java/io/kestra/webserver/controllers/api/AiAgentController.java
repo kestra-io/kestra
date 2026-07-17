@@ -16,6 +16,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.agent.AgentConfiguration;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.AgentTurnContext;
@@ -49,13 +50,14 @@ import reactor.core.publisher.FluxSink;
 @Controller("/api/v1/{tenant}/ai/threads")
 @Requires(bean = AiServiceManager.class)
 public class AiAgentController {
-    private final TenantService tenantService;
+    protected final TenantService tenantService;
     private final AiServiceManager aiServiceManager;
     private final AiThreadRepositoryInterface threadStore;
     private final AiMessageRepositoryInterface messageStore;
-    private final AiThreadManager threadManager;
+    protected final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
     private final AgentPrincipalResolver principalResolver;
+    private final int maxTurnsPerThread;
     private final ExecutorService executor;
 
     @Inject
@@ -67,6 +69,7 @@ public class AiAgentController {
         final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
         final AgentPrincipalResolver principalResolver,
+        final AgentConfiguration configuration,
         final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
         this.aiServiceManager = aiServiceManager;
@@ -75,6 +78,7 @@ public class AiAgentController {
         this.threadManager = threadManager;
         this.orchestrator = orchestrator;
         this.principalResolver = principalResolver;
+        this.maxTurnsPerThread = configuration.maxTurnsPerThread();
         this.executor = executorsUtils.maxCachedThreadPool(8, "ai-agent-orchestrator");
     }
 
@@ -121,6 +125,15 @@ public class AiAgentController {
         String tenant = tenantService.resolveTenant();
         requireProvider(request.providerId());
         AgentThread thread = requireThread(tenant, threadId);
+
+        // Cost/abuse guardrail: cap the number of user turns a single thread may hold. A resume reuses
+        // its turn's trace, so confirming a parked action never counts against the cap.
+        if (threadManager.turnCount(threadId) >= maxTurnsPerThread) {
+            throw new HttpStatusException(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "This thread has reached its maximum of %d turns; start a new thread.".formatted(maxTurnsPerThread)
+            );
+        }
 
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
         // Atomically claim the thread (IDLE -> RUNNING) before scheduling the async turn; if a turn is
@@ -182,7 +195,7 @@ public class AiAgentController {
         }, FluxSink.OverflowStrategy.BUFFER);
     }
 
-    private AgentThread requireThread(final String tenant, final String threadId) {
+    protected AgentThread requireThread(final String tenant, final String threadId) {
         String userId = resolveUserId();
         return (userId == null ? threadStore.find(tenant, threadId) : threadStore.find(tenant, userId, threadId))
             .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));

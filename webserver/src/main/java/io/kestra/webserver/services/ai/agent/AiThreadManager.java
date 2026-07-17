@@ -1,6 +1,7 @@
 package io.kestra.webserver.services.ai.agent;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +47,30 @@ public class AiThreadManager {
         return threadStore.find(tenant, uid);
     }
 
+    /**
+     * Lists a user's non-deleted threads, most-recently-active first (by last turn, falling back to the
+     * last update). Backs the EE thread-management surface.
+     */
+    public List<AgentThread> list(final String tenant, final String userId) {
+        return threadStore.findAllForUser(tenant, userId).stream()
+            .sorted(Comparator.comparing(AiThreadManager::lastActivity).reversed())
+            .toList();
+    }
+
+    /** Renames a thread, refreshing its update timestamp. Other fields (status, mode) are preserved. */
+    public AgentThread rename(final AgentThread thread, final String title) {
+        return threadStore.save(thread.withTitle(title).withUpdatedAt(Instant.now()));
+    }
+
+    /** Soft-deletes a thread; its history is retained until purge. */
+    public AgentThread delete(final AgentThread thread) {
+        return threadStore.delete(thread);
+    }
+
+    private static Instant lastActivity(final AgentThread thread) {
+        return thread.lastTurnAt() != null ? thread.lastTurnAt() : thread.updatedAt();
+    }
+
     public Optional<AgentThread> tryMarkRunning(final AgentThread thread, final AgentMode mode, final AgentThreadStatus expected) {
         return threadStore.updateIf(
             thread.tenant(), thread.uid(), expected, t -> t.toBuilder()
@@ -82,6 +107,18 @@ public class AiThreadManager {
 
     public List<AgentMessage> load(final String threadId) {
         return messageStore.load(threadId);
+    }
+
+    /**
+     * The number of user turns a thread already holds — its distinct turn traces. A confirmation resume
+     * reuses the suspended turn's trace, so a suspend/resume counts as one turn. Backs the
+     * {@code maxTurnsPerThread} guardrail.
+     */
+    public long turnCount(final String threadId) {
+        return messageStore.load(threadId).stream()
+            .map(AgentMessage::traceId)
+            .distinct()
+            .count();
     }
 
     public void appendUser(final String threadId, final String traceId, final String content) {

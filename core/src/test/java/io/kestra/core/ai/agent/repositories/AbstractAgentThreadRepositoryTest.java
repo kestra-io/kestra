@@ -1,6 +1,7 @@
 package io.kestra.core.ai.agent.repositories;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -87,6 +88,57 @@ public abstract class AbstractAgentThreadRepositoryTest {
 
         // When / Then — same user id, different tenant, cannot see it
         assertThat(threadStore.find("other-" + tenant, "user-1", thread.uid())).isEmpty();
+    }
+
+    @Test
+    void shouldListThreadsForOwningUserOnly() {
+        // Given — two threads for user-1, one for user-2, and one soft-deleted for user-1
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread mine1 = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        AgentThread mine2 = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        AgentThread theirs = thread(tenant, "user-2", AgentThreadStatus.IDLE);
+        AgentThread deleted = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(mine1);
+        threadStore.create(mine2);
+        threadStore.create(theirs);
+        threadStore.create(deleted);
+        threadStore.delete(deleted);
+
+        // When
+        List<AgentThread> listed = threadStore.findAllForUser(tenant, "user-1");
+
+        // Then — only the caller's non-deleted threads, never another user's or a deleted one
+        assertThat(listed).extracting(AgentThread::uid)
+            .containsExactlyInAnyOrder(mine1.uid(), mine2.uid());
+    }
+
+    @Test
+    void shouldNotListThreadsFromAnotherTenant() {
+        // Given
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(thread);
+
+        // When / Then — the same user in a different tenant sees nothing
+        assertThat(threadStore.findAllForUser("other-" + tenant, "user-1")).isEmpty();
+    }
+
+    @Test
+    void shouldSoftDeleteThread() {
+        // Given
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(thread);
+
+        // When
+        AgentThread deleted = threadStore.delete(thread);
+
+        // Then — soft-deleted: flagged, and invisible to every lookup
+        assertThat(deleted.isDeleted()).isTrue();
+        assertThat(threadStore.find(tenant, thread.uid())).isEmpty();
+        assertThat(threadStore.find(tenant, "user-1", thread.uid())).isEmpty();
+        assertThat(threadStore.exists(tenant, thread.uid())).isFalse();
+        assertThat(threadStore.findAllForUser(tenant, "user-1")).isEmpty();
     }
 
     @Test

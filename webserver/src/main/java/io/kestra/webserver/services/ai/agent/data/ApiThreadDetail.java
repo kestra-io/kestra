@@ -14,10 +14,13 @@ public record ApiThreadDetail(
     @Nullable String title,
     AgentMode mode,
     AgentThreadStatus status,
+    // The token to present when resuming a thread suspended in AWAITING_CONFIRMATION — null otherwise.
+    // Exposed so a client that reloads a page can resume a pending confirmation from durable state.
+    @Nullable String pendingConfirmationId,
     List<ApiMessageView> messages) {
     public static ApiThreadDetail from(final AgentThread thread, final List<AgentMessage> messages) {
         return new ApiThreadDetail(
-            thread.uid(), thread.title(), thread.mode(), thread.status(),
+            thread.uid(), thread.title(), thread.mode(), thread.status(), thread.pendingConfirmationId(),
             messages.stream().map(ApiMessageView::from).toList()
         );
     }

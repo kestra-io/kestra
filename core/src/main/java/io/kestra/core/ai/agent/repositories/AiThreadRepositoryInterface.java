@@ -1,5 +1,6 @@
 package io.kestra.core.ai.agent.repositories;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 
@@ -34,6 +35,17 @@ public interface AiThreadRepositoryInterface {
     Optional<AgentThread> find(String tenant, String userId, String uid);
 
     /**
+     * Lists every non-deleted thread owned by a user within a tenant. Ordering is not guaranteed here
+     * (the manager sorts for presentation). Used by the EE thread-management surface; OSS runs a single
+     * implicit session and never lists.
+     *
+     * @param tenant the tenant the threads belong to.
+     * @param userId the user that owns the threads; {@code null} matches threads with no owner (OSS).
+     * @return the owned, non-deleted threads (possibly empty).
+     */
+    List<AgentThread> findAllForUser(String tenant, String userId);
+
+    /**
      * Returns whether a non-deleted thread exists for the given tenant and uid.
      *
      * @param tenant the tenant the thread belongs to.
@@ -57,6 +69,15 @@ public interface AiThreadRepositoryInterface {
      * @return the saved thread.
      */
     AgentThread save(AgentThread thread);
+
+    /**
+     * Soft-deletes a thread, retaining its row (and history) until purge. Idempotent: deleting an
+     * already-deleted thread is a no-op from the caller's perspective (subsequent lookups miss).
+     *
+     * @param thread the thread to soft-delete.
+     * @return the soft-deleted thread.
+     */
+    AgentThread delete(AgentThread thread);
 
     /**
      * Atomically applies a mutation to a thread only if it exists, is not deleted, and its

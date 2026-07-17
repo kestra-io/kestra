@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
@@ -39,6 +40,20 @@ public abstract class AbstractJdbcAgentThreadRepository extends AbstractJdbcCrud
     @Override
     public Optional<AgentThread> find(String tenant, String userId, String uid) {
         return find(tenant, uid).filter(thread -> Objects.equals(thread.userId(), userId));
+    }
+
+    /**
+     * Lists the tenant's non-deleted threads (the default filter excludes deleted rows) and keeps only
+     * those owned by {@code userId}. The {@code agent_thread} table has no {@code user_id} column, so
+     * ownership is matched against the deserialized record rather than in SQL — mirroring
+     * {@link #find(String, String, String)}.
+     * {@inheritDoc}
+     */
+    @Override
+    public List<AgentThread> findAllForUser(String tenant, String userId) {
+        return find(tenant, DSL.trueCondition()).stream()
+            .filter(thread -> Objects.equals(thread.userId(), userId))
+            .toList();
     }
 
     @Override

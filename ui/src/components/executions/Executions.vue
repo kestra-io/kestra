@@ -162,7 +162,7 @@
                         }"
                         class="execution-id"
                     >
-                        <KsId :value="scope.row?.id" :shrink="true" />
+                        <KsId :value="scope.row?.id" :shrink="true" placement="right" />
                     </RouterLink>
                 </template>
             </KsTableColumn>

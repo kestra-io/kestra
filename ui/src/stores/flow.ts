@@ -727,7 +727,7 @@ function deleteFlowAndDependencies() {
     function exportFlowByQuery(options: { namespace: string, id: string }) {
         return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
             .then(response => {
-                Utils.downloadUrl(response.request.responseURL, "flows.zip")
+                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
             })
     }
 
@@ -748,8 +748,8 @@ function deleteFlowAndDependencies() {
 
     function importFlows(options: { file: FormData,  failOnError: boolean }) {
          const {file, failOnError} = options
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
         return axios.post(`${apiUrl()}/flows/import`, file, {
-            headers: {"Content-Type": "multipart/form-data"},
             params: {failOnError},
         }).then(response => {
             return response

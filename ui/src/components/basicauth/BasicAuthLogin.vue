@@ -120,14 +120,14 @@
 
 
     const checkServerInitialization = async () => {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000, withCredentials: true})
+        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000})
         return response.data?.isBasicAuthInitialized
     }
 
     const handleNetworkError = (error: any) => {
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
-            (!error.response && error.message?.includes("Network Error"))
+            (!error.response && error instanceof TypeError)
     }
 
     const loadAuthConfigErrors = async () => {

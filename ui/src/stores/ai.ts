@@ -24,17 +24,16 @@ export const useAiStore = defineStore("ai", () => {
         tenantId?: string,
         type: AiGenerationType
     }) {
+        const uid = getUid()
         const response = await client.post(`${apiUrl()}/ai/generate/${type}`, {
             userPrompt,
             conversationId,
             providerId,
-            namespace, 
+            namespace,
             tenantId,
             ...(yaml !== undefined ? {yaml} : {}),
         }, {
-            headers: {
-                "X-Kestra-User-Id": getUid(),
-            },
+            headers: uid ? {"X-Kestra-User-Id": uid} : {},
         })
 
         const remainingQuota = response.headers["x-kestra-ai-quota"]

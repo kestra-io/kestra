@@ -2,7 +2,7 @@
     <div class="plugin-doc">
         <template v-if="fetchPluginDocumentation && currentPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
-                <KsTaskIcon
+                <TaskIcon
                     class="plugin-icon"
                     :cls="currentPlugin.cls"
                     onlyIcon
@@ -52,7 +52,8 @@
 
     import {computed} from "vue"
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
     import {getTheme} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"

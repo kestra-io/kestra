@@ -22,7 +22,7 @@
                         class="icon"
                         :class="{missing: missingTasks.includes(task)}"
                     >
-                        <KsTaskIcon :cls="task" :icons="icons" :loadIcon="loadIcon" />
+                        <TaskIcon :cls="task" :icons="icons" :loadIcon="loadIcon" />
                     </span>
                     <span v-if="overflowCount" class="overflow">
                         +{{ overflowCount }}
@@ -60,7 +60,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import {canCreate} from "override/composables/blueprintsPermissions"
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
@@ -211,7 +211,7 @@
                 display: flex;
                 flex-shrink: 0;
 
-                :deep(.ks-task-icon) {
+                :deep(.task-icon) {
                     width: 1.5rem;
                     height: 1.5rem;
                 }

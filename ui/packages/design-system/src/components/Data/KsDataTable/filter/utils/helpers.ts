@@ -72,18 +72,6 @@ export interface QueryFilter {
 }
 
 /**
- * `QueryFilter.Field`'s wire value (`@JsonValue`) is the camelCase form of its enum name for every
- * field except these two irregular ones — see the `Field` enum in `QueryFilter.java`.
- */
-const FIELD_VALUE_OVERRIDES: Record<string, string> = {
-    q: "QUERY",
-    groupList: "GROUP",
-}
-
-const fieldToEnumName = (field: string): string =>
-    FIELD_VALUE_OVERRIDES[field] ?? field.replace(/([A-Z])/g, "_$1").toUpperCase()
-
-/**
  * Builds one logical position in the filter tree, mirroring the backend's
  * `QueryFilterFormatBinder.NodeBuilder`: direct leaves land here directly, LABELS leaves sharing an
  * operation are merged into one filter with a map value, and nested `[and|or][N]` segments descend
@@ -103,17 +91,16 @@ class FilterNodeBuilder {
     }
 
     addLeaf(field: string, operation: string, subKey: string | undefined, value: string | string[]) {
-        const enumField = fieldToEnumName(field)
         const scalarValue = Array.isArray(value) ? value[0] : value
 
-        if (enumField === "LABELS" && subKey) {
+        if (field === "labels" && subKey) {
             const map = this.labelsByOp.get(operation) ?? {}
             map[subKey] = scalarValue
             this.labelsByOp.set(operation, map)
             return
         }
 
-        this.directLeaves.push({field: enumField, operation, value})
+        this.directLeaves.push({field, operation, value})
     }
 
     build(): QueryFilter[] {
@@ -121,7 +108,7 @@ class FilterNodeBuilder {
 
         this.labelsByOp.forEach((map, operation) => {
             if (Object.keys(map).length > 0) {
-                items.push({field: "LABELS", operation, value: map})
+                items.push({field: "labels", operation, value: map})
             }
         })
 

@@ -1192,6 +1192,12 @@
         "title": "Aggiungi Blueprint Personalizzati",
         "message": "Nella Kestra Enterprise Edition, puoi creare blueprint personalizzati disponibili solo per la tua organizzazione. Puoi usarli come modelli di best-practice per condividere, centralizzare e documentare i flussi di lavoro comunemente utilizzati nel tuo team."
       },
+      "policies": {
+        "header": "Politiche di Governance",
+        "label": "Politiche",
+        "message": "Le policy consentono ai team della piattaforma di gestire e applicare centralmente le regole a tutti i flow — iniettare valori predefiniti condivisi, bloccare i plugin, limitare i valori delle proprietà e richiedere label di conformità. Le regole si applicano a livello di tenant o di namespace con rollout graduale, e ogni valore iniettato o sostituito rimane visibile agli autori dei flow.",
+        "title": "Gestisci ogni flow con Politiche"
+      },
       "namespace": {
         "edit": {
           "title": "Aggiorna la Gestione del tuo Namespace",
@@ -1208,6 +1214,10 @@
         "variables": {
           "title": "Governa Centralmente le Tue Variabili",
           "message": "Nella Kestra Enterprise Edition, puoi definire e gestire variabili a livello di namespace per eliminare configurazioni ripetitive tra i flow. Queste variabili assicurano coerenza, semplificano gli aggiornamenti di configurazione e possono essere facilmente riferite da qualsiasi task o trigger per flussi di lavoro più puliti e manutenibili."
+        },
+        "policies": {
+          "title": "Applicare le Regole di Governance in questo Namespace",
+          "message": "In Kestra Enterprise Edition, le politiche ti consentono di definire regole che si applicano a ogni flow in questo namespace e ai suoi figli — iniettare impostazioni predefinite condivise, limitare i values delle proprietà, bloccare i plugin e richiedere labels di conformità, con ogni modifica completamente visibile agli autori dei flow."
         },
         "history": {
           "title": "Gestisci la Cronologia delle Revisioni in un Unico Luogo",

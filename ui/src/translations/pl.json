@@ -1192,6 +1192,12 @@
         "title": "Dodaj niestandardowe Blueprints",
         "message": "W Kestra Enterprise Edition możesz tworzyć niestandardowe Blueprints dostępne tylko dla Twojej organizacji. Możesz ich używać jako szablonów najlepszych praktyk do udostępniania, centralizowania i dokumentowania często używanych workflow w Twoim zespole."
       },
+      "policies": {
+        "header": "Zasady Zarządzania",
+        "label": "Polityki",
+        "message": "Polityki pozwalają zespołom platformy centralnie zarządzać i egzekwować zasady we wszystkich flow — wstrzykiwać współdzielone wartości domyślne, blokować wtyczki, ograniczać wartości właściwości i wymagać etykiet zgodności. Zasady mają zastosowanie na poziomie dzierżawcy lub namespace ze stopniowym wdrażaniem, a każda wstrzyknięta lub zastąpiona wartość pozostaje widoczna dla autorów flow.",
+        "title": "Zarządzaj każdym flow Politykami"
+      },
       "namespace": {
         "edit": {
           "title": "Ulepsz zarządzanie Namespace",
@@ -1208,6 +1214,10 @@
         "variables": {
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi",
           "message": "W Kestra Enterprise Edition możesz definiować i zarządzać zmiennymi na poziomie namespace, aby wyeliminować powtarzające się konfiguracje w różnych flow. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo odwoływane przez dowolny task lub trigger, co prowadzi do czystszych i łatwiejszych w utrzymaniu workflow."
+        },
+        "policies": {
+          "title": "Wymuszaj Zasady Zarządzania W Obrębie Tego Namespace",
+          "message": "W Kestra Enterprise Edition, Zasady pozwalają definiować reguły, które mają zastosowanie do każdego flow w tym namespace i jego potomnych — wstrzykiwać współdzielone wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać labeli zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów flow."
         },
         "history": {
           "title": "Zarządzaj historią wersji w jednym miejscu",

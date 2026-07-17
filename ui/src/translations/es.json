@@ -1192,6 +1192,12 @@
         "title": "Agregar Blueprints Personalizados",
         "message": "En Kestra Enterprise Edition, puedes crear Blueprints personalizados disponibles solo para tu organización. Puedes usarlos como plantillas de mejores prácticas para compartir, centralizar y documentar flujos de trabajo comúnmente utilizados en tu equipo."
       },
+      "policies": {
+        "header": "Políticas de Gobernanza",
+        "label": "Políticas",
+        "message": "Las Políticas permiten a los equipos de plataforma gestionar y aplicar reglas de forma centralizada en todos los flows — inyectar valores predeterminados compartidos, bloquear plugins, limitar valores de propiedades y requerir labels de cumplimiento. Las reglas se aplican a nivel de tenant o namespace con despliegue por fases, y cada valor inyectado o reemplazado permanece visible para los autores de flows.",
+        "title": "Gestionar cada flow con Políticas"
+      },
       "namespace": {
         "edit": {
           "title": "Mejora la Gestión de tu Namespace",
@@ -1208,6 +1214,10 @@
         "variables": {
           "title": "Gobierne Centralmente Sus Variables",
           "message": "En Kestra Enterprise Edition, puedes definir y gestionar variables a nivel de namespace para eliminar configuraciones repetitivas a través de los flows. Estas variables aseguran consistencia, simplifican las actualizaciones de configuración y pueden ser fácilmente referenciadas por cualquier task o trigger para flujos de trabajo más limpios y mantenibles."
+        },
+        "policies": {
+          "title": "Aplicar Reglas de Gobernanza en este namespace",
+          "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos — inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
         },
         "history": {
           "title": "Gestionar el Historial de Revisiones en un Solo Lugar",

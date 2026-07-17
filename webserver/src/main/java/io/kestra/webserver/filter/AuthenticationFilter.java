@@ -48,6 +48,7 @@ public class AuthenticationFilter implements HttpServerFilter {
             {
                 String normalizedPath = normalizePath(request.getPath());
                 boolean isConfigEndpoint = "/api/v1/configs".equals(normalizedPath)
+                    || "/api/v1/login".equals(normalizedPath)
                     || ((normalizedPath.matches("/api/v1(/[^/]+)?/basicAuth") || "/api/v1/basicAuthValidationErrors".equals(normalizedPath))
                         && !basicAuthService.isBasicAuthInitialized());
 

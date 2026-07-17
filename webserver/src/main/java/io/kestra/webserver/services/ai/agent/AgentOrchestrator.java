@@ -4,11 +4,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentMessageType;
@@ -20,6 +23,7 @@ import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
@@ -84,15 +88,40 @@ public class AgentOrchestrator {
             threadManager.appendUser(thread.uid(), traceId, context.prompt());
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(threadManager.load(thread.uid()));
-            List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
+            List<ChatMessage> messages = new ArrayList<>(projected.size() + 2);
             messages.add(SystemMessage.from(profile.systemPrompt()));
             messages.addAll(projected);
+            // Caller-supplied context for this turn only: appended at the end so the model sees it as the
+            // latest input, but never persisted to the thread history (it is not appended via threadManager).
+            additionalContextMessage(context.additionalContext()).ifPresent(messages::add);
 
             runLoop(
                 new AgentLoopContext(thread, context.tenant(), context.principal(), context.providerId(), context.mode(), profile, model, messages, traceId, new AtomicBoolean(false)), sink
             );
         } catch (Exception e) {
             failTurn(thread, sink, e);
+        }
+    }
+
+    /**
+     * Renders caller-supplied per-turn context into a trailing {@link UserMessage}. Serialized as JSON
+     * so nested structures survive intact. Returns empty when there is no usable context (null, empty,
+     * or unserializable) so nothing is added to the model input. Deliberately built here rather than
+     * persisted via {@link AiThreadManager}, so it never enters the thread's durable history.
+     *
+     * @param additionalContext the caller-supplied context map for this turn, may be {@code null}
+     * @return the context message to append at the end of the turn's input, or empty
+     */
+    private Optional<ChatMessage> additionalContextMessage(final Map<String, Object> additionalContext) {
+        if (additionalContext == null || additionalContext.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            String json = JacksonMapper.ofJson().writeValueAsString(additionalContext);
+            return Optional.of(UserMessage.from("Additional context for this request:\n" + json));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize additional context for a Copilot turn; continuing without it", e);
+            return Optional.empty();
         }
     }
 

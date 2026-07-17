@@ -131,7 +131,7 @@ public class AiAgentController {
         AgentPrincipal principal = principalResolver.resolve();
         return stream(
             sink -> orchestrator.runTurn(
-                new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal), sink
+                new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink
             )
         );
     }

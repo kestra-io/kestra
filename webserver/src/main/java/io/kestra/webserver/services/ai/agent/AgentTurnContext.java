@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai.agent;
 
+import java.util.Map;
+
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.core.ai.agent.models.AgentThread;
@@ -12,5 +14,6 @@ public record AgentTurnContext(
     AgentMode mode,
     String tenant,
     @Nullable String providerId,
-    @Nullable AgentPrincipal principal) {
+    @Nullable AgentPrincipal principal,
+    @Nullable Map<String, Object> additionalContext) {
 }

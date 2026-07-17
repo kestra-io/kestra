@@ -211,8 +211,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            // filters is FilterObject[] here (see ChartParameters' comment); the backend accepts
-            // the same field/operation strings the SDK's QueryFilterField/QueryFilterOp enums do.
             return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
         } catch (e: any) {
             if (e.status === 404) return undefined

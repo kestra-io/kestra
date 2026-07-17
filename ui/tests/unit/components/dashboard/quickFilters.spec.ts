@@ -23,7 +23,7 @@ describe("quickFilters", () => {
         it("returns every state for the All tab when the chart constrains STATE", () => {
             const where = [{type: "IN", field: "STATE", values: ["RUNNING", "PAUSED"]}]
             expect(stateFilterForTab(chart({where}), "all")).toEqual({
-                field: "STATE",
+                field: "state",
                 operation: "IN",
                 value: ALL_STATES,
             })
@@ -31,7 +31,7 @@ describe("quickFilters", () => {
 
         it("returns the tab's own states for a state tab", () => {
             expect(stateFilterForTab(chart(), "failed")).toEqual({
-                field: "STATE",
+                field: "state",
                 operation: "IN",
                 value: ["FAILED", "KILLED", "CANCELLED", "SKIPPED", "RETRIED"],
             })

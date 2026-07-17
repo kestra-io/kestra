@@ -2099,6 +2099,12 @@
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet",
         "draft": {
+          "openInEditor": "Apri nell'editor",
+          "apply": "Applica",
+          "applyTitle": "Applica flow",
+          "applyConfirm": "Applicare il flow {namespace}.{id}? Verrà creato oppure sovrascritto se esiste già.",
+          "applyError": "Impossibile applicare il flow. Riprova.",
+          "applyNoTarget": "Questa bozza non ha namespace o id da applicare.",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

@@ -1,5 +1,14 @@
-import {describe, it, expect} from "vitest"
+import {describe, it, expect, vi} from "vitest"
 import {mount} from "@vue/test-utils"
+import {ref} from "vue"
+
+// Stub the apply composable (it pulls in the router + flows SDK); assert wiring only.
+const openInEditor = vi.fn()
+const apply = vi.fn()
+vi.mock("../../../../../src/components/ai/copilot/useApplyDraft", () => ({
+    useApplyDraft: () => ({applying: ref(false), openInEditor, apply}),
+}))
+
 import CopilotArtefactDraft from "../../../../../src/components/ai/copilot/CopilotArtefactDraft.vue"
 import {mountGlobal} from "./_helpers"
 import type {ArtefactDraftEvent} from "../../../../../src/components/ai/copilot/types"
@@ -32,5 +41,27 @@ describe("CopilotArtefactDraft", () => {
         const w = mountDraft({draftId: "d3", kind: "APP", yaml: "id: my-app", valid: true, constraints: null})
         expect(w.find("[data-test=\"copilot-draft-copy\"]").exists()).toBe(false)
         expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: my-app")
+    })
+
+    it("offers Open-in-editor + Apply for a valid flow draft and wires them", async () => {
+        const w = mountDraft({draftId: "d4", kind: "FLOW", yaml: "id: f", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-open\"]").trigger("click")
+        expect(openInEditor).toHaveBeenCalled()
+        const applyBtn = w.find("[data-test=\"copilot-draft-apply\"]")
+        expect(applyBtn.attributes("disabled")).toBeUndefined()
+        await applyBtn.trigger("click")
+        expect(apply).toHaveBeenCalled()
+    })
+
+    it("disables Apply for an invalid flow draft (Open-in-editor stays available)", () => {
+        const w = mountDraft({draftId: "d5", kind: "FLOW", yaml: "id: f", valid: false, constraints: "bad"})
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").attributes("disabled")).toBeDefined()
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(true)
+    })
+
+    it("shows no apply actions for non-flow drafts (dashboard/app)", () => {
+        const w = mountDraft({draftId: "d6", kind: "DASHBOARD", yaml: "x: 1", valid: true, constraints: null})
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
     })
 })

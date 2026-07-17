@@ -41,7 +41,7 @@ app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
 const handleAuthError = (error: Error, to: {fullPath: string}) => {
     if (error.message?.includes("401")) {
-        void BasicAuth.logout()
+        BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
     }

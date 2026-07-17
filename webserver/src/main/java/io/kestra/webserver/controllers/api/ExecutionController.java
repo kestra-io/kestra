@@ -18,6 +18,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.CheckReturnValue;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
@@ -46,6 +48,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
@@ -117,8 +120,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import javax.annotation.CheckReturnValue;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -726,6 +727,10 @@ public class ExecutionController {
             .breakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null))
             .build();
 
+        // Capture the OTel context on the current thread before entering the reactive chain.
+        // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
+        // would return an empty root context since OTel Context is thread-local.
+        final Context otelContext = Context.current();
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs ->
             {
@@ -735,7 +740,7 @@ public class ExecutionController {
                     openTelemetry
                         .map(OpenTelemetry::getPropagators)
                         .map(ContextPropagators::getTextMapPropagator)
-                        .ifPresent(propagator -> propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE));
+                        .ifPresent(propagator -> propagator.inject(otelContext, executionWithInputs, ExecutionTextMapSetter.INSTANCE));
 
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
@@ -1978,8 +1983,10 @@ public class ExecutionController {
         }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
-        return sseConnectionMetrics.track(flux, "execution",
-            () -> streamingService.unregisterSubscriber(executionId, subscriberId));
+        return sseConnectionMetrics.track(
+            flux, "execution",
+            () -> streamingService.unregisterSubscriber(executionId, subscriberId)
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2579,8 +2586,10 @@ public class ExecutionController {
         }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
-        return sseConnectionMetrics.track(flux, "dependencies",
-            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
+        return sseConnectionMetrics.track(
+            flux, "dependencies",
+            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId)
+        );
     }
 
     public String getTenant() {

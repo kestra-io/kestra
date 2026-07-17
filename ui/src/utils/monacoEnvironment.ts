@@ -3,18 +3,20 @@ import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker"
 import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
 import YamlWorker from "../components/inputs/yaml.worker.js?worker"
 
+const nodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {query: "?raw", import: "default"}) as Record<string, () => Promise<string>>
+
 let nodeTypesRequested = false
 
 // Registers @types/node into Monaco's TS service on first JS/TS worker request — both
 // are multi-MB payloads that must not load at boot. Retries until languages.typescript exists.
 function loadNodeTypes(tries = 0) {
-    Promise.all([
-        import("monaco-editor/esm/vs/editor/editor.api"),
-        import("./nodeTypes"),
-    ]).then(([{languages}, {default: nodeTypesRaw}]) => {
-        if (languages.typescript) {
+    import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
+        const typescript = languages.typescript
+        if (typescript) {
             for (const path in nodeTypesRaw) {
-                languages.typescript.typescriptDefaults.addExtraLib(nodeTypesRaw[path], `file://${path}`)
+                nodeTypesRaw[path]().then((content) => {
+                    typescript.typescriptDefaults.addExtraLib(content, `file://${path}`)
+                })
             }
         } else if (tries <= 15) {
             setTimeout(() => loadNodeTypes(tries + 1), (tries + 1) * 100)

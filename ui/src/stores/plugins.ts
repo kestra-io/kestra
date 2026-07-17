@@ -419,7 +419,9 @@ export const usePluginsStore = defineStore("plugins", () => {
             return
         }
 
-        let payload: LoadOptions = {cls, version, hash}
+        // silentOn404: with the catalog merged into the plugin list, the cursor can sit on a type
+        // that is not installed yet — its doc endpoint 404s and must not trigger the error page.
+        let payload: LoadOptions = {cls, version, hash, silentOn404: true}
 
         if (version !== undefined) {
             if (semver.valid(version) !== null ||
@@ -438,7 +440,15 @@ export const usePluginsStore = defineStore("plugins", () => {
             version,
         }
 
-        const pluginData = await load(payload)
+        let pluginData
+        try {
+            pluginData = await load(payload)
+        } catch {
+            // catalog-only type: no local doc until the plugin is actually installed
+            editorPlugin.value = undefined
+            currentlyLoading = undefined
+            return
+        }
 
         editorPlugin.value = {
             cls,

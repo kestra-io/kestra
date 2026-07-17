@@ -74,7 +74,7 @@
     }))
 
     const logout = () => {
-        void BasicAuth.logout()
+        BasicAuth.logout()
         delete axios.defaults.headers.common["Authorization"]
         router.push({name: "login"})
     }

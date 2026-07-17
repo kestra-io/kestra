@@ -5,11 +5,8 @@ import YamlWorker from "../components/inputs/yaml.worker.js?worker"
 
 let nodeTypesRequested = false
 
-// Registers @types/node into Monaco's TypeScript language service the first
-// time a JS/TS worker is requested. Both Monaco and the raw typings are
-// multi-megabyte payloads that must not load at boot; extra libs added after
-// worker creation still propagate to open models. The retry loop waits for
-// the typescript language contribution to finish registering.
+// Registers @types/node into Monaco's TS service on first JS/TS worker request — both
+// are multi-MB payloads that must not load at boot. Retries until languages.typescript exists.
 function loadNodeTypes(tries = 0) {
     Promise.all([
         import("monaco-editor/esm/vs/editor/editor.api"),

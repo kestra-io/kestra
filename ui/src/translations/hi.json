@@ -2014,7 +2014,7 @@
         "send": "Send",
         "mode": {
           "ask": "Ask",
-          "edit": "Build",
+          "edit": "Edit",
           "plan": "Plan"
         },
         "empty": {

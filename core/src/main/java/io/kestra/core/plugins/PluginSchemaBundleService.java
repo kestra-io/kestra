@@ -305,11 +305,21 @@ public class PluginSchemaBundleService {
     }
 
     /**
-     * Builds a minimal object definition that only pins the discriminator {@code type} to the
-     * subtype's FQCN (plus its {@code title}/{@code markdownDescription} for the completion popup when
-     * the bundle carries them). Includes {@code type: object} so it matches the shape of an installed
+     * Builds a minimal object definition that pins the discriminator {@code type} to the subtype's
+     * FQCN (plus its {@code title}/{@code markdownDescription} for the completion popup when the
+     * bundle carries them). Includes {@code type: object} so it matches the shape of an installed
      * subtype definition — the editor won't offer a {@code type} const from a branch that isn't an
      * object schema.
+     *
+     * <p>
+     * The bundle definition's other properties are copied <b>by name only</b> — each as a
+     * {@code {title?, markdownDescription?}} shell with no type, no nested schema, no {@code $ref}
+     * (which would dangle, since the referenced definitions stay in the bundle pool). That is enough
+     * for the editor to offer <em>key</em> completion (e.g. {@code apiToken}, {@code monitorId})
+     * under a not-yet-installed task, while still omitting the heavy nested property schemas that
+     * would balloon the merged response. The bundle's {@code required} list is carried over too, so
+     * mandatory keys are prompted exactly like on an installed plugin. Value-level completion and
+     * real validation arrive once the plugin is installed.
      */
     private static ObjectNode lightweightDefinition(String fqcn, @Nullable ObjectNode bundleDefinition) {
         String typeConst = fqcn;
@@ -319,11 +329,40 @@ public class PluginSchemaBundleService {
 
         ObjectNode definition = JsonNodeFactory.instance.objectNode();
         definition.put("type", "object");
-        definition.putObject("properties").putObject("type").put("const", typeConst);
-        definition.putArray("required").add("type");
+        ObjectNode properties = definition.putObject("properties");
+        properties.putObject("type").put("const", typeConst);
+
+        ArrayNode required = definition.putArray("required");
+        required.add("type");
+
         if (bundleDefinition != null) {
             copyText(bundleDefinition, definition, "title");
             copyText(bundleDefinition, definition, "markdownDescription");
+
+            if (bundleDefinition.get("properties") instanceof ObjectNode bundleProperties) {
+                bundleProperties.properties().forEach(entry ->
+                {
+                    if (properties.has(entry.getKey())) {
+                        return;
+                    }
+                    ObjectNode shell = properties.putObject(entry.getKey());
+                    if (entry.getValue() instanceof ObjectNode bundleProperty) {
+                        copyText(bundleProperty, shell, "title");
+                        copyText(bundleProperty, shell, "markdownDescription");
+                    }
+                });
+            }
+
+            if (bundleDefinition.get("required") instanceof ArrayNode bundleRequired) {
+                Set<String> present = new LinkedHashSet<>();
+                required.forEach(name -> present.add(name.asText()));
+                bundleRequired.forEach(name ->
+                {
+                    if (name.isTextual() && present.add(name.asText())) {
+                        required.add(name);
+                    }
+                });
+            }
         }
         return definition;
     }

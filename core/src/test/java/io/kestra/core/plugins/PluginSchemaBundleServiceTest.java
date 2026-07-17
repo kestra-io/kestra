@@ -72,7 +72,12 @@ class PluginSchemaBundleServiceTest {
                 "io.kestra.plugin.core.log.Log": {"type": "object"},
                 "io.kestra.plugin.compress.archive.Compress": {
                   "type": "object",
-                  "properties": {"type": {"const": "io.kestra.plugin.compress.archive.Compress"}, "level": {"type": "integer"}},
+                  "properties": {
+                    "type": {"const": "io.kestra.plugin.compress.archive.Compress"},
+                    "level": {"type": "integer", "markdownDescription": "Compression level."},
+                    "algorithm": {"$ref": "#/definitions/some.heavy.Nested"}
+                  },
+                  "required": ["type", "level"],
                   "title": "Compress"
                 },
                 "io.kestra.plugin.core.trigger.Schedule": {"type": "object"}
@@ -117,10 +122,15 @@ class PluginSchemaBundleServiceTest {
         Map<String, Object> compress = (Map<String, Object>) definitions.get("io.kestra.plugin.compress.archive.Compress");
         assertThat(compress).containsEntry("type", "object");
         assertThat(defTypeConst(compress)).isEqualTo("io.kestra.plugin.compress.archive.Compress");
-        assertThat((List<String>) compress.get("required")).containsExactly("type");
+        assertThat((List<String>) compress.get("required")).containsExactly("type", "level");
         assertThat(compress).containsEntry("title", "Compress");
-        // the heavy property is stripped — only the discriminator `type` survives
-        assertThat((Map<String, Object>) compress.get("properties")).containsOnlyKeys("type");
+        // property NAMES survive (for key completion) with only their doc text — types, nested
+        // schemas and $refs (which would dangle) are stripped
+        Map<String, Object> compressProperties = (Map<String, Object>) compress.get("properties");
+        assertThat(compressProperties).containsOnlyKeys("type", "level", "algorithm");
+        assertThat((Map<String, Object>) compressProperties.get("level"))
+            .containsOnlyKeys("markdownDescription");
+        assertThat((Map<String, Object>) compressProperties.get("algorithm")).isEmpty();
 
         // And: the trigger root, merged from the same bundle, falls back to the FQCN as const
         Map<String, Object> localTriggerSchema = JacksonMapper.ofJson().readValue("""

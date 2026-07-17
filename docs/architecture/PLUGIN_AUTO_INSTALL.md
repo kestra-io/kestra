@@ -128,10 +128,16 @@ loaded asynchronously, and a **no-op when the property is empty** (the default).
 `PluginSchemaBundleService.mergeWithBundle` — `mergeLightweightSubtypes`:
 
 - for **every occurrence** of a polymorphic subtype list in the local schema, it adds, for each
-  catalog subtype not already installed, a **lightweight definition**
-  `{"type": "object", "properties": {"type": {"const": "<fqcn>"}}, "required": ["type"]}` (plus
-  `title` / `markdownDescription` when the bundle carries them) **and a `$ref` branch** to it in
-  that occurrence's `anyOf`.
+  catalog subtype not already installed, a **lightweight definition** **and a `$ref` branch** to it
+  in that occurrence's `anyOf`. The definition pins the discriminator
+  (`{"type": "object", "properties": {"type": {"const": "<fqcn>"}}, "required": ["type", ...]}`,
+  plus `title` / `markdownDescription` when the bundle carries them) and lists the plugin's other
+  **property names as empty shells** — each keeps only its doc text (`title` /
+  `markdownDescription`), no type, no nested schema, no `$ref` (which would dangle outside the
+  bundle pool). That is enough for the editor to complete both the `type` value *and* the keys
+  under it (e.g. `apiToken`, `monitorId`), and the carried-over `required` list prompts mandatory
+  keys exactly like an installed plugin. Value-level completion and real validation still need the
+  install.
 - "every occurrence" is load-bearing (that was the second bug): the generator does **not** route
   every subtype list through the discriminator base-class definition. The `flow` schema inlines the
   full installed-subtype `anyOf` directly at each property site (`Flow.tasks.items`, `errors`, every
@@ -155,9 +161,11 @@ Dedup is by FQCN, so an installed subtype is never shadowed and re-merging is id
 plugins take precedence** over the bundle. Draft-7 shape (`definitions`, not `$defs`).
 
 > **Size matters.** Copying the whole catalog's *full* definitions produced a ~12 MB schema per flow
-> file that silently broke completion in monaco-yaml. Lightweight definitions cut the bundle's
-> contribution to under 1 MB (each stub definition appears once; only the ~50-byte `$ref` branches
-> repeat per site — e.g. a full-plugin dev install goes 6.9 → 7.8 MB). On a lean (`-no-plugins`)
+> file that silently broke completion in monaco-yaml. Lightweight definitions keep the bundle's
+> contribution to a few MB: each stub definition appears once (property-name shells + doc text
+> included), only the ~50-byte `$ref` branches repeat per site — e.g. a heavy full-plugin dev
+> install goes 6.9 → 9.8 MB merged. If that ever creeps toward the monaco ceiling, the per-property
+> `markdownDescription` copy is the first thing to drop (~1.5 MB). On a lean (`-no-plugins`)
 > install — the actual target — the local schema is small too, so the merged result stays light.
 
 Merge-by-FQCN works only because both sides come from the same `JsonSchemaGenerator.schemas()` — the

@@ -15,8 +15,10 @@ import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.core.worker.models.WorkerTriggerResult;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.worker.WorkerConfig;
 import io.kestra.worker.WorkerSecurityService;
+import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
 
@@ -58,20 +60,8 @@ public class WorkerJobProcessorFactory {
 
     @SuppressWarnings("unchecked")
     public <T extends WorkerJob> WorkerJobProcessor<T> create(WorkerContext context, T job) {
-        if (job instanceof WorkerTask) {
-            return (WorkerJobProcessor<T>) new WorkerTaskProcessor(
-                context.workerId(),
-                context.workerGroupId(),
-                serverConfig,
-                metricRegistry,
-                workerSecurityService,
-                tracer,
-                runContextInitializer,
-                runContextLoggerFactory,
-                workerQueueRegistry.getOrCreate(context, WorkerTaskResult.class),
-                workerQueueRegistry.getOrCreate(context, MetricEntry.class),
-                executionKilledManager
-            );
+        if (job instanceof WorkerTask workerTask) {
+            return (WorkerJobProcessor<T>) createWorkerTaskProcessor(context, workerTask);
         } else if (job instanceof WorkerTrigger) {
             return (WorkerJobProcessor<T>) new WorkerTriggerProcessor(
                 context.workerGroupId(),
@@ -87,6 +77,42 @@ public class WorkerJobProcessorFactory {
         }
 
         throw new IllegalArgumentException("Unsupported worker job type [" + job.getClass().getName() + "]");
+    }
+
+    private AbstractWorkerTaskProcessor createWorkerTaskProcessor(WorkerContext context, WorkerTask workerTask) {
+        final String workerId = context.workerId();
+        final String workerGroupId = context.workerGroupId();
+        final WorkerQueue<WorkerTaskResult> workerTaskResultQueue = workerQueueRegistry.getOrCreate(context, WorkerTaskResult.class);
+        final WorkerQueue<MetricEntry> workerMetricQueue = workerQueueRegistry.getOrCreate(context, MetricEntry.class);
+
+        if (workerTask.getTask() instanceof WorkingDirectory) {
+            return new WorkingDirectoryTaskProcessor(
+                workerId,
+                workerGroupId,
+                serverConfig,
+                metricRegistry,
+                workerSecurityService,
+                tracer,
+                runContextInitializer,
+                runContextLoggerFactory,
+                workerTaskResultQueue,
+                workerMetricQueue,
+                executionKilledManager
+            );
+        }
+        return new WorkerTaskProcessor(
+            workerId,
+            workerGroupId,
+            serverConfig,
+            metricRegistry,
+            workerSecurityService,
+            tracer,
+            runContextInitializer,
+            runContextLoggerFactory,
+            workerTaskResultQueue,
+            workerMetricQueue,
+            executionKilledManager
+        );
     }
 
 }

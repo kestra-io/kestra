@@ -59,7 +59,7 @@ function setupAxios(router: Router) {
         document.body.classList.add("login")
         unsavedChangesStore.unsavedChange = false
         layoutStore.setTopNavbar(undefined)
-        void BasicAuth.logout()
+        BasicAuth.logout()
     }
 
 

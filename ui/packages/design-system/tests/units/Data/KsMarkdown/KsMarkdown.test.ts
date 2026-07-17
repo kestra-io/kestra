@@ -3,7 +3,7 @@ import {markRaw} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../../src/index"
-import KsMarkdown from "../../../../src/components/Data/KsMarkdown/KsMarkdown.vue"
+import KsMarkdown from "../../../../src/components/Data/KsMarkdown/KsMarkdownContent.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 

@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsMarkdown from "../../../src/components/Data/KsMarkdown/KsMarkdown.vue"
+import KsMarkdown from "../../../src/components/Data/KsMarkdown/KsMarkdownContent.vue"
 
 const meta: Meta<typeof KsMarkdown> = {
     title: "Components/Data/KsMarkdown",

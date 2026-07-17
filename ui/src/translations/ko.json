@@ -2099,6 +2099,12 @@
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet",
         "draft": {
+          "openInEditor": "편집기에서 열기",
+          "apply": "적용",
+          "applyTitle": "flow 적용",
+          "applyConfirm": "{namespace}.{id} flow를 적용하시겠습니까? 생성되며, 이미 존재하는 경우 덮어씁니다.",
+          "applyError": "flow를 적용할 수 없습니다. 다시 시도해 주세요.",
+          "applyNoTarget": "이 초안에는 적용할 namespace 또는 id가 없습니다.",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

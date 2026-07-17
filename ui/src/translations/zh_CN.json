@@ -2099,6 +2099,12 @@
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet",
         "draft": {
+          "openInEditor": "在编辑器中打开",
+          "apply": "应用",
+          "applyTitle": "应用 flow",
+          "applyConfirm": "应用 flow {namespace}.{id} 吗？将创建它；如果已存在则覆盖。",
+          "applyError": "无法应用 flow。请重试。",
+          "applyNoTarget": "此草稿没有可应用的 namespace 或 id。",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

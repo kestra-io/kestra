@@ -2099,6 +2099,12 @@
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet",
         "draft": {
+          "openInEditor": "エディターで開く",
+          "apply": "適用",
+          "applyTitle": "flow を適用",
+          "applyConfirm": "flow {namespace}.{id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
+          "applyError": "flow を適用できませんでした。もう一度お試しください。",
+          "applyNoTarget": "この下書きには適用する namespace または id がありません。",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

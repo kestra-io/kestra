@@ -23,9 +23,24 @@
         </KsAlert>
 
         <!-- The drafted YAML — read-only, syntax-highlighted preview (nothing is saved).
-             KsMarkdown provides its own copy-to-clipboard control, so no separate copy button.
-             A one-click "apply" (load into the flow editor) arrives with the flow-editor cutover. -->
+             KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
         <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
+
+        <!-- Apply actions (flow drafts only): review in the editor, or save it directly. -->
+        <div v-if="draft.kind === 'FLOW'" class="copilot-draft-footer">
+            <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
+                {{ t("ai.copilot.draft.openInEditor") }}
+            </KsButton>
+            <KsButton
+                size="small"
+                type="primary"
+                :disabled="!draft.valid || applying"
+                data-test="copilot-draft-apply"
+                @click="apply(draft)"
+            >
+                {{ t("ai.copilot.draft.apply") }}
+            </KsButton>
+        </div>
     </div>
 </template>
 
@@ -33,11 +48,13 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
+    import {useApplyDraft} from "./useApplyDraft"
     import type {ArtefactDraftEvent} from "./types"
 
     const props = defineProps<{draft: ArtefactDraftEvent}>()
 
     const {t} = useI18n()
+    const {applying, openInEditor, apply} = useApplyDraft()
 
     // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the
     // assistant transcript), rather than showing it as flat monospace text.
@@ -80,5 +97,13 @@
         overflow: auto;
         padding: var(--ks-spacing-3);
         font-size: var(--ks-font-size-sm);
+    }
+
+    .copilot-draft-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        background: var(--ks-bg-elevated);
     }
 </style>

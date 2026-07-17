@@ -2099,6 +2099,12 @@
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet",
         "draft": {
+          "openInEditor": "एडिटर में खोलें",
+          "apply": "लागू करें",
+          "applyTitle": "flow लागू करें",
+          "applyConfirm": "flow {namespace}.{id} लागू करें? यह बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
+          "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
+          "applyNoTarget": "इस ड्राफ्ट में लागू करने के लिए कोई namespace या id नहीं है।",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

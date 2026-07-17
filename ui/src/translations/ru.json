@@ -2099,6 +2099,12 @@
         "recents": "Recents",
         "recentsEmpty": "No recent conversations yet",
         "draft": {
+          "openInEditor": "Открыть в редакторе",
+          "apply": "Применить",
+          "applyTitle": "Применить flow",
+          "applyConfirm": "Применить flow {namespace}.{id}? Он будет создан или перезаписан, если уже существует.",
+          "applyError": "Не удалось применить flow. Пожалуйста, попробуйте снова.",
+          "applyNoTarget": "В этом черновике нет namespace или id для применения.",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

@@ -118,14 +118,6 @@
 
     const axios = useClient()
 
-    const validateCredentials = async (username: string, password: string) => {
-        try {
-            await axios.post(`${apiUrlWithoutTenants()}/login`, {username, password}, {timeout: 10000, withCredentials: true})
-        } catch(e) {
-            await BasicAuth.logout()
-            throw e
-        }
-    }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000, withCredentials: true})
@@ -160,16 +152,11 @@
             if (!(await form.value.validate().catch(() => false))) return
 
             isLoading.value = true
-
-            const {username, password} = credentials.value
-            const trimmedUsername = username.trim()
-
-            await validateCredentials(trimmedUsername, password)
-
+            
             const isInitialized = await checkServerInitialization()
             if (!isInitialized) { router.push({name: "setup"}); return }
 
-            BasicAuth.signIn()
+            const {username: trimmedUsername} = await BasicAuth.signIn(credentials.value)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
 

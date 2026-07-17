@@ -1,5 +1,6 @@
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {getCsrfToken} from "./csrf"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 // The BASIC_AUTH cookie itself is HttpOnly and issued by the server (see MiscController#login/#logout);
 // this flag never carries credentials, it only mirrors client-side whether a login round-trip succeeded.
@@ -19,11 +20,24 @@ export async function logout() {
     return true
 }
 
-export function signIn() {
+export async function signIn(credentials: {username: string, password: string}) {
+    const {username, password} = credentials
+    const trimmedUsername = username.trim()
+    await validateCredentials(trimmedUsername, password)
     sessionStorage.setItem(AUTH_FLAG_KEY, "true")
-    return true
+    return {username: trimmedUsername}
 }
 
 export function isLoggedIn() {
     return sessionStorage.getItem(AUTH_FLAG_KEY) === "true"
+}
+
+async function validateCredentials(username: string, password: string) {
+    try {
+        const axios = useClient()
+        await axios.post(`${apiUrlWithoutTenants()}/login`, {username, password}, {timeout: 10000, withCredentials: true})
+    } catch(e) {
+        await logout()
+        throw e
+    }
 }

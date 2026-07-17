@@ -88,7 +88,7 @@ class AiAgentControllerTest {
     @Test
     void shouldCreateIdleThreadWithAskModeWhenModeOmitted() {
         // When
-        ApiThreadSummary summary = createThread(new ApiCreateThreadRequest(null, null, null));
+        ApiThreadSummary summary = createThread(new ApiCreateThreadRequest(null, null));
 
         // Then
         assertThat(summary.mode()).isEqualTo(AgentMode.ASK);
@@ -109,7 +109,7 @@ class AiAgentControllerTest {
     @Test
     void shouldStreamAnswerAndFinishIdleWhenChattingInAskMode() {
         // Given
-        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.ASK, "q", null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.ASK, "q"));
         scriptedModel.enqueue(AiMessage.from("A trigger starts a flow automatically."));
 
         // When
@@ -128,7 +128,7 @@ class AiAgentControllerTest {
     @Test
     void shouldProposeActionAndAwaitConfirmationWhenModelCallsMutateToolInEditMode() {
         // Given
-        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
 
         // When
@@ -145,7 +145,7 @@ class AiAgentControllerTest {
     @Test
     void shouldReturnConflictWhenChattingWhileTurnAwaitsConfirmation() {
         // Given — a thread suspended awaiting confirmation
-        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
         chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null));
 
@@ -167,7 +167,7 @@ class AiAgentControllerTest {
     @Test
     void shouldRecordRejectedResultAndResumeIdleWhenRejectingProposedAction() {
         // Given — a proposed mutate awaiting confirmation, and a closing answer to resume into
-        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null));
         scriptedModel.enqueue(mutateToolCall("c1", "exec-1"));
         String confirmationId = confirmationId(chat(thread.uid(), new ApiChatTurnRequest("update it", AgentMode.EDIT, null, null)));
         scriptedModel.enqueue(AiMessage.from("Understood, I won't update it."));
@@ -184,7 +184,7 @@ class AiAgentControllerTest {
     @Test
     void shouldProposePlanCardWhenChattingInPlanMode() {
         // Given — Plan mode: the first tool-free response is the plan
-        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.PLAN, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.PLAN, null));
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs\n2. restart the flow"));
 
         // When
@@ -199,7 +199,7 @@ class AiAgentControllerTest {
     @Test
     void shouldRunPlanToCompletionWhenApprovingPlanCard() {
         // Given — a plan proposed and awaiting approval, and a closing answer to resume into
-        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.PLAN, null, null));
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.PLAN, null));
         scriptedModel.enqueue(AiMessage.from("Plan:\n1. read the logs\n2. restart the flow"));
         String confirmationId = confirmationId(chat(thread.uid(), new ApiChatTurnRequest("fix my failing flow", AgentMode.PLAN, null, null)));
         scriptedModel.enqueue(AiMessage.from("All steps completed."));

@@ -56,7 +56,7 @@ class AiAgentControllerNoProviderTest {
     void shouldReturnServiceUnavailableOnCreateWhenNoProviderConfigured() {
         assertThatThrownBy(
             () -> client.toBlocking().exchange(
-                HttpRequest.POST(BASE, new ApiCreateThreadRequest(null, null, null)), ApiThreadSummary.class
+                HttpRequest.POST(BASE, new ApiCreateThreadRequest(null, null)), ApiThreadSummary.class
             )
         )
             .isInstanceOfSatisfying(

@@ -19,7 +19,6 @@ public record AgentThread(
     String tenant,
     @With @Nullable String title,
     @With AgentMode mode,
-    @Nullable AgentScopeBinding scope,
     @With @Nullable String ownerNodeId,
     @With AgentThreadStatus status,
     @With @Nullable String pendingConfirmationId,

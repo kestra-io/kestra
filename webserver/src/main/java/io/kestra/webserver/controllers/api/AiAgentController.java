@@ -94,7 +94,6 @@ public class AiAgentController {
             .tenant(tenant)
             .title(request.title())
             .mode(request.mode() != null ? request.mode() : AgentMode.ASK)
-            .scope(request.scope())
             .status(AgentThreadStatus.IDLE)
             .createdAt(now)
             .updatedAt(now)

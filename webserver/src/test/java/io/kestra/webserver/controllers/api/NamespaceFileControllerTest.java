@@ -139,6 +139,19 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void getRevisionsWithoutLeadingSlash() throws IOException, URISyntaxException {
+        // The UI's file explorer builds paths without a leading slash (e.g. "test.txt" for a root-level file),
+        // while namespace file metadata is always stored with a normalized leading slash ("/test.txt").
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+
+        List<NamespaceFileRevision> res = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
+        assertThat(res).containsExactlyInAnyOrder(new NamespaceFileRevision(1));
+    }
+
+    @Test
     void namespaceRootGetFileMetadatasWithoutPreCreation() {
         String namespace = TestsUtils.randomNamespace();
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats"), TestFileAttributes.class);

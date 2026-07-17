@@ -2,8 +2,8 @@ package io.kestra.webserver.services.ai.agent.data;
 
 import java.time.Instant;
 
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
-import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 
 import io.micronaut.core.annotation.Nullable;

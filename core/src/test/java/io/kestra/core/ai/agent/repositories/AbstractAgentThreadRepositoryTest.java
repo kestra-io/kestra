@@ -6,8 +6,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
-import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractAgentThreadRepositoryTest {
 
     @Inject
-    private ThreadStore threadStore;
+    private AiThreadRepositoryInterface threadStore;
 
     @Test
     void shouldCreateAndFindThread() {
@@ -51,6 +51,56 @@ public abstract class AbstractAgentThreadRepositoryTest {
         // When / Then — another tenant cannot see it
         assertThat(threadStore.find("other-" + tenant, thread.uid())).isEmpty();
         assertThat(threadStore.exists("other-" + tenant, thread.uid())).isFalse();
+    }
+
+    @Test
+    void shouldFindThreadForOwningUser() {
+        // Given
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(thread);
+
+        // When / Then — the owning user finds it
+        Optional<AgentThread> found = threadStore.find(tenant, "user-1", thread.uid());
+        assertThat(found).isPresent();
+        assertThat(found.get().uid()).isEqualTo(thread.uid());
+        assertThat(found.get().userId()).isEqualTo("user-1");
+    }
+
+    @Test
+    void shouldNotFindThreadOwnedByAnotherUser() {
+        // Given — a thread private to user-1
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(thread);
+
+        // When / Then — another user in the same tenant cannot see it (a miss, never leaks existence)
+        assertThat(threadStore.find(tenant, "user-2", thread.uid())).isEmpty();
+    }
+
+    @Test
+    void shouldNotFindThreadForUserFromAnotherTenant() {
+        // Given
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(thread);
+
+        // When / Then — same user id, different tenant, cannot see it
+        assertThat(threadStore.find("other-" + tenant, "user-1", thread.uid())).isEmpty();
+    }
+
+    @Test
+    void shouldNotFindSoftDeletedThreadByUser() {
+        // Given
+        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
+        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
+        threadStore.create(thread);
+
+        // When — soft-delete
+        threadStore.save(thread.withDeleted(true));
+
+        // Then — even the owning user no longer finds it
+        assertThat(threadStore.find(tenant, "user-1", thread.uid())).isEmpty();
     }
 
     @Test
@@ -132,10 +182,15 @@ public abstract class AbstractAgentThreadRepositoryTest {
     }
 
     private static AgentThread thread(final String tenant, final AgentThreadStatus status) {
+        return thread(tenant, null, status);
+    }
+
+    private static AgentThread thread(final String tenant, final String userId, final AgentThreadStatus status) {
         Instant now = Instant.now();
         return AgentThread.builder()
             .uid(IdUtils.create())
             .tenant(tenant)
+            .userId(userId)
             .mode(AgentMode.EDIT)
             .status(status)
             .createdAt(now)

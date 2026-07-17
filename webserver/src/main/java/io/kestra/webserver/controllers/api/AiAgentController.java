@@ -4,12 +4,12 @@ import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
-import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
-import io.kestra.core.ai.agent.repositories.MessageStore;
-import io.kestra.core.ai.agent.repositories.ThreadStore;
+import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
+import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.tenant.TenantService;
@@ -51,8 +51,8 @@ import reactor.core.publisher.FluxSink;
 public class AiAgentController {
     private final TenantService tenantService;
     private final AiServiceManager aiServiceManager;
-    private final ThreadStore threadStore;
-    private final MessageStore messageStore;
+    private final AiThreadRepositoryInterface threadStore;
+    private final AiMessageRepositoryInterface messageStore;
     private final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
     private final AgentPrincipalResolver principalResolver;
@@ -62,8 +62,8 @@ public class AiAgentController {
     public AiAgentController(
         final TenantService tenantService,
         final AiServiceManager aiServiceManager,
-        final ThreadStore threadStore,
-        final MessageStore messageStore,
+        final AiThreadRepositoryInterface threadStore,
+        final AiMessageRepositoryInterface messageStore,
         final AiThreadManager threadManager,
         final AgentOrchestrator orchestrator,
         final AgentPrincipalResolver principalResolver,
@@ -92,6 +92,7 @@ public class AiAgentController {
         AgentThread thread = AgentThread.builder()
             .uid(IdUtils.create())
             .tenant(tenant)
+            .userId(resolveUserId())
             .title(request.title())
             .mode(request.mode() != null ? request.mode() : AgentMode.ASK)
             .status(AgentThreadStatus.IDLE)
@@ -182,8 +183,13 @@ public class AiAgentController {
     }
 
     private AgentThread requireThread(final String tenant, final String threadId) {
-        return threadStore.find(tenant, threadId)
+        String userId = resolveUserId();
+        return (userId == null ? threadStore.find(tenant, threadId) : threadStore.find(tenant, userId, threadId))
             .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));
+    }
+
+    protected String resolveUserId() {
+        return null;
     }
 
     private void requireProvider(final String providerId) {

@@ -6,16 +6,16 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.ai.agent.models.AgentMessage;
-import io.kestra.core.ai.agent.repositories.MessageStore;
+import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
 
 /**
- * Abstract JDBC implementation of {@link MessageStore}: append-only conversation history keyed by
- * {@code thread_id}. Messages are not tenant-scoped or soft-deleted, so the default filter is
- * dropped; a thread's history sorts chronologically by the monotonic {@code key} (message uid).
+ * Abstract JDBC implementation of {@link AiMessageRepositoryInterface}: append-only conversation
+ * history keyed by {@code thread_id}. Messages are not tenant-scoped or soft-deleted, so the default
+ * filter is dropped; a thread's history sorts chronologically by the monotonic {@code key} (message uid).
  */
 public abstract class AbstractJdbcAgentMessageRepository extends AbstractJdbcCrudRepository<AgentMessage>
-    implements MessageStore {
+    implements AiMessageRepositoryInterface {
 
     private static final Field<String> THREAD_ID_FIELD = field("thread_id", String.class);
 

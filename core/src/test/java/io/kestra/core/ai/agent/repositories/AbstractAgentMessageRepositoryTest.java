@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentMessageRole;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.utils.IdUtils;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractAgentMessageRepositoryTest {
 
     @Inject
-    private MessageStore messageStore;
+    private AiMessageRepositoryInterface messageStore;
 
     @Test
     void shouldAppendAndLoadInKeyOrder() {

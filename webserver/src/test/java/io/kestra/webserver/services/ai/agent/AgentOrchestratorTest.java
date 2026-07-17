@@ -17,13 +17,13 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentMode;
-import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.ai.agent.models.AgentToolCall;
-import io.kestra.core.ai.agent.repositories.MessageStore;
-import io.kestra.core.ai.agent.repositories.ThreadStore;
+import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
+import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -62,10 +62,10 @@ class AgentOrchestratorTest {
     AgentOrchestrator orchestrator;
 
     @Inject
-    ThreadStore threadStore;
+    AiThreadRepositoryInterface threadStore;
 
     @Inject
-    MessageStore messageStore;
+    AiMessageRepositoryInterface messageStore;
 
     @Inject
     AiThreadManager threadManager;

@@ -8,16 +8,17 @@ import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
-import io.kestra.core.ai.agent.repositories.ThreadStore;
+import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 
 /**
- * Abstract JDBC implementation of {@link ThreadStore}: Copilot conversation threads, tenant-scoped
- * and soft-deleted (the default {@link #defaultFilter(String)} already excludes deleted rows).
+ * Abstract JDBC implementation of {@link AiThreadRepositoryInterface}: Copilot conversation threads,
+ * tenant-scoped and soft-deleted (the default {@link #defaultFilter(String)} already excludes deleted
+ * rows).
  */
 public abstract class AbstractJdbcAgentThreadRepository extends AbstractJdbcCrudRepository<AgentThread>
-    implements ThreadStore {
+    implements AiThreadRepositoryInterface {
 
     public AbstractJdbcAgentThreadRepository(io.kestra.jdbc.AbstractJdbcRepository<AgentThread> jdbcRepository) {
         super(jdbcRepository);
@@ -26,6 +27,18 @@ public abstract class AbstractJdbcAgentThreadRepository extends AbstractJdbcCrud
     @Override
     public Optional<AgentThread> find(String tenant, String uid) {
         return findOne(tenant, KEY_FIELD.eq(uid));
+    }
+
+    /**
+     * Scopes the lookup to the owning user. The {@code agent_thread} table has no {@code user_id}
+     * column, so the owner is checked against the deserialized record rather than in SQL — the
+     * thread is fetched by its uid (a primary-key hit) and returned only when it belongs to
+     * {@code userId}.
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<AgentThread> find(String tenant, String userId, String uid) {
+        return find(tenant, uid).filter(thread -> Objects.equals(thread.userId(), userId));
     }
 
     @Override

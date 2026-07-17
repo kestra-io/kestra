@@ -13,11 +13,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
-import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;

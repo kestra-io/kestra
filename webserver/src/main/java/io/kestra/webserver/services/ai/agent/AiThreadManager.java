@@ -6,16 +6,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageRole;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 import io.kestra.core.ai.agent.models.AgentMode;
-import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.ArtefactDraft;
-import io.kestra.core.ai.agent.repositories.MessageStore;
-import io.kestra.core.ai.agent.repositories.ThreadStore;
+import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
+import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.utils.IdUtils;
 
@@ -23,20 +23,21 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Owns a Copilot thread end to end: its lifecycle (status transitions in the {@link ThreadStore}) and
- * its append-only conversation log (building and persisting {@link AgentMessage} rows in the
- * {@link MessageStore}), including deriving the thread title from the first user message.
+ * Owns a Copilot thread end to end: its lifecycle (status transitions in the
+ * {@link AiThreadRepositoryInterface}) and its append-only conversation log (building and persisting
+ * {@link AgentMessage} rows in the {@link AiMessageRepositoryInterface}), including deriving the thread
+ * title from the first user message.
  */
 @Singleton
 public class AiThreadManager {
     private static final int MAX_TITLE_LENGTH = 60;
 
-    private final ThreadStore threadStore;
-    private final MessageStore messageStore;
+    private final AiThreadRepositoryInterface threadStore;
+    private final AiMessageRepositoryInterface messageStore;
     private final AtomicLong sequence = new AtomicLong();
 
     @Inject
-    public AiThreadManager(final ThreadStore threadStore, final MessageStore messageStore) {
+    public AiThreadManager(final AiThreadRepositoryInterface threadStore, final AiMessageRepositoryInterface messageStore) {
         this.threadStore = threadStore;
         this.messageStore = messageStore;
     }
@@ -146,6 +147,11 @@ public class AiThreadManager {
         );
     }
 
+    /**
+     * Mints a monotonically-increasing message uid: a zero-padded per-node sequence prefix followed by
+     * a random id. Message history is loaded ordered by this uid, so the prefix guarantees messages
+     * sort in append order (a tool call always before its result).
+     */
     private String newMessageUid() {
         return String.format("%019d-%s", sequence.incrementAndGet(), IdUtils.create());
     }

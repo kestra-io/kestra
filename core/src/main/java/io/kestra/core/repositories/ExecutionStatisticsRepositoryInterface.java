@@ -40,4 +40,21 @@ public interface ExecutionStatisticsRepositoryInterface extends IndexingReposito
         Instant startDate,
         Instant endDate,
         DateUtils.GroupType groupBy);
+
+    /**
+     * Aggregates execution statistics over a date range, bucketed by {@code groupBy} for all tenants.
+     * <p>
+     * Transparently sums both raw rows (not yet compacted) and already-compacted aggregate rows
+     * of the same bucket, so results are correct regardless of whether the periodic compaction job
+     * has already processed that bucket.
+     *
+     * @param startDate the inclusive range start.
+     * @param endDate the inclusive range end.
+     * @param groupBy the bucket size to group results by.
+     * @return one {@link DailyExecutionStatistics} entry per bucket in the range.
+     */
+    List<DailyExecutionStatistics> statisticsForAllTenants(
+        Instant startDate,
+        Instant endDate,
+        DateUtils.GroupType groupBy);
 }

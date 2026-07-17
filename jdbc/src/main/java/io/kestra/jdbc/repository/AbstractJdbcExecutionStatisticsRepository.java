@@ -94,6 +94,36 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
                 return this.jdbcRepository.fetch(select);
             });
 
+        return mapStatistics(rows, startDate, endDate, groupByType);
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public List<DailyExecutionStatistics> statisticsForAllTenants(
+        Instant startDate,
+        Instant endDate,
+        DateUtils.GroupType groupBy) {
+        DateUtils.GroupType groupByType = groupBy != null ? groupBy : DateUtils.groupByType(Duration.between(startDate, endDate));
+
+        List<ExecutionStatistic> rows = this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<?> select = context
+                    .select(VALUE_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(DATE_FIELD.greaterOrEqual(bindableDate(configuration.dialect(), startDate)))
+                    .and(DATE_FIELD.lessOrEqual(bindableDate(configuration.dialect(), endDate)));
+
+                return this.jdbcRepository.fetch(select);
+            });
+
+        return mapStatistics(rows, startDate, endDate, groupByType);
+    }
+
+    private List<DailyExecutionStatistics> mapStatistics(List<ExecutionStatistic> rows, Instant startDate, Instant endDate, DateUtils.GroupType groupByType) {
         Map<Instant, List<ExecutionStatistic>> byBucket = rows.stream()
             .collect(Collectors.groupingBy(row -> truncateToBucket(row.date(), groupByType)));
 

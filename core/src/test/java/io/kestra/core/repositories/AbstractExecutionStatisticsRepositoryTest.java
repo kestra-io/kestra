@@ -166,6 +166,43 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
         assertThat(stats.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
     }
 
+    @Test
+    void shouldAggregateAcrossAllTenantsIgnoringTenantScoping() {
+        // Given: two executions in the same bucket but belonging to different tenants
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+
+        long before = allTenantsCountFor(bucket);
+
+        executionStatisticsRepository.saveBatch(
+            List.of(
+                raw(tenant1, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
+                raw(tenant2, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 2000)
+            )
+        );
+
+        // When
+        long after = allTenantsCountFor(bucket);
+
+        // Then: both tenants' executions were summed into the same bucket, unscoped by tenant
+        assertThat(after - before).isEqualTo(2L);
+    }
+
+    private long allTenantsCountFor(Instant bucket) {
+        this.refresh();
+
+        List<DailyExecutionStatistics> stats = executionStatisticsRepository.statisticsForAllTenants(
+            bucket, bucket, DateUtils.GroupType.MINUTE
+        );
+
+        if (stats.isEmpty()) {
+            return 0L;
+        }
+
+        return stats.getFirst().getExecutionCounts().getOrDefault(State.Type.SUCCESS, 0L);
+    }
+
     private DailyExecutionStatistics statisticsFor(String tenant, String namespace, String flowId, Instant bucket) {
         // refresh before querying
         this.refresh();

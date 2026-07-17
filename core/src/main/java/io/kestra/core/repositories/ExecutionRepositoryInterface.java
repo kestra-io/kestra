@@ -11,11 +11,9 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
 import io.micronaut.data.model.Pageable;
@@ -121,25 +119,6 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
     boolean purge(Execution execution);
 
     Integer purge(List<Execution> executions);
-
-    List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy);
-
-    List<DailyExecutionStatistics> dailyStatistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        List<State.Type> state);
 
     @Getter
     @SuperBuilder

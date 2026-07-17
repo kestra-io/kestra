@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.utils.Enums;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Category bucket for the "Add Trigger" catalog in the UI.

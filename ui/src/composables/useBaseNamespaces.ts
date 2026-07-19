@@ -14,7 +14,6 @@ function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`
 }
 
-const HEADERS = {headers: {"Content-Type": "multipart/form-data"}}
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
@@ -156,10 +155,6 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
-    async function loadInheritedPluginDefaults(_: {id: string, commit?: boolean}) {
-        // NOOP IN OSS
-    }
-
     async function createDirectory(payload: {namespace: string; path: string}) {
         await FilesAPI.createNamespaceDirectory(payload)
     }
@@ -184,7 +179,8 @@ export const useBaseNamespacesStore = () => {
         DATA.append("fileContent", BLOB)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(payload.path)}`
-        await axios.post(URL, Utils.toFormData(DATA), HEADERS)
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
+        await axios.post(URL, Utils.toFormData(DATA))
     }
 
     async function fileRevisions(payload: {namespace: string; path: string}): Promise<{revision: number}[]> {
@@ -222,7 +218,8 @@ export const useBaseNamespacesStore = () => {
         DATA.append("fileContent", BLOB)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`
-        await axios.post(URL, DATA, HEADERS)
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
+        await axios.post(URL, DATA)
     }
 
     async function moveFileDirectory(payload: {namespace: string; old: string; new: string}) {
@@ -242,7 +239,7 @@ export const useBaseNamespacesStore = () => {
         const request = await axios.get(URL)
 
         const name = payload.namespace + "_files.zip"
-        Utils.downloadUrl(request.request.responseURL, name)
+        Utils.downloadUrl(request.request?.responseURL ?? "", name)
     }
 
     return {
@@ -275,7 +272,6 @@ export const useBaseNamespacesStore = () => {
         patchSecret,
         deleteSecrets,
         loadInheritedVariables,
-        loadInheritedPluginDefaults,
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,

@@ -22,7 +22,6 @@ export const SECTIONS_IDS = [
     "errors",
     "finally",
     "afterExecution",
-    "pluginDefaults",
     "outputs",
 ]
 
@@ -32,6 +31,7 @@ const HIDDEN_FIELDS = [
     "deleted",
     "tenantId",
     "revision",
+    "pluginDefaults",
 ]
 
 export function useFlowFields(flowSource: ComputedRef<string>){

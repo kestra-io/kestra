@@ -66,7 +66,7 @@
     })
 
     onBeforeMount(() => {
-        if (blockType === "pluginDefaults" || isPluginBlock) {
+        if (isPluginBlock) {
             pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
         pluginsStore.fetchIcons()
@@ -109,15 +109,8 @@
     })
 
     const taskModels = computed(() => {
-        const entries = blockType === "pluginDefaults"
-            ? (() => {
-                const deprecated = new Set(pluginsStore.deprecatedTypes)
-                return pluginsStore.allTypes
-                    .filter((cls: string) => !deprecated.has(cls) && rootDefinitions.value?.[cls])
-                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}))
-            })()
-            : (Array.from(taskModelsSets.value) as [string, string][])
-                .map(([cls, title]) => ({cls, title}))
+        const entries = (Array.from(taskModelsSets.value) as [string, string][])
+            .map(([cls, title]) => ({cls, title}))
 
         const unique = Array.from(new Map(entries.map(e => [e.cls, e])).values())
         return unique.sort((a, b) => a.cls.localeCompare(b.cls))

@@ -36,7 +36,8 @@
     "Default page": "Página padrão",
     "confirmation": "Confirmação",
     "common": {
-      "back": "Voltar"
+      "back": "Voltar",
+      "openInNewTab": "Abrir em nova aba"
     },
     "delete confirm": "Tem certeza de que deseja excluir <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -692,7 +693,6 @@
     "taskid column details": "Última task sendo executada e seu número de tentativas.",
     "flow already exists": "Flow já existe",
     "flow already exists message": "Flow <code>{id}</code> já existe no namespace <code>{namespace}</code>. Deseja criar uma nova revisão?",
-    "plugin_default_already_exists": "O padrão do plugin para <code>{type}</code> já existe.",
     "namespace not allowed": "Namespace não permitido",
     "switch-view": "Alternar visualização",
     "source and topology": "Fonte e topologia",
@@ -1192,6 +1192,12 @@
         "title": "Adicionar Blueprints Personalizados",
         "message": "Na Kestra Enterprise Edition, você pode criar Blueprints personalizados disponíveis apenas para sua organização. Você pode usá-los como modelos de melhores práticas para compartilhar, centralizar e documentar fluxos de trabalho comumente usados em sua equipe."
       },
+      "policies": {
+        "header": "Políticas de Governança",
+        "label": "Políticas",
+        "message": "Políticas permitem que equipes de plataforma gerenciem e apliquem regras centralizadamente em todos os flows — injetar padrões compartilhados, bloquear plugins, limitar valores de propriedades e exigir labels de conformidade. As regras se aplicam no nível do tenant ou do namespace com lançamento faseado, e cada valor injetado ou substituído permanece visível para os autores de flow.",
+        "title": "Governar Todos os Flow com Políticas"
+      },
       "namespace": {
         "edit": {
           "title": "Atualize o Gerenciamento do seu Namespace",
@@ -1209,9 +1215,9 @@
           "title": "Governe Centralmente Suas Variáveis",
           "message": "Na Kestra Enterprise Edition, você pode definir e gerenciar variáveis no nível do namespace para eliminar configurações repetitivas em flows. Essas variáveis garantem consistência, simplificam atualizações de configuração e podem ser facilmente referenciadas por qualquer task ou trigger para workflows mais limpos e fáceis de manter."
         },
-        "plugin-defaults": {
-          "title": "Padronizar Configuração com Padrões de Plugin",
-          "message": "Na Kestra Enterprise Edition, você pode definir padrões de plugin específicos para cada namespace, reduzindo a necessidade de configuração duplicada em cada flow. Esta governança central de plugins impõe configurações consistentes, permite a referência segura de segredos ou variáveis e simplifica a manutenção dos seus workflows."
+        "policies": {
+          "title": "Aplicar Regras de Governança Neste namespace",
+          "message": "Na Kestra Edição Enterprise, as Políticas permitem definir regras que se aplicam a cada flow neste namespace e seus filhos — injetar padrões compartilhados, restringir valores de propriedade, bloquear plugins e exigir labels de conformidade, com cada alteração totalmente visível para os autores do flow."
         },
         "history": {
           "title": "Gerenciar Histórico de Revisões em Um Só Lugar",
@@ -1387,26 +1393,6 @@
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
     "system_namespace": "Mantenha sua plataforma sob controle com system flows.",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
-    "pluginDefaults": {
-      "title": "Padrões do Plugin",
-      "add": "Adicionar Plugin Padrão",
-      "edit": "Editar Padrão do Plugin",
-      "add_subtitle": "Configurar um novo plugin padrão com suas propriedades",
-      "edit_subtitle": "Modificar a configuração padrão do plugin existente",
-      "predefined": "Plugin Predefinido",
-      "custom": "Plugin Personalizado",
-      "form": "Formulário",
-      "yaml": "YAML",
-      "select_predefined": "Selecionar Plugin Predefinido",
-      "cancel": "Cancelar",
-      "update": "Atualizar Plugin Padrão",
-      "custom_type": "Tipo de plugin personalizado",
-      "custom_placeholder": "Insira o tipo de plugin",
-      "use_custom": "Usar Personalizado",
-      "custom_configure": "Tipo de plugin personalizado - configure usando YAML",
-      "yaml_configuration": "Configuração YAML",
-      "show_yaml": "Mostrar YAML"
-    },
     "secret": {
       "add": "Criar",
       "update": "Atualizar segredo '{name}'",
@@ -1629,8 +1615,7 @@
         "triggers": "Triggers",
         "errors": "Manipuladores de Erro",
         "afterExecution": "Após a Execução",
-        "finally": "Finalmente",
-        "pluginDefaults": "Padrões de Plugin"
+        "finally": "Finalmente"
       },
       "fields": {
         "main": {
@@ -1662,7 +1647,6 @@
         "triggers": "Selecione um trigger",
         "errors": "Selecione uma task",
         "finally": "Selecione uma task",
-        "pluginDefaults": "Selecione um plugin",
         "afterExecution": "Selecione uma task",
         "conditions": "Selecione uma condição",
         "inputs": "Selecione um tipo de campo de input",
@@ -1676,7 +1660,6 @@
         "triggers": "Adicionar um trigger",
         "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
-        "pluginDefaults": "Adicionar um padrão de plugin",
         "afterExecution": "Adicionar um bloco após a execução",
         "conditions": "Adicionar uma condição",
         "inputs": "Adicionar um campo de input",
@@ -1793,10 +1776,6 @@
       "concurrency_limits": {
         "title": "Nenhum limite de concorrência está definido.",
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação."
-      },
-      "pluginDefaults": {
-        "title": "Você ainda não tem padrões de plugin!",
-        "content": "Os Padrões de Plugin permitem que você governe centralmente a configuração do seu plugin e a compartilhe com todos os flows no seu namespace."
       },
       "variables": {
         "title": "Ainda não há variáveis",

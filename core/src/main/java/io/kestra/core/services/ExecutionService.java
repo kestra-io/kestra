@@ -92,7 +92,7 @@ public class ExecutionService {
     private ConcurrencyLimitService concurrencyLimitService;
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private TaskOutputService taskOutputService;
@@ -609,7 +609,7 @@ public class ExecutionService {
 
         Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
-        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
@@ -856,7 +856,7 @@ public class ExecutionService {
         return Mono.create(sink ->
         {
             try {
-                final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+                final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
                 var runningTaskRun = execution
                     .findFirstByState(State.Type.PAUSED)
                     .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));

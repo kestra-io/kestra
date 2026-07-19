@@ -866,6 +866,32 @@ public abstract class StorageTestSuite {
         assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/level1/1.yml"))).isFalse();
         assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/level1/level2/1.yml"))).isFalse();
     }
+
+    @Test
+    void deleteByPrefixWithSpaceInFilename() throws Exception {
+        String tenantId = IdUtils.create();
+        String namespace = IdUtils.create();
+        String filePath = "/" + namespace + "/storage/File Test Template.md";
+        URI fileUri = new URI(null, null, filePath, null);
+
+        storageInterface.put(
+            tenantId,
+            namespace,
+            fileUri,
+            new ByteArrayInputStream("Hello World".getBytes())
+        );
+
+        var deleted = storageInterface.deleteByPrefix(
+            tenantId,
+            namespace,
+            new URI(null, null, "/" + namespace + "/storage/", null)
+        );
+
+        URI expected = new URI("kestra", "", filePath, null, null);
+        assertTrue(deleted.contains(expected));
+        assertTrue(deleted.stream().anyMatch(uri -> filePath.equals(uri.getPath())));
+        assertFalse(storageInterface.exists(tenantId, namespace, fileUri));
+    }
     //endregion
 
     //region test CREATEDIRECTORY

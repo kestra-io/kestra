@@ -653,6 +653,7 @@ public class ExecutionController {
         }
 
         final AbstractWebhookTrigger webhook = maybeWebhook.get();
+        this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -683,6 +684,15 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    /**
+     * Hook invoked once a webhook trigger has been matched against its key, before it is evaluated.
+     * No-op by default; editions may throw to veto the execution creation. Running after key matching
+     * keeps veto details from callers that failed the key check.
+     */
+    protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
+        // no-op
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -772,6 +782,10 @@ public class ExecutionController {
         }
 
         var executionId = IdUtils.create();
+        // Capture the OTel context on the current thread before entering the reactive chain.
+        // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
+        // would return an empty root context since OTel Context is thread-local.
+        final Context otelContext = Context.current();
         return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
             .flatMap(executionInputs ->
             {
@@ -800,13 +814,13 @@ public class ExecutionController {
                     createCommand = createCommand.withStateType(State.Type.FAILED);
                 }
 
-                // inject the traceparent from the current OTel context into the command so it's propagated to the execution
+                // inject the traceparent from the captured OTel context into the command so it's propagated to the execution
                 // TODO see if we can replicate ExecutionTextMapSetter logic
                 Map<String, String> traceCarrier = new HashMap<>();
                 openTelemetry
                     .map(OpenTelemetry::getPropagators)
                     .map(ContextPropagators::getTextMapPropagator)
-                    .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
+                    .ifPresent(propagator -> propagator.inject(otelContext, traceCarrier, Map::put));
                 if (traceCarrier.containsKey("traceparent")) {
                     createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
                 }

@@ -144,10 +144,14 @@ public class FlowParsingService {
 
         // The block below should only be reached during testing for failure scenarios
         try {
-            Flow parsed = YAML_MAPPER_NON_DEFAULT.readValue(flow.getSource(), Flow.class);
+            // Flow parsed = YAML_MAPPER_NON_DEFAULT.readValue(flow.getSource(), Flow.class);
+            Flow parsed = YamlParser.parse(flow.getSource(), Flow.class);
             return FlowWithSource.of(parsed, flow.getSource());
-        } catch (JsonProcessingException e) {
-            throw new KestraRuntimeException("Failed to read flow from source", e);
+        } catch (Exception e) {
+            if (e instanceof JsonProcessingException je) {
+                throw new KestraRuntimeException("Failed to read flow from source", e);
+            }
+            throw e;
         }
     }
 
@@ -198,7 +202,8 @@ public class FlowParsingService {
     protected Map<String, Object> readFlowAsMap(@Nullable final String tenantId,
         @Nullable final String namespace,
         final String source) throws JsonProcessingException, FlowProcessingException {
-        Map<String, Object> mapFlow = YAML_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
+        Map<String, Object> mapFlow = YamlParser.parse(source, JacksonMapper.MAP_TYPE_REFERENCE);
+        // Map<String, Object> mapFlow = YAML_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
         return injectPluginVersions(tenantId, namespace == null ? (String) mapFlow.get("namespace") : namespace, mapFlow);
     }
 

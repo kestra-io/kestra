@@ -34,7 +34,7 @@ public class GraphService {
     @Inject
     private TriggerRepositoryInterface triggerRepository;
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -64,7 +64,7 @@ public class GraphService {
     public GraphCluster of(GraphCluster baseGraph, FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution)
         throws IllegalVariableEvaluationException, FlowProcessingException {
         String tenantId = flow.getTenantId();
-        flow = pluginDefaultService.injectAllDefaults(flow, false);
+        flow = flowParsingService.parse(flow, false);
         List<TriggerState> triggers = null;
         if (flow.getTriggers() != null) {
             triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
@@ -134,7 +134,7 @@ public class GraphService {
                     );
                 }
             );
-            subflow = pluginDefaultService.injectAllDefaults(subflow, false);
+            subflow = flowParsingService.parse(subflow, false);
 
             SubflowGraphTask finalSubflowGraphTask = subflowGraphTask;
             return new TaskToClusterReplacer(

@@ -189,6 +189,18 @@ subprojects {subProj ->
 
         configurations {
             mockitoAgent
+            // Exposes this project's compiled test classes/resources to other projects, replacing the
+            // Gradle 9.5-incompatible `project(':x').sourceSets.test.output` cross-project script access.
+            testArtifacts {
+                canBeConsumed = true
+                canBeResolved = false
+            }
+        }
+
+        artifacts {
+            sourceSets.test.output.files.each { dir ->
+                testArtifacts(dir) { builtBy tasks.named('testClasses') }
+            }
         }
 
         dependencies {

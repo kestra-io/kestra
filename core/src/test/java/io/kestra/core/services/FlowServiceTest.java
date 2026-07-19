@@ -85,22 +85,15 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenValidatingFlowGivenDefaults() {
+    void shouldReturnTrueWhenValidatingFlow() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
               - id: log
                 type: io.kestra.plugin.core.log.Log
                 message: This is a message
-            pluginDefaults:
-              - type: io.kestra.plugin.core
-                values:
-                  level: WARN
-                  uri: https://kestra.io
             """;
         // When
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
@@ -111,22 +104,15 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenValidatingFlowWithFilenameGivenDefaults() {
+    void shouldReturnTrueWhenValidatingFlowWithFilename() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
               - id: log
                 type: io.kestra.plugin.core.log.Log
                 message: This is a message
-            pluginDefaults:
-              - type: io.kestra.plugin.core
-                values:
-                  level: WARN
-                  uri: https://kestra.io
             """;
         // When
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource("flow.yaml", source)));
@@ -137,18 +123,19 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnNoWarningsWhenPropertiesProvidedByPluginDefaults() {
+    void shouldReturnConstraintWhenFlowUsesRemovedPluginDefaults() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
             pluginDefaults:
-              - type: io.kestra.plugin.core.http.Download
+              - type: io.kestra.plugin.core.log.Log
                 values:
-                  uri: https://kestra.io
+                  level: WARN
             """;
 
         // When
@@ -156,8 +143,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).isNull();
-        assertThat(results.getFirst().getWarnings()).isEmpty();
+        assertThat(results.getFirst().getConstraints()).contains("pluginDefaults");
     }
 
     @Test

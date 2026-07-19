@@ -1192,6 +1192,12 @@
         "title": "Benutzerdefinierte Blueprints hinzufügen",
         "message": "In der Kestra Enterprise Edition können Sie benutzerdefinierte Blueprints erstellen, die nur für Ihre Organisation verfügbar sind. Sie können diese als Best-Practice-Vorlagen verwenden, um häufig genutzte Workflows in Ihrem Team zu teilen, zu zentralisieren und zu dokumentieren."
       },
+      "policies": {
+        "header": "Governance-Richtlinien",
+        "label": "Richtlinien",
+        "message": "Richtlinien ermöglichen Plattformteams, Regeln zentral über alle flows hinweg zu verwalten und durchzusetzen – gemeinsame Standardwerte einzufügen, Plugins zu blockieren, Eigenschaftswerte zu begrenzen und Compliance-labels zu erfordern. Regeln gelten auf Mandanten- oder namespace-Ebene mit gestuftem Rollout, und jeder eingefügte oder ersetzte Wert bleibt für flow-Autoren sichtbar.",
+        "title": "Jeden flow mit Richtlinien steuern"
+      },
       "namespace": {
         "edit": {
           "title": "Verbessern Sie Ihr Namespace-Management",
@@ -1208,6 +1214,10 @@
         "variables": {
           "title": "Verwalten Sie Ihre Variablen zentral",
           "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Variablen definieren und verwalten, um wiederholte Konfigurationen über Flows hinweg zu eliminieren. Diese Variablen gewährleisten Konsistenz, vereinfachen Konfigurationsaktualisierungen und können von jedem Task oder Trigger leicht referenziert werden, um sauberere und besser wartbare Workflows zu ermöglichen."
+        },
+        "policies": {
+          "title": "Governance-Regeln in diesem namespace durchsetzen",
+          "message": "In der Kestra Enterprise Edition ermöglichen es Ihnen Richtlinien, Regeln zu definieren, die für jeden flow in diesem namespace und seinen untergeordneten Elementen gelten — gemeinsame Standardwerte injizieren, Eigenschaftswerte einschränken, Plugins blockieren und Compliance-labels erfordern, wobei jede Änderung für flow-Autoren vollständig sichtbar ist."
         },
         "history": {
           "title": "Verwalten Sie die Revisionshistorie an einem Ort",

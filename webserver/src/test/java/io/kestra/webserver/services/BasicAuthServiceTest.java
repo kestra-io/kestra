@@ -464,6 +464,41 @@ class BasicAuthServiceTest {
     }
 
     @Test
+    void shouldValidateCredentials_withCorrectPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCredentials("admin@kestra.io", "Kestra123")).isTrue();
+    }
+
+    @Test
+    void shouldNotValidateCredentials_withWrongPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCredentials("admin@kestra.io", "WrongPassword1")).isFalse();
+        assertThat(basicAuthService.validateCredentials("nobody@kestra.io", "Kestra123")).isFalse();
+        assertThat(basicAuthService.validateCredentials(null, null)).isFalse();
+    }
+
+    @Test
+    void shouldNotValidateCredentials_whenNotInitialized() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        assertThat(basicAuthService.validateCredentials("admin@kestra.io", "Kestra123")).isFalse();
+    }
+
+    @Test
+    void encodeTokenShouldMatchAuthenticationCookieFormat() {
+        String token = BasicAuthService.encodeToken("admin@kestra.io", "Kestra123");
+
+        assertThat(token).isEqualTo(Base64.getEncoder().encodeToString("admin@kestra.io:Kestra123".getBytes()));
+    }
+
+    @Test
     void should_remove_validation_error_when_init_with_correct_config() {
         var settingRepositoryInterface = new InMemorySettingRepository();
         settingRepositoryInterface.save(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).value(List.of("errors")).build());

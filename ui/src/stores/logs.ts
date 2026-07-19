@@ -68,7 +68,7 @@ export const useLogsStore = defineStore("logs", () => {
 
     async function levelCounts(baseParams: Record<string, any>): Promise<Record<string, number>> {
         const baseFilters = (routeQueryToQueryFilters(baseParams) as QueryFilter[])
-            .filter((f) => f.field !== "LEVEL")
+            .filter((f) => f.field !== "level")
 
         const cumulative = await Promise.all(LEVELS_ASC.map((logLevel) => {
             const filters = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]

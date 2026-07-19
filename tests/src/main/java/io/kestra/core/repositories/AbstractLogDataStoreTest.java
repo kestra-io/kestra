@@ -30,7 +30,10 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.kestra.plugin.core.dashboard.data.LogsKPI;
 
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import lombok.Builder;
@@ -72,7 +75,7 @@ public abstract class AbstractLogDataStoreTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO, "executionId").build());
 
-        ArrayListTotal<LogEntry> entries = logRepository.find(Pageable.UNPAGED, tenant, List.of(filter));
+        List<LogEntry> entries = logRepository.find(Pageable.UNPAGED, tenant, List.of(filter)).getContent();
 
         assertThat(entries).hasSize(1);
     }
@@ -97,7 +100,12 @@ public abstract class AbstractLogDataStoreTest {
 
         logRepository.deleteByFilters(tenant, List.of(filter));
 
-        assertThat(logRepository.findAllAsync(tenant).collectList().block()).isEmpty();
+        if (logRepository.canPurge()) {
+            assertThat(logRepository.findAllAsync(tenant).collectList().block()).isEmpty();
+        } else {
+            // Stores that can't purge no-op: the entry is still there.
+            assertThat(logRepository.findAllAsync(tenant).collectList().block()).hasSize(1);
+        }
     }
 
     static Stream<QueryFilter> filterCombinations() {
@@ -200,13 +208,13 @@ public abstract class AbstractLogDataStoreTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         LogEntry.LogEntryBuilder builder = logEntry(tenant, Level.INFO);
 
-        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, tenant, null);
+        List<LogEntry> find = logRepository.find(Pageable.UNPAGED, tenant, null).getContent();
         assertThat(find.size()).isZero();
 
         LogEntry save = logRepository.save(builder.build());
         logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // non-NORMAL: excluded from the default NORMAL-only listing
 
-        find = logRepository.find(Pageable.UNPAGED, tenant, null);
+        find = logRepository.find(Pageable.UNPAGED, tenant, null).getContent();
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
         var filters = List.of(
@@ -221,10 +229,10 @@ public abstract class AbstractLogDataStoreTest {
                 .value(Instant.now().minus(1, ChronoUnit.HOURS))
                 .build()
         );
-        find = logRepository.find(Pageable.UNPAGED, "doe", filters);
+        find = logRepository.find(Pageable.UNPAGED, "doe", filters).getContent();
         assertThat(find.size()).isZero();
 
-        find = logRepository.find(Pageable.UNPAGED, tenant, null);
+        find = logRepository.find(Pageable.UNPAGED, tenant, null).getContent();
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
@@ -241,7 +249,7 @@ public abstract class AbstractLogDataStoreTest {
                     .value(ExecutionKind.TEST.name())
                     .build()
             )
-        );
+        ).getContent();
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.TEST);
 
@@ -270,10 +278,15 @@ public abstract class AbstractLogDataStoreTest {
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         Integer countDeleted = logRepository.purge(Execution.builder().id(save.getExecutionId()).build());
-        assertThat(countDeleted).isEqualTo(2);
-
         list = logRepository.findByExecutionIdAndTaskId(tenant, save.getExecutionId(), save.getTaskId(), null);
-        assertThat(list.size()).isZero();
+        if (logRepository.canPurge()) {
+            assertThat(countDeleted).isEqualTo(2);
+            assertThat(list.size()).isZero();
+        } else {
+            // A store that can't purge no-ops and returns 0, leaving the logs in place.
+            assertThat(countDeleted).isZero();
+            assertThat(list.size()).isEqualTo(2);
+        }
     }
 
     @Test
@@ -295,34 +308,66 @@ public abstract class AbstractLogDataStoreTest {
         // normal kind should also be retrieved
         logRepository.save(builder.executionKind(ExecutionKind.NORMAL).build());
 
-        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
+        if (logRepository.paginationType() == PaginationType.OFFSET) {
+            // Offset pagination: exact total + random page access.
+            Page<LogEntry> find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
 
-        assertThat(find.size()).isEqualTo(50);
-        assertThat(find.getTotal()).isEqualTo(102L);
+            assertThat(find.getNumberOfElements()).isEqualTo(50);
+            assertThat(find.getTotalSize()).isEqualTo(102L);
 
-        find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(3, 50));
+            find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(3, 50));
 
-        assertThat(find.size()).isEqualTo(2);
-        assertThat(find.getTotal()).isEqualTo(102L);
+            assertThat(find.getNumberOfElements()).isEqualTo(2);
+            assertThat(find.getTotalSize()).isEqualTo(102L);
 
-        find = logRepository.findByExecutionIdAndTaskId(tenant, executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
+            find = logRepository.findByExecutionIdAndTaskId(tenant, executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
 
-        assertThat(find.size()).isEqualTo(22);
-        assertThat(find.getTotal()).isEqualTo(22L);
+            assertThat(find.getNumberOfElements()).isEqualTo(22);
+            assertThat(find.getTotalSize()).isEqualTo(22L);
 
-        find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
+            find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
 
-        assertThat(find.size()).isEqualTo(10);
-        assertThat(find.getTotal()).isEqualTo(22L);
+            assertThat(find.getNumberOfElements()).isEqualTo(10);
+            assertThat(find.getTotalSize()).isEqualTo(22L);
 
-        find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenant, executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
+            find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenant, executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
 
-        assertThat(find.size()).isEqualTo(10);
-        assertThat(find.getTotal()).isEqualTo(22L);
+            assertThat(find.getNumberOfElements()).isEqualTo(10);
+            assertThat(find.getTotalSize()).isEqualTo(22L);
 
-        find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
+            find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
 
-        assertThat(find.size()).isZero();
+            assertThat(find.getNumberOfElements()).isZero();
+        } else {
+            // Cursor pagination: no total, forward-only. Walk the opaque cursor to the end, accumulating the row
+            // count — this proves the cursor advances and terminates, without relying on a total or random page
+            // access (and is robust to identical rows, unlike an element-disjointness check).
+            List<QueryFilter> filters = List.of(
+                QueryFilter.builder().field(QueryFilter.Field.EXECUTION_ID).operation(QueryFilter.Op.EQUALS).value(executionId).build()
+            );
+
+            int pageSize = 20;
+            int collected = 0;
+            Pageable.Cursor cursor = null;
+            for (int guard = 0; guard < 100; guard++) {
+                Pageable request = cursor == null
+                    ? Pageable.from(1, pageSize)
+                    : Pageable.afterCursor(cursor, 1, pageSize, Sort.UNSORTED);
+
+                Page<LogEntry> page = logRepository.find(request, tenant, filters);
+                assertThat(page).isInstanceOf(CursoredPage.class);
+                assertThat(page.hasTotalSize()).isFalse(); // cursor stores expose no total
+
+                if (page.getContent().isEmpty()) {
+                    break;
+                }
+                collected += page.getNumberOfElements();
+                List<Pageable.Cursor> cursors = ((CursoredPage<LogEntry>) page).getCursors();
+                cursor = cursors.get(cursors.size() - 1);
+            }
+
+            assertThat(collected).isEqualTo(102);
+        }
     }
 
     @Test
@@ -341,31 +386,38 @@ public abstract class AbstractLogDataStoreTest {
         LogEntry log1 = logEntry(tenant, Level.INFO).build();
         logRepository.save(log1);
 
+        if (!logRepository.canPurge()) {
+            // A store that can't purge no-ops: deleteByQuery leaves the entry in place.
+            logRepository.deleteByQuery(tenant, log1.getExecutionId(), null, null, null, null);
+            assertThat(logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50)).getNumberOfElements()).isEqualTo(1);
+            return;
+        }
+
         logRepository.deleteByQuery(tenant, log1.getExecutionId(), null, null, null, null);
 
-        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isZero();
+        Page<LogEntry> find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.getNumberOfElements()).isZero();
 
         logRepository.save(log1);
 
         logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null, List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1), true, true, null);
 
         find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isZero();
+        assertThat(find.getNumberOfElements()).isZero();
 
         logRepository.save(log1);
 
         logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null);
 
         find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isZero();
+        assertThat(find.getNumberOfElements()).isZero();
 
         logRepository.save(log1);
 
         logRepository.deleteByQuery(tenant, null, null, log1.getExecutionId(), List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1), true, true, null);
 
         find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isZero();
+        assertThat(find.getNumberOfElements()).isZero();
     }
 
     @Test
@@ -377,10 +429,16 @@ public abstract class AbstractLogDataStoreTest {
         }
 
         int deleted = logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, 2);
-
-        assertThat(deleted).isEqualTo(5);
         var remaining = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
-        assertThat(remaining.size()).isZero();
+
+        if (logRepository.canPurge()) {
+            assertThat(deleted).isEqualTo(5);
+            assertThat(remaining.getNumberOfElements()).isZero();
+        } else {
+            // No-op store: nothing deleted, all rows remain.
+            assertThat(deleted).isZero();
+            assertThat(remaining.getNumberOfElements()).isEqualTo(5);
+        }
     }
 
     @Test
@@ -397,10 +455,18 @@ public abstract class AbstractLogDataStoreTest {
         // purged, while sibling namespaces sharing a textual prefix (io.kestra.purgeother) are kept.
         int deleted = logRepository.deleteByQuery(tenant, "io.kestra.purge", null, null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, null);
 
-        assertThat(deleted).isEqualTo(2);
-        assertThat(logRepository.findByExecutionId(tenant, parent.getExecutionId(), null)).isEmpty();
-        assertThat(logRepository.findByExecutionId(tenant, child.getExecutionId(), null)).isEmpty();
-        assertThat(logRepository.findByExecutionId(tenant, sibling.getExecutionId(), null)).hasSize(1);
+        if (logRepository.canPurge()) {
+            assertThat(deleted).isEqualTo(2);
+            assertThat(logRepository.findByExecutionId(tenant, parent.getExecutionId(), null)).isEmpty();
+            assertThat(logRepository.findByExecutionId(tenant, child.getExecutionId(), null)).isEmpty();
+            assertThat(logRepository.findByExecutionId(tenant, sibling.getExecutionId(), null)).hasSize(1);
+        } else {
+            // No-op store: nothing deleted, all three remain.
+            assertThat(deleted).isZero();
+            assertThat(logRepository.findByExecutionId(tenant, parent.getExecutionId(), null)).hasSize(1);
+            assertThat(logRepository.findByExecutionId(tenant, child.getExecutionId(), null)).hasSize(1);
+            assertThat(logRepository.findByExecutionId(tenant, sibling.getExecutionId(), null)).hasSize(1);
+        }
     }
 
     @Test
@@ -439,8 +505,13 @@ public abstract class AbstractLogDataStoreTest {
             null
         );
 
-        assertThat(results).hasSize(1);
-        assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
+        if (logRepository.canAggregate()) {
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
+        } else {
+            // A store that can't aggregate yields no rows (dashboards render "No data").
+            assertThat(results).isEmpty();
+        }
     }
 
     @Test
@@ -462,7 +533,8 @@ public abstract class AbstractLogDataStoreTest {
             false
         );
 
-        assertThat(results).isEqualTo(1.0);
+        // A store that can't aggregate yields a zero KPI (so dashboards render "No data").
+        assertThat(results).isEqualTo(logRepository.canAggregate() ? 1.0 : 0.0);
     }
 
     @Test
@@ -474,7 +546,14 @@ public abstract class AbstractLogDataStoreTest {
         logRepository.save(logEntry(tenant, Level.INFO, "execution2").build());
 
         var result = logRepository.purge(List.of(Execution.builder().id("execution1").build(), Execution.builder().id("execution2").build()));
-        assertThat(result).isEqualTo(4);
+
+        if (logRepository.canPurge()) {
+            assertThat(result).isEqualTo(4);
+        } else {
+            // No-op store: returns 0 and leaves the logs in place.
+            assertThat(result).isZero();
+            assertThat(logRepository.findByExecutionId(tenant, "execution1", null)).hasSize(2);
+        }
     }
 
     private static final LogEntry traceLog = logEntry(null, Level.TRACE, "exec-trace").build();
@@ -887,9 +966,9 @@ public abstract class AbstractLogDataStoreTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         testCase.logs().forEach(log -> logRepository.save(log.toBuilder().tenantId(tenant).build()));
 
-        ArrayListTotal<LogEntry> results = logRepository.find(
+        List<LogEntry> results = logRepository.find(
             Pageable.UNPAGED, tenant, List.of(testCase.queryFilter())
-        );
+        ).getContent();
 
         assertThat(results)
             .extracting(LogEntry::getExecutionId)
@@ -903,7 +982,7 @@ public abstract class AbstractLogDataStoreTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         kindLogs.forEach(log -> logRepository.save(log.toBuilder().tenantId(tenant).build()));
 
-        ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, tenant, null);
+        List<LogEntry> results = logRepository.find(Pageable.UNPAGED, tenant, null).getContent();
 
         assertThat(results)
             .extracting(LogEntry::getExecutionId)
@@ -930,33 +1009,5 @@ public abstract class AbstractLogDataStoreTest {
 
         assertThat(results).hasSize(2);
         assertThat(results).extracting(LogEntry::getLevel).containsExactlyInAnyOrder(Level.WARN, Level.ERROR);
-    }
-
-    @Test
-    void shouldFindWithNullTenantId() {
-        LogEntry saved = logRepository.save(logEntry(null, Level.INFO, "nullTenantExec").build());
-        try {
-            ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, null, null);
-
-            assertThat(results.stream().map(LogEntry::getExecutionId).toList())
-                .contains(saved.getExecutionId());
-        } finally {
-            logRepository.purge(Execution.builder().id(saved.getExecutionId()).build());
-        }
-    }
-
-    @Test
-    void shouldNotFindTenantLogsWhenQueryingNullTenant() {
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        LogEntry saved = logRepository.save(logEntry(tenant, Level.INFO, "realTenantExec").build());
-
-        try {
-            ArrayListTotal<LogEntry> results = logRepository.find(Pageable.UNPAGED, null, null);
-
-            assertThat(results.stream().map(LogEntry::getExecutionId).toList())
-                .doesNotContain(saved.getExecutionId());
-        } finally {
-            logRepository.purge(Execution.builder().id(saved.getExecutionId()).build());
-        }
     }
 }

@@ -36,7 +36,8 @@
     "Default page": "Standardseite",
     "confirmation": "Bestätigung",
     "common": {
-      "back": "Zurück"
+      "back": "Zurück",
+      "openInNewTab": "In neuer Registerkarte öffnen"
     },
     "delete confirm": "Sind Sie sicher, dass Sie <code>{name}</code> löschen möchten?",
     "outdated revision save confirmation": {
@@ -692,7 +693,6 @@
     "taskid column details": "Letzter Task, der ausgeführt wird, und seine Anzahl der Versuche.",
     "flow already exists": "Flow existiert bereits",
     "flow already exists message": "Flow <code>{id}</code> existiert bereits im namespace <code>{namespace}</code>. Möchten Sie eine neue Revision erstellen?",
-    "plugin_default_already_exists": "Standard-Plugin für <code>{type}</code> existiert bereits.",
     "namespace not allowed": "Namespace nicht erlaubt",
     "switch-view": "Ansicht wechseln",
     "source and topology": "Quelle und Topologie",
@@ -1209,10 +1209,6 @@
           "title": "Verwalten Sie Ihre Variablen zentral",
           "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Variablen definieren und verwalten, um wiederholte Konfigurationen über Flows hinweg zu eliminieren. Diese Variablen gewährleisten Konsistenz, vereinfachen Konfigurationsaktualisierungen und können von jedem Task oder Trigger leicht referenziert werden, um sauberere und besser wartbare Workflows zu ermöglichen."
         },
-        "plugin-defaults": {
-          "title": "Konfiguration mit Plugin-Standards standardisieren",
-          "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Plugin-Standardeinstellungen festlegen, wodurch der Bedarf an doppelter Einrichtung in jedem Flow reduziert wird. Diese zentrale Plugin-Verwaltung erzwingt konsistente Konfigurationen, ermöglicht die sichere Referenzierung von Geheimnissen oder Variablen und vereinfacht die Wartung Ihrer Workflows."
-        },
         "history": {
           "title": "Verwalten Sie die Revisionshistorie an einem Ort",
           "message": "In der Kestra Enterprise Edition können Sie die Versionshistorie Ihrer Namespaces verwalten."
@@ -1387,26 +1383,6 @@
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
     "system_namespace": "Behalten Sie Ihre Plattform mit Systemflows im Blick.",
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",
-    "pluginDefaults": {
-      "title": "Plugin-Standardeinstellungen",
-      "add": "Plugin-Standard hinzufügen",
-      "edit": "Standard-Plugin bearbeiten",
-      "add_subtitle": "Konfigurieren Sie ein neues Plugin-Standard mit seinen Eigenschaften",
-      "edit_subtitle": "Ändern Sie die bestehende Standardkonfiguration des Plugins",
-      "predefined": "Vordefiniertes Plugin",
-      "custom": "Benutzerdefiniertes Plugin",
-      "form": "Formular",
-      "yaml": "YAML",
-      "select_predefined": "Wählen Sie vordefiniertes Plugin",
-      "cancel": "Abbrechen",
-      "update": "Plugin-Standard aktualisieren",
-      "custom_type": "Benutzerdefinierter Plugin-Typ",
-      "custom_placeholder": "Geben Sie den Plugin-Typ ein",
-      "use_custom": "Benutzerdefiniert verwenden",
-      "custom_configure": "Benutzerdefinierter Plugin-Typ - Konfiguration mit YAML",
-      "yaml_configuration": "YAML-Konfiguration",
-      "show_yaml": "YAML anzeigen"
-    },
     "secret": {
       "add": "Erstellen",
       "update": "Aktualisiere Secret '{name}'",
@@ -1629,8 +1605,7 @@
         "triggers": "Trigger",
         "errors": "Fehlerbehandler",
         "afterExecution": "Nach Ausführung",
-        "finally": "Schließlich",
-        "pluginDefaults": "Plugin-Standardeinstellungen"
+        "finally": "Schließlich"
       },
       "fields": {
         "main": {
@@ -1662,7 +1637,6 @@
         "triggers": "Wählen Sie einen Trigger aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
-        "pluginDefaults": "Wählen Sie ein Plugin aus",
         "afterExecution": "Wählen Sie eine Task aus",
         "conditions": "Wählen Sie eine Bedingung aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
@@ -1676,7 +1650,6 @@
         "triggers": "Füge einen Trigger hinzu",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
-        "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "conditions": "Bedingung hinzufügen",
         "inputs": "Ein Eingabefeld hinzufügen",
@@ -1793,10 +1766,6 @@
       "concurrency_limits": {
         "title": "Es sind keine Nebenläufigkeitsgrenzen festgelegt.",
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation."
-      },
-      "pluginDefaults": {
-        "title": "Sie haben noch keine Plugin-Standards!",
-        "content": "Plugin-Standardeinstellungen ermöglichen es Ihnen, Ihre Plugin-Konfiguration zentral zu verwalten und mit allen flows in Ihrem namespace zu teilen."
       },
       "variables": {
         "title": "Noch keine Variablen vorhanden",

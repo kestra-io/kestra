@@ -7,31 +7,19 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.docs.JsonSchemaCache;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class PluginAutoInstallServiceTest {
 
     private PluginCatalogService catalogService;
-    private PluginManager pluginManager;
     private PluginRegistry pluginRegistry;
-    private JsonSchemaCache jsonSchemaCache;
 
     @BeforeEach
     void setUp() {
         catalogService = mock(PluginCatalogService.class);
-        pluginManager = mock(PluginManager.class);
         pluginRegistry = mock(PluginRegistry.class);
-        jsonSchemaCache = mock(JsonSchemaCache.class);
     }
 
     // ─── findMissingTypes ──────────────────────────────────────────────────────
@@ -176,76 +164,6 @@ class PluginAutoInstallServiceTest {
         assertThat(result).isEmpty();
     }
 
-    // ─── installMissingPlugins ────────────────────────────────────────────────
-
-    @Test
-    void shouldInstallMissingPluginAndClearSchemaCache() {
-        // Given
-        String yaml = """
-            id: my-flow
-            namespace: company
-            tasks:
-              - id: t1
-                type: io.kestra.plugin.http.request.Request
-            """;
-        when(pluginRegistry.findClassByIdentifier("io.kestra.plugin.http.request.Request")).thenReturn(null);
-        when(catalogService.get()).thenReturn(
-            List.of(
-                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
-            )
-        );
-        PluginArtifact latestArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
-        PluginArtifact resolvedArtifact = latestArtifact.toBuilder().version("1.2.3").build();
-        when(catalogService.resolveVersions(List.of(latestArtifact))).thenReturn(
-            List.of(new PluginResolutionResult(latestArtifact, "1.2.3", List.of("1.2.3"), true))
-        );
-        when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(resolvedArtifact));
-
-        PluginAutoInstallService service = enabledService();
-
-        // When
-        List<PluginArtifact> installed = service.installMissingPlugins(yaml);
-
-        // Then
-        assertThat(installed).hasSize(1);
-        assertThat(installed.getFirst().artifactId()).isEqualTo("plugin-http");
-        assertThat(installed.getFirst().version()).isEqualTo("1.2.3");
-        verify(pluginManager).install(eq(List.of(resolvedArtifact)), anyList(), eq(true), any());
-        verify(jsonSchemaCache).clear();
-    }
-
-    @Test
-    void shouldSkipArtifactsWithNoCompatibleVersion() {
-        // Given
-        String yaml = """
-            id: my-flow
-            namespace: company
-            tasks:
-              - id: t1
-                type: io.kestra.plugin.http.request.Request
-            """;
-        when(pluginRegistry.findClassByIdentifier("io.kestra.plugin.http.request.Request")).thenReturn(null);
-        when(catalogService.get()).thenReturn(
-            List.of(
-                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
-            )
-        );
-        PluginArtifact latestArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
-        when(catalogService.resolveVersions(List.of(latestArtifact))).thenReturn(
-            List.of(new PluginResolutionResult(latestArtifact, null, List.of(), false))
-        );
-
-        PluginAutoInstallService service = enabledService();
-
-        // When
-        List<PluginArtifact> installed = service.installMissingPlugins(yaml);
-
-        // Then
-        assertThat(installed).isEmpty();
-        verify(pluginManager, never()).install(anyList(), anyList(), any(Boolean.class), any());
-        verify(jsonSchemaCache, never()).clear();
-    }
-
     @Test
     void shouldBeNoOpWhenDisabled() {
         // Given
@@ -258,79 +176,18 @@ class PluginAutoInstallServiceTest {
             """;
         PluginAutoInstallService service = disabledService();
 
-        // When
-        List<PluginArtifact> installed = service.installMissingPlugins(yaml);
-
-        // Then
-        assertThat(installed).isEmpty();
-        verify(pluginManager, never()).install(anyList(), anyList(), any(Boolean.class), any());
-        verify(jsonSchemaCache, never()).clear();
-    }
-
-    @Test
-    void shouldBeNoOpWhenAllTypesAlreadyInstalled() {
-        // Given
-        String yaml = """
-            id: my-flow
-            namespace: company
-            tasks:
-              - id: t1
-                type: io.kestra.plugin.http.request.Request
-            """;
-        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn((Class) Object.class);
-
-        PluginAutoInstallService service = enabledService();
-
-        // When
-        List<PluginArtifact> installed = service.installMissingPlugins(yaml);
-
-        // Then
-        assertThat(installed).isEmpty();
-        verify(pluginManager, never()).install(anyList(), anyList(), any(Boolean.class), any());
-    }
-
-    @Test
-    void shouldNotInstallDeduplicatedArtifacts() {
-        // Given — two types from the same plugin
-        String yaml = """
-            id: my-flow
-            namespace: company
-            tasks:
-              - id: t1
-                type: io.kestra.plugin.http.request.Request
-              - id: t2
-                type: io.kestra.plugin.http.request.Options
-            """;
-        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
-        when(catalogService.get()).thenReturn(
-            List.of(
-                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
-            )
-        );
-        PluginArtifact latestArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
-        PluginArtifact resolvedArtifact = latestArtifact.toBuilder().version("1.2.3").build();
-        when(catalogService.resolveVersions(List.of(latestArtifact))).thenReturn(
-            List.of(new PluginResolutionResult(latestArtifact, "1.2.3", List.of("1.2.3"), true))
-        );
-        when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(resolvedArtifact));
-
-        PluginAutoInstallService service = enabledService();
-
-        // When
-        service.installMissingPlugins(yaml);
-
-        // Then — PluginManager.install is called with a single de-duplicated, version-resolved artifact
-        verify(pluginManager).install(eq(List.of(resolvedArtifact)), anyList(), eq(true), any());
+        // When / Then — service state is independent of findMissingTypes, which only depends on the registry
+        assertThat(service.isEnabled()).isFalse();
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
 
     private PluginAutoInstallService enabledService() {
-        return new PluginAutoInstallService(catalogService, pluginManager, pluginRegistry, jsonSchemaCache, true);
+        return new PluginAutoInstallService(catalogService, pluginRegistry, true);
     }
 
     private PluginAutoInstallService disabledService() {
-        return new PluginAutoInstallService(catalogService, pluginManager, pluginRegistry, jsonSchemaCache, false);
+        return new PluginAutoInstallService(catalogService, pluginRegistry, false);
     }
 
     private PluginCatalogService.PluginManifest manifest(String groupId, String artifactId, String group) {

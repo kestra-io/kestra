@@ -43,3 +43,16 @@ export function scopeFromRoute(route: RouteLike | undefined | null): ScopeBindin
             return null
     }
 }
+
+/**
+ * Converts a scope into the free-form `additionalContext` map sent on a chat turn (what the user is
+ * currently viewing). Returns undefined when there's no scope, and omits absent fields.
+ */
+export function scopeToContext(scope: ScopeBinding | null | undefined): Record<string, unknown> | undefined {
+    if (!scope) return undefined
+    const currentView: Record<string, unknown> = {kind: scope.kind}
+    if (scope.namespace) currentView.namespace = scope.namespace
+    if (scope.flowId) currentView.flowId = scope.flowId
+    if (scope.executionId) currentView.executionId = scope.executionId
+    return {currentView}
+}

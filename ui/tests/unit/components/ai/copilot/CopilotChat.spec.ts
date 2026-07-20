@@ -25,7 +25,7 @@ const state = {
     restoreThread: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
-// CopilotChat derives `inFocus` from the current route — mock a mutable route so tests control it.
+// CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
 let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
 vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
@@ -98,17 +98,17 @@ describe("CopilotChat", () => {
         const w = mountChat({initialMode: "PLAN"})
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "do it")
         await flushPromises()
-        expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", inFocus: null, providerId: undefined})
+        expect(state.sendChat).toHaveBeenCalledWith({prompt: "do it", mode: "PLAN", additionalContext: undefined, providerId: undefined})
     })
 
-    it("sends the current page as inFocus when on a detail route (context-awareness)", async () => {
+    it("sends the current page as additionalContext on a detail route (context-awareness)", async () => {
         routeStub = {name: "executions/update", params: {namespace: "company.team", flowId: "my-flow", id: "exec-1"}}
         const w = mountChat()
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "why did this fail?")
         await flushPromises()
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
             prompt: "why did this fail?",
-            inFocus: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"},
+            additionalContext: {currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}},
         }))
     })
 
@@ -132,7 +132,7 @@ describe("CopilotChat", () => {
 
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no scope please")
         await flushPromises()
-        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "no scope please", inFocus: null}))
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "no scope please", additionalContext: undefined}))
     })
 
     it("surfaces a warning notice when a turn yields no output", () => {

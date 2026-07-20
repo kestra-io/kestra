@@ -81,8 +81,19 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function loadDefaults() {
-        defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards()
-        return defaultDashboards.value
+        try {
+            defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards(
+                undefined,
+                {showMessageOnError: false} as any,
+            )
+            return defaultDashboards.value
+        } catch (e: any) {
+            if (e.status === 404) {
+                defaultDashboards.value = undefined
+                return undefined
+            }
+            throw e
+        }
     }
 
     async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {

@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
-import io.kestra.core.runners.PriviledgedIo;
+import io.kestra.core.runners.PrivilegedIo;
 
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -175,7 +175,7 @@ public class InternalNamespace implements Namespace {
                 if (nsFileMetadata.isDirectory()) {
                     afterNamespaceFile = this.createDirectory(Path.of(finalNewPath));
                 } else {
-                    try (InputStream oldContent = PriviledgedIo.call(() -> storage.get(tenant, namespace, beforeNamespaceFile.storagePath().toUri()))) {
+                    try (InputStream oldContent = PrivilegedIo.call(() -> storage.get(tenant, namespace, beforeNamespaceFile.storagePath().toUri()))) {
                         List<NamespaceFile> putResult = this.putFile(Path.of(finalNewPath), oldContent, Conflicts.OVERWRITE);
                         afterNamespaceFile = putResult.stream().filter(f -> f.path().equals(finalNewPath)).findFirst().orElse(putResult.get(putResult.size() - 1));
                     }
@@ -221,7 +221,7 @@ public class InternalNamespace implements Namespace {
         // The two stores cannot be updated atomically, so we order them to fail safe: a crash in between
         // leaves an orphan object (harmless, reclaimable) rather than a dangling index entry.
         stateStore.save(NamespaceFileMetadata.of(tenant, nsFile).toBuilder().deleted(true).build());
-        PriviledgedIo.run(() -> storage.delete(tenant, namespace, nsFile.storagePath().toUri()));
+        PrivilegedIo.run(() -> storage.delete(tenant, namespace, nsFile.storagePath().toUri()));
     }
 
     /**
@@ -261,7 +261,7 @@ public class InternalNamespace implements Namespace {
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
         URI resolvedUri = resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision());
 
-        return PriviledgedIo.call(() -> storage.get(tenant, namespace, resolvedUri));
+        return PrivilegedIo.call(() -> storage.get(tenant, namespace, resolvedUri));
     }
 
     /**
@@ -276,7 +276,7 @@ public class InternalNamespace implements Namespace {
     private URI resolveExistingRevisionUri(Path normalizedPath, int revision) throws IOException {
         for (int candidate = revision; candidate >= 1; candidate--) {
             URI uri = NamespaceFile.of(namespace, normalizedPath, candidate).storagePath().toUri();
-            if (PriviledgedIo.call(() -> storage.exists(tenant, namespace, uri))) {
+            if (PrivilegedIo.call(() -> storage.exists(tenant, namespace, uri))) {
                 if (candidate != revision) {
                     logger.warn(
                         "Namespace file '{}' revision {} is missing from storage in namespace '{}' (metadata/storage drift); serving the latest available revision {} instead.",
@@ -348,7 +348,7 @@ public class InternalNamespace implements Namespace {
 
         List<NamespaceFile> createdFiles = new ArrayList<>();
         if (inRepository.isEmpty()) {
-            PriviledgedIo.run(() -> storage.put(tenant, namespace, cleanUri, content));
+            PrivilegedIo.run(() -> storage.put(tenant, namespace, cleanUri, content));
 
             createdFiles.addAll(mkDirs(normalizedPath.toString()));
 
@@ -357,7 +357,7 @@ public class InternalNamespace implements Namespace {
                     .tenantId(tenant)
                     .namespace(namespace)
                     .path(normalizedPath.toString())
-                    .size(PriviledgedIo.call(() -> storage.getAttributes(tenant, namespace, cleanUri)).getSize())
+                    .size(PrivilegedIo.call(() -> storage.getAttributes(tenant, namespace, cleanUri)).getSize())
                     .build()
             );
 
@@ -371,12 +371,12 @@ public class InternalNamespace implements Namespace {
 
             createdFiles.add(namespaceFile);
         } else if (onAlreadyExist == Conflicts.OVERWRITE || inRepository.get().isDeleted()) {
-            PriviledgedIo.run(() -> storage.put(tenant, namespace, cleanUri, content));
+            PrivilegedIo.run(() -> storage.put(tenant, namespace, cleanUri, content));
 
             createdFiles.addAll(mkDirs(normalizedPath.toString()));
 
             stateStore.save(
-                inRepository.get().toBuilder().size(PriviledgedIo.call(() -> storage.getAttributes(tenant, namespace, cleanUri)).getSize()).deleted(false).build()
+                inRepository.get().toBuilder().size(PrivilegedIo.call(() -> storage.getAttributes(tenant, namespace, cleanUri)).getSize()).deleted(false).build()
             );
 
             if (inRepository.get().isDeleted()) {
@@ -436,7 +436,7 @@ public class InternalNamespace implements Namespace {
                 .size(0L)
                 .build()
         );
-        PriviledgedIo.run(() -> storage.createDirectory(tenant, namespace, NamespaceFile.of(namespace, normalizedPath, 1).storagePath().toUri()));
+        PrivilegedIo.run(() -> storage.createDirectory(tenant, namespace, NamespaceFile.of(namespace, normalizedPath, 1).storagePath().toUri()));
 
         return NamespaceFile.fromMetadata(nsFileMetadata);
     }

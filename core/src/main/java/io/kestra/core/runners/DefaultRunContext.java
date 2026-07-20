@@ -398,7 +398,7 @@ public class DefaultRunContext extends RunContext {
                 logger.closeLogFile();
                 String logName = "log-" + RandomStringUtils.secure().nextAlphanumeric(5).toLowerCase() + ".txt";
                 Path logFile = this.workingDir.createFile(logName);
-                PriviledgedIo.run(() ->
+                PrivilegedIo.run(() ->
                 {
                     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(logFile))) {
                         Files.copy(logger.getLogFile().toPath(), out);

@@ -13,7 +13,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 
-import io.kestra.core.runners.PriviledgedIo;
+import io.kestra.core.runners.PrivilegedIo;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.FileUtils;
 
@@ -90,7 +90,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public boolean isFileExist(URI uri) {
-        return PriviledgedIo.call(() -> this.storage.exists(context.getTenantId(), context.getNamespace(), uri));
+        return PrivilegedIo.call(() -> this.storage.exists(context.getTenantId(), context.getNamespace(), uri));
     }
 
     /**
@@ -100,7 +100,7 @@ public class InternalStorage implements Storage {
     public InputStream getFile(final URI uri) throws IOException {
         uriGuard(uri);
 
-        return PriviledgedIo.call(() -> this.storage.get(context.getTenantId(), context.getNamespace(), uri));
+        return PrivilegedIo.call(() -> this.storage.get(context.getTenantId(), context.getNamespace(), uri));
 
     }
 
@@ -108,7 +108,7 @@ public class InternalStorage implements Storage {
     public FileAttributes getAttributes(URI uri) throws IOException {
         uriGuard(uri);
 
-        return PriviledgedIo.call(() -> this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri));
+        return PrivilegedIo.call(() -> this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri));
     }
 
     /**
@@ -118,7 +118,7 @@ public class InternalStorage implements Storage {
     public boolean deleteFile(final URI uri) throws IOException {
         uriGuard(uri);
 
-        return PriviledgedIo.call(() -> this.storage.delete(context.getTenantId(), context.getNamespace(), uri));
+        return PrivilegedIo.call(() -> this.storage.delete(context.getTenantId(), context.getNamespace(), uri));
 
     }
 
@@ -142,7 +142,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public List<URI> deleteExecutionFiles() throws IOException {
-        return PriviledgedIo.call(() -> this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI()));
+        return PrivilegedIo.call(() -> this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI()));
     }
 
     /**
@@ -160,7 +160,7 @@ public class InternalStorage implements Storage {
     public URI putFile(InputStream inputStream, String name) throws IOException {
         URI uri = context.getContextStorageURI();
         URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + toLogicalPath(name));
-        return PriviledgedIo.call(() -> this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream)));
+        return PrivilegedIo.call(() -> this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream)));
     }
 
     /**
@@ -168,7 +168,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(InputStream inputStream, URI uri) throws IOException {
-        return PriviledgedIo.call(() -> this.storage.put(context.getTenantId(), context.getNamespace(), uri, new BufferedInputStream(inputStream)));
+        return PrivilegedIo.call(() -> this.storage.put(context.getTenantId(), context.getNamespace(), uri, new BufferedInputStream(inputStream)));
     }
 
     /**
@@ -186,7 +186,7 @@ public class InternalStorage implements Storage {
     public URI putFile(File file, String name) throws IOException {
         URI uri = context.getContextStorageURI();
         URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + (name != null ? name : file.getName()));
-        try (InputStream is = PriviledgedIo.call(() -> new FileInputStream(file))) {
+        try (InputStream is = PrivilegedIo.call(() -> new FileInputStream(file))) {
             return putFile(is, resolved);
         } finally {
             FileUtils.deleteWithRetry(file.toPath())
@@ -217,12 +217,12 @@ public class InternalStorage implements Storage {
             }
         }
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ? Optional.of(PriviledgedIo.call(() -> storage.get(context.getTenantId(), context.getNamespace(), uri))) : Optional.empty();
+        return isFileExist(uri) ? Optional.of(PrivilegedIo.call(() -> storage.get(context.getTenantId(), context.getNamespace(), uri))) : Optional.empty();
     }
 
     private Optional<Long> getCacheFileLastModifiedTime(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ? Optional.of(PriviledgedIo.call(() -> this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri)).getLastModifiedTime())
+        return isFileExist(uri) ? Optional.of(PrivilegedIo.call(() -> this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri)).getLastModifiedTime())
             : Optional.empty();
     }
 
@@ -241,11 +241,11 @@ public class InternalStorage implements Storage {
     @Override
     public Optional<Boolean> deleteCacheFile(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ? Optional.of(PriviledgedIo.call(() -> this.storage.delete(context.getTenantId(), context.getNamespace(), uri))) : Optional.empty();
+        return isFileExist(uri) ? Optional.of(PrivilegedIo.call(() -> this.storage.delete(context.getTenantId(), context.getNamespace(), uri))) : Optional.empty();
     }
 
     private URI putFileAndDelete(File file, URI uri) throws IOException {
-        try (InputStream is = PriviledgedIo.call(() -> new FileInputStream(file))) {
+        try (InputStream is = PrivilegedIo.call(() -> new FileInputStream(file))) {
             return this.putFile(is, uri);
         } finally {
             FileUtils.deleteWithRetry(file.toPath())
@@ -262,7 +262,7 @@ public class InternalStorage implements Storage {
     private URI putFile(InputStream inputStream, String prefix, String name) throws IOException {
         URI uri = URI.create(prefix);
         URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return PriviledgedIo.call(() -> this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream)));
+        return PrivilegedIo.call(() -> this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream)));
     }
 
     @Override
@@ -272,6 +272,6 @@ public class InternalStorage implements Storage {
 
     @Override
     public List<FileAttributes> list(URI uri) throws IOException {
-        return PriviledgedIo.call(() -> this.storage.list(context.getTenantId(), context.getNamespace(), uri));
+        return PrivilegedIo.call(() -> this.storage.list(context.getTenantId(), context.getNamespace(), uri));
     }
 }

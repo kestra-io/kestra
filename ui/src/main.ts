@@ -4,18 +4,14 @@ import type {Router} from "vue-router"
 import "./utils/monacoEnvironment"
 
 const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"}) as Record<string, string>
-function loadNodeTypes(tries = 0) {
-    import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
-        if (languages.typescript) {
-            for (const path in NodeTypesRaw) {
-                languages.typescript.typescriptDefaults.addExtraLib(NodeTypesRaw[path], `file://${path}`)
-            }
-        } else if (tries <= 15) {
-            setTimeout(() => loadNodeTypes(tries + 1), (tries + 1) * 100)
-        }
-    })
-}
-loadNodeTypes()
+Promise.all([
+    import("monaco-editor/esm/vs/language/typescript/monaco.contribution"),
+    import("monaco-editor/esm/vs/editor/editor.api"),
+]).then(([, {languages}]) => {
+    for (const path in NodeTypesRaw) {
+        languages.typescript.typescriptDefaults.addExtraLib(NodeTypesRaw[path], `file://${path}`)
+    }
+})
 
 import App from "./App.vue"
 import initApp from "./utils/init"

@@ -117,8 +117,9 @@ the existing schema-publishing composite action).
 ### (b) Runtime — fetch & cache
 
 `PluginSchemaBundleService` downloads the bundle from a configurable URL,
-`kestra.plugins.schema-bundle-url-template` (`{version}` → current stable version). Cached ~1h,
-loaded asynchronously, and a **no-op when the property is empty** (the default). This is pure JSON —
+`kestra.plugins.schema-bundle-url-template` (`{version}` → current stable version, defaults to a
+`storage.googleapis.com` bucket — clear the property to opt out on air-gapped instances). Cached
+~1h, loaded asynchronously, and a **no-op when the property is empty**. This is pure JSON —
 **no plugin JAR is ever downloaded here.**
 
 ### (c) Serve — merge on the fly
@@ -243,8 +244,10 @@ and `KestraContext.getServerType()`.
 
 | Property | Default | Effect |
 |----------|---------|--------|
-| `kestra.plugins.schema-bundle-url-template` | empty | Bundle URL (`{version}` placeholder). Empty → bundle disabled, completion falls back to installed-only. |
+| `kestra.plugins.schema-bundle-url-template` | `https://storage.googleapis.com/kestra-api-storage_prd/configuration-schema/{version}/plugins-schema.json` | Bundle URL (`{version}` placeholder, resolved to the stripped stable version, e.g. `1.2.3`). Set to empty → bundle disabled, completion falls back to installed-only — the setting to use for air-gapped instances that must never reach `storage.googleapis.com`. |
 | `kestra.plugins.auto-install.enabled` | unset → `true` on OSS+standalone, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && serverType == STANDALONE`); an explicit value always wins. |
+
+> **Every instance phones GCS by default.** Since the bundle URL now ships with a real value, every OSS/EE instance fetches `plugins-schema.json` from `storage.googleapis.com` on first `?includeCatalog=true` schema request unless the template is explicitly cleared — worth flagging for air-gapped/offline deployments (hourly retries otherwise just log a warning and no-op). Also note the URL is keyed by the **stripped stable** version (`{version}` → `1.2.3`, never `-SNAPSHOT`), while CI publishes dev bundles under a `develop/` prefix — so on `develop`/`-SNAPSHOT` builds the fetch 404s and the feature is a silent no-op by design, not a bug.
 
 ## Who downloads what
 

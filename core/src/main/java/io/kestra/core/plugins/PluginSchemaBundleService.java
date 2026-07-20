@@ -3,6 +3,7 @@ package io.kestra.core.plugins;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLConnection;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -50,14 +53,25 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>
  * The bundle URL template is configurable via {@code kestra.plugins.schema-bundle-url-template},
- * where {@code {version}} is replaced by the current stable Kestra version. When the property is
- * empty (the default) the service is a no-op.
+ * where {@code {version}} is replaced by the current stable Kestra version. Setting the property
+ * to empty turns the service into a no-op — useful for air-gapped instances that should never
+ * phone {@code storage.googleapis.com}. The shipped default points at a real GCS bucket keyed by
+ * the stripped stable version (e.g. {@code 1.2.3}, never {@code -SNAPSHOT}), so the fetch is a
+ * silent no-op (404, logged and swallowed) on {@code develop}/dev builds, which only publish
+ * under a {@code develop/} prefix.
  */
 @Singleton
 @Slf4j
 public class PluginSchemaBundleService {
 
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
+    // Bounds the one-time blocking wait for the very first caller when no bundle is cached yet.
+    // Later callers never wait on the network: a stale cache is served immediately while a
+    // background refresh runs, and a still-empty cache after this timeout just means the merge
+    // is skipped for this request rather than the caller hanging on a slow/unreachable GCS fetch.
+    private static final Duration INITIAL_FETCH_TIMEOUT = Duration.ofSeconds(15);
+    private static final int CONNECT_TIMEOUT_MILLIS = 5_000;
+    private static final int READ_TIMEOUT_MILLIS = 10_000;
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
@@ -65,9 +79,9 @@ public class PluginSchemaBundleService {
     private final String bundleUrlTemplate;
     private final String resolvedBundleUrl;
 
-    private CompletableFuture<Bundle> future;
-    private Bundle cached = Bundle.EMPTY;
-    private Instant cacheLastLoaded = Instant.now();
+    private volatile CompletableFuture<Bundle> future;
+    private volatile Bundle cached = Bundle.EMPTY;
+    private volatile Instant cacheLastLoaded = Instant.now();
     private final AtomicBoolean loading = new AtomicBoolean(false);
 
     public PluginSchemaBundleService(
@@ -142,23 +156,39 @@ public class PluginSchemaBundleService {
 
     // ── internal ──────────────────────────────────────────────────────────────
 
-    private synchronized Bundle getBundle() {
-        if (future == null) {
-            loading.set(true);
+    /**
+     * Returns the cached bundle, kicking off an async (re)load when needed.
+     * <p>
+     * Only the very first call — before anything is cached — blocks the caller, and only up to
+     * {@link #INITIAL_FETCH_TIMEOUT}; every subsequent call (cache populated, even if stale) returns
+     * {@code cached} immediately while a background refresh runs. This method deliberately does not
+     * synchronize on the fetch itself: holding a monitor across a network call would serialize every
+     * concurrent {@code ?includeCatalog=true} request behind one slow/hung GCS fetch.
+     */
+    private Bundle getBundle() {
+        boolean staleOrEmpty = cached.isEmpty() || cacheLastLoaded.plus(MAX_CACHE_DURATION).isBefore(Instant.now());
+        if (staleOrEmpty && loading.compareAndSet(false, true)) {
             future = CompletableFuture.supplyAsync(this::load);
         }
 
+        if (!cached.isEmpty()) {
+            // Serve the current (possibly stale) cache immediately; any refresh kicked off above
+            // (or already in flight from another thread) completes in the background.
+            return cached;
+        }
+
+        // Nothing cached yet: bound the wait so the very first caller gets real data instead of an
+        // empty schema, without risking a hung caller if the fetch stalls.
+        CompletableFuture<Bundle> inFlight = future;
+        if (inFlight == null) {
+            return cached;
+        }
         try {
-            Bundle result = future.get();
+            Bundle result = inFlight.get(INITIAL_FETCH_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             if (!result.isEmpty()) {
                 cached = result;
             }
-            if (cacheLastLoaded.plus(MAX_CACHE_DURATION).isBefore(Instant.now())) {
-                if (loading.compareAndSet(false, true)) {
-                    future = CompletableFuture.supplyAsync(this::load);
-                }
-            }
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException | TimeoutException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
@@ -172,7 +202,10 @@ public class PluginSchemaBundleService {
     private Bundle load() {
         try {
             log.debug("Fetching plugin schema bundle from {}", resolvedBundleUrl);
-            try (InputStream in = URI.create(resolvedBundleUrl).toURL().openStream()) {
+            URLConnection connection = URI.create(resolvedBundleUrl).toURL().openConnection();
+            connection.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
+            connection.setReadTimeout(READ_TIMEOUT_MILLIS);
+            try (InputStream in = connection.getInputStream()) {
                 JsonNode root = MAPPER.readTree(in);
                 ObjectNode definitions = root.get("definitions") instanceof ObjectNode defs ? defs : JsonNodeFactory.instance.objectNode();
 

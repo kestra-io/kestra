@@ -31,18 +31,6 @@ public abstract class AbstractJdbcAgentThreadRepository extends AbstractJdbcCrud
     }
 
     /**
-     * Scopes the lookup to the owning user. The {@code ai_agent_thread} table has no {@code user_id}
-     * column, so the owner is checked against the deserialized record rather than in SQL — the
-     * thread is fetched by its uid (a primary-key hit) and returned only when it belongs to
-     * {@code userId}.
-     * {@inheritDoc}
-     */
-    @Override
-    public Optional<AgentThread> find(String tenant, String userId, String uid) {
-        return find(tenant, uid).filter(thread -> Objects.equals(thread.userId(), userId));
-    }
-
-    /**
      * Lists the tenant's non-deleted threads (the default filter excludes deleted rows) and keeps only
      * those owned by {@code userId}. The {@code ai_agent_thread} table has no {@code user_id} column, so
      * ownership is matched against the deserialized record rather than in SQL — mirroring

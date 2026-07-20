@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -197,7 +198,8 @@ public class AiAgentController {
 
     protected AgentThread requireThread(final String tenant, final String threadId) {
         String userId = resolveUserId();
-        return (userId == null ? threadStore.find(tenant, threadId) : threadStore.find(tenant, userId, threadId))
+        return threadStore.find(tenant, threadId)
+            .filter(thread -> userId == null || Objects.equals(thread.userId(), userId))
             .orElseThrow(() -> new NotFoundException("Thread not found: '" + threadId + "'"));
     }
 

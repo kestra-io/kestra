@@ -21,20 +21,6 @@ public interface AiThreadRepositoryInterface {
     Optional<AgentThread> find(String tenant, String uid);
 
     /**
-     * Finds a non-deleted thread by its tenant, owning user and uid.
-     * <p>
-     * Threads are private to the user that created them (the KIP {@code (tenant, userId, uid)} key),
-     * so this returns empty when the thread exists but is owned by a different user — callers use it
-     * to enforce per-user access without leaking a thread's existence.
-     *
-     * @param tenant the tenant the thread belongs to.
-     * @param userId the user that must own the thread.
-     * @param uid the unique identifier of the thread.
-     * @return the thread, or an empty {@link Optional} if it does not exist, is deleted, or is owned by another user.
-     */
-    Optional<AgentThread> find(String tenant, String userId, String uid);
-
-    /**
      * Lists every non-deleted thread owned by a user within a tenant. Ordering is not guaranteed here
      * (the manager sorts for presentation). Used by the EE thread-management surface; OSS runs a single
      * implicit session and never lists.

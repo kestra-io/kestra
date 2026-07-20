@@ -55,42 +55,6 @@ public abstract class AbstractAgentThreadRepositoryTest {
     }
 
     @Test
-    void shouldFindThreadForOwningUser() {
-        // Given
-        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
-        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
-        threadStore.create(thread);
-
-        // When / Then — the owning user finds it
-        Optional<AgentThread> found = threadStore.find(tenant, "user-1", thread.uid());
-        assertThat(found).isPresent();
-        assertThat(found.get().uid()).isEqualTo(thread.uid());
-        assertThat(found.get().userId()).isEqualTo("user-1");
-    }
-
-    @Test
-    void shouldNotFindThreadOwnedByAnotherUser() {
-        // Given — a thread private to user-1
-        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
-        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
-        threadStore.create(thread);
-
-        // When / Then — another user in the same tenant cannot see it (a miss, never leaks existence)
-        assertThat(threadStore.find(tenant, "user-2", thread.uid())).isEmpty();
-    }
-
-    @Test
-    void shouldNotFindThreadForUserFromAnotherTenant() {
-        // Given
-        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
-        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
-        threadStore.create(thread);
-
-        // When / Then — same user id, different tenant, cannot see it
-        assertThat(threadStore.find("other-" + tenant, "user-1", thread.uid())).isEmpty();
-    }
-
-    @Test
     void shouldListThreadsForOwningUserOnly() {
         // Given — two threads for user-1, one for user-2, and one soft-deleted for user-1
         String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
@@ -136,23 +100,8 @@ public abstract class AbstractAgentThreadRepositoryTest {
         // Then — soft-deleted: flagged, and invisible to every lookup
         assertThat(deleted.isDeleted()).isTrue();
         assertThat(threadStore.find(tenant, thread.uid())).isEmpty();
-        assertThat(threadStore.find(tenant, "user-1", thread.uid())).isEmpty();
         assertThat(threadStore.exists(tenant, thread.uid())).isFalse();
         assertThat(threadStore.findAllForUser(tenant, "user-1")).isEmpty();
-    }
-
-    @Test
-    void shouldNotFindSoftDeletedThreadByUser() {
-        // Given
-        String tenant = TestsUtils.randomTenant(getClass().getSimpleName());
-        AgentThread thread = thread(tenant, "user-1", AgentThreadStatus.IDLE);
-        threadStore.create(thread);
-
-        // When — soft-delete
-        threadStore.save(thread.withDeleted(true));
-
-        // Then — even the owning user no longer finds it
-        assertThat(threadStore.find(tenant, "user-1", thread.uid())).isEmpty();
     }
 
     @Test

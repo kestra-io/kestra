@@ -1398,7 +1398,14 @@
       "update": "更新密钥 '{name}'",
       "isReadOnly": "Secret 是只读的",
       "names": "秘密",
-      "inherited": "继承的秘密"
+      "inherited": "继承的秘密",
+      "key": "名称",
+      "keyPlaceholder": "用于引用此机密的名称，例如 MY_API_TOKEN",
+      "name": "机密值",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此机密",
+      "tags": "标签",
+      "addTag": "添加标签"
     },
     "workerId": "工作者ID",
     "kv": {

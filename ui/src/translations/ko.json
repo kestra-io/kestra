@@ -1398,7 +1398,14 @@
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀"
+      "inherited": "상속된 비밀",
+      "key": "이름",
+      "keyPlaceholder": "이 시크릿을 참조할 때 사용하는 이름 (예: MY_API_TOKEN)",
+      "name": "시크릿 값",
+      "description": "설명",
+      "descriptionPlaceholder": "이 시크릿에 대한 설명",
+      "tags": "태그",
+      "addTag": "태그 추가"
     },
     "workerId": "Worker Id",
     "kv": {

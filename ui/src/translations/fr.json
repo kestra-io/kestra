@@ -1398,7 +1398,14 @@
       "update": "Mettre à jour le secret '{name}'",
       "isReadOnly": "Le secret est en lecture seule",
       "names": "Secrets",
-      "inherited": "Secrets hérités"
+      "inherited": "Secrets hérités",
+      "key": "Nom",
+      "keyPlaceholder": "Nom utilisé pour référencer ce secret, p. ex. MY_API_TOKEN",
+      "name": "Valeur du secret",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez ce secret",
+      "tags": "Étiquettes",
+      "addTag": "Ajouter une étiquette"
     },
     "workerId": "Worker Id",
     "kv": {

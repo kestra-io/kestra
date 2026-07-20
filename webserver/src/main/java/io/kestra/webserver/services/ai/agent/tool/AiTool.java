@@ -10,7 +10,4 @@ package io.kestra.webserver.services.ai.agent.tool;
  * </p>
  */
 public interface AiTool {
-    default Object toolInstance() {
-        return this;
-    }
 }

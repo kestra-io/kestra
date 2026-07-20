@@ -119,7 +119,7 @@ public class ToolCatalog {
     private void register(final Map<String, ToolEntry> built, final AiTool tool,
         final AgentToolCall.Kind kind, @Nullable final AgentToolFamily family,
         final AgentWritePolicy writePolicy) {
-        Method method = toolMethod(tool.toolInstance());
+        Method method = toolMethod(tool);
 
         boolean hasQueryFilter = Arrays.stream(method.getParameters())
             .anyMatch(parameter -> parameter.isAnnotationPresent(QueryFilterFormat.class));
@@ -130,9 +130,9 @@ public class ToolCatalog {
         // as an error outcome and feed the message back to the model. QueryFilterToolExecutor already
         // propagates, so both executor paths behave the same on failure.
         ToolExecutor executor = hasQueryFilter
-            ? new QueryFilterToolExecutor(tool.toolInstance(), method)
+            ? new QueryFilterToolExecutor(tool, method)
             : DefaultToolExecutor.builder()
-                .object(tool.toolInstance())
+                .object(tool)
                 .originalMethod(method)
                 .methodToInvoke(method)
                 .propagateToolExecutionExceptions(true)

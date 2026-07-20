@@ -55,7 +55,11 @@ export interface CreateThreadRequest {
 export interface ChatTurnRequest {
     prompt: string
     mode?: Mode | null
-    inFocus?: ScopeBinding | null
+    /**
+     * Free-form, per-turn context (e.g. what the user is currently viewing). The backend renders it
+     * into the model input for this turn only — it is not persisted. Replaces the old `inFocus`.
+     */
+    additionalContext?: Record<string, unknown> | null
     providerId?: string | null
 }
 

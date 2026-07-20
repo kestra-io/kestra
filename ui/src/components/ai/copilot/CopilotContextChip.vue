@@ -1,5 +1,5 @@
 <template>
-    <!-- Shows the page the copilot is focused on (sent as `inFocus`). Dismissible to drop the scope. -->
+    <!-- Shows the page the copilot is focused on (sent as `additionalContext`). Dismissible to drop it. -->
     <div class="copilot-context" data-test="copilot-context-chip">
         <KsTag closable size="small" :icon="icon" @close="emit('clear')">
             {{ label }}

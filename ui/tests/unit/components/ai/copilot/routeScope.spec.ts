@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {scopeFromRoute} from "../../../../../src/components/ai/copilot/routeScope"
+import {scopeFromRoute, scopeToContext} from "../../../../../src/components/ai/copilot/routeScope"
 
 describe("scopeFromRoute", () => {
     it("maps an execution detail route to an EXECUTION scope", () => {
@@ -35,5 +35,19 @@ describe("scopeFromRoute", () => {
             .toEqual({kind: "FLOW", namespace: "a", flowId: "f"})
         expect(scopeFromRoute({name: "namespaces/update", params: {id: ""}}))
             .toEqual({kind: "NAMESPACE", namespace: undefined})
+    })
+})
+
+describe("scopeToContext", () => {
+    it("wraps a scope as a currentView additionalContext map, omitting absent fields", () => {
+        expect(scopeToContext({kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}))
+            .toEqual({currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}})
+        expect(scopeToContext({kind: "NAMESPACE", namespace: "company.team"}))
+            .toEqual({currentView: {kind: "NAMESPACE", namespace: "company.team"}})
+    })
+
+    it("returns undefined when there is no scope", () => {
+        expect(scopeToContext(null)).toBeUndefined()
+        expect(scopeToContext(undefined)).toBeUndefined()
     })
 })

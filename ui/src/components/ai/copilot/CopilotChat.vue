@@ -123,14 +123,14 @@
     import CopilotContextChip from "./CopilotContextChip.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
-    import {scopeFromRoute} from "./routeScope"
+    import {scopeFromRoute, scopeToContext} from "./routeScope"
     import type {Mode, ScopeBinding} from "./types"
     import {useMiscStore} from "override/stores/misc"
 
     const props = defineProps<{
         /** Initial mode; defaults to EDIT. */
         initialMode?: Mode
-        /** Artefact in focus, passed as `inFocus` on each turn. */
+        /** Scope the user is focused on; sent as `additionalContext` on each turn. */
         inFocus?: ScopeBinding | null
     }>()
 
@@ -213,7 +213,7 @@
     })
 
     function onSubmit(prompt: string): void {
-        sendChat({prompt, mode: mode.value, inFocus: activeScope.value, providerId: selectedProvider.value})
+        sendChat({prompt, mode: mode.value, additionalContext: scopeToContext(activeScope.value), providerId: selectedProvider.value})
     }
 
     // Keep the transcript pinned to the bottom as content arrives: new messages, streamed

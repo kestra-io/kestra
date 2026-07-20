@@ -156,11 +156,19 @@ public class PluginController {
         description = "Enqueues installation of the specified plugin artifacts and returns a job id " +
             "immediately (HTTP 202). Poll GET /plugins/install/{jobId} for status and per-artifact " +
             "byte-level progress. In distributed (EE) deployments the installation is propagated " +
-            "cluster-wide after the job succeeds."
+            "cluster-wide after the job succeeds. Returns 403 when the auto-install feature is disabled " +
+            "on this instance."
     )
     @ApiResponse(responseCode = "202", description = "Installation job accepted")
+    @ApiResponse(responseCode = "403", description = "Auto-install feature is disabled on this instance")
     public HttpResponse<PluginInstallJob> installPlugins(
         @Valid @Body List<PluginArtifact> artifacts) {
+        // Same gate as detectMissingPlugins: without it, any caller could make the server resolve,
+        // download and load arbitrary Maven artifacts in-process regardless of the feature flag.
+        if (!pluginAutoInstallService.isEnabled()) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN);
+        }
+
         UUID jobId = pluginInstallJobRegistry.submit(artifacts);
         PluginInstallJob job = pluginInstallJobRegistry.get(jobId)
             .orElseThrow(() -> new IllegalStateException("Job vanished immediately after submit: " + jobId));
@@ -202,8 +210,8 @@ public class PluginController {
         var missingTypes = pluginAutoInstallService.findMissingTypes(flowYaml);
         var artifacts = missingTypes.stream()
             .map(pluginAutoInstallService::findArtifactForType)
-            .filter(java.util.Optional::isPresent)
-            .map(java.util.Optional::get)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .distinct()
             .toList();
 

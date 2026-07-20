@@ -20,6 +20,7 @@
         value?: string
         shrink?: boolean
         size?: number
+        /** Tooltip placement. Defaults to "top". */
         placement?: string
     }>(), {
         value: undefined,

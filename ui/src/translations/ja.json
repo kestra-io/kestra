@@ -2046,7 +2046,9 @@
           "emptyTurn": "アシスタントから応答がありませんでした。もう一度お試しください。",
           "retry": "再試行"
         },
+        "cancelled": "ターンをキャンセルしました",
         "error": {
+          "turnCap": "この会話は上限に達しました。新しいチャットを開始してください。",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

@@ -39,6 +39,7 @@ describe("useAiChat", () => {
         nextFrames = []
         nextError = null
         lastBody = null
+        localStorage.clear()
         post.mockResolvedValue(idleThread())
     })
 
@@ -287,5 +288,69 @@ describe("useAiChat", () => {
         expect(chat.thread.value).toBeNull()
         expect(chat.status.value).toBe("IDLE")
         expect(chat.pendingConfirmation.value).toBeNull()
+    })
+
+    it("maps a 429 to the turnCap error code", async () => {
+        const chat = useAiChat()
+        nextError = new SseHttpError(429, "")
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.error.value).toBe("turnCap")
+        expect(chat.status.value).toBe("IDLE")
+    })
+
+    it("remembers the thread uid and restoreThread() rehydrates it on reload", async () => {
+        // First session: create a thread (persists its uid to localStorage).
+        const first = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await first.sendChat({prompt: "hi"})
+        expect(localStorage.getItem("kestra.copilot.activeThread")).toBe("t1")
+
+        // Second session (reload): restoreThread loads the remembered thread's transcript.
+        get.mockResolvedValue({data: {
+            uid: "t1", mode: "ASK", status: "IDLE",
+            messages: [{uid: "a", role: "USER", type: "TEXT", content: "hi"}],
+        }})
+        const reloaded = useAiChat()
+        await reloaded.restoreThread()
+        expect(get).toHaveBeenCalledWith("http://localhost/api/v1/main/ai/threads/t1")
+        expect(reloaded.thread.value?.uid).toBe("t1")
+        expect(reloaded.messages.value.some((m) => m.content === "hi")).toBe(true)
+    })
+
+    it("restoreThread() forgets a stored thread that no longer exists (404) and stays empty", async () => {
+        localStorage.setItem("kestra.copilot.activeThread", "gone")
+        get.mockRejectedValue({status: 404})
+        const chat = useAiChat()
+        await chat.restoreThread()
+        expect(chat.thread.value).toBeNull()
+        expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
+    })
+
+    it("loadThread reconstructs a pending proposal from pendingConfirmationId + the transcript", async () => {
+        get.mockResolvedValue({data: {
+            uid: "t2", mode: "EDIT", status: "AWAITING_CONFIRMATION", pendingConfirmationId: "cf-9",
+            messages: [
+                {uid: "a", role: "USER", type: "TEXT", content: "restart it"},
+                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart-execution on exec-1",
+                 toolCall: {tool: "restart-execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
+            ],
+        }})
+        const chat = useAiChat()
+        await chat.loadThread("t2")
+        expect(chat.status.value).toBe("AWAITING_CONFIRMATION")
+        expect(chat.pendingConfirmation.value).toMatchObject({
+            confirmationId: "cf-9",
+            summary: "Run restart-execution on exec-1",
+            tool: "restart-execution",
+        })
+    })
+
+    it("reset() forgets the remembered thread", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(localStorage.getItem("kestra.copilot.activeThread")).toBe("t1")
+        chat.reset()
+        expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
     })
 })

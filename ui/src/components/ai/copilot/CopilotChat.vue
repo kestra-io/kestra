@@ -1,22 +1,13 @@
 <template>
     <div class="copilot-chat" data-test="copilot-chat">
-        <!-- Thread controls: start a new chat, browse recents (recents is a BE-pending placeholder). -->
+        <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
+             rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
             <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
-            <KsDropdown trigger="click" data-test="copilot-recents">
-                <KsButton size="small" class="copilot-topbar-pill">
-                    {{ t("ai.copilot.recents") }}
-                    <ChevronDown :size="16" />
-                </KsButton>
-                <template #dropdown>
-                    <KsDropdownMenu>
-                        <KsDropdownItem disabled>{{ t("ai.copilot.recentsEmpty") }}</KsDropdownItem>
-                    </KsDropdownMenu>
-                </template>
-            </KsDropdown>
+            <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
         <!-- AI unavailable: the backend has no configured provider (503). -->
@@ -121,7 +112,6 @@
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
     import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
@@ -131,6 +121,7 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute} from "./routeScope"
     import type {Mode, ScopeBinding} from "./types"
@@ -191,7 +182,15 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {messages, status, streaming, error, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn} = useAiChat()
+    const {thread, messages, status, streaming, error, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread} = useAiChat()
+
+    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
+    onMounted(() => { restoreThread() })
+
+    /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
+    function onSelectThread(threadId: string): void {
+        loadThread(threadId)
+    }
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
     void status

@@ -21,6 +21,8 @@ const state = {
     reset: vi.fn(),
     retry: vi.fn(),
     retryLastTurn: vi.fn(),
+    loadThread: vi.fn(),
+    restoreThread: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // CopilotChat derives `inFocus` from the current route — mock a mutable route so tests control it.
@@ -34,6 +36,7 @@ const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), p
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
+import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
 import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
 
 const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
@@ -53,6 +56,9 @@ describe("CopilotChat", () => {
         state.reset.mockReset()
         state.retry.mockReset()
         state.retryLastTurn.mockReset()
+        state.loadThread.mockReset()
+        state.restoreThread.mockReset()
+        state.thread.value = null
         miscStore.copilotPrompt = null
     })
 
@@ -137,6 +143,24 @@ describe("CopilotChat", () => {
         expect(alert.text()).toContain("The assistant didn't return a response. Please try again.")
     })
 
+    it("restores the last conversation on mount", () => {
+        mountChat()
+        expect(state.restoreThread).toHaveBeenCalled()
+    })
+
+    it("surfaces the turn-cap error with a start-a-new-chat message", () => {
+        state.error.value = "turnCap"
+        const w = mountChat()
+        expect(w.find(".ks-alert").text()).toContain("start a new chat")
+    })
+
+    it("switches thread when the thread controls emit select", async () => {
+        const w = mountChat()
+        w.findComponent(CopilotThreadControls).vm.$emit("select", "t-42")
+        await flushPromises()
+        expect(state.loadThread).toHaveBeenCalledWith("t-42")
+    })
+
     it("retries the last turn from the empty-turn notice", async () => {
         state.notice.value = "emptyTurn"
         const w = mountChat()
@@ -189,8 +213,8 @@ describe("CopilotChat", () => {
         expect(state.reset).toHaveBeenCalled()
     })
 
-    it("shows the recents placeholder control", () => {
-        expect(mountChat().find("[data-test=\"copilot-recents\"]").exists()).toBe(true)
+    it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {
+        expect(mountChat().findComponent(CopilotThreadControls).exists()).toBe(true)
     })
 
     it("shows the AI-unavailable state (and no composer) when unavailable", () => {

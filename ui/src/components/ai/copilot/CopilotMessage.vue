@@ -56,6 +56,11 @@
     <div v-else-if="message.type === 'ARTEFACT_DRAFT' && message.draft" class="copilot-msg copilot-msg-assistant">
         <CopilotArtefactDraft :draft="message.draft" />
     </div>
+
+    <!-- Cancelled turn — a subtle, centered system marker in the transcript (reload only). -->
+    <div v-else-if="message.type === 'CANCELLED'" class="copilot-msg copilot-msg-cancelled" data-test="copilot-cancelled">
+        <KsText size="small" class="copilot-cancelled-label">{{ t("ai.copilot.cancelled") }}</KsText>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -113,6 +118,16 @@
     .copilot-msg-assistant {
         display: flex;
         justify-content: flex-start;
+    }
+
+    .copilot-msg-cancelled {
+        display: flex;
+        justify-content: center;
+    }
+
+    .copilot-cancelled-label {
+        --kel-text-color: var(--ks-text-muted);
+        font-style: italic;
     }
 
     .copilot-bubble-user {

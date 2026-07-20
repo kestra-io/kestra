@@ -2046,7 +2046,9 @@
           "emptyTurn": "L'assistant n'a renvoyé aucune réponse. Veuillez réessayer.",
           "retry": "Réessayer"
         },
+        "cancelled": "Tour annulé",
         "error": {
+          "turnCap": "Cette conversation a atteint sa limite — démarrez une nouvelle discussion.",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

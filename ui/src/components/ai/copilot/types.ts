@@ -18,7 +18,7 @@ export type ThreadStatus = "IDLE" | "RUNNING" | "AWAITING_CONFIRMATION"
 
 export type MessageRole = "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
 
-export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT"
+export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT" | "CANCELLED"
 
 export type ToolFamily = "READ" | "MUTATE" | "ACT"
 
@@ -99,6 +99,8 @@ export interface ThreadDetail {
     mode: Mode
     scope?: ScopeBinding | null
     status: ThreadStatus
+    /** Set only when status is AWAITING_CONFIRMATION — lets a reload resume the suspended turn. */
+    pendingConfirmationId?: string | null
     messages: MessageView[]
 }
 
@@ -148,7 +150,9 @@ export interface ArtefactDraftEvent {
 }
 
 export interface ToolResultEvent {
-    tool: string
+    /** Present on the live stream; absent on thread reload (the persisted map has no `tool` — the
+     *  name comes from the paired tool-call instead). */
+    tool?: string
     /** "ok", "error" (the tool threw; the turn continues), or "rejected". */
     outcome: string
     /**

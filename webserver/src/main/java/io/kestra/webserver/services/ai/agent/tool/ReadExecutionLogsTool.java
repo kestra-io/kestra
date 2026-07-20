@@ -58,7 +58,7 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
                 .forEach(effective::add);
         }
 
-        List<LogEntry> entries = logRepository.find(PageableUtils.from(1, MAX_LOGS), tenant, effective);
+        List<LogEntry> entries = logRepository.find(PageableUtils.from(1, MAX_LOGS), tenant, effective).getContent();
 
         return new Result(
             executionId, entries.stream()

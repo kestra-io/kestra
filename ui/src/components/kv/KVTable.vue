@@ -588,6 +588,21 @@
         }
         kv.value.update = true
         kv.value.description = entry.description
+
+        if (entry.expirationDate) {
+            const expirationMoment = moment(entry.expirationDate)
+            const now = moment()
+
+            if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
+                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
+                kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
+            } else {
+                kv.value.ttl = undefined
+            }
+        } else {
+            kv.value.ttl = undefined
+        }
+
         addKvDrawerVisible.value = true
     }
 

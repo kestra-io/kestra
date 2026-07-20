@@ -182,12 +182,14 @@
         &.is-text {
             &:hover {
                 background-color: var(--ks-bg-hover);
-                border: 1px solid var(--ks-btn-secondary-border-hover);
+                /* Draw the hover ring with an inset shadow rather than a border: a border adds
+                   1px on each side and shifts surrounding layout, a shadow doesn't affect the box. */
+                box-shadow: inset 0 0 0 1px var(--ks-btn-secondary-border-hover);
             }
 
             &:active {
                 background-color: var(--ks-btn-secondary-bg-active);
-                border: 0;
+                box-shadow: none;
             }
         }
 

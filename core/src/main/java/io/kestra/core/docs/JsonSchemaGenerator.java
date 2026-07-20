@@ -987,13 +987,15 @@ public class JsonSchemaGenerator {
     protected static Optional<ResolvedType> safelyResolveSubtype(ResolvedType declaredType, Class<?> clz, TypeContext typeContext) {
         try {
             return Optional.ofNullable(typeContext.resolveSubtype(declaredType, clz));
-        } catch (Throwable e) {
+        } catch (Exception | LinkageError e) {
             // resolveSubtype() walks the full generic hierarchy against declaredType and can throw
             // (e.g. java.lang.TypeNotPresentException on a non-backward-compatible plugin, or a
             // classloading conflict such as NoClassDefFoundError/LinkageError from a plugin jar).
             // Fall back to a plain resolve(), the same call every other plugin category (TaskRunner,
             // Chart, Asset, ...) already relies on, so the type still appears in the schema/autocompletion
             // even if some generic-derived detail is missing, instead of silently disappearing.
+            // Deliberately not catch(Throwable): VirtualMachineError (OutOfMemoryError, StackOverflowError)
+            // must propagate rather than be logged and swallowed here.
             try {
                 ResolvedType fallback = typeContext.resolve(clz);
                 log.warn(
@@ -1004,7 +1006,7 @@ public class JsonSchemaGenerator {
                     e.getMessage()
                 );
                 return Optional.of(fallback);
-            } catch (Throwable fallbackException) {
+            } catch (Exception | LinkageError fallbackException) {
                 log.warn(
                     "Unable to resolve subtype '{}' of '{}' for schema generation, it will be excluded from autocompletion. Cause: [{}] {}",
                     clz.getName(),

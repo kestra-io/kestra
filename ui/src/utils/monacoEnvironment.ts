@@ -3,23 +3,18 @@ import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker"
 import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
 import YamlWorker from "../components/inputs/yaml.worker.js?worker"
 
-const nodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {query: "?raw", import: "default"}) as Record<string, () => Promise<string>>
-
 let nodeTypesRequested = false
 
-// Registers @types/node into Monaco's TS service on first JS/TS worker request — both
-// the types and the TS language contribution are multi-MB payloads that must not load
-// at boot. Importing the contribution is what populates `languages.typescript` (Monaco's
-// ESM build leaves it undefined otherwise).
+// Lazily registers @types/node on first JS/TS worker request. The TS contribution import
+// is what populates `languages.typescript` (Monaco's ESM build leaves it undefined otherwise).
 function loadNodeTypes() {
     Promise.all([
         import("monaco-editor/esm/vs/language/typescript/monaco.contribution"),
         import("monaco-editor/esm/vs/editor/editor.api"),
-    ]).then(([, {languages}]) => {
-        for (const path in nodeTypesRaw) {
-            nodeTypesRaw[path]().then((content) => {
-                languages.typescript.typescriptDefaults.addExtraLib(content, `file://${path}`)
-            })
+        import("./monacoNodeTypes"),
+    ]).then(([, {languages}, {default: nodeTypes}]) => {
+        for (const path in nodeTypes) {
+            languages.typescript.typescriptDefaults.addExtraLib(nodeTypes[path], `file://${path}`)
         }
     })
 }

@@ -8,18 +8,18 @@ const nodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {qu
 let nodeTypesRequested = false
 
 // Registers @types/node into Monaco's TS service on first JS/TS worker request — both
-// are multi-MB payloads that must not load at boot. Retries until languages.typescript exists.
-function loadNodeTypes(tries = 0) {
-    import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
-        const typescript = languages.typescript
-        if (typescript) {
-            for (const path in nodeTypesRaw) {
-                nodeTypesRaw[path]().then((content) => {
-                    typescript.typescriptDefaults.addExtraLib(content, `file://${path}`)
-                })
-            }
-        } else if (tries <= 15) {
-            setTimeout(() => loadNodeTypes(tries + 1), (tries + 1) * 100)
+// the types and the TS language contribution are multi-MB payloads that must not load
+// at boot. Importing the contribution is what populates `languages.typescript` (Monaco's
+// ESM build leaves it undefined otherwise).
+function loadNodeTypes() {
+    Promise.all([
+        import("monaco-editor/esm/vs/language/typescript/monaco.contribution"),
+        import("monaco-editor/esm/vs/editor/editor.api"),
+    ]).then(([, {languages}]) => {
+        for (const path in nodeTypesRaw) {
+            nodeTypesRaw[path]().then((content) => {
+                languages.typescript.typescriptDefaults.addExtraLib(content, `file://${path}`)
+            })
         }
     })
 }

@@ -16,23 +16,23 @@ html.dark-2 {
     #{--ks-bg-badge}: $base-gray-neutral-800;
     #{--ks-bg-base}: $base-gray-neutral-950;
     #{--ks-bg-elevated}: $base-gray-neutral-900;
-    #{--ks-bg-error}: $base-gray-neutral-950;
+    #{--ks-bg-error}: rgba($base-red-300, 0.1);
     #{--ks-bg-hover}: $base-gray-neutral-800;
     #{--ks-bg-hover-elevated}: $base-gray-neutral-700;
     #{--ks-bg-inactive}: $base-gray-neutral-800;
-    #{--ks-bg-info}: $base-gray-neutral-950;
+    #{--ks-bg-info}: rgba($base-blue-300, 0.1);
     #{--ks-bg-input}: $base-gray-neutral-950;
     #{--ks-bg-overlay}: $base-gray-neutral-900;
     #{--ks-bg-scrim}: #0e1016cc;
     #{--ks-bg-sidebar}: $base-gray-neutral-900;
-    #{--ks-bg-success}: $base-gray-neutral-950;
+    #{--ks-bg-success}: rgba($base-green-400, 0.1);
     #{--ks-bg-surface}: $base-gray-neutral-900;
     #{--ks-bg-tabs-default}: $base-gray-neutral-700;
     #{--ks-bg-tag}: rgba($base-gray-cool-white, 0.05);
     #{--ks-bg-tag-active}: rgba($base-primary-300, 0.4);
     #{--ks-bg-tag-hover}: rgba($base-primary-300, 0.2);
     #{--ks-bg-tag-inactive}: rgba($base-gray-cool-white, 0.03);
-    #{--ks-bg-warning}: $base-gray-neutral-950;
+    #{--ks-bg-warning}: rgba($base-orange-300, 0.1);
 
     /* border */
     #{--ks-border-default}: $base-gray-neutral-700;

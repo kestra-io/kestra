@@ -55,7 +55,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         // 3 loop sub-executions, one per iteration, all with SUCCESS
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -76,7 +76,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 2)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 2);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 2));
 
         // 2 loop sub-executions, one per iteration, each running 2 child tasks
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -105,7 +105,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 3));
 
         // All 3 sub-executions ran and each failed individually (failure not propagated to the loop)
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -121,7 +121,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(3);
@@ -141,7 +141,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(3);
@@ -161,7 +161,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(3);
@@ -181,7 +181,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 4)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 4);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 4));
 
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(4);
@@ -201,7 +201,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         // 3 loop sub-executions, one per iteration, all with SUCCESS
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -217,7 +217,7 @@ public class LoopCaseTest {
             assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
             assertThat(taskOutputService.getOutputs(loopTaskRun))
                 .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-                .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+                .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
         }
 
         // 6 loop sub-executions total (3 per loop task), all with SUCCESS
@@ -239,7 +239,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         // 3 loop sub-executions, one per iteration, all with SUCCESS
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -251,7 +251,7 @@ public class LoopCaseTest {
             Map<String, Object> subLoopOutputs = taskOutputService.getOutputs(subLoopTaskRun);
             return subLoopTaskRun.getState().getCurrent() == State.Type.SUCCESS
                 && Integer.valueOf(3).equals(subLoopOutputs.get(Loop.ITERATION_COUNT_OUTPUT))
-                && Integer.valueOf(3).equals(subLoopOutputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
+                && Map.of("SUCCESS", 3).equals(subLoopOutputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
         }));
 
         // each loop1 sub-execution should have 3 loop2 sub-executions, each running loop3
@@ -265,7 +265,7 @@ public class LoopCaseTest {
                 Map<String, Object> loop3Outputs = taskOutputService.getOutputs(loop3TaskRun);
                 return loop3TaskRun.getState().getCurrent() == State.Type.SUCCESS
                     && Integer.valueOf(3).equals(loop3Outputs.get(Loop.ITERATION_COUNT_OUTPUT))
-                    && Integer.valueOf(3).equals(loop3Outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
+                    && Map.of("SUCCESS", 3).equals(loop3Outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
             }));
             // each loop2 sub-execution should have 3 loop3 sub-executions with Return task outputs
             for (Execution loop2SubExec : loop2SubExecutions) {
@@ -307,7 +307,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         // 3 loop sub-executions, one per map entry, all with SUCCESS
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -331,7 +331,7 @@ public class LoopCaseTest {
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         // 3 loop sub-executions, one per ION value, all with SUCCESS
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
@@ -393,7 +393,7 @@ public class LoopCaseTest {
         assertThat(loopTaskOutputs)
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
             .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         @SuppressWarnings("unchecked")
         var valueList = (List<Map<String, Object>>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
@@ -450,7 +450,7 @@ public class LoopCaseTest {
         assertThat(loopTaskOutputs)
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
             .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
-            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
 
         @SuppressWarnings("unchecked")
         var valueList = (List<Map<String, Object>>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);

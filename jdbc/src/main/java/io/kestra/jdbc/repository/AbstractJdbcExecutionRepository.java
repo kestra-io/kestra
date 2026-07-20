@@ -614,6 +614,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         }
     }
 
+    // NOTE: anchored to ZoneId.systemDefault(), matching this class's getDate()-based bucket-key
+    // extraction (also system-default-zone), so results are internally consistent but their
+    // absolute bucket labels are off by the server's UTC offset on non-UTC hosts. See
+    // AbstractJdbcExecutionStatisticsRepository#fillDate for the UTC-correct pattern; not applied
+    // here since it also requires fixing the shared getDate(), out of scope for now.
     private static List<DailyExecutionStatistics> fillDate(
         List<DailyExecutionStatistics> results,
         ZonedDateTime startDate,
@@ -661,7 +666,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .groupBy(groupByType)
             .duration(
                 DailyExecutionStatistics.Duration.builder()
-                    .avg(Duration.ofMillis(durationSum / count))
+                    .avg(Duration.ofMillis(count == 0 ? 0 : durationSum / count))
                     .min(result.stream().map(ExecutionStatistics::getDurationMin).map(x -> x != null ? x : 0).min(Long::compare).map(Duration::ofMillis).orElse(null))
                     .max(result.stream().map(ExecutionStatistics::getDurationMax).map(x -> x != null ? x : 0).max(Long::compare).map(Duration::ofMillis).orElse(null))
                     .sum(Duration.ofMillis(durationSum))

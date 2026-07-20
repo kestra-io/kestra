@@ -75,22 +75,22 @@ describe("Filter Helpers", () => {
     describe("routeQueryToQueryFilters", () => {
         it("builds a simple leaf filter", () => {
             expect(routeQueryToQueryFilters({"filters[namespace][EQUALS]": "io.kestra"})).toEqual([
-                {field: "NAMESPACE", operation: "EQUALS", value: "io.kestra"},
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
             ])
         })
 
-        it("maps the irregular q/groupList field values", () => {
+        it("keeps the irregular q/groupList field values as-is (already the wire form)", () => {
             expect(routeQueryToQueryFilters({"filters[q][EQUALS]": "hello"})).toEqual([
-                {field: "QUERY", operation: "EQUALS", value: "hello"},
+                {field: "q", operation: "EQUALS", value: "hello"},
             ])
             expect(routeQueryToQueryFilters({"filters[groupList][EQUALS]": "team"})).toEqual([
-                {field: "GROUP", operation: "EQUALS", value: "team"},
+                {field: "groupList", operation: "EQUALS", value: "team"},
             ])
         })
 
         it("keeps a comma-joined IN/NOT_IN value as a plain string", () => {
             expect(routeQueryToQueryFilters({"filters[namespace][IN]": "a,b,c"})).toEqual([
-                {field: "NAMESPACE", operation: "IN", value: "a,b,c"},
+                {field: "namespace", operation: "IN", value: "a,b,c"},
             ])
         })
 
@@ -99,7 +99,7 @@ describe("Filter Helpers", () => {
                 "filters[labels][EQUALS][env]": "prod",
                 "filters[labels][EQUALS][team]": "backend",
             })).toEqual([
-                {field: "LABELS", operation: "EQUALS", value: {env: "prod", team: "backend"}},
+                {field: "labels", operation: "EQUALS", value: {env: "prod", team: "backend"}},
             ])
         })
 
@@ -111,8 +111,8 @@ describe("Filter Helpers", () => {
                 {
                     field: "", operation: "", logical: "OR",
                     children: [
-                        {field: "STATE", operation: "EQUALS", value: "RUNNING"},
-                        {field: "STATE", operation: "EQUALS", value: "FAILED"},
+                        {field: "state", operation: "EQUALS", value: "RUNNING"},
+                        {field: "state", operation: "EQUALS", value: "FAILED"},
                     ],
                 },
             ])
@@ -120,7 +120,7 @@ describe("Filter Helpers", () => {
 
         it("flattens a single-branch AND group back to a plain leaf", () => {
             expect(routeQueryToQueryFilters({"filters[and][0][state][EQUALS]": "RUNNING"})).toEqual([
-                {field: "STATE", operation: "EQUALS", value: "RUNNING"},
+                {field: "state", operation: "EQUALS", value: "RUNNING"},
             ])
         })
 
@@ -136,11 +136,11 @@ describe("Filter Helpers", () => {
                         {
                             field: "", operation: "", logical: "AND",
                             children: [
-                                {field: "NAMESPACE", operation: "EQUALS", value: "io.kestra"},
-                                {field: "STATE", operation: "EQUALS", value: "RUNNING"},
+                                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+                                {field: "state", operation: "EQUALS", value: "RUNNING"},
                             ],
                         },
-                        {field: "STATE", operation: "EQUALS", value: "FAILED"},
+                        {field: "state", operation: "EQUALS", value: "FAILED"},
                     ],
                 },
             ])
@@ -151,8 +151,8 @@ describe("Filter Helpers", () => {
                 "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2023-01-01T00:00:00.000Z",
                 "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2023-01-31T23:59:59.000Z",
             })).toEqual([
-                {field: "START_DATE", operation: "GREATER_THAN_OR_EQUAL_TO", value: "2023-01-01T00:00:00.000Z"},
-                {field: "END_DATE", operation: "LESS_THAN_OR_EQUAL_TO", value: "2023-01-31T23:59:59.000Z"},
+                {field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: "2023-01-01T00:00:00.000Z"},
+                {field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: "2023-01-31T23:59:59.000Z"},
             ])
         })
 

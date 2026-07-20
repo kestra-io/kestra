@@ -115,7 +115,7 @@ class AgentOrchestratorTest {
         assertThat(sink.completed).isTrue();
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly("USER/TEXT", "ASSISTANT/TEXT");
     }
@@ -154,10 +154,10 @@ class AgentOrchestratorTest {
             .anySatisfy(m -> assertThat(((UserMessage) m).singleText()).isEqualTo("what am I looking at?"));
 
         // ...and the context is NOT persisted to the thread history (only the prompt and the answer are)
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly("USER/TEXT", "ASSISTANT/TEXT");
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .noneSatisfy(m -> assertThat(m.content()).contains("Additional context"));
     }
 
@@ -198,7 +198,7 @@ class AgentOrchestratorTest {
         assertThat(toolResultOutcome(sink)).isEqualTo("ok");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         // the durable log spans both turns: prompt, plan card, approval nudge, tool call, result, answer
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly(
                 "USER/TEXT", "ASSISTANT/PROPOSED_ACTION", "USER/TEXT",
@@ -222,7 +222,7 @@ class AgentOrchestratorTest {
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.AWAITING_CONFIRMATION);
         // the confirmation token is persisted on the thread (not held in memory), so any node can resume
         assertThat(reload(thread).pendingConfirmationId()).isEqualTo(confirmationId(sink));
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .anyMatch(m -> m.type() == AgentMessageType.PROPOSED_ACTION);
     }
 
@@ -247,7 +247,7 @@ class AgentOrchestratorTest {
         assertThat(toolResultOutcome(sink)).isEqualTo("ok");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(m -> "ok".equals(m.toolResult().get("outcome")));
     }
@@ -270,7 +270,7 @@ class AgentOrchestratorTest {
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(m -> "rejected".equals(m.toolResult().get("outcome")));
     }
@@ -300,7 +300,7 @@ class AgentOrchestratorTest {
         assertThat(draft.valid()).isTrue();
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         // the draft is durable: it survives in the message log for history reloads
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly(
                 "USER/TEXT",
@@ -308,10 +308,10 @@ class AgentOrchestratorTest {
                 "ASSISTANT/TEXT"
             );
         // authoring calls are recorded with the AUTHORING discriminator and no family
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_CALL)
             .allMatch(m -> m.toolCall().kind() == AgentToolCall.Kind.AUTHORING && m.toolCall().family() == null);
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.ARTEFACT_DRAFT)
             .allMatch(m -> m.draft() != null && "draft-exec-1".equals(m.draft().draftId()));
     }
@@ -356,7 +356,7 @@ class AgentOrchestratorTest {
         );
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(
                 m -> "rejected".equals(m.toolResult().get("outcome"))
@@ -398,7 +398,7 @@ class AgentOrchestratorTest {
         assertThat(sink.names()).containsExactly(AgentEvents.DONE);
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .anyMatch(m -> m.type() == AgentMessageType.TEXT && m.content() != null && m.content().startsWith("Plan rejected"));
     }
 
@@ -469,7 +469,7 @@ class AgentOrchestratorTest {
         assertThat(toolResultOutcome(sink)).isEqualTo("error");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         // the error result is durable and carries the tool author's message for the model to read
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(
                 m -> "error".equals(m.toolResult().get("outcome"))
@@ -502,7 +502,7 @@ class AgentOrchestratorTest {
             AgentEvents.TOKEN, AgentEvents.DONE
         );
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly(
                 "USER/TEXT",
@@ -546,7 +546,7 @@ class AgentOrchestratorTest {
         assertThat(sink.names()).doesNotContain(AgentEvents.DONE);
         assertThat(sink.error).isNull();
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
-        assertThat(messageStore.load(thread.uid()))
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
     }
 
@@ -599,7 +599,7 @@ class AgentOrchestratorTest {
         assertThat(sink.error).isNull();
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
-        List<AgentMessage> log = messageStore.load(thread.uid());
+        List<AgentMessage> log = messageStore.load(thread.tenant(), thread.uid());
         assertThat(log.stream().filter(m -> m.type() == AgentMessageType.TOOL_RESULT).count()).isEqualTo(25L);
         // the final assistant message explains the graceful stop
         assertThat(log.getLast().type()).isEqualTo(AgentMessageType.TEXT);

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS agent_thread (
+CREATE TABLE IF NOT EXISTS ai_agent_thread (
     "key"       VARCHAR(250) NOT NULL PRIMARY KEY,
     "value"     TEXT NOT NULL,
     "tenant_id" VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.tenant')),
@@ -7,13 +7,14 @@ CREATE TABLE IF NOT EXISTS agent_thread (
     "updated"   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS agent_thread__tenant_deleted ON agent_thread ("tenant_id", "deleted");
+CREATE INDEX IF NOT EXISTS ai_agent_thread__tenant_deleted ON ai_agent_thread ("tenant_id", "deleted");
 
-CREATE TABLE IF NOT EXISTS agent_message (
+CREATE TABLE IF NOT EXISTS ai_agent_message (
     "key"        VARCHAR(250) NOT NULL PRIMARY KEY,
     "value"      TEXT NOT NULL,
+    "tenant_id"  VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.tenant')),
     "thread_id"  VARCHAR(250) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.threadId')),
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS agent_message__thread ON agent_message ("thread_id", "key");
+CREATE INDEX IF NOT EXISTS ai_agent_message__tenant_thread ON ai_agent_message ("tenant_id", "thread_id", "key");

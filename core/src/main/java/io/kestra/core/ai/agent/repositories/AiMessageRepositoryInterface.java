@@ -14,10 +14,13 @@ public interface AiMessageRepositoryInterface {
     AgentMessage append(AgentMessage message);
 
     /**
-     * Loads the full message history of a thread, ordered chronologically by uid.
+     * Loads the full message history of a thread, ordered chronologically by uid. Scoped to the given
+     * tenant: messages of a thread belonging to another tenant are never returned, even if the thread id
+     * matches.
      *
+     * @param tenant the tenant the thread belongs to.
      * @param threadId the unique identifier of the thread.
      * @return the thread's messages, or an empty list if the thread has none.
      */
-    List<AgentMessage> load(String threadId);
+    List<AgentMessage> load(String tenant, String threadId);
 }

@@ -15,9 +15,9 @@ import lombok.Builder;
 import lombok.With;
 
 /**
- * The durable unit of Copilot conversation memory: one row in the {@code agent_thread} table. Holds the
+ * The durable unit of Copilot conversation memory: one row in the {@code ai_agent_thread} table. Holds the
  * metadata/governance record for a conversation — never the messages themselves (those are appended to
- * {@code agent_message}). Keyed by its globally-unique {@link #uid()} and scoped by {@link #tenant()};
+ * {@code ai_agent_message}). Keyed by its globally-unique {@link #uid()} and scoped by {@link #tenant()};
  * {@link #userId()} is the owning principal (populated in EE, implicit in OSS). Soft-deleted rather
  * than hard-deleted so history is retained until purge.
  */

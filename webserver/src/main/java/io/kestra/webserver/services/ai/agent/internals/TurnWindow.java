@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai.agent.internals;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.kestra.core.ai.agent.AgentMessage;
 
@@ -46,7 +47,7 @@ public final class TurnWindow {
         }
 
         // Keep only the trailing maxTurns traceIds.
-        Set<String> kept = turns.stream().skip(turns.size() - (long) maxTurns).collect(java.util.stream.Collectors.toSet());
+        Set<String> kept = turns.stream().skip(turns.size() - (long) maxTurns).collect(Collectors.toSet());
         return history.stream().filter(message -> kept.contains(message.traceId())).toList();
     }
 }

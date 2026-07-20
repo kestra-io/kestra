@@ -11,8 +11,10 @@ import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
 
 /**
  * Abstract JDBC implementation of {@link AiMessageRepositoryInterface}: append-only conversation
- * history keyed by {@code thread_id}. Messages are not tenant-scoped or soft-deleted, so the default
- * filter is dropped; a thread's history sorts chronologically by the monotonic {@code key} (message uid).
+ * history keyed by {@code thread_id} and scoped by {@code tenant_id}. Messages are tenant-scoped (so a
+ * thread's history never leaks across tenants) but never soft-deleted, so the default filter keeps only
+ * the tenant condition and drops the {@code deleted} clause; a thread's history sorts chronologically by
+ * the monotonic {@code key} (message uid).
  */
 public abstract class AbstractJdbcAgentMessageRepository extends AbstractJdbcCrudRepository<AgentMessage>
     implements AiMessageRepositoryInterface {
@@ -23,13 +25,13 @@ public abstract class AbstractJdbcAgentMessageRepository extends AbstractJdbcCru
         super(jdbcRepository);
     }
 
-    /** No tenant column on agent_message. {@inheritDoc} */
+    /** Tenant-scoped, but no {@code deleted} column on ai_agent_message. {@inheritDoc} */
     @Override
     protected Condition defaultFilter(String tenantId) {
-        return DSL.trueCondition();
+        return buildTenantCondition(tenantId);
     }
 
-    /** No tenant column on agent_message. {@inheritDoc} */
+    /** No tenant argument here and no {@code deleted} column on ai_agent_message. {@inheritDoc} */
     @Override
     protected Condition defaultFilter() {
         return DSL.trueCondition();
@@ -42,7 +44,7 @@ public abstract class AbstractJdbcAgentMessageRepository extends AbstractJdbcCru
     }
 
     @Override
-    public List<AgentMessage> load(String threadId) {
-        return find((String) null, THREAD_ID_FIELD.eq(threadId), KEY_FIELD.asc());
+    public List<AgentMessage> load(String tenant, String threadId) {
+        return find(tenant, THREAD_ID_FIELD.eq(threadId), KEY_FIELD.asc());
     }
 }

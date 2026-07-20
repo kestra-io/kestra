@@ -96,7 +96,7 @@ public class AiThreadManager {
     }
 
     public AgentThread finish(final AgentThread thread) {
-        String title = thread.title() != null ? thread.title() : deriveTitle(thread.uid());
+        String title = thread.title() != null ? thread.title() : deriveTitle(thread.tenant(), thread.uid());
         AgentThread idle = thread.toIdle();
         return threadStore.save(idle.withLastTurnAt(idle.updatedAt()).withTitle(title));
     }
@@ -105,8 +105,8 @@ public class AiThreadManager {
         threadStore.find(tenant, uid).ifPresent(t -> threadStore.save(t.toIdle()));
     }
 
-    public List<AgentMessage> load(final String threadId) {
-        return messageStore.load(threadId);
+    public List<AgentMessage> load(final String tenant, final String threadId) {
+        return messageStore.load(tenant, threadId);
     }
 
     /**
@@ -114,37 +114,38 @@ public class AiThreadManager {
      * reuses the suspended turn's trace, so a suspend/resume counts as one turn. Backs the
      * {@code maxTurnsPerThread} guardrail.
      */
-    public long turnCount(final String threadId) {
-        return messageStore.load(threadId).stream()
+    public long turnCount(final String tenant, final String threadId) {
+        return messageStore.load(tenant, threadId).stream()
             .map(AgentMessage::traceId)
             .distinct()
             .count();
     }
 
-    public void appendUser(final String threadId, final String traceId, final String content) {
-        append(threadId, traceId, AgentMessageRole.USER, AgentMessageType.TEXT, content, null, null);
+    public void appendUser(final String tenant, final String threadId, final String traceId, final String content) {
+        append(tenant, threadId, traceId, AgentMessageRole.USER, AgentMessageType.TEXT, content, null, null);
     }
 
-    public void appendAssistantText(final String threadId, final String traceId, final String content) {
-        append(threadId, traceId, AgentMessageRole.ASSISTANT, AgentMessageType.TEXT, content, null, null);
+    public void appendAssistantText(final String tenant, final String threadId, final String traceId, final String content) {
+        append(tenant, threadId, traceId, AgentMessageRole.ASSISTANT, AgentMessageType.TEXT, content, null, null);
     }
 
-    public void appendToolCall(final String threadId, final String traceId, final String content, final AgentToolCall toolCall) {
-        append(threadId, traceId, AgentMessageRole.ASSISTANT, AgentMessageType.TOOL_CALL, content, toolCall, null);
+    public void appendToolCall(final String tenant, final String threadId, final String traceId, final String content, final AgentToolCall toolCall) {
+        append(tenant, threadId, traceId, AgentMessageRole.ASSISTANT, AgentMessageType.TOOL_CALL, content, toolCall, null);
     }
 
-    public void appendProposedAction(final String threadId, final String traceId, final String content, final AgentToolCall toolCall) {
-        append(threadId, traceId, AgentMessageRole.ASSISTANT, AgentMessageType.PROPOSED_ACTION, content, toolCall, null);
+    public void appendProposedAction(final String tenant, final String threadId, final String traceId, final String content, final AgentToolCall toolCall) {
+        append(tenant, threadId, traceId, AgentMessageRole.ASSISTANT, AgentMessageType.PROPOSED_ACTION, content, toolCall, null);
     }
 
-    public void appendToolResult(final String threadId, final String traceId, final AgentToolCall toolCall, final Map<String, Object> result) {
-        append(threadId, traceId, AgentMessageRole.TOOL, AgentMessageType.TOOL_RESULT, null, toolCall, result);
+    public void appendToolResult(final String tenant, final String threadId, final String traceId, final AgentToolCall toolCall, final Map<String, Object> result) {
+        append(tenant, threadId, traceId, AgentMessageRole.TOOL, AgentMessageType.TOOL_RESULT, null, toolCall, result);
     }
 
-    public void appendArtefactDraft(final String threadId, final String traceId, final ArtefactDraft draft) {
+    public void appendArtefactDraft(final String tenant, final String threadId, final String traceId, final ArtefactDraft draft) {
         messageStore.append(
             AgentMessage.builder()
                 .uid(newMessageUid())
+                .tenant(tenant)
                 .threadId(threadId)
                 .role(AgentMessageRole.ASSISTANT)
                 .type(AgentMessageType.ARTEFACT_DRAFT)
@@ -155,23 +156,24 @@ public class AiThreadManager {
         );
     }
 
-    public void appendCancelled(final String threadId, final String traceId) {
-        append(threadId, traceId, AgentMessageRole.SYSTEM, AgentMessageType.CANCELLED, null, null, null);
+    public void appendCancelled(final String tenant, final String threadId, final String traceId) {
+        append(tenant, threadId, traceId, AgentMessageRole.SYSTEM, AgentMessageType.CANCELLED, null, null, null);
     }
 
-    private String deriveTitle(final String threadId) {
-        return messageStore.load(threadId).stream()
+    private String deriveTitle(final String tenant, final String threadId) {
+        return messageStore.load(tenant, threadId).stream()
             .filter(m -> m.role() == AgentMessageRole.USER && m.type() == AgentMessageType.TEXT && m.content() != null)
             .findFirst()
             .map(m -> m.content().length() > MAX_TITLE_LENGTH ? m.content().substring(0, MAX_TITLE_LENGTH) + "…" : m.content())
             .orElse(null);
     }
 
-    private void append(final String threadId, final String traceId, final AgentMessageRole role, final AgentMessageType type,
+    private void append(final String tenant, final String threadId, final String traceId, final AgentMessageRole role, final AgentMessageType type,
         final String content, final AgentToolCall toolCall, final Map<String, Object> toolResult) {
         messageStore.append(
             AgentMessage.builder()
                 .uid(newMessageUid())
+                .tenant(tenant)
                 .threadId(threadId)
                 .role(role)
                 .type(type)

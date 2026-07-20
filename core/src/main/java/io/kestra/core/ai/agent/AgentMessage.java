@@ -15,8 +15,9 @@ import io.micronaut.core.annotation.Nullable;
 import lombok.Builder;
 
 /**
- * One append-only step of a Copilot turn: one row in the {@code agent_message} table, linked to its
- * parent thread by {@link #threadId()}. Rows are only ever inserted; a thread's history is loaded
+ * One append-only step of a Copilot turn: one row in the {@code ai_agent_message} table, linked to its
+ * parent thread by {@link #threadId()} and scoped by {@link #tenant()} (mirroring the owning thread) so
+ * history can be loaded with tenant isolation. Rows are only ever inserted; a thread's history is loaded
  * ordered by its monotonic {@link #uid()}, so messages always load in the order they were appended
  * (e.g. a tool call always loads before its result).
  */
@@ -24,6 +25,7 @@ import lombok.Builder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record AgentMessage(
     String uid,
+    @Nullable String tenant,
     String threadId,
     AgentMessageRole role,
     AgentMessageType type,

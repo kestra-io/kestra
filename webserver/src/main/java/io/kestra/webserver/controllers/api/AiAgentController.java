@@ -114,7 +114,7 @@ public class AiAgentController {
         requireProvider(null);
         String tenant = tenantService.resolveTenant();
         AgentThread thread = requireThread(tenant, threadId);
-        return ApiThreadDetail.from(thread, messageStore.load(threadId));
+        return ApiThreadDetail.from(thread, messageStore.load(tenant, threadId));
     }
 
     @Post(uri = "/{threadId}/chat", produces = MediaType.TEXT_EVENT_STREAM)
@@ -128,7 +128,7 @@ public class AiAgentController {
 
         // Cost/abuse guardrail: cap the number of user turns a single thread may hold. A resume reuses
         // its turn's trace, so confirming a parked action never counts against the cap.
-        if (threadManager.turnCount(threadId) >= maxTurnsPerThread) {
+        if (threadManager.turnCount(tenant, threadId) >= maxTurnsPerThread) {
             throw new HttpStatusException(
                 HttpStatus.TOO_MANY_REQUESTS,
                 "This thread has reached its maximum of %d turns; start a new thread.".formatted(maxTurnsPerThread)

@@ -173,13 +173,13 @@ public class JdbcTableConfigsFactory {
     @Bean
     @Named("agentthread")
     public InstantiableJdbcTableConfig agentThread() {
-        return new InstantiableJdbcTableConfig("agentthread", AgentThread.class, "agent_thread");
+        return new InstantiableJdbcTableConfig("agentthread", AgentThread.class, "ai_agent_thread");
     }
 
     @Bean
     @Named("agentmessage")
     public InstantiableJdbcTableConfig agentMessage() {
-        return new InstantiableJdbcTableConfig("agentmessage", AgentMessage.class, "agent_message");
+        return new InstantiableJdbcTableConfig("agentmessage", AgentMessage.class, "ai_agent_message");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

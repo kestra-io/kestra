@@ -1,6 +1,25 @@
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3";
 import {waitFor, within, userEvent, expect} from "storybook/test";
+import {vi} from "vitest";
+
+const {outputsState} = vi.hoisted(() => ({
+    outputsState: {
+        outputsInformation: [
+            {taskId: "http_request", taskRunId: "run-http", value: null, iteration: null, inline: false},
+            {taskId: "check_status", taskRunId: "run-check", value: null, iteration: null, inline: false},
+        ],
+        outputsByTaskRunId: {
+            "run-http": {code: 200, body: "healthy"},
+            "run-check": {passed: true},
+        } as Record<string, Record<string, unknown>>,
+    },
+}));
+
+vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
+    taskOutputsInformation: vi.fn(async () => outputsState.outputsInformation),
+    taskRunOutputs: vi.fn(async ({taskRunId}: {taskRunId: string}) => outputsState.outputsByTaskRunId[taskRunId] ?? {}),
+}));
 
 import {useExecutionsStore} from "../../../../src/stores/executions";
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue";
@@ -8,16 +27,18 @@ import ExecutionVariableExplorer from "../../../../src/components/executions/out
 /**
  * The explorer reads everything but task outputs straight from the active
  * execution in the executions store: `variables` → Variables, `trigger` →
- * Triggers, `inputs` → Flow Inputs. Task outputs are fetched lazily from the
- * backend (`/outputs/{id}`) and therefore only appear against a live API —
- * these stories exercise the store-sourced sections.
+ * Triggers, `inputs` → Flow Inputs. Task outputs are fetched from the outputs
+ * API, which is mocked here so stories can exercise the search flow.
  */
 const FAKE_EXECUTION = {
     id: "test-exec-id",
     flowId: "notify-customers",
     namespace: "company.team",
     state: {current: "SUCCESS", startDate: "2025-01-01T00:00:00Z", duration: "PT1S"},
-    taskRunList: [],
+    taskRunList: [
+        {id: "run-http", taskId: "http_request"},
+        {id: "run-check", taskId: "check_status"},
+    ],
     variables: {
         Api_endpoint: "http://api.kestra.io/v1",
         environment: {name: "production", region: "eu-west-1", tier: "gold"},
@@ -117,6 +138,29 @@ export const SearchFiltersItems: Story = {
                 expect(canvas.queryByText("maxRetries")).toBeNull();
             },
             {timeout: 3000},
+        );
+    },
+};
+
+/**
+ * Typing an output value fetches task-run outputs and filters the whole task run.
+ */
+export const SearchFiltersTaskOutputs: Story = {
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+
+        const search = await waitFor(
+            () => canvas.getByPlaceholderText(/search key or value/i),
+            {timeout: 5000},
+        );
+        await userEvent.type(search, "200");
+
+        await waitFor(
+            () => {
+                expect(canvas.getByText("http_request")).toBeTruthy();
+                expect(canvas.queryByText("check_status")).toBeNull();
+            },
+            {timeout: 5000},
         );
     },
 };

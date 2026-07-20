@@ -10,6 +10,7 @@
                             :sections="sections"
                             :selectedExpression="selectedBase"
                             @select="selectItem"
+                            @search-change="onSearchChange"
                         />
                     </KsSplitterPanel>
 
@@ -87,7 +88,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
+    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
 
     import {
@@ -107,6 +108,7 @@
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
+    import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
 
@@ -163,16 +165,23 @@
     // is fetched from the /outputs/{executionId} endpoint, then each task's
     // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
 
+    interface TaskOutputMeta {
+        taskId: string;
+        value?: string | null;
+        iteration?: number | null;
+    }
+
     const tasksWithOutputs = ref<string[] | undefined>(undefined)
+    const taskOutputMetaByRunId = ref<Record<string, TaskOutputMeta>>({})
     const taskOutputs = ref<Record<string, Record<string, unknown>>>({})
 
     watch(
         () => execution.value?.id,
         async (id) => {
             tasksWithOutputs.value = undefined
+            taskOutputMetaByRunId.value = {}
             taskOutputs.value = {}
             if (!id) return
-
 
             const data = await OutputsAPI.taskOutputsInformation({
                 executionId: id,
@@ -180,26 +189,75 @@
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
 
-            tasksWithOutputs.value = data
-                .map((task) => task.taskRunId)
-                .filter((taskRunId) => taskRunId !== undefined)
+            const metaByRunId: Record<string, TaskOutputMeta> = {}
+            const taskRunIds = data
+                .map((task) => {
+                    if (task.taskRunId !== undefined) {
+                        metaByRunId[task.taskRunId] = {
+                            taskId: task.taskId ?? "",
+                            value: task.value,
+                            iteration: task.iteration,
+                        }
+                    }
 
+                    return task.taskRunId
+                })
+                .filter((taskRunId): taskRunId is string => taskRunId !== undefined)
+
+            taskOutputMetaByRunId.value = metaByRunId
+            tasksWithOutputs.value = taskRunIds
         },
         {immediate: true},
     )
 
-    async function loadTaskOutputs(item: ExplorerItem) {
+    async function fetchTaskRunOutputs(taskRunId: string) {
         const id = execution.value?.id
-        if (!id || !item.taskRunId || taskOutputs.value[item.taskRunId]) return
+        if (!id) return {}
+
+        const cached = taskOutputs.value[taskRunId]
+        if (cached) {
+            return cached
+        }
 
         const data = await OutputsAPI.taskRunOutputs({
-            taskRunId: item.taskRunId,
+            taskRunId,
             executionId: id,
         }, {
             validateStatus: (s: number) => s === 200 || s === 404,
         })
 
-        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}}
+        const outputs = data || {}
+        taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
+        return outputs
+    }
+
+    async function loadTaskOutputs(item: ExplorerItem) {
+        if (!item.taskRunId) return
+
+        await fetchTaskRunOutputs(item.taskRunId)
+    }
+
+    async function prefetchTaskOutputsForSearch() {
+        const taskRunIds = tasksWithOutputs.value ?? []
+        const missingTaskRunIds = taskRunIds.filter((taskRunId) => !taskOutputs.value[taskRunId])
+
+        if (missingTaskRunIds.length === 0) {
+            return
+        }
+
+        await Promise.all(missingTaskRunIds.map((taskRunId) => fetchTaskRunOutputs(taskRunId)))
+    }
+
+    const debouncedPrefetchTaskOutputsForSearch = useDebounceFn(async (query: string) => {
+        if (!query.trim()) {
+            return
+        }
+
+        await prefetchTaskOutputsForSearch()
+    }, 300)
+
+    function onSearchChange(query: string) {
+        void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
     function isOutputTaskAFile(item: any): item is { uri: string } {
@@ -216,14 +274,23 @@
         const taskRunList = execution.value?.taskRunList ?? []
         return taskRunList
             .filter((task) => tasksWithOutputs.value?.includes(task.id))
-            .map((task) => ({
-                label: task.taskId,
-                value: taskOutputs.value[task.id],
-                type: isOutputTaskAFile(taskOutputs.value[task.id]) ? "file" : "object",
-                preview: "",
-                expression: `outputs${formatStep(task.taskId)}`,
-                taskRunId: task.id,
-            }))
+            .map((task) => {
+                const outputs = taskOutputs.value[task.id]
+                const meta = taskOutputMetaByRunId.value[task.id]
+                const iterationValue = meta?.value ?? meta?.iteration
+
+                return {
+                    label: taskOutputLabel(task.taskId, iterationValue),
+                    value: outputs,
+                    type: isOutputTaskAFile(outputs) ? "file" : "object",
+                    preview: outputs ? preview(outputs) : "",
+                    expression: `outputs${formatStep(task.taskId)}`,
+                    taskRunId: task.id,
+                    searchText: [task.taskId, meta?.value, meta?.iteration]
+                        .filter((value) => value !== undefined && value !== null && value !== "")
+                        .join(" "),
+                }
+            })
     })
 
     /* ------------------------------- Sections -------------------------------- */

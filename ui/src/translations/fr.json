@@ -1192,6 +1192,12 @@
         "title": "Ajouter des Blueprints Personnalisés",
         "message": "Dans l'édition Kestra Enterprise, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe."
       },
+      "policies": {
+        "header": "Politiques de gouvernance",
+        "label": "Politiques",
+        "message": "Les politiques permettent aux équipes plateforme de gérer et d'appliquer des règles de manière centralisée sur tous les flows — injecter des valeurs par défaut partagées, bloquer les plugins, limiter les valeurs de propriété et exiger des labels de conformité. Les règles s'appliquent au niveau du tenant ou du namespace avec un déploiement progressif, et chaque valeur injectée ou remplacée reste visible pour les auteurs de flow.",
+        "title": "Gérer tous les flows avec des politiques"
+      },
       "namespace": {
         "edit": {
           "title": "Améliorez la Gestion de votre Namespace",
@@ -1208,6 +1214,10 @@
         "variables": {
           "title": "Gérez vos Variables de manière centralisée",
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir."
+        },
+        "policies": {
+          "title": "Appliquer les règles de gouvernance dans ce namespace",
+          "message": "Dans Kestra Enterprise Edition, les politiques vous permettent de définir des règles qui s'appliquent à chaque flow dans ce namespace et ses enfants — injecter des valeurs par défaut partagées, restreindre les valeurs de propriété, bloquer les plugins et exiger des labels de conformité, avec chaque modification entièrement visible pour les auteurs de flow."
         },
         "history": {
           "title": "Gérer l'historique des révisions en un seul endroit",

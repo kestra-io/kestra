@@ -1192,6 +1192,12 @@
         "title": "添加自定义蓝图",
         "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。"
       },
+      "policies": {
+        "header": "治理策略",
+        "label": "策略",
+        "message": "策略让平台团队能够集中管理和执行适用于所有 flow 的规则 — 注入共享默认值、阻止插件、限制属性值并要求合规 label。规则通过分阶段发布应用于租户或 namespace 级别，并且每个注入或替换的 value 对 flow 作者保持可见。",
+        "title": "通过策略治理每个 flow"
+      },
       "namespace": {
         "edit": {
           "title": "升级您的Namespace管理",
@@ -1208,6 +1214,10 @@
         "variables": {
           "title": "集中管理您的变量",
           "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。"
+        },
+        "policies": {
+          "title": "在此 namespace 中强制执行治理规则",
+          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
         },
         "history": {
           "title": "在一个地方管理修订历史",

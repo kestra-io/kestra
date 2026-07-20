@@ -988,18 +988,32 @@ public class JsonSchemaGenerator {
         try {
             return Optional.ofNullable(typeContext.resolveSubtype(declaredType, clz));
         } catch (Throwable e) {
-            // Can be thrown when resolving a plugin-type depending on a non-backward compatible kestra
-            // (e.g., java.lang.TypeNotPresentException), or a plugin jar with a classloading conflict
-            // (e.g., NoClassDefFoundError/LinkageError). Log so the excluded type is not silently missing
-            // from the schema used for editor autocompletion.
-            log.warn(
-                "Unable to resolve subtype '{}' of '{}' for schema generation, it will be excluded from autocompletion. Cause: [{}] {}",
-                clz.getName(),
-                declaredType.getErasedType().getName(),
-                e.getClass().getSimpleName(),
-                e.getMessage()
-            );
-            return Optional.empty();
+            // resolveSubtype() walks the full generic hierarchy against declaredType and can throw
+            // (e.g. java.lang.TypeNotPresentException on a non-backward-compatible plugin, or a
+            // classloading conflict such as NoClassDefFoundError/LinkageError from a plugin jar).
+            // Fall back to a plain resolve(), the same call every other plugin category (TaskRunner,
+            // Chart, Asset, ...) already relies on, so the type still appears in the schema/autocompletion
+            // even if some generic-derived detail is missing, instead of silently disappearing.
+            try {
+                ResolvedType fallback = typeContext.resolve(clz);
+                log.warn(
+                    "Unable to fully resolve subtype '{}' of '{}' for schema generation, falling back to a plain type resolution. Cause: [{}] {}",
+                    clz.getName(),
+                    declaredType.getErasedType().getName(),
+                    e.getClass().getSimpleName(),
+                    e.getMessage()
+                );
+                return Optional.of(fallback);
+            } catch (Throwable fallbackException) {
+                log.warn(
+                    "Unable to resolve subtype '{}' of '{}' for schema generation, it will be excluded from autocompletion. Cause: [{}] {}",
+                    clz.getName(),
+                    declaredType.getErasedType().getName(),
+                    fallbackException.getClass().getSimpleName(),
+                    fallbackException.getMessage()
+                );
+                return Optional.empty();
+            }
         }
     }
 

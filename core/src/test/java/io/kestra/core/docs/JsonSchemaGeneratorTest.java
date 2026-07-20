@@ -636,12 +636,27 @@ class JsonSchemaGeneratorTest {
     }
 
     @Test
-    void safelyResolveSubtypeShouldReturnEmptyInsteadOfThrowingWhenSubtypeIsUnresolvable() {
+    void safelyResolveSubtypeShouldFallBackToPlainResolveWhenSubtypeResolutionFails() {
         com.github.victools.jsonschema.generator.TypeContext typeContext = com.github.victools.jsonschema.generator.impl.TypeContextFactory.createDefaultTypeContext();
         com.fasterxml.classmate.ResolvedType declaredType = typeContext.resolve(Task.class);
 
         // String is unrelated to Task, so classmate throws while resolving it as a subtype;
-        // safelyResolveSubtype must swallow it (and log) rather than aborting schema generation for every other plugin.
+        // safelyResolveSubtype must fall back to a plain resolve() so the type still appears in the schema
+        // instead of being silently excluded from autocompletion.
+        Optional<com.fasterxml.classmate.ResolvedType> resolved = JsonSchemaGenerator.safelyResolveSubtype(declaredType, String.class, typeContext);
+
+        assertThat(resolved.isPresent(), is(true));
+        assertThat(resolved.get().getErasedType(), is(String.class));
+    }
+
+    @Test
+    void safelyResolveSubtypeShouldReturnEmptyWhenBothSubtypeAndPlainResolveFail() {
+        com.github.victools.jsonschema.generator.TypeContext typeContext = org.mockito.Mockito.mock(com.github.victools.jsonschema.generator.TypeContext.class);
+        com.fasterxml.classmate.ResolvedType declaredType = org.mockito.Mockito.mock(com.fasterxml.classmate.ResolvedType.class);
+        org.mockito.Mockito.doReturn(Task.class).when(declaredType).getErasedType();
+        org.mockito.Mockito.when(typeContext.resolveSubtype(declaredType, String.class)).thenThrow(new IllegalArgumentException("subtype resolution failed"));
+        org.mockito.Mockito.when(typeContext.resolve(String.class)).thenThrow(new NoClassDefFoundError("plain resolve also failed"));
+
         Optional<com.fasterxml.classmate.ResolvedType> resolved = JsonSchemaGenerator.safelyResolveSubtype(declaredType, String.class, typeContext);
 
         assertThat(resolved.isEmpty(), is(true));

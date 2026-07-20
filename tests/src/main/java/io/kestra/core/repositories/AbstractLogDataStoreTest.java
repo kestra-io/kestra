@@ -141,10 +141,15 @@ public abstract class AbstractLogDataStoreTest {
         log(Level.INFO, "exec-sink").taskId("sink").taskRunId("tr-sink").attemptNumber(2).build()
     );
 
+    // The three levels are DISTINCT on purpose: fetchData/fetchValue aggregate COUNT over the LEVEL field, and
+    // backends legitimately differ on "COUNT of a field" — JDBC counts rows, Elasticsearch counts distinct values
+    // (cardinality). Distinct levels make COUNT(level) == 3 under both semantics, keeping the aggregation assertion
+    // backend-agnostic. Do not collapse these back to a single level. (No DISTINCT filter case filters on level.)
     private static final List<LogEntry> DISTINCT_LOGS = List.of(
         log(Level.INFO, "exec-alpha").namespace("io.kestra.alpha").flowId("alpha-flow").triggerId("alpha-trigger").taskId("alpha-task").taskRunId("alpha-tr").message("alpha message").build(),
-        log(Level.INFO, "exec-beta").namespace("io.kestra.beta").flowId("beta-flow").triggerId("beta-trigger").taskId("beta-task").taskRunId("beta-tr").message("beta message").build(),
-        log(Level.INFO, "exec-gamma").namespace("com.example.gamma").flowId("gamma-flow").triggerId("gamma-trigger").taskId("gamma-task").taskRunId("gamma-tr").message("gamma message").build()
+        log(Level.WARN, "exec-beta").namespace("io.kestra.beta").flowId("beta-flow").triggerId("beta-trigger").taskId("beta-task").taskRunId("beta-tr").message("beta message").build(),
+        log(Level.ERROR, "exec-gamma").namespace("com.example.gamma").flowId("gamma-flow").triggerId("gamma-trigger").taskId("gamma-task").taskRunId("gamma-tr").message("gamma message")
+            .build()
     );
 
     // Timestamps are relative to now, never fixed historical dates: retention-limited backends (Cloud Logging drops

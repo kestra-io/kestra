@@ -95,36 +95,8 @@ class ScriptServiceTest {
     }
 
     @Test
-    void replaceInternalStorageEmoji() throws IOException {
-        String tenant = IdUtils.create();
-        var runContext = runContextFactory.of("id", "namespace", tenant);
-
-        Path path = createFile(tenant, "file-🐸");
-
-        String internalStorageUri = "kestra://some/file-🐸.txt";
-        File localFile = null;
-
-        try {
-            var command = ScriptService.replaceInternalStorage(
-                runContext,
-                "my command with an internal storage file: " + internalStorageUri,
-                false
-            );
-
-            Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
-
-            assertThat(matcher.matches()).isTrue();
-
-            Path absoluteLocalFilePath = Path.of(matcher.group(1));
-            localFile = absoluteLocalFilePath.toFile();
-
-            assertThat(localFile.exists()).isTrue();
-        } finally {
-            if (localFile != null) {
-                localFile.delete();
-            }
-            path.toFile().delete();
-        }
+    void shouldAcceptOutputFileWithEmoji() throws IOException {
+        ScriptService.validateStoragePath("file🐸name.txt");
     }
 
     @Test

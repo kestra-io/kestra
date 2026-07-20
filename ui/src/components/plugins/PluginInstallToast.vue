@@ -42,6 +42,7 @@
     const props = defineProps<{
         jobId: string;
         onSuccess?: () => void;
+        onFailure?: () => void;
     }>()
 
     const {t} = useI18n()
@@ -87,6 +88,7 @@
             props.onSuccess?.()
         } else if (latest?.status === "FAILED" || latest === null) {
             stopPolling()
+            props.onFailure?.()
         }
     }
 

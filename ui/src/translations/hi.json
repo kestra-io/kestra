@@ -493,6 +493,13 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "autoInstall": {
+        "failed": "plugin इंस्टॉलेशन विफल रहा",
+        "progress": "{transferred} / {total}",
+        "succeeded": "plugin सफलतापूर्वक इंस्टॉल हो गया | plugins सफलतापूर्वक इंस्टॉल हो गए",
+        "timeout": "plugin इंस्टॉलेशन में अपेक्षा से अधिक समय लग रहा है, फिर भी सेव किया जा रहा है",
+        "title": "{count} plugin इंस्टॉल हो रहा है | {count} plugins इंस्टॉल हो रहे हैं"
+      },
       "names": "plugins",
       "release": "रिलीज़ नोट्स",
       "beta": "बीटा",

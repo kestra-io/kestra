@@ -493,6 +493,13 @@
     },
     "use": "使用",
     "plugins": {
+      "autoInstall": {
+        "failed": "插件安装失败",
+        "progress": "{transferred} / {total}",
+        "succeeded": "插件安装成功 | 插件安装成功",
+        "timeout": "插件安装耗时超出预期,仍将继续保存",
+        "title": "正在安装 {count} 个插件 | 正在安装 {count} 个插件"
+      },
       "names": "插件",
       "release": "发行说明",
       "beta": "测试版",

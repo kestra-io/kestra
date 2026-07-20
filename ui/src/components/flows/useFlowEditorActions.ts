@@ -58,20 +58,19 @@ export function useFlowEditorActions() {
         await flushDirtyFiles()
     }
 
-    async function waitForInstallJob(jobId: string): Promise<void> {
-        for (;;) {
-            const job = await pluginsStore.getInstallJob(jobId)
-            if (!job || job.status === "SUCCEEDED" || job.status === "FAILED") return
-            await new Promise(resolve => setTimeout(resolve, 500))
-        }
-    }
+    // Upper bound on how long a save waits on a plugin install job before giving up and saving
+    // anyway. PluginInstallToast keeps polling and updating in the background past this point —
+    // this only stops the save button from hanging forever on a hung/slow download.
+    const INSTALL_WAIT_TIMEOUT_MS = 60_000
 
     /**
      * Detects missing plugins for the current flow YAML and, if any are found, enqueues an
      * installation job and opens a live-progress notification toast. Resolves once the install
-     * reaches a terminal state (or immediately if nothing is missing) so callers can await it
-     * before saving — the type the flow references must be registered before the backend
-     * re-validates it, otherwise the save is rejected as an unknown type.
+     * reaches a terminal state, the wait times out, or immediately if nothing is missing — so
+     * callers can await it before saving. The type the flow references must be registered before
+     * the backend re-validates it, otherwise the save is rejected as an unknown type; polling for
+     * that terminal state is owned solely by {@link PluginInstallToast} (single poll loop, reused
+     * here via its success/failure callbacks) rather than duplicated with a second timer.
      */
     async function triggerPluginInstallIfNeeded(): Promise<void> {
         const yaml = flowStore.flowYaml
@@ -97,21 +96,36 @@ export function useFlowEditorActions() {
         const count = detection.artifacts.length
         let notificationHandle: ReturnType<typeof KsNotification> | undefined
 
-        notificationHandle = KsNotification({
-            title: t("plugins.autoInstall.title", count),
-            message: h(PluginInstallToast, {
-                jobId: job.id,
-                onSuccess: () => {
-                    pluginsStore.list()
-                    setTimeout(() => notificationHandle?.close(), 3000)
-                },
-            }),
-            position: "bottom-right",
-            type: "info",
-            duration: 0,
-        })
+        await new Promise<void>((resolve) => {
+            let settled = false
+            const settle = () => {
+                if (settled) return
+                settled = true
+                resolve()
+            }
 
-        await waitForInstallJob(job.id)
+            notificationHandle = KsNotification({
+                title: t("plugins.autoInstall.title", count),
+                message: h(PluginInstallToast, {
+                    jobId: job.id,
+                    onSuccess: () => {
+                        pluginsStore.list()
+                        setTimeout(() => notificationHandle?.close(), 3000)
+                        settle()
+                    },
+                    onFailure: settle,
+                }),
+                position: "bottom-right",
+                type: "info",
+                duration: 0,
+            })
+
+            setTimeout(() => {
+                if (settled) return
+                toast.warning(t("plugins.autoInstall.timeout"))
+                settle()
+            }, INSTALL_WAIT_TIMEOUT_MS)
+        })
     }
 
     function reportSaveError(error: any) {

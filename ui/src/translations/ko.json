@@ -493,6 +493,13 @@
     },
     "use": "사용",
     "plugins": {
+      "autoInstall": {
+        "failed": "플러그인 설치에 실패했습니다",
+        "progress": "{transferred} / {total}",
+        "succeeded": "플러그인이 성공적으로 설치되었습니다 | 플러그인이 성공적으로 설치되었습니다",
+        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있어 그대로 저장합니다",
+        "title": "플러그인 {count}개 설치 중 | 플러그인 {count}개 설치 중"
+      },
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",

@@ -493,6 +493,13 @@
     },
     "use": "Verwenden",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin-Installation fehlgeschlagen",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin erfolgreich installiert | Plugins erfolgreich installiert",
+        "timeout": "Die Plugin-Installation dauert länger als erwartet, wird trotzdem gespeichert",
+        "title": "{count} Plugin wird installiert | {count} Plugins werden installiert"
+      },
       "names": "Plugins",
       "release": "Versionshinweise",
       "beta": "Beta",

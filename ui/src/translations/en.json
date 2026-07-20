@@ -497,6 +497,7 @@
         "failed": "Plugin installation failed",
         "progress": "{transferred} / {total}",
         "succeeded": "Plugin installed successfully | Plugins installed successfully",
+        "timeout": "Plugin installation is taking longer than expected, saving anyway",
         "title": "Installing {count} plugin | Installing {count} plugins"
       },
       "names": "Plugins",

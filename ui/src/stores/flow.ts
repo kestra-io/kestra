@@ -110,6 +110,7 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
+    const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
@@ -481,6 +482,7 @@ export const useFlowStore = defineStore("flow", () => {
         flow.value = data
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
+        previewSource.value = undefined
         overallTotal.value = 1
 
         return data
@@ -911,11 +913,13 @@ function deleteFlowAndDependencies() {
     })
 
     const readOnlySystemLabel = computed(() => {
-        if (!flow.value || !flow.value.labels) {
+        if (!flow.value?.labels) {
             return false
         }
 
-        return flow.value.labels.some(label => label.key === "system.readOnly" && label.value === "true")
+        const labelsArray = Array.isArray(flow.value.labels) ? flow.value.labels : Object.entries(flow.value.labels).map(([key, value]) => ({key, value}))
+
+        return labelsArray.some(label => label.key === "system.readOnly" && label.value === "true")
     })
 
     const isReadOnly = computed(() => {
@@ -1009,6 +1013,7 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        previewSource,
         haveChange,
         expandedSubflows,
         metadata,

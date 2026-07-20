@@ -36,7 +36,8 @@
     "Default page": "默认页面",
     "confirmation": "确认",
     "common": {
-      "back": "返回"
+      "back": "返回",
+      "openInNewTab": "在新标签页中打开"
     },
     "delete confirm": "确定要删除 <code>{name}</code> 吗？",
     "outdated revision save confirmation": {
@@ -693,7 +694,6 @@
     "taskid column details": "最后执行的任务及其尝试次数。",
     "flow already exists": "流程已存在",
     "flow already exists message": "flow <code>{id}</code> 已存在于 namespace <code>{namespace}</code>。您要创建一个新的修订版本吗？",
-    "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "namespace not allowed": "不允许的命名空间",
     "switch-view": "切换视图",
     "source and topology": "源代码和拓扑",
@@ -1193,6 +1193,12 @@
         "title": "添加自定义蓝图",
         "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。"
       },
+      "policies": {
+        "header": "治理策略",
+        "label": "策略",
+        "message": "策略让平台团队能够集中管理和执行适用于所有 flow 的规则 — 注入共享默认值、阻止插件、限制属性值并要求合规 label。规则通过分阶段发布应用于租户或 namespace 级别，并且每个注入或替换的 value 对 flow 作者保持可见。",
+        "title": "通过策略治理每个 flow"
+      },
       "namespace": {
         "edit": {
           "title": "升级您的Namespace管理",
@@ -1210,9 +1216,9 @@
           "title": "集中管理您的变量",
           "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。"
         },
-        "plugin-defaults": {
-          "title": "使用插件默认值标准化配置",
-          "message": "在 Kestra Enterprise Edition 中，您可以设置特定于 namespace 的插件默认值，从而减少每个 flow 中重复设置的需求。这种集中的插件管理强制执行一致的配置，允许安全引用机密或变量，并简化工作流的维护。"
+        "policies": {
+          "title": "在此 namespace 中强制执行治理规则",
+          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
         },
         "history": {
           "title": "在一个地方管理修订历史",
@@ -1388,26 +1394,6 @@
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "system_namespace": "保持您的平台通过系统flows进行检查。",
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
-    "pluginDefaults": {
-      "title": "插件默认值",
-      "add": "添加插件默认值",
-      "edit": "编辑插件默认值",
-      "add_subtitle": "配置新插件默认值及其属性",
-      "edit_subtitle": "修改现有插件默认配置",
-      "predefined": "预定义插件",
-      "custom": "自定义插件",
-      "form": "表单",
-      "yaml": "YAML",
-      "select_predefined": "选择预定义插件",
-      "cancel": "取消",
-      "update": "更新插件默认值",
-      "custom_type": "自定义插件类型",
-      "custom_placeholder": "输入插件类型",
-      "use_custom": "使用自定义",
-      "custom_configure": "自定义插件类型 - 使用 YAML 配置",
-      "yaml_configuration": "YAML 配置",
-      "show_yaml": "显示 YAML"
-    },
     "secret": {
       "add": "创建",
       "update": "更新密钥 '{name}'",
@@ -1630,8 +1616,7 @@
         "triggers": "触发器",
         "errors": "错误处理程序",
         "afterExecution": "执行后",
-        "finally": "最后",
-        "pluginDefaults": "插件默认值"
+        "finally": "最后"
       },
       "fields": {
         "main": {
@@ -1663,7 +1648,6 @@
         "triggers": "选择一个trigger",
         "errors": "选择一个task",
         "finally": "选择一个task",
-        "pluginDefaults": "选择插件",
         "afterExecution": "选择一个task",
         "conditions": "选择条件",
         "inputs": "选择一个input字段类型",
@@ -1677,7 +1661,6 @@
         "triggers": "添加一个trigger",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
-        "pluginDefaults": "添加插件默认值",
         "afterExecution": "添加执行后块",
         "conditions": "添加条件",
         "inputs": "添加一个input字段",
@@ -1794,10 +1777,6 @@
       "concurrency_limits": {
         "title": "未设置并发限制。",
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">并发限制</a></strong>的信息。"
-      },
-      "pluginDefaults": {
-        "title": "您还没有插件默认值！",
-        "content": "插件默认设置允许您集中管理插件配置，并与namespace中的所有flow共享。"
       },
       "variables": {
         "title": "尚无变量",

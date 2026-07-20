@@ -7,8 +7,8 @@ import java.util.List;
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
@@ -33,10 +33,10 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
     public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService,
         PosthogService posthogService, @Nullable NamespaceContextTool namespaceContextTool,
         String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration, ExpressionContextService expressionContextService,
-        PluginDefaultService pluginDefaultService) {
+        FlowParsingService flowParsingService) {
         super(
             pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration,
-            expressionContextService, pluginDefaultService
+            expressionContextService, flowParsingService
         );
     }
 

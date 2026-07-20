@@ -155,10 +155,6 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
-    async function loadInheritedPluginDefaults(_: {id: string, commit?: boolean}) {
-        // NOOP IN OSS
-    }
-
     async function createDirectory(payload: {namespace: string; path: string}) {
         await FilesAPI.createNamespaceDirectory(payload)
     }
@@ -276,7 +272,6 @@ export const useBaseNamespacesStore = () => {
         patchSecret,
         deleteSecrets,
         loadInheritedVariables,
-        loadInheritedPluginDefaults,
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,

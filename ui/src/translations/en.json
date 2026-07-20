@@ -36,7 +36,8 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "common": {
-      "back": "Back"
+      "back": "Back",
+      "openInNewTab": "Open in new tab"
     },
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -693,7 +694,6 @@
     "taskid column details": "Last task being executed and its number of attempts.",
     "flow already exists": "Flow already exists",
     "flow already exists message": "Flow <code>{id}</code> already exists in namespace <code>{namespace}</code>. Do you want to create a new revision?",
-    "plugin_default_already_exists": "Plugin default for <code>{type}</code> already exists.",
     "namespace not allowed": "Namespace not allowed",
     "switch-view": "Switch view",
     "source and topology": "Source and topology",
@@ -1193,6 +1193,12 @@
         "title": "Add Custom Blueprints",
         "message": "In Kestra Enterprise Edition, you can create custom Blueprints only available to your organization. You can use them as best-practices templates to share, centralize, and document commonly used workflows in your team."
       },
+      "policies": {
+        "header": "Governance Policies",
+        "label": "Policies",
+        "message": "Policies let platform teams centrally manage and enforce rules across all flows — inject shared defaults, block plugins, bound property values, and require compliance labels. Rules apply at the tenant or namespace level with staged rollout, and every injected or replaced value stays visible to flow authors.",
+        "title": "Govern Every Flow with Policies"
+      },
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
@@ -1210,9 +1216,9 @@
           "title": "Centrally Govern Your Variables",
           "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
         },
-        "plugin-defaults": {
-          "title": "Standardize Configuration with Plugin Defaults",
-          "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
+        "policies": {
+          "title": "Enforce Governance Rules Across This Namespace",
+          "message": "In Kestra Enterprise Edition, Policies let you define rules that apply to every flow in this namespace and its children — inject shared defaults, restrict property values, block plugins, and require compliance labels, with every change fully visible to flow authors."
         },
         "history": {
           "title": "Manage Revision History in One Place",
@@ -1388,26 +1394,6 @@
     "no_namespaces": "Zero namespaces match the search criteria.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
-    "pluginDefaults": {
-      "title": "Plugin Defaults",
-      "add": "Add Plugin Default",
-      "edit": "Edit Plugin Default",
-      "add_subtitle": "Configure a new plugin default with its properties",
-      "edit_subtitle": "Modify the existing plugin default configuration",
-      "predefined": "Predefined Plugin",
-      "custom": "Custom Plugin",
-      "form": "Form",
-      "yaml": "YAML",
-      "select_predefined": "Select Predefined Plugin",
-      "cancel": "Cancel",
-      "update": "Update Plugin Default",
-      "custom_type": "Custom plugin type",
-      "custom_placeholder": "Enter plugin type",
-      "use_custom": "Use Custom",
-      "custom_configure": "Custom plugin type - configure using YAML",
-      "yaml_configuration": "YAML Configuration",
-      "show_yaml": "Show YAML"
-    },
     "secret": {
       "add": "Create",
       "update": "Update secret '{name}'",
@@ -1630,8 +1616,7 @@
         "triggers": "Triggers",
         "errors": "Error Handlers",
         "afterExecution": "After Execution",
-        "finally": "Finally",
-        "pluginDefaults": "Plugin Defaults"
+        "finally": "Finally"
       },
       "fields": {
         "main": {
@@ -1663,7 +1648,6 @@
         "triggers": "Select a trigger",
         "errors": "Select a task",
         "finally": "Select a task",
-        "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
         "conditions": "Select a condition",
         "inputs": "Select an input field type",
@@ -1677,7 +1661,6 @@
         "triggers": "Add a trigger",
         "errors": "Add an error handler",
         "finally": "Add a finally block",
-        "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
         "conditions": "Add a condition",
         "inputs": "Add an input field",
@@ -1794,10 +1777,6 @@
       "concurrency_limits": {
         "title": "No concurrency limits are set.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
-      "pluginDefaults": {
-        "title": "You have no plugin defaults yet!",
-        "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
       },
       "variables": {
         "title": "No variables yet",

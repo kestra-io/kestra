@@ -36,7 +36,8 @@
     "Default page": "デフォルトページ",
     "confirmation": "確認",
     "common": {
-      "back": "戻る"
+      "back": "戻る",
+      "openInNewTab": "新しいタブで開く"
     },
     "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
     "outdated revision save confirmation": {
@@ -693,7 +694,6 @@
     "taskid column details": "最後に実行されたtaskとその試行回数。",
     "flow already exists": "Flowはすでに存在します",
     "flow already exists message": "namespace <code>{namespace}</code> に flow <code>{id}</code> が既に存在します。新しいリビジョンを作成しますか？",
-    "plugin_default_already_exists": "<code>{type}</code>のプラグインデフォルトはすでに存在します。",
     "namespace not allowed": "Namespaceは許可されていません",
     "switch-view": "ビューを切り替え",
     "source and topology": "ソースとトポロジー",
@@ -1193,6 +1193,12 @@
         "title": "カスタムBlueprintの追加",
         "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるworkflowを共有、集中化、文書化することができます。"
       },
+      "policies": {
+        "header": "ガバナンスポリシー",
+        "label": "ポリシー",
+        "message": "ポリシーにより、プラットフォームチームはすべての flow にわたってルールを一元的に管理および適用できます。これには、共有のデフォルト値の注入、プラグインのブロック、プロパティ値の制限、コンプライアンス label の要求などが含まれます。ルールはテナントまたは namespace レベルで段階的なロールアウトとともに適用され、注入または置換されたすべての値は flow の作成者から常に可視です。",
+        "title": "すべての Flow をポリシーで統制"
+      },
       "namespace": {
         "edit": {
           "title": "名前空間管理をアップグレードする",
@@ -1210,9 +1216,9 @@
           "title": "変数を中央で管理する",
           "message": "Kestra Enterprise Editionでは、namespaceレベルの変数を定義および管理することで、flow全体での繰り返しの設定を排除できます。これらの変数は一貫性を確保し、設定の更新を簡素化し、どのtaskやtriggerからも簡単に参照できるため、よりクリーンで保守しやすいワークフローを実現します。"
         },
-        "plugin-defaults": {
-          "title": "プラグインのデフォルトで設定を標準化する",
-          "message": "Kestra Enterprise Editionでは、namespace固有のプラグインデフォルトを設定でき、各flowでの重複した設定の必要性を減らします。この中央プラグインガバナンスは、一貫した設定を強制し、秘密情報や変数の安全な参照を可能にし、ワークフローのメンテナンスを簡素化します。"
+        "policies": {
+          "title": "この namespace 全体にガバナンスルールを適用する",
+          "message": "Kestra Enterprise Editionでは、ポリシーにより、このnamespaceとその子孫のすべてのflowに適用されるルールを定義できます。共有のデフォルト値の注入、プロパティ値の制限、プラグインのブロック、コンプライアンスlabelの要求などが可能になり、すべての変更はflowの作成者に完全に表示されます。"
         },
         "history": {
           "title": "一箇所でリビジョン履歴を管理",
@@ -1388,26 +1394,6 @@
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
-    "pluginDefaults": {
-      "title": "プラグインのデフォルト",
-      "add": "プラグインデフォルトを追加",
-      "edit": "プラグインデフォルトを編集",
-      "add_subtitle": "新しいプラグインのデフォルトをそのプロパティで設定する",
-      "edit_subtitle": "既存のプラグインのデフォルト設定を変更する",
-      "predefined": "定義済みプラグイン",
-      "custom": "カスタムプラグイン",
-      "form": "フォーム",
-      "yaml": "YAML",
-      "select_predefined": "定義済みプラグインを選択",
-      "cancel": "キャンセル",
-      "update": "プラグインデフォルトを更新",
-      "custom_type": "カスタムプラグインタイプ",
-      "custom_placeholder": "プラグインタイプを入力",
-      "use_custom": "カスタムを使用",
-      "custom_configure": "カスタムプラグインタイプ - YAMLを使用して構成",
-      "yaml_configuration": "YAML設定",
-      "show_yaml": "YAMLを表示"
-    },
     "secret": {
       "add": "作成",
       "update": "シークレット '{name}' を更新",
@@ -1630,8 +1616,7 @@
         "triggers": "トリガー",
         "errors": "エラーハンドラー",
         "afterExecution": "実行後",
-        "finally": "最後に",
-        "pluginDefaults": "プラグインデフォルト"
+        "finally": "最後に"
       },
       "fields": {
         "main": {
@@ -1663,7 +1648,6 @@
         "triggers": "トリガーを選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
-        "pluginDefaults": "プラグインを選択",
         "afterExecution": "タスクを選択",
         "conditions": "条件を選択",
         "inputs": "入力フィールドタイプを選択",
@@ -1677,7 +1661,6 @@
         "triggers": "トリガーを追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
-        "pluginDefaults": "プラグインのデフォルトを追加",
         "afterExecution": "実行後ブロックを追加",
         "conditions": "条件を追加",
         "inputs": "入力フィールドを追加",
@@ -1794,10 +1777,6 @@
       "concurrency_limits": {
         "title": "同時実行制限は設定されていません。",
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。"
-      },
-      "pluginDefaults": {
-        "title": "プラグインのデフォルトがまだありません！",
-        "content": "プラグインデフォルトを使用すると、プラグインの設定を一元管理し、namespace内のすべてのflowと共有できます。"
       },
       "variables": {
         "title": "変数はまだありません",

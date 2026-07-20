@@ -79,6 +79,19 @@
         return result
     }
 
+    // Raw HTML video embeds in docs are YouTube-only; restrict `iframe src` to YouTube's
+    // own embed hosts so the shared xss whitelist below can't be used to embed arbitrary sites.
+    const IFRAME_ALLOWED_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"]
+
+    function isAllowedIframeSrc(value: string): boolean {
+        try {
+            const url = new URL(value)
+            return url.protocol === "https:" && IFRAME_ALLOWED_HOSTS.includes(url.hostname)
+        } catch {
+            return false
+        }
+    }
+
     function htmlEscape(content: string): string {
         return xss(content, {
             whiteList: {
@@ -95,6 +108,7 @@
                 h1: ["id", "class"], h2: ["id", "class"], h3: ["id", "class"],
                 h4: ["id", "class"], h5: ["id", "class"], h6: ["id", "class"],
                 hr: [],
+                iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "referrerpolicy", "frameborder", "class"],
                 img: ["src", "alt", "title", "width", "height", "class"],
                 kbd: [],
                 li: ["class"], ol: ["start", "class"], ul: ["class"],
@@ -114,6 +128,12 @@
                 button: ["type", "class", "aria-label"],
             },
             stripIgnoreTag: true,
+            onTagAttr: function (tag: string, name: string, value: string) {
+                if (tag === "iframe" && name === "src" && !isAllowedIframeSrc(value)) {
+                    return ""
+                }
+                return undefined
+            },
             onIgnoreTagAttr: function (_tag: string, name: string, value: string) {
                 if (name.startsWith("data-")) {
                     return name + "=\"" + escapeAttrValue(value) + "\""

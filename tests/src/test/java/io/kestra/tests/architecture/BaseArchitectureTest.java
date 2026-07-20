@@ -19,6 +19,17 @@ public class BaseArchitectureTest {
     static final ArchRule no_java_util_logging = NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 
     @ArchTest
+    static final ArchRule no_joda_time = NO_CLASSES_SHOULD_USE_JODATIME;
+
+    @ArchTest
+    static final ArchRule test_same_package = testClassesShouldResideInTheSamePackageAsImplementation();
+
+    @ArchTest
+    static final ArchRule no_standard_stream = noClasses()
+        .that().doNotBelongToAnyOf(io.kestra.core.utils.ThreadUncaughtExceptionHandler.class)
+        .should(ACCESS_STANDARD_STREAMS);
+
+    @ArchTest
     public static final ArchRule no_production_use_of_awaitility = noClasses()
         .that().doNotBelongToAnyOf(io.kestra.core.utils.Await.class, io.kestra.core.junit.extensions.AbstractLoaderExtension.class)
         .should().dependOnClassesThat().resideInAPackage("org.awaitility")

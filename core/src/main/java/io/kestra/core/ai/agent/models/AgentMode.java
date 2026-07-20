@@ -14,16 +14,16 @@ import io.kestra.core.utils.Enums;
  *
  * <ul>
  * <li>{@link #ASK} — read + (non-mutating) authoring tools only; never mutates.</li>
- * <li>{@link #EDIT} — read + mutation of the in-focus artefact; each write is confirmed.</li>
- * <li>{@link #PLAN} — cumulative over Edit and adds act tools; multi-step, confirmed per step.</li>
+ * <li>{@link #PLAN} — read + mutation of the in-focus artefact, planned and carried out step by step.</li>
+ * <li>{@link #EDIT} — cumulative over Plan and adds act tools (e.g. restarting an execution); each action is confirmed.</li>
  * </ul>
  */
 public enum AgentMode {
     ASK(EnumSet.of(AgentToolFamily.READ)),
-    EDIT(EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE)),
-    PLAN(EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT));
+    PLAN(EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE)),
+    EDIT(EnumSet.of(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT));
 
-    /** The tool families this mode may use — cumulative: Ask ⊂ Edit ⊂ Plan. */
+    /** The tool families this mode may use — cumulative: Ask ⊂ Plan ⊂ Edit. */
     private final Set<AgentToolFamily> allowedToolFamilies;
 
     AgentMode(final Set<AgentToolFamily> allowedToolFamilies) {

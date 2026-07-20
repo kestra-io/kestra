@@ -12,19 +12,19 @@ class AgentModeTest {
         // Given / When / Then
         assertThat(AgentMode.ASK.allowedToolFamilies())
             .containsExactlyInAnyOrder(AgentToolFamily.READ);
-        assertThat(AgentMode.EDIT.allowedToolFamilies())
-            .containsExactlyInAnyOrder(AgentToolFamily.READ, AgentToolFamily.MUTATE);
         assertThat(AgentMode.PLAN.allowedToolFamilies())
+            .containsExactlyInAnyOrder(AgentToolFamily.READ, AgentToolFamily.MUTATE);
+        assertThat(AgentMode.EDIT.allowedToolFamilies())
             .containsExactlyInAnyOrder(AgentToolFamily.READ, AgentToolFamily.MUTATE, AgentToolFamily.ACT);
     }
 
     @Test
     void shouldKeepToolFamiliesCumulativeAcrossModes() {
-        // Then: Ask ⊂ Edit ⊂ Plan
-        assertThat(AgentMode.EDIT.allowedToolFamilies())
-            .containsAll(AgentMode.ASK.allowedToolFamilies());
+        // Then: Ask ⊂ Plan ⊂ Edit
         assertThat(AgentMode.PLAN.allowedToolFamilies())
-            .containsAll(AgentMode.EDIT.allowedToolFamilies());
+            .containsAll(AgentMode.ASK.allowedToolFamilies());
+        assertThat(AgentMode.EDIT.allowedToolFamilies())
+            .containsAll(AgentMode.PLAN.allowedToolFamilies());
     }
 
     @Test

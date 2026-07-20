@@ -150,7 +150,9 @@ export interface ArtefactDraftEvent {
 }
 
 export interface ToolResultEvent {
-    tool: string
+    /** Present on the live stream; absent on thread reload (the persisted map has no `tool` — the
+     *  name comes from the paired tool-call instead). */
+    tool?: string
     /** "ok", "error" (the tool threw; the turn continues), or "rejected". */
     outcome: string
     /**

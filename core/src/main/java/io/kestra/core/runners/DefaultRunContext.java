@@ -398,9 +398,12 @@ public class DefaultRunContext extends RunContext {
                 logger.closeLogFile();
                 String logName = "log-" + RandomStringUtils.secure().nextAlphanumeric(5).toLowerCase() + ".txt";
                 Path logFile = this.workingDir.createFile(logName);
-                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(logFile))) {
-                    Files.copy(logger.getLogFile().toPath(), out);
-                }
+                PriviledgedIo.run(() ->
+                {
+                    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(logFile))) {
+                        Files.copy(logger.getLogFile().toPath(), out);
+                    }
+                });
                 URI logFileURI = this.storage.putFile(logFile.toFile());
                 if (!logger.getLogFile().delete()) {
                     logger().warn("Unable to delete the log file {}", logger.getLogFile().toPath());

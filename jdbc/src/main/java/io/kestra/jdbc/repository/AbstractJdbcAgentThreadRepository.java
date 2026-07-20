@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
@@ -21,6 +22,8 @@ import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 public abstract class AbstractJdbcAgentThreadRepository extends AbstractJdbcCrudRepository<AgentThread>
     implements AiThreadRepositoryInterface {
 
+    private static final Field<String> USER_ID_FIELD = field("user_id", String.class);
+
     public AbstractJdbcAgentThreadRepository(io.kestra.jdbc.AbstractJdbcRepository<AgentThread> jdbcRepository) {
         super(jdbcRepository);
     }
@@ -31,17 +34,15 @@ public abstract class AbstractJdbcAgentThreadRepository extends AbstractJdbcCrud
     }
 
     /**
-     * Lists the tenant's non-deleted threads (the default filter excludes deleted rows) and keeps only
-     * those owned by {@code userId}. The {@code ai_agent_thread} table has no {@code user_id} column, so
-     * ownership is matched against the deserialized record rather than in SQL — mirroring
-     * {@link #find(String, String, String)}.
+     * Lists the tenant's non-deleted threads (the default filter excludes deleted rows) owned by
+     * {@code userId}, filtered in SQL on the generated {@code user_id} column (backed by the
+     * {@code (tenant_id, deleted, user_id)} index). A {@code null} {@code userId} matches threads with
+     * no owner (OSS).
      * {@inheritDoc}
      */
     @Override
     public List<AgentThread> findAllForUser(String tenant, String userId) {
-        return find(tenant, DSL.trueCondition()).stream()
-            .filter(thread -> Objects.equals(thread.userId(), userId))
-            .toList();
+        return find(tenant, eqOrIsNull(USER_ID_FIELD, userId));
     }
 
     @Override

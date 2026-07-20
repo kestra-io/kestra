@@ -2,12 +2,13 @@ CREATE TABLE IF NOT EXISTS ai_agent_thread (
     "key"       VARCHAR(250) NOT NULL PRIMARY KEY,
     "value"     TEXT NOT NULL,
     "tenant_id" VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.tenant')),
+    "user_id"   VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.userId')),
     "deleted"   BOOLEAN NOT NULL GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.deleted')),
     "created"   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated"   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS ai_agent_thread__tenant_deleted ON ai_agent_thread ("tenant_id", "deleted");
+CREATE INDEX IF NOT EXISTS ai_agent_thread__tenant_deleted_user ON ai_agent_thread ("tenant_id", "deleted", "user_id");
 
 CREATE TABLE IF NOT EXISTS ai_agent_message (
     "key"        VARCHAR(250) NOT NULL PRIMARY KEY,

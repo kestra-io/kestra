@@ -2,12 +2,13 @@ CREATE TABLE IF NOT EXISTS ai_agent_thread (
     "key"       VARCHAR(250) NOT NULL PRIMARY KEY,
     "value"     JSONB NOT NULL,
     "tenant_id" VARCHAR(150) GENERATED ALWAYS AS (value ->> 'tenant') STORED,
+    "user_id"   VARCHAR(150) GENERATED ALWAYS AS (value ->> 'userId') STORED,
     "deleted"   BOOLEAN NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS BOOLEAN)) STORED,
     "created"   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated"   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS ai_agent_thread__tenant_deleted ON ai_agent_thread ("tenant_id", "deleted");
+CREATE INDEX IF NOT EXISTS ai_agent_thread__tenant_deleted_user ON ai_agent_thread ("tenant_id", "deleted", "user_id");
 
 CREATE OR REPLACE TRIGGER ai_agent_thread_updated BEFORE UPDATE
     ON ai_agent_thread FOR EACH ROW EXECUTE PROCEDURE

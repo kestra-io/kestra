@@ -64,10 +64,11 @@ public final class PrivilegedIo {
     }
 
     private static void requireTrustedCaller() {
-        Class<?> caller = STACK_WALKER.walk(frames -> frames
-            .map(StackWalker.StackFrame::getDeclaringClass)
-            .filter(declaringClass -> declaringClass != PrivilegedIo.class)
-            .findFirst()
+        Class<?> caller = STACK_WALKER.walk(
+            frames -> frames
+                .map(StackWalker.StackFrame::getDeclaringClass)
+                .filter(declaringClass -> declaringClass != PrivilegedIo.class)
+                .findFirst()
         ).orElse(null);
 
         if (!TRUSTED_CALLERS.contains(caller)) {

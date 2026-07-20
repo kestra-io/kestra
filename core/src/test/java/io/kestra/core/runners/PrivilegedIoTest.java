@@ -20,7 +20,8 @@ class PrivilegedIoTest {
 
     @Test
     void shouldRejectRunFromUntrustedCaller() {
-        var exception = assertThrows(SecurityException.class, () -> PrivilegedIo.run(() -> {
+        var exception = assertThrows(SecurityException.class, () -> PrivilegedIo.run(() ->
+        {
             throw new AssertionError("should never run");
         }));
 

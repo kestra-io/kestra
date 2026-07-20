@@ -2,7 +2,7 @@ package io.kestra.core.ai.agent.repositories;
 
 import java.util.List;
 
-import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessage;
 
 public interface AiMessageRepositoryInterface {
     /**

@@ -1,6 +1,6 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.ai.agent.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcAgentThreadRepository;
 

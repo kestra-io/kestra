@@ -1,7 +1,7 @@
 package io.kestra.jdbc;
 
-import io.kestra.core.ai.agent.AgentMessage;
-import io.kestra.core.ai.agent.AgentThread;
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;

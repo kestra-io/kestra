@@ -1,14 +1,10 @@
-package io.kestra.core.ai.agent;
+package io.kestra.core.ai.agent.models;
 
 import java.time.Instant;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.kestra.core.ai.agent.models.AgentMessageRole;
-import io.kestra.core.ai.agent.models.AgentMessageType;
-import io.kestra.core.ai.agent.models.AgentToolCall;
-import io.kestra.core.ai.agent.models.ArtefactDraft;
 import io.kestra.core.models.HasUID;
 
 import io.micronaut.core.annotation.Nullable;

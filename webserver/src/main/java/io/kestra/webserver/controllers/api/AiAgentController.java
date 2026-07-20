@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-import io.kestra.core.ai.agent.AgentThread;
+import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.core.ai.agent.models.AgentThreadStatus;

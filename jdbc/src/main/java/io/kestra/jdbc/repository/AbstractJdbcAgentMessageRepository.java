@@ -6,7 +6,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
 
 /**

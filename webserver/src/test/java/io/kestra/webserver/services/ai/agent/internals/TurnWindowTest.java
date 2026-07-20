@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentMessageRole;
 import io.kestra.core.ai.agent.models.AgentMessageType;
 

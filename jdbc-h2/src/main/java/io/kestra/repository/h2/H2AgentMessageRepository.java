@@ -1,6 +1,6 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.ai.agent.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcAgentMessageRepository;
 

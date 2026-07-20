@@ -1,12 +1,10 @@
-package io.kestra.core.ai.agent;
+package io.kestra.core.ai.agent.models;
 
 import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.kestra.core.ai.agent.models.AgentMode;
-import io.kestra.core.ai.agent.models.AgentThreadStatus;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 

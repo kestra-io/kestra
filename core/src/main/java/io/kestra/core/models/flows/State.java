@@ -120,7 +120,11 @@ public class State {
             return Optional.empty();
         }
 
-        return Optional.of(this.histories.get(this.histories.size() - 1).getDate());
+        if (this.histories.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(this.histories.getLast().getDate());
     }
 
     public String humanDuration() {

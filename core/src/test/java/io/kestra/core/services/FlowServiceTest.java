@@ -229,6 +229,27 @@ class FlowServiceTest {
     }
 
     @Test
+    void importFlow_ShouldEmitTriggerCreatedEventForNewTriggerInSyncedFlow() throws FlowProcessingException, QueueException {
+        reset(triggerEventQueue);
+
+    String source = """
+        id: import_with_trigger
+        namespace: some.namespace
+        triggers:
+          - id: daily
+            type: io.kestra.plugin.core.trigger.Schedule
+            cron: "0 6 * * *"
+        tasks:
+          - id: task
+            type: io.kestra.plugin.core.log.Log
+            message: Hello""";
+
+    flowService.importFlow("my-tenant", source);
+    verify(triggerEventQueue).send(any());
+    
+    }
+
+    @Test
     void findByNamespacePrefix() {
         FlowWithSource exactMatch = create(null, "prefix.namespace", "prefixExact", "test", 1);
         flowRepository.create(GenericFlow.of(exactMatch));
